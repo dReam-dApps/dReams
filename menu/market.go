@@ -1,12 +1,13 @@
 package menu
 
 import (
-	"SixofClubsss/dReams/rpc"
-	"SixofClubsss/dReams/table"
 	"fmt"
 	"image/color"
 	"strconv"
 	"strings"
+
+	"github.com/SixofClubsss/dReams/rpc"
+	"github.com/SixofClubsss/dReams/table"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"

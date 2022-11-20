@@ -1,9 +1,9 @@
 package prediction
 
 import (
-	"SixofClubsss/dReams/menu"
-	"SixofClubsss/dReams/rpc"
-	"SixofClubsss/dReams/table"
+	"github.com/SixofClubsss/dReams/menu"
+	"github.com/SixofClubsss/dReams/rpc"
+	"github.com/SixofClubsss/dReams/table"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/data/binding"

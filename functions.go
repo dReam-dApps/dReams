@@ -1,10 +1,6 @@
 package main
 
 import (
-	"SixofClubsss/dReams/menu"
-	"SixofClubsss/dReams/prediction"
-	"SixofClubsss/dReams/rpc"
-	"SixofClubsss/dReams/table"
 	"encoding/json"
 	"fmt"
 	"image/color"
@@ -14,6 +10,11 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/SixofClubsss/dReams/menu"
+	"github.com/SixofClubsss/dReams/prediction"
+	"github.com/SixofClubsss/dReams/rpc"
+	"github.com/SixofClubsss/dReams/table"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"

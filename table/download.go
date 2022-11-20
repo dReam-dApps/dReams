@@ -1,7 +1,6 @@
 package table
 
 import (
-	"SixofClubsss/dReams/rpc"
 	"archive/zip"
 	"encoding/json"
 	"errors"
@@ -14,6 +13,8 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+
+    "github.com/SixofClubsss/dReams/rpc"
 
 	"fyne.io/fyne/v2/canvas"
 )

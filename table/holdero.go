@@ -1,12 +1,13 @@
 package table
 
 import (
-	"SixofClubsss/dReams/rpc"
 	"image/color"
 	"log"
 	"math"
 	"os"
 	"strconv"
+
+    "github.com/SixofClubsss/dReams/rpc"
 
 	"fyne.io/fyne/driver/mobile"
 	"fyne.io/fyne/v2"

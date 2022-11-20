@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	"SixofClubsss/dReams/rpc"
-	"SixofClubsss/dReams/table"
+	"github.com/SixofClubsss/dReams/rpc"
+	"github.com/SixofClubsss/dReams/table"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"

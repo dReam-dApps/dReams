@@ -1,8 +1,9 @@
 package table
 
 import (
-	"SixofClubsss/dReams/rpc"
 	"strconv"
+
+    "github.com/SixofClubsss/dReams/rpc"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"

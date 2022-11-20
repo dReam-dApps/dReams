@@ -1,9 +1,6 @@
 package prediction
 
 import (
-	"SixofClubsss/dReams/menu"
-	"SixofClubsss/dReams/rpc"
-	"SixofClubsss/dReams/table"
 	"encoding/json"
 	"io/ioutil"
 	"log"
@@ -11,6 +8,10 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/SixofClubsss/dReams/menu"
+	"github.com/SixofClubsss/dReams/rpc"
+	"github.com/SixofClubsss/dReams/table"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"

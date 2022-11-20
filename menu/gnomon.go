@@ -1,8 +1,6 @@
 package menu
 
 import (
-	"SixofClubsss/dReams/rpc"
-	"SixofClubsss/dReams/table"
 	"crypto/sha1"
 	"encoding/json"
 	"fmt"
@@ -11,6 +9,9 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/SixofClubsss/dReams/rpc"
+	"github.com/SixofClubsss/dReams/table"
 
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
