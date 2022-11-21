@@ -1076,7 +1076,7 @@ func confirmAssetList(list, dur, start, charAddr, charPerc string) { /// listing
 	})
 
 	display := container.NewVBox(label, layout.NewSpacer())
-	options := container.NewHBox(layout.NewSpacer(), confirm_button, cancel_button)
+	options := container.NewAdaptiveGrid(2, confirm_button, cancel_button)
 	content := container.NewVBox(display, options)
 
 	img := *canvas.NewImageFromResource(Resource.Back2)

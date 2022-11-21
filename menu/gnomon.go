@@ -385,7 +385,7 @@ func checkTableVersion(scid string) uint64 {
 func CreateTableList(gc bool) {
 	if !gc {
 		var owner bool
-		TableList = []string{}
+		list := []string{}
 		tables := Gnomes.Graviton.GetAllOwnersAndSCIDs()
 
 		for scid := range tables {
@@ -396,7 +396,7 @@ func CreateTableList(gc bool) {
 				d := valid[0]
 				v := version[0]
 				if d >= 1 && v >= 100 {
-					TableList = append(TableList, scid)
+					list = append(list, scid)
 					if checkTableOwner(scid) {
 						PlayerControl.holdero_unlock.Hide()
 						PlayerControl.holdero_new.Show()
@@ -413,8 +413,9 @@ func CreateTableList(gc bool) {
 			rpc.Wallet.PokerOwner = false
 		}
 
-		t := len(TableList)
-		TableList = append(TableList, "  Holdero Tables: "+strconv.Itoa(t))
+		t := len(list)
+		list = append(list, "  Holdero Tables: "+strconv.Itoa(t))
+		TableList = list
 		sort.Strings(TableList)
 
 		PlayerControl.table_options.Refresh()
@@ -626,24 +627,38 @@ func TrimTeamB(s string) string {
 
 func FindNfaListings(gs bool) {
 	if gs {
-		Market.Auctions = []string{" Collection,  Name,  Description,  SCID:"}
-		Market.Buy_now = []string{" Collection,  Name,  Description, SCID:"}
+		auction := []string{" Collection,  Name,  Description,  SCID:"}
+		buy_now := []string{" Collection,  Name,  Description,  SCID:"}
 		assets := Gnomes.Graviton.GetAllOwnersAndSCIDs()
 		keys := make([]string, len(assets))
 
 		i := 0
 		for k := range assets {
 			keys[i] = k
-			checkNfaListing(keys[i])
+
+			a := checkNfaAuctionListing(keys[i])
+
+			if a != "" {
+				auction = append(auction, a)
+			}
+
+			b := checkNfaBuyListing(keys[i])
+
+			if b != "" {
+				buy_now = append(buy_now, b)
+			}
+
 			i++
 		}
 
+		Market.Auctions = auction
+		Market.Buy_now = buy_now
 		sort.Strings(Market.Auctions)
 		sort.Strings(Market.Buy_now)
 	}
 }
 
-func checkNfaListing(scid string) {
+func checkNfaAuctionListing(scid string) string {
 	listType, _ := Gnomes.Graviton.GetSCIDValuesByKey(scid, "listType", Gnomes.Indexer.ChainHeight, true)
 	header, _ := Gnomes.Graviton.GetSCIDValuesByKey(scid, "nameHdr", Gnomes.Indexer.ChainHeight, true)
 	coll, _ := Gnomes.Graviton.GetSCIDValuesByKey(scid, "collection", Gnomes.Indexer.ChainHeight, true)
@@ -653,12 +668,34 @@ func checkNfaListing(scid string) {
 		if check == "AZYDS" || check == "DBC" || check == "AZYPC" || check == "SIXPC" || check == "AZYPCB" || check == "SIXPCB" {
 			switch listType[0] {
 			case "auction":
-				Market.Auctions = append(Market.Auctions, coll[0]+"   "+header[0]+"   "+desc[0]+"   "+scid)
-			case "sale":
-				Market.Buy_now = append(Market.Buy_now, coll[0]+"   "+header[0]+"   "+desc[0]+"   "+scid)
+				return coll[0] + "   " + header[0] + "   " + desc[0] + "   " + scid
+			default:
+				return ""
 			}
 		}
 	}
+
+	return ""
+}
+
+func checkNfaBuyListing(scid string) string {
+	listType, _ := Gnomes.Graviton.GetSCIDValuesByKey(scid, "listType", Gnomes.Indexer.ChainHeight, true)
+	header, _ := Gnomes.Graviton.GetSCIDValuesByKey(scid, "nameHdr", Gnomes.Indexer.ChainHeight, true)
+	coll, _ := Gnomes.Graviton.GetSCIDValuesByKey(scid, "collection", Gnomes.Indexer.ChainHeight, true)
+	desc, _ := Gnomes.Graviton.GetSCIDValuesByKey(scid, "descrHdr", Gnomes.Indexer.ChainHeight, true)
+	if listType != nil && header != nil {
+		check := strings.Trim(header[0], "0123456789")
+		if check == "AZYDS" || check == "DBC" || check == "AZYPC" || check == "SIXPC" || check == "AZYPCB" || check == "SIXPCB" {
+			switch listType[0] {
+			case "sale":
+				return coll[0] + "   " + header[0] + "   " + desc[0] + "   " + scid
+			default:
+				return ""
+			}
+		}
+	}
+
+	return ""
 }
 
 func GetAuctionImages(scid string) {

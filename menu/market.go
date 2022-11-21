@@ -170,9 +170,9 @@ func confirmCancelClose(scid string, c int) {
 		var text string
 		switch c {
 		case 0:
-			text = "Close listing for SCID: " + scid
+			text = "Close listing for SCID:\n" + scid
 		case 1:
-			text = "Cancel listing for SCID: " + scid
+			text = "Cancel listing for SCID:\n" + scid
 		default:
 		}
 

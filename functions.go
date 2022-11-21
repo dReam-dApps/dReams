@@ -81,7 +81,7 @@ func makeConfig(name, daemon string) (data save) {
 }
 
 func writeConfig(u save) {
-	if u.Daemon != nil {
+	if u.Daemon != nil && u.Name != "" {
 		file, err := os.Create("config.json")
 
 		if err != nil {
@@ -756,8 +756,8 @@ func MenuRefresh(tab, gi bool) {
 			}
 		}
 
-		if dReams.menu_tabs.market && offset%3 == 0 {
-			///menu.FindNfaListings(menu.Gnomes.Sync)
+		if dReams.menu_tabs.market {
+			menu.FindNfaListings(menu.Gnomes.Sync)
 			menu.Market.Auction_list.Refresh()
 			menu.Market.Buy_list.Refresh()
 		}
