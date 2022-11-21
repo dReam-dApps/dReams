@@ -144,9 +144,10 @@ func startGnomon(ep string) {
 	if len(filters) == 7 {
 		Gnomes.Indexer = indexer.NewIndexer(Gnomes.Graviton, filters, last_indexedheight, daemon_endpoint, runmode, mbl, closeondisconnect, fastsync)
 		go Gnomes.Indexer.StartDaemonMode()
+		time.Sleep(3 * time.Second)
 		Gnomes.Init = true
 	}
-	time.Sleep(3 * time.Second)
+
 }
 
 func StopGnomon(gi bool) {
@@ -161,12 +162,24 @@ func StopGnomon(gi bool) {
 	}
 }
 
+func GnomonWriting() bool {
+	return Gnomes.Indexer.Backend.Writing == 1
+}
+
+func GnomonClosing() bool {
+	if Gnomes.Indexer.Closing || Gnomes.Graviton.Closing {
+		return true
+	}
+
+	return false
+}
+
 func GnomonState(dc bool) {
-	if dc && Gnomes.Init && !Gnomes.Indexer.Closing {
+	if dc && Gnomes.Init && !GnomonWriting() && !GnomonClosing() {
 		Gnomes.Graviton.StoreLastIndexHeight(Gnomes.Indexer.LastIndexedHeight)
 		Gnomes.SCIDS = uint64(len(Gnomes.Graviton.GetAllOwnersAndSCIDs()))
 
-		if Gnomes.Graviton.GetLastIndexHeight() >= stringToInt64(rpc.Wallet.Height) && stringToInt64(rpc.Wallet.Height) != 0 && !Gnomes.Indexer.Closing {
+		if Gnomes.Graviton.GetLastIndexHeight() >= stringToInt64(rpc.Wallet.Height) && stringToInt64(rpc.Wallet.Height) != 0 && !GnomonClosing() {
 			Gnomes.Sync = true
 			if rpc.Wallet.Connect {
 				go CheckBetContract(Gnomes.Sync, Gnomes.Checked)
@@ -626,7 +639,7 @@ func TrimTeamB(s string) string {
 }
 
 func FindNfaListings(gs bool) {
-	if gs {
+	if gs && !GnomonClosing() {
 		auction := []string{" Collection,  Name,  Description,  SCID:"}
 		buy_now := []string{" Collection,  Name,  Description,  SCID:"}
 		assets := Gnomes.Graviton.GetAllOwnersAndSCIDs()

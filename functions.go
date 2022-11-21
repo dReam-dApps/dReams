@@ -638,7 +638,7 @@ func PopulateSports(dc, gs bool) {
 }
 
 func GetBook(dc bool, scid string) {
-	if dc {
+	if dc && !menu.GnomonWriting() {
 		_, initValue := menu.Gnomes.Graviton.GetSCIDValuesByKey(scid, "s_init", menu.Gnomes.Indexer.ChainHeight, true)
 		if initValue != nil {
 			_, playedValue := menu.Gnomes.Graviton.GetSCIDValuesByKey(scid, "s_played", menu.Gnomes.Indexer.ChainHeight, true)
@@ -729,7 +729,7 @@ func MenuRefresh(tab, gi bool) {
 	if tab && gi {
 		dHeight, _ := rpc.DaemonHeight()
 		var index int
-		if !menu.Gnomes.Indexer.Closing {
+		if !menu.GnomonClosing() {
 			index = int(menu.Gnomes.Graviton.GetLastIndexHeight())
 		}
 		table.Assets.Gnomes_height.Text = (" Gnomon Height: " + strconv.Itoa(index))
