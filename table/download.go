@@ -14,7 +14,7 @@ import (
 	"strconv"
 	"strings"
 
-    "github.com/SixofClubsss/dReams/rpc"
+	"github.com/SixofClubsss/dReams/rpc"
 
 	"fyne.io/fyne/v2/canvas"
 )
@@ -709,11 +709,17 @@ func getKucoin(coin string) string {
 func downloadFileLocal(filepath string, url string) (err error) {
 	_, dir := os.Stat("cards")
 	if os.IsNotExist(dir) {
-		log.Println("Creating Crds Dir.")
+		log.Println("Creating Cards Dir")
 		mkdir := os.Mkdir("cards", 0755)
 		if mkdir != nil {
 			log.Println(mkdir)
+		} else {
+			mksub := os.Mkdir("cards/backs", 0755)
+			if mksub != nil {
+				log.Println(mksub)
+			}
 		}
+
 	}
 
 	out, err := os.Create(filepath)

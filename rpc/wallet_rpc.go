@@ -841,7 +841,7 @@ func TradedReams(amt uint64) error {
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(Round.Contract, args, t)
+	fee, _ := GasEstimate(BaccSCID, args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     BaccSCID,

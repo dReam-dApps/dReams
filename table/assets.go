@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-    "github.com/SixofClubsss/dReams/rpc"
+	"github.com/SixofClubsss/dReams/rpc"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -196,7 +196,7 @@ func AvatarSelect() fyne.Widget {
 		if check == "DBC" {
 			Settings.AvatarUrl = "https://raw.githubusercontent.com/Azylem/" + s + "/main/" + s + ".PNG"
 		} else if check == "Dero Seals" {
-			seal := strings.Trim(s, "Dero Sal#")
+			seal := strings.Trim(s, "Dero Sals#")
 			Settings.AvatarUrl = "https://ipfs.io/ipfs/QmP3HnzWpiaBA6ZE8c3dy5ExeG7hnYjSqkNfVbeVW5iEp6/low/" + seal + ".jpg"
 		} else if s == "None" {
 			Settings.AvatarUrl = ""

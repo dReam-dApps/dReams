@@ -83,10 +83,14 @@ func MarketItems() fyne.CanvasObject {
 	}
 
 	Market.Market_button = widget.NewButton("Bid", func() {
-		if Market.Market_button.Text == "Bid" {
-			rpc.NfaBidBuy(Market.Viewing, "Bid", ToAtomicFive(Market.Entry.Text))
-		} else if Market.Market_button.Text == "Buy" {
-			rpc.NfaBidBuy(Market.Viewing, "BuyItNow", Market.Buy_amt)
+		scid := Market.Viewing
+		text := Market.Market_button.Text
+		Market.Market_button.Hide()
+		if text == "Bid" {
+			amt := ToAtomicFive(Market.Entry.Text)
+			bidBuyConfirm(scid, amt, 0)
+		} else if text == "Buy" {
+			bidBuyConfirm(scid, Market.Buy_amt, 1)
 		}
 	})
 
@@ -102,6 +106,63 @@ func MarketItems() fyne.CanvasObject {
 	Market.Market_box.Hide()
 
 	return &Market.Market_box
+}
+
+func bidBuyConfirm(scid string, amt uint64, b int) {
+	var text string
+	f := float64(amt)
+	str := fmt.Sprintf("%.5f", f/100000)
+	switch b {
+	case 0:
+		text = "Bidding on SCID:\n\n" + scid + "\n\nBid amount: " + str + " Dero\n\nConfirm bid"
+	case 1:
+		text = "Buying SCID:\n\n" + scid + "\n\nBuy amount: " + str + " Dero\n\nConfirm buy"
+	default:
+	}
+
+	cw := fyne.CurrentApp().NewWindow("Confirm")
+	cw.Resize(fyne.NewSize(350, 350))
+	cw.SetFixedSize(true)
+	cw.SetIcon(Resource.SmallIcon)
+	cw.SetCloseIntercept(func() {
+		Market.Market_button.Show()
+		cw.Close()
+	})
+
+	label := widget.NewLabel(text)
+	label.Wrapping = fyne.TextWrapWord
+
+	confirm := widget.NewButton("Confirm", func() {
+		switch b {
+		case 0:
+			rpc.NfaBidBuy(scid, "Bid", amt)
+		case 1:
+			rpc.NfaBidBuy(scid, "BuyItNow", amt)
+
+		default:
+
+		}
+		Market.Market_button.Show()
+		cw.Close()
+	})
+
+	cancel := widget.NewButton("Cancel", func() {
+		Market.Market_button.Show()
+		cw.Close()
+	})
+
+	left := container.NewVBox(confirm)
+	right := container.NewVBox(cancel)
+	buttons := container.NewAdaptiveGrid(2, left, right)
+
+	content := container.NewVBox(label, layout.NewSpacer(), buttons)
+
+	img := *canvas.NewImageFromResource(Resource.Back2)
+	cw.SetContent(
+		container.New(layout.NewMaxLayout(),
+			&img,
+			content))
+	cw.Show()
 }
 
 func confirmCancelClose(scid string, c int) {
@@ -126,12 +187,13 @@ func confirmCancelClose(scid string, c int) {
 			switch c {
 			case 0:
 				rpc.NfaCancelClose(scid, "CloseListing")
-				Market.Close_button.Hide()
 			case 1:
 				rpc.NfaCancelClose(scid, "CancelListing")
-				Market.Cancel_button.Hide()
+
 			default:
+
 			}
+			Market.Cancel_button.Hide()
 			Market.Viewing = ""
 			cw.Close()
 		})
@@ -172,7 +234,7 @@ func AuctionListings() fyne.Widget {
 			split := strings.Split(Market.Auctions[id], "   ")
 			if split[3] != Market.Viewing {
 				Market.Viewing = split[3]
-				ResetAuctionInfo()
+				go ResetAuctionInfo()
 				go GetAuctionImages(split[3])
 				GetAuctionDetails(split[3])
 				value := float64(Market.Bid_amt)

@@ -257,6 +257,14 @@ func verifyBetContract(scid, t string) {
 	}
 }
 
+func isNfa(scid string) bool {
+	artAddr, _ := Gnomes.Graviton.GetSCIDValuesByKey(scid, "artificerAddr", Gnomes.Indexer.ChainHeight, true)
+	if artAddr != nil {
+		return artAddr[0] == rpc.ArtAddress
+	}
+	return false
+}
+
 func validNfa(file string) bool {
 	return file != "-"
 }

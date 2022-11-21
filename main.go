@@ -52,7 +52,7 @@ func main() {
 	dReams.Window.SetMaster()
 	quit := make(chan struct{})
 	dReams.Window.SetCloseIntercept(func() {
-		writeConfig(save{Name: table.Poker_name})
+		writeConfig(makeConfig(table.Poker_name, rpc.Round.Daemon))
 		menu.StopGnomon(menu.Gnomes.Init)
 		quit <- struct{}{}
 		time.Sleep(1 * time.Second)
@@ -69,7 +69,7 @@ func main() {
 	table.Settings.ThemeImg = *canvas.NewImageFromResource(resourceBackgroundPng)
 	background = container.NewMax(&table.Settings.ThemeImg)
 
-	table.Poker_name = readConfig()
+	table.Poker_name, menu.PlayerControl.Daemon_config = readConfig()
 	go func() {
 		dReams.Window.SetContent(
 			container.New(layout.NewMaxLayout(),

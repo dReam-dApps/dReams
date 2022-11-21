@@ -29,7 +29,8 @@ type Notification struct {
 }
 
 type save struct {
-	Name string `json:"name"`
+	Name   string   `json:"name"`
+	Daemon []string `json:"daemon"`
 }
 
 var offset int
@@ -66,8 +67,21 @@ func labelColorBlack(c *fyne.Container) *fyne.Container {
 	return cont
 }
 
+func makeConfig(name, daemon string) (data save) {
+	data.Name = name
+	switch daemon {
+	case "127.0.0.1:10102":
+	case "89.38.99.117:10102":
+	case "dero-node.mysrv.cloud:10102":
+	case "derostats.io:10102":
+	default:
+		data.Daemon = []string{daemon}
+	}
+	return data
+}
+
 func writeConfig(u save) {
-	if u.Name != "" {
+	if u.Daemon != nil {
 		file, err := os.Create("config.json")
 
 		if err != nil {
@@ -85,26 +99,26 @@ func writeConfig(u save) {
 	}
 }
 
-func readConfig() string {
+func readConfig() (string, string) {
 	if !table.FileExists("config.json") {
-		return ""
+		return "", ""
 	}
 
 	file, err := os.ReadFile("config.json")
 
 	if err != nil {
 		log.Println("Error reading config file: ", err)
-		return ""
+		return "", ""
 	}
 
 	var config save
 	err = json.Unmarshal(file, &config)
 	if err != nil {
 		log.Println("Error during unmarshal: ", err)
-		return ""
+		return "", ""
 	}
 
-	return config.Name
+	return config.Name, config.Daemon[0]
 }
 
 func showBaccCards() *fyne.Container {
@@ -742,8 +756,8 @@ func MenuRefresh(tab, gi bool) {
 			}
 		}
 
-		if dReams.menu_tabs.market {
-			menu.FindNfaListings(menu.Gnomes.Sync)
+		if dReams.menu_tabs.market && offset%3 == 0 {
+			///menu.FindNfaListings(menu.Gnomes.Sync)
 			menu.Market.Auction_list.Refresh()
 			menu.Market.Buy_list.Refresh()
 		}
@@ -857,6 +871,8 @@ func MenuTab(ti *container.TabItem) {
 		go menu.FindNfaListings(menu.Gnomes.Sync)
 		menu.Market.Cancel_button.Hide()
 		menu.Market.Close_button.Hide()
+		menu.Market.Auction_list.Refresh()
+		menu.Market.Buy_list.Refresh()
 	}
 }
 
@@ -872,6 +888,7 @@ func MenuContractTab(ti *container.TabItem) {
 func MarketTab(ti *container.TabItem) {
 	switch ti.Text {
 	case "Auctions":
+		go menu.FindNfaListings(menu.Gnomes.Sync)
 		menu.Market.Tab = "Auction"
 		menu.Market.Auction_list.UnselectAll()
 		menu.Market.Viewing = ""
@@ -882,6 +899,7 @@ func MarketTab(ti *container.TabItem) {
 		menu.ResetAuctionInfo()
 		menu.AuctionInfo()
 	case "Buy Now":
+		go menu.FindNfaListings(menu.Gnomes.Sync)
 		menu.Market.Tab = "Buy"
 		menu.Market.Buy_list.UnselectAll()
 		menu.Market.Viewing = ""

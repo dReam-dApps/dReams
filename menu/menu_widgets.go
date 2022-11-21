@@ -28,6 +28,7 @@ const (
 
 type playerOptions struct {
 	list_open      bool
+	Daemon_config  string
 	Viewing_asset  string
 	daemon_check   *widget.Check
 	wallet_check   *widget.Check
@@ -178,6 +179,9 @@ func HolderoContractConnectedBox() fyne.Widget {
 
 func DaemonRpcEntry() fyne.Widget {
 	var options = []string{"", DAEMON_RPC_DEFAULT, DAEMON_RPC_REMOTE1, DAEMON_RPC_REMOTE2, DAEMON_RPC_REMOTE3}
+	if PlayerControl.Daemon_config != "" {
+		options = append(options, PlayerControl.Daemon_config)
+	}
 	entry := widget.NewSelectEntry(options)
 	entry.PlaceHolder = "Daemon RPC: "
 
@@ -943,7 +947,9 @@ func IndexEntry() fyne.CanvasObject {
 
 	PlayerControl.Claim_button = widget.NewButton("Claim", func() {
 		if len(table.Assets.Index_entry.Text) == 64 {
-			rpc.ClaimNfa(table.Assets.Index_entry.Text)
+			if isNfa(table.Assets.Index_entry.Text) {
+				rpc.ClaimNfa(table.Assets.Index_entry.Text)
+			}
 		}
 	})
 
