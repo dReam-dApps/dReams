@@ -7,7 +7,7 @@ import (
 	"os"
 	"strconv"
 
-    "github.com/SixofClubsss/dReams/rpc"
+	"github.com/SixofClubsss/dReams/rpc"
 
 	"fyne.io/fyne/driver/mobile"
 	"fyne.io/fyne/v2"
@@ -395,6 +395,7 @@ type tableWidgets struct {
 	Multi        *widget.RadioGroup
 	ButtonA      *widget.Button
 	ButtonB      *widget.Button
+	Sports_box   *fyne.Container
 	S_contract   *widget.SelectEntry
 }
 

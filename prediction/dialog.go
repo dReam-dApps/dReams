@@ -356,23 +356,23 @@ func OwnerButton() fyne.CanvasObject {
 func GetActiveGames(dc bool) {
 	if dc {
 		options := []string{}
-		contracts := menu.Gnomes.Graviton.GetAllOwnersAndSCIDs()
+		contracts := menu.Gnomes.Indexer.Backend.GetAllOwnersAndSCIDs()
 		keys := make([]string, len(contracts))
 
 		i := 0
 		for k := range contracts {
 			keys[i] = k
-			owner, _ := menu.Gnomes.Graviton.GetSCIDValuesByKey(keys[i], "owner", menu.Gnomes.Indexer.ChainHeight, true)
+			owner, _ := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(keys[i], "owner", menu.Gnomes.Indexer.ChainHeight, true)
 			if owner != nil && owner[0] == rpc.Wallet.Address {
 				if len(keys[i]) == 64 {
-					_, init := menu.Gnomes.Graviton.GetSCIDValuesByKey(keys[i], "s_init", menu.Gnomes.Indexer.ChainHeight, true)
+					_, init := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(keys[i], "s_init", menu.Gnomes.Indexer.ChainHeight, true)
 					if init != nil {
 						for ic := uint64(1); ic <= init[0]; ic++ {
 							num := strconv.Itoa(int(ic))
-							game, _ := menu.Gnomes.Graviton.GetSCIDValuesByKey(keys[i], "game_"+num, menu.Gnomes.Indexer.ChainHeight, true)
-							league, _ := menu.Gnomes.Graviton.GetSCIDValuesByKey(keys[i], "league_"+num, menu.Gnomes.Indexer.ChainHeight, true)
-							_, end := menu.Gnomes.Graviton.GetSCIDValuesByKey(keys[i], "s_end_at_"+num, menu.Gnomes.Indexer.ChainHeight, true)
-							_, add := menu.Gnomes.Graviton.GetSCIDValuesByKey(keys[i], "time_a", menu.Gnomes.Indexer.ChainHeight, true)
+							game, _ := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(keys[i], "game_"+num, menu.Gnomes.Indexer.ChainHeight, true)
+							league, _ := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(keys[i], "league_"+num, menu.Gnomes.Indexer.ChainHeight, true)
+							_, end := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(keys[i], "s_end_at_"+num, menu.Gnomes.Indexer.ChainHeight, true)
+							_, add := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(keys[i], "time_a", menu.Gnomes.Indexer.ChainHeight, true)
 							if game != nil && end != nil && add != nil {
 								if end[0]+add[0] < uint64(time.Now().Unix()) {
 									options = append(options, num+"   "+league[0]+"   "+game[0])

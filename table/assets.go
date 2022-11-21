@@ -421,7 +421,10 @@ func SetHeaderItems() fyne.CanvasObject {
 	icon_entry.PlaceHolder = "Icon:"
 
 	button := widget.NewButton("Set Headers", func() {
-		headerPopUp(name_entry.Text, descr_entry.Text, icon_entry.Text, Assets.Index_entry.Text)
+		scid := Assets.Index_entry.Text
+		if len(scid) == 64 && name_entry.Text != "dReam Tables" {
+			headerPopUp(name_entry.Text, descr_entry.Text, icon_entry.Text, scid)
+		}
 	})
 
 	contr := container.NewVBox(name_entry, descr_entry, icon_entry, button)
@@ -436,13 +439,11 @@ func headerPopUp(name, desc, icon, scid string) {
 	confirm.Resize(fyne.NewSize(300, 300))
 	confirm.SetFixedSize(true)
 	confirm.SetIcon(Resource.SmallIcon)
-	label := widget.NewLabel("Headers for SCID: " + scid + "\nName: " + name + "\nDescription: " + desc + "\nIcon: " + icon)
+	label := widget.NewLabel("Headers for SCID: " + scid + "\n\nName: " + name + "\n\nDescription: " + desc + "\n\nIcon: " + icon)
 	label.Wrapping = fyne.TextWrapWord
 
 	confirm_button := widget.NewButton("Confirm", func() {
-		if name != "dReam Tables" {
-			rpc.SetHeaders(name, desc, icon, scid)
-		}
+		rpc.SetHeaders(name, desc, icon, scid)
 		confirm.Close()
 	})
 

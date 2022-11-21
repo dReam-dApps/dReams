@@ -46,6 +46,10 @@ func notification(title, content string, g int) *fyne.Notification {
 	return &fyne.Notification{Title: title, Content: content}
 }
 
+func isWindows() bool {
+	return dReams.os == "windows"
+}
+
 func systemTray(w fyne.App) bool {
 	if desk, ok := w.(desktop.App); ok {
 		m := fyne.NewMenu("MyApp",
@@ -82,19 +86,21 @@ func makeConfig(name, daemon string) (data save) {
 
 func writeConfig(u save) {
 	if u.Daemon != nil && u.Name != "" {
-		file, err := os.Create("config.json")
+		if u.Daemon[0] != "" {
+			file, err := os.Create("config.json")
 
-		if err != nil {
-			log.Println(err)
-		}
+			if err != nil {
+				log.Println(err)
+			}
 
-		defer file.Close()
-		json, _ := json.MarshalIndent(u, "", " ")
+			defer file.Close()
+			json, _ := json.MarshalIndent(u, "", " ")
 
-		_, err = file.Write(json)
+			_, err = file.Write(json)
 
-		if err != nil {
-			log.Println("Error writing config file: ", err)
+			if err != nil {
+				log.Println("Error writing config file: ", err)
+			}
 		}
 	}
 }
@@ -242,7 +248,7 @@ func fetch(quit chan struct{}) { /// main loop
 				rpc.FetchHolderoSC(rpc.Signal.Daemon, rpc.Signal.Contract)
 				rpc.FetchBaccSC(rpc.Signal.Daemon)
 				rpc.FetchPredictionSC(rpc.Signal.Daemon, prediction.PredictControl.Contract)
-				menu.GnomonState(rpc.Signal.Daemon)
+				menu.GnomonState(rpc.Signal.Daemon, menu.Gnomes.Init)
 				background.Refresh()
 
 				offset++
@@ -371,7 +377,9 @@ func HolderoRefresh() {
 			}
 
 			if !rpc.Round.Notified {
-				dReams.App.SendNotification(notification("dReams - Holdero", "Your Turn", 0))
+				if !isWindows() {
+					dReams.App.SendNotification(notification("dReams - Holdero", "Your Turn", 0))
+				}
 			}
 		} else {
 			if rpc.Signal.Sit {
@@ -388,7 +396,9 @@ func HolderoRefresh() {
 			if rpc.Signal.Reveal && rpc.Signal.My_turn && !rpc.Signal.End {
 				if !rpc.Round.Notified {
 					rpc.Display.Res = "Revealing Key"
-					dReams.App.SendNotification(notification("dReams - Holdero", "Revealing Key", 0))
+					if !isWindows() {
+						dReams.App.SendNotification(notification("dReams - Holdero", "Revealing Key", 0))
+					}
 				}
 			}
 
@@ -441,7 +451,9 @@ func BaccRefresh() {
 	B.TableItems.Refresh()
 
 	if rpc.Bacc.Found && !rpc.Bacc.Notified {
-		dReams.App.SendNotification(notification("dReams - Baccarat", rpc.Display.BaccRes, 1))
+		if !isWindows() {
+			dReams.App.SendNotification(notification("dReams - Baccarat", rpc.Display.BaccRes, 1))
+		}
 	}
 }
 
@@ -488,12 +500,12 @@ func P_initResults(p, amt, eA, c, to, u, d, r, f, m string, ta, tb, tc int, post
 	if post {
 		P.TopLabel.SetText("SCID: \n" + prediction.PredictControl.Contract + "\n" + "\n" + p + " Price Posted" +
 			"\nMark: " + m + "\nPredictions: " + c +
-			"\nRound Pot: " + s + "\nUp Predictions: " + u + "\nDown Predictions: " + d + "\nPayout After: " + end_pay.String() + "\nRefund if not paid within " + rf + " minutes\nTotal Rounds Played: " + r)
+			"\nRound Pot: " + s + "\nUp Predictions: " + u + "\nDown Predictions: " + d + "\nPayout After: " + end_pay.String() + "\nRefund if not paid within " + rf + " minutes\nRounds Completed: " + r)
 	} else {
 		pw := strconv.Itoa(ta / 60)
 		P.TopLabel.SetText("SCID: \n" + prediction.PredictControl.Contract + "\n" + "\nAccepting " + p + " Predictions " +
 			"\nPrediction Amount: " + amt + " Dero\nCloses at: " + utc + "\nPrice posted with in " + pw + " minutes of close\nPredictions: " + c +
-			"\nRound Pot: " + s + "\nHigher Predictions: " + u + "\nLower Predictions: " + d + "\nPayout After: " + end_pay.String() + "\nRefund if not paid within " + rf + " minutes\nTotal Rounds Played: " + r)
+			"\nRound Pot: " + s + "\nHigher Predictions: " + u + "\nLower Predictions: " + d + "\nPayout After: " + end_pay.String() + "\nRefund if not paid within " + rf + " minutes\nRounds Completed: " + r)
 	}
 
 	if offset == 11 || P.BottomLabel.Text == "" {
@@ -535,38 +547,51 @@ func roundResults(fr, m string) string { /// prediction results text
 
 func P_no_initResults(fr, tx, r, m string) { /// prediction info, not initialized
 	P.TopLabel.SetText("SCID: \n" + prediction.PredictControl.Contract + "\n" + "\nNot Accepting Predictions\n\nLast Round Mark: " + m +
-		"\nLast Round Results: " + roundResults(fr, m) + "\nLast Round TXID: " + tx + "\n\nTotal Rounds Played: " + r)
+		"\nLast Round Results: " + roundResults(fr, m) + "\nLast Round TXID: " + tx + "\n\nRounds Completed: " + r)
 
 	P.BottomLabel.SetText("")
 }
 
 func PopulatePredictions(dc, gs bool) {
-	prediction.PredictControl.Contract_list = []string{}
 	if dc && gs {
-		contracts := menu.Gnomes.Graviton.GetAllOwnersAndSCIDs()
+		list := []string{}
+		contracts := menu.Gnomes.Indexer.Backend.GetAllOwnersAndSCIDs()
 		keys := make([]string, len(contracts))
 
 		i := 0
 		for k := range contracts {
 			keys[i] = k
-			prediction.PredictControl.Contract_list = checkBetContractOwner(keys[i], "p", prediction.PredictControl.Contract_list)
+			list = checkBetContractOwner(keys[i], "p", list)
 			i++
 		}
-		t := len(prediction.PredictControl.Contract_list)
-		prediction.PredictControl.Contract_list = append(prediction.PredictControl.Contract_list, " Contracts: "+strconv.Itoa(t))
-		sort.Strings(prediction.PredictControl.Contract_list)
+		t := len(list)
+		list = append(list, " Contracts: "+strconv.Itoa(t))
+		sort.Strings(list)
+		prediction.PredictControl.Contract_list = list
 	}
 	prediction.PredictControl.Predict_list.Refresh()
 }
 
 func checkBetContractOwner(scid, t string, list []string) []string {
-	owner, _ := menu.Gnomes.Graviton.GetSCIDValuesByKey(scid, "owner", menu.Gnomes.Indexer.ChainHeight, true)
-	dev, _ := menu.Gnomes.Graviton.GetSCIDValuesByKey(scid, "dev", menu.Gnomes.Indexer.ChainHeight, true)
-	_, init := menu.Gnomes.Graviton.GetSCIDValuesByKey(scid, t+"_init", menu.Gnomes.Indexer.ChainHeight, true)
+	owner, _ := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "owner", menu.Gnomes.Indexer.ChainHeight, true)
+	dev, _ := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "dev", menu.Gnomes.Indexer.ChainHeight, true)
+	_, init := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, t+"_init", menu.Gnomes.Indexer.ChainHeight, true)
 
 	if owner != nil && dev != nil && init != nil {
 		if dev[0] == rpc.DevAddress {
-			list = append(list, scid)
+			headers, _ := rpc.GetSCHeaders(scid)
+			name := "?"
+			desc := "?"
+			if headers != nil {
+				if headers[1] != "" {
+					desc = headers[1]
+				}
+
+				if headers[0] != "" {
+					name = " " + headers[0]
+				}
+			}
+			list = append(list, name+"   "+desc+"   "+scid)
 			menu.DisableBetOwner(owner[0])
 		}
 	}
@@ -576,8 +601,8 @@ func checkBetContractOwner(scid, t string, list []string) []string {
 
 func MakeLeaderBoard(dc, gs bool, scid string) {
 	if dc && gs && len(scid) == 64 {
-		prediction.PredictControl.Leaders_map = make(map[string]uint64)
-		findLeaders := menu.Gnomes.Graviton.GetAllSCIDVariableDetails(scid)
+		leaders := make(map[string]uint64)
+		findLeaders := menu.Gnomes.Indexer.Backend.GetAllSCIDVariableDetails(scid)
 
 		keys := make([]int64, 0, len(findLeaders))
 		for k := range findLeaders {
@@ -590,9 +615,11 @@ func MakeLeaderBoard(dc, gs bool, scid string) {
 			a := findLeaders[keys[0]][val].Key
 			split := strings.Split(a.(string), "_")
 			if split[0] == "u" {
-				prediction.PredictControl.Leaders_map[split[1]] = uint64(findLeaders[keys[0]][val].Value.(float64))
+				leaders[split[1]] = uint64(findLeaders[keys[0]][val].Value.(float64))
 			}
 		}
+
+		prediction.PredictControl.Leaders_map = leaders
 
 		printLeaders()
 	}
@@ -620,29 +647,32 @@ func printLeaders() {
 
 func PopulateSports(dc, gs bool) {
 	if dc && gs {
-		prediction.SportsControl.Contract_list = []string{}
-		contracts := menu.Gnomes.Graviton.GetAllOwnersAndSCIDs()
+		list := []string{}
+		//prediction.SportsControl.Contract_list = []string{}
+		contracts := menu.Gnomes.Indexer.Backend.GetAllOwnersAndSCIDs()
 		keys := make([]string, len(contracts))
 
 		i := 0
 		for k := range contracts {
 			keys[i] = k
-			prediction.SportsControl.Contract_list = checkBetContractOwner(keys[i], "s", prediction.SportsControl.Contract_list)
+			list = checkBetContractOwner(keys[i], "s", list)
 			i++
 		}
-		t := len(prediction.SportsControl.Contract_list)
-		prediction.SportsControl.Contract_list = append(prediction.SportsControl.Contract_list, " Contracts: "+strconv.Itoa(t))
-		sort.Strings(prediction.SportsControl.Contract_list)
+
+		t := len(list)
+		list = append(list, " Contracts: "+strconv.Itoa(t))
+		sort.Strings(list)
+		prediction.SportsControl.Contract_list = list
 	}
 	prediction.SportsControl.Sports_list.Refresh()
 }
 
 func GetBook(dc bool, scid string) {
-	if dc && !menu.GnomonWriting() {
-		_, initValue := menu.Gnomes.Graviton.GetSCIDValuesByKey(scid, "s_init", menu.Gnomes.Indexer.ChainHeight, true)
+	if dc && !menu.GnomonClosing() && !menu.GnomonWriting() {
+		_, initValue := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "s_init", menu.Gnomes.Indexer.ChainHeight, true)
 		if initValue != nil {
-			_, playedValue := menu.Gnomes.Graviton.GetSCIDValuesByKey(scid, "s_played", menu.Gnomes.Indexer.ChainHeight, true)
-			//_, hl := menu.Gnomes.Graviton.GetSCIDValuesByKey(scid, "hl", menu.Gnomes.Indexer.ChainHeight, true)
+			_, playedValue := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "s_played", menu.Gnomes.Indexer.ChainHeight, true)
+			//_, hl := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "hl", menu.Gnomes.Indexer.ChainHeight, true)
 			init := initValue[0]
 			played := playedValue[0]
 
@@ -657,19 +687,19 @@ func GetBook(dc bool, scid string) {
 			var single bool
 			iv := 1
 			for {
-				_, s_init := menu.Gnomes.Graviton.GetSCIDValuesByKey(scid, "s_init_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
+				_, s_init := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "s_init_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
 				if s_init != nil {
-					game, _ := menu.Gnomes.Graviton.GetSCIDValuesByKey(scid, "game_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
-					league, _ := menu.Gnomes.Graviton.GetSCIDValuesByKey(scid, "league_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
-					_, s_n := menu.Gnomes.Graviton.GetSCIDValuesByKey(scid, "s_#_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
-					_, s_amt := menu.Gnomes.Graviton.GetSCIDValuesByKey(scid, "s_amount_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
-					_, s_end := menu.Gnomes.Graviton.GetSCIDValuesByKey(scid, "s_end_at_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
-					_, s_total := menu.Gnomes.Graviton.GetSCIDValuesByKey(scid, "s_total_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
-					//s_urlValue, _ := menu.Gnomes.Graviton.GetSCIDValuesByKey(scid, "s_url_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
-					_, s_ta := menu.Gnomes.Graviton.GetSCIDValuesByKey(scid, "team_a_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
-					_, s_tb := menu.Gnomes.Graviton.GetSCIDValuesByKey(scid, "team_b_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
-					_, time_a := menu.Gnomes.Graviton.GetSCIDValuesByKey(scid, "time_a", menu.Gnomes.Indexer.ChainHeight, true)
-					_, time_b := menu.Gnomes.Graviton.GetSCIDValuesByKey(scid, "time_b", menu.Gnomes.Indexer.ChainHeight, true)
+					game, _ := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "game_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
+					league, _ := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "league_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
+					_, s_n := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "s_#_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
+					_, s_amt := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "s_amount_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
+					_, s_end := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "s_end_at_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
+					_, s_total := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "s_total_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
+					//s_urlValue, _ := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "s_url_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
+					_, s_ta := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "team_a_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
+					_, s_tb := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "team_b_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
+					_, time_a := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "time_a", menu.Gnomes.Indexer.ChainHeight, true)
+					_, time_b := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "time_b", menu.Gnomes.Indexer.ChainHeight, true)
 
 					team_a := menu.TrimTeamA(game[0])
 					team_b := menu.TrimTeamB(game[0])
@@ -729,8 +759,8 @@ func MenuRefresh(tab, gi bool) {
 	if tab && gi {
 		dHeight, _ := rpc.DaemonHeight()
 		var index int
-		if !menu.GnomonClosing() {
-			index = int(menu.Gnomes.Graviton.GetLastIndexHeight())
+		if !menu.GnomonClosing() && menu.FastSynced() {
+			index = int(menu.Gnomes.Indexer.ChainHeight) //int(menu.Gnomes.Indexer.Backend.GetLastIndexHeight())
 		}
 		table.Assets.Gnomes_height.Text = (" Gnomon Height: " + strconv.Itoa(index))
 		table.Assets.Gnomes_height.Refresh()
@@ -915,7 +945,7 @@ func MarketTab(ti *container.TabItem) {
 func PredictTab(ti *container.TabItem) {
 	switch ti.Text {
 	case "Contracts":
-		PopulatePredictions(rpc.Signal.Daemon, menu.Gnomes.Sync)
+		go PopulatePredictions(rpc.Signal.Daemon, menu.Gnomes.Sync)
 	case "Leaderboard":
 		go MakeLeaderBoard(rpc.Signal.Daemon, menu.Gnomes.Sync, prediction.PredictControl.Contract)
 	}

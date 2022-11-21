@@ -1,6 +1,8 @@
 package prediction
 
 import (
+	"strings"
+
 	"github.com/SixofClubsss/dReams/menu"
 	"github.com/SixofClubsss/dReams/rpc"
 	"github.com/SixofClubsss/dReams/table"
@@ -19,7 +21,8 @@ type predictItems struct {
 	connected_box   *widget.Check
 	Leaders_list    *widget.List
 	Predict_list    *widget.List
-	RemoveButton    *widget.Button
+	Remove_button   *widget.Button
+	Predicion_box   *fyne.Container
 }
 
 var PredictControl predictItems
@@ -82,7 +85,9 @@ func Change() fyne.Widget { /// change name button
 
 func Higher() fyne.Widget {
 	table.Actions.Higher = widget.NewButton("Higher", func() {
-		confirmPopUp(2, "", "")
+		if len(PredictControl.Contract) == 64 {
+			confirmPopUp(2, "", "")
+		}
 	})
 
 	table.Actions.Higher.Hide()
@@ -92,7 +97,9 @@ func Higher() fyne.Widget {
 
 func Lower() fyne.Widget {
 	table.Actions.Lower = widget.NewButton("Lower", func() {
-		confirmPopUp(1, "", "")
+		if len(PredictControl.Contract) == 64 {
+			confirmPopUp(1, "", "")
+		}
 	})
 
 	table.Actions.Lower.Hide()
@@ -130,21 +137,29 @@ func PredictionListings() fyne.Widget { /// prediction contract list
 
 	PredictControl.Predict_list.OnSelected = func(id widget.ListItemID) {
 		if id != 0 {
-			table.Actions.P_contract.SetText(PredictControl.Contract_list[id])
-			table.Actions.NameEntry.Text = menu.CheckPredictionName(PredictControl.Contract)
-			table.Actions.NameEntry.Refresh()
+			if rpc.Signal.Daemon && rpc.Wallet.Connect {
+				menu.DisablePreditions(false)
+			}
+
+			split := strings.Split(PredictControl.Contract_list[id], "   ")
+			if len(split[2]) == 64 {
+				table.Actions.P_contract.SetText(split[2])
+				table.Actions.NameEntry.Text = menu.CheckPredictionName(PredictControl.Contract)
+				table.Actions.NameEntry.Refresh()
+			}
 		}
+
 	}
 
 	return PredictControl.Predict_list
 }
 
 func Remove() fyne.Widget {
-	PredictControl.RemoveButton = widget.NewButton("Remove", func() {
+	PredictControl.Remove_button = widget.NewButton("Remove", func() {
 		namePopUp(2)
 	})
 
-	PredictControl.RemoveButton.Hide()
+	PredictControl.Remove_button.Hide()
 
-	return PredictControl.RemoveButton
+	return PredictControl.Remove_button
 }

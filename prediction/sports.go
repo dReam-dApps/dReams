@@ -56,7 +56,28 @@ func SportsContractEntry() fyne.Widget {
 	return table.Actions.S_contract
 }
 
-func Multiplyer() fyne.Widget { /// sports Multiplier
+func SportsBox() fyne.CanvasObject {
+	table.Actions.Game_select = widget.NewSelect(table.Actions.Game_options, func(s string) {
+		split := strings.Split(s, "   ")
+		a, b := menu.GetSportsTeams(SportsControl.Contract, split[0])
+		if table.Actions.Game_select.SelectedIndex() >= 0 {
+			table.Actions.Multi.Show()
+			table.Actions.ButtonA.Show()
+			table.Actions.ButtonB.Show()
+			table.Actions.ButtonA.Text = a
+			table.Actions.ButtonA.Refresh()
+			table.Actions.ButtonB.Text = b
+			table.Actions.ButtonB.Refresh()
+		} else {
+			table.Actions.Multi.Hide()
+			table.Actions.ButtonA.Hide()
+			table.Actions.ButtonB.Hide()
+		}
+	})
+
+	table.Actions.Game_select.PlaceHolder = "Select Game #"
+	//table.Actions.Game_select.Hide()
+
 	var Multi_options = []string{"1x", "3x", "5x"}
 	table.Actions.Multi = widget.NewRadioGroup(Multi_options, func(s string) {
 
@@ -64,41 +85,32 @@ func Multiplyer() fyne.Widget { /// sports Multiplier
 	table.Actions.Multi.Horizontal = true
 	table.Actions.Multi.Hide()
 
-	return table.Actions.Multi
-}
-
-func TeamA() fyne.Widget {
 	table.Actions.ButtonA = widget.NewButton("TEAM A", func() {
-		confirmPopUp(3, table.Actions.ButtonA.Text, table.Actions.ButtonB.Text)
+		if len(SportsControl.Contract) == 64 {
+			confirmPopUp(3, table.Actions.ButtonA.Text, table.Actions.ButtonB.Text)
+		}
 	})
 	table.Actions.ButtonA.Hide()
 
-	return table.Actions.ButtonA
-}
-
-func TeamB() fyne.Widget {
 	table.Actions.ButtonB = widget.NewButton("TEAM B", func() {
-		confirmPopUp(4, table.Actions.ButtonA.Text, table.Actions.ButtonB.Text)
+		if len(SportsControl.Contract) == 64 {
+			confirmPopUp(4, table.Actions.ButtonA.Text, table.Actions.ButtonB.Text)
+		}
 	})
 	table.Actions.ButtonB.Hide()
 
-	return table.Actions.ButtonB
-}
+	sports_muli := container.NewCenter(table.Actions.Multi)
+	sports_actions := container.NewVBox(
+		sports_muli,
+		table.Actions.Game_select,
+		table.Actions.ButtonA,
+		table.Actions.ButtonB)
 
-func GameOptions() fyne.Widget { /// game select
-	table.Actions.Game_select = widget.NewSelect(table.Actions.Game_options, func(s string) {
-		split := strings.Split(s, "   ")
-		a, b := menu.GetSportsTeams(SportsControl.Contract, split[0])
-		table.Actions.ButtonA.Text = a
-		table.Actions.ButtonA.Refresh()
-		table.Actions.ButtonB.Text = b
-		table.Actions.ButtonB.Refresh()
-	})
+	table.Actions.Sports_box = sports_actions
+	table.Actions.Sports_box.Hide()
 
-	table.Actions.Game_select.PlaceHolder = "Select Game #"
-	table.Actions.Game_select.Hide()
+	return table.Actions.Sports_box
 
-	return table.Actions.Game_select
 }
 
 func SportsListings() fyne.CanvasObject { /// sports contract list
@@ -114,8 +126,15 @@ func SportsListings() fyne.CanvasObject { /// sports contract list
 		})
 
 	SportsControl.Sports_list.OnSelected = func(id widget.ListItemID) {
-		if id != 0 {
-			table.Actions.S_contract.SetText(SportsControl.Contract_list[id])
+		if id != 0 && rpc.Wallet.Connect {
+			table.Actions.Game_select.ClearSelected()
+			table.Actions.Game_select.Options = []string{}
+			table.Actions.Game_select.Refresh()
+			split := strings.Split(SportsControl.Contract_list[id], "   ")
+			table.Actions.Sports_box.Show()
+			table.Actions.S_contract.SetText(split[2])
+		} else {
+			table.Actions.Sports_box.Hide()
 		}
 	}
 

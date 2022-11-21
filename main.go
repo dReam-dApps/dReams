@@ -1,6 +1,7 @@
 package main
 
 import (
+	"runtime"
 	"time"
 
 	"github.com/SixofClubsss/dReams/menu"
@@ -25,6 +26,7 @@ const (
 type dReamTables struct {
 	App       fyne.App
 	Window    fyne.Window
+	os        string
 	menu      bool
 	holdero   bool
 	bacc      bool
@@ -76,7 +78,7 @@ func main() {
 				background,
 				place()))
 	}()
-
+	dReams.os = runtime.GOOS
 	if systemTray(dReams.App) {
 		dReams.App.(desktop.App).SetSystemTrayIcon(resourceCardSharkTrayPng)
 	}

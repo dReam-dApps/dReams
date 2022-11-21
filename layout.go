@@ -342,12 +342,6 @@ func placeSports() *fyne.Container {
 	sports_content := container.NewVBox(S.TopLabel)
 	sports_scroll := container.NewVScroll(sports_content)
 	sports_scroll.SetMinSize(fyne.NewSize(180, 500))
-	sports_muli := container.NewCenter(prediction.Multiplyer())
-	sports_buttons := container.NewVBox(
-		sports_muli,
-		prediction.GameOptions(),
-		prediction.TeamA(),
-		prediction.TeamB())
 
 	check_box := container.NewVBox(
 		prediction.SportsConnectedBox())
@@ -357,7 +351,7 @@ func placeSports() *fyne.Container {
 		hbox,
 		sports_scroll,
 		layout.NewSpacer(),
-		sports_buttons)
+		prediction.SportsBox())
 
 	fifa := widget.NewLabel("")
 	fifa.Wrapping = fyne.TextWrapWord

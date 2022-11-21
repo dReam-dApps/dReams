@@ -164,6 +164,10 @@ func GetSCHeaders(scid string) ([]string, error) {
 
 	headers := result.VariableStringKeys[scid]
 
+	if headers == nil {
+		return nil, err
+	}
+
 	split := strings.Split(fromHextoString(headers.(string)), ";")
 
 	if split[0] == "" {

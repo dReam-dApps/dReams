@@ -118,8 +118,6 @@ func CheckConnection() {
 
 	if rpc.Wallet.Connect {
 		PlayerControl.wallet_check.SetChecked(true)
-		disablePreditions(false)
-		disableSports(false)
 		disableActions(false)
 	} else {
 		PlayerControl.wallet_check.SetChecked(false)
@@ -127,7 +125,7 @@ func CheckConnection() {
 		PlayerControl.table_options.Refresh()
 		disableOwnerControls(true)
 		disableBaccActions(true)
-		disablePreditions(true)
+		DisablePreditions(true)
 		disableSports(true)
 		disableActions(true)
 		disconnected()
@@ -328,8 +326,9 @@ func TableListings() fyne.Widget { /// tables contracts
 
 	PlayerControl.table_options.OnSelected = func(id widget.ListItemID) {
 		if id != 0 {
-			PlayerControl.contract_input.SetText(TableList[id])
-			go GetTableStats(TableList[id], true)
+			split := strings.Split(TableList[id], "   ")
+			PlayerControl.contract_input.SetText(split[2])
+			go GetTableStats(split[2], true)
 			rpc.Times.Kick_block = rpc.StringToInt(rpc.Wallet.Height)
 		}
 	}
@@ -683,7 +682,7 @@ func disableIndex(d bool) {
 	Market.Market_box.Refresh()
 }
 
-func disablePreditions(d bool) {
+func DisablePreditions(d bool) {
 	if d {
 		table.Actions.Higher.Hide()
 		table.Actions.Lower.Hide()
@@ -702,20 +701,10 @@ func disablePreditions(d bool) {
 
 func disableSports(d bool) {
 	if d {
-		table.Actions.Game_select.Hide()
-		table.Actions.Multi.Hide()
-		table.Actions.ButtonA.Hide()
-		table.Actions.ButtonB.Hide()
-	} else {
-		table.Actions.Game_select.Show()
-		table.Actions.Multi.Show()
-		table.Actions.ButtonA.Show()
-		table.Actions.ButtonB.Show()
+		table.Actions.Sports_box.Hide()
 	}
-	table.Actions.Game_select.Refresh()
-	table.Actions.Multi.Refresh()
-	table.Actions.ButtonA.Refresh()
-	table.Actions.ButtonB.Refresh()
+
+	table.Actions.Sports_box.Refresh()
 }
 
 func disableActions(d bool) {
@@ -1108,8 +1097,9 @@ func IntroTree() fyne.CanvasObject {
 		"Contracts":         {"Holdero", "Baccarat", "Predictions", "Sports"},
 		"Holdero":           {"Multiplayer Texas Hold'em style on chian poker", "No limit, single raise game. Table owners choose game params", "Six players max at a table", "No side pots, must call or fold", "Can use Dero or dReam Tokens", "View table listings or launch your own Holdero contract from the contracts tab"},
 		"Baccarat":          {"A popular table game, where closest to 9 wins", "Uses dReam Tokens for betting"},
-		"Predictions":       {"Prediction contracts are for binary based predictions, (higher/lower, yes/no)", "Variable time limits allowing for different prediction set ups, each contract runs one prediction at a time", "View active prediction contracts in predictions tab or launch your own prediction contract from the contracts tab"},
-		"Sports":            {"Sports contracts are for sports wagers", "Variable time limits, one contract can run miltiple games at the same time", "Current Leagues", "View active sports contracts in sports tab or launch your own sports contract from the contracts tab"},
+		"Predictions":       {"Prediction contracts are for binary based predictions, (higher/lower, yes/no)", "Variable time limits allowing for different prediction set ups, each contract runs one prediction at a time", "Current Markets", "dReams Client aggregated price feed", "View active prediction contracts in predictions tab or launch your own prediction contract from the contracts tab"},
+		"Current Markets":   {"BTC-USDT", "DERO-USDT", "XMR-USDT"},
+		"Sports":            {"Sports contracts are for sports wagers", "Variable time limits, one contract can run miltiple games at the same time", "Current Leagues", "Live game scores, and game schedules", "View active sports contracts in sports tab or launch your own sports contract from the contracts tab"},
 		"Current Leagues":   {"FIFA", "NBA", "NFL", "NHL"},
 		"Assets":            {"View any owned assets held in wallet", "Put owned assets up for auction or for sale", "Indexer, add custom contracts to your index and search current index db"},
 		"Market":            {"View any in game assets up for auction or sale", "Bid on or buy assets", "Cancel or close out any existing listings"},
