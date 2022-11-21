@@ -35,7 +35,7 @@ func PredictConnectedBox() fyne.Widget {
 }
 
 func PreictionContractEntry() fyne.Widget {
-	options := []string{rpc.PredictSCID}
+	options := []string{}
 	table.Actions.P_contract = widget.NewSelectEntry(options)
 	table.Actions.P_contract.PlaceHolder = "Contract Address: "
 	table.Actions.P_contract.OnCursorChanged = func() {

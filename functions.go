@@ -786,7 +786,7 @@ func MenuRefresh(tab, gi bool) {
 			}
 		}
 
-		if dReams.menu_tabs.market {
+		if dReams.menu_tabs.market && !isWindows() {
 			menu.FindNfaListings(menu.Gnomes.Sync)
 			menu.Market.Auction_list.Refresh()
 			menu.Market.Buy_list.Refresh()

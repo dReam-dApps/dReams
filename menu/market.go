@@ -84,13 +84,15 @@ func MarketItems() fyne.CanvasObject {
 
 	Market.Market_button = widget.NewButton("Bid", func() {
 		scid := Market.Viewing
-		text := Market.Market_button.Text
-		Market.Market_button.Hide()
-		if text == "Bid" {
-			amt := ToAtomicFive(Market.Entry.Text)
-			bidBuyConfirm(scid, amt, 0)
-		} else if text == "Buy" {
-			bidBuyConfirm(scid, Market.Buy_amt, 1)
+		if len(scid) == 64 {
+			text := Market.Market_button.Text
+			Market.Market_button.Hide()
+			if text == "Bid" {
+				amt := ToAtomicFive(Market.Entry.Text)
+				bidBuyConfirm(scid, amt, 0)
+			} else if text == "Buy" {
+				bidBuyConfirm(scid, Market.Buy_amt, 1)
+			}
 		}
 	})
 
