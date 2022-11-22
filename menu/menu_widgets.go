@@ -4,6 +4,7 @@ import (
 	"image/color"
 	"log"
 	"math"
+	"runtime"
 	"strconv"
 	"strings"
 
@@ -637,7 +638,7 @@ func TimeOutConfirm() {
 	cancel_button := widget.NewButton("Cancel", func() {
 		tocw.Close()
 	})
-	confirm_button := widget.NewButton("Confrim", func() {
+	confirm_button := widget.NewButton("Confirm", func() {
 		rpc.TimeOut()
 		tocw.Close()
 	})
@@ -807,7 +808,11 @@ Confirm to proceed with install.`
 	}
 
 	cw := fyne.CurrentApp().NewWindow("Confirm")
-	cw.Resize(fyne.NewSize(550, 550))
+	if runtime.GOOS == "windows" {
+		cw.Resize(fyne.NewSize(650, 650))
+	} else {
+		cw.Resize(fyne.NewSize(550, 550))
+	}
 	cw.SetFixedSize(true)
 	cw.SetIcon(Resource.SmallIcon)
 	label := widget.NewLabel(text)
@@ -889,7 +894,11 @@ Choose Predictions or Sports to proceed with install.`
 	}
 
 	cw := fyne.CurrentApp().NewWindow("Confirm")
-	cw.Resize(fyne.NewSize(550, 550))
+	if runtime.GOOS == "windows" {
+		cw.Resize(fyne.NewSize(650, 650))
+	} else {
+		cw.Resize(fyne.NewSize(550, 550))
+	}
 	cw.SetFixedSize(true)
 	cw.SetIcon(Resource.SmallIcon)
 	label := widget.NewLabel(text)
@@ -1079,7 +1088,7 @@ func listMenu() { /// asset listing
 func confirmAssetList(list, dur, start, charAddr, charPerc string) { /// listing confirmation
 	ocw := fyne.CurrentApp().NewWindow("Confirm")
 	ocw.SetIcon(Resource.SmallIcon)
-	ocw.Resize(fyne.NewSize(330, 330))
+	ocw.Resize(fyne.NewSize(550, 550))
 	ocw.SetFixedSize(true)
 	label := widget.NewLabel("SCID: " + PlayerControl.Viewing_asset + "\n\nList Type: " + list + "\n\nDuration: " + dur + "\n\nStart Price: " + start + " Dero\n\nDonate Address: " + charAddr + "\n\nDonate Percent: " + charPerc + "\n\nConfirm Asset Listing")
 	label.Wrapping = fyne.TextWrapWord
@@ -1101,7 +1110,7 @@ func confirmAssetList(list, dur, start, charAddr, charPerc string) { /// listing
 	options := container.NewAdaptiveGrid(2, confirm_button, cancel_button)
 	content := container.NewVBox(display, options)
 
-	img := *canvas.NewImageFromResource(Resource.Back2)
+	img := *canvas.NewImageFromResource(Resource.Back4)
 	ocw.SetContent(
 		container.New(layout.NewMaxLayout(),
 			&img,

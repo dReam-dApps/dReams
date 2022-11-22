@@ -24,6 +24,7 @@ type resources struct {
 	SmallIcon  fyne.Resource
 	Back2      fyne.Resource
 	Back3      fyne.Resource
+	Back4      fyne.Resource
 	Background fyne.Resource
 }
 
@@ -51,11 +52,12 @@ type assetWidgets struct {
 var Assets assetWidgets
 var Resource resources
 
-func GetTableResources(r1, r2, r3, r4 fyne.Resource) {
+func GetTableResources(r1, r2, r3, r4, r5 fyne.Resource) {
 	Resource.SmallIcon = r1
 	Resource.Back2 = r2
 	Resource.Back3 = r3
 	Resource.Background = r4
+	Resource.Back4 = r5
 
 }
 
@@ -436,7 +438,7 @@ func SetHeaderItems() fyne.CanvasObject {
 
 func headerPopUp(name, desc, icon, scid string) {
 	confirm := fyne.CurrentApp().NewWindow("Confirm")
-	confirm.Resize(fyne.NewSize(300, 300))
+	confirm.Resize(fyne.NewSize(550, 550))
 	confirm.SetFixedSize(true)
 	confirm.SetIcon(Resource.SmallIcon)
 	label := widget.NewLabel("Headers for SCID: " + scid + "\n\nName: " + name + "\n\nDescription: " + desc + "\n\nIcon: " + icon)
@@ -455,7 +457,7 @@ func headerPopUp(name, desc, icon, scid string) {
 	buttons := container.NewAdaptiveGrid(2, confirm_button, cancel_button)
 	content := container.NewVBox(label, layout.NewSpacer(), buttons)
 
-	img := *canvas.NewImageFromResource(Resource.Back2)
+	img := *canvas.NewImageFromResource(Resource.Back4)
 	confirm.SetContent(
 		container.New(layout.NewMaxLayout(),
 			&img,

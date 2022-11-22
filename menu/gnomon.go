@@ -227,7 +227,7 @@ func searchIndex(scid string) {
 }
 
 func CheckAssets(gs, gc bool) {
-	if gs && !gc {
+	if gs && !gc && !GnomonClosing() {
 		assets := Gnomes.Indexer.Backend.GetAllOwnersAndSCIDs()
 		keys := make([]string, len(assets))
 		log.Println("Checking NFA Assets")
@@ -284,36 +284,38 @@ func validNfa(file string) bool {
 }
 
 func checkNFAOwner(scid string) {
-	owner, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "owner", Gnomes.Indexer.ChainHeight, true)
-	header, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "nameHdr", Gnomes.Indexer.ChainHeight, true)
-	file, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "fileURL", Gnomes.Indexer.ChainHeight, true)
-	if owner != nil && header != nil && file != nil {
-		if owner[0] == rpc.Wallet.Address && validNfa(file[0]) {
-			check := strings.Trim(header[0], "0123456789")
-			if check == "AZYDS" {
-				current := table.Settings.ThemeSelect.Options
-				new := append(current, header[0])
-				table.Settings.ThemeSelect.Options = new
-				table.Settings.ThemeSelect.Refresh()
-				table.Assets.Assets = append(table.Assets.Assets, header[0]+"   "+scid)
-			} else if check == "AZYPCB" || check == "SIXPCB" {
-				current := table.Settings.BackSelect.Options
-				new := append(current, header[0])
-				table.Settings.BackSelect.Options = new
-				table.Settings.BackSelect.Refresh()
-				table.Assets.Assets = append(table.Assets.Assets, header[0]+"   "+scid)
-			} else if check == "AZYPC" || check == "SIXPC" {
-				current := table.Settings.FaceSelect.Options
-				new := append(current, header[0])
-				table.Settings.FaceSelect.Options = new
-				table.Settings.FaceSelect.Refresh()
-				table.Assets.Assets = append(table.Assets.Assets, header[0]+"   "+scid)
-			} else if check == "DBC" {
-				current := table.Settings.AvatarSelect.Options
-				new := append(current, header[0])
-				table.Settings.AvatarSelect.Options = new
-				table.Settings.AvatarSelect.Refresh()
-				table.Assets.Assets = append(table.Assets.Assets, header[0]+"   "+scid)
+	if !GnomonClosing() {
+		owner, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "owner", Gnomes.Indexer.ChainHeight, true)
+		header, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "nameHdr", Gnomes.Indexer.ChainHeight, true)
+		file, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "fileURL", Gnomes.Indexer.ChainHeight, true)
+		if owner != nil && header != nil && file != nil {
+			if owner[0] == rpc.Wallet.Address && validNfa(file[0]) {
+				check := strings.Trim(header[0], "0123456789")
+				if check == "AZYDS" {
+					current := table.Settings.ThemeSelect.Options
+					new := append(current, header[0])
+					table.Settings.ThemeSelect.Options = new
+					table.Settings.ThemeSelect.Refresh()
+					table.Assets.Assets = append(table.Assets.Assets, header[0]+"   "+scid)
+				} else if check == "AZYPCB" || check == "SIXPCB" {
+					current := table.Settings.BackSelect.Options
+					new := append(current, header[0])
+					table.Settings.BackSelect.Options = new
+					table.Settings.BackSelect.Refresh()
+					table.Assets.Assets = append(table.Assets.Assets, header[0]+"   "+scid)
+				} else if check == "AZYPC" || check == "SIXPC" {
+					current := table.Settings.FaceSelect.Options
+					new := append(current, header[0])
+					table.Settings.FaceSelect.Options = new
+					table.Settings.FaceSelect.Refresh()
+					table.Assets.Assets = append(table.Assets.Assets, header[0]+"   "+scid)
+				} else if check == "DBC" {
+					current := table.Settings.AvatarSelect.Options
+					new := append(current, header[0])
+					table.Settings.AvatarSelect.Options = new
+					table.Settings.AvatarSelect.Refresh()
+					table.Assets.Assets = append(table.Assets.Assets, header[0]+"   "+scid)
+				}
 			}
 		}
 	}
@@ -397,7 +399,7 @@ func checkTableVersion(scid string) uint64 {
 }
 
 func CreateTableList(gc bool) {
-	if !gc {
+	if !gc && !GnomonClosing() {
 		var owner bool
 		list := []string{}
 		tables := Gnomes.Indexer.Backend.GetAllOwnersAndSCIDs()
@@ -556,7 +558,7 @@ type Seal struct {
 }
 
 func CheckG45owner(gs, gc bool) {
-	if gs && !gc {
+	if gs && !gc && !GnomonClosing() {
 		g45s := Gnomes.Indexer.Backend.GetAllOwnersAndSCIDs()
 		log.Println("Checking G45 Assets")
 

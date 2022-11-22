@@ -62,7 +62,7 @@ func main() {
 	})
 
 	menu.GetMenuResources(resourceGnomonIconPng, resourceAvatarFramePng, resourceCwBackgroundPng, resourceMwBackgroundPng, resourceOwBackgroundPng, resourceUwBackgroundPng)
-	table.GetTableResources(resourceGnomonIconPng, resourceMwBackgroundPng, resourceOwBackgroundPng, resourceBackgroundPng)
+	table.GetTableResources(resourceGnomonIconPng, resourceMwBackgroundPng, resourceOwBackgroundPng, resourceBackgroundPng, resourceUwBackgroundPng)
 
 	rpc.Signal.Startup = true
 	rpc.Bacc.Display = true
