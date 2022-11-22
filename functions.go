@@ -553,7 +553,7 @@ func P_no_initResults(fr, tx, r, m string) { /// prediction info, not initialize
 }
 
 func PopulatePredictions(dc, gs bool) {
-	if dc && gs {
+	if dc && gs && !menu.GnomonClosing() {
 		list := []string{}
 		contracts := menu.Gnomes.Indexer.Backend.GetAllOwnersAndSCIDs()
 		keys := make([]string, len(contracts))
@@ -573,29 +573,30 @@ func PopulatePredictions(dc, gs bool) {
 }
 
 func checkBetContractOwner(scid, t string, list []string) []string {
-	owner, _ := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "owner", menu.Gnomes.Indexer.ChainHeight, true)
-	dev, _ := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "dev", menu.Gnomes.Indexer.ChainHeight, true)
-	_, init := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, t+"_init", menu.Gnomes.Indexer.ChainHeight, true)
+	if !menu.GnomonClosing() {
+		owner, _ := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "owner", menu.Gnomes.Indexer.ChainHeight, true)
+		dev, _ := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "dev", menu.Gnomes.Indexer.ChainHeight, true)
+		_, init := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, t+"_init", menu.Gnomes.Indexer.ChainHeight, true)
 
-	if owner != nil && dev != nil && init != nil {
-		if dev[0] == rpc.DevAddress {
-			headers, _ := rpc.GetSCHeaders(scid)
-			name := "?"
-			desc := "?"
-			if headers != nil {
-				if headers[1] != "" {
-					desc = headers[1]
-				}
+		if owner != nil && dev != nil && init != nil {
+			if dev[0] == rpc.DevAddress {
+				headers, _ := rpc.GetSCHeaders(scid)
+				name := "?"
+				desc := "?"
+				if headers != nil {
+					if headers[1] != "" {
+						desc = headers[1]
+					}
 
-				if headers[0] != "" {
-					name = " " + headers[0]
+					if headers[0] != "" {
+						name = " " + headers[0]
+					}
 				}
+				list = append(list, name+"   "+desc+"   "+scid)
+				menu.DisableBetOwner(owner[0])
 			}
-			list = append(list, name+"   "+desc+"   "+scid)
-			menu.DisableBetOwner(owner[0])
 		}
 	}
-
 	return list
 }
 

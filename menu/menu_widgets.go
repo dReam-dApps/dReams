@@ -53,6 +53,7 @@ type resources struct {
 	Back1     fyne.Resource
 	Back2     fyne.Resource
 	Back3     fyne.Resource
+	Back4     fyne.Resource
 }
 
 var Resource resources
@@ -60,12 +61,13 @@ var TableList []string
 var FavoriteList []string
 var PlayerControl playerOptions
 
-func GetMenuResources(r1, r2, r3, r4, r5 fyne.Resource) {
+func GetMenuResources(r1, r2, r3, r4, r5, r6 fyne.Resource) {
 	Resource.SmallIcon = r1
 	Resource.Frame = r2
 	Resource.Back1 = r3
 	Resource.Back2 = r4
 	Resource.Back3 = r5
+	Resource.Back4 = r6
 }
 
 func disconnected() {
@@ -775,11 +777,19 @@ func holderoMenuConfirm(c int) {
 	var text string
 	switch c {
 	case 1:
-		text = `You are about to unlock and install your first Holdero Table. To help support the project, there is a 3 DERO donation attached to preform this action.
+		text = `You are about to unlock and install your first Holdero Table. 
+		
+To help support the project, there is a 3 DERO donation attached to preform this action.
 
 Once you've unlocked a table, you can upload as many new tables free of donation
 
 Total transaction will be 3.3 DERO (0.3 gas fee for contract install)
+
+Select a public or private table.
+
+	- Public will show up in indexed list of tables
+	- Private will not show up in the list
+
 
 Confirm to proceed with unlock and install.`
 	case 2:
@@ -787,11 +797,17 @@ Confirm to proceed with unlock and install.`
 
 Gas fee to install new table is 0.3 DERO.
 
+Select a public or private table.
+
+	- Public will show up in indexed list of tables
+	- Private will not show up in the list
+
+
 Confirm to proceed with install.`
 	}
 
 	cw := fyne.CurrentApp().NewWindow("Confirm")
-	cw.Resize(fyne.NewSize(350, 350))
+	cw.Resize(fyne.NewSize(550, 550))
 	cw.SetFixedSize(true)
 	cw.SetIcon(Resource.SmallIcon)
 	label := widget.NewLabel(text)
@@ -830,10 +846,12 @@ Confirm to proceed with install.`
 
 	content := container.NewVBox(label, layout.NewSpacer(), box)
 
-	img := *canvas.NewImageFromResource(Resource.Back2)
+	img := *canvas.NewImageFromResource(Resource.Back4)
+	alpha := container.NewMax(canvas.NewRectangle(color.RGBA{0, 0, 0, 120}))
 	cw.SetContent(
 		container.New(layout.NewMaxLayout(),
 			&img,
+			alpha,
 			content))
 	cw.Show()
 }
@@ -842,11 +860,19 @@ func bettingMenuConfirm(c int) {
 	var text string
 	switch c {
 	case 1:
-		text = `You are about to unlock and install your first betting contract. To help support the project, there is a 3 DERO donation attached to preform this action.
+		text = `You are about to unlock and install your first betting contract. 
+		
+To help support the project, there is a 3 DERO donation attached to preform this action.
 
 Once you've unlocked betting, you can upload as many new betting contracts free of donation
 
-Total transaction will be 2.1 DERO (0.1 gas fee for contract install)
+Total transaction will be 3.1 DERO (0.1 gas fee for contract install)
+
+Select a public or private contract.
+
+	- Public will show up in indexed list of contracrs
+	- Private will not show up in the list
+
 
 Choose Predictions or Sports to proceed with unlock and installing chosen contract.`
 	case 2:
@@ -854,11 +880,16 @@ Choose Predictions or Sports to proceed with unlock and installing chosen contra
 
 Gas fee to install new betting contract is 0.1 DERO.
 
+Select a public or private contract.
+
+	- Public will show up in indexed list of contracrs
+	- Private will not show up in the list
+
 Choose Predictions or Sports to proceed with install.`
 	}
 
 	cw := fyne.CurrentApp().NewWindow("Confirm")
-	cw.Resize(fyne.NewSize(350, 350))
+	cw.Resize(fyne.NewSize(550, 550))
 	cw.SetFixedSize(true)
 	cw.SetIcon(Resource.SmallIcon)
 	label := widget.NewLabel(text)
@@ -910,10 +941,12 @@ Choose Predictions or Sports to proceed with install.`
 
 	content := container.NewVBox(label, layout.NewSpacer(), box)
 
-	img := *canvas.NewImageFromResource(Resource.Back2)
+	img := *canvas.NewImageFromResource(Resource.Back4)
+	alpha := container.NewMax(canvas.NewRectangle(color.RGBA{0, 0, 0, 120}))
 	cw.SetContent(
 		container.New(layout.NewMaxLayout(),
 			&img,
+			alpha,
 			content))
 	cw.Show()
 }

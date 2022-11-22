@@ -60,7 +60,7 @@ func GetTableResources(r1, r2, r3, r4 fyne.Resource) {
 }
 
 func FaceSelect() fyne.Widget {
-	options := []string{"Light", "Dark", "SIXPC0002"}
+	options := []string{"Light", "Dark"}
 	Settings.FaceSelect = widget.NewSelect(options, func(s string) {
 		switch Settings.FaceSelect.SelectedIndex() {
 		case -1:

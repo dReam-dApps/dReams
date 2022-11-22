@@ -245,7 +245,7 @@ func CheckAssets(gs, gc bool) {
 }
 
 func CheckBetContract(gs, gc bool) {
-	if gs && !gc {
+	if gs && !gc && !GnomonClosing() {
 		contracts := Gnomes.Indexer.Backend.GetAllOwnersAndSCIDs()
 		keys := make([]string, len(contracts))
 

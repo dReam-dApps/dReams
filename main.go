@@ -61,7 +61,7 @@ func main() {
 		dReams.Window.Close()
 	})
 
-	menu.GetMenuResources(resourceGnomonIconPng, resourceAvatarFramePng, resourceCwBackgroundPng, resourceMwBackgroundPng, resourceOwBackgroundPng)
+	menu.GetMenuResources(resourceGnomonIconPng, resourceAvatarFramePng, resourceCwBackgroundPng, resourceMwBackgroundPng, resourceOwBackgroundPng, resourceUwBackgroundPng)
 	table.GetTableResources(resourceGnomonIconPng, resourceMwBackgroundPng, resourceOwBackgroundPng, resourceBackgroundPng)
 
 	rpc.Signal.Startup = true
