@@ -1098,7 +1098,7 @@ func confirmAssetList(list, dur, start, charAddr, charPerc string) { /// listing
 	})
 
 	confirm_button := widget.NewButton("Confirm", func() {
-		d := uint64(stringToInt64(charPerc))
+		d := uint64(stringToInt64(dur))
 		s := ToAtomicFive(start)
 		cp := uint64(stringToInt64(charPerc))
 		rpc.NfaSetListing(PlayerControl.Viewing_asset, list, charAddr, d, s, cp)
@@ -1108,7 +1108,7 @@ func confirmAssetList(list, dur, start, charAddr, charPerc string) { /// listing
 
 	display := container.NewVBox(label, layout.NewSpacer())
 	options := container.NewAdaptiveGrid(2, confirm_button, cancel_button)
-	content := container.NewVBox(display, options)
+	content := container.NewVBox(display, layout.NewSpacer(), options)
 
 	img := *canvas.NewImageFromResource(Resource.Back4)
 	ocw.SetContent(
