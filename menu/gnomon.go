@@ -146,7 +146,12 @@ func startGnomon(ep string) {
 		time.Sleep(3 * time.Second)
 		Gnomes.Init = true
 	}
+}
 
+func GnomonEndPoint(dc, gi, gs bool) {
+	if dc && gi && gs {
+		Gnomes.Indexer.Endpoint = rpc.Round.Daemon
+	}
 }
 
 func StopGnomon(gi bool) {
@@ -376,7 +381,7 @@ func GetOwnedAssetStats(scid string) {
 }
 
 func checkTableOwner(scid string) bool {
-	if len(scid) != 64 {
+	if len(scid) != 64 || GnomonClosing() {
 		return false
 	}
 
@@ -483,7 +488,11 @@ func GetTableStats(scid string, single bool) {
 				Stats.Name.Refresh()
 				Stats.Desc.Text = (" Description: " + h[1])
 				Stats.Desc.Refresh()
-				Stats.Image, _ = table.DownloadFile(h[2], h[0])
+				if len(h[2]) > 6 {
+					Stats.Image, _ = table.DownloadFile(h[2], h[0])
+				} else {
+					Stats.Image = *canvas.NewImageFromImage(nil)
+				}
 
 			} else {
 				Stats.Name.Text = (" Name: ?")

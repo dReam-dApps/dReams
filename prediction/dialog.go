@@ -505,7 +505,7 @@ func ownerConfirmPopUp(i int, p float64) { /// bet owner action confirmation
 
 	switch i {
 	case 1:
-		confirm_display.SetText("SCID: " + s_scid + "\n\nGame: " + s_game + "\n\nMinimum: " + s_amt + "\n\nEnds At: " + s_end.String() + "\n\nFeed: " + s_feed + "\n\nInitial Deposit: " + s_dep + " Dero\n\nConfirm")
+		confirm_display.SetText("SCID: " + s_scid + "\n\nGame: " + s_game + "\n\nMinimum: " + s_amt + "\n\nCloses At: " + s_end.String() + "\n\nFeed: " + s_feed + "\n\nInitial Deposit: " + s_dep + " Dero\n\nConfirm")
 	case 2:
 		confirm_display.SetText("SCID: " + p_scid + "\n\nPredicing: " + p_pre + "\nMinimum: " + p_amt + "\nCloses At: " + p_end.String() + "\nFeed: " + p_feed + "\nInitial Deposit: " + p_dep + " Dero\n\nConfirm")
 	case 3:

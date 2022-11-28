@@ -330,9 +330,12 @@ func TableListings() fyne.Widget { /// tables contracts
 	PlayerControl.table_options.OnSelected = func(id widget.ListItemID) {
 		if id != 0 {
 			split := strings.Split(TableList[id], "   ")
-			PlayerControl.contract_input.SetText(split[2])
-			go GetTableStats(split[2], true)
-			rpc.Times.Kick_block = rpc.StringToInt(rpc.Wallet.Height)
+			trimmed := strings.Trim(split[2], " ")
+			if len(trimmed) == 64 {
+				PlayerControl.contract_input.SetText(trimmed)
+				go GetTableStats(trimmed, true)
+				rpc.Times.Kick_block = rpc.StringToInt(rpc.Wallet.Height)
+			}
 		}
 	}
 
@@ -1134,17 +1137,20 @@ func ToAtomicFive(v string) uint64 {
 
 func IntroTree() fyne.CanvasObject {
 	list := map[string][]string{
-		"":                  {"Welcome to dReams"},
-		"Welcome to dReams": {"Contracts", "Assets", "Market"},
-		"Contracts":         {"Holdero", "Baccarat", "Predictions", "Sports"},
-		"Holdero":           {"Multiplayer Texas Hold'em style on chian poker", "No limit, single raise game. Table owners choose game params", "Six players max at a table", "No side pots, must call or fold", "Can use Dero or dReam Tokens", "View table listings or launch your own Holdero contract from the contracts tab"},
-		"Baccarat":          {"A popular table game, where closest to 9 wins", "Uses dReam Tokens for betting"},
-		"Predictions":       {"Prediction contracts are for binary based predictions, (higher/lower, yes/no)", "Variable time limits allowing for different prediction set ups, each contract runs one prediction at a time", "Current Markets", "dReams Client aggregated price feed", "View active prediction contracts in predictions tab or launch your own prediction contract from the contracts tab"},
-		"Current Markets":   {"BTC-USDT", "DERO-USDT", "XMR-USDT"},
-		"Sports":            {"Sports contracts are for sports wagers", "Variable time limits, one contract can run miltiple games at the same time", "Current Leagues", "Live game scores, and game schedules", "View active sports contracts in sports tab or launch your own sports contract from the contracts tab"},
-		"Current Leagues":   {"FIFA", "NBA", "NFL", "NHL"},
-		"Assets":            {"View any owned assets held in wallet", "Put owned assets up for auction or for sale", "Indexer, add custom contracts to your index and search current index db"},
-		"Market":            {"View any in game assets up for auction or sale", "Bid on or buy assets", "Cancel or close out any existing listings"},
+		"":                      {"Welcome to dReams"},
+		"Welcome to dReams":     {"Get Started", "Contracts", "Assets", "Market"},
+		"Get Started":           {"You will need a Dero wallet to play", "Can use local daemon, or remote daemon options are availible in drop down", "Enter daemon rpc address, wallet rpc address and user:pass", "Press connect and check boxes will show successful connection", "On first start start up of app, Gnomon will take aprox 10 seconds to create your local db"},
+		"Contracts":             {"Holdero", "Baccarat", "Predictions", "Sports"},
+		"Holdero":               {"Multiplayer Texas Hold'em style on chian poker", "No limit, single raise game. Table owners choose game params", "Six players max at a table", "No side pots, must call or fold", "Can use Dero or dReam Tokens", "View table listings or launch your own Holdero contract from the contracts tab"},
+		"Baccarat":              {"A popular table game, where closest to 9 wins", "Uses dReam Tokens for betting"},
+		"Predictions":           {"Prediction contracts are for binary based predictions, (higher/lower, yes/no)", "How predictions works", "Current Markets", "dReams Client aggregated price feed", "View active prediction contracts in predictions tab or launch your own prediction contract from the contracts tab"},
+		"How predictions works": {"P2P predictions", "Variable time limits allowing for different prediction set ups, each contract runs one prediction at a time", "Click a contract from the list to view it", "Closes at, is when the contract will stop accepting predictions", "Posted with in, is the acceptable time frame to post the Mark (price you are predicting on)", "If Mark is not posted, prediction is voided and you will be refunded", "Payout after, is when the Final price is posted and compared to the mark to determine winners", "If the final price is not posted with in refund time frame, prediction is void and you will be refunded"},
+		"Current Markets":       {"BTC-USDT", "DERO-USDT", "XMR-USDT"},
+		"Sports":                {"Sports contracts are for sports wagers", "How sports works", "Current Leagues", "Live game scores, and game schedules", "View active sports contracts in sports tab or launch your own sports contract from the contracts tab"},
+		"How sports works":      {"P2P betting", "Variable time limits, one contract can run miltiple games at the same time", "Click a contract from the list to view it", "Any active games on the contract will populate, you can pick which game you'd like to play from the drop down", "Closes at, is when the contrcts stops accepting picks", "Default payout time after close is 4hr, this is when winner will be posted from client feed", "Default refund time is 8hr after close, meaning if team winner is not provided past that time you will be refunded", "Ties refund pot to all all participants"},
+		"Current Leagues":       {"FIFA", "NBA", "NFL", "NHL"},
+		"Assets":                {"View any owned assets held in wallet", "Put owned assets up for auction or for sale", "Indexer, add custom contracts to your index and search current index db"},
+		"Market":                {"View any in game assets up for auction or sale", "Bid on or buy assets", "Cancel or close out any existing listings"},
 	}
 
 	tree := widget.NewTreeWithStrings(list)

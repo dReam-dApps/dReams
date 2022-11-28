@@ -427,6 +427,7 @@ func FetchHolderoSC(dc, cc bool) error {
 			winningHand(End_jv)
 		} else {
 			potIsEmpty(0)
+			Round.ID = 0
 		}
 		potIsEmpty(Pot_jv)
 		allFoldedWinner()

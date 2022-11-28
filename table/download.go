@@ -111,6 +111,12 @@ func ClearShared() {
 	Shared.GotP4 = false
 	Shared.GotP5 = false
 	Shared.GotP6 = false
+	Shared.P1_avatar = *canvas.NewImageFromImage(nil)
+	Shared.P2_avatar = *canvas.NewImageFromImage(nil)
+	Shared.P3_avatar = *canvas.NewImageFromImage(nil)
+	Shared.P4_avatar = *canvas.NewImageFromImage(nil)
+	Shared.P5_avatar = *canvas.NewImageFromImage(nil)
+	Shared.P6_avatar = *canvas.NewImageFromImage(nil)
 }
 
 var Shared sharedCards
@@ -141,32 +147,38 @@ func DownloadFile(Url, fileName string) (canvas.Image, error) {
 func ShowAvatar(tab bool) {
 	if tab {
 		if rpc.Round.P1_url != "" && !Shared.GotP1 {
-			Shared.P1_avatar, _ = DownloadFile(rpc.Round.P1_url, "P1")
+			img1, _ := DownloadFile(rpc.Round.P1_url, "P1")
+			Shared.P1_avatar = img1
 			Shared.GotP1 = true
 		}
 
 		if rpc.Round.P2_url != "" && !Shared.GotP2 {
-			Shared.P2_avatar, _ = DownloadFile(rpc.Round.P2_url, "P2")
+			img2, _ := DownloadFile(rpc.Round.P2_url, "P2")
+			Shared.P2_avatar = img2
 			Shared.GotP2 = true
 		}
 
 		if rpc.Round.P3_url != "" && !Shared.GotP3 {
-			Shared.P3_avatar, _ = DownloadFile(rpc.Round.P3_url, "P3")
+			img3, _ := DownloadFile(rpc.Round.P3_url, "P3")
+			Shared.P3_avatar = img3
 			Shared.GotP3 = true
 		}
 
 		if rpc.Round.P4_url != "" && !Shared.GotP4 {
-			Shared.P4_avatar, _ = DownloadFile(rpc.Round.P4_url, "P4")
+			img4, _ := DownloadFile(rpc.Round.P4_url, "P4")
+			Shared.P4_avatar = img4
 			Shared.GotP4 = true
 		}
 
 		if rpc.Round.P5_url != "" && !Shared.GotP5 {
-			Shared.P5_avatar, _ = DownloadFile(rpc.Round.P5_url, "P5")
+			img5, _ := DownloadFile(rpc.Round.P5_url, "P5")
+			Shared.P5_avatar = img5
 			Shared.GotP5 = true
 		}
 
 		if rpc.Round.P6_url != "" && !Shared.GotP6 {
-			Shared.P6_avatar, _ = DownloadFile(rpc.Round.P6_url, "P6")
+			img6, _ := DownloadFile(rpc.Round.P6_url, "P6")
+			Shared.P6_avatar = img6
 			Shared.GotP6 = true
 		}
 	}

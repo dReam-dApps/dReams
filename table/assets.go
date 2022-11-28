@@ -301,10 +301,33 @@ func DreamsOpts() fyne.CanvasObject {
 	return cont
 }
 
+type dReamsAmt struct {
+	NumericalEntry
+}
+
+func (e *dReamsAmt) TypedKey(k *fyne.KeyEvent) {
+	value := strings.Trim(e.Entry.Text, "dReams: ")
+	switch k.Name {
+	case fyne.KeyUp:
+		if f, err := strconv.ParseFloat(value, 64); err == nil {
+			e.Entry.SetText("dReams: " + strconv.FormatFloat(float64(f+1), 'f', 0, 64))
+		}
+
+	case fyne.KeyDown:
+		if f, err := strconv.ParseFloat(value, 64); err == nil {
+			if f >= 1 {
+				e.Entry.SetText("dReams: " + strconv.FormatFloat(float64(f-1), 'f', 0, 64))
+			}
+		}
+	}
+	e.Entry.TypedKey(k)
+}
+
 func DreamsEntry() fyne.CanvasObject {
-	Actions.DEntry = NilNumericalEntry()
+	Actions.DEntry = &dReamsAmt{}
+	Actions.DEntry.ExtendBaseWidget(Actions.DEntry)
 	Actions.DEntry.PlaceHolder = "dReams:"
-	Actions.DEntry.Validator = validation.NewRegexp(`^(dReams: )\d{1,}`, "Format Not Valid")
+	Actions.DEntry.Validator = validation.NewRegexp(`^(dReams: )\d{1,}$`, "Format Not Valid")
 	Actions.DEntry.OnChanged = func(s string) {
 		if Actions.DEntry.Validate() != nil {
 			Actions.DEntry.SetText("dReams: 0")

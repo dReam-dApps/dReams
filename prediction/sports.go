@@ -131,8 +131,11 @@ func SportsListings() fyne.CanvasObject { /// sports contract list
 			table.Actions.Game_select.Options = []string{}
 			table.Actions.Game_select.Refresh()
 			split := strings.Split(SportsControl.Contract_list[id], "   ")
+			trimmed := strings.Trim(split[2], " ")
 			table.Actions.Sports_box.Show()
-			table.Actions.S_contract.SetText(split[2])
+			if len(trimmed) == 64 {
+				table.Actions.S_contract.SetText(trimmed)
+			}
 		} else {
 			table.Actions.Sports_box.Hide()
 		}

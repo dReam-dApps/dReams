@@ -381,7 +381,7 @@ type tableWidgets struct {
 
 	Dreams *widget.Button
 	Dero   *widget.Button
-	DEntry *NumericalEntry
+	DEntry *dReamsAmt
 
 	Higher     *widget.Button
 	Lower      *widget.Button

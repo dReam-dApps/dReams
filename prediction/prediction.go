@@ -142,8 +142,9 @@ func PredictionListings() fyne.Widget { /// prediction contract list
 			}
 
 			split := strings.Split(PredictControl.Contract_list[id], "   ")
-			if len(split[2]) == 64 {
-				table.Actions.P_contract.SetText(split[2])
+			trimmed := strings.Trim(split[2], " ")
+			if len(trimmed) == 64 {
+				table.Actions.P_contract.SetText(trimmed)
 				table.Actions.NameEntry.Text = menu.CheckPredictionName(PredictControl.Contract)
 				table.Actions.NameEntry.Refresh()
 			}

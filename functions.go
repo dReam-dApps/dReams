@@ -245,6 +245,7 @@ func fetch(quit chan struct{}) { /// main loop
 			rpc.GetHeight(rpc.Wallet.Connect)
 			if !rpc.Signal.Startup {
 				menu.CheckConnection()
+				menu.GnomonEndPoint(rpc.Signal.Daemon, menu.Gnomes.Init, menu.Gnomes.Sync)
 				rpc.FetchHolderoSC(rpc.Signal.Daemon, rpc.Signal.Contract)
 				rpc.FetchBaccSC(rpc.Signal.Daemon)
 				rpc.FetchPredictionSC(rpc.Signal.Daemon, prediction.PredictControl.Contract)
@@ -335,6 +336,7 @@ func HolderoRefresh() {
 	H.CardsContent = *container.NewWithoutLayout(showHolderoCards(rpc.CardHash.Local1, rpc.CardHash.Local2))
 	if !rpc.Signal.Clicked {
 		if rpc.Round.ID == 0 && rpc.Wallet.Connect {
+			table.ClearShared()
 			if rpc.Signal.Sit {
 				table.Actions.Sit.Hide()
 			} else {
@@ -512,7 +514,7 @@ func P_initResults(p, amt, eA, c, to, u, d, r, f, m string, ta, tb, tc int, post
 		_, btc := table.GetPrice("BTC-USDT")
 		_, dero := table.GetPrice("DERO-USDT")
 		_, xmr := table.GetPrice("XMR-USDT")
-		P.BottomLabel.SetText(f + "\nBTC: " + btc + "\nDERO: " + dero + "\nXMR: " + xmr)
+		P.BottomLabel.SetText("Current Price feed from " + f + "\nBTC: " + btc + "\nDERO: " + dero + "\nXMR: " + xmr)
 	}
 }
 
@@ -649,7 +651,6 @@ func printLeaders() {
 func PopulateSports(dc, gs bool) {
 	if dc && gs {
 		list := []string{}
-		//prediction.SportsControl.Contract_list = []string{}
 		contracts := menu.Gnomes.Indexer.Backend.GetAllOwnersAndSCIDs()
 		keys := make([]string, len(contracts))
 
