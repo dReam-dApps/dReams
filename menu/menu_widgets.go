@@ -690,19 +690,11 @@ func disableIndex(d bool) {
 
 func DisablePreditions(d bool) {
 	if d {
-		table.Actions.Higher.Hide()
-		table.Actions.Lower.Hide()
-		table.Actions.Change.Hide()
-		table.Actions.NameEntry.Hide()
+		table.Actions.Prediction_box.Hide()
 	} else {
-		table.Actions.Higher.Show()
-		table.Actions.Lower.Show()
-		table.Actions.NameEntry.Show()
+		table.Actions.Prediction_box.Show()
 	}
-	table.Actions.Higher.Refresh()
-	table.Actions.Lower.Refresh()
-	table.Actions.Change.Refresh()
-	table.Actions.NameEntry.Refresh()
+	table.Actions.Prediction_box.Refresh()
 }
 
 func disableSports(d bool) {

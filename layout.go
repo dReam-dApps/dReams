@@ -294,8 +294,6 @@ func placeBacc() *fyne.Container {
 func placePredict() *fyne.Container {
 	cont := container.NewHScroll(prediction.PreictionContractEntry())
 	cont.SetMinSize(fyne.NewSize(600, 35.1875))
-	predict_buttons := container.NewVBox(prediction.Higher(), prediction.Lower())
-	predict_name := container.NewVBox(prediction.NameEdit(), prediction.Change())
 	predict_info := container.NewVBox(P.TopLabel, P.BottomLabel)
 	predict_scroll := container.NewScroll(predict_info)
 	predict_scroll.SetMinSize(fyne.NewSize(540, 500))
@@ -308,8 +306,7 @@ func placePredict() *fyne.Container {
 		hbox,
 		predict_scroll,
 		layout.NewSpacer(),
-		predict_name,
-		predict_buttons)
+		prediction.PredictBox())
 
 	leaders_scroll := container.NewScroll(prediction.LeadersDisplay())
 	leaders_scroll.SetMinSize(fyne.NewSize(180, 500))

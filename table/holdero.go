@@ -383,12 +383,13 @@ type tableWidgets struct {
 	Dero   *widget.Button
 	DEntry *dReamsAmt
 
-	Higher     *widget.Button
-	Lower      *widget.Button
-	Change     *widget.Button
-	Remove     *widget.Button
-	NameEntry  *widget.Entry
-	P_contract *widget.SelectEntry
+	Higher         *widget.Button
+	Lower          *widget.Button
+	Change         *widget.Button
+	Remove         *widget.Button
+	NameEntry      *widget.Entry
+	Prediction_box *fyne.Container
+	P_contract     *widget.SelectEntry
 
 	Game_select  *widget.Select
 	Game_options []string

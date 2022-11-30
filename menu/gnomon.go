@@ -593,8 +593,21 @@ func CheckG45owner(gs, gc bool) {
 	}
 }
 
+func CheckActivePrediction(scid string) bool {
+	if len(scid) == 64 {
+		_, ends := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "p_end_at", Gnomes.Indexer.ChainHeight, true)
+		if ends != nil {
+			now := time.Now().Unix()
+			if now < int64(ends[0]) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 func CheckPredictionName(scid string) (name string) {
-	if scid != "" {
+	if len(scid) == 64 {
 		check := Gnomes.Indexer.Backend.GetAllSCIDVariableDetails(scid)
 		if check != nil {
 			keys := make([]int64, 0, len(check))

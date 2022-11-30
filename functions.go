@@ -506,7 +506,7 @@ func P_initResults(p, amt, eA, c, to, u, d, r, f, m string, ta, tb, tc int, post
 	} else {
 		pw := strconv.Itoa(ta / 60)
 		P.TopLabel.SetText("SCID: \n" + prediction.PredictControl.Contract + "\n" + "\nAccepting " + p + " Predictions " +
-			"\nPrediction Amount: " + amt + " Dero\nCloses at: " + utc + "\nPrice posted with in " + pw + " minutes of close\nPredictions: " + c +
+			"\nPrediction Amount: " + amt + " Dero\nCloses at: " + utc + "\nMark posted with in " + pw + " minutes of close\nPredictions: " + c +
 			"\nRound Pot: " + s + "\nHigher Predictions: " + u + "\nLower Predictions: " + d + "\nPayout After: " + end_pay.String() + "\nRefund if not paid within " + rf + " minutes\nRounds Completed: " + r)
 	}
 

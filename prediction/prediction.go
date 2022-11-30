@@ -8,6 +8,7 @@ import (
 	"github.com/SixofClubsss/dReams/table"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/data/validation"
 	"fyne.io/fyne/v2/widget"
@@ -22,7 +23,6 @@ type predictItems struct {
 	Leaders_list    *widget.List
 	Predict_list    *widget.List
 	Remove_button   *widget.Button
-	Predicion_box   *fyne.Container
 }
 
 var PredictControl predictItems
@@ -55,7 +55,7 @@ func PreictionContractEntry() fyne.Widget {
 	return table.Actions.P_contract
 }
 
-func NameEdit() fyne.Widget {
+func PredictBox() fyne.CanvasObject {
 	table.Actions.NameEntry = widget.NewEntry()
 	table.Actions.NameEntry.SetPlaceHolder("Name")
 	table.Actions.NameEntry.OnChanged = func(input string) {
@@ -64,12 +64,6 @@ func NameEdit() fyne.Widget {
 		table.Actions.NameEntry.Refresh()
 	}
 
-	table.Actions.NameEntry.Hide()
-
-	return table.Actions.NameEntry
-}
-
-func Change() fyne.Widget { /// change name button
 	table.Actions.Change = widget.NewButton("Change Name", func() {
 		if table.Actions.NameEntry.Disabled() {
 			table.Actions.NameEntry.Enable()
@@ -78,33 +72,27 @@ func Change() fyne.Widget { /// change name button
 		}
 	})
 
-	table.Actions.Change.Hide()
-
-	return table.Actions.Change
-}
-
-func Higher() fyne.Widget {
 	table.Actions.Higher = widget.NewButton("Higher", func() {
 		if len(PredictControl.Contract) == 64 {
 			confirmPopUp(2, "", "")
 		}
 	})
 
-	table.Actions.Higher.Hide()
-
-	return table.Actions.Higher
-}
-
-func Lower() fyne.Widget {
 	table.Actions.Lower = widget.NewButton("Lower", func() {
 		if len(PredictControl.Contract) == 64 {
 			confirmPopUp(1, "", "")
 		}
 	})
 
+	table.Actions.NameEntry.Hide()
+	table.Actions.Change.Hide()
+	table.Actions.Higher.Hide()
 	table.Actions.Lower.Hide()
 
-	return table.Actions.Lower
+	table.Actions.Prediction_box = container.NewVBox(table.Actions.NameEntry, table.Actions.Change, table.Actions.Higher, table.Actions.Lower)
+	table.Actions.Prediction_box.Hide()
+
+	return table.Actions.Prediction_box
 }
 
 func LeadersDisplay() fyne.Widget {
@@ -138,18 +126,25 @@ func PredictionListings() fyne.Widget { /// prediction contract list
 	PredictControl.Predict_list.OnSelected = func(id widget.ListItemID) {
 		if id != 0 {
 			if rpc.Signal.Daemon && rpc.Wallet.Connect {
-				menu.DisablePreditions(false)
-			}
-
-			split := strings.Split(PredictControl.Contract_list[id], "   ")
-			trimmed := strings.Trim(split[2], " ")
-			if len(trimmed) == 64 {
-				table.Actions.P_contract.SetText(trimmed)
-				table.Actions.NameEntry.Text = menu.CheckPredictionName(PredictControl.Contract)
-				table.Actions.NameEntry.Refresh()
+				split := strings.Split(PredictControl.Contract_list[id], "   ")
+				trimmed := strings.Trim(split[2], " ")
+				if len(trimmed) == 64 {
+					table.Actions.P_contract.SetText(trimmed)
+					if menu.CheckActivePrediction(trimmed) {
+						menu.DisablePreditions(false)
+						table.Actions.Higher.Show()
+						table.Actions.Lower.Show()
+						table.Actions.NameEntry.Show()
+						table.Actions.NameEntry.Text = menu.CheckPredictionName(PredictControl.Contract)
+						table.Actions.NameEntry.Refresh()
+					} else {
+						menu.DisablePreditions(true)
+					}
+				}
+			} else {
+				menu.DisablePreditions(true)
 			}
 		}
-
 	}
 
 	return PredictControl.Predict_list
