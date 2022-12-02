@@ -47,7 +47,7 @@ func fromHextoString(h string) string {
 	return string(str)
 }
 
-func setDaemonClient(addr string) (jsonrpc.RPCClient, context.Context, context.CancelFunc) {
+func SetDaemonClient(addr string) (jsonrpc.RPCClient, context.Context, context.CancelFunc) {
 	client := jsonrpc.NewClient(pre + addr + suff)
 	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
 
@@ -55,7 +55,7 @@ func setDaemonClient(addr string) (jsonrpc.RPCClient, context.Context, context.C
 }
 
 func Ping() error { /// ping blockchain for connection
-	rpcClientD, ctx, cancel := setDaemonClient(Round.Daemon)
+	rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
 	defer cancel()
 
 	var result string
@@ -75,7 +75,7 @@ func Ping() error { /// ping blockchain for connection
 }
 
 func DaemonHeight() (uint64, error) {
-	rpcClientD, ctx, cancel := setDaemonClient(Round.Daemon)
+	rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
 	defer cancel()
 
 	var result *rpc.GetHeight_Result
@@ -89,7 +89,7 @@ func DaemonHeight() (uint64, error) {
 }
 
 func GasEstimate(scid string, args rpc.Arguments, t []rpc.Transfer) (uint64, error) {
-	rpcClientD, ctx, cancel := setDaemonClient(Round.Daemon)
+	rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
 	defer cancel()
 
 	var result *rpc.GasEstimate_Result
@@ -123,7 +123,7 @@ func GasEstimate(scid string, args rpc.Arguments, t []rpc.Transfer) (uint64, err
 }
 
 func CheckForIndex(scid string) (interface{}, error) {
-	rpcClientD, ctx, cancel := setDaemonClient(Round.Daemon)
+	rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
 	defer cancel()
 
 	var result *rpc.GetSC_Result
@@ -146,7 +146,7 @@ func CheckForIndex(scid string) (interface{}, error) {
 }
 
 func GetSCHeaders(scid string) ([]string, error) {
-	rpcClientD, ctx, cancel := setDaemonClient(Round.Daemon)
+	rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
 	defer cancel()
 
 	var result *rpc.GetSC_Result
@@ -178,7 +178,7 @@ func GetSCHeaders(scid string) ([]string, error) {
 }
 
 func CheckHolderoContract() error {
-	rpcClientD, ctx, cancel := setDaemonClient(Round.Daemon)
+	rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
 	defer cancel()
 
 	var result *rpc.GetSC_Result
@@ -210,7 +210,7 @@ func CheckHolderoContract() error {
 
 func FetchHolderoSC(dc, cc bool) error {
 	if dc && cc {
-		rpcClientD, ctx, cancel := setDaemonClient(Round.Daemon)
+		rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
 		defer cancel()
 
 		var result *rpc.GetSC_Result
@@ -440,7 +440,7 @@ func FetchHolderoSC(dc, cc bool) error {
 
 func GetHoldero100Code(dc bool) (string, error) { /// v 1.0.0
 	if dc {
-		rpcClientD, ctx, cancel := setDaemonClient(Round.Daemon)
+		rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
 		defer cancel()
 
 		var result *rpc.GetSC_Result
@@ -465,7 +465,7 @@ func GetHoldero100Code(dc bool) (string, error) { /// v 1.0.0
 
 func GetHoldero110Code(dc bool, pub int) (string, error) { /// v 1.1.0
 	if dc {
-		rpcClientD, ctx, cancel := setDaemonClient(Round.Daemon)
+		rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
 		defer cancel()
 
 		var result *rpc.GetSC_Result
@@ -499,7 +499,7 @@ func GetHoldero110Code(dc bool, pub int) (string, error) { /// v 1.1.0
 
 func FetchBaccSC(dc bool) error {
 	if dc {
-		rpcClientD, ctx, cancel := setDaemonClient(Round.Daemon)
+		rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
 		defer cancel()
 
 		var result *rpc.GetSC_Result
@@ -555,7 +555,7 @@ func FetchBaccSC(dc bool) error {
 
 func GetBaccCode(dc bool) (string, error) {
 	if dc {
-		rpcClientD, ctx, cancel := setDaemonClient(Round.Daemon)
+		rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
 		defer cancel()
 
 		var result *rpc.GetSC_Result
@@ -579,7 +579,7 @@ func GetBaccCode(dc bool) (string, error) {
 
 func FetchBaccHand(dc bool, tx string) error { /// find played hand
 	if dc && tx != "" {
-		rpcClientD, ctx, cancel := setDaemonClient(Round.Daemon)
+		rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
 		defer cancel()
 
 		var result *rpc.GetSC_Result
@@ -637,7 +637,7 @@ func FetchBaccHand(dc bool, tx string) error { /// find played hand
 }
 
 func CheckBetContract(scid string) (bool, error) {
-	rpcClientD, ctx, cancel := setDaemonClient(Round.Daemon)
+	rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
 	defer cancel()
 
 	var result *rpc.GetSC_Result
@@ -655,7 +655,7 @@ func CheckBetContract(scid string) (bool, error) {
 
 	d := fmt.Sprint(result.VariableStringKeys["dev"])
 
-	if d != "06724a7cd63eac5080b7e0fbecd9d0c64f7ad35567bc5132ceafb2cbeb231ada00" {
+	if DeroAddress(d) != DevAddress {
 		return false, err
 	}
 
@@ -664,7 +664,7 @@ func CheckBetContract(scid string) (bool, error) {
 
 func FetchPredictionSC(d bool, scid string) error {
 	if d {
-		rpcClientD, ctx, cancel := setDaemonClient(Round.Daemon)
+		rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
 		defer cancel()
 
 		params := &rpc.GetSC_Params{
@@ -770,7 +770,7 @@ func FetchPredictionSC(d bool, scid string) error {
 
 func GetPredictCode(dc bool, pub int) (string, error) {
 	if dc {
-		rpcClientD, ctx, cancel := setDaemonClient(Round.Daemon)
+		rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
 		defer cancel()
 
 		var result *rpc.GetSC_Result
@@ -802,7 +802,7 @@ func GetPredictCode(dc bool, pub int) (string, error) {
 
 func GetSportsCode(dc bool, pub int) (string, error) {
 	if dc {
-		rpcClientD, ctx, cancel := setDaemonClient(Round.Daemon)
+		rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
 		defer cancel()
 
 		var result *rpc.GetSC_Result
