@@ -480,7 +480,14 @@ func GetTableStats(scid string, single bool) {
 		p4, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "Player4 ID:", Gnomes.Indexer.LastIndexedHeight, true)
 		p5, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "Player5 ID:", Gnomes.Indexer.LastIndexedHeight, true)
 		p6, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "Player6 ID:", Gnomes.Indexer.LastIndexedHeight, true)
+		_, tourney := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "Tournament", Gnomes.Indexer.ChainHeight, true)
 		h, _ := rpc.GetSCHeaders(scid)
+
+		if rpc.Wallet.Connect && tourney != nil && tourney[0] == 1 {
+			table.Actions.Tournament.Show()
+		} else {
+			table.Actions.Tournament.Hide()
+		}
 
 		if single {
 			if h != nil {

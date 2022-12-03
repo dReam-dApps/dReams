@@ -31,6 +31,7 @@ type wallet struct {
 	ClientKey  string
 	Balance    string
 	TokenBal   string
+	TourneyBal string
 	Height     string
 	Connect    bool
 	PokerOwner bool
@@ -107,7 +108,7 @@ func DeroAddress(v interface{}) (address string) {
 	return address
 }
 
-func setWalletClient(addr, pass string) (jsonrpc.RPCClient, context.Context, context.CancelFunc) { /// user:pass auth
+func SetWalletClient(addr, pass string) (jsonrpc.RPCClient, context.Context, context.CancelFunc) { /// user:pass auth
 	client := jsonrpc.NewClientWithOpts(pre+addr+suff, &jsonrpc.RPCClientOpts{
 		CustomHeaders: map[string]string{
 			"Authorization": "Basic " + base64.StdEncoding.EncodeToString([]byte(pass)),
@@ -120,7 +121,7 @@ func setWalletClient(addr, pass string) (jsonrpc.RPCClient, context.Context, con
 }
 
 func GetAddress() error {
-	rpcClientW, ctx, cancel := setWalletClient(Wallet.Rpc, Wallet.UserPass)
+	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
 	var result *rpc.GetAddress_Result
@@ -136,7 +137,7 @@ func GetAddress() error {
 	if address == 66 {
 		Wallet.Connect = true
 		log.Println("Wallet Connected")
-		log.Println("Dero Address:" + result.Address)
+		log.Println("Dero Address: " + result.Address)
 		Wallet.Address = result.Address
 		id := []byte(result.Address)
 		hash := sha256.Sum256(id)
@@ -150,7 +151,7 @@ func GetAddress() error {
 
 func GetBalance(wc bool) error { /// get wallet dero balance
 	if wc {
-		rpcClientW, ctx, cancel := setWalletClient(Wallet.Rpc, Wallet.UserPass)
+		rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 		defer cancel()
 
 		var result *rpc.GetBalance_Result
@@ -168,32 +169,73 @@ func GetBalance(wc bool) error { /// get wallet dero balance
 	return nil
 }
 
-func DreamsBalance(wc bool) (error, bool) { /// get wallet dReam balance
+func TokenBalance(scid string) (uint64, error) { /// get wallet token balance
+	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
+	defer cancel()
+
+	var result *rpc.GetBalance_Result
+	sc := crypto.HashHexToHash(scid)
+	params := &rpc.GetBalance_Params{
+		SCID: sc,
+	}
+
+	err := rpcClientW.CallFor(ctx, &result, "GetBalance", params)
+	if err != nil {
+		log.Println(err)
+		return 0, nil
+	}
+
+	return result.Unlocked_Balance, err
+}
+
+func DreamsBalance(wc bool) { /// get wallet dReam balance
 	if wc {
-		rpcClientW, ctx, cancel := setWalletClient(Wallet.Rpc, Wallet.UserPass)
+		bal, _ := TokenBalance(dReamsSCID)
+		Wallet.TokenBal = fromAtomic(bal)
+	}
+}
+
+func TourneyBalance(wc, t bool, scid string) { /// get tournament balance
+	if wc && t {
+		bal, _ := TokenBalance(scid)
+		Wallet.TourneyBal = fromAtomic(bal)
+	}
+}
+
+func TourneyDeposit(bal uint64, name string) error {
+	if bal > 0 {
+		rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 		defer cancel()
 
-		var result *rpc.GetBalance_Result
-		scid := crypto.HashHexToHash(dReamsSCID)
-		params := &rpc.GetBalance_Params{
-			SCID: scid,
+		arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "Deposit"}
+		arg2 := rpc.Argument{Name: "name", DataType: "S", Value: name}
+		args := rpc.Arguments{arg1, arg2}
+		txid := rpc.Transfer_Result{}
+		params := &rpc.SC_Invoke_Params{
+			SC_ID:            TourneySCID,
+			SC_RPC:           args,
+			SC_TOKEN_Deposit: bal,
+			Ringsize:         2,
 		}
 
-		err := rpcClientW.CallFor(ctx, &result, "GetBalance", params)
+		err := rpcClientW.CallFor(ctx, &txid, "scinvoke", params)
 		if err != nil {
 			log.Println(err)
-			return nil, false
+			return nil
 		}
 
-		Wallet.TokenBal = fromAtomic(result.Unlocked_Balance)
+		log.Println("Tournament Deposit TX:", txid)
+		addLog("Tournament Deposit TX: " + txid.TXID)
 
+		return err
 	}
-	return nil, false
+	log.Println("No Tournament Chips")
+	return nil
 }
 
 func GetHeight(wc bool) error { /// get wallet height
 	if wc {
-		rpcClientW, ctx, cancel := setWalletClient(Wallet.Rpc, Wallet.UserPass)
+		rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 		defer cancel()
 
 		var result *rpc.GetHeight_Result
@@ -210,7 +252,7 @@ func GetHeight(wc bool) error { /// get wallet height
 }
 
 func SitDown(name, av string) error { /// sit at holdero table
-	rpcClientW, ctx, cancel := setWalletClient(Wallet.Rpc, Wallet.UserPass)
+	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
 	var hx string
@@ -245,7 +287,7 @@ func SitDown(name, av string) error { /// sit at holdero table
 }
 
 func Leave() error { /// leave holdero table
-	rpcClientW, ctx, cancel := setWalletClient(Wallet.Rpc, Wallet.UserPass)
+	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
 	checkoutId := StringToInt(Display.PlayerId)
@@ -272,7 +314,7 @@ func Leave() error { /// leave holdero table
 }
 
 func SetTable(seats int, bb, sb, ante uint64, chips, name, av string) error { /// set holdero
-	rpcClientW, ctx, cancel := setWalletClient(Wallet.Rpc, Wallet.UserPass)
+	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
 	var hx string
@@ -340,7 +382,7 @@ func GenerateKey() string {
 }
 
 func DealHand() error { /// holdero hand
-	rpcClientW, ctx, cancel := setWalletClient(Wallet.Rpc, Wallet.UserPass)
+	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
 	Wallet.ClientKey = GenerateKey()
@@ -369,12 +411,21 @@ func DealHand() error { /// holdero hand
 			Burn:        0,
 		}
 
-		t2 := rpc.Transfer{
-			SCID:        crypto.HashHexToHash(dReamsSCID),
-			Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
-			Burn:        amount,
+		if Round.Tourney {
+			t2 := rpc.Transfer{
+				SCID:        crypto.HashHexToHash(TourneySCID),
+				Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
+				Burn:        amount,
+			}
+			t = append(t, t1, t2)
+		} else {
+			t2 := rpc.Transfer{
+				SCID:        crypto.HashHexToHash(dReamsSCID),
+				Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
+				Burn:        amount,
+			}
+			t = append(t, t1, t2)
 		}
-		t = append(t, t1, t2)
 	} else {
 		t1 := rpc.Transfer{
 			Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
@@ -407,7 +458,7 @@ func DealHand() error { /// holdero hand
 }
 
 func Bet(amt string) error { /// holdero bet
-	rpcClientW, ctx, cancel := setWalletClient(Wallet.Rpc, Wallet.UserPass)
+	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
 	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "Bet"}
@@ -416,10 +467,18 @@ func Bet(amt string) error { /// holdero bet
 
 	var t1 rpc.Transfer
 	if Round.Asset {
-		t1 = rpc.Transfer{
-			SCID:        crypto.HashHexToHash(dReamsSCID),
-			Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
-			Burn:        ToAtomicOne(amt),
+		if Round.Tourney {
+			t1 = rpc.Transfer{
+				SCID:        crypto.HashHexToHash(TourneySCID),
+				Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
+				Burn:        ToAtomicOne(amt),
+			}
+		} else {
+			t1 = rpc.Transfer{
+				SCID:        crypto.HashHexToHash(dReamsSCID),
+				Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
+				Burn:        ToAtomicOne(amt),
+			}
 		}
 	} else {
 		t1 = rpc.Transfer{
@@ -454,7 +513,7 @@ func Bet(amt string) error { /// holdero bet
 }
 
 func Check() error { /// holdero check and fold
-	rpcClientW, ctx, cancel := setWalletClient(Wallet.Rpc, Wallet.UserPass)
+	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
 	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "Bet"}
@@ -469,10 +528,18 @@ func Check() error { /// holdero check and fold
 			Burn:        0,
 		}
 	} else {
-		t1 = rpc.Transfer{
-			SCID:        crypto.HashHexToHash(dReamsSCID),
-			Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
-			Burn:        0,
+		if Round.Tourney {
+			t1 = rpc.Transfer{
+				SCID:        crypto.HashHexToHash(TourneySCID),
+				Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
+				Burn:        0,
+			}
+		} else {
+			t1 = rpc.Transfer{
+				SCID:        crypto.HashHexToHash(dReamsSCID),
+				Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
+				Burn:        0,
+			}
 		}
 	}
 
@@ -500,7 +567,7 @@ func Check() error { /// holdero check and fold
 }
 
 func PayOut(w string) error { /// holdero single winner
-	rpcClientW, ctx, cancel := setWalletClient(Wallet.Rpc, Wallet.UserPass)
+	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
 	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "Winner"}
@@ -537,7 +604,7 @@ func PayOut(w string) error { /// holdero single winner
 }
 
 func PayoutSplit(r ranker, f1, f2, f3, f4, f5, f6 bool) error { /// holdero split winners
-	rpcClientW, ctx, cancel := setWalletClient(Wallet.Rpc, Wallet.UserPass)
+	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
 	ways := 0
@@ -616,7 +683,7 @@ func PayoutSplit(r ranker, f1, f2, f3, f4, f5, f6 bool) error { /// holdero spli
 }
 
 func RevealKey(key string) error { /// holdero reveal
-	rpcClientW, ctx, cancel := setWalletClient(Wallet.Rpc, Wallet.UserPass)
+	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
 	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "RevealKey"}
@@ -644,7 +711,7 @@ func RevealKey(key string) error { /// holdero reveal
 }
 
 func CleanTable(amt uint64) error { /// shuffle and clean holdero
-	rpcClientW, ctx, cancel := setWalletClient(Wallet.Rpc, Wallet.UserPass)
+	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
 	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "CleanTable"}
@@ -681,7 +748,7 @@ func CleanTable(amt uint64) error { /// shuffle and clean holdero
 }
 
 func TimeOut() error {
-	rpcClientW, ctx, cancel := setWalletClient(Wallet.Rpc, Wallet.UserPass)
+	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
 	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "TimeOut"}
@@ -717,7 +784,7 @@ func TimeOut() error {
 }
 
 func ForceStat() error {
-	rpcClientW, ctx, cancel := setWalletClient(Wallet.Rpc, Wallet.UserPass)
+	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
 	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "ForceStart"}
@@ -760,7 +827,7 @@ type TableSpecs struct {
 }
 
 func SharedDeckUrl(face, faceUrl, back, backUrl string) error {
-	rpcClientW, ctx, cancel := setWalletClient(Wallet.Rpc, Wallet.UserPass)
+	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
 	var cards string
@@ -798,7 +865,7 @@ func SharedDeckUrl(face, faceUrl, back, backUrl string) error {
 }
 
 func GetdReams(amt uint64) error {
-	rpcClientW, ctx, cancel := setWalletClient(Wallet.Rpc, Wallet.UserPass)
+	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
 	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "IssueChips"}
@@ -825,7 +892,7 @@ func GetdReams(amt uint64) error {
 }
 
 func TradedReams(amt uint64) error {
-	rpcClientW, ctx, cancel := setWalletClient(Wallet.Rpc, Wallet.UserPass)
+	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
 	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "ConvertChips"}
@@ -880,7 +947,7 @@ func ownerT3(o bool) (t *rpc.Transfer) {
 
 func UploadHolderoContract(d, w bool, pub int) error {
 	if d && w {
-		rpcClientW, ctx, cancel := setWalletClient(Wallet.Rpc, Wallet.UserPass)
+		rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 		defer cancel()
 
 		code, code_err := GetHoldero110Code(d, pub)
@@ -917,7 +984,7 @@ func UploadHolderoContract(d, w bool, pub int) error {
 }
 
 func BaccBet(amt, w string) error {
-	rpcClientW, ctx, cancel := setWalletClient(Wallet.Rpc, Wallet.UserPass)
+	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
 	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "PlayBaccarat"}
@@ -968,7 +1035,7 @@ func BaccBet(amt, w string) error {
 }
 
 func PredictHigher(scid, name string) error {
-	rpcClientW, ctx, cancel := setWalletClient(Wallet.Rpc, Wallet.UserPass)
+	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
 	a := uint64(Predict.Amount)
@@ -999,7 +1066,7 @@ func PredictHigher(scid, name string) error {
 }
 
 func PredictLower(scid, name string) error {
-	rpcClientW, ctx, cancel := setWalletClient(Wallet.Rpc, Wallet.UserPass)
+	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
 	a := uint64(Predict.Amount)
@@ -1030,7 +1097,7 @@ func PredictLower(scid, name string) error {
 }
 
 func NameChange(scid, name string) error { /// change leaderboard name
-	rpcClientW, ctx, cancel := setWalletClient(Wallet.Rpc, Wallet.UserPass)
+	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
 	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "NameChange"}
@@ -1058,7 +1125,7 @@ func NameChange(scid, name string) error { /// change leaderboard name
 }
 
 func RemoveAddress(scid, name string) error {
-	rpcClientW, ctx, cancel := setWalletClient(Wallet.Rpc, Wallet.UserPass)
+	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
 	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "Remove"}
@@ -1086,7 +1153,7 @@ func RemoveAddress(scid, name string) error {
 }
 
 func PickTeam(scid, multi, n string, a uint64, pick int) error { /// pick sports team
-	rpcClientW, ctx, cancel := setWalletClient(Wallet.Rpc, Wallet.UserPass)
+	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
 	var amt uint64
@@ -1137,7 +1204,7 @@ func PickTeam(scid, multi, n string, a uint64, pick int) error { /// pick sports
 }
 
 func SetSports(end int, amt, dep uint64, scid, league, game, feed string) error {
-	rpcClientW, ctx, cancel := setWalletClient(Wallet.Rpc, Wallet.UserPass)
+	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
 	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "S_start"}
@@ -1169,7 +1236,7 @@ func SetSports(end int, amt, dep uint64, scid, league, game, feed string) error 
 }
 
 func SetPrediction(end int, amt, dep uint64, scid, predict, feed string) error {
-	rpcClientW, ctx, cancel := setWalletClient(Wallet.Rpc, Wallet.UserPass)
+	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
 	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "P_start"}
@@ -1200,7 +1267,7 @@ func SetPrediction(end int, amt, dep uint64, scid, predict, feed string) error {
 }
 
 func PostPrediction(scid string, price int) error {
-	rpcClientW, ctx, cancel := setWalletClient(Wallet.Rpc, Wallet.UserPass)
+	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
 	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "Post"}
@@ -1228,7 +1295,7 @@ func PostPrediction(scid string, price int) error {
 }
 
 func EndSports(scid, num, team string) error {
-	rpcClientW, ctx, cancel := setWalletClient(Wallet.Rpc, Wallet.UserPass)
+	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
 	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "S_end"}
@@ -1260,7 +1327,7 @@ func EndSports(scid, num, team string) error {
 }
 
 func EndPredition(scid string, price int) error {
-	rpcClientW, ctx, cancel := setWalletClient(Wallet.Rpc, Wallet.UserPass)
+	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
 	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "P_end"}
@@ -1293,7 +1360,7 @@ func EndPredition(scid string, price int) error {
 
 func UploadBetContract(d, w, c bool, pub int) error {
 	if d && w {
-		rpcClientW, ctx, cancel := setWalletClient(Wallet.Rpc, Wallet.UserPass)
+		rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 		defer cancel()
 
 		var code string
@@ -1341,7 +1408,7 @@ func UploadBetContract(d, w, c bool, pub int) error {
 }
 
 func SetHeaders(name, desc, icon, scid string) error {
-	rpcClientW, ctx, cancel := setWalletClient(Wallet.Rpc, Wallet.UserPass)
+	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
 	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "SetSCIDHeaders"}
@@ -1380,7 +1447,7 @@ func SetHeaders(name, desc, icon, scid string) error {
 }
 
 func ClaimNfa(scid string) error {
-	rpcClientW, ctx, cancel := setWalletClient(Wallet.Rpc, Wallet.UserPass)
+	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
 	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "ClaimOwnership"}
@@ -1418,7 +1485,7 @@ func ClaimNfa(scid string) error {
 }
 
 func NfaBidBuy(scid, bidor string, amt uint64) error {
-	rpcClientW, ctx, cancel := setWalletClient(Wallet.Rpc, Wallet.UserPass)
+	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
 	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: bidor}
@@ -1459,7 +1526,7 @@ func NfaBidBuy(scid, bidor string, amt uint64) error {
 }
 
 func NfaSetListing(scid, list, char string, dur, amt, perc uint64) error {
-	rpcClientW, ctx, cancel := setWalletClient(Wallet.Rpc, Wallet.UserPass)
+	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
 	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "Start"}
@@ -1514,7 +1581,7 @@ func NfaSetListing(scid, list, char string, dur, amt, perc uint64) error {
 }
 
 func NfaCancelClose(scid, c string) error {
-	rpcClientW, ctx, cancel := setWalletClient(Wallet.Rpc, Wallet.UserPass)
+	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
 	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: c}

@@ -715,6 +715,7 @@ func disableActions(d bool) {
 		PlayerControl.Bet_new.Hide()
 		PlayerControl.Bet_unlock.Hide()
 		PlayerControl.Bet_menu.Hide()
+		table.Actions.Tournament.Hide()
 	} else {
 		table.Actions.Dreams.Show()
 		table.Actions.Dero.Show()
@@ -729,6 +730,7 @@ func disableActions(d bool) {
 	PlayerControl.Bet_new.Refresh()
 	PlayerControl.Bet_unlock.Refresh()
 	PlayerControl.Bet_menu.Refresh()
+	table.Actions.Tournament.Refresh()
 }
 
 func disableBaccActions(d bool) {

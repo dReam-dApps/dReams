@@ -360,6 +360,16 @@ func DreamsEntry() fyne.CanvasObject {
 	return &box
 }
 
+func TournamentButton() fyne.CanvasObject {
+	Actions.Tournament = widget.NewButton("Tournament", func() {
+		tourneyConfirmPopUp()
+	})
+
+	Actions.Tournament.Hide()
+
+	return Actions.Tournament
+}
+
 func dReamsConfirmPopUp(c int, amt int) {
 	var text string
 
@@ -391,6 +401,43 @@ Confirm.`
 		case 2:
 			rpc.TradedReams(uint64(amt * 100000))
 		}
+		confirm.Close()
+
+	})
+
+	cancel_button := widget.NewButton("Cancel", func() {
+		confirm.Close()
+
+	})
+
+	buttons := container.NewAdaptiveGrid(2, confirm_button, cancel_button)
+	content := container.NewVBox(label, layout.NewSpacer(), buttons)
+
+	img := *canvas.NewImageFromResource(Resource.Back2)
+	confirm.SetContent(
+		container.New(layout.NewMaxLayout(),
+			&img,
+			content))
+	confirm.Show()
+}
+
+func tourneyConfirmPopUp() {
+	bal, _ := rpc.TokenBalance(rpc.TourneySCID)
+	balance := float64(bal) / 100000
+	a := fmt.Sprint(strconv.FormatFloat(balance, 'f', 5, 64))
+	text := `You are about to deposit ` + a + ` Tournament Chips into leaderboard contract
+
+Confirm.`
+
+	confirm := fyne.CurrentApp().NewWindow("Confirm")
+	confirm.Resize(fyne.NewSize(300, 300))
+	confirm.SetFixedSize(true)
+	confirm.SetIcon(Resource.SmallIcon)
+	label := widget.NewLabel(text)
+	label.Wrapping = fyne.TextWrapWord
+
+	confirm_button := widget.NewButton("Confirm", func() {
+		rpc.TourneyDeposit(bal, Poker_name)
 		confirm.Close()
 
 	})

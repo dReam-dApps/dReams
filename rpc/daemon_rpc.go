@@ -18,6 +18,7 @@ const (
 	pre          = "http://"
 	suff         = "/json_rpc"
 	dReamsSCID   = "ad2e7b37c380cc1aed3a6b27224ddfc92a2d15962ca1f4d35e530dba0f9575a9"
+	TourneySCID  = "f7c8531bf91bd7d47f46569d81c017b447b8ec83518a4ad0edd687947fe79dcb"
 	HolderoSCID  = "e3f37573de94560e126a9020c0a5b3dfc7a4f3a4fbbe369fba93fbd219dc5fe9"
 	pHolderoSCID = "896834d57628d3a65076d3f4d84ddc7c5daf3e86b66a47f018abda6068afe2e6"
 	BaccSCID     = "8289c6109f41cbe1f6d5f27a419db537bf3bf30a25eff285241a36e1ae3e48a4"
@@ -298,18 +299,35 @@ func FetchHolderoSC(dc, cc bool) error {
 			Key6_jv := result.VariableStringKeys["Player6Key"]
 			End_jv := result.VariableStringKeys["End"]
 			Chips_jv := result.VariableStringKeys["Chips"]
+			Tourney_jv := result.VariableStringKeys["Tournament"]
 
 			tableOpen(Seats_jv, Full_jv, TwoId_jv, ThreeId_jv, FourId_jv, FiveId_jv, SixId_jv)
-			if Chips_jv != nil {
-				if fromHextoString(Chips_jv.(string)) == "ASSET" {
-					Round.Asset = true
-					Pot_jv = result.Balances[dReamsSCID]
+			if Tourney_jv == nil {
+				Round.Tourney = false
+				if Chips_jv != nil {
+					if fromHextoString(Chips_jv.(string)) == "ASSET" {
+						Round.Asset = true
+						Pot_jv = result.Balances[dReamsSCID]
+					} else {
+						Round.Asset = false
+						Pot_jv = result.Balances["0000000000000000000000000000000000000000000000000000000000000000"]
+					}
 				} else {
-					Round.Asset = false
 					Pot_jv = result.Balances["0000000000000000000000000000000000000000000000000000000000000000"]
 				}
 			} else {
-				Pot_jv = result.Balances["0000000000000000000000000000000000000000000000000000000000000000"]
+				Round.Tourney = true
+				if Chips_jv != nil {
+					if fromHextoString(Chips_jv.(string)) == "ASSET" {
+						Round.Asset = true
+						Pot_jv = result.Balances[TourneySCID]
+					} else {
+						Round.Asset = false
+						Pot_jv = result.Balances["0000000000000000000000000000000000000000000000000000000000000000"]
+					}
+				} else {
+					Pot_jv = result.Balances["0000000000000000000000000000000000000000000000000000000000000000"]
+				}
 			}
 
 			Round.Ante = uint64(Ante_jv.(float64))
@@ -428,6 +446,7 @@ func FetchHolderoSC(dc, cc bool) error {
 		} else {
 			potIsEmpty(0)
 			Round.ID = 0
+			Round.Tourney = false
 		}
 		potIsEmpty(Pot_jv)
 		allFoldedWinner()

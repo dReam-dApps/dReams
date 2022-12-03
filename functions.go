@@ -242,6 +242,7 @@ func fetch(quit chan struct{}) { /// main loop
 			rpc.Ping()
 			rpc.GetBalance(rpc.Wallet.Connect)
 			rpc.DreamsBalance(rpc.Wallet.Connect)
+			rpc.TourneyBalance(rpc.Wallet.Connect, rpc.Round.Tourney, rpc.TourneySCID)
 			rpc.GetHeight(rpc.Wallet.Connect)
 			if !rpc.Signal.Startup {
 				menu.CheckConnection()
@@ -304,7 +305,11 @@ func setHolderoLabel() {
 	H.TopLabel.SetText(rpc.Display.Res)
 	H.LeftLabel.SetText("Seats: " + rpc.Display.Seats + "      Pot: " + rpc.Display.Pot + "      Blinds: " + rpc.Display.Blinds + "      Ante: " + rpc.Display.Ante + "      Dealer: " + rpc.Display.Dealer + "      Turn: " + rpc.Display.Turn)
 	if rpc.Round.Asset {
-		H.RightLabel.SetText(rpc.Display.Readout + "      Player ID: " + rpc.Display.PlayerId + "      dReams Balance: " + rpc.Wallet.TokenBal + "      Height: " + rpc.Wallet.Height)
+		if rpc.Round.Tourney {
+			H.RightLabel.SetText(rpc.Display.Readout + "      Player ID: " + rpc.Display.PlayerId + "      Chip Balance: " + rpc.Wallet.TourneyBal + "      Height: " + rpc.Wallet.Height)
+		} else {
+			H.RightLabel.SetText(rpc.Display.Readout + "      Player ID: " + rpc.Display.PlayerId + "      dReams Balance: " + rpc.Wallet.TokenBal + "      Height: " + rpc.Wallet.Height)
+		}
 	} else {
 		H.RightLabel.SetText(rpc.Display.Readout + "      Player ID: " + rpc.Display.PlayerId + "      Dero Balance: " + rpc.Wallet.Balance + "      Height: " + rpc.Wallet.Height)
 	}
@@ -323,7 +328,12 @@ func setHolderoLabel() {
 func waitLabel() {
 	H.TopLabel.SetText("")
 	if rpc.Round.Asset {
-		H.RightLabel.SetText("Wait for Block" + "      Player ID: " + rpc.Display.PlayerId + "      dReams Balance: " + rpc.Wallet.TokenBal + "      Height: " + rpc.Wallet.Height)
+		if rpc.Round.Tourney {
+			H.RightLabel.SetText("Wait for Block" + "      Player ID: " + rpc.Display.PlayerId + "      Chip Balance: " + rpc.Wallet.TourneyBal + "      Height: " + rpc.Wallet.Height)
+		} else {
+			H.RightLabel.SetText("Wait for Block" + "      Player ID: " + rpc.Display.PlayerId + "      dReams Balance: " + rpc.Wallet.TokenBal + "      Height: " + rpc.Wallet.Height)
+		}
+
 	} else {
 		H.RightLabel.SetText("Wait for Block" + "      Player ID: " + rpc.Display.PlayerId + "      Dero Balance: " + rpc.Wallet.Balance + "      Height: " + rpc.Wallet.Height)
 	}

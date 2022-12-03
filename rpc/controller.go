@@ -112,6 +112,7 @@ type holderoValues struct {
 	Asset     bool
 	Printed   bool
 	Notified  bool
+	Tourney   bool
 	Face      string
 	Back      string
 	F_url     string
@@ -173,6 +174,7 @@ type signals struct {
 	My_turn   bool
 	PlacedBet bool
 	Paid      bool
+	Log       bool
 	Clicked   bool
 	CHeight   int
 }
@@ -317,7 +319,6 @@ func checkPlayerId(one, two, three, four, five, six string) string {
 }
 
 func setHolderoName(one, two, three, four, five, six interface{}) {
-
 	if one != nil {
 		Signal.In1 = true
 	} else {
@@ -393,6 +394,7 @@ func potIsEmpty(pot uint64) {
 		Signal.Reveal = false
 		Signal.End = false
 		Signal.Paid = false
+		Signal.Log = false
 		Display.Res = ""
 	}
 }
@@ -710,6 +712,11 @@ func allFolded(p1, p2, p3, p4, p5, p6, s interface{}) {
 		Round.LocalEnd = true
 		Round.Winner = who
 		Display.Res = display + " Wins, All Players Have Folded"
+		if !Signal.Log {
+			Signal.Log = true
+			addLog(Display.Res)
+		}
+
 	}
 }
 

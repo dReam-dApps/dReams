@@ -379,9 +379,10 @@ type tableWidgets struct {
 
 	Bacc_actions *fyne.Container
 
-	Dreams *widget.Button
-	Dero   *widget.Button
-	DEntry *dReamsAmt
+	Dreams     *widget.Button
+	Dero       *widget.Button
+	DEntry     *dReamsAmt
+	Tournament *widget.Button
 
 	Higher         *widget.Button
 	Lower          *widget.Button

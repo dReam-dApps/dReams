@@ -25,7 +25,7 @@ func place() *fyne.Container {
 	H.LeftLabel = widget.NewLabel("")
 	H.RightLabel = widget.NewLabel("")
 	H.TopLabel = widget.NewLabel("")
-	H.TopLabel.Move(fyne.NewPos(350, 185))
+	H.TopLabel.Move(fyne.NewPos(345, 192))
 
 	B.LeftLabel = widget.NewLabel("")
 	B.RightLabel = widget.NewLabel("")
@@ -158,7 +158,7 @@ func placeContract() *container.Split {
 	player_box := container.NewHBox(player_input, check_box)
 	menu_top := container.NewHSplit(player_box, max)
 
-	mid := container.NewVBox(layout.NewSpacer(), container.NewAdaptiveGrid(2, menu.NameEntry(), layout.NewSpacer()), menu.OwnersBoxMid())
+	mid := container.NewVBox(layout.NewSpacer(), container.NewAdaptiveGrid(2, menu.NameEntry(), table.TournamentButton()), menu.OwnersBoxMid())
 
 	menu_bottom := container.NewGridWithColumns(3, menu.OwnersBoxLeft(), mid, prediction.OwnerButton())
 
