@@ -146,40 +146,64 @@ func DownloadFile(Url, fileName string) (canvas.Image, error) {
 
 func ShowAvatar(tab bool) {
 	if tab {
-		if rpc.Round.P1_url != "" && !Shared.GotP1 {
-			img1, _ := DownloadFile(rpc.Round.P1_url, "P1")
-			Shared.P1_avatar = img1
-			Shared.GotP1 = true
+		if rpc.Round.P1_url != "" {
+			if !Shared.GotP1 {
+				img1, _ := DownloadFile(rpc.Round.P1_url, "P1")
+				Shared.P1_avatar = img1
+				Shared.GotP1 = true
+			}
+		} else {
+			Shared.GotP1 = false
 		}
 
-		if rpc.Round.P2_url != "" && !Shared.GotP2 {
-			img2, _ := DownloadFile(rpc.Round.P2_url, "P2")
-			Shared.P2_avatar = img2
-			Shared.GotP2 = true
+		if rpc.Round.P2_url != "" {
+			if !Shared.GotP2 {
+				img2, _ := DownloadFile(rpc.Round.P2_url, "P2")
+				Shared.P2_avatar = img2
+				Shared.GotP2 = true
+			}
+		} else {
+			Shared.GotP2 = false
 		}
 
-		if rpc.Round.P3_url != "" && !Shared.GotP3 {
-			img3, _ := DownloadFile(rpc.Round.P3_url, "P3")
-			Shared.P3_avatar = img3
-			Shared.GotP3 = true
+		if rpc.Round.P3_url != "" {
+			if !Shared.GotP3 {
+				img3, _ := DownloadFile(rpc.Round.P3_url, "P3")
+				Shared.P3_avatar = img3
+				Shared.GotP3 = true
+			}
+		} else {
+			Shared.GotP3 = false
 		}
 
-		if rpc.Round.P4_url != "" && !Shared.GotP4 {
-			img4, _ := DownloadFile(rpc.Round.P4_url, "P4")
-			Shared.P4_avatar = img4
-			Shared.GotP4 = true
+		if rpc.Round.P4_url != "" {
+			if !Shared.GotP4 {
+				img4, _ := DownloadFile(rpc.Round.P4_url, "P4")
+				Shared.P4_avatar = img4
+				Shared.GotP4 = true
+			}
+		} else {
+			Shared.GotP4 = false
 		}
 
-		if rpc.Round.P5_url != "" && !Shared.GotP5 {
-			img5, _ := DownloadFile(rpc.Round.P5_url, "P5")
-			Shared.P5_avatar = img5
-			Shared.GotP5 = true
+		if rpc.Round.P5_url != "" {
+			if !Shared.GotP5 {
+				img5, _ := DownloadFile(rpc.Round.P5_url, "P5")
+				Shared.P5_avatar = img5
+				Shared.GotP5 = true
+			}
+		} else {
+			Shared.GotP5 = false
 		}
 
-		if rpc.Round.P6_url != "" && !Shared.GotP6 {
-			img6, _ := DownloadFile(rpc.Round.P6_url, "P6")
-			Shared.P6_avatar = img6
-			Shared.GotP6 = true
+		if rpc.Round.P6_url != "" {
+			if !Shared.GotP6 {
+				img6, _ := DownloadFile(rpc.Round.P6_url, "P6")
+				Shared.P6_avatar = img6
+				Shared.GotP6 = true
+			}
+		} else {
+			Shared.GotP6 = false
 		}
 	}
 }

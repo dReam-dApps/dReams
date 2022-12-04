@@ -105,6 +105,8 @@ func searchFilters() (filter []string) {
 }
 
 func manualIndex(scid []string) {
+	filters := Gnomes.Indexer.SearchFilter
+	Gnomes.Indexer.SearchFilter = []string{}
 	scidstoadd := make(map[string]*structures.FastSyncImport)
 
 	for i := range scid {
@@ -118,6 +120,7 @@ func manualIndex(scid []string) {
 	if err != nil {
 		log.Printf("Err - %v", err)
 	}
+	Gnomes.Indexer.SearchFilter = filters
 }
 
 func GnomonDB() *storage.GravitonStore {
@@ -233,16 +236,29 @@ func searchIndex(scid string) {
 
 func CheckAssets(gs, gc bool) {
 	if gs && !gc && !GnomonClosing() {
-		assets := Gnomes.Indexer.Backend.GetAllOwnersAndSCIDs()
-		keys := make([]string, len(assets))
+		scids := Gnomes.Indexer.Backend.GetAllOwnersAndSCIDs()
+		keys := make([]string, len(scids))
 		log.Println("Checking NFA Assets")
+		table.Settings.FaceSelect.Options = []string{}
+		table.Settings.BackSelect.Options = []string{}
+		table.Settings.ThemeSelect.Options = []string{}
+		table.Settings.AvatarSelect.Options = []string{}
 
 		i := 0
-		for k := range assets {
+		for k := range scids {
 			keys[i] = k
 			checkNFAOwner(keys[i])
 			i++
 		}
+		sort.Strings(table.Settings.FaceSelect.Options)
+		sort.Strings(table.Settings.BackSelect.Options)
+		sort.Strings(table.Settings.ThemeSelect.Options)
+
+		ld := []string{"Light", "Dark"}
+		table.Settings.FaceSelect.Options = append(ld, table.Settings.FaceSelect.Options...)
+		table.Settings.BackSelect.Options = append(ld, table.Settings.BackSelect.Options...)
+		table.Settings.ThemeSelect.Options = append([]string{"Main"}, table.Settings.ThemeSelect.Options...)
+
 		Gnomes.Checked = true
 		table.Assets.Asset_list.Refresh()
 	}
@@ -391,7 +407,11 @@ func checkTableOwner(scid string) bool {
 	}
 
 	owner, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "owner:", Gnomes.Indexer.LastIndexedHeight, true)
-	return owner[0] == rpc.Wallet.Address
+	if owner != nil {
+		return owner[0] == rpc.Wallet.Address
+	}
+
+	return false
 }
 
 func checkTableVersion(scid string) uint64 {
@@ -410,6 +430,9 @@ func CreateTableList(gc bool) {
 		tables := Gnomes.Indexer.Backend.GetAllOwnersAndSCIDs()
 
 		for scid := range tables {
+			if GnomonClosing() {
+				break
+			}
 			_, valid := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "Deck Count:", Gnomes.Indexer.LastIndexedHeight, true)
 			_, version := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "V:", Gnomes.Indexer.LastIndexedHeight, true)
 
@@ -597,6 +620,9 @@ func CheckG45owner(gs, gc bool) {
 			}
 		}
 		table.Assets.Asset_list.Refresh()
+		sort.Strings(table.Settings.AvatarSelect.Options)
+		table.Settings.AvatarSelect.Options = append([]string{"None"}, table.Settings.AvatarSelect.Options...)
+
 	}
 }
 

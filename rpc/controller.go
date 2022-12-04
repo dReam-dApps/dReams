@@ -227,8 +227,51 @@ func addOne(v interface{}) string {
 	return str
 }
 
+func closedTable() {
+	Round.ID = 0
+	Round.Tourney = false
+	Round.P1_url = ""
+	Round.P2_url = ""
+	Round.P3_url = ""
+	Round.P4_url = ""
+	Round.P5_url = ""
+	Round.P6_url = ""
+	Round.P1_name = ""
+	Round.P2_name = ""
+	Round.P3_name = ""
+	Round.P4_name = ""
+	Round.P5_name = ""
+	Round.P6_name = ""
+}
+
+func singleNameClear(p int) {
+	switch p {
+	case 1:
+		Round.P1_name = ""
+		Round.P1_url = ""
+	case 2:
+		Round.P2_name = ""
+		Round.P2_url = ""
+	case 3:
+		Round.P3_name = ""
+		Round.P3_url = ""
+	case 4:
+		Round.P4_name = ""
+		Round.P4_url = ""
+	case 5:
+		Round.P5_name = ""
+		Round.P5_url = ""
+	case 6:
+		Round.P6_name = ""
+		Round.P6_url = ""
+	default:
+
+	}
+}
+
 func getAvatar(p int, id interface{}) string {
 	if id == nil {
+		singleNameClear(p)
 		return "nil"
 	}
 
@@ -244,44 +287,68 @@ func getAvatar(p int, id interface{}) string {
 	case 1:
 		if len(split) == 2 {
 			Round.P1_name = split[1]
+			Round.P1_url = ""
 		} else if len(split) == 3 {
 			Round.P1_name = split[1]
 			Round.P1_url = split[2]
+		} else {
+			Round.P1_name = ""
+			Round.P1_url = ""
 		}
 	case 2:
 		if len(split) == 2 {
 			Round.P2_name = split[1]
+			Round.P2_url = ""
 		} else if len(split) == 3 {
 			Round.P2_name = split[1]
 			Round.P2_url = split[2]
+		} else {
+			Round.P2_name = ""
+			Round.P2_url = ""
 		}
 	case 3:
 		if len(split) == 2 {
 			Round.P3_name = split[1]
+			Round.P3_url = ""
 		} else if len(split) == 3 {
 			Round.P3_name = split[1]
 			Round.P3_url = split[2]
+		} else {
+			Round.P3_name = ""
+			Round.P3_url = ""
 		}
 	case 4:
 		if len(split) == 2 {
 			Round.P4_name = split[1]
+			Round.P4_url = ""
 		} else if len(split) == 3 {
 			Round.P4_name = split[1]
 			Round.P4_url = split[2]
+		} else {
+			Round.P4_name = ""
+			Round.P4_url = ""
 		}
 	case 5:
 		if len(split) == 2 {
 			Round.P5_name = split[1]
+			Round.P5_url = ""
 		} else if len(split) == 3 {
 			Round.P5_name = split[1]
 			Round.P5_url = split[2]
+		} else {
+			Round.P5_name = ""
+			Round.P5_url = ""
 		}
 	case 6:
 		if len(split) == 2 {
 			Round.P6_name = split[1]
+			Round.P6_url = ""
 		} else if len(split) == 3 {
 			Round.P6_name = split[1]
 			Round.P6_url = split[2]
+		} else {
+			Round.P6_name = ""
+			Round.P6_url = ""
 		}
 	}
 
@@ -415,24 +482,28 @@ func tableClosed(seats interface{}) {
 }
 
 func tableOpen(seats, full, two, three, four, five, six interface{}) {
+	if Round.ID > 1 {
+		Signal.Sit = true
+		return
+	}
 	s := int(seats.(float64))
-	if s >= 2 && two == nil {
+	if s >= 2 && two == nil && Round.ID != 1 {
 		Signal.Sit = false
 	}
 
-	if s >= 3 && three == nil {
+	if s >= 3 && three == nil && Round.ID != 1 {
 		Signal.Sit = false
 	}
 
-	if s >= 4 && four == nil {
+	if s >= 4 && four == nil && Round.ID != 1 {
 		Signal.Sit = false
 	}
 
-	if s >= 5 && five == nil {
+	if s >= 5 && five == nil && Round.ID != 1 {
 		Signal.Sit = false
 	}
 
-	if s == 6 && six == nil {
+	if s == 6 && six == nil && Round.ID != 1 {
 		Signal.Sit = false
 	}
 
@@ -444,22 +515,32 @@ func tableOpen(seats, full, two, three, four, five, six interface{}) {
 func getCommCardValues(f1, f2, f3, t, r interface{}) {
 	if f1 != nil {
 		Round.Flop1 = int(f1.(float64))
+	} else {
+		Round.Flop1 = 0
 	}
 
 	if f2 != nil {
 		Round.Flop2 = int(f2.(float64))
+	} else {
+		Round.Flop2 = 0
 	}
 
 	if f3 != nil {
 		Round.Flop3 = int(f3.(float64))
+	} else {
+		Round.Flop3 = 0
 	}
 
 	if t != nil {
 		Round.TurnCard = int(t.(float64))
+	} else {
+		Round.TurnCard = 0
 	}
 
 	if r != nil {
 		Round.RiverCard = int(r.(float64))
+	} else {
+		Round.RiverCard = 0
 	}
 }
 

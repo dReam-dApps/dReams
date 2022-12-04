@@ -291,6 +291,7 @@ func Leave() error { /// leave holdero table
 	defer cancel()
 
 	checkoutId := StringToInt(Display.PlayerId)
+	singleNameClear(checkoutId)
 	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "PlayerLeave"}
 	arg2 := rpc.Argument{Name: "id", DataType: "U", Value: checkoutId}
 	args := rpc.Arguments{arg1, arg2}

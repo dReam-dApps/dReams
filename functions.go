@@ -6,9 +6,11 @@ import (
 	"image/color"
 	"log"
 	"os"
+	"os/signal"
 	"sort"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/SixofClubsss/dReams/menu"
@@ -34,6 +36,18 @@ type save struct {
 }
 
 var offset int
+
+func init() {
+	c := make(chan os.Signal)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-c
+		fmt.Println()
+		menu.StopGnomon(menu.Gnomes.Init)
+		log.Println("Closing dReams.")
+		os.Exit(0)
+	}()
+}
 
 func notification(title, content string, g int) *fyne.Notification {
 	switch g {
@@ -346,7 +360,6 @@ func HolderoRefresh() {
 	H.CardsContent = *container.NewWithoutLayout(showHolderoCards(rpc.CardHash.Local1, rpc.CardHash.Local2))
 	if !rpc.Signal.Clicked {
 		if rpc.Round.ID == 0 && rpc.Wallet.Connect {
-			table.ClearShared()
 			if rpc.Signal.Sit {
 				table.Actions.Sit.Hide()
 			} else {
@@ -821,10 +834,6 @@ func RecheckButton() fyne.CanvasObject {
 }
 
 func RecheckAssets() {
-	table.Settings.FaceSelect.Options = []string{"Light", "Dark"}
-	table.Settings.BackSelect.Options = []string{"Light", "Dark"}
-	table.Settings.ThemeSelect.Options = []string{"Main"}
-	table.Settings.AvatarSelect.Options = []string{"None"}
 	table.Assets.Assets = []string{}
 	menu.CheckAssets(menu.Gnomes.Sync, false)
 	menu.CheckG45owner(menu.Gnomes.Sync, false)
@@ -972,6 +981,8 @@ func DisplayCard(card int) *canvas.Image {
 		if card > 0 {
 			i := table.Settings.FaceSelect.SelectedIndex()
 			switch i {
+			case -1:
+				return canvas.NewImageFromResource(DisplayLightCard(card))
 			case 0:
 				return canvas.NewImageFromResource(DisplayLightCard(card))
 			case 1:
@@ -983,6 +994,8 @@ func DisplayCard(card int) *canvas.Image {
 
 		i := table.Settings.BackSelect.SelectedIndex()
 		switch i {
+		case -1:
+			return canvas.NewImageFromResource(resourceBack1Png)
 		case 0:
 			return canvas.NewImageFromResource(resourceBack1Png)
 		case 1:

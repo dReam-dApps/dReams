@@ -19,8 +19,8 @@ import (
 const (
 	MIN_WIDTH  = 1400
 	MIN_HEIGHT = 800
-	ID         = "dReam Tables App"
-	Name       = "dReams"
+	App_ID     = "dReam Tables App"
+	App_Name   = "dReams"
 )
 
 type dReamTables struct {
@@ -44,9 +44,9 @@ var dReams dReamTables
 var background *fyne.Container
 
 func main() {
-	dReams.App = app.NewWithID(ID)
+	dReams.App = app.NewWithID(App_ID)
 	dReams.App.Settings().SetTheme(Theme())
-	dReams.Window = dReams.App.NewWindow(Name)
+	dReams.Window = dReams.App.NewWindow(App_Name)
 	dReams.Window.SetMaster()
 	dReams.Window.Resize(fyne.NewSize(MIN_WIDTH, MIN_HEIGHT))
 	dReams.Window.SetFixedSize(false)

@@ -570,12 +570,12 @@ func BetAmount() fyne.CanvasObject {
 						}
 					}
 
-					if s < strconv.FormatFloat(float64(rpc.Round.BB)/100000, 'f', 1, 64) {
-						Actions.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.BB)/100000, 'f', 1, 64))
+					if s < strconv.FormatFloat(float64(rpc.Round.Ante)/100000, 'f', 1, 64) {
+						Actions.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.Ante)/100000, 'f', 1, 64))
 					}
 
 					if Actions.BetEntry.Validate() != nil {
-						Actions.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.BB)/100000, 'f', 1, 64))
+						Actions.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.Ante)/100000, 'f', 1, 64))
 					}
 				}
 			}

@@ -301,7 +301,6 @@ func FetchHolderoSC(dc, cc bool) error {
 			Chips_jv := result.VariableStringKeys["Chips"]
 			Tourney_jv := result.VariableStringKeys["Tournament"]
 
-			tableOpen(Seats_jv, Full_jv, TwoId_jv, ThreeId_jv, FourId_jv, FiveId_jv, SixId_jv)
 			if Tourney_jv == nil {
 				Round.Tourney = false
 				if Chips_jv != nil {
@@ -347,6 +346,8 @@ func FetchHolderoSC(dc, cc bool) error {
 				setHolderoName(OneId_jv, TwoId_jv, ThreeId_jv, FourId_jv, FiveId_jv, SixId_jv)
 				setSignals(Pot_jv, P1Out_jv)
 			}
+
+			tableOpen(Seats_jv, Full_jv, TwoId_jv, ThreeId_jv, FourId_jv, FiveId_jv, SixId_jv)
 
 			if FlopBool_jv != nil {
 				Round.Flop = true
@@ -445,8 +446,7 @@ func FetchHolderoSC(dc, cc bool) error {
 			winningHand(End_jv)
 		} else {
 			potIsEmpty(0)
-			Round.ID = 0
-			Round.Tourney = false
+			closedTable()
 		}
 		potIsEmpty(Pot_jv)
 		allFoldedWinner()
