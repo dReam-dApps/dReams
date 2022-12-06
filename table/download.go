@@ -105,6 +105,9 @@ func ClearShared() {
 	rpc.Round.P4_name = ""
 	rpc.Round.P5_name = ""
 	rpc.Round.P6_name = ""
+	rpc.Round.Bettor = ""
+	rpc.Round.Raisor = ""
+	rpc.Signal.Out1 = false
 	Shared.GotP1 = false
 	Shared.GotP2 = false
 	Shared.GotP3 = false

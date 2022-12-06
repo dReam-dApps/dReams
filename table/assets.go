@@ -424,7 +424,7 @@ Confirm.`
 func tourneyConfirmPopUp() {
 	bal, _ := rpc.TokenBalance(rpc.TourneySCID)
 	balance := float64(bal) / 100000
-	a := fmt.Sprint(strconv.FormatFloat(balance, 'f', 5, 64))
+	a := fmt.Sprint(strconv.FormatFloat(balance, 'f', 2, 64))
 	text := `You are about to deposit ` + a + ` Tournament Chips into leaderboard contract
 
 Confirm.`

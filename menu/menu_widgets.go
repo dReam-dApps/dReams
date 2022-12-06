@@ -369,7 +369,7 @@ func NameEntry() fyne.CanvasObject {
 	name.PlaceHolder = "Name:"
 	this := binding.BindString(&table.Poker_name)
 	name.Bind(this)
-	name.Validator = validation.NewRegexp(`^\w{3,10}$`, "Format Not Valid")
+	name.Validator = validation.NewRegexp(`^.{3,12}$`, "Format Not Valid")
 
 	return name
 }

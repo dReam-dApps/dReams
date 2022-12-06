@@ -206,19 +206,24 @@ func ifBet(w, r uint64) { /// sets bet amount on turn
 		float := float64(w) / 100000
 		wager := strconv.FormatFloat(float, 'f', 1, 64)
 		table.Actions.BetEntry.SetText(wager)
-		rpc.Display.Res = "Bet Raised, " + wager + " to Call "
+		rpc.Display.Res = rpc.Round.Raisor + " Raised, " + wager + " to Call "
 	} else if w > 0 && !rpc.Signal.PlacedBet {
 		float := float64(w) / 100000
 		wager := strconv.FormatFloat(float, 'f', 1, 64)
 		table.Actions.BetEntry.SetText(wager)
-		rpc.Display.Res = "Bet is " + wager
+		rpc.Display.Res = rpc.Round.Bettor + " Bet " + wager
 	} else if r > 0 && rpc.Signal.PlacedBet {
 		float := float64(r) / 100000
 		rasied := strconv.FormatFloat(float, 'f', 1, 64)
 		table.Actions.BetEntry.SetText(rasied)
-		rpc.Display.Res = "Bet Raised, " + rasied + " to Call"
+		rpc.Display.Res = rpc.Round.Raisor + " Raised, " + rasied + " to Call"
 	} else if w == 0 && !rpc.Signal.Bet {
-		float := float64(rpc.Round.BB) / 100000
+		var float float64
+		if rpc.Round.Ante == 0 {
+			float = float64(rpc.Round.BB) / 100000
+		} else {
+			float = float64(rpc.Round.Ante) / 100000
+		}
 		this := strconv.FormatFloat(float, 'f', 1, 64)
 		table.Actions.BetEntry.SetText(this)
 		if !rpc.Signal.Reveal {
@@ -785,7 +790,7 @@ func MenuRefresh(tab, gi bool) {
 		dHeight, _ := rpc.DaemonHeight()
 		var index int
 		if !menu.GnomonClosing() && menu.FastSynced() {
-			index = int(menu.Gnomes.Indexer.ChainHeight) //int(menu.Gnomes.Indexer.Backend.GetLastIndexHeight())
+			index = int(menu.Gnomes.Indexer.ChainHeight)
 		}
 		table.Assets.Gnomes_height.Text = (" Gnomon Height: " + strconv.Itoa(index))
 		table.Assets.Gnomes_height.Refresh()

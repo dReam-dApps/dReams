@@ -18,7 +18,7 @@ const (
 	pre          = "http://"
 	suff         = "/json_rpc"
 	dReamsSCID   = "ad2e7b37c380cc1aed3a6b27224ddfc92a2d15962ca1f4d35e530dba0f9575a9"
-	TourneySCID  = "f7c8531bf91bd7d47f46569d81c017b447b8ec83518a4ad0edd687947fe79dcb"
+	TourneySCID  = "c2e1ec16aed6f653aef99a06826b2b6f633349807d01fbb74cc0afb5ff99c3c7"
 	HolderoSCID  = "e3f37573de94560e126a9020c0a5b3dfc7a4f3a4fbbe369fba93fbd219dc5fe9"
 	pHolderoSCID = "896834d57628d3a65076d3f4d84ddc7c5daf3e86b66a47f018abda6068afe2e6"
 	BaccSCID     = "8289c6109f41cbe1f6d5f27a419db537bf3bf30a25eff285241a36e1ae3e48a4"
@@ -259,9 +259,7 @@ func FetchHolderoSC(dc, cc bool) error {
 			Round.Version = int(V_jv.(float64))
 		}
 
-		tableClosed(Seats_jv)
-
-		if Seats_jv != nil {
+		if Seats_jv != nil && int(Seats_jv.(float64)) > 0 {
 			Flop1_jv := result.VariableStringKeys["FlopCard1"]
 			Flop2_jv := result.VariableStringKeys["FlopCard2"]
 			Flop3_jv := result.VariableStringKeys["FlopCard3"]
@@ -347,6 +345,12 @@ func FetchHolderoSC(dc, cc bool) error {
 				setSignals(Pot_jv, P1Out_jv)
 			}
 
+			if P1Out_jv != nil {
+				Signal.Out1 = true
+			} else {
+				Signal.Out1 = false
+			}
+
 			tableOpen(Seats_jv, Full_jv, TwoId_jv, ThreeId_jv, FourId_jv, FiveId_jv, SixId_jv)
 
 			if FlopBool_jv != nil {
@@ -355,17 +359,30 @@ func FetchHolderoSC(dc, cc bool) error {
 				Round.Flop = false
 			}
 
+			Display.PlayerId = checkPlayerId(getAvatar(1, OneId_jv), getAvatar(2, TwoId_jv), getAvatar(3, ThreeId_jv), getAvatar(4, FourId_jv), getAvatar(5, FiveId_jv), getAvatar(6, SixId_jv))
+
 			if Wager_jv != nil {
+				if Round.Bettor == "" {
+					Round.Bettor = findBettor(Turn_jv)
+				}
 				Round.Wager = uint64(Wager_jv.(float64))
 				Display.B_Button = "Call/Raise"
 				Display.C_Button = "Fold"
 			} else {
+				Round.Bettor = ""
 				Round.Wager = 0
 			}
+
 			if Raised_jv != nil {
+				if Round.Raisor == "" {
+					Round.Raisor = findBettor(Turn_jv)
+				}
 				Round.Raised = uint64(Raised_jv.(float64))
 				Display.B_Button = "Call"
 				Display.C_Button = "Fold"
+			} else {
+				Round.Raisor = ""
+				Round.Raised = 0
 			}
 
 			if Round.ID == int(Turn_jv.(float64))+1 {
@@ -382,7 +399,6 @@ func FetchHolderoSC(dc, cc bool) error {
 			Display.Blinds = blindString(BigBlind_jv, SmallBlind_jv)
 			Display.Dealer = fmt.Sprint(Dealer_jv.(float64) + 1)
 
-			Display.PlayerId = checkPlayerId(getAvatar(1, OneId_jv), getAvatar(2, TwoId_jv), getAvatar(3, ThreeId_jv), getAvatar(4, FourId_jv), getAvatar(5, FiveId_jv), getAvatar(6, SixId_jv))
 			Round.SC_seed = fmt.Sprint(Seed_jv)
 
 			if Face_jv != nil && Face_jv.(string) != "nil" {
@@ -445,9 +461,9 @@ func FetchHolderoSC(dc, cc bool) error {
 
 			winningHand(End_jv)
 		} else {
-			potIsEmpty(0)
 			closedTable()
 		}
+
 		potIsEmpty(Pot_jv)
 		allFoldedWinner()
 

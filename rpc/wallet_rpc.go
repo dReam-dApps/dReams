@@ -198,7 +198,8 @@ func DreamsBalance(wc bool) { /// get wallet dReam balance
 func TourneyBalance(wc, t bool, scid string) { /// get tournament balance
 	if wc && t {
 		bal, _ := TokenBalance(scid)
-		Wallet.TourneyBal = fromAtomic(bal)
+		value := float64(bal)
+		Wallet.TourneyBal = fmt.Sprintf("%.2f", value/100000)
 	}
 }
 
