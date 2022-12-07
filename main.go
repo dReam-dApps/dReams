@@ -71,13 +71,13 @@ func main() {
 	table.Settings.ThemeImg = *canvas.NewImageFromResource(resourceBackgroundPng)
 	background = container.NewMax(&table.Settings.ThemeImg)
 
-	table.Poker_name, menu.PlayerControl.Daemon_config = readConfig()
 	go func() {
 		dReams.Window.SetContent(
 			container.New(layout.NewMaxLayout(),
 				background,
 				place()))
 	}()
+
 	dReams.os = runtime.GOOS
 	if systemTray(dReams.App) {
 		dReams.App.(desktop.App).SetSystemTrayIcon(resourceCardSharkTrayPng)

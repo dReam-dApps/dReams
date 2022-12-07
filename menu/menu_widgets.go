@@ -5,6 +5,7 @@ import (
 	"log"
 	"math"
 	"runtime"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -315,7 +316,7 @@ func NewBettingButton() fyne.Widget {
 	return PlayerControl.Bet_new
 }
 
-func TableListings() fyne.Widget { /// tables contracts
+func TableListings() fyne.CanvasObject { /// tables contracts
 	PlayerControl.table_options = widget.NewList(
 		func() int {
 			return len(TableList)
@@ -327,11 +328,14 @@ func TableListings() fyne.Widget { /// tables contracts
 			o.(*widget.Label).SetText(TableList[i])
 		})
 
+	var item string
+
 	PlayerControl.table_options.OnSelected = func(id widget.ListItemID) {
 		if id != 0 {
 			split := strings.Split(TableList[id], "   ")
 			trimmed := strings.Trim(split[2], " ")
 			if len(trimmed) == 64 {
+				item = TableList[id]
 				PlayerControl.contract_input.SetText(trimmed)
 				go GetTableStats(trimmed, true)
 				rpc.Times.Kick_block = rpc.StringToInt(rpc.Wallet.Height)
@@ -339,10 +343,22 @@ func TableListings() fyne.Widget { /// tables contracts
 		}
 	}
 
-	return PlayerControl.table_options
+	save := widget.NewButton("Favorite", func() {
+		FavoriteList = append(FavoriteList, item)
+		sort.Strings(FavoriteList)
+	})
+
+	cont := container.NewBorder(
+		nil,
+		container.NewBorder(nil, nil, nil, save, layout.NewSpacer()),
+		nil,
+		nil,
+		PlayerControl.table_options)
+
+	return cont
 }
 
-func FavoriteListings() fyne.Widget {
+func HolderoFavorites() fyne.CanvasObject {
 	PlayerControl.table_fav = widget.NewList(
 		func() int {
 			return len(FavoriteList)
@@ -353,15 +369,45 @@ func FavoriteListings() fyne.Widget {
 		func(i widget.ListItemID, o fyne.CanvasObject) {
 			o.(*widget.Label).SetText(FavoriteList[i])
 		})
-	PlayerControl.table_fav.Resize(fyne.NewSize(360, 680))
-	PlayerControl.table_fav.Move(fyne.NewPos(5, 10))
-	PlayerControl.table_fav.OnSelected = func(id widget.ListItemID) {
-		// if id != 0 {
 
-		// }
+	var item string
+
+	PlayerControl.table_fav.OnSelected = func(id widget.ListItemID) {
+		split := strings.Split(FavoriteList[id], "   ")
+		if len(split) >= 3 {
+			trimmed := strings.Trim(split[2], " ")
+			if len(trimmed) == 64 {
+				item = FavoriteList[id]
+				PlayerControl.contract_input.SetText(trimmed)
+				go GetTableStats(trimmed, true)
+				rpc.Times.Kick_block = rpc.StringToInt(rpc.Wallet.Height)
+			}
+		}
 	}
 
-	return PlayerControl.table_fav
+	remove := widget.NewButton("Remove", func() {
+		if len(FavoriteList) > 0 {
+			for i := range FavoriteList {
+				if FavoriteList[i] == item {
+					copy(FavoriteList[i:], FavoriteList[i+1:])
+					FavoriteList[len(FavoriteList)-1] = ""
+					FavoriteList = FavoriteList[:len(FavoriteList)-1]
+					break
+				}
+			}
+		}
+		PlayerControl.table_fav.Refresh()
+		sort.Strings(FavoriteList)
+	})
+
+	cont := container.NewBorder(
+		nil,
+		container.NewBorder(nil, nil, nil, remove, layout.NewSpacer()),
+		nil,
+		nil,
+		PlayerControl.table_fav)
+
+	return cont
 }
 
 func NameEntry() fyne.CanvasObject {
@@ -1148,6 +1194,7 @@ func IntroTree() fyne.CanvasObject {
 	}
 
 	tree := widget.NewTreeWithStrings(list)
+	tree.OpenBranch("Welcome to dReams")
 
 	alpha := container.NewMax(canvas.NewRectangle(color.RGBA{0, 0, 0, 120}))
 	max := container.NewMax(alpha, tree)

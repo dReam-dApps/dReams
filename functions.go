@@ -31,13 +31,22 @@ type Notification struct {
 }
 
 type save struct {
-	Name   string   `json:"name"`
-	Daemon []string `json:"daemon"`
+	Name    string   `json:"name"`
+	Daemon  []string `json:"daemon"`
+	Tables  []string `json:"tables"`
+	Predict []string `json:"predict"`
+	Sports  []string `json:"sports"`
 }
 
 var offset int
 
 func init() {
+	saved := readConfig()
+	table.Poker_name = saved.Name
+	menu.PlayerControl.Daemon_config = saved.Daemon[0]
+	menu.FavoriteList = saved.Tables
+	prediction.PredictControl.Favorites_list = saved.Predict
+	prediction.SportsControl.Favorites_list = saved.Sports
 	c := make(chan os.Signal)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
@@ -95,7 +104,12 @@ func makeConfig(name, daemon string) (data save) {
 	default:
 		data.Daemon = []string{daemon}
 	}
-	return data
+
+	data.Tables = menu.FavoriteList
+	data.Predict = prediction.PredictControl.Favorites_list
+	data.Sports = prediction.SportsControl.Favorites_list
+
+	return
 }
 
 func writeConfig(u save) {
@@ -106,6 +120,10 @@ func writeConfig(u save) {
 			if err != nil {
 				log.Println(err)
 			}
+
+			u.Tables = menu.FavoriteList
+			u.Predict = prediction.PredictControl.Favorites_list
+			u.Sports = prediction.SportsControl.Favorites_list
 
 			defer file.Close()
 			json, _ := json.MarshalIndent(u, "", " ")
@@ -119,26 +137,26 @@ func writeConfig(u save) {
 	}
 }
 
-func readConfig() (string, string) {
+func readConfig() (saved save) {
 	if !table.FileExists("config.json") {
-		return "", ""
+		return
 	}
 
 	file, err := os.ReadFile("config.json")
 
 	if err != nil {
 		log.Println("Error reading config file: ", err)
-		return "", ""
+		return
 	}
 
 	var config save
 	err = json.Unmarshal(file, &config)
 	if err != nil {
 		log.Println("Error during unmarshal: ", err)
-		return "", ""
+		return
 	}
 
-	return config.Name, config.Daemon[0]
+	return config
 }
 
 func showBaccCards() *fyne.Container {

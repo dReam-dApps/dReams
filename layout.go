@@ -146,7 +146,7 @@ func placeContract() *container.Split {
 
 	tabs := container.NewAppTabs(
 		container.NewTabItem("Tables", menu.TableListings()),
-		container.NewTabItem("Favorites", menu.FavoriteListings()))
+		container.NewTabItem("Favorites", menu.HolderoFavorites()))
 
 	tabs.OnSelected = func(ti *container.TabItem) {
 		MenuContractTab(ti)
@@ -314,6 +314,7 @@ func placePredict() *fyne.Container {
 
 	tabs := container.NewAppTabs(
 		container.NewTabItem("Contracts", prediction.PredictionListings()),
+		container.NewTabItem("Favorites", prediction.PredicitFavorites()),
 		container.NewTabItem("Leaderboard", leaders_contnet))
 
 	tabs.OnSelected = func(ti *container.TabItem) {
@@ -385,6 +386,7 @@ func placeSports() *fyne.Container {
 
 	tabs := container.NewAppTabs(
 		container.NewTabItem("Contracts", prediction.SportsListings()),
+		container.NewTabItem("Favorites", prediction.SportsFavorites()),
 		container.NewTabItem("Scores", score_tabs))
 
 	tabs.OnSelected = func(ti *container.TabItem) {
