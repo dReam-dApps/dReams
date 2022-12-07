@@ -673,6 +673,17 @@ func CheckPredictionName(scid string) (name string) {
 	return
 }
 
+func CheckActiveGames(scid string) bool {
+	_, played := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "s_played", Gnomes.Indexer.ChainHeight, true)
+	_, init := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "s_init", Gnomes.Indexer.ChainHeight, true)
+
+	if played != nil && init != nil {
+		return played[0] == init[0]
+	}
+
+	return false
+}
+
 func GetSportsAmt(scid, n string) uint64 {
 	_, amt := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "s_amount_"+n, Gnomes.Indexer.ChainHeight, true)
 	if amt != nil {

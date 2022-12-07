@@ -139,6 +139,11 @@ func SportsListings() fyne.CanvasObject { /// sports contract list
 			trimmed := strings.Trim(split[2], " ")
 			table.Actions.Sports_box.Show()
 			if len(trimmed) == 64 {
+				if !menu.CheckActiveGames(trimmed) {
+					table.Actions.Game_select.Show()
+				} else {
+					table.Actions.Game_select.Hide()
+				}
 				item = SportsControl.Contract_list[id]
 				table.Actions.S_contract.SetText(trimmed)
 			}
@@ -177,13 +182,23 @@ func SportsFavorites() fyne.CanvasObject {
 	var item string
 
 	favorites.OnSelected = func(id widget.ListItemID) {
-		split := strings.Split(SportsControl.Favorites_list[id], "   ")
-		if len(split) >= 3 {
-			trimmed := strings.Trim(split[2], " ")
-			if len(trimmed) == 64 {
-				item = SportsControl.Favorites_list[id]
-				table.Actions.S_contract.SetText(trimmed)
+		if rpc.Wallet.Connect {
+			split := strings.Split(SportsControl.Favorites_list[id], "   ")
+			if len(split) >= 3 {
+				trimmed := strings.Trim(split[2], " ")
+				if len(trimmed) == 64 {
+					if !menu.CheckActiveGames(trimmed) {
+						table.Actions.Sports_box.Show()
+						table.Actions.Game_select.Show()
+					} else {
+						table.Actions.Sports_box.Hide()
+					}
+					item = SportsControl.Favorites_list[id]
+					table.Actions.S_contract.SetText(trimmed)
+				}
 			}
+		} else {
+			table.Actions.Sports_box.Hide()
 		}
 	}
 

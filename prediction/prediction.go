@@ -183,12 +183,28 @@ func PredicitFavorites() fyne.CanvasObject {
 	var item string
 
 	favorites.OnSelected = func(id widget.ListItemID) {
-		split := strings.Split(PredictControl.Favorites_list[id], "   ")
-		if len(split) >= 3 {
-			trimmed := strings.Trim(split[2], " ")
-			if len(trimmed) == 64 {
-				item = PredictControl.Favorites_list[id]
-				table.Actions.P_contract.SetText(trimmed)
+		if rpc.Signal.Daemon && rpc.Wallet.Connect {
+			split := strings.Split(PredictControl.Favorites_list[id], "   ")
+			if len(split) >= 3 {
+				trimmed := strings.Trim(split[2], " ")
+				if len(trimmed) == 64 {
+					if len(trimmed) == 64 {
+						item = PredictControl.Favorites_list[id]
+						table.Actions.P_contract.SetText(trimmed)
+						if menu.CheckActivePrediction(trimmed) {
+							menu.DisablePreditions(false)
+							table.Actions.Higher.Show()
+							table.Actions.Lower.Show()
+							table.Actions.NameEntry.Show()
+							table.Actions.NameEntry.Text = menu.CheckPredictionName(PredictControl.Contract)
+							table.Actions.NameEntry.Refresh()
+						} else {
+							menu.DisablePreditions(true)
+						}
+					}
+				}
+			} else {
+				menu.DisablePreditions(true)
 			}
 		}
 	}
