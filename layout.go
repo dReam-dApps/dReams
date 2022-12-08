@@ -64,7 +64,7 @@ func place() *fyne.Container {
 	bottom_box := container.NewHBox(bottom, layout.NewSpacer())
 	bottom_bar := container.NewVBox(layout.NewSpacer(), bottom_box)
 
-	alpha := container.NewMax(top_bar, bottom_bar, canvas.NewRectangle(color.RGBA{0, 0, 0, 150}))
+	alpha := container.NewMax(top_bar, bottom_bar, canvas.NewRectangle(color.RGBA{0, 0, 0, 150}), menu.StartIndicators())
 
 	tabs := container.NewAppTabs(
 		container.NewTabItem("Menu", menu_tabs),
@@ -105,8 +105,7 @@ func placeWall() *container.Split {
 		asset_items)
 
 	check_boxes := container.NewVBox(
-		menu.DaemonConnectedBox(rpc.Signal.Daemon),
-		menu.WalletConnectedBox())
+		menu.DaemonConnectedBox())
 
 	player_box := container.NewHBox(player_input, check_boxes)
 	menu_top := container.NewHSplit(player_box, menu.IntroTree())

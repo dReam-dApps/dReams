@@ -44,6 +44,8 @@ var dReams dReamTables
 var background *fyne.Container
 
 func main() {
+	n := runtime.NumCPU()
+	runtime.GOMAXPROCS(n)
 	dReams.App = app.NewWithID(App_ID)
 	dReams.App.Settings().SetTheme(Theme())
 	dReams.Window = dReams.App.NewWindow(App_Name)
@@ -57,12 +59,13 @@ func main() {
 		writeConfig(makeConfig(table.Poker_name, rpc.Round.Daemon))
 		menu.StopGnomon(menu.Gnomes.Init)
 		quit <- struct{}{}
+		menu.StopIndicators()
 		time.Sleep(1 * time.Second)
 		dReams.Window.Close()
 	})
 
-	menu.GetMenuResources(resourceGnomonIconPng, resourceAvatarFramePng, resourceCwBackgroundPng, resourceMwBackgroundPng, resourceOwBackgroundPng, resourceUwBackgroundPng)
-	table.GetTableResources(resourceGnomonIconPng, resourceMwBackgroundPng, resourceOwBackgroundPng, resourceBackgroundPng, resourceUwBackgroundPng)
+	menu.GetMenuResources(resourceDTGnomonIconPng, resourceAvatarFramePng, resourceCwBackgroundPng, resourceMwBackgroundPng, resourceOwBackgroundPng, resourceUwBackgroundPng, resourceGnomoniconPng)
+	table.GetTableResources(resourceDTGnomonIconPng, resourceMwBackgroundPng, resourceOwBackgroundPng, resourceBackgroundPng, resourceUwBackgroundPng)
 
 	rpc.Signal.Startup = true
 	rpc.Bacc.Display = true

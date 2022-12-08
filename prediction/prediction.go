@@ -20,9 +20,6 @@ type predictItems struct {
 	Contract        string
 	Leaders_map     map[string]uint64
 	Leaders_display []string
-	Contract_list   []string
-	Favorites_list  []string
-	connected_box   *widget.Check
 	Leaders_list    *widget.List
 	Predict_list    *widget.List
 	Remove_button   *widget.Button
@@ -31,10 +28,10 @@ type predictItems struct {
 var PredictControl predictItems
 
 func PredictConnectedBox() fyne.Widget {
-	PredictControl.connected_box = widget.NewCheck("", func(b bool) {})
-	PredictControl.connected_box.Disable()
+	menu.MenuControl.Predict_check = widget.NewCheck("", func(b bool) {})
+	menu.MenuControl.Predict_check.Disable()
 
-	return PredictControl.connected_box
+	return menu.MenuControl.Predict_check
 }
 
 func PreictionContractEntry() fyne.Widget {
@@ -45,9 +42,9 @@ func PreictionContractEntry() fyne.Widget {
 		if rpc.Signal.Daemon {
 			yes, _ := rpc.CheckBetContract(PredictControl.Contract)
 			if yes {
-				PredictControl.connected_box.SetChecked(true)
+				menu.MenuControl.Predict_check.SetChecked(true)
 			} else {
-				PredictControl.connected_box.SetChecked(false)
+				menu.MenuControl.Predict_check.SetChecked(false)
 			}
 		}
 	}
@@ -117,24 +114,24 @@ func LeadersDisplay() fyne.Widget {
 func PredictionListings() fyne.CanvasObject { /// prediction contract list
 	PredictControl.Predict_list = widget.NewList(
 		func() int {
-			return len(PredictControl.Contract_list)
+			return len(menu.MenuControl.Predict_contracts)
 		},
 		func() fyne.CanvasObject {
 			return widget.NewLabel("")
 		},
 		func(i widget.ListItemID, o fyne.CanvasObject) {
-			o.(*widget.Label).SetText(PredictControl.Contract_list[i])
+			o.(*widget.Label).SetText(menu.MenuControl.Predict_contracts[i])
 		})
 
 	var item string
 
 	PredictControl.Predict_list.OnSelected = func(id widget.ListItemID) {
 		if id != 0 {
-			if rpc.Signal.Daemon && rpc.Wallet.Connect {
-				split := strings.Split(PredictControl.Contract_list[id], "   ")
+			if menu.Connected() {
+				split := strings.Split(menu.MenuControl.Predict_contracts[id], "   ")
 				trimmed := strings.Trim(split[2], " ")
 				if len(trimmed) == 64 {
-					item = PredictControl.Contract_list[id]
+					item = menu.MenuControl.Predict_contracts[id]
 					table.Actions.P_contract.SetText(trimmed)
 					if menu.CheckActivePrediction(trimmed) {
 						menu.DisablePreditions(false)
@@ -154,8 +151,8 @@ func PredictionListings() fyne.CanvasObject { /// prediction contract list
 	}
 
 	save := widget.NewButton("Favorite", func() {
-		PredictControl.Favorites_list = append(PredictControl.Favorites_list, item)
-		sort.Strings(PredictControl.Favorites_list)
+		menu.MenuControl.Predict_favorites = append(menu.MenuControl.Predict_favorites, item)
+		sort.Strings(menu.MenuControl.Predict_favorites)
 	})
 
 	cont := container.NewBorder(
@@ -171,25 +168,25 @@ func PredictionListings() fyne.CanvasObject { /// prediction contract list
 func PredicitFavorites() fyne.CanvasObject {
 	favorites := widget.NewList(
 		func() int {
-			return len(PredictControl.Favorites_list)
+			return len(menu.MenuControl.Predict_favorites)
 		},
 		func() fyne.CanvasObject {
 			return widget.NewLabel("")
 		},
 		func(i widget.ListItemID, o fyne.CanvasObject) {
-			o.(*widget.Label).SetText(PredictControl.Favorites_list[i])
+			o.(*widget.Label).SetText(menu.MenuControl.Predict_favorites[i])
 		})
 
 	var item string
 
 	favorites.OnSelected = func(id widget.ListItemID) {
-		if rpc.Signal.Daemon && rpc.Wallet.Connect {
-			split := strings.Split(PredictControl.Favorites_list[id], "   ")
+		if menu.Connected() {
+			split := strings.Split(menu.MenuControl.Predict_favorites[id], "   ")
 			if len(split) >= 3 {
 				trimmed := strings.Trim(split[2], " ")
 				if len(trimmed) == 64 {
 					if len(trimmed) == 64 {
-						item = PredictControl.Favorites_list[id]
+						item = menu.MenuControl.Predict_favorites[id]
 						table.Actions.P_contract.SetText(trimmed)
 						if menu.CheckActivePrediction(trimmed) {
 							menu.DisablePreditions(false)
@@ -210,21 +207,21 @@ func PredicitFavorites() fyne.CanvasObject {
 	}
 
 	remove := widget.NewButton("Remove", func() {
-		if len(PredictControl.Favorites_list) > 0 {
+		if len(menu.MenuControl.Predict_favorites) > 0 {
 			favorites.UnselectAll()
-			new := PredictControl.Favorites_list
+			new := menu.MenuControl.Predict_favorites
 			for i := range new {
 				if new[i] == item {
 					copy(new[i:], new[i+1:])
 					new[len(new)-1] = ""
 					new = new[:len(new)-1]
-					PredictControl.Favorites_list = new
+					menu.MenuControl.Predict_favorites = new
 					break
 				}
 			}
 		}
 		favorites.Refresh()
-		sort.Strings(PredictControl.Favorites_list)
+		sort.Strings(menu.MenuControl.Predict_favorites)
 	})
 
 	cont := container.NewBorder(

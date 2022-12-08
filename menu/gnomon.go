@@ -4,6 +4,7 @@ import (
 	"crypto/sha1"
 	"encoding/json"
 	"fmt"
+	"image/color"
 	"log"
 	"sort"
 	"strconv"
@@ -13,8 +14,11 @@ import (
 	"github.com/SixofClubsss/dReams/rpc"
 	"github.com/SixofClubsss/dReams/table"
 
+	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/layout"
+	"fyne.io/fyne/v2/widget"
 	"github.com/civilware/Gnomon/indexer"
 	"github.com/civilware/Gnomon/storage"
 	"github.com/civilware/Gnomon/structures"
@@ -50,11 +54,15 @@ End Function`
 )
 
 type gnomon struct {
-	Init    bool
-	Sync    bool
-	Checked bool
-	SCIDS   uint64
-	Indexer *indexer.Indexer
+	Start    bool
+	Init     bool
+	Sync     bool
+	Checked  bool
+	SCIDS    uint64
+	Sync_ind *fyne.Animation
+	Full_ind *fyne.Animation
+	Icon_ind *fyne.Animation
+	Indexer  *indexer.Indexer
 }
 
 var Gnomes gnomon
@@ -70,6 +78,151 @@ func stringToInt64(s string) int64 {
 	}
 
 	return 0
+}
+
+func startLabel() {
+	table.Assets.Gnomes_sync.Text = (" Starting Gnomon")
+	table.Assets.Gnomes_sync.Refresh()
+}
+
+func checkLabel() {
+	table.Assets.Gnomes_sync.Text = (" Checking for Assets")
+	table.Assets.Gnomes_sync.Refresh()
+}
+
+func stopLabel() {
+	table.Assets.Gnomes_sync.Text = (" Putting Gnomon to Sleep")
+	table.Assets.Gnomes_sync.Refresh()
+}
+
+func sleepLabel() {
+	table.Assets.Gnomes_sync.Text = (" Gnomon is Sleeping")
+	table.Assets.Gnomes_sync.Refresh()
+}
+
+func StartIndicators() fyne.CanvasObject {
+	purple := color.RGBA{105, 90, 205, 210}
+	blue := color.RGBA{31, 150, 200, 210}
+	alpha := color.RGBA{0, 0, 0, 0}
+
+	g_top := canvas.NewRectangle(color.Black)
+	g_top.SetMinSize(fyne.NewSize(150, 12))
+
+	g_bottom := canvas.NewRectangle(color.Black)
+	g_bottom.SetMinSize(fyne.NewSize(150, 12))
+
+	Gnomes.Sync_ind = canvas.NewColorRGBAAnimation(purple, blue,
+		time.Second*3, func(c color.Color) {
+			if Gnomes.Init && !Gnomes.Checked {
+				g_top.FillColor = c
+				canvas.Refresh(g_top)
+				g_bottom.FillColor = c
+				canvas.Refresh(g_bottom)
+			} else {
+				g_top.FillColor = alpha
+				canvas.Refresh(g_top)
+				g_bottom.FillColor = alpha
+				canvas.Refresh(g_bottom)
+			}
+		})
+
+	Gnomes.Sync_ind.RepeatCount = fyne.AnimationRepeatForever
+	Gnomes.Sync_ind.AutoReverse = true
+	Gnomes.Sync_ind.Start()
+
+	sync_box := container.NewVBox(
+		g_top,
+		layout.NewSpacer(),
+		g_bottom)
+
+	g_full := canvas.NewRectangle(color.Black)
+	g_full.SetMinSize(fyne.NewSize(150, 36))
+
+	Gnomes.Full_ind = canvas.NewColorRGBAAnimation(purple, blue,
+		time.Second*3, func(c color.Color) {
+			if Gnomes.Init && FastSynced() && Gnomes.Checked {
+				g_full.FillColor = c
+				canvas.Refresh(g_full)
+				sync_box.Hide()
+			} else {
+				g_full.FillColor = alpha
+				canvas.Refresh(g_full)
+				sync_box.Show()
+			}
+		})
+
+	Gnomes.Full_ind.RepeatCount = fyne.AnimationRepeatForever
+	Gnomes.Full_ind.AutoReverse = true
+	Gnomes.Full_ind.Start()
+
+	icon := widget.NewIcon(Resource.Gnomon)
+	Gnomes.Icon_ind = canvas.NewPositionAnimation(fyne.NewPos(3, 4), fyne.NewPos(112, 1), time.Second*3, func(p fyne.Position) {
+		icon.Move(p)
+		width := 30 + (p.X / 30)
+		icon.Resize(fyne.NewSize(width, width))
+	})
+
+	Gnomes.Icon_ind.RepeatCount = fyne.AnimationRepeatForever
+	Gnomes.Icon_ind.AutoReverse = true
+	Gnomes.Icon_ind.Curve = fyne.AnimationEaseInOut
+	Gnomes.Icon_ind.Start()
+
+	d_rect := canvas.NewRectangle(color.Black)
+	d_rect.SetMinSize(fyne.NewSize(36, 36))
+
+	MenuControl.Daemon_ind = canvas.NewColorRGBAAnimation(purple, blue,
+		time.Second*3, func(c color.Color) {
+			if rpc.Signal.Daemon {
+				d_rect.FillColor = c
+				canvas.Refresh(d_rect)
+			} else {
+				d_rect.FillColor = alpha
+				canvas.Refresh(d_rect)
+			}
+		})
+
+	MenuControl.Daemon_ind.RepeatCount = fyne.AnimationRepeatForever
+	MenuControl.Daemon_ind.AutoReverse = true
+	MenuControl.Daemon_ind.Start()
+
+	w_rect := canvas.NewRectangle(color.Black)
+	w_rect.SetMinSize(fyne.NewSize(36, 36))
+
+	MenuControl.Wallet_ind = canvas.NewColorRGBAAnimation(purple, blue,
+		time.Second*3, func(c color.Color) {
+			if rpc.Wallet.Connect {
+				w_rect.FillColor = c
+				canvas.Refresh(w_rect)
+			} else {
+				w_rect.FillColor = alpha
+				canvas.Refresh(w_rect)
+			}
+		})
+	MenuControl.Wallet_ind.RepeatCount = fyne.AnimationRepeatForever
+	MenuControl.Wallet_ind.AutoReverse = true
+	MenuControl.Wallet_ind.Start()
+
+	d := canvas.NewText("D", color.White)
+	d.TextStyle.Bold = true
+	w := canvas.NewText("W", color.White)
+	w.TextStyle.Bold = true
+
+	hbox := container.NewHBox(
+		container.NewMax(d_rect, container.NewCenter(d)),
+		container.NewMax(w_rect, container.NewCenter(w)))
+
+	top_box := container.NewHBox(layout.NewSpacer(), hbox, container.NewMax(g_full, sync_box, icon))
+	place := container.NewVBox(top_box, layout.NewSpacer())
+
+	return container.NewMax(place)
+}
+
+func StopIndicators() {
+	Gnomes.Icon_ind.Stop()
+	Gnomes.Sync_ind.Stop()
+	Gnomes.Full_ind.Stop()
+	MenuControl.Daemon_ind.Stop()
+	MenuControl.Wallet_ind.Stop()
 }
 
 func searchFilters() (filter []string) {
@@ -132,6 +285,8 @@ func GnomonDB() *storage.GravitonStore {
 }
 
 func startGnomon(ep string) {
+	Gnomes.Start = true
+	go startLabel()
 	log.Println("Starting Gnomon.")
 	backend := GnomonDB()
 
@@ -149,6 +304,8 @@ func startGnomon(ep string) {
 		time.Sleep(3 * time.Second)
 		Gnomes.Init = true
 	}
+
+	Gnomes.Start = false
 }
 
 func GnomonEndPoint(dc, gi, gs bool) {
@@ -159,11 +316,13 @@ func GnomonEndPoint(dc, gi, gs bool) {
 
 func StopGnomon(gi bool) {
 	if gi && !GnomonClosing() {
-		log.Println("Putting Gnomon to sleep.")
+		go stopLabel()
+		log.Println("Putting Gnomon to Sleep.")
 		Gnomes.Indexer.Close()
 		Gnomes.Init = false
-		log.Println("Gnomon is asleep.")
 		time.Sleep(1 * time.Second)
+		log.Println("Gnomon is Sleeping.")
+		go sleepLabel()
 	}
 }
 
@@ -181,6 +340,14 @@ func GnomonClosing() bool {
 
 func FastSynced() bool {
 	return Gnomes.SCIDS > 0
+}
+
+func Connected() bool {
+	if rpc.Signal.Daemon && rpc.Wallet.Connect && Gnomes.Sync {
+		return true
+	}
+
+	return false
 }
 
 func GnomonState(dc, gi bool) {
@@ -236,6 +403,7 @@ func searchIndex(scid string) {
 
 func CheckAssets(gs, gc bool) {
 	if gs && !gc && !GnomonClosing() {
+		go checkLabel()
 		scids := Gnomes.Indexer.Backend.GetAllOwnersAndSCIDs()
 		keys := make([]string, len(scids))
 		log.Println("Checking NFA Assets")
@@ -281,13 +449,15 @@ func CheckBetContract(gs, gc bool) {
 }
 
 func verifyBetContract(scid, t string) {
-	owner, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "owner", Gnomes.Indexer.ChainHeight, true)
-	dev, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "dev", Gnomes.Indexer.ChainHeight, true)
-	_, init := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, t+"_init", Gnomes.Indexer.ChainHeight, true)
+	if !GnomonClosing() {
+		owner, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "owner", Gnomes.Indexer.ChainHeight, true)
+		dev, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "dev", Gnomes.Indexer.ChainHeight, true)
+		_, init := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, t+"_init", Gnomes.Indexer.ChainHeight, true)
 
-	if owner != nil && dev != nil && init != nil {
-		if dev[0] == rpc.DevAddress {
-			DisableBetOwner(owner[0])
+		if owner != nil && dev != nil && init != nil {
+			if dev[0] == rpc.DevAddress {
+				DisableBetOwner(owner[0])
+			}
 		}
 	}
 }
@@ -473,9 +643,9 @@ func CreateTableList(gc bool) {
 		t := len(list)
 		list = append(list, "  Holdero Tables: "+strconv.Itoa(t))
 		sort.Strings(list)
-		TableList = list
+		MenuControl.Holdero_tables = list
 
-		PlayerControl.table_options.Refresh()
+		PlayerControl.table_list.Refresh()
 	}
 }
 
@@ -681,7 +851,7 @@ func CheckActiveGames(scid string) bool {
 		return played[0] == init[0]
 	}
 
-	return false
+	return true
 }
 
 func GetSportsAmt(scid, n string) uint64 {

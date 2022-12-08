@@ -35,6 +35,7 @@ type assetWidgets struct {
 	Wall_height   *canvas.Text
 	Daem_height   *canvas.Text
 	Gnomes_height *canvas.Text
+	Gnomes_sync   *canvas.Text
 	Gnomes_index  *canvas.Text
 	Index_entry   *widget.Entry
 	Index_button  *widget.Button
@@ -334,16 +335,17 @@ func DreamsEntry() fyne.CanvasObject {
 		}
 	}
 
+	Assets.Gnomes_sync = canvas.NewText("", color.RGBA{31, 150, 200, 210})
 	Assets.Gnomes_height = canvas.NewText(" Gnomon Height: ", color.White)
-
 	Assets.Daem_height = canvas.NewText(" Daemon Height: ", color.White)
 	Assets.Wall_height = canvas.NewText(" Wallet Height: ", color.White)
 	Assets.Dreams_bal = canvas.NewText(" dReams Balance: ", color.White)
 	Assets.Dero_bal = canvas.NewText(" Dero Balance: ", color.White)
 	price := getOgre("DERO-USDT")
 	Assets.Dero_price = canvas.NewText(" Dero Price: $"+price, color.White)
-	Assets.Gnomes_height.TextSize = 18
 
+	Assets.Gnomes_sync.TextSize = 18
+	Assets.Gnomes_height.TextSize = 18
 	Assets.Daem_height.TextSize = 18
 	Assets.Wall_height.TextSize = 18
 	Assets.Dreams_bal.TextSize = 18
@@ -355,7 +357,15 @@ func DreamsEntry() fyne.CanvasObject {
 	Actions.DEntry.SetText("dReams: 0")
 	Actions.DEntry.Hide()
 
-	box := *container.NewVBox(Assets.Gnomes_height, Assets.Daem_height, Assets.Wall_height, Assets.Dreams_bal, Assets.Dero_bal, Assets.Dero_price, exLabel, Actions.DEntry)
+	box := *container.NewVBox(
+		Assets.Gnomes_sync,
+		Assets.Gnomes_height,
+		Assets.Daem_height,
+		Assets.Wall_height,
+		Assets.Dreams_bal,
+		Assets.Dero_bal,
+		Assets.Dero_price, exLabel,
+		Actions.DEntry)
 
 	return &box
 }

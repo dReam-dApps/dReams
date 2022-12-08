@@ -43,16 +43,17 @@ var offset int
 func init() {
 	saved := readConfig()
 	table.Poker_name = saved.Name
-	menu.PlayerControl.Daemon_config = saved.Daemon[0]
-	menu.FavoriteList = saved.Tables
-	prediction.PredictControl.Favorites_list = saved.Predict
-	prediction.SportsControl.Favorites_list = saved.Sports
+	menu.MenuControl.Daemon_config = saved.Daemon[0]
+	menu.MenuControl.Holdero_favorites = saved.Tables
+	menu.MenuControl.Predict_favorites = saved.Predict
+	menu.MenuControl.Sports_favorites = saved.Sports
 	c := make(chan os.Signal)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-c
 		fmt.Println()
 		menu.StopGnomon(menu.Gnomes.Init)
+		menu.StopIndicators()
 		log.Println("Closing dReams.")
 		os.Exit(0)
 	}()
@@ -105,9 +106,9 @@ func makeConfig(name, daemon string) (data save) {
 		data.Daemon = []string{daemon}
 	}
 
-	data.Tables = menu.FavoriteList
-	data.Predict = prediction.PredictControl.Favorites_list
-	data.Sports = prediction.SportsControl.Favorites_list
+	data.Tables = menu.MenuControl.Holdero_favorites
+	data.Predict = menu.MenuControl.Predict_favorites
+	data.Sports = menu.MenuControl.Sports_favorites
 
 	return
 }
@@ -121,9 +122,9 @@ func writeConfig(u save) {
 				log.Println(err)
 			}
 
-			u.Tables = menu.FavoriteList
-			u.Predict = prediction.PredictControl.Favorites_list
-			u.Sports = prediction.SportsControl.Favorites_list
+			u.Tables = menu.MenuControl.Holdero_favorites
+			u.Predict = menu.MenuControl.Predict_favorites
+			u.Sports = menu.MenuControl.Sports_favorites
 
 			defer file.Close()
 			json, _ := json.MarshalIndent(u, "", " ")
@@ -615,7 +616,7 @@ func PopulatePredictions(dc, gs bool) {
 		t := len(list)
 		list = append(list, " Contracts: "+strconv.Itoa(t))
 		sort.Strings(list)
-		prediction.PredictControl.Contract_list = list
+		menu.MenuControl.Predict_contracts = list
 	}
 	prediction.PredictControl.Predict_list.Refresh()
 }
@@ -710,7 +711,7 @@ func PopulateSports(dc, gs bool) {
 		t := len(list)
 		list = append(list, " Contracts: "+strconv.Itoa(t))
 		sort.Strings(list)
-		prediction.SportsControl.Contract_list = list
+		menu.MenuControl.Sports_contracts = list
 	}
 	prediction.SportsControl.Sports_list.Refresh()
 }
@@ -803,29 +804,94 @@ func S_Results(g, gN, l, min, eA, c, tA, tB, tAV, tBV, total string, a, b uint64
 	S.TopLabel.Refresh()
 }
 
-func MenuRefresh(tab, gi bool) {
-	if tab && gi {
-		dHeight, _ := rpc.DaemonHeight()
-		var index int
-		if !menu.GnomonClosing() && menu.FastSynced() {
-			index = int(menu.Gnomes.Indexer.ChainHeight)
-		}
-		table.Assets.Gnomes_height.Text = (" Gnomon Height: " + strconv.Itoa(index))
+func refreshGnomonDisplay(index, c int) {
+	if c == 1 {
+		height := " Gnomon Height: " + strconv.Itoa(index)
+		table.Assets.Gnomes_height.Text = (height)
 		table.Assets.Gnomes_height.Refresh()
-		table.Assets.Gnomes_index.Text = (" Indexed SCIDs: " + strconv.Itoa(int(menu.Gnomes.SCIDS)))
+	} else {
+		table.Assets.Gnomes_height.Text = (" Gnomon Height: 0")
+		table.Assets.Gnomes_height.Refresh()
+	}
+}
+
+func refreshIndexDisplay(c bool) {
+	if c {
+		scids := " Indexed SCIDs: " + strconv.Itoa(int(menu.Gnomes.SCIDS))
+		table.Assets.Gnomes_index.Text = (scids)
 		table.Assets.Gnomes_index.Refresh()
-		table.Assets.Daem_height.Text = (" Daemon Height: " + strconv.Itoa(int(dHeight)))
+	} else {
+		table.Assets.Gnomes_index.Text = (" Indexed SCIDs: 0")
+		table.Assets.Gnomes_index.Refresh()
+	}
+}
+
+func refreshDaemonDisplay(c bool) {
+	if c && rpc.Signal.Daemon {
+		dHeight, _ := rpc.DaemonHeight()
+		d := strconv.Itoa(int(dHeight))
+		table.Assets.Daem_height.Text = (" Daemon Height: " + d)
 		table.Assets.Daem_height.Refresh()
+	} else {
+		table.Assets.Daem_height.Text = (" Daemon Height: 0")
+		table.Assets.Daem_height.Refresh()
+	}
+}
+
+func refreshWalletDisplay(c bool) {
+	if c {
 		table.Assets.Wall_height.Text = (" Wallet Height: " + rpc.Wallet.Height)
 		table.Assets.Wall_height.Refresh()
 		table.Assets.Dreams_bal.Text = (" dReams Balance: " + rpc.Wallet.TokenBal)
 		table.Assets.Dreams_bal.Refresh()
 		table.Assets.Dero_bal.Text = (" Dero Balance: " + rpc.Wallet.Balance)
 		table.Assets.Dero_bal.Refresh()
+	} else {
+		table.Assets.Wall_height.Text = (" Wallet Height: 0")
+		table.Assets.Wall_height.Refresh()
+		table.Assets.Dreams_bal.Text = (" dReams Balance: 0")
+		table.Assets.Dreams_bal.Refresh()
+		table.Assets.Dero_bal.Text = (" Dero Balance: 0")
+		table.Assets.Dero_bal.Refresh()
+	}
+}
+
+func refreshPriceDisplay(c bool) {
+	if c && rpc.Signal.Daemon {
+		_, price := table.GetPrice("DERO-USDT")
+		table.Assets.Dero_price.Text = (" Dero Price: $" + price)
+		table.Assets.Dero_price.Refresh()
+	} else {
+		table.Assets.Dero_price.Text = (" Dero Price: $")
+		table.Assets.Dero_price.Refresh()
+	}
+}
+
+func MenuRefresh(tab, gi bool) {
+	if tab && gi {
+		var index int
+		if !menu.GnomonClosing() && menu.FastSynced() {
+			index = int(menu.Gnomes.Indexer.ChainHeight)
+		}
+
+		if !menu.FastSynced() {
+			table.Assets.Gnomes_sync.Text = (" Gnomon Syncing... ")
+			table.Assets.Gnomes_sync.Refresh()
+		} else {
+			if !menu.GnomonClosing() {
+				table.Assets.Gnomes_sync.Text = ("")
+				table.Assets.Gnomes_sync.Refresh()
+			}
+		}
+		go refreshGnomonDisplay(index, 1)
+		go refreshIndexDisplay(true)
+
+		if rpc.Signal.Daemon {
+			go refreshDaemonDisplay(true)
+		}
+
 		if offset == 20 {
-			_, price := table.GetPrice("DERO-USDT")
-			table.Assets.Dero_price.Text = (" Dero Price: $" + price)
-			table.Assets.Dero_price.Refresh()
+			go refreshPriceDisplay(true)
 		}
 
 		if dReams.menu_tabs.contracts {
@@ -841,10 +907,20 @@ func MenuRefresh(tab, gi bool) {
 		}
 	}
 
+	if !rpc.Signal.Daemon {
+		go refreshDaemonDisplay(false)
+		go refreshGnomonDisplay(0, 0)
+	}
+
+	if rpc.Wallet.Connect {
+		go refreshWalletDisplay(true)
+	} else {
+		go refreshWalletDisplay(false)
+	}
+
 	if !dReams.menu {
 		menu.Market.Viewing = ""
 	}
-
 }
 
 func RecheckButton() fyne.CanvasObject {
@@ -899,9 +975,11 @@ func MainTab(ti *container.TabItem) {
 		dReams.bacc = false
 		dReams.predict = true
 		dReams.sports = false
-		table.Actions.NameEntry.Text = menu.CheckPredictionName(prediction.PredictControl.Contract)
-		table.Actions.NameEntry.Refresh()
-		go PopulatePredictions(rpc.Signal.Daemon, menu.Gnomes.Sync)
+		go func() {
+			table.Actions.NameEntry.Text = menu.CheckPredictionName(prediction.PredictControl.Contract)
+			table.Actions.NameEntry.Refresh()
+			PopulatePredictions(rpc.Signal.Daemon, menu.Gnomes.Sync)
+		}()
 		PredictionRefresh(dReams.predict)
 	case "Sports":
 		dReams.menu = false
@@ -935,7 +1013,7 @@ func MenuTab(ti *container.TabItem) {
 		dReams.menu_tabs.contracts = false
 		dReams.menu_tabs.assets = true
 		dReams.menu_tabs.market = false
-		menu.PlayerControl.Viewing_asset = ""
+		menu.MenuControl.Viewing_asset = ""
 		table.Assets.Asset_list.UnselectAll()
 	case "Market":
 		dReams.menu_tabs.wallet = false
