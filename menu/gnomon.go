@@ -54,6 +54,8 @@ End Function`
 )
 
 type gnomon struct {
+	Para     int
+	Fast     bool
 	Start    bool
 	Init     bool
 	Sync     bool
@@ -295,12 +297,11 @@ func startGnomon(ep string) {
 	runmode := "daemon"
 	mbl := false
 	closeondisconnect := false
-	fastsync := true
 
 	filters := searchFilters()
 	if len(filters) == 7 {
-		Gnomes.Indexer = indexer.NewIndexer(backend, filters, last_height, daemon_endpoint, runmode, mbl, closeondisconnect, fastsync)
-		go Gnomes.Indexer.StartDaemonMode()
+		Gnomes.Indexer = indexer.NewIndexer(backend, filters, last_height, daemon_endpoint, runmode, mbl, closeondisconnect, Gnomes.Fast)
+		go Gnomes.Indexer.StartDaemonMode(Gnomes.Para)
 		time.Sleep(3 * time.Second)
 		Gnomes.Init = true
 	}
@@ -920,6 +921,9 @@ func FindNfaListings(gs bool) {
 		Market.Buy_now = buy_now
 		sort.Strings(Market.Auctions)
 		sort.Strings(Market.Buy_now)
+
+		Market.Auction_list.Refresh()
+		Market.Buy_list.Refresh()
 	}
 }
 
@@ -973,8 +977,10 @@ func GetAuctionImages(scid string) {
 		icon, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "iconURLHdr", Gnomes.Indexer.LastIndexedHeight, true)
 		cover, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "coverURL", Gnomes.Indexer.LastIndexedHeight, true)
 		if icon != nil {
-			Market.Icon, _ = table.DownloadFile(icon[0], name[0])
-			Market.Cover, _ = table.DownloadFile(cover[0], name[0]+"-cover")
+			go func() {
+				Market.Icon, _ = table.DownloadFile(icon[0], name[0])
+				Market.Cover, _ = table.DownloadFile(cover[0], name[0]+"-cover")
+			}()
 		} else {
 			Market.Icon = *canvas.NewImageFromImage(nil)
 			Market.Cover = *canvas.NewImageFromImage(nil)

@@ -235,13 +235,14 @@ func AuctionListings() fyne.Widget {
 		if id != 0 {
 			split := strings.Split(Market.Auctions[id], "   ")
 			if split[3] != Market.Viewing {
+				clearNfaImages()
 				Market.Viewing = split[3]
-				go ResetAuctionInfo()
 				go GetAuctionImages(split[3])
-				GetAuctionDetails(split[3])
+				go GetAuctionDetails(split[3])
 				value := float64(Market.Bid_amt)
 				str := fmt.Sprintf("%.5f", value/100000)
 				Market.Entry.SetText(str)
+
 			}
 		}
 	}
@@ -264,10 +265,12 @@ func BuyNowListings() fyne.Widget {
 	Market.Buy_list.OnSelected = func(id widget.ListItemID) {
 		if id != 0 {
 			split := strings.Split(Market.Buy_now[id], "   ")
-			Market.Viewing = split[3]
-			ResetBuyInfo()
-			go GetBuyNowImages(split[3])
-			GetBuyNowDetails(split[3])
+			if split[3] != Market.Viewing {
+				clearNfaImages()
+				Market.Viewing = split[3]
+				go GetBuyNowImages(split[3])
+				GetBuyNowDetails(split[3])
+			}
 		}
 	}
 
@@ -297,6 +300,13 @@ func NfaImg(img canvas.Image) *fyne.Container {
 	cont := container.NewWithoutLayout(&img)
 
 	return cont
+}
+
+func clearNfaImages() {
+	Market.Cover = *canvas.NewImageFromImage(nil)
+	Market.Cover.Refresh()
+	Market.Icon = *canvas.NewImageFromImage(nil)
+	Market.Icon.Refresh()
 }
 
 func NfaMarketInfo() fyne.CanvasObject {
@@ -353,7 +363,9 @@ func AuctionInfo() fyne.CanvasObject {
 func ResetAuctionInfo() {
 	Market.Bid_amt = 0
 	Market.Icon = *canvas.NewImageFromImage(nil)
+	Market.Icon.Refresh()
 	Market.Cover = *canvas.NewImageFromImage(nil)
+	Market.Cover.Refresh()
 	Market.Name.Text = (" Name: ")
 	Market.Name.Refresh()
 	Market.Collection.Text = (" Collection: ")

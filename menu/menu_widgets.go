@@ -1198,7 +1198,7 @@ func IntroTree() fyne.CanvasObject {
 	list := map[string][]string{
 		"":                      {"Welcome to dReams"},
 		"Welcome to dReams":     {"Get Started", "Contracts", "Assets", "Market"},
-		"Get Started":           {"You will need a Dero wallet to play", "Can use local daemon, or remote daemon options are availible in drop down", "Enter daemon rpc address, wallet rpc address and user:pass", "Press connect and check boxes will show successful connection", "On first start start up of app, Gnomon will take aprox 10 seconds to create your local db"},
+		"Get Started":           {"You will need a Dero wallet to play", "Can use local daemon, or remote daemon options are availible in drop down", "Enter daemon rpc address, wallet rpc address and user:pass", "Press connect, D & W indicators at top right of screen will light up on successful connection", "On first start start up of app, Gnomon will take ~10 seconds to create your local db", "Gnomon idicator will have a stripe when starting or syncing, indicator will turn solid when startup, sync and scan are completed"},
 		"Contracts":             {"Holdero", "Baccarat", "Predictions", "Sports"},
 		"Holdero":               {"Multiplayer Texas Hold'em style on chian poker", "No limit, single raise game. Table owners choose game params", "Six players max at a table", "No side pots, must call or fold", "Can use Dero or dReam Tokens", "View table listings or launch your own Holdero contract from the contracts tab"},
 		"Baccarat":              {"A popular table game, where closest to 9 wins", "Uses dReam Tokens for betting"},
@@ -1213,6 +1213,15 @@ func IntroTree() fyne.CanvasObject {
 	}
 
 	tree := widget.NewTreeWithStrings(list)
+
+	tree.OnBranchClosed = func(uid widget.TreeNodeID) {
+		tree.UnselectAll()
+	}
+
+	tree.OnBranchOpened = func(uid widget.TreeNodeID) {
+		tree.Select(uid)
+	}
+
 	tree.OpenBranch("Welcome to dReams")
 
 	alpha := container.NewMax(canvas.NewRectangle(color.RGBA{0, 0, 0, 120}))

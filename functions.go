@@ -17,6 +17,7 @@ import (
 	"github.com/SixofClubsss/dReams/prediction"
 	"github.com/SixofClubsss/dReams/rpc"
 	"github.com/SixofClubsss/dReams/table"
+	"github.com/docopt/docopt-go"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -38,15 +39,70 @@ type save struct {
 	Sports  []string `json:"sports"`
 }
 
+var command_line string = `dReams
+dReam Tables all in one dApp, powered by Gnomon.
+
+Usage:
+  dReams [options]
+  dReams -h | --help
+
+Options:
+  -h --help     Show this screen.
+  --fastsync=<false>	Gnomon option,  true/false value to define loading at chain height on start up.
+  --num-parallel-blocks=<5>   Gnomon option,  defines the number of parallel blocks to index.`
+
 var offset int
+
+func flags() {
+	arguments, err := docopt.ParseArgs(command_line, nil, "v0.9.0")
+
+	if err != nil {
+		log.Fatalf("Error while parsing arguments: %s\n", err)
+	}
+
+	fastsync := true
+	if arguments["--fastsync"] != nil {
+		if arguments["--fastsync"].(string) == "false" {
+			fastsync = false
+		}
+	}
+
+	parallel := 1
+	if arguments["--num-parallel-blocks"] != nil {
+		s := arguments["--num-parallel-blocks"].(string)
+		switch s {
+		case "2":
+			parallel = 2
+		case "3":
+			parallel = 3
+		case "4":
+			parallel = 4
+		case "5":
+			parallel = 5
+		default:
+			parallel = 1
+		}
+	}
+
+	menu.Gnomes.Fast = fastsync
+	menu.Gnomes.Para = parallel
+}
 
 func init() {
 	saved := readConfig()
+
 	table.Poker_name = saved.Name
-	menu.MenuControl.Daemon_config = saved.Daemon[0]
+
+	if saved.Daemon != nil {
+		menu.MenuControl.Daemon_config = saved.Daemon[0]
+	}
+
 	menu.MenuControl.Holdero_favorites = saved.Tables
 	menu.MenuControl.Predict_favorites = saved.Predict
 	menu.MenuControl.Sports_favorites = saved.Sports
+
+	rpc.Signal.Sit = true
+
 	c := make(chan os.Signal)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
@@ -433,7 +489,7 @@ func HolderoRefresh() {
 		} else {
 			if rpc.Signal.Sit {
 				table.Actions.Sit.Hide()
-			} else {
+			} else if !rpc.Signal.Sit && rpc.Wallet.Connect {
 				table.Actions.Sit.Show()
 			}
 			table.Actions.Leave.Hide()
@@ -902,8 +958,6 @@ func MenuRefresh(tab, gi bool) {
 
 		if dReams.menu_tabs.market && !isWindows() {
 			menu.FindNfaListings(menu.Gnomes.Sync)
-			menu.Market.Auction_list.Refresh()
-			menu.Market.Buy_list.Refresh()
 		}
 	}
 

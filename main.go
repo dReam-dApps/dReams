@@ -46,6 +46,7 @@ var background *fyne.Container
 func main() {
 	n := runtime.NumCPU()
 	runtime.GOMAXPROCS(n)
+	flags()
 	dReams.App = app.NewWithID(App_ID)
 	dReams.App.Settings().SetTheme(Theme())
 	dReams.Window = dReams.App.NewWindow(App_Name)
