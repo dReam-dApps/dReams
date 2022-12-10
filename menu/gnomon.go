@@ -377,10 +377,10 @@ func GnomonState(dc, gi bool) {
 		if len(Market.Viewing) == 64 && rpc.Wallet.Connect {
 			if Market.Tab == "Buy" {
 				GetBuyNowDetails(Market.Viewing)
-				BuyNowInfo()
+				go RefreshNfaImages()
 			} else {
 				GetAuctionDetails(Market.Viewing)
-				AuctionInfo()
+				go RefreshNfaImages()
 			}
 		}
 	}
@@ -595,7 +595,7 @@ func checkTableVersion(scid string) uint64 {
 }
 
 func CreateTableList(gc bool) {
-	if !gc && !GnomonClosing() {
+	if Gnomes.Init && !gc && !GnomonClosing() {
 		var owner bool
 		list := []string{}
 		tables := Gnomes.Indexer.Backend.GetAllOwnersAndSCIDs()
@@ -922,8 +922,6 @@ func FindNfaListings(gs bool) {
 		sort.Strings(Market.Auctions)
 		sort.Strings(Market.Buy_now)
 
-		Market.Auction_list.Refresh()
-		Market.Buy_list.Refresh()
 	}
 }
 
@@ -971,16 +969,14 @@ func checkNfaBuyListing(scid string) string {
 	return ""
 }
 
-func GetAuctionImages(scid string) {
+func GetNfaImages(scid string) {
 	if len(scid) == 64 {
 		name, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "nameHdr", Gnomes.Indexer.ChainHeight, true)
 		icon, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "iconURLHdr", Gnomes.Indexer.LastIndexedHeight, true)
 		cover, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "coverURL", Gnomes.Indexer.LastIndexedHeight, true)
 		if icon != nil {
-			go func() {
-				Market.Icon, _ = table.DownloadFile(icon[0], name[0])
-				Market.Cover, _ = table.DownloadFile(cover[0], name[0]+"-cover")
-			}()
+			Market.Icon, _ = table.DownloadFile(icon[0], name[0])
+			Market.Cover, _ = table.DownloadFile(cover[0], name[0]+"-cover")
 		} else {
 			Market.Icon = *canvas.NewImageFromImage(nil)
 			Market.Cover = *canvas.NewImageFromImage(nil)
@@ -1011,6 +1007,7 @@ func GetAuctionDetails(scid string) {
 			Market.Collection.Refresh()
 			Market.Description.Text = (" Description: " + description[0])
 			Market.Description.Refresh()
+
 			Market.Creator.Text = (" Creator: " + creator[0])
 			Market.Creator.Refresh()
 			Market.Owner.Text = (" Owner: " + owner[0])
@@ -1021,6 +1018,7 @@ func GetAuctionDetails(scid string) {
 				Market.Owner_update.Text = (" Owner can update: No")
 			}
 			Market.Owner_update.Refresh()
+
 			Market.Royalty.Text = (" Royalty: " + strconv.Itoa(int(royalty[0])) + "%")
 			Market.Royalty.Refresh()
 			price := float64(start[0])
@@ -1029,9 +1027,11 @@ func GetAuctionDetails(scid string) {
 			Market.Start_price.Refresh()
 			Market.Bid_count.Text = (" Bids: " + strconv.Itoa(int(bids[0])))
 			Market.Bid_count.Refresh()
+
 			end, _ := rpc.MsToTime(strconv.Itoa(int(endTime[0]) * 1000))
 			Market.End_time.Text = (" Ends At: " + end.String())
 			Market.End_time.Refresh()
+
 			if current != nil {
 				value := float64(current[0])
 				str := fmt.Sprintf("%.5f", value/100000)
@@ -1072,22 +1072,6 @@ func GetAuctionDetails(scid string) {
 	}
 }
 
-func GetBuyNowImages(scid string) {
-	if len(scid) == 64 {
-		name, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "nameHdr", Gnomes.Indexer.ChainHeight, true)
-		icon, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "iconURLHdr", Gnomes.Indexer.LastIndexedHeight, true)
-		cover, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "coverURL", Gnomes.Indexer.LastIndexedHeight, true)
-		if icon != nil {
-			Market.Icon, _ = table.DownloadFile(icon[0], name[0])
-			Market.Cover, _ = table.DownloadFile(cover[0], name[0]+"-cover")
-		} else {
-			Market.Icon = *canvas.NewImageFromImage(nil)
-			Market.Cover = *canvas.NewImageFromImage(nil)
-
-		}
-	}
-}
-
 func GetBuyNowDetails(scid string) {
 	if len(scid) == 64 {
 		name, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "nameHdr", Gnomes.Indexer.ChainHeight, true)
@@ -1108,6 +1092,7 @@ func GetBuyNowDetails(scid string) {
 			Market.Collection.Refresh()
 			Market.Description.Text = (" Description: " + description[0])
 			Market.Description.Refresh()
+
 			Market.Creator.Text = (" Creator: " + creator[0])
 			Market.Creator.Refresh()
 			Market.Owner.Text = (" Owner: " + owner[0])
@@ -1118,6 +1103,7 @@ func GetBuyNowDetails(scid string) {
 				Market.Owner_update.Text = (" Owner can update: No")
 			}
 			Market.Owner_update.Refresh()
+
 			Market.Royalty.Text = (" Royalty: " + strconv.Itoa(int(royalty[0])) + "%")
 			Market.Royalty.Refresh()
 			Market.Buy_amt = start[0]
@@ -1125,6 +1111,7 @@ func GetBuyNowDetails(scid string) {
 			str := fmt.Sprintf("%.5f", value/100000)
 			Market.Start_price.Text = (" Buy now for: " + str + " Dero")
 			Market.Start_price.Refresh()
+
 			Market.Entry.SetText(str)
 			Market.Entry.Disable()
 			end, _ := rpc.MsToTime(strconv.Itoa(int(endTime[0]) * 1000))

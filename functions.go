@@ -582,7 +582,7 @@ func PredictionRefresh(tab bool) {
 func SportsRefresh(tab bool) {
 	if tab {
 		S.RightLabel.SetText("dReams Balance: " + rpc.Wallet.TokenBal + "      Dero Balance: " + rpc.Wallet.Balance + "      Height: " + rpc.Wallet.Height)
-		go GetBook(rpc.Signal.Daemon, prediction.SportsControl.Contract)
+		go GetBook(menu.Gnomes.Init, prediction.SportsControl.Contract)
 	}
 }
 
@@ -772,8 +772,8 @@ func PopulateSports(dc, gs bool) {
 	prediction.SportsControl.Sports_list.Refresh()
 }
 
-func GetBook(dc bool, scid string) {
-	if dc && !menu.GnomonClosing() && !menu.GnomonWriting() {
+func GetBook(gi bool, scid string) {
+	if gi && !menu.GnomonClosing() && !menu.GnomonWriting() {
 		_, initValue := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "s_init", menu.Gnomes.Indexer.ChainHeight, true)
 		if initValue != nil {
 			_, playedValue := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "s_played", menu.Gnomes.Indexer.ChainHeight, true)
@@ -961,7 +961,9 @@ func MenuRefresh(tab, gi bool) {
 		}
 	}
 
-	if !rpc.Signal.Daemon {
+	if rpc.Signal.Daemon {
+		go refreshDaemonDisplay(true)
+	} else {
 		go refreshDaemonDisplay(false)
 		go refreshGnomonDisplay(0, 0)
 	}
@@ -1042,7 +1044,7 @@ func MainTab(ti *container.TabItem) {
 		dReams.predict = false
 		dReams.sports = true
 		go PopulateSports(rpc.Signal.Daemon, menu.Gnomes.Sync)
-		go GetBook(rpc.Signal.Daemon, prediction.SportsControl.Contract)
+		go GetBook(menu.Gnomes.Init, prediction.SportsControl.Contract)
 	}
 }
 
