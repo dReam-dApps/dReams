@@ -212,14 +212,26 @@ func TourneyDeposit(bal uint64, name string) error {
 		arg2 := rpc.Argument{Name: "name", DataType: "S", Value: name}
 		args := rpc.Arguments{arg1, arg2}
 		txid := rpc.Transfer_Result{}
-		params := &rpc.SC_Invoke_Params{
-			SC_ID:            TourneySCID,
-			SC_RPC:           args,
-			SC_TOKEN_Deposit: bal,
-			Ringsize:         2,
+
+		scid := crypto.HashHexToHash(TourneySCID)
+		t1 := rpc.Transfer{
+			SCID:        scid,
+			Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
+			Amount:      0,
+			Burn:        bal,
 		}
 
-		err := rpcClientW.CallFor(ctx, &txid, "scinvoke", params)
+		t := []rpc.Transfer{t1}
+		fee, _ := GasEstimate(TourneySCID, args, t)
+		params := &rpc.Transfer_Params{
+			Transfers: t,
+			SC_ID:     TourneySCID,
+			SC_RPC:    args,
+			Ringsize:  2,
+			Fees:      fee,
+		}
+
+		err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
 		if err != nil {
 			log.Println(err)
 			return nil
@@ -269,13 +281,24 @@ func SitDown(name, av string) error { /// sit at holdero table
 	arg2 := rpc.Argument{Name: "address", DataType: "S", Value: Wallet.idHash + hx}
 	args := rpc.Arguments{arg1, arg2}
 	txid := rpc.Transfer_Result{}
-	params := &rpc.SC_Invoke_Params{
-		SC_ID:    Round.Contract,
-		SC_RPC:   args,
-		Ringsize: 2,
+
+	t1 := rpc.Transfer{
+		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
+		Amount:      0,
+		Burn:        0,
 	}
 
-	err := rpcClientW.CallFor(ctx, &txid, "scinvoke", params)
+	t := []rpc.Transfer{t1}
+	fee, _ := GasEstimate(Round.Contract, args, t)
+	params := &rpc.Transfer_Params{
+		Transfers: t,
+		SC_ID:     Round.Contract,
+		SC_RPC:    args,
+		Ringsize:  2,
+		Fees:      fee,
+	}
+
+	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
 	if err != nil {
 		log.Println(err)
 		return nil
@@ -297,13 +320,24 @@ func Leave() error { /// leave holdero table
 	arg2 := rpc.Argument{Name: "id", DataType: "U", Value: checkoutId}
 	args := rpc.Arguments{arg1, arg2}
 	txid := rpc.Transfer_Result{}
-	params := &rpc.SC_Invoke_Params{
-		SC_ID:    Round.Contract,
-		SC_RPC:   args,
-		Ringsize: 2,
+
+	t1 := rpc.Transfer{
+		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
+		Amount:      0,
+		Burn:        0,
 	}
 
-	err := rpcClientW.CallFor(ctx, &txid, "scinvoke", params)
+	t := []rpc.Transfer{t1}
+	fee, _ := GasEstimate(Round.Contract, args, t)
+	params := &rpc.Transfer_Params{
+		Transfers: t,
+		SC_ID:     Round.Contract,
+		SC_RPC:    args,
+		Ringsize:  2,
+		Fees:      fee,
+	}
+
+	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
 	if err != nil {
 		log.Println(err)
 		return nil
@@ -351,7 +385,6 @@ func SetTable(seats int, bb, sb, ante uint64, chips, name, av string) error { //
 	}
 
 	t := []rpc.Transfer{t1}
-
 	fee, _ := GasEstimate(Round.Contract, args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
@@ -693,13 +726,23 @@ func RevealKey(key string) error { /// holdero reveal
 	args := rpc.Arguments{arg1, arg2}
 	txid := rpc.Transfer_Result{}
 
-	params := &rpc.SC_Invoke_Params{
-		SC_ID:    Round.Contract,
-		SC_RPC:   args,
-		Ringsize: 2,
+	t1 := rpc.Transfer{
+		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
+		Amount:      0,
+		Burn:        0,
 	}
 
-	err := rpcClientW.CallFor(ctx, &txid, "scinvoke", params)
+	t := []rpc.Transfer{t1}
+	fee, _ := GasEstimate(Round.Contract, args, t)
+	params := &rpc.Transfer_Params{
+		Transfers: t,
+		SC_ID:     Round.Contract,
+		SC_RPC:    args,
+		Ringsize:  2,
+		Fees:      fee,
+	}
+
+	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
 	if err != nil {
 		log.Println(err)
 		return nil
@@ -792,13 +835,24 @@ func ForceStat() error {
 	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "ForceStart"}
 	args := rpc.Arguments{arg1}
 	txid := rpc.Transfer_Result{}
-	params := &rpc.SC_Invoke_Params{
-		SC_ID:    Round.Contract,
-		SC_RPC:   args,
-		Ringsize: 2,
+
+	t1 := rpc.Transfer{
+		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
+		Amount:      0,
+		Burn:        0,
 	}
 
-	err := rpcClientW.CallFor(ctx, &txid, "scinvoke", params)
+	t := []rpc.Transfer{t1}
+	fee, _ := GasEstimate(Round.Contract, args, t)
+	params := &rpc.Transfer_Params{
+		Transfers: t,
+		SC_ID:     Round.Contract,
+		SC_RPC:    args,
+		Ringsize:  2,
+		Fees:      fee,
+	}
+
+	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
 	if err != nil {
 		log.Println(err)
 		return nil
@@ -848,13 +902,23 @@ func SharedDeckUrl(face, faceUrl, back, backUrl string) error {
 	args := rpc.Arguments{arg1, arg2, arg3}
 	txid := rpc.Transfer_Result{}
 
-	params := &rpc.SC_Invoke_Params{
-		SC_ID:    Round.Contract,
-		SC_RPC:   args,
-		Ringsize: 2,
+	t1 := rpc.Transfer{
+		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
+		Amount:      0,
+		Burn:        0,
 	}
 
-	err := rpcClientW.CallFor(ctx, &txid, "scinvoke", params)
+	t := []rpc.Transfer{t1}
+	fee, _ := GasEstimate(Round.Contract, args, t)
+	params := &rpc.Transfer_Params{
+		Transfers: t,
+		SC_ID:     Round.Contract,
+		SC_RPC:    args,
+		Ringsize:  2,
+		Fees:      fee,
+	}
+
+	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
 	if err != nil {
 		log.Println(err)
 		return nil
@@ -874,14 +938,23 @@ func GetdReams(amt uint64) error {
 	args := rpc.Arguments{arg1}
 	txid := rpc.Transfer_Result{}
 
-	params := &rpc.SC_Invoke_Params{
-		SC_ID:           BaccSCID,
-		SC_RPC:          args,
-		SC_DERO_Deposit: amt,
-		Ringsize:        2,
+	t1 := rpc.Transfer{
+		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
+		Amount:      0,
+		Burn:        amt,
 	}
 
-	err := rpcClientW.CallFor(ctx, &txid, "scinvoke", params)
+	t := []rpc.Transfer{t1}
+	fee, _ := GasEstimate(BaccSCID, args, t)
+	params := &rpc.Transfer_Params{
+		Transfers: t,
+		SC_ID:     BaccSCID,
+		SC_RPC:    args,
+		Ringsize:  2,
+		Fees:      fee,
+	}
+
+	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
 	if err != nil {
 		log.Println(err)
 		return nil
@@ -1040,7 +1113,7 @@ func PredictHigher(scid, name string) error {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
-	a := uint64(Predict.Amount)
+	amt := uint64(Predict.Amount)
 
 	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "Predict"}
 	arg2 := rpc.Argument{Name: "pre", DataType: "U", Value: 1}
@@ -1048,14 +1121,23 @@ func PredictHigher(scid, name string) error {
 	args := rpc.Arguments{arg1, arg2, arg3}
 	txid := rpc.Transfer_Result{}
 
-	p := &rpc.SC_Invoke_Params{
-		SC_ID:           scid,
-		SC_RPC:          args,
-		SC_DERO_Deposit: a,
-		Ringsize:        2,
+	t1 := rpc.Transfer{
+		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
+		Amount:      0,
+		Burn:        amt,
 	}
 
-	err := rpcClientW.CallFor(ctx, &txid, "scinvoke", p)
+	t := []rpc.Transfer{t1}
+	fee, _ := GasEstimate(scid, args, t)
+	params := &rpc.Transfer_Params{
+		Transfers: t,
+		SC_ID:     scid,
+		SC_RPC:    args,
+		Ringsize:  2,
+		Fees:      fee,
+	}
+
+	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
 	if err != nil {
 		log.Println(err)
 		return nil
@@ -1071,7 +1153,7 @@ func PredictLower(scid, name string) error {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
-	a := uint64(Predict.Amount)
+	amt := uint64(Predict.Amount)
 
 	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "Predict"}
 	arg2 := rpc.Argument{Name: "pre", DataType: "U", Value: 0}
@@ -1079,14 +1161,23 @@ func PredictLower(scid, name string) error {
 	args := rpc.Arguments{arg1, arg2, arg3}
 	txid := rpc.Transfer_Result{}
 
-	p := &rpc.SC_Invoke_Params{
-		SC_ID:           scid,
-		SC_RPC:          args,
-		SC_DERO_Deposit: a,
-		Ringsize:        2,
+	t1 := rpc.Transfer{
+		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
+		Amount:      0,
+		Burn:        amt,
 	}
 
-	err := rpcClientW.CallFor(ctx, &txid, "scinvoke", p)
+	t := []rpc.Transfer{t1}
+	fee, _ := GasEstimate(scid, args, t)
+	params := &rpc.Transfer_Params{
+		Transfers: t,
+		SC_ID:     scid,
+		SC_RPC:    args,
+		Ringsize:  2,
+		Fees:      fee,
+	}
+
+	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
 	if err != nil {
 		log.Println(err)
 		return nil
@@ -1107,14 +1198,23 @@ func NameChange(scid, name string) error { /// change leaderboard name
 	args := rpc.Arguments{arg1, arg2}
 	txid := rpc.Transfer_Result{}
 
-	p := &rpc.SC_Invoke_Params{
-		SC_ID:           scid,
-		SC_RPC:          args,
-		SC_DERO_Deposit: 10000,
-		Ringsize:        2,
+	t1 := rpc.Transfer{
+		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
+		Amount:      0,
+		Burn:        10000,
 	}
 
-	err := rpcClientW.CallFor(ctx, &txid, "scinvoke", p)
+	t := []rpc.Transfer{t1}
+	fee, _ := GasEstimate(scid, args, t)
+	params := &rpc.Transfer_Params{
+		Transfers: t,
+		SC_ID:     scid,
+		SC_RPC:    args,
+		Ringsize:  2,
+		Fees:      fee,
+	}
+
+	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
 	if err != nil {
 		log.Println(err)
 		return nil
@@ -1135,14 +1235,23 @@ func RemoveAddress(scid, name string) error {
 	args := rpc.Arguments{arg1, arg2}
 	txid := rpc.Transfer_Result{}
 
-	p := &rpc.SC_Invoke_Params{
-		SC_ID:           scid,
-		SC_RPC:          args,
-		SC_DERO_Deposit: 10000,
-		Ringsize:        2,
+	t1 := rpc.Transfer{
+		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
+		Amount:      0,
+		Burn:        10000,
 	}
 
-	err := rpcClientW.CallFor(ctx, &txid, "scinvoke", p)
+	t := []rpc.Transfer{t1}
+	fee, _ := GasEstimate(scid, args, t)
+	params := &rpc.Transfer_Params{
+		Transfers: t,
+		SC_ID:     scid,
+		SC_RPC:    args,
+		Ringsize:  2,
+		Fees:      fee,
+	}
+
+	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
 	if err != nil {
 		log.Println(err)
 		return nil
@@ -1218,14 +1327,23 @@ func SetSports(end int, amt, dep uint64, scid, league, game, feed string) error 
 	args := rpc.Arguments{arg1, arg2, arg3, arg4, arg5, arg6}
 	txid := rpc.Transfer_Result{}
 
-	params := &rpc.SC_Invoke_Params{
-		SC_ID:           scid,
-		SC_RPC:          args,
-		SC_DERO_Deposit: dep,
-		Ringsize:        2,
+	t1 := rpc.Transfer{
+		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
+		Amount:      0,
+		Burn:        dep,
 	}
 
-	err := rpcClientW.CallFor(ctx, &txid, "scinvoke", params)
+	t := []rpc.Transfer{t1}
+	fee, _ := GasEstimate(scid, args, t)
+	params := &rpc.Transfer_Params{
+		Transfers: t,
+		SC_ID:     scid,
+		SC_RPC:    args,
+		Ringsize:  2,
+		Fees:      fee,
+	}
+
+	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
 	if err != nil {
 		log.Println(err)
 		return nil
@@ -1249,14 +1367,23 @@ func SetPrediction(end int, amt, dep uint64, scid, predict, feed string) error {
 	args := rpc.Arguments{arg1, arg2, arg3, arg4, arg5}
 	txid := rpc.Transfer_Result{}
 
-	params := &rpc.SC_Invoke_Params{
-		SC_ID:           scid,
-		SC_RPC:          args,
-		SC_DERO_Deposit: dep,
-		Ringsize:        2,
+	t1 := rpc.Transfer{
+		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
+		Amount:      0,
+		Burn:        dep,
 	}
 
-	err := rpcClientW.CallFor(ctx, &txid, "scinvoke", params)
+	t := []rpc.Transfer{t1}
+	fee, _ := GasEstimate(scid, args, t)
+	params := &rpc.Transfer_Params{
+		Transfers: t,
+		SC_ID:     scid,
+		SC_RPC:    args,
+		Ringsize:  2,
+		Fees:      fee,
+	}
+
+	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
 	if err != nil {
 		log.Println(err)
 		return nil
@@ -1277,14 +1404,23 @@ func PostPrediction(scid string, price int) error {
 	args := rpc.Arguments{arg1, arg2}
 	txid := rpc.Transfer_Result{}
 
-	params := &rpc.SC_Invoke_Params{
-		SC_ID:           scid,
-		SC_RPC:          args,
-		SC_DERO_Deposit: 0,
-		Ringsize:        2,
+	t1 := rpc.Transfer{
+		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
+		Amount:      0,
+		Burn:        0,
 	}
 
-	err := rpcClientW.CallFor(ctx, &txid, "scinvoke", params)
+	t := []rpc.Transfer{t1}
+	fee, _ := GasEstimate(scid, args, t)
+	params := &rpc.Transfer_Params{
+		Transfers: t,
+		SC_ID:     scid,
+		SC_RPC:    args,
+		Ringsize:  2,
+		Fees:      fee,
+	}
+
+	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
 	if err != nil {
 		log.Println(err)
 		return nil
