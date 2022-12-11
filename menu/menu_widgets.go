@@ -266,9 +266,17 @@ func HolderoContractEntry() fyne.Widget {
 				} else {
 					disableOwnerControls(true)
 				}
+
+				tourney, _ := rpc.CheckTournamentTable()
+				if rpc.Wallet.Connect && tourney {
+					table.Actions.Tournament.Show()
+				} else {
+					table.Actions.Tournament.Hide()
+				}
 			} else {
 				rpc.Signal.Contract = false
 				MenuControl.holdero_check.SetChecked(false)
+				table.Actions.Tournament.Hide()
 			}
 		}
 	}
