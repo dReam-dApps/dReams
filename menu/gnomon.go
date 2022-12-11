@@ -359,7 +359,8 @@ func GnomonState(dc, gi bool) {
 	if dc && Gnomes.Init && !GnomonWriting() && !GnomonClosing() {
 		Gnomes.SCIDS = uint64(len(Gnomes.Indexer.Backend.GetAllOwnersAndSCIDs()))
 		if FastSynced() {
-			if Gnomes.Indexer.ChainHeight >= stringToInt64(rpc.Wallet.Height) && stringToInt64(rpc.Wallet.Height) != 0 && !GnomonClosing() {
+			height := stringToInt64(rpc.Wallet.Height)
+			if Gnomes.Indexer.ChainHeight >= height-1 && height != 0 && !GnomonClosing() {
 				Gnomes.Sync = true
 				if rpc.Wallet.Connect {
 					go CheckBetContract(Gnomes.Sync, Gnomes.Checked)
@@ -375,8 +376,8 @@ func GnomonState(dc, gi bool) {
 
 		table.Assets.Stats_box = *container.NewVBox(table.Assets.Collection, table.Assets.Name, table.IconImg(Resource.Frame))
 		table.Assets.Stats_box.Refresh()
-		PlayerControl.Stats_box = *container.NewVBox(Stats.Name, Stats.Desc, Stats.Version, Stats.Last, Stats.Seats, TableIcon(Resource.Frame))
-		PlayerControl.Stats_box.Refresh()
+		HolderoControl.Stats_box = *container.NewVBox(Stats.Name, Stats.Desc, Stats.Version, Stats.Last, Stats.Seats, TableIcon(Resource.Frame))
+		HolderoControl.Stats_box.Refresh()
 
 		if len(Market.Viewing) == 64 && rpc.Wallet.Connect {
 			if Market.Tab == "Buy" {
@@ -518,61 +519,63 @@ func checkNFAOwner(scid string) {
 }
 
 func GetOwnedAssetStats(scid string) {
-	n, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "nameHdr", Gnomes.Indexer.LastIndexedHeight, true)
-	if n != nil {
-		c, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "collection", Gnomes.Indexer.LastIndexedHeight, true)
-		//d, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "descrHdr:", Gnomes.Indexer.LastIndexedHeight, true)
-		i, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "iconURLHdr", Gnomes.Indexer.LastIndexedHeight, true)
-
+	if Gnomes.Init && !GnomonClosing() {
+		n, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "nameHdr", Gnomes.Indexer.LastIndexedHeight, true)
 		if n != nil {
-			table.Assets.Name.Text = (" Name: " + n[0])
-			table.Assets.Name.Refresh()
-			PlayerControl.List_button.Show()
+			c, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "collection", Gnomes.Indexer.LastIndexedHeight, true)
+			//d, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "descrHdr:", Gnomes.Indexer.LastIndexedHeight, true)
+			i, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "iconURLHdr", Gnomes.Indexer.LastIndexedHeight, true)
 
-		} else {
-			table.Assets.Name.Text = (" Name: ?")
-			table.Assets.Name.Refresh()
-		}
-
-		if c != nil {
-			table.Assets.Collection.Text = (" Collection: " + c[0])
-			table.Assets.Collection.Refresh()
-		} else {
-			table.Assets.Collection.Text = (" Collection: ?")
-			table.Assets.Collection.Refresh()
-		}
-
-		if i != nil {
-			table.Assets.Icon, _ = table.DownloadFile(i[0], n[0])
-		} else {
-			table.Assets.Icon = *canvas.NewImageFromImage(nil)
-		}
-
-	} else {
-		PlayerControl.List_button.Hide()
-		data, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "metadata", Gnomes.Indexer.LastIndexedHeight, true)
-		if data != nil {
-			var seal Seal
-			json.Unmarshal([]byte(data[0]), &seal)
-			check := strings.Trim(seal.Name, " #0123456789")
-			if check == "Dero Seals" {
-
-				table.Assets.Name.Text = (" Name: " + seal.Name)
+			if n != nil {
+				table.Assets.Name.Text = (" Name: " + n[0])
 				table.Assets.Name.Refresh()
+				MenuControl.List_button.Show()
 
-				table.Assets.Collection.Text = (" Collection: " + check)
+			} else {
+				table.Assets.Name.Text = (" Name: ?")
+				table.Assets.Name.Refresh()
+			}
+
+			if c != nil {
+				table.Assets.Collection.Text = (" Collection: " + c[0])
 				table.Assets.Collection.Refresh()
+			} else {
+				table.Assets.Collection.Text = (" Collection: ?")
+				table.Assets.Collection.Refresh()
+			}
 
-				number := strings.Trim(seal.Name, "DeroSals# ")
-				table.Assets.Icon, _ = table.DownloadFile("https://ipfs.io/ipfs/QmP3HnzWpiaBA6ZE8c3dy5ExeG7hnYjSqkNfVbeVW5iEp6/low/"+number+".jpg", seal.Name)
+			if i != nil {
+				table.Assets.Icon, _ = table.DownloadFile(i[0], n[0])
+			} else {
+				table.Assets.Icon = *canvas.NewImageFromImage(nil)
+			}
 
+		} else {
+			MenuControl.List_button.Hide()
+			data, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "metadata", Gnomes.Indexer.LastIndexedHeight, true)
+			if data != nil {
+				var seal Seal
+				json.Unmarshal([]byte(data[0]), &seal)
+				check := strings.Trim(seal.Name, " #0123456789")
+				if check == "Dero Seals" {
+
+					table.Assets.Name.Text = (" Name: " + seal.Name)
+					table.Assets.Name.Refresh()
+
+					table.Assets.Collection.Text = (" Collection: " + check)
+					table.Assets.Collection.Refresh()
+
+					number := strings.Trim(seal.Name, "DeroSals# ")
+					table.Assets.Icon, _ = table.DownloadFile("https://ipfs.io/ipfs/QmP3HnzWpiaBA6ZE8c3dy5ExeG7hnYjSqkNfVbeVW5iEp6/low/"+number+".jpg", seal.Name)
+
+				}
 			}
 		}
 	}
 }
 
 func checkTableOwner(scid string) bool {
-	if len(scid) != 64 || GnomonClosing() {
+	if len(scid) != 64 || !Gnomes.Init || GnomonClosing() {
 		return false
 	}
 
@@ -602,10 +605,11 @@ func CreateTableList(gc bool) {
 	if Gnomes.Init && !gc && !GnomonClosing() {
 		var owner bool
 		list := []string{}
+		owned := []string{}
 		tables := Gnomes.Indexer.Backend.GetAllOwnersAndSCIDs()
 
 		for scid := range tables {
-			if GnomonClosing() {
+			if !Gnomes.Init || GnomonClosing() {
 				break
 			}
 			_, valid := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "Deck Count:", Gnomes.Indexer.LastIndexedHeight, true)
@@ -630,8 +634,9 @@ func CreateTableList(gc bool) {
 
 					list = append(list, name+"   "+desc+"   "+scid)
 					if checkTableOwner(scid) {
-						PlayerControl.holdero_unlock.Hide()
-						PlayerControl.holdero_new.Show()
+						owned = append(owned, name+"   "+desc+"   "+scid)
+						HolderoControl.holdero_unlock.Hide()
+						HolderoControl.holdero_new.Show()
 						owner = true
 						rpc.Wallet.PokerOwner = true
 					}
@@ -640,8 +645,8 @@ func CreateTableList(gc bool) {
 		}
 
 		if !owner {
-			PlayerControl.holdero_unlock.Show()
-			PlayerControl.holdero_new.Hide()
+			HolderoControl.holdero_unlock.Show()
+			HolderoControl.holdero_new.Hide()
 			rpc.Wallet.PokerOwner = false
 		}
 
@@ -650,7 +655,11 @@ func CreateTableList(gc bool) {
 		sort.Strings(list)
 		MenuControl.Holdero_tables = list
 
-		PlayerControl.table_list.Refresh()
+		sort.Strings(owned)
+		MenuControl.Holdero_owned = owned
+
+		HolderoControl.Table_list.Refresh()
+		HolderoControl.Owned_list.Refresh()
 	}
 }
 
@@ -808,7 +817,7 @@ func CheckActivePrediction(scid string) bool {
 }
 
 func CheckPredictionName(scid string) (name string) {
-	if len(scid) == 64 {
+	if len(scid) == 64 && Gnomes.Init && !GnomonClosing() {
 		check := Gnomes.Indexer.Backend.GetAllSCIDVariableDetails(scid)
 		if check != nil {
 			keys := make([]int64, 0, len(check))

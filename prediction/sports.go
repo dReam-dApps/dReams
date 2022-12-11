@@ -22,14 +22,21 @@ import (
 )
 
 type sportsItems struct {
-	Contract    string
-	Sports_list *widget.List
+	Contract      string
+	Sports_list   *widget.List
+	Favorite_list *widget.List
+	Owned_list    *widget.List
 }
 
 var SportsControl sportsItems
 
 func SportsConnectedBox() fyne.Widget {
-	menu.MenuControl.Sports_check = widget.NewCheck("", func(b bool) {})
+	menu.MenuControl.Sports_check = widget.NewCheck("", func(b bool) {
+		if !b {
+			menu.MenuControl.Sports_contracts = []string{}
+			SportsControl.Sports_list.Refresh()
+		}
+	})
 	menu.MenuControl.Sports_check.Disable()
 
 	return menu.MenuControl.Sports_check
@@ -110,7 +117,28 @@ func SportsBox() fyne.CanvasObject {
 	table.Actions.Sports_box.Hide()
 
 	return table.Actions.Sports_box
+}
 
+func setSportsControls(str string) (item string) {
+	table.Actions.Game_select.ClearSelected()
+	table.Actions.Game_select.Options = []string{}
+	table.Actions.Game_select.Refresh()
+	split := strings.Split(str, "   ")
+	if len(split) >= 3 {
+		trimmed := strings.Trim(split[2], " ")
+		table.Actions.Sports_box.Show()
+		if len(trimmed) == 64 {
+			if !menu.CheckActiveGames(trimmed) {
+				table.Actions.Game_select.Show()
+			} else {
+				table.Actions.Game_select.Hide()
+			}
+			item = str
+			table.Actions.S_contract.SetText(trimmed)
+		}
+	}
+
+	return
 }
 
 func SportsListings() fyne.CanvasObject { /// sports contract list
@@ -129,21 +157,9 @@ func SportsListings() fyne.CanvasObject { /// sports contract list
 
 	SportsControl.Sports_list.OnSelected = func(id widget.ListItemID) {
 		if id != 0 && menu.Connected() {
-			table.Actions.Game_select.ClearSelected()
-			table.Actions.Game_select.Options = []string{}
-			table.Actions.Game_select.Refresh()
-			split := strings.Split(menu.MenuControl.Sports_contracts[id], "   ")
-			trimmed := strings.Trim(split[2], " ")
-			table.Actions.Sports_box.Show()
-			if len(trimmed) == 64 {
-				if !menu.CheckActiveGames(trimmed) {
-					table.Actions.Game_select.Show()
-				} else {
-					table.Actions.Game_select.Hide()
-				}
-				item = menu.MenuControl.Sports_contracts[id]
-				table.Actions.S_contract.SetText(trimmed)
-			}
+			item = setSportsControls(menu.MenuControl.Sports_contracts[id])
+			SportsControl.Favorite_list.UnselectAll()
+			SportsControl.Owned_list.UnselectAll()
 		} else {
 			table.Actions.Sports_box.Hide()
 		}
@@ -165,7 +181,7 @@ func SportsListings() fyne.CanvasObject { /// sports contract list
 }
 
 func SportsFavorites() fyne.CanvasObject {
-	favorites := widget.NewList(
+	SportsControl.Favorite_list = widget.NewList(
 		func() int {
 			return len(menu.MenuControl.Sports_favorites)
 		},
@@ -178,22 +194,11 @@ func SportsFavorites() fyne.CanvasObject {
 
 	var item string
 
-	favorites.OnSelected = func(id widget.ListItemID) {
+	SportsControl.Favorite_list.OnSelected = func(id widget.ListItemID) {
 		if menu.Connected() {
-			split := strings.Split(menu.MenuControl.Sports_favorites[id], "   ")
-			if len(split) >= 3 {
-				trimmed := strings.Trim(split[2], " ")
-				if len(trimmed) == 64 {
-					if !menu.CheckActiveGames(trimmed) {
-						table.Actions.Sports_box.Show()
-						table.Actions.Game_select.Show()
-					} else {
-						table.Actions.Sports_box.Hide()
-					}
-					item = menu.MenuControl.Sports_favorites[id]
-					table.Actions.S_contract.SetText(trimmed)
-				}
-			}
+			item = setSportsControls(menu.MenuControl.Sports_favorites[id])
+			SportsControl.Sports_list.UnselectAll()
+			SportsControl.Owned_list.UnselectAll()
 		} else {
 			table.Actions.Sports_box.Hide()
 		}
@@ -201,9 +206,8 @@ func SportsFavorites() fyne.CanvasObject {
 
 	remove := widget.NewButton("Remove", func() {
 		if len(menu.MenuControl.Sports_favorites) > 0 {
-			favorites.UnselectAll()
+			SportsControl.Favorite_list.UnselectAll()
 			new := menu.MenuControl.Sports_favorites
-			favorites.UnselectAll()
 			for i := range new {
 				if new[i] == item {
 					copy(new[i:], new[i+1:])
@@ -214,7 +218,7 @@ func SportsFavorites() fyne.CanvasObject {
 				}
 			}
 		}
-		favorites.Refresh()
+		SportsControl.Favorite_list.Refresh()
 		sort.Strings(menu.MenuControl.Sports_favorites)
 	})
 
@@ -223,9 +227,34 @@ func SportsFavorites() fyne.CanvasObject {
 		container.NewBorder(nil, nil, nil, remove, layout.NewSpacer()),
 		nil,
 		nil,
-		favorites)
+		SportsControl.Favorite_list)
 
 	return cont
+}
+
+func SportsOwned() fyne.CanvasObject {
+	SportsControl.Owned_list = widget.NewList(
+		func() int {
+			return len(menu.MenuControl.Sports_owned)
+		},
+		func() fyne.CanvasObject {
+			return widget.NewLabel("")
+		},
+		func(i widget.ListItemID, o fyne.CanvasObject) {
+			o.(*widget.Label).SetText(menu.MenuControl.Sports_owned[i])
+		})
+
+	SportsControl.Owned_list.OnSelected = func(id widget.ListItemID) {
+		if menu.Connected() {
+			setSportsControls(menu.MenuControl.Sports_owned[id])
+			SportsControl.Sports_list.UnselectAll()
+			SportsControl.Favorite_list.UnselectAll()
+		} else {
+			table.Actions.Sports_box.Hide()
+		}
+	}
+
+	return SportsControl.Owned_list
 }
 
 func sports(league string) (api string) {

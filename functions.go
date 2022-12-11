@@ -107,6 +107,7 @@ func init() {
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-c
+		writeConfig(makeConfig(table.Poker_name, rpc.Round.Daemon))
 		fmt.Println()
 		menu.StopGnomon(menu.Gnomes.Init)
 		menu.StopIndicators()
@@ -660,24 +661,30 @@ func P_no_initResults(fr, tx, r, m string) { /// prediction info, not initialize
 func PopulatePredictions(dc, gs bool) {
 	if dc && gs && !menu.GnomonClosing() {
 		list := []string{}
+		owned := []string{}
 		contracts := menu.Gnomes.Indexer.Backend.GetAllOwnersAndSCIDs()
 		keys := make([]string, len(contracts))
 
 		i := 0
 		for k := range contracts {
 			keys[i] = k
-			list = checkBetContractOwner(keys[i], "p", list)
+			list, owned = checkBetContractOwner(keys[i], "p", list, owned)
 			i++
 		}
 		t := len(list)
 		list = append(list, " Contracts: "+strconv.Itoa(t))
 		sort.Strings(list)
 		menu.MenuControl.Predict_contracts = list
+
+		sort.Strings(owned)
+		menu.MenuControl.Predict_owned = owned
+
 	}
 	prediction.PredictControl.Predict_list.Refresh()
+	prediction.PredictControl.Owned_list.Refresh()
 }
 
-func checkBetContractOwner(scid, t string, list []string) []string {
+func checkBetContractOwner(scid, t string, list, owned []string) ([]string, []string) {
 	if !menu.GnomonClosing() {
 		owner, _ := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "owner", menu.Gnomes.Indexer.ChainHeight, true)
 		dev, _ := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "dev", menu.Gnomes.Indexer.ChainHeight, true)
@@ -696,13 +703,17 @@ func checkBetContractOwner(scid, t string, list []string) []string {
 					if headers[0] != "" {
 						name = " " + headers[0]
 					}
+
+					if owner[0] == rpc.Wallet.Address {
+						owned = append(owned, name+"   "+desc+"   "+scid)
+					}
 				}
 				list = append(list, name+"   "+desc+"   "+scid)
 				menu.DisableBetOwner(owner[0])
 			}
 		}
 	}
-	return list
+	return list, owned
 }
 
 func MakeLeaderBoard(dc, gs bool, scid string) {
@@ -754,13 +765,14 @@ func printLeaders() {
 func PopulateSports(dc, gs bool) {
 	if dc && gs {
 		list := []string{}
+		owned := []string{}
 		contracts := menu.Gnomes.Indexer.Backend.GetAllOwnersAndSCIDs()
 		keys := make([]string, len(contracts))
 
 		i := 0
 		for k := range contracts {
 			keys[i] = k
-			list = checkBetContractOwner(keys[i], "s", list)
+			list, owned = checkBetContractOwner(keys[i], "s", list, owned)
 			i++
 		}
 
@@ -768,8 +780,12 @@ func PopulateSports(dc, gs bool) {
 		list = append(list, " Contracts: "+strconv.Itoa(t))
 		sort.Strings(list)
 		menu.MenuControl.Sports_contracts = list
+
+		sort.Strings(owned)
+		menu.MenuControl.Sports_owned = owned
 	}
 	prediction.SportsControl.Sports_list.Refresh()
+	prediction.SportsControl.Owned_list.Refresh()
 }
 
 func GetBook(gi bool, scid string) {
@@ -1090,6 +1106,8 @@ func MenuContractTab(ti *container.TabItem) {
 		if rpc.Signal.Daemon {
 			go menu.CreateTableList(false)
 		}
+
+	default:
 	}
 }
 
@@ -1126,6 +1144,8 @@ func PredictTab(ti *container.TabItem) {
 		go PopulatePredictions(rpc.Signal.Daemon, menu.Gnomes.Sync)
 	case "Leaderboard":
 		go MakeLeaderBoard(rpc.Signal.Daemon, menu.Gnomes.Sync, prediction.PredictControl.Contract)
+
+	default:
 	}
 }
 

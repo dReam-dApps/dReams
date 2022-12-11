@@ -20,15 +20,22 @@ type predictItems struct {
 	Contract        string
 	Leaders_map     map[string]uint64
 	Leaders_display []string
-	Leaders_list    *widget.List
 	Predict_list    *widget.List
+	Favorite_list   *widget.List
+	Owned_list      *widget.List
+	Leaders_list    *widget.List
 	Remove_button   *widget.Button
 }
 
 var PredictControl predictItems
 
 func PredictConnectedBox() fyne.Widget {
-	menu.MenuControl.Predict_check = widget.NewCheck("", func(b bool) {})
+	menu.MenuControl.Predict_check = widget.NewCheck("", func(b bool) {
+		if !b {
+			menu.MenuControl.Predict_contracts = []string{}
+			PredictControl.Predict_list.Refresh()
+		}
+	})
 	menu.MenuControl.Predict_check.Disable()
 
 	return menu.MenuControl.Predict_check
@@ -111,6 +118,29 @@ func LeadersDisplay() fyne.Widget {
 	return PredictControl.Leaders_list
 }
 
+func setPredictionControls(str string) (item string) {
+	split := strings.Split(str, "   ")
+	if len(split) >= 3 {
+		trimmed := strings.Trim(split[2], " ")
+		if len(trimmed) == 64 {
+			item = str
+			table.Actions.P_contract.SetText(trimmed)
+			if menu.CheckActivePrediction(trimmed) {
+				menu.DisablePreditions(false)
+				table.Actions.Higher.Show()
+				table.Actions.Lower.Show()
+				table.Actions.NameEntry.Show()
+				table.Actions.NameEntry.Text = menu.CheckPredictionName(PredictControl.Contract)
+				table.Actions.NameEntry.Refresh()
+			} else {
+				menu.DisablePreditions(true)
+			}
+		}
+	}
+
+	return
+}
+
 func PredictionListings() fyne.CanvasObject { /// prediction contract list
 	PredictControl.Predict_list = widget.NewList(
 		func() int {
@@ -126,27 +156,12 @@ func PredictionListings() fyne.CanvasObject { /// prediction contract list
 	var item string
 
 	PredictControl.Predict_list.OnSelected = func(id widget.ListItemID) {
-		if id != 0 {
-			if menu.Connected() {
-				split := strings.Split(menu.MenuControl.Predict_contracts[id], "   ")
-				trimmed := strings.Trim(split[2], " ")
-				if len(trimmed) == 64 {
-					item = menu.MenuControl.Predict_contracts[id]
-					table.Actions.P_contract.SetText(trimmed)
-					if menu.CheckActivePrediction(trimmed) {
-						menu.DisablePreditions(false)
-						table.Actions.Higher.Show()
-						table.Actions.Lower.Show()
-						table.Actions.NameEntry.Show()
-						table.Actions.NameEntry.Text = menu.CheckPredictionName(PredictControl.Contract)
-						table.Actions.NameEntry.Refresh()
-					} else {
-						menu.DisablePreditions(true)
-					}
-				}
-			} else {
-				menu.DisablePreditions(true)
-			}
+		if id != 0 && menu.Connected() {
+			item = setPredictionControls(menu.MenuControl.Predict_contracts[id])
+			PredictControl.Favorite_list.UnselectAll()
+			PredictControl.Owned_list.UnselectAll()
+		} else {
+			menu.DisablePreditions(true)
 		}
 	}
 
@@ -165,8 +180,8 @@ func PredictionListings() fyne.CanvasObject { /// prediction contract list
 	return cont
 }
 
-func PredicitFavorites() fyne.CanvasObject {
-	favorites := widget.NewList(
+func PredicitionFavorites() fyne.CanvasObject {
+	PredictControl.Favorite_list = widget.NewList(
 		func() int {
 			return len(menu.MenuControl.Predict_favorites)
 		},
@@ -179,36 +194,19 @@ func PredicitFavorites() fyne.CanvasObject {
 
 	var item string
 
-	favorites.OnSelected = func(id widget.ListItemID) {
+	PredictControl.Favorite_list.OnSelected = func(id widget.ListItemID) {
 		if menu.Connected() {
-			split := strings.Split(menu.MenuControl.Predict_favorites[id], "   ")
-			if len(split) >= 3 {
-				trimmed := strings.Trim(split[2], " ")
-				if len(trimmed) == 64 {
-					if len(trimmed) == 64 {
-						item = menu.MenuControl.Predict_favorites[id]
-						table.Actions.P_contract.SetText(trimmed)
-						if menu.CheckActivePrediction(trimmed) {
-							menu.DisablePreditions(false)
-							table.Actions.Higher.Show()
-							table.Actions.Lower.Show()
-							table.Actions.NameEntry.Show()
-							table.Actions.NameEntry.Text = menu.CheckPredictionName(PredictControl.Contract)
-							table.Actions.NameEntry.Refresh()
-						} else {
-							menu.DisablePreditions(true)
-						}
-					}
-				}
-			} else {
-				menu.DisablePreditions(true)
-			}
+			item = setPredictionControls(menu.MenuControl.Predict_favorites[id])
+			PredictControl.Predict_list.UnselectAll()
+			PredictControl.Owned_list.UnselectAll()
+		} else {
+			menu.DisablePreditions(true)
 		}
 	}
 
 	remove := widget.NewButton("Remove", func() {
 		if len(menu.MenuControl.Predict_favorites) > 0 {
-			favorites.UnselectAll()
+			PredictControl.Favorite_list.UnselectAll()
 			new := menu.MenuControl.Predict_favorites
 			for i := range new {
 				if new[i] == item {
@@ -220,7 +218,7 @@ func PredicitFavorites() fyne.CanvasObject {
 				}
 			}
 		}
-		favorites.Refresh()
+		PredictControl.Favorite_list.Refresh()
 		sort.Strings(menu.MenuControl.Predict_favorites)
 	})
 
@@ -229,9 +227,35 @@ func PredicitFavorites() fyne.CanvasObject {
 		container.NewBorder(nil, nil, nil, remove, layout.NewSpacer()),
 		nil,
 		nil,
-		favorites)
+		PredictControl.Favorite_list)
 
 	return cont
+}
+
+func PredictionOwned() fyne.CanvasObject {
+	PredictControl.Owned_list = widget.NewList(
+		func() int {
+			return len(menu.MenuControl.Predict_owned)
+		},
+		func() fyne.CanvasObject {
+			return widget.NewLabel("")
+		},
+		func(i widget.ListItemID, o fyne.CanvasObject) {
+			o.(*widget.Label).SetText(menu.MenuControl.Predict_owned[i])
+		})
+
+	PredictControl.Owned_list.OnSelected = func(id widget.ListItemID) {
+		if menu.Connected() {
+			setPredictionControls(menu.MenuControl.Predict_owned[id])
+			PredictControl.Predict_list.UnselectAll()
+			PredictControl.Favorite_list.UnselectAll()
+		} else {
+			menu.DisablePreditions(true)
+		}
+
+	}
+
+	return PredictControl.Owned_list
 }
 
 func Remove() fyne.Widget {

@@ -343,12 +343,12 @@ func humanTimeConvert() fyne.CanvasObject {
 }
 
 func OwnerButton() fyne.CanvasObject {
-	menu.PlayerControl.Bet_menu = widget.NewButton("Bet Contract Options", func() {
+	menu.MenuControl.Bet_menu = widget.NewButton("Bet Contract Options", func() {
 		ownersMenu()
 	})
-	menu.PlayerControl.Bet_menu.Hide()
+	menu.MenuControl.Bet_menu.Hide()
 
-	box := container.NewVBox(layout.NewSpacer(), menu.PlayerControl.Bet_menu)
+	box := container.NewVBox(layout.NewSpacer(), menu.MenuControl.Bet_menu)
 
 	return box
 }
@@ -393,10 +393,10 @@ func ownersMenu() { /// bet owners menu
 	ow := fyne.CurrentApp().NewWindow("Bet Contracts")
 	ow.Resize(fyne.NewSize(330, 700))
 	ow.SetIcon(menu.Resource.SmallIcon)
-	menu.PlayerControl.Bet_menu.Hide()
+	menu.MenuControl.Bet_menu.Hide()
 	quit := make(chan struct{})
 	ow.SetCloseIntercept(func() {
-		menu.PlayerControl.Bet_menu.Show()
+		menu.MenuControl.Bet_menu.Show()
 		quit <- struct{}{}
 		ow.Close()
 	})
