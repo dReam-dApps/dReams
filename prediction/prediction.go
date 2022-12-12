@@ -1,7 +1,10 @@
 package prediction
 
 import (
+	"fmt"
+	"log"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/SixofClubsss/dReams/menu"
@@ -20,6 +23,8 @@ type predictItems struct {
 	Contract        string
 	Leaders_map     map[string]uint64
 	Leaders_display []string
+	Info            *widget.Label
+	Prices          *widget.Label
 	Predict_list    *widget.List
 	Favorite_list   *widget.List
 	Owned_list      *widget.List
@@ -32,8 +37,11 @@ var PredictControl predictItems
 func PredictConnectedBox() fyne.Widget {
 	menu.MenuControl.Predict_check = widget.NewCheck("", func(b bool) {
 		if !b {
-			menu.MenuControl.Predict_contracts = []string{}
-			PredictControl.Predict_list.Refresh()
+			table.Actions.NameEntry.Hide()
+			table.Actions.Change.Hide()
+			table.Actions.Higher.Hide()
+			table.Actions.Lower.Hide()
+			PredictControl.Leaders_display = []string{}
 		}
 	})
 	menu.MenuControl.Predict_check.Disable()
@@ -47,7 +55,7 @@ func PreictionContractEntry() fyne.Widget {
 	table.Actions.P_contract.PlaceHolder = "Contract Address: "
 	table.Actions.P_contract.OnCursorChanged = func() {
 		if rpc.Signal.Daemon {
-			yes, _ := rpc.CheckBetContract(PredictControl.Contract)
+			yes, _ := rpc.ValidBetContract(PredictControl.Contract)
 			if yes {
 				menu.MenuControl.Predict_check.SetChecked(true)
 			} else {
@@ -125,6 +133,7 @@ func setPredictionControls(str string) (item string) {
 		if len(trimmed) == 64 {
 			item = str
 			table.Actions.P_contract.SetText(trimmed)
+			go SetPredictionInfo(trimmed)
 			if menu.CheckActivePrediction(trimmed) {
 				menu.DisablePreditions(false)
 				table.Actions.Higher.Show()
@@ -139,6 +148,26 @@ func setPredictionControls(str string) (item string) {
 	}
 
 	return
+}
+
+func SetPredictionInfo(scid string) {
+	info := GetPrediction(rpc.Signal.Daemon, scid)
+	if info != "" {
+		PredictControl.Info.SetText(info)
+		PredictControl.Info.Refresh()
+	}
+}
+
+func SetPredictionPrices(d bool) {
+	if d {
+		_, btc := table.GetPrice("BTC-USDT")
+		_, dero := table.GetPrice("DERO-USDT")
+		_, xmr := table.GetPrice("XMR-USDT")
+		/// custom feed with rpc.Display.P_feed
+		prices := "Current Price feed from dReams Client\nBTC: " + btc + "\nDERO: " + dero + "\nXMR: " + xmr
+
+		PredictControl.Prices.SetText(prices)
+	}
 }
 
 func PredictionListings() fyne.CanvasObject { /// prediction contract list
@@ -266,4 +295,166 @@ func Remove() fyne.Widget {
 	PredictControl.Remove_button.Hide()
 
 	return PredictControl.Remove_button
+}
+
+func P_initResults(p, amt, eA, c, to, u, d, r, f, m string, ta, tb, tc, offset int, post bool) (info string) { /// prediction info, initialized
+	end_time, _ := rpc.MsToTime(eA)
+	utc := end_time.String()
+	add := rpc.StringToInt(eA)
+	end := strconv.Itoa(add + (tc * 1000))
+	end_pay, _ := rpc.MsToTime(end)
+	rf := strconv.Itoa(tb / 60)
+
+	result, err := strconv.ParseFloat(to, 32)
+
+	if err != nil {
+		log.Println("Float Conversion Error", err)
+	}
+
+	s := fmt.Sprintf("%.5f", result/100000)
+
+	if post {
+		info = "SCID: \n" + PredictControl.Contract + "\n" + "\n" + p + " Price Posted" +
+			"\nMark: " + m + "\nPredictions: " + c +
+			"\nRound Pot: " + s + "\nUp Predictions: " + u + "\nDown Predictions: " + d + "\nPayout After: " + end_pay.String() + "\nRefund if not paid within " + rf + " minutes\nRounds Completed: " + r
+	} else {
+		pw := strconv.Itoa(ta / 60)
+		info = "SCID: \n" + PredictControl.Contract + "\n" + "\nAccepting " + p + " Predictions " +
+			"\nPrediction Amount: " + amt + " Dero\nCloses at: " + utc + "\nMark posted with in " + pw + " minutes of close\nPredictions: " + c +
+			"\nRound Pot: " + s + "\nHigher Predictions: " + u + "\nLower Predictions: " + d + "\nPayout After: " + end_pay.String() + "\nRefund if not paid within " + rf + " minutes\nRounds Completed: " + r
+	}
+
+	return
+}
+
+func roundResults(fr, m string) string { /// prediction results text
+	if len(PredictControl.Contract) == 64 && fr != "" {
+		split := strings.Split(fr, "_")
+		var res string
+		var def string
+
+		if mark, err := strconv.ParseFloat(m, 64); err == nil {
+			if rpc.StringToInt(split[1]) > int(mark*100) {
+				res = "Higher "
+				def = " > "
+			} else if rpc.StringToInt(split[1]) == int(mark*100) {
+				res = "Equal "
+				def = " == "
+			} else {
+				res = "Lower "
+				def = " < "
+			}
+		}
+
+		if final, err := strconv.ParseFloat(split[1], 64); err == nil {
+			fStr := fmt.Sprintf("%.2f", final/100)
+
+			return split[0] + " " + res + fStr + def + m
+		}
+
+	}
+	return ""
+}
+
+func P_no_initResults(fr, tx, r, m string) (info string) { /// prediction info, not initialized
+	info = "SCID: \n" + PredictControl.Contract + "\n" + "\nNot Accepting Predictions\n\nLast Round Mark: " + m +
+		"\nLast Round Results: " + roundResults(fr, m) + "\nLast Round TXID: " + tx + "\n\nRounds Completed: " + r
+
+	return
+}
+
+func GetPrediction(d bool, scid string) (info string) {
+	if d && menu.Gnomes.Init && !menu.GnomonClosing() && !menu.GnomonWriting() {
+		predicting, _ := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "predicting", menu.Gnomes.Indexer.ChainHeight, true)
+		url, _ := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "p_url", menu.Gnomes.Indexer.ChainHeight, true)
+		final, _ := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "p_final", menu.Gnomes.Indexer.ChainHeight, true)
+		//final_tx, _ := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "p_final_txid", menu.Gnomes.Indexer.ChainHeight, true)
+		_, amt := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "p_amount", menu.Gnomes.Indexer.ChainHeight, true)
+		_, init := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "p_init", menu.Gnomes.Indexer.ChainHeight, true)
+		_, up := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "p_up", menu.Gnomes.Indexer.ChainHeight, true)
+		_, down := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "p_down", menu.Gnomes.Indexer.ChainHeight, true)
+		_, count := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "p_#", menu.Gnomes.Indexer.ChainHeight, true)
+		_, end := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "p_end_at", menu.Gnomes.Indexer.ChainHeight, true)
+		_, pot := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "p_total", menu.Gnomes.Indexer.ChainHeight, true)
+		_, rounds := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "p_played", menu.Gnomes.Indexer.ChainHeight, true)
+		_, mark := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "mark", menu.Gnomes.Indexer.ChainHeight, true)
+		_, time_a := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "time_a", menu.Gnomes.Indexer.ChainHeight, true)
+		_, time_b := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "time_b", menu.Gnomes.Indexer.ChainHeight, true)
+		_, time_c := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "time_c", menu.Gnomes.Indexer.ChainHeight, true)
+
+		var pre, p_played, p_final, p_mark string
+		if init != nil {
+			if init[0] == 1 {
+				rpc.Predict.Amount = amt[0]
+				if predicting != nil {
+					pre = predicting[0]
+				}
+				rpc.Display.Prediction = pre
+
+				p_amt := fmt.Sprint(float64(rpc.Predict.Amount) / 100000)
+
+				p_down := fmt.Sprint(down[0])
+				p_up := fmt.Sprint(up[0])
+				p_count := fmt.Sprint(count[0])
+
+				p_pot := fmt.Sprint(pot[0])
+				p_played := fmt.Sprint(rounds[0])
+
+				var p_feed string
+				if url != nil {
+					rpc.Display.P_feed = url[0]
+					p_feed = url[0]
+				}
+
+				if mark != nil {
+					p_mark = fmt.Sprintf("%.2f", float64(mark[0])/100)
+				} else {
+					p_mark = "0"
+				}
+
+				var p_end string
+				if init[0] == 1 {
+					rpc.Predict.Init = true
+					end_at := uint(end[0])
+					p_end = fmt.Sprint(end_at * 1000)
+					if mark != nil {
+						rpc.Predict.Mark = true
+					} else {
+						rpc.Predict.Mark = false
+					}
+
+				} else {
+					rpc.Predict.Init = false
+				}
+
+				if rpc.Predict.Mark {
+					info = P_initResults(pre, p_amt, p_end, p_count, p_pot, p_up, p_down, p_played, p_feed, p_mark, int(time_a[0]), int(time_b[0]), int(time_c[0]), 11, true)
+
+				} else {
+					info = P_initResults(pre, p_amt, p_end, p_count, p_pot, p_up, p_down, p_played, p_feed, "", int(time_a[0]), int(time_b[0]), int(time_c[0]), 11, true)
+				}
+
+			} else {
+				if final != nil {
+					p_final = final[0]
+				}
+
+				txid, _ := rpc.FetchPredictionFinal(rpc.Signal.Daemon, scid)
+
+				if mark != nil {
+					p_mark = fmt.Sprintf("%.2f", float64(mark[0])/100)
+				} else {
+					p_mark = "0"
+				}
+
+				if rounds != nil {
+					p_played = fmt.Sprint(rounds[0])
+				}
+
+				info = P_no_initResults(p_final, txid, p_played, p_mark)
+			}
+		}
+	}
+
+	return
 }

@@ -2,6 +2,7 @@ package prediction
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -23,6 +24,7 @@ import (
 
 type sportsItems struct {
 	Contract      string
+	Info          *widget.Label
 	Sports_list   *widget.List
 	Favorite_list *widget.List
 	Owned_list    *widget.List
@@ -33,8 +35,10 @@ var SportsControl sportsItems
 func SportsConnectedBox() fyne.Widget {
 	menu.MenuControl.Sports_check = widget.NewCheck("", func(b bool) {
 		if !b {
-			menu.MenuControl.Sports_contracts = []string{}
-			SportsControl.Sports_list.Refresh()
+			table.Actions.Game_select.Hide()
+			table.Actions.Multi.Hide()
+			table.Actions.ButtonA.Hide()
+			table.Actions.ButtonB.Hide()
 		}
 	})
 	menu.MenuControl.Sports_check.Disable()
@@ -48,9 +52,14 @@ func SportsContractEntry() fyne.Widget {
 	table.Actions.S_contract.PlaceHolder = "Contract Address: "
 	table.Actions.S_contract.OnCursorChanged = func() {
 		if rpc.Signal.Daemon {
-			yes, _ := rpc.CheckBetContract(SportsControl.Contract)
+			yes, _ := rpc.ValidBetContract(SportsControl.Contract)
 			if yes {
 				menu.MenuControl.Sports_check.SetChecked(true)
+				if !menu.CheckActiveGames(SportsControl.Contract) {
+					table.Actions.Game_select.Show()
+				} else {
+					table.Actions.Game_select.Hide()
+				}
 			} else {
 				menu.MenuControl.Sports_check.SetChecked(false)
 			}
@@ -128,6 +137,7 @@ func setSportsControls(str string) (item string) {
 		trimmed := strings.Trim(split[2], " ")
 		table.Actions.Sports_box.Show()
 		if len(trimmed) == 64 {
+			go setSportsInfo(trimmed)
 			if !menu.CheckActiveGames(trimmed) {
 				table.Actions.Game_select.Show()
 			} else {
@@ -139,6 +149,13 @@ func setSportsControls(str string) (item string) {
 	}
 
 	return
+}
+
+func setSportsInfo(scid string) {
+	info := GetBook(menu.Gnomes.Init, scid)
+	SportsControl.Info.SetText(info)
+	SportsControl.Info.Refresh()
+	table.Actions.Game_select.Refresh()
 }
 
 func SportsListings() fyne.CanvasObject { /// sports contract list
@@ -255,6 +272,95 @@ func SportsOwned() fyne.CanvasObject {
 	}
 
 	return SportsControl.Owned_list
+}
+
+func GetBook(gi bool, scid string) (info string) {
+	if gi && !menu.GnomonClosing() && !menu.GnomonWriting() {
+		_, initValue := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "s_init", menu.Gnomes.Indexer.ChainHeight, true)
+		if initValue != nil {
+			_, playedValue := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "s_played", menu.Gnomes.Indexer.ChainHeight, true)
+			//_, hl := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "hl", menu.Gnomes.Indexer.ChainHeight, true)
+			init := initValue[0]
+			played := playedValue[0]
+
+			table.Actions.Game_options = []string{}
+			table.Actions.Game_select.Options = table.Actions.Game_options
+			played_str := strconv.Itoa(int(played))
+			if init == played {
+				info = "SCID: \n" + scid + "\n\nGames Completed: " + played_str + "\n\nNo current Games\n"
+				return
+			}
+
+			var single bool
+			iv := 1
+			for {
+				_, s_init := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "s_init_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
+				if s_init != nil {
+					game, _ := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "game_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
+					league, _ := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "league_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
+					_, s_n := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "s_#_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
+					_, s_amt := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "s_amount_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
+					_, s_end := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "s_end_at_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
+					_, s_total := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "s_total_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
+					//s_urlValue, _ := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "s_url_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
+					_, s_ta := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "team_a_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
+					_, s_tb := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "team_b_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
+					_, time_a := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "time_a", menu.Gnomes.Indexer.ChainHeight, true)
+					_, time_b := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "time_b", menu.Gnomes.Indexer.ChainHeight, true)
+
+					team_a := menu.TrimTeamA(game[0])
+					team_b := menu.TrimTeamB(game[0])
+
+					if s_end[0] > uint64(time.Now().Unix()) {
+						current := table.Actions.Game_select.Options
+						new := append(current, strconv.Itoa(iv)+"   "+game[0])
+						table.Actions.Game_select.Options = new
+					}
+
+					eA := fmt.Sprint(s_end[0] * 1000)
+					min := fmt.Sprint(float64(s_amt[0]) / 100000)
+					n := strconv.Itoa(int(s_n[0]))
+					aV := strconv.Itoa(int(s_ta[0]))
+					bV := strconv.Itoa(int(s_tb[0]))
+					t := strconv.Itoa(int(s_total[0]))
+					if !single {
+						single = true
+						info = "SCID: \n" + scid + "\n\nGames Completed: " + played_str + "\nCurrent Games:\n"
+					}
+					info = info + S_Results(game[0], strconv.Itoa(iv), league[0], min, eA, n, team_a, team_b, aV, bV, t, time_a[0], time_b[0])
+
+				}
+
+				if iv >= int(init) {
+					break
+				}
+
+				iv++
+			}
+		}
+	}
+
+	return
+}
+
+func S_Results(g, gN, l, min, eA, c, tA, tB, tAV, tBV, total string, a, b uint64) (info string) { /// sports info label
+	result, err := strconv.ParseFloat(total, 32)
+
+	if err != nil {
+		log.Println("Float Conversion Error", err)
+	}
+
+	s := fmt.Sprintf("%.5f", result/100000)
+	end_time, _ := rpc.MsToTime(eA)
+	utc_end := end_time.String()
+
+	pa := strconv.Itoa(int(a/60) / 60)
+	rf := strconv.Itoa(int(b/60) / 60)
+
+	info = ("\nGame " + gN + " - " + g + "\nLeague: " + l + "\nMinimum: " + min +
+		" Dero\nCloses at: " + utc_end + "\nPayout " + pa + " hours after close\nRefund if not paid " + rf + " within hours\nPot Total: " + s + "\nPicks: " + c + "\n" + tA + " Picks: " + tAV + "\n" + tB + " Picks: " + tBV + "\n")
+
+	return
 }
 
 func sports(league string) (api string) {

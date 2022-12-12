@@ -37,18 +37,8 @@ type displayStrings struct {
 	BaccMin  string
 	BaccRes  string
 
-	Preiction string
-	P_amt     string
-	P_end     string
-	P_count   string
-	P_pot     string
-	P_up      string
-	P_down    string
-	P_played  string
-	P_final   string
-	P_mark    string
-	P_feed    string
-	P_txid    string
+	Prediction string
+	P_feed     string
 
 	Game    string
 	S_count string

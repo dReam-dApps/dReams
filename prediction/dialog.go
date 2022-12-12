@@ -164,13 +164,13 @@ func payoutOpts() fyne.CanvasObject {
 	})
 
 	post_button := widget.NewButton("Post Price", func() {
-		a, _ := table.GetPrice(rpc.Display.Preiction)
+		a, _ := table.GetPrice(rpc.Display.Prediction)
 		ownerConfirmPopUp(4, a)
 
 	})
 
 	predict_confirm := widget.NewButton("Prediction Payout", func() {
-		a, _ := table.GetPrice(rpc.Display.Preiction)
+		a, _ := table.GetPrice(rpc.Display.Prediction)
 		ownerConfirmPopUp(5, a)
 	})
 

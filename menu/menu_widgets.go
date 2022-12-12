@@ -108,10 +108,6 @@ func disconnected() {
 	table.Actions.NameEntry.Refresh()
 	Market.Auction_list.UnselectAll()
 	Market.Buy_list.UnselectAll()
-	Market.Buy_now = []string{}
-	Market.Auctions = []string{}
-	Market.Buy_list.Refresh()
-	Market.Auction_list.Refresh()
 	Market.Icon = *canvas.NewImageFromImage(nil)
 	Market.Cover = *canvas.NewImageFromImage(nil)
 	Market.Viewing = ""
@@ -126,6 +122,8 @@ func clearContractLists() {
 	MenuControl.Holdero_owned = []string{}
 	MenuControl.Predict_owned = []string{}
 	MenuControl.Sports_owned = []string{}
+	Market.Auctions = []string{}
+	Market.Buy_now = []string{}
 }
 
 func CheckConnection() {

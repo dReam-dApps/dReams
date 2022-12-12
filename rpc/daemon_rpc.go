@@ -702,7 +702,7 @@ func FetchBaccHand(dc bool, tx string) error { /// find played hand
 	return nil
 }
 
-func CheckBetContract(scid string) (bool, error) {
+func ValidBetContract(scid string) (bool, error) {
 	rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
 	defer cancel()
 
@@ -728,7 +728,7 @@ func CheckBetContract(scid string) (bool, error) {
 	return true, err
 }
 
-func FetchPredictionSC(d bool, scid string) error {
+func FetchPredictionFinal(d bool, scid string) (string, error) {
 	if d {
 		rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
 		defer cancel()
@@ -743,95 +743,20 @@ func FetchPredictionSC(d bool, scid string) error {
 		err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params)
 		if err != nil {
 			log.Println(err)
-			return nil
+			return "", nil
 		}
 
-		p_predict := result.VariableStringKeys["predicting"]
-		p_amt := result.VariableStringKeys["p_amount"]
-		p_init := result.VariableStringKeys["p_init"]
-		p_up := result.VariableStringKeys["p_up"]
-		p_down := result.VariableStringKeys["p_down"]
-		p_count := result.VariableStringKeys["p_#"]
-		p_endAt := result.VariableStringKeys["p_end_at"]
-		p_pot := result.VariableStringKeys["p_total"]
-		p_rounds := result.VariableStringKeys["p_played"]
-		p_feed_url := result.VariableStringKeys["p_url"]
-		p_final := result.VariableStringKeys["p_final"]
 		p_txid := result.VariableStringKeys["p_final_txid"]
-		p_mark := result.VariableStringKeys["mark"]
-		time_a := result.VariableStringKeys["time_a"]
-		time_b := result.VariableStringKeys["time_b"]
-		time_c := result.VariableStringKeys["time_c"]
 
-		if p_init != nil {
-			Predict.Time_a = int(time_a.(float64))
-			Predict.Time_b = int(time_b.(float64))
-			Predict.Time_c = int(time_c.(float64))
-			Predict.Amount = uint64(p_amt.(float64))
-			if p_predict != nil {
-				Display.Preiction = fromHextoString(fmt.Sprint(p_predict))
-			}
-			Display.P_amt = fmt.Sprint(float64(Predict.Amount) / 100000)
-			in := fmt.Sprint(p_init)
-			Display.P_down = fmt.Sprint(p_down)
-			Display.P_up = fmt.Sprint(p_up)
-			Display.P_count = fmt.Sprint(p_count)
+		var txid string
+		if p_txid != nil {
+			txid = fmt.Sprint(p_txid)
 
-			Display.P_pot = fmt.Sprint(p_pot)
-			Display.P_played = fmt.Sprint(p_rounds)
-			if p_feed_url != nil {
-				Display.P_feed = fromHextoString(fmt.Sprint(p_feed_url))
-			}
-			if p_final != nil {
-				Display.P_final = fromHextoString(fmt.Sprint(p_final))
-			}
-
-			Display.P_txid = fmt.Sprint(p_txid)
-
-			if p_mark != nil {
-				Display.P_mark = fmt.Sprintf("%.2f", p_mark.(float64)/100)
-			} else {
-				Display.P_mark = "0"
-			}
-
-			if in == "1" {
-				Predict.Init = true
-				end_at := uint(p_endAt.(float64))
-				Display.P_end = fmt.Sprint(end_at * 1000)
-				if p_mark != nil {
-					Predict.Mark = true
-				} else {
-					Predict.Mark = false
-				}
-
-			} else {
-				Predict.Init = false
-
-			}
-		} else {
-			Predict.Time_a = 0
-			Predict.Time_b = 0
-			Predict.Time_c = 0
-			Predict.Amount = 0
-			Display.Preiction = ""
-			Display.P_amt = ""
-			Display.P_up = ""
-			Display.P_down = ""
-			Display.P_count = ""
-			Display.P_pot = ""
-			Display.P_played = ""
-			Display.P_feed = ""
-			Display.P_final = ""
-			Display.P_txid = ""
-			Display.P_mark = ""
-			Display.P_end = ""
-			Predict.Init = false
-			Predict.Mark = false
 		}
-
-		return err
+		return txid, nil
 	}
-	return nil
+
+	return "", nil
 }
 
 func GetPredictCode(dc bool, pub int) (string, error) {
