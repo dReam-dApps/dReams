@@ -124,6 +124,7 @@ func clearContractLists() {
 	MenuControl.Sports_owned = []string{}
 	Market.Auctions = []string{}
 	Market.Buy_now = []string{}
+	table.Assets.Assets = []string{}
 }
 
 func CheckConnection() {
@@ -1117,8 +1118,11 @@ func AssetList() fyne.CanvasObject {
 
 	table.Assets.Asset_list.OnSelected = func(id widget.ListItemID) {
 		split := strings.Split(table.Assets.Assets[id], "   ")
-		MenuControl.Viewing_asset = split[1]
-		go GetOwnedAssetStats(split[1])
+		if len(split) >= 2 {
+			trimmed := strings.Trim(split[1], " ")
+			MenuControl.Viewing_asset = trimmed
+			go GetOwnedAssetStats(trimmed)
+		}
 	}
 
 	box := container.NewMax(table.Assets.Asset_list)

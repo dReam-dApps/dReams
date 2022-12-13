@@ -366,13 +366,13 @@ func GnomonState(dc, gi bool, windows bool) {
 				if rpc.Wallet.Connect {
 					if !Gnomes.Checked {
 						go CheckBetContractOwner(Gnomes.Sync, Gnomes.Checked, contracts)
-						go CreateTableList(Gnomes.Checked, contracts)
+						CreateTableList(Gnomes.Checked, contracts)
 						go CheckG45owner(Gnomes.Sync, Gnomes.Checked, contracts)
 						go CheckAssets(Gnomes.Sync, Gnomes.Checked, contracts)
 						if !windows {
 							go PopulateSports(rpc.Signal.Daemon, Gnomes.Sync, contracts)
 							go PopulatePredictions(rpc.Signal.Daemon, Gnomes.Sync, contracts)
-							go FindNfaListings(Gnomes.Sync, contracts)
+							FindNfaListings(Gnomes.Sync, contracts)
 						}
 						Gnomes.Checked = true
 					}
@@ -648,21 +648,36 @@ func GetOwnedAssetStats(scid string) {
 		} else {
 			MenuControl.List_button.Hide()
 			data, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "metadata", Gnomes.Indexer.LastIndexedHeight, true)
-			if data != nil {
-				var seal Seal
-				json.Unmarshal([]byte(data[0]), &seal)
-				check := strings.Trim(seal.Name, " #0123456789")
-				if check == "Dero Seals" {
+			minter, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "minter", Gnomes.Indexer.LastIndexedHeight, true)
+			if data != nil && minter != nil {
+				if minter[0] == Seals_mint {
+					var seal Seal
+					json.Unmarshal([]byte(data[0]), &seal)
+					check := strings.Trim(seal.Name, " #0123456789")
+					if check == "Dero Seals" {
+						table.Assets.Name.Text = (" Name: " + seal.Name)
+						table.Assets.Name.Refresh()
 
-					table.Assets.Name.Text = (" Name: " + seal.Name)
-					table.Assets.Name.Refresh()
+						table.Assets.Collection.Text = (" Collection: " + check)
+						table.Assets.Collection.Refresh()
 
-					table.Assets.Collection.Text = (" Collection: " + check)
-					table.Assets.Collection.Refresh()
+						number := strings.Trim(seal.Name, "DeroSals# ")
+						table.Assets.Icon, _ = table.DownloadFile("https://ipfs.io/ipfs/QmP3HnzWpiaBA6ZE8c3dy5ExeG7hnYjSqkNfVbeVW5iEp6/low/"+number+".jpg", seal.Name)
+					}
+				} else if minter[0] == ATeam_mint {
+					var agent Agent
+					json.Unmarshal([]byte(data[0]), &agent)
+					check := strings.Trim(agent.Name, " #0123456789")
+					if table.ValidAgent(check) {
+						table.Assets.Name.Text = (" Name: " + agent.Name)
+						table.Assets.Name.Refresh()
 
-					number := strings.Trim(seal.Name, "DeroSals# ")
-					table.Assets.Icon, _ = table.DownloadFile("https://ipfs.io/ipfs/QmP3HnzWpiaBA6ZE8c3dy5ExeG7hnYjSqkNfVbeVW5iEp6/low/"+number+".jpg", seal.Name)
+						table.Assets.Collection.Text = (" Collection: Dero A-Team")
+						table.Assets.Collection.Refresh()
 
+						number := strconv.Itoa(agent.ID)
+						table.Assets.Icon, _ = table.DownloadFile("https://ipfs.io/ipfs/QmaRHXcQwbFdUAvwbjgpDtr5kwGiNpkCM2eDBzAbvhD7wh/low/"+number+".jpg", agent.Name)
+					}
 				}
 			}
 		}
@@ -857,47 +872,50 @@ func GetTableStats(scid string, single bool) {
 	}
 }
 
-type Seal struct {
-	Attributes struct {
-		Eyes        string `json:"Eyes"`
-		FacialHair  string `json:"Facial Hair"`
-		HairAndHats string `json:"Hair And Hats"`
-		Shirts      string `json:"Shirts"`
-	} `json:"attributes"`
-	ID    int     `json:"id"`
-	Image string  `json:"image"`
-	Name  string  `json:"name"`
-	Score float64 `json:"score"`
-}
-
 func CheckG45owner(gs, gc bool, g45s map[string]string) {
-	if gs && !gc && !GnomonClosing() {
+	if Gnomes.Init && gs && !gc && !GnomonClosing() {
 		if g45s == nil {
 			g45s = Gnomes.Indexer.Backend.GetAllOwnersAndSCIDs()
 		}
 		log.Println("Checking G45 Assets")
 
 		for scid := range g45s {
-			var seal Seal
 			data, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "metadata", Gnomes.Indexer.LastIndexedHeight, true)
 			owner, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "owner", Gnomes.Indexer.LastIndexedHeight, true)
-			if data != nil && owner != nil {
+			minter, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "minter", Gnomes.Indexer.LastIndexedHeight, true)
+			if data != nil && owner != nil && minter != nil {
 				if owner[0] == rpc.Wallet.Address {
-					json.Unmarshal([]byte(data[0]), &seal)
-					check := strings.Trim(seal.Name, " #0123456789")
-					if check == "Dero Seals" {
-						table.Assets.Assets = append(table.Assets.Assets, seal.Name+"   "+scid)
-						current := table.Settings.AvatarSelect.Options
-						new := append(current, seal.Name)
-						table.Settings.AvatarSelect.Options = new
-						table.Settings.AvatarSelect.Refresh()
+					if minter[0] == Seals_mint {
+						var seal Seal
+						json.Unmarshal([]byte(data[0]), &seal)
+						check := strings.Trim(seal.Name, " #0123456789")
+						if check == "Dero Seals" {
+							table.Assets.Assets = append(table.Assets.Assets, seal.Name+"   "+scid)
+							current := table.Settings.AvatarSelect.Options
+							new := append(current, seal.Name)
+							table.Settings.AvatarSelect.Options = new
+							table.Settings.AvatarSelect.Refresh()
+						}
+					} else if minter[0] == ATeam_mint {
+						var agent Agent
+						err := json.Unmarshal([]byte(data[0]), &agent)
+						if err == nil {
+							check := strings.Trim(agent.Name, " #0123456789")
+							if table.ValidAgent(check) {
+								table.Assets.Assets = append(table.Assets.Assets, agent.Name+"   "+scid)
+								current := table.Settings.AvatarSelect.Options
+								new := append(current, agent.Name)
+								table.Settings.AvatarSelect.Options = new
+								table.Settings.AvatarSelect.Refresh()
+							}
+						}
 					}
 				}
 			}
 		}
-		table.Assets.Asset_list.Refresh()
 		sort.Strings(table.Settings.AvatarSelect.Options)
 		table.Settings.AvatarSelect.Options = append([]string{"None"}, table.Settings.AvatarSelect.Options...)
+		table.Assets.Asset_list.Refresh()
 
 	}
 }

@@ -761,6 +761,9 @@ func RecheckAssets() {
 	table.Assets.Assets = []string{}
 	menu.CheckAssets(menu.Gnomes.Sync, false, nil)
 	menu.CheckG45owner(menu.Gnomes.Sync, false, nil)
+	sort.Strings(table.Assets.Assets)
+	table.Assets.Asset_list.UnselectAll()
+	table.Assets.Asset_list.Refresh()
 
 }
 
