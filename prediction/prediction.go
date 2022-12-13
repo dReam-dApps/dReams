@@ -413,25 +413,23 @@ func GetPrediction(d bool, scid string) (info string) {
 				}
 
 				var p_end string
+				var marked bool
 				if init[0] == 1 {
-					rpc.Predict.Init = true
 					end_at := uint(end[0])
 					p_end = fmt.Sprint(end_at * 1000)
 					if mark != nil {
-						rpc.Predict.Mark = true
+						marked = true
 					} else {
-						rpc.Predict.Mark = false
+						marked = false
 					}
 
-				} else {
-					rpc.Predict.Init = false
 				}
 
-				if rpc.Predict.Mark {
+				if marked {
 					info = P_initResults(pre, p_amt, p_end, p_count, p_pot, p_up, p_down, p_played, p_feed, p_mark, int(time_a[0]), int(time_b[0]), int(time_c[0]), 11, true)
 
 				} else {
-					info = P_initResults(pre, p_amt, p_end, p_count, p_pot, p_up, p_down, p_played, p_feed, "", int(time_a[0]), int(time_b[0]), int(time_c[0]), 11, true)
+					info = P_initResults(pre, p_amt, p_end, p_count, p_pot, p_up, p_down, p_played, p_feed, "", int(time_a[0]), int(time_b[0]), int(time_c[0]), 11, false)
 				}
 
 			} else {

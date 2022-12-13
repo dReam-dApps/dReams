@@ -579,7 +579,7 @@ func PredictionRefresh(tab bool) {
 func SportsRefresh(tab bool) {
 	if tab {
 		S.RightLabel.SetText("dReams Balance: " + rpc.Wallet.TokenBal + "      Dero Balance: " + rpc.Wallet.Balance + "      Height: " + rpc.Wallet.Height)
-		go prediction.GetBook(menu.Gnomes.Init, prediction.SportsControl.Contract)
+		go prediction.SetSportsInfo(prediction.SportsControl.Contract)
 	}
 }
 
@@ -816,7 +816,6 @@ func MainTab(ti *container.TabItem) {
 		dReams.predict = false
 		dReams.sports = true
 		go menu.PopulateSports(rpc.Signal.Daemon, menu.Gnomes.Sync, nil)
-		go prediction.GetBook(menu.Gnomes.Init, prediction.SportsControl.Contract)
 	}
 }
 

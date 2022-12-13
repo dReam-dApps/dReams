@@ -138,12 +138,7 @@ type baccValues struct {
 }
 
 type predictionValues struct {
-	Init   bool
-	Mark   bool
 	Amount uint64
-	Time_a int
-	Time_b int
-	Time_c int
 }
 
 type signals struct {
