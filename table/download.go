@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -651,10 +650,13 @@ func GetPrice(coin string) (price float64, display string) {
 		price = k
 	}
 
+	if price == 0 {
+		log.Println("Error getting dReams price feed")
+	}
+
 	display = fmt.Sprintf("%.2f", price/100)
 
 	return
-
 }
 
 func getOgre(coin string) string {
@@ -675,6 +677,7 @@ func getOgre(coin string) string {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		log.Println(err.Error())
+		return ""
 	}
 
 	req.Header.Add("Accept", "application/json")
@@ -683,13 +686,15 @@ func getOgre(coin string) string {
 
 	if err != nil {
 		log.Println(err.Error())
+		return ""
 	}
 
 	defer resp.Body.Close()
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 
 	if err != nil {
 		log.Println(err.Error())
+		return ""
 	}
 
 	json.Unmarshal(b, &found)
@@ -719,6 +724,7 @@ func getKucoin(coin string) string {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		log.Println(err.Error())
+		return ""
 	}
 
 	req.Header.Add("Accept", "application/json")
@@ -727,13 +733,15 @@ func getKucoin(coin string) string {
 
 	if err != nil {
 		log.Println(err.Error())
+		return ""
 	}
 
 	defer resp.Body.Close()
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 
 	if err != nil {
 		log.Println(err.Error())
+		return ""
 	}
 
 	json.Unmarshal(b, &found)

@@ -3,7 +3,7 @@ package prediction
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"sort"
@@ -414,7 +414,7 @@ func callSoccer(date, league string) (s *soccer) {
 	}
 
 	defer resp.Body.Close()
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 
 	if err != nil {
 		log.Println(err.Error())
@@ -444,7 +444,7 @@ func callBasketball(date, league string) (bb *basketball) {
 	}
 
 	defer resp.Body.Close()
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 
 	if err != nil {
 		log.Println(err.Error())
@@ -474,7 +474,7 @@ func callFootball(date, league string) (f *football) {
 	}
 
 	defer resp.Body.Close()
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 
 	if err != nil {
 		log.Println(err.Error())
@@ -504,7 +504,7 @@ func callHockey(date, league string) (h *hockey) {
 	}
 
 	defer resp.Body.Close()
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 
 	if err != nil {
 		log.Println(err.Error())
@@ -536,7 +536,7 @@ func GetGameEnd(date, game, league string) {
 	}
 
 	defer resp.Body.Close()
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 
 	if err != nil {
 		log.Println(err.Error())
@@ -580,7 +580,7 @@ func callScores(date, league string) (s *scores) {
 	}
 
 	defer resp.Body.Close()
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 
 	if err != nil {
 		log.Println(err.Error())
