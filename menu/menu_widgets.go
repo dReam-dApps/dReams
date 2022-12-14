@@ -96,13 +96,22 @@ func disconnected() {
 	table.Settings.BackSelect.Options = []string{"Light", "Dark"}
 	table.Settings.ThemeSelect.Options = []string{"Main"}
 	table.Settings.AvatarSelect.Options = []string{"None"}
+	table.Settings.FaceUrl = ""
+	table.Settings.BackUrl = ""
+	table.Settings.AvatarUrl = ""
 	table.Settings.FaceSelect.SetSelectedIndex(0)
 	table.Settings.BackSelect.SetSelectedIndex(0)
+	table.Settings.AvatarSelect.SetSelectedIndex(0)
 	table.Settings.FaceSelect.Refresh()
 	table.Settings.BackSelect.Refresh()
 	table.Settings.ThemeSelect.Refresh()
 	table.Settings.AvatarSelect.Refresh()
 	table.Assets.Assets = []string{}
+	table.Assets.Name.Text = (" Name:")
+	table.Assets.Name.Refresh()
+	table.Assets.Collection.Text = (" Collection:")
+	table.Assets.Collection.Refresh()
+	table.Assets.Icon = *canvas.NewImageFromImage(nil)
 	table.Actions.NameEntry.Text = ""
 	table.Actions.NameEntry.Enable()
 	table.Actions.NameEntry.Refresh()

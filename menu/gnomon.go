@@ -300,6 +300,7 @@ func startGnomon(ep string) {
 
 	filters := searchFilters()
 	if len(filters) == 7 {
+		table.Assets.Asset_map = make(map[string]string)
 		Gnomes.Indexer = indexer.NewIndexer(backend, filters, last_height, daemon_endpoint, runmode, mbl, closeondisconnect, Gnomes.Fast)
 		go Gnomes.Indexer.StartDaemonMode(Gnomes.Para)
 		time.Sleep(3 * time.Second)
@@ -649,26 +650,26 @@ func GetOwnedAssetStats(scid string) {
 			MenuControl.List_button.Hide()
 			data, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "metadata", Gnomes.Indexer.LastIndexedHeight, true)
 			minter, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "minter", Gnomes.Indexer.LastIndexedHeight, true)
-			if data != nil && minter != nil {
-				if minter[0] == Seals_mint {
-					var seal Seal
-					json.Unmarshal([]byte(data[0]), &seal)
-					check := strings.Trim(seal.Name, " #0123456789")
-					if check == "Dero Seals" {
-						table.Assets.Name.Text = (" Name: " + seal.Name)
-						table.Assets.Name.Refresh()
+			coll, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "collection", Gnomes.Indexer.LastIndexedHeight, true)
+			if data != nil && minter != nil && coll != nil {
+				if minter[0] == table.Seals_mint && coll[0] == table.Seals_coll {
+					var seal table.Seal
+					if err := json.Unmarshal([]byte(data[0]), &seal); err == nil {
+						check := strings.Trim(seal.Name, " #0123456789")
+						if check == "Dero Seals" {
+							table.Assets.Name.Text = (" Name: " + seal.Name)
+							table.Assets.Name.Refresh()
 
-						table.Assets.Collection.Text = (" Collection: " + check)
-						table.Assets.Collection.Refresh()
+							table.Assets.Collection.Text = (" Collection: " + check)
+							table.Assets.Collection.Refresh()
 
-						number := strings.Trim(seal.Name, "DeroSals# ")
-						table.Assets.Icon, _ = table.DownloadFile("https://ipfs.io/ipfs/QmP3HnzWpiaBA6ZE8c3dy5ExeG7hnYjSqkNfVbeVW5iEp6/low/"+number+".jpg", seal.Name)
+							number := strings.Trim(seal.Name, "DeroSals# ")
+							table.Assets.Icon, _ = table.DownloadFile("https://ipfs.io/ipfs/QmP3HnzWpiaBA6ZE8c3dy5ExeG7hnYjSqkNfVbeVW5iEp6/low/"+number+".jpg", seal.Name)
+						}
 					}
-				} else if minter[0] == ATeam_mint {
-					var agent Agent
-					json.Unmarshal([]byte(data[0]), &agent)
-					check := strings.Trim(agent.Name, " #0123456789")
-					if table.ValidAgent(check) {
+				} else if minter[0] == table.ATeam_mint && coll[0] == table.ATeam_coll {
+					var agent table.Agent
+					if err := json.Unmarshal([]byte(data[0]), &agent); err == nil {
 						table.Assets.Name.Text = (" Name: " + agent.Name)
 						table.Assets.Name.Refresh()
 
@@ -676,7 +677,11 @@ func GetOwnedAssetStats(scid string) {
 						table.Assets.Collection.Refresh()
 
 						number := strconv.Itoa(agent.ID)
-						table.Assets.Icon, _ = table.DownloadFile("https://ipfs.io/ipfs/QmaRHXcQwbFdUAvwbjgpDtr5kwGiNpkCM2eDBzAbvhD7wh/low/"+number+".jpg", agent.Name)
+						if agent.ID < 172 {
+							table.Assets.Icon, _ = table.DownloadFile("https://ipfs.io/ipfs/QmaRHXcQwbFdUAvwbjgpDtr5kwGiNpkCM2eDBzAbvhD7wh/low/"+number+".jpg", agent.Name)
+						} else {
+							table.Assets.Icon, _ = table.DownloadFile("https://ipfs.io/ipfs/QmQQyKoE9qDnzybeDCXhyMhwQcPmLaVy3AyYAzzC2zMauW/low/"+number+".jpg", agent.Name)
+						}
 					}
 				}
 			}
@@ -883,31 +888,27 @@ func CheckG45owner(gs, gc bool, g45s map[string]string) {
 			data, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "metadata", Gnomes.Indexer.LastIndexedHeight, true)
 			owner, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "owner", Gnomes.Indexer.LastIndexedHeight, true)
 			minter, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "minter", Gnomes.Indexer.LastIndexedHeight, true)
-			if data != nil && owner != nil && minter != nil {
+			coll, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "collection", Gnomes.Indexer.LastIndexedHeight, true)
+			if data != nil && owner != nil && minter != nil && coll != nil {
 				if owner[0] == rpc.Wallet.Address {
-					if minter[0] == Seals_mint {
-						var seal Seal
-						json.Unmarshal([]byte(data[0]), &seal)
-						check := strings.Trim(seal.Name, " #0123456789")
-						if check == "Dero Seals" {
+					if minter[0] == table.Seals_mint && coll[0] == table.Seals_coll {
+						var seal table.Seal
+						if err := json.Unmarshal([]byte(data[0]), &seal); err == nil {
 							table.Assets.Assets = append(table.Assets.Assets, seal.Name+"   "+scid)
 							current := table.Settings.AvatarSelect.Options
 							new := append(current, seal.Name)
 							table.Settings.AvatarSelect.Options = new
 							table.Settings.AvatarSelect.Refresh()
 						}
-					} else if minter[0] == ATeam_mint {
-						var agent Agent
-						err := json.Unmarshal([]byte(data[0]), &agent)
-						if err == nil {
-							check := strings.Trim(agent.Name, " #0123456789")
-							if table.ValidAgent(check) {
-								table.Assets.Assets = append(table.Assets.Assets, agent.Name+"   "+scid)
-								current := table.Settings.AvatarSelect.Options
-								new := append(current, agent.Name)
-								table.Settings.AvatarSelect.Options = new
-								table.Settings.AvatarSelect.Refresh()
-							}
+					} else if minter[0] == table.ATeam_mint && coll[0] == table.ATeam_coll {
+						var agent table.Agent
+						if err := json.Unmarshal([]byte(data[0]), &agent); err == nil {
+							table.Assets.Asset_map[agent.Name] = scid
+							table.Assets.Assets = append(table.Assets.Assets, agent.Name+"   "+scid)
+							current := table.Settings.AvatarSelect.Options
+							new := append(current, agent.Name)
+							table.Settings.AvatarSelect.Options = new
+							table.Settings.AvatarSelect.Refresh()
 						}
 					}
 				}

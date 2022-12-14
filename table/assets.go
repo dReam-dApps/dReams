@@ -1,6 +1,8 @@
 package table
 
 import (
+	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"image/color"
@@ -11,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/SixofClubsss/dReams/rpc"
+	dero "github.com/deroproject/derohe/rpc"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -42,6 +45,7 @@ type assetWidgets struct {
 	Index_search  *widget.Button
 	Asset_list    *widget.List
 	Assets        []string
+	Asset_map     map[string]string
 	Name          *canvas.Text
 	Collection    *canvas.Text
 	Descrption    *canvas.Text
@@ -201,9 +205,14 @@ func AvatarSelect() fyne.Widget {
 		} else if check == "Dero Seals" {
 			seal := strings.Trim(s, "Dero Sals#")
 			Settings.AvatarUrl = "https://ipfs.io/ipfs/QmP3HnzWpiaBA6ZE8c3dy5ExeG7hnYjSqkNfVbeVW5iEp6/low/" + seal + ".jpg"
-		} else if ValidAgent(check) {
-			agent := strconv.Itoa(getAgentNumber(s))
-			Settings.AvatarUrl = "https://ipfs.io/ipfs/QmaRHXcQwbFdUAvwbjgpDtr5kwGiNpkCM2eDBzAbvhD7wh/low/" + agent + ".jpg"
+		} else if ValidAgent(s) {
+			agent, _ := getAgentNumber(rpc.Signal.Daemon, Assets.Asset_map[s])
+			if agent >= 0 && agent < 172 {
+				Settings.AvatarUrl = "https://ipfs.io/ipfs/QmaRHXcQwbFdUAvwbjgpDtr5kwGiNpkCM2eDBzAbvhD7wh/low/" + strconv.Itoa(agent) + ".jpg"
+			} else if agent < 1200 {
+				Settings.AvatarUrl = "https://ipfs.io/ipfs/QmQQyKoE9qDnzybeDCXhyMhwQcPmLaVy3AyYAzzC2zMauW/low/" + strconv.Itoa(agent) + ".jpg"
+
+			}
 		} else if s == "None" {
 			Settings.AvatarUrl = ""
 		}
@@ -215,131 +224,41 @@ func AvatarSelect() fyne.Widget {
 }
 
 func ValidAgent(s string) bool {
-	if s == "Agent" || s == "Grey Agent" || s == "Black Ops Agent" || s == "White Ops Agent" ||
-		s == "Fleet Admiral" || s == "Fleet Commander" || s == "Black Ops Leader" || s == "Violet Leader" ||
-		s == "Indigo Leader" || s == "Blue Leader" || s == "Green Leader" || s == "Yellow Leader" || s == "Orange Leader" || s == "Red Leader" {
+	if Assets.Asset_map[s] != "" && len(Assets.Asset_map[s]) == 64 {
 		return true
 	}
 
 	return false
 }
 
-func getAgentNumber(agent string) int {
-	if len(agent) < 10 {
-		trimmed := strings.Trim(agent, " Agent")
-		i, err := strconv.ParseInt(trimmed, 10, 64)
-		if err == nil {
-			if i == 777 {
-				return 172
-			}
-			return int(i)
-		}
-	}
+func getAgentNumber(dc bool, scid string) (int, error) {
+	if dc {
+		rpcClientD, ctx, cancel := rpc.SetDaemonClient(rpc.Round.Daemon)
+		defer cancel()
 
-	agent = strings.TrimRight(agent, " ")
-	switch agent {
-	case "Violet Leader":
-		return 0
-	case "Indigo Leader":
-		return 4
-	case "Blue Leader":
-		return 14
-	case "Green Leader":
-		return 26
-	case "Yellow Leader":
-		return 41
-	case "Orange Leader":
-		return 66
-	case "Red Leader":
-		return 97
-	case "Black Ops Leader":
-		return 131
-	case "Black Ops Agent 01":
-		return 132
-	case "Black Ops Agent 02":
-		return 133
-	case "Black Ops Agent 03":
-		return 134
-	case "Black Ops Agent 04":
-		return 135
-	case "Black Ops Agent 05":
-		return 136
-	case "Black Ops Agent 06":
-		return 137
-	case "Black Ops Agent 07":
-		return 138
-	case "Black Ops Agent 08":
-		return 139
-	case "Black Ops Agent 09":
-		return 140
-	case "Black Ops Agent 10":
-		return 141
-	case "Black Ops Agent 11":
-		return 142
-	case "Black Ops Agent 12":
-		return 143
-	case "Fleet Admiral":
-		return 144
-	case "Fleet Commander 01":
-		return 145
-	case "Fleet Commander 02":
-		return 146
-	case "Fleet Commander 03":
-		return 147
-	case "Fleet Commander 04":
-		return 148
-	case "Fleet Commander 05":
-		return 149
-	case "White Ops Agent 01":
-		return 150
-	case "White Ops Agent 02":
-		return 151
-	case "Grey Agent 01":
-		return 152
-	case "Grey Agent 02":
-		return 153
-	case "Grey Agent 03":
-		return 154
-	case "Grey Agent 04":
-		return 155
-	case "Grey Agent 05":
-		return 156
-	case "Grey Agent 06":
-		return 157
-	case "Grey Agent 07":
-		return 158
-	case "Grey Agent 08":
-		return 159
-	case "Grey Agent 09":
-		return 160
-	case "Grey Agent 10":
-		return 161
-	case "Grey Agent 11":
-		return 162
-	case "Grey Agent 12":
-		return 163
-	case "Grey Agent 13":
-		return 164
-	case "Grey Agent 14":
-		return 165
-	case "Grey Agent 15":
-		return 166
-	case "Grey Agent 16":
-		return 167
-	case "Grey Agent 17":
-		return 168
-	case "Grey Agent 18":
-		return 169
-	case "Grey Agent 19":
-		return 170
-	case "Grey Agent 20":
-		return 171
-	case "Agent 777":
-		return 172
-	default:
-		log.Println("Could not get Agent #")
-		return 999
+		var result *dero.GetSC_Result
+		params := dero.GetSC_Params{
+			SCID:      scid,
+			Code:      false,
+			Variables: true,
+		}
+
+		err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params)
+		if err != nil {
+			log.Println(err)
+			return 1200, nil
+		}
+
+		data := result.VariableStringKeys["metadata"]
+		var agent Agent
+
+		hx, _ := hex.DecodeString(data.(string))
+		if err := json.Unmarshal(hx, &agent); err == nil {
+			return agent.ID, err
+		}
+
 	}
+	return 1200, nil
 }
 
 func FileExists(path string) bool {
