@@ -66,7 +66,13 @@ func SessionLog() *fyne.Container {
 	})
 
 	cont := container.NewMax(logEntry)
-	vbox := container.NewVBox(layout.NewSpacer(), button)
+
+	vbox := container.NewVBox(
+		layout.NewSpacer(),
+		container.NewAdaptiveGrid(2,
+			layout.NewSpacer(),
+			button))
+
 	max := container.NewMax(cont, vbox)
 
 	return max
