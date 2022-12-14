@@ -4,7 +4,6 @@ import (
 	"image/color"
 	"log"
 	"math"
-	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -920,11 +919,7 @@ Confirm to proceed with install.`
 	}
 
 	cw := fyne.CurrentApp().NewWindow("Confirm")
-	if runtime.GOOS == "windows" {
-		cw.Resize(fyne.NewSize(650, 650))
-	} else {
-		cw.Resize(fyne.NewSize(550, 550))
-	}
+	cw.Resize(fyne.NewSize(450, 450))
 	cw.SetFixedSize(true)
 	cw.SetIcon(Resource.SmallIcon)
 	label := widget.NewLabel(text)
@@ -937,7 +932,6 @@ Confirm to proceed with install.`
 			rpc.UploadHolderoContract(rpc.Signal.Daemon, rpc.Wallet.Connect, choice.SelectedIndex())
 			cw.Close()
 		}
-
 	})
 
 	options := []string{"Public", "Private"}
@@ -951,7 +945,6 @@ Confirm to proceed with install.`
 
 	cancel_button := widget.NewButton("Cancel", func() {
 		cw.Close()
-
 	})
 
 	confirm_button.Hide()
@@ -960,8 +953,9 @@ Confirm to proceed with install.`
 	right := container.NewVBox(cancel_button)
 	buttons := container.NewAdaptiveGrid(2, left, right)
 	box := container.NewVBox(choice, buttons)
+	scroll := container.NewVScroll(label)
 
-	content := container.NewVBox(label, layout.NewSpacer(), box)
+	content := container.NewBorder(nil, box, nil, nil, scroll)
 
 	img := *canvas.NewImageFromResource(Resource.Back4)
 	alpha := container.NewMax(canvas.NewRectangle(color.RGBA{0, 0, 0, 120}))
@@ -1006,11 +1000,7 @@ Choose Predictions or Sports to proceed with install.`
 	}
 
 	cw := fyne.CurrentApp().NewWindow("Confirm")
-	if runtime.GOOS == "windows" {
-		cw.Resize(fyne.NewSize(650, 650))
-	} else {
-		cw.Resize(fyne.NewSize(550, 550))
-	}
+	cw.Resize(fyne.NewSize(450, 450))
 	cw.SetFixedSize(true)
 	cw.SetIcon(Resource.SmallIcon)
 	label := widget.NewLabel(text)
@@ -1023,7 +1013,6 @@ Choose Predictions or Sports to proceed with install.`
 			rpc.UploadBetContract(rpc.Signal.Daemon, rpc.Wallet.Connect, true, choice.SelectedIndex())
 			cw.Close()
 		}
-
 	})
 
 	sports_button := widget.NewButton("Sports", func() {
@@ -1031,7 +1020,6 @@ Choose Predictions or Sports to proceed with install.`
 			rpc.UploadBetContract(rpc.Signal.Daemon, rpc.Wallet.Connect, false, choice.SelectedIndex())
 			cw.Close()
 		}
-
 	})
 
 	options := []string{"Public", "Private"}
@@ -1047,7 +1035,6 @@ Choose Predictions or Sports to proceed with install.`
 
 	cancel_button := widget.NewButton("Cancel", func() {
 		cw.Close()
-
 	})
 
 	pre_button.Hide()
@@ -1057,10 +1044,10 @@ Choose Predictions or Sports to proceed with install.`
 	mid := container.NewVBox(sports_button)
 	right := container.NewVBox(cancel_button)
 	buttons := container.NewAdaptiveGrid(3, left, mid, right)
-
 	box := container.NewVBox(choice, buttons)
+	scroll := container.NewVScroll(label)
 
-	content := container.NewVBox(label, layout.NewSpacer(), box)
+	content := container.NewBorder(nil, box, nil, nil, scroll)
 
 	img := *canvas.NewImageFromResource(Resource.Back4)
 	alpha := container.NewMax(canvas.NewRectangle(color.RGBA{0, 0, 0, 120}))
