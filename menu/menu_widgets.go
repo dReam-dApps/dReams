@@ -1079,7 +1079,7 @@ func IndexEntry() fyne.CanvasObject {
 		listMenu()
 	})
 
-	MenuControl.Claim_button = widget.NewButton("Claim", func() {
+	MenuControl.Claim_button = widget.NewButton("Claim NFA", func() {
 		if len(table.Assets.Index_entry.Text) == 64 {
 			if isNfa(table.Assets.Index_entry.Text) {
 				rpc.ClaimNfa(table.Assets.Index_entry.Text)
@@ -1194,9 +1194,9 @@ func listMenu() { /// asset listing
 func confirmAssetList(list, dur, start, charAddr, charPerc string) { /// listing confirmation
 	ocw := fyne.CurrentApp().NewWindow("Confirm")
 	ocw.SetIcon(Resource.SmallIcon)
-	ocw.Resize(fyne.NewSize(550, 550))
+	ocw.Resize(fyne.NewSize(450, 450))
 	ocw.SetFixedSize(true)
-	label := widget.NewLabel("SCID: " + MenuControl.Viewing_asset + "\n\nList Type: " + list + "\n\nDuration: " + dur + "\n\nStart Price: " + start + " Dero\n\nDonate Address: " + charAddr + "\n\nDonate Percent: " + charPerc + "\n\nConfirm Asset Listing")
+	label := widget.NewLabel("SCID: " + MenuControl.Viewing_asset + "\n\nList Type: " + list + "\n\nDuration: " + dur + " Hours\n\nStart Price: " + start + " Dero\n\nDonation Address: " + charAddr + "\n\nDonate Percent: " + charPerc + "\n\nConfirm Asset Listing")
 	label.Wrapping = fyne.TextWrapWord
 	cancel_button := widget.NewButton("Cancel", func() {
 		MenuControl.Set_list.Show()
@@ -1214,12 +1214,14 @@ func confirmAssetList(list, dur, start, charAddr, charPerc string) { /// listing
 
 	display := container.NewVBox(label, layout.NewSpacer())
 	options := container.NewAdaptiveGrid(2, confirm_button, cancel_button)
-	content := container.NewVBox(display, layout.NewSpacer(), options)
+	content := container.NewBorder(nil, options, nil, nil, display)
 
 	img := *canvas.NewImageFromResource(Resource.Back4)
+	alpha := container.NewMax(canvas.NewRectangle(color.RGBA{0, 0, 0, 120}))
 	ocw.SetContent(
 		container.New(layout.NewMaxLayout(),
 			&img,
+			alpha,
 			content))
 	ocw.Show()
 }
