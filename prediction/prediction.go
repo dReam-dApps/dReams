@@ -357,14 +357,14 @@ func roundResults(fr, m string) string { /// prediction results text
 }
 
 func P_no_initResults(fr, tx, r, m string) (info string) { /// prediction info, not initialized
-	info = "SCID: \n" + PredictControl.Contract + "\n" + "\nNot Accepting Predictions\n\nLast Round Mark: " + m +
-		"\nLast Round Results: " + roundResults(fr, m) + "\nLast Round TXID: " + tx + "\n\nRounds Completed: " + r
+	info = "SCID: \n" + PredictControl.Contract + "\n" + "\nRound Completed\n\nRound Mark: " + m +
+		"\nRound Results: " + roundResults(fr, m) + "\nPayout TXID: " + tx + "\n\nRounds Completed: " + r
 
 	return
 }
 
 func GetPrediction(d bool, scid string) (info string) {
-	if d && menu.Gnomes.Init && !menu.GnomonClosing() && !menu.GnomonWriting() {
+	if d && menu.Gnomes.Init && !menu.GnomonClosing() && menu.Gnomes.Sync {
 		predicting, _ := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "predicting", menu.Gnomes.Indexer.ChainHeight, true)
 		url, _ := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "p_url", menu.Gnomes.Indexer.ChainHeight, true)
 		final, _ := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "p_final", menu.Gnomes.Indexer.ChainHeight, true)

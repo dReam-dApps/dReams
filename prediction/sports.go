@@ -270,7 +270,7 @@ func SportsOwned() fyne.CanvasObject {
 }
 
 func GetBook(gi bool, scid string) (info string) {
-	if gi && !menu.GnomonClosing() && !menu.GnomonWriting() {
+	if gi && !menu.GnomonClosing() && menu.Gnomes.Sync {
 		_, initValue := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "s_init", menu.Gnomes.Indexer.ChainHeight, true)
 		if initValue != nil {
 			_, playedValue := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "s_played", menu.Gnomes.Indexer.ChainHeight, true)
