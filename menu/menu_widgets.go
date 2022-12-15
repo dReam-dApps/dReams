@@ -91,6 +91,8 @@ func GetMenuResources(r1, r2, r3, r4, r5, r6, r7 fyne.Resource) {
 func disconnected() {
 	rpc.Wallet.PokerOwner = false
 	rpc.Wallet.BetOwner = false
+	rpc.Round.ID = 0
+	rpc.Display.PlayerId = ""
 	table.Settings.FaceSelect.Options = []string{"Light", "Dark"}
 	table.Settings.BackSelect.Options = []string{"Light", "Dark"}
 	table.Settings.ThemeSelect.Options = []string{"Main"}
@@ -169,7 +171,6 @@ func CheckConnection() {
 		disableActions(true)
 		disconnected()
 		Gnomes.Checked = false
-
 	}
 
 	if rpc.Signal.Contract {
@@ -308,6 +309,9 @@ func RpcConnectButton() fyne.Widget {
 			rpc.Ping()
 			rpc.GetAddress()
 			CheckConnection()
+			if len(HolderoControl.contract_input.Text) == 64 {
+				rpc.CheckHolderoContract()
+			}
 		}()
 	})
 
