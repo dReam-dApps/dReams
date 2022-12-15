@@ -74,22 +74,22 @@ func BaccaratButtons() fyne.CanvasObject {
 	entry := &baccAmt{}
 	entry.ExtendBaseWidget(entry)
 	entry.PlaceHolder = "dReams:"
-	entry.SetText("1")
+	entry.SetText("10")
 	entry.Validator = validation.NewRegexp(`\d{1,}$`, "Format Not Valid")
 	entry.OnChanged = func(s string) {
 		if rpc.Signal.Daemon {
 			if f, err := strconv.ParseFloat(s, 64); err == nil {
-				if f < 1 {
-					entry.SetText("1")
+				if f < 10 {
+					entry.SetText("10")
 				}
 
-				if f > 150 {
-					entry.SetText("150")
+				if f > 250 {
+					entry.SetText("250")
 				}
 			}
 
 			if entry.Validate() != nil {
-				entry.SetText("1")
+				entry.SetText("10")
 			}
 		}
 
