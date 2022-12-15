@@ -3,7 +3,7 @@ package table
 import (
 	"strconv"
 
-    "github.com/SixofClubsss/dReams/rpc"
+	"github.com/SixofClubsss/dReams/rpc"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -55,7 +55,7 @@ func BaccBuffer(d bool) {
 		rpc.Bacc.B_card2 = 99
 		rpc.Bacc.B_card3 = 99
 		rpc.Bacc.Last = ""
-		rpc.Display.BaccRes = ""
+		rpc.Display.BaccRes = "Wait for Block..."
 	} else {
 		Actions.Bacc_actions.Show()
 	}
