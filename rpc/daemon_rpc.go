@@ -116,11 +116,11 @@ func GasEstimate(scid string, args rpc.Arguments, t []rpc.Transfer) (uint64, err
 
 	log.Println("Gas Fee:", result.GasStorage+100)
 
-	if result.GasStorage < 1000 {
-		return result.GasStorage + 100, err
+	if result.GasStorage < 1200 {
+		return result.GasStorage + 120, err
 	}
 
-	return 1100, err
+	return 1320, err
 }
 
 func CheckForIndex(scid string) (interface{}, error) {
