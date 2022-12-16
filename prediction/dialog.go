@@ -164,13 +164,13 @@ func payoutOpts() fyne.CanvasObject {
 	})
 
 	post_button := widget.NewButton("Post Price", func() {
-		a, _ := table.GetPrice(rpc.Display.Preiction)
+		a, _ := table.GetPrice(rpc.Display.Prediction)
 		ownerConfirmPopUp(4, a)
 
 	})
 
 	predict_confirm := widget.NewButton("Prediction Payout", func() {
-		a, _ := table.GetPrice(rpc.Display.Preiction)
+		a, _ := table.GetPrice(rpc.Display.Prediction)
 		ownerConfirmPopUp(5, a)
 	})
 
@@ -343,12 +343,12 @@ func humanTimeConvert() fyne.CanvasObject {
 }
 
 func OwnerButton() fyne.CanvasObject {
-	menu.PlayerControl.Bet_menu = widget.NewButton("Bet Contract Options", func() {
+	menu.MenuControl.Bet_menu = widget.NewButton("Bet Contract Options", func() {
 		ownersMenu()
 	})
-	menu.PlayerControl.Bet_menu.Hide()
+	menu.MenuControl.Bet_menu.Hide()
 
-	box := container.NewVBox(layout.NewSpacer(), menu.PlayerControl.Bet_menu)
+	box := container.NewVBox(layout.NewSpacer(), menu.MenuControl.Bet_menu)
 
 	return box
 }
@@ -393,10 +393,10 @@ func ownersMenu() { /// bet owners menu
 	ow := fyne.CurrentApp().NewWindow("Bet Contracts")
 	ow.Resize(fyne.NewSize(330, 700))
 	ow.SetIcon(menu.Resource.SmallIcon)
-	menu.PlayerControl.Bet_menu.Hide()
+	menu.MenuControl.Bet_menu.Hide()
 	quit := make(chan struct{})
 	ow.SetCloseIntercept(func() {
-		menu.PlayerControl.Bet_menu.Show()
+		menu.MenuControl.Bet_menu.Show()
 		quit <- struct{}{}
 		ow.Close()
 	})
@@ -505,7 +505,7 @@ func ownerConfirmPopUp(i int, p float64) { /// bet owner action confirmation
 
 	switch i {
 	case 1:
-		confirm_display.SetText("SCID: " + s_scid + "\n\nGame: " + s_game + "\n\nMinimum: " + s_amt + "\n\nEnds At: " + s_end.String() + "\n\nFeed: " + s_feed + "\n\nInitial Deposit: " + s_dep + " Dero\n\nConfirm")
+		confirm_display.SetText("SCID: " + s_scid + "\n\nGame: " + s_game + "\n\nMinimum: " + s_amt + "\n\nCloses At: " + s_end.String() + "\n\nFeed: " + s_feed + "\n\nInitial Deposit: " + s_dep + " Dero\n\nConfirm")
 	case 2:
 		confirm_display.SetText("SCID: " + p_scid + "\n\nPredicing: " + p_pre + "\nMinimum: " + p_amt + "\nCloses At: " + p_end.String() + "\nFeed: " + p_feed + "\nInitial Deposit: " + p_dep + " Dero\n\nConfirm")
 	case 3:

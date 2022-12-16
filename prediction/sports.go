@@ -2,9 +2,11 @@ package prediction
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"fmt"
+	"io"
 	"log"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -16,23 +18,32 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/data/binding"
+	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 )
 
 type sportsItems struct {
 	Contract      string
-	Contract_list []string
+	Info          *widget.Label
 	Sports_list   *widget.List
-	connected_box *widget.Check
+	Favorite_list *widget.List
+	Owned_list    *widget.List
 }
 
 var SportsControl sportsItems
 
 func SportsConnectedBox() fyne.Widget {
-	SportsControl.connected_box = widget.NewCheck("", func(b bool) {})
-	SportsControl.connected_box.Disable()
+	menu.MenuControl.Sports_check = widget.NewCheck("", func(b bool) {
+		if !b {
+			table.Actions.Game_select.Hide()
+			table.Actions.Multi.Hide()
+			table.Actions.ButtonA.Hide()
+			table.Actions.ButtonB.Hide()
+		}
+	})
+	menu.MenuControl.Sports_check.Disable()
 
-	return SportsControl.connected_box
+	return menu.MenuControl.Sports_check
 }
 
 func SportsContractEntry() fyne.Widget {
@@ -41,11 +52,16 @@ func SportsContractEntry() fyne.Widget {
 	table.Actions.S_contract.PlaceHolder = "Contract Address: "
 	table.Actions.S_contract.OnCursorChanged = func() {
 		if rpc.Signal.Daemon {
-			yes, _ := rpc.CheckBetContract(SportsControl.Contract)
+			yes, _ := rpc.ValidBetContract(SportsControl.Contract)
 			if yes {
-				SportsControl.connected_box.SetChecked(true)
+				menu.MenuControl.Sports_check.SetChecked(true)
+				if !menu.CheckActiveGames(SportsControl.Contract) {
+					table.Actions.Game_select.Show()
+				} else {
+					table.Actions.Game_select.Hide()
+				}
 			} else {
-				SportsControl.connected_box.SetChecked(false)
+				menu.MenuControl.Sports_check.SetChecked(false)
 			}
 		}
 	}
@@ -76,7 +92,7 @@ func SportsBox() fyne.CanvasObject {
 	})
 
 	table.Actions.Game_select.PlaceHolder = "Select Game #"
-	//table.Actions.Game_select.Hide()
+	table.Actions.Game_select.Hide()
 
 	var Multi_options = []string{"1x", "3x", "5x"}
 	table.Actions.Multi = widget.NewRadioGroup(Multi_options, func(s string) {
@@ -110,37 +126,236 @@ func SportsBox() fyne.CanvasObject {
 	table.Actions.Sports_box.Hide()
 
 	return table.Actions.Sports_box
+}
 
+func setSportsControls(str string) (item string) {
+	table.Actions.Game_select.ClearSelected()
+	table.Actions.Game_select.Options = []string{}
+	table.Actions.Game_select.Refresh()
+	split := strings.Split(str, "   ")
+	if len(split) >= 3 {
+		trimmed := strings.Trim(split[2], " ")
+		table.Actions.Sports_box.Show()
+		if len(trimmed) == 64 {
+			go SetSportsInfo(trimmed)
+			item = str
+			table.Actions.S_contract.SetText(trimmed)
+		}
+	}
+
+	return
+}
+
+func SetSportsInfo(scid string) {
+	info := GetBook(menu.Gnomes.Init, scid)
+	SportsControl.Info.SetText(info)
+	SportsControl.Info.Refresh()
+	table.Actions.Game_select.Refresh()
 }
 
 func SportsListings() fyne.CanvasObject { /// sports contract list
 	SportsControl.Sports_list = widget.NewList(
 		func() int {
-			return len(SportsControl.Contract_list)
+			return len(menu.MenuControl.Sports_contracts)
 		},
 		func() fyne.CanvasObject {
 			return widget.NewLabel("")
 		},
 		func(i widget.ListItemID, o fyne.CanvasObject) {
-			o.(*widget.Label).SetText(SportsControl.Contract_list[i])
+			o.(*widget.Label).SetText(menu.MenuControl.Sports_contracts[i])
 		})
 
+	var item string
+
 	SportsControl.Sports_list.OnSelected = func(id widget.ListItemID) {
-		if id != 0 && rpc.Wallet.Connect {
-			table.Actions.Game_select.ClearSelected()
-			table.Actions.Game_select.Options = []string{}
-			table.Actions.Game_select.Refresh()
-			split := strings.Split(SportsControl.Contract_list[id], "   ")
-			table.Actions.Sports_box.Show()
-			table.Actions.S_contract.SetText(split[2])
+		if id != 0 && menu.Connected() {
+			item = setSportsControls(menu.MenuControl.Sports_contracts[id])
+			SportsControl.Favorite_list.UnselectAll()
+			SportsControl.Owned_list.UnselectAll()
 		} else {
 			table.Actions.Sports_box.Hide()
 		}
 	}
 
-	cont := container.NewMax(SportsControl.Sports_list)
+	save := widget.NewButton("Favorite", func() {
+		menu.MenuControl.Sports_favorites = append(menu.MenuControl.Sports_favorites, item)
+		sort.Strings(menu.MenuControl.Sports_favorites)
+	})
+
+	cont := container.NewBorder(
+		nil,
+		container.NewBorder(nil, nil, nil, save, layout.NewSpacer()),
+		nil,
+		nil,
+		SportsControl.Sports_list)
 
 	return cont
+}
+
+func SportsFavorites() fyne.CanvasObject {
+	SportsControl.Favorite_list = widget.NewList(
+		func() int {
+			return len(menu.MenuControl.Sports_favorites)
+		},
+		func() fyne.CanvasObject {
+			return widget.NewLabel("")
+		},
+		func(i widget.ListItemID, o fyne.CanvasObject) {
+			o.(*widget.Label).SetText(menu.MenuControl.Sports_favorites[i])
+		})
+
+	var item string
+
+	SportsControl.Favorite_list.OnSelected = func(id widget.ListItemID) {
+		if menu.Connected() {
+			item = setSportsControls(menu.MenuControl.Sports_favorites[id])
+			SportsControl.Sports_list.UnselectAll()
+			SportsControl.Owned_list.UnselectAll()
+		} else {
+			table.Actions.Sports_box.Hide()
+		}
+	}
+
+	remove := widget.NewButton("Remove", func() {
+		if len(menu.MenuControl.Sports_favorites) > 0 {
+			SportsControl.Favorite_list.UnselectAll()
+			new := menu.MenuControl.Sports_favorites
+			for i := range new {
+				if new[i] == item {
+					copy(new[i:], new[i+1:])
+					new[len(new)-1] = ""
+					new = new[:len(new)-1]
+					menu.MenuControl.Sports_favorites = new
+					break
+				}
+			}
+		}
+		SportsControl.Favorite_list.Refresh()
+		sort.Strings(menu.MenuControl.Sports_favorites)
+	})
+
+	cont := container.NewBorder(
+		nil,
+		container.NewBorder(nil, nil, nil, remove, layout.NewSpacer()),
+		nil,
+		nil,
+		SportsControl.Favorite_list)
+
+	return cont
+}
+
+func SportsOwned() fyne.CanvasObject {
+	SportsControl.Owned_list = widget.NewList(
+		func() int {
+			return len(menu.MenuControl.Sports_owned)
+		},
+		func() fyne.CanvasObject {
+			return widget.NewLabel("")
+		},
+		func(i widget.ListItemID, o fyne.CanvasObject) {
+			o.(*widget.Label).SetText(menu.MenuControl.Sports_owned[i])
+		})
+
+	SportsControl.Owned_list.OnSelected = func(id widget.ListItemID) {
+		if menu.Connected() {
+			setSportsControls(menu.MenuControl.Sports_owned[id])
+			SportsControl.Sports_list.UnselectAll()
+			SportsControl.Favorite_list.UnselectAll()
+		} else {
+			table.Actions.Sports_box.Hide()
+		}
+	}
+
+	return SportsControl.Owned_list
+}
+
+func GetBook(gi bool, scid string) (info string) {
+	if gi && !menu.GnomonClosing() && menu.Gnomes.Sync {
+		_, initValue := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "s_init", menu.Gnomes.Indexer.ChainHeight, true)
+		if initValue != nil {
+			_, playedValue := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "s_played", menu.Gnomes.Indexer.ChainHeight, true)
+			//_, hl := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "hl", menu.Gnomes.Indexer.ChainHeight, true)
+			init := initValue[0]
+			played := playedValue[0]
+
+			table.Actions.Game_options = []string{}
+			table.Actions.Game_select.Options = table.Actions.Game_options
+			played_str := strconv.Itoa(int(played))
+			if init == played {
+				info = "SCID: \n" + scid + "\n\nGames Completed: " + played_str + "\n\nNo current Games\n"
+				return
+			}
+
+			var single bool
+			iv := 1
+			for {
+				_, s_init := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "s_init_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
+				if s_init != nil {
+					game, _ := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "game_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
+					league, _ := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "league_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
+					_, s_n := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "s_#_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
+					_, s_amt := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "s_amount_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
+					_, s_end := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "s_end_at_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
+					_, s_total := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "s_total_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
+					//s_urlValue, _ := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "s_url_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
+					_, s_ta := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "team_a_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
+					_, s_tb := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "team_b_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
+					_, time_a := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "time_a", menu.Gnomes.Indexer.ChainHeight, true)
+					_, time_b := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "time_b", menu.Gnomes.Indexer.ChainHeight, true)
+
+					team_a := menu.TrimTeamA(game[0])
+					team_b := menu.TrimTeamB(game[0])
+
+					if s_end[0] > uint64(time.Now().Unix()) {
+						current := table.Actions.Game_select.Options
+						new := append(current, strconv.Itoa(iv)+"   "+game[0])
+						table.Actions.Game_select.Options = new
+					}
+
+					eA := fmt.Sprint(s_end[0] * 1000)
+					min := fmt.Sprint(float64(s_amt[0]) / 100000)
+					n := strconv.Itoa(int(s_n[0]))
+					aV := strconv.Itoa(int(s_ta[0]))
+					bV := strconv.Itoa(int(s_tb[0]))
+					t := strconv.Itoa(int(s_total[0]))
+					if !single {
+						single = true
+						info = "SCID: \n" + scid + "\n\nGames Completed: " + played_str + "\nCurrent Games:\n"
+					}
+					info = info + S_Results(game[0], strconv.Itoa(iv), league[0], min, eA, n, team_a, team_b, aV, bV, t, time_a[0], time_b[0])
+
+				}
+
+				if iv >= int(init) {
+					break
+				}
+
+				iv++
+			}
+		}
+	}
+
+	return
+}
+
+func S_Results(g, gN, l, min, eA, c, tA, tB, tAV, tBV, total string, a, b uint64) (info string) { /// sports info label
+	result, err := strconv.ParseFloat(total, 32)
+
+	if err != nil {
+		log.Println("Float Conversion Error", err)
+	}
+
+	s := fmt.Sprintf("%.5f", result/100000)
+	end_time, _ := rpc.MsToTime(eA)
+	utc_end := end_time.String()
+
+	pa := strconv.Itoa(int(a/60) / 60)
+	rf := strconv.Itoa(int(b/60) / 60)
+
+	info = ("\nGame " + gN + " - " + g + "\nLeague: " + l + "\nMinimum: " + min +
+		" Dero\nCloses at: " + utc_end + "\nPayout " + pa + " hours after close\nRefund if not paid " + rf + " within hours\nPot Total: " + s + "\nPicks: " + c + "\n" + tA + " Picks: " + tAV + "\n" + tB + " Picks: " + tBV + "\n")
+
+	return
 }
 
 func sports(league string) (api string) {
@@ -186,6 +401,7 @@ func callSoccer(date, league string) (s *soccer) {
 	req, err := http.NewRequest("GET", sports(league)+"?dates="+date, nil)
 	if err != nil {
 		log.Println(err.Error())
+		return
 	}
 
 	req.Header.Add("Accept", "application/json")
@@ -194,13 +410,15 @@ func callSoccer(date, league string) (s *soccer) {
 
 	if err != nil {
 		log.Println(err.Error())
+		return
 	}
 
 	defer resp.Body.Close()
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 
 	if err != nil {
 		log.Println(err.Error())
+		return
 	}
 
 	json.Unmarshal(b, &s)
@@ -213,6 +431,7 @@ func callBasketball(date, league string) (bb *basketball) {
 	req, err := http.NewRequest("GET", sports(league)+"?dates="+date, nil)
 	if err != nil {
 		log.Println(err.Error())
+		return
 	}
 
 	req.Header.Add("Accept", "application/json")
@@ -221,13 +440,15 @@ func callBasketball(date, league string) (bb *basketball) {
 
 	if err != nil {
 		log.Println(err.Error())
+		return
 	}
 
 	defer resp.Body.Close()
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 
 	if err != nil {
 		log.Println(err.Error())
+		return
 	}
 
 	json.Unmarshal(b, &bb)
@@ -240,6 +461,7 @@ func callFootball(date, league string) (f *football) {
 	req, err := http.NewRequest("GET", sports(league)+"?dates="+date, nil)
 	if err != nil {
 		log.Println(err.Error())
+		return
 	}
 
 	req.Header.Add("Accept", "application/json")
@@ -248,13 +470,15 @@ func callFootball(date, league string) (f *football) {
 
 	if err != nil {
 		log.Println(err.Error())
+		return
 	}
 
 	defer resp.Body.Close()
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 
 	if err != nil {
 		log.Println(err.Error())
+		return
 	}
 
 	json.Unmarshal(b, &f)
@@ -267,6 +491,7 @@ func callHockey(date, league string) (h *hockey) {
 	req, err := http.NewRequest("GET", sports(league)+"?dates="+date, nil)
 	if err != nil {
 		log.Println(err.Error())
+		return
 	}
 
 	req.Header.Add("Accept", "application/json")
@@ -275,13 +500,15 @@ func callHockey(date, league string) (h *hockey) {
 
 	if err != nil {
 		log.Println(err.Error())
+		return
 	}
 
 	defer resp.Body.Close()
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 
 	if err != nil {
 		log.Println(err.Error())
+		return
 	}
 
 	json.Unmarshal(b, &h)
@@ -291,12 +518,12 @@ func callHockey(date, league string) (h *hockey) {
 
 func GetGameEnd(date, game, league string) {
 	var found hockey
-
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", sports(league)+"?dates="+date, nil)
 
 	if err != nil {
 		log.Println(err.Error())
+		return
 	}
 
 	req.Header.Add("Accept", "application/json")
@@ -305,13 +532,15 @@ func GetGameEnd(date, game, league string) {
 
 	if err != nil {
 		log.Println(err.Error())
+		return
 	}
 
 	defer resp.Body.Close()
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 
 	if err != nil {
 		log.Println(err.Error())
+		return
 	}
 
 	json.Unmarshal(b, &found)
@@ -338,6 +567,7 @@ func callScores(date, league string) (s *scores) {
 	req, err := http.NewRequest("GET", sports(league)+"?dates="+date, nil)
 	if err != nil {
 		log.Println(err.Error())
+		return
 	}
 
 	req.Header.Add("Accept", "application/json")
@@ -346,13 +576,15 @@ func callScores(date, league string) (s *scores) {
 
 	if err != nil {
 		log.Println(err.Error())
+		return
 	}
 
 	defer resp.Body.Close()
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 
 	if err != nil {
 		log.Println(err.Error())
+		return
 	}
 
 	json.Unmarshal(b, &s)
@@ -368,64 +600,66 @@ func GetScores(label *widget.Label, league string) {
 		date = date[0:10]
 		comp := date[0:4] + date[5:7] + date[8:10]
 		found := callScores(comp, league)
-		if !single {
-			label.SetText(found.Leagues[0].Abbreviation + "\n" + found.Day.Date + "\n")
-		}
-
-		for i := range found.Events {
-			trimmed := strings.Trim(found.Events[i].Competitions[0].StartDate, "Z")
-			utc_time, err := time.Parse("2006-01-02T15:04", trimmed)
-			if err != nil {
-				log.Println(err)
+		if found != nil {
+			if !single {
+				label.SetText(found.Leagues[0].Abbreviation + "\n" + found.Day.Date + "\n")
 			}
 
-			tz, _ := time.LoadLocation("Local")
-			local := utc_time.In(tz).String()
-			state := found.Events[i].Competitions[0].Status.Type.State
-			team_a := found.Events[i].Competitions[0].Competitors[0].Team.Abbreviation
-			team_b := found.Events[i].Competitions[0].Competitors[1].Team.Abbreviation
-			score_a := found.Events[i].Competitions[0].Competitors[0].Score
-			score_b := found.Events[i].Competitions[0].Competitors[1].Score
-			period := found.Events[i].Status.Period
-			clock := found.Events[i].Competitions[0].Status.DisplayClock
-			complete := found.Events[i].Status.Type.Completed
+			for i := range found.Events {
+				trimmed := strings.Trim(found.Events[i].Competitions[0].StartDate, "Z")
+				utc_time, err := time.Parse("2006-01-02T15:04", trimmed)
+				if err != nil {
+					log.Println(err)
+				}
 
-			var format string
-			switch league {
-			case "FIFA":
-				format = " Half "
-			case "NBA":
-				format = " Quarter "
-			case "NFL":
-				format = " Quarter "
-			case "NHL":
-				format = " Period "
-			default:
-			}
+				tz, _ := time.LoadLocation("Local")
+				local := utc_time.In(tz).String()
+				state := found.Events[i].Competitions[0].Status.Type.State
+				team_a := found.Events[i].Competitions[0].Competitors[0].Team.Abbreviation
+				team_b := found.Events[i].Competitions[0].Competitors[1].Team.Abbreviation
+				score_a := found.Events[i].Competitions[0].Competitors[0].Score
+				score_b := found.Events[i].Competitions[0].Competitors[1].Score
+				period := found.Events[i].Status.Period
+				clock := found.Events[i].Competitions[0].Status.DisplayClock
+				complete := found.Events[i].Status.Type.Completed
 
-			var abv string
-			switch period {
-			case 0:
-				abv = ""
-			case 1:
-				abv = "st "
-			case 2:
-				abv = "nd "
-			case 3:
-				abv = "rd "
-			case 4:
-				abv = "th "
-			default:
-				abv = "th "
-			}
-			if state == "pre" {
-				label.SetText(label.Text + team_a + " - " + team_b + "\nStart time: " + local + "\nState: " + state + "\nComplete: " + strconv.FormatBool(complete) + "\n\n")
-			} else {
-				label.SetText(label.Text + team_a + " - " + team_b + "\nStart time: " + local + "\nState: " + state +
-					"\n" + strconv.Itoa(period) + abv + format + " " + clock + "\n" + team_a + ": " + score_a + "\n" + team_b + ": " + score_b + "\nComplete: " + strconv.FormatBool(complete) + "\n\n")
-			}
+				var format string
+				switch league {
+				case "FIFA":
+					format = " Half "
+				case "NBA":
+					format = " Quarter "
+				case "NFL":
+					format = " Quarter "
+				case "NHL":
+					format = " Period "
+				default:
+				}
 
-			single = true
+				var abv string
+				switch period {
+				case 0:
+					abv = ""
+				case 1:
+					abv = "st "
+				case 2:
+					abv = "nd "
+				case 3:
+					abv = "rd "
+				case 4:
+					abv = "th "
+				default:
+					abv = "th "
+				}
+				if state == "pre" {
+					label.SetText(label.Text + team_a + " - " + team_b + "\nStart time: " + local + "\nState: " + state + "\nComplete: " + strconv.FormatBool(complete) + "\n\n")
+				} else {
+					label.SetText(label.Text + team_a + " - " + team_b + "\nStart time: " + local + "\nState: " + state +
+						"\n" + strconv.Itoa(period) + abv + format + " " + clock + "\n" + team_a + ": " + score_a + "\n" + team_b + ": " + score_b + "\nComplete: " + strconv.FormatBool(complete) + "\n\n")
+				}
+
+				single = true
+			}
 		}
 	}
 	label.Refresh()
@@ -433,47 +667,51 @@ func GetScores(label *widget.Label, league string) {
 
 func GetHockey(date string) {
 	found := callHockey(date, "NHL")
-	for i := range found.Events {
-		pregame := found.Events[i].Competitions[0].Status.Type.State
-		trimmed := strings.Trim(found.Events[i].Competitions[0].StartDate, "Z")
-		utc_time, err := time.Parse("2006-01-02T15:04", trimmed)
-		if err != nil {
-			log.Println(err)
-		}
+	if found != nil {
+		for i := range found.Events {
+			pregame := found.Events[i].Competitions[0].Status.Type.State
+			trimmed := strings.Trim(found.Events[i].Competitions[0].StartDate, "Z")
+			utc_time, err := time.Parse("2006-01-02T15:04", trimmed)
+			if err != nil {
+				log.Println(err)
+			}
 
-		tz, _ := time.LoadLocation("Local")
+			tz, _ := time.LoadLocation("Local")
 
-		teamA := found.Events[i].Competitions[0].Competitors[0].Team.Abbreviation
-		teamB := found.Events[i].Competitions[0].Competitors[1].Team.Abbreviation
+			teamA := found.Events[i].Competitions[0].Competitors[0].Team.Abbreviation
+			teamB := found.Events[i].Competitions[0].Competitors[1].Team.Abbreviation
 
-		if !found.Events[i].Status.Type.Completed && pregame == "pre" {
-			current := PS_Control.S_game.Options
-			new := append(current, utc_time.In(tz).String()[0:16]+"   "+teamA+"-"+teamB)
-			PS_Control.S_game.Options = new
+			if !found.Events[i].Status.Type.Completed && pregame == "pre" {
+				current := PS_Control.S_game.Options
+				new := append(current, utc_time.In(tz).String()[0:16]+"   "+teamA+"-"+teamB)
+				PS_Control.S_game.Options = new
+			}
 		}
 	}
 }
 
 func GetSoccer(date string) {
 	found := callSoccer(date, "FIFA")
-	for i := range found.Events {
-		pregame := found.Events[i].Competitions[0].Status.Type.State
+	if found != nil {
+		for i := range found.Events {
+			pregame := found.Events[i].Competitions[0].Status.Type.State
 
-		trimmed := strings.Trim(found.Events[i].Competitions[0].StartDate, "Z")
-		utc_time, err := time.Parse("2006-01-02T15:04", trimmed)
-		if err != nil {
-			log.Println(err)
-		}
+			trimmed := strings.Trim(found.Events[i].Competitions[0].StartDate, "Z")
+			utc_time, err := time.Parse("2006-01-02T15:04", trimmed)
+			if err != nil {
+				log.Println(err)
+			}
 
-		tz, _ := time.LoadLocation("Local")
+			tz, _ := time.LoadLocation("Local")
 
-		teamA := found.Events[i].Competitions[0].Competitors[0].Team.Abbreviation
-		teamB := found.Events[i].Competitions[0].Competitors[1].Team.Abbreviation
+			teamA := found.Events[i].Competitions[0].Competitors[0].Team.Abbreviation
+			teamB := found.Events[i].Competitions[0].Competitors[1].Team.Abbreviation
 
-		if !found.Events[i].Status.Type.Completed && pregame == "pre" {
-			current := PS_Control.S_game.Options
-			new := append(current, utc_time.In(tz).String()[0:16]+"   "+teamA+"-"+teamB)
-			PS_Control.S_game.Options = new
+			if !found.Events[i].Status.Type.Completed && pregame == "pre" {
+				current := PS_Control.S_game.Options
+				new := append(current, utc_time.In(tz).String()[0:16]+"   "+teamA+"-"+teamB)
+				PS_Control.S_game.Options = new
+			}
 		}
 	}
 }
@@ -486,26 +724,27 @@ func GetWinner(sport, game, league string) (string, string) {
 		comp := date[0:4] + date[5:7] + date[8:10]
 
 		found := callScores(comp, league)
+		if found != nil {
+			for i := range found.Events {
+				a := found.Events[i].Competitions[0].Competitors[0].Team.Abbreviation
+				b := found.Events[i].Competitions[0].Competitors[1].Team.Abbreviation
+				g := a + "-" + b
 
-		for i := range found.Events {
-			a := found.Events[i].Competitions[0].Competitors[0].Team.Abbreviation
-			b := found.Events[i].Competitions[0].Competitors[1].Team.Abbreviation
-			g := a + "-" + b
+				if g == game {
+					if found.Events[i].Status.Type.Completed {
+						teamA := found.Events[i].Competitions[0].Competitors[0].Team.Abbreviation
+						a_win := found.Events[i].Competitions[0].Competitors[0].Winner
 
-			if g == game {
-				if found.Events[i].Status.Type.Completed {
-					teamA := found.Events[i].Competitions[0].Competitors[0].Team.Abbreviation
-					a_win := found.Events[i].Competitions[0].Competitors[0].Winner
+						teamB := found.Events[i].Competitions[0].Competitors[1].Team.Abbreviation
+						b_win := found.Events[i].Competitions[0].Competitors[1].Winner
 
-					teamB := found.Events[i].Competitions[0].Competitors[1].Team.Abbreviation
-					b_win := found.Events[i].Competitions[0].Competitors[1].Winner
-
-					if a_win && !b_win {
-						return "team_a", teamA
-					} else if b_win && !a_win {
-						return "team_b", teamB
-					} else {
-						return "", ""
+						if a_win && !b_win {
+							return "team_a", teamA
+						} else if b_win && !a_win {
+							return "team_b", teamB
+						} else {
+							return "", ""
+						}
 					}
 				}
 			}
@@ -516,46 +755,50 @@ func GetWinner(sport, game, league string) (string, string) {
 
 func GetFootball(date string) {
 	found := callFootball(date, "NFL")
-	for i := range found.Events {
-		pregame := found.Events[i].Competitions[0].Status.Type.State
-		trimmed := strings.Trim(found.Events[i].Competitions[0].StartDate, "Z")
-		utc_time, err := time.Parse("2006-01-02T15:04", trimmed)
-		if err != nil {
-			log.Println(err)
-		}
+	if found != nil {
+		for i := range found.Events {
+			pregame := found.Events[i].Competitions[0].Status.Type.State
+			trimmed := strings.Trim(found.Events[i].Competitions[0].StartDate, "Z")
+			utc_time, err := time.Parse("2006-01-02T15:04", trimmed)
+			if err != nil {
+				log.Println(err)
+			}
 
-		tz, _ := time.LoadLocation("Local")
+			tz, _ := time.LoadLocation("Local")
 
-		teamA := found.Events[i].Competitions[0].Competitors[0].Team.Abbreviation
-		teamB := found.Events[i].Competitions[0].Competitors[1].Team.Abbreviation
+			teamA := found.Events[i].Competitions[0].Competitors[0].Team.Abbreviation
+			teamB := found.Events[i].Competitions[0].Competitors[1].Team.Abbreviation
 
-		if !found.Events[i].Status.Type.Completed && pregame == "pre" {
-			current := PS_Control.S_game.Options
-			new := append(current, utc_time.In(tz).String()[0:16]+"   "+teamA+"-"+teamB)
-			PS_Control.S_game.Options = new
+			if !found.Events[i].Status.Type.Completed && pregame == "pre" {
+				current := PS_Control.S_game.Options
+				new := append(current, utc_time.In(tz).String()[0:16]+"   "+teamA+"-"+teamB)
+				PS_Control.S_game.Options = new
+			}
 		}
 	}
 }
 
 func GetBasketball(date string) {
 	found := callBasketball(date, "NBA")
-	for i := range found.Events {
-		pregame := found.Events[i].Competitions[0].Status.Type.State
-		trimmed := strings.Trim(found.Events[i].Competitions[0].StartDate, "Z")
-		utc_time, err := time.Parse("2006-01-02T15:04", trimmed)
-		if err != nil {
-			log.Println(err)
-		}
+	if found != nil {
+		for i := range found.Events {
+			pregame := found.Events[i].Competitions[0].Status.Type.State
+			trimmed := strings.Trim(found.Events[i].Competitions[0].StartDate, "Z")
+			utc_time, err := time.Parse("2006-01-02T15:04", trimmed)
+			if err != nil {
+				log.Println(err)
+			}
 
-		tz, _ := time.LoadLocation("Local")
+			tz, _ := time.LoadLocation("Local")
 
-		teamA := found.Events[i].Competitions[0].Competitors[0].Team.Abbreviation
-		teamB := found.Events[i].Competitions[0].Competitors[1].Team.Abbreviation
+			teamA := found.Events[i].Competitions[0].Competitors[0].Team.Abbreviation
+			teamB := found.Events[i].Competitions[0].Competitors[1].Team.Abbreviation
 
-		if !found.Events[i].Status.Type.Completed && pregame == "pre" {
-			current := PS_Control.S_game.Options
-			new := append(current, utc_time.In(tz).String()[0:16]+"   "+teamA+"-"+teamB)
-			PS_Control.S_game.Options = new
+			if !found.Events[i].Status.Type.Completed && pregame == "pre" {
+				current := PS_Control.S_game.Options
+				new := append(current, utc_time.In(tz).String()[0:16]+"   "+teamA+"-"+teamB)
+				PS_Control.S_game.Options = new
+			}
 		}
 	}
 }

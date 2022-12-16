@@ -1,6 +1,8 @@
 package table
 
 import (
+	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"image/color"
@@ -11,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/SixofClubsss/dReams/rpc"
+	dero "github.com/deroproject/derohe/rpc"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -35,12 +38,14 @@ type assetWidgets struct {
 	Wall_height   *canvas.Text
 	Daem_height   *canvas.Text
 	Gnomes_height *canvas.Text
+	Gnomes_sync   *canvas.Text
 	Gnomes_index  *canvas.Text
 	Index_entry   *widget.Entry
 	Index_button  *widget.Button
 	Index_search  *widget.Button
 	Asset_list    *widget.List
 	Assets        []string
+	Asset_map     map[string]string
 	Name          *canvas.Text
 	Collection    *canvas.Text
 	Descrption    *canvas.Text
@@ -200,6 +205,14 @@ func AvatarSelect() fyne.Widget {
 		} else if check == "Dero Seals" {
 			seal := strings.Trim(s, "Dero Sals#")
 			Settings.AvatarUrl = "https://ipfs.io/ipfs/QmP3HnzWpiaBA6ZE8c3dy5ExeG7hnYjSqkNfVbeVW5iEp6/low/" + seal + ".jpg"
+		} else if ValidAgent(s) {
+			agent, _ := getAgentNumber(rpc.Signal.Daemon, Assets.Asset_map[s])
+			if agent >= 0 && agent < 172 {
+				Settings.AvatarUrl = "https://ipfs.io/ipfs/QmaRHXcQwbFdUAvwbjgpDtr5kwGiNpkCM2eDBzAbvhD7wh/low/" + strconv.Itoa(agent) + ".jpg"
+			} else if agent < 1200 {
+				Settings.AvatarUrl = "https://ipfs.io/ipfs/QmQQyKoE9qDnzybeDCXhyMhwQcPmLaVy3AyYAzzC2zMauW/low/" + strconv.Itoa(agent) + ".jpg"
+
+			}
 		} else if s == "None" {
 			Settings.AvatarUrl = ""
 		}
@@ -208,6 +221,44 @@ func AvatarSelect() fyne.Widget {
 	Settings.AvatarSelect.PlaceHolder = "Avatar"
 
 	return Settings.AvatarSelect
+}
+
+func ValidAgent(s string) bool {
+	if Assets.Asset_map[s] != "" && len(Assets.Asset_map[s]) == 64 {
+		return true
+	}
+
+	return false
+}
+
+func getAgentNumber(dc bool, scid string) (int, error) {
+	if dc {
+		rpcClientD, ctx, cancel := rpc.SetDaemonClient(rpc.Round.Daemon)
+		defer cancel()
+
+		var result *dero.GetSC_Result
+		params := dero.GetSC_Params{
+			SCID:      scid,
+			Code:      false,
+			Variables: true,
+		}
+
+		err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params)
+		if err != nil {
+			log.Println(err)
+			return 1200, nil
+		}
+
+		data := result.VariableStringKeys["metadata"]
+		var agent Agent
+
+		hx, _ := hex.DecodeString(data.(string))
+		if err := json.Unmarshal(hx, &agent); err == nil {
+			return agent.ID, err
+		}
+
+	}
+	return 1200, nil
 }
 
 func FileExists(path string) bool {
@@ -301,26 +352,50 @@ func DreamsOpts() fyne.CanvasObject {
 	return cont
 }
 
+type dReamsAmt struct {
+	NumericalEntry
+}
+
+func (e *dReamsAmt) TypedKey(k *fyne.KeyEvent) {
+	value := strings.Trim(e.Entry.Text, "dReams: ")
+	switch k.Name {
+	case fyne.KeyUp:
+		if f, err := strconv.ParseFloat(value, 64); err == nil {
+			e.Entry.SetText("dReams: " + strconv.FormatFloat(float64(f+1), 'f', 0, 64))
+		}
+
+	case fyne.KeyDown:
+		if f, err := strconv.ParseFloat(value, 64); err == nil {
+			if f >= 1 {
+				e.Entry.SetText("dReams: " + strconv.FormatFloat(float64(f-1), 'f', 0, 64))
+			}
+		}
+	}
+	e.Entry.TypedKey(k)
+}
+
 func DreamsEntry() fyne.CanvasObject {
-	Actions.DEntry = NilNumericalEntry()
+	Actions.DEntry = &dReamsAmt{}
+	Actions.DEntry.ExtendBaseWidget(Actions.DEntry)
 	Actions.DEntry.PlaceHolder = "dReams:"
-	Actions.DEntry.Validator = validation.NewRegexp(`^(dReams: )\d{1,}`, "Format Not Valid")
+	Actions.DEntry.Validator = validation.NewRegexp(`^(dReams: )\d{1,}$`, "Format Not Valid")
 	Actions.DEntry.OnChanged = func(s string) {
 		if Actions.DEntry.Validate() != nil {
 			Actions.DEntry.SetText("dReams: 0")
 		}
 	}
 
+	Assets.Gnomes_sync = canvas.NewText("", color.RGBA{31, 150, 200, 210})
 	Assets.Gnomes_height = canvas.NewText(" Gnomon Height: ", color.White)
-
 	Assets.Daem_height = canvas.NewText(" Daemon Height: ", color.White)
 	Assets.Wall_height = canvas.NewText(" Wallet Height: ", color.White)
 	Assets.Dreams_bal = canvas.NewText(" dReams Balance: ", color.White)
 	Assets.Dero_bal = canvas.NewText(" Dero Balance: ", color.White)
 	price := getOgre("DERO-USDT")
 	Assets.Dero_price = canvas.NewText(" Dero Price: $"+price, color.White)
-	Assets.Gnomes_height.TextSize = 18
 
+	Assets.Gnomes_sync.TextSize = 18
+	Assets.Gnomes_height.TextSize = 18
 	Assets.Daem_height.TextSize = 18
 	Assets.Wall_height.TextSize = 18
 	Assets.Dreams_bal.TextSize = 18
@@ -332,9 +407,27 @@ func DreamsEntry() fyne.CanvasObject {
 	Actions.DEntry.SetText("dReams: 0")
 	Actions.DEntry.Hide()
 
-	box := *container.NewVBox(Assets.Gnomes_height, Assets.Daem_height, Assets.Wall_height, Assets.Dreams_bal, Assets.Dero_bal, Assets.Dero_price, exLabel, Actions.DEntry)
+	box := *container.NewVBox(
+		Assets.Gnomes_sync,
+		Assets.Gnomes_height,
+		Assets.Daem_height,
+		Assets.Wall_height,
+		Assets.Dreams_bal,
+		Assets.Dero_bal,
+		Assets.Dero_price, exLabel,
+		Actions.DEntry)
 
 	return &box
+}
+
+func TournamentButton() fyne.CanvasObject {
+	Actions.Tournament = widget.NewButton("Tournament", func() {
+		tourneyConfirmPopUp()
+	})
+
+	Actions.Tournament.Hide()
+
+	return Actions.Tournament
 }
 
 func dReamsConfirmPopUp(c int, amt int) {
@@ -368,6 +461,43 @@ Confirm.`
 		case 2:
 			rpc.TradedReams(uint64(amt * 100000))
 		}
+		confirm.Close()
+
+	})
+
+	cancel_button := widget.NewButton("Cancel", func() {
+		confirm.Close()
+
+	})
+
+	buttons := container.NewAdaptiveGrid(2, confirm_button, cancel_button)
+	content := container.NewVBox(label, layout.NewSpacer(), buttons)
+
+	img := *canvas.NewImageFromResource(Resource.Back2)
+	confirm.SetContent(
+		container.New(layout.NewMaxLayout(),
+			&img,
+			content))
+	confirm.Show()
+}
+
+func tourneyConfirmPopUp() {
+	bal, _ := rpc.TokenBalance(rpc.TourneySCID)
+	balance := float64(bal) / 100000
+	a := fmt.Sprint(strconv.FormatFloat(balance, 'f', 2, 64))
+	text := `You are about to deposit ` + a + ` Tournament Chips into leaderboard contract
+
+Confirm.`
+
+	confirm := fyne.CurrentApp().NewWindow("Confirm")
+	confirm.Resize(fyne.NewSize(300, 300))
+	confirm.SetFixedSize(true)
+	confirm.SetIcon(Resource.SmallIcon)
+	label := widget.NewLabel(text)
+	label.Wrapping = fyne.TextWrapWord
+
+	confirm_button := widget.NewButton("Confirm", func() {
+		rpc.TourneyDeposit(bal, Poker_name)
 		confirm.Close()
 
 	})

@@ -19,8 +19,8 @@ import (
 const (
 	MIN_WIDTH  = 1400
 	MIN_HEIGHT = 800
-	ID         = "dReam Tables App"
-	Name       = "dReams"
+	App_ID     = "dReam Tables App"
+	App_Name   = "dReams"
 )
 
 type dReamTables struct {
@@ -44,9 +44,12 @@ var dReams dReamTables
 var background *fyne.Container
 
 func main() {
-	dReams.App = app.NewWithID(ID)
+	n := runtime.NumCPU()
+	runtime.GOMAXPROCS(n)
+	flags()
+	dReams.App = app.NewWithID(App_ID)
 	dReams.App.Settings().SetTheme(Theme())
-	dReams.Window = dReams.App.NewWindow(Name)
+	dReams.Window = dReams.App.NewWindow(App_Name)
 	dReams.Window.SetMaster()
 	dReams.Window.Resize(fyne.NewSize(MIN_WIDTH, MIN_HEIGHT))
 	dReams.Window.SetFixedSize(false)
@@ -57,12 +60,13 @@ func main() {
 		writeConfig(makeConfig(table.Poker_name, rpc.Round.Daemon))
 		menu.StopGnomon(menu.Gnomes.Init)
 		quit <- struct{}{}
+		menu.StopIndicators()
 		time.Sleep(1 * time.Second)
 		dReams.Window.Close()
 	})
 
-	menu.GetMenuResources(resourceGnomonIconPng, resourceAvatarFramePng, resourceCwBackgroundPng, resourceMwBackgroundPng, resourceOwBackgroundPng, resourceUwBackgroundPng)
-	table.GetTableResources(resourceGnomonIconPng, resourceMwBackgroundPng, resourceOwBackgroundPng, resourceBackgroundPng, resourceUwBackgroundPng)
+	menu.GetMenuResources(resourceDTGnomonIconPng, resourceAvatarFramePng, resourceCwBackgroundPng, resourceMwBackgroundPng, resourceOwBackgroundPng, resourceUwBackgroundPng, resourceGnomoniconPng)
+	table.GetTableResources(resourceDTGnomonIconPng, resourceMwBackgroundPng, resourceOwBackgroundPng, resourceBackgroundPng, resourceUwBackgroundPng)
 
 	rpc.Signal.Startup = true
 	rpc.Bacc.Display = true
@@ -71,13 +75,13 @@ func main() {
 	table.Settings.ThemeImg = *canvas.NewImageFromResource(resourceBackgroundPng)
 	background = container.NewMax(&table.Settings.ThemeImg)
 
-	table.Poker_name, menu.PlayerControl.Daemon_config = readConfig()
 	go func() {
 		dReams.Window.SetContent(
 			container.New(layout.NewMaxLayout(),
 				background,
 				place()))
 	}()
+
 	dReams.os = runtime.GOOS
 	if systemTray(dReams.App) {
 		dReams.App.(desktop.App).SetSystemTrayIcon(resourceCardSharkTrayPng)

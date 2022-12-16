@@ -25,7 +25,7 @@ func place() *fyne.Container {
 	H.LeftLabel = widget.NewLabel("")
 	H.RightLabel = widget.NewLabel("")
 	H.TopLabel = widget.NewLabel("")
-	H.TopLabel.Move(fyne.NewPos(350, 185))
+	H.TopLabel.Move(fyne.NewPos(345, 192))
 
 	B.LeftLabel = widget.NewLabel("")
 	B.RightLabel = widget.NewLabel("")
@@ -33,14 +33,15 @@ func place() *fyne.Container {
 	P.LeftLabel = widget.NewLabel("")
 	P.RightLabel = widget.NewLabel("")
 
-	P.TopLabel = widget.NewLabel("Loading Data...")
-	P.BottomLabel = widget.NewLabel("")
+	prediction.PredictControl.Info = widget.NewLabel("SCID: \n" + prediction.PredictControl.Contract + "\n")
+	prediction.PredictControl.Info.Wrapping = fyne.TextWrapWord
+	prediction.PredictControl.Prices = widget.NewLabel("")
 
 	S.LeftLabel = widget.NewLabel("")
 	S.RightLabel = widget.NewLabel("")
 
-	S.TopLabel = widget.NewLabel("SCID: \n" + prediction.SportsControl.Contract + "\n")
-	S.TopLabel.Wrapping = fyne.TextWrapWord
+	prediction.SportsControl.Info = widget.NewLabel("SCID: \n" + prediction.SportsControl.Contract + "\n")
+	prediction.SportsControl.Info.Wrapping = fyne.TextWrapWord
 
 	menu_tabs := container.NewAppTabs(
 		container.NewTabItem("Wallet", placeWall()),
@@ -64,7 +65,7 @@ func place() *fyne.Container {
 	bottom_box := container.NewHBox(bottom, layout.NewSpacer())
 	bottom_bar := container.NewVBox(layout.NewSpacer(), bottom_box)
 
-	alpha := container.NewMax(top_bar, bottom_bar, canvas.NewRectangle(color.RGBA{0, 0, 0, 150}))
+	alpha := container.NewMax(top_bar, bottom_bar, canvas.NewRectangle(color.RGBA{0, 0, 0, 150}), menu.StartIndicators())
 
 	tabs := container.NewAppTabs(
 		container.NewTabItem("Menu", menu_tabs),
@@ -105,8 +106,7 @@ func placeWall() *container.Split {
 		asset_items)
 
 	check_boxes := container.NewVBox(
-		menu.DaemonConnectedBox(rpc.Signal.Daemon),
-		menu.WalletConnectedBox())
+		menu.DaemonConnectedBox())
 
 	player_box := container.NewHBox(player_input, check_boxes)
 	menu_top := container.NewHSplit(player_box, menu.IntroTree())
@@ -146,7 +146,8 @@ func placeContract() *container.Split {
 
 	tabs := container.NewAppTabs(
 		container.NewTabItem("Tables", menu.TableListings()),
-		container.NewTabItem("Favorites", menu.FavoriteListings()))
+		container.NewTabItem("Favorites", menu.HolderoFavorites()),
+		container.NewTabItem("Owned", menu.MyTables()))
 
 	tabs.OnSelected = func(ti *container.TabItem) {
 		MenuContractTab(ti)
@@ -158,7 +159,7 @@ func placeContract() *container.Split {
 	player_box := container.NewHBox(player_input, check_box)
 	menu_top := container.NewHSplit(player_box, max)
 
-	mid := container.NewVBox(layout.NewSpacer(), container.NewAdaptiveGrid(2, menu.NameEntry(), layout.NewSpacer()), menu.OwnersBoxMid())
+	mid := container.NewVBox(layout.NewSpacer(), container.NewAdaptiveGrid(2, menu.NameEntry(), table.TournamentButton()), menu.OwnersBoxMid())
 
 	menu_bottom := container.NewGridWithColumns(3, menu.OwnersBoxLeft(), mid, prediction.OwnerButton())
 
@@ -294,9 +295,7 @@ func placeBacc() *fyne.Container {
 func placePredict() *fyne.Container {
 	cont := container.NewHScroll(prediction.PreictionContractEntry())
 	cont.SetMinSize(fyne.NewSize(600, 35.1875))
-	predict_buttons := container.NewVBox(prediction.Higher(), prediction.Lower())
-	predict_name := container.NewVBox(prediction.NameEdit(), prediction.Change())
-	predict_info := container.NewVBox(P.TopLabel, P.BottomLabel)
+	predict_info := container.NewVBox(prediction.PredictControl.Info, prediction.PredictControl.Prices)
 	predict_scroll := container.NewScroll(predict_info)
 	predict_scroll.SetMinSize(fyne.NewSize(540, 500))
 
@@ -308,8 +307,7 @@ func placePredict() *fyne.Container {
 		hbox,
 		predict_scroll,
 		layout.NewSpacer(),
-		predict_name,
-		predict_buttons)
+		prediction.PredictBox())
 
 	leaders_scroll := container.NewScroll(prediction.LeadersDisplay())
 	leaders_scroll.SetMinSize(fyne.NewSize(180, 500))
@@ -317,6 +315,8 @@ func placePredict() *fyne.Container {
 
 	tabs := container.NewAppTabs(
 		container.NewTabItem("Contracts", prediction.PredictionListings()),
+		container.NewTabItem("Favorites", prediction.PredicitionFavorites()),
+		container.NewTabItem("Owned", prediction.PredictionOwned()),
 		container.NewTabItem("Leaderboard", leaders_contnet))
 
 	tabs.OnSelected = func(ti *container.TabItem) {
@@ -339,7 +339,7 @@ func placePredict() *fyne.Container {
 func placeSports() *fyne.Container {
 	cont := container.NewHScroll(prediction.SportsContractEntry())
 	cont.SetMinSize(fyne.NewSize(600, 35.1875))
-	sports_content := container.NewVBox(S.TopLabel)
+	sports_content := container.NewVBox(prediction.SportsControl.Info)
 	sports_scroll := container.NewVScroll(sports_content)
 	sports_scroll.SetMinSize(fyne.NewSize(180, 500))
 
@@ -388,6 +388,8 @@ func placeSports() *fyne.Container {
 
 	tabs := container.NewAppTabs(
 		container.NewTabItem("Contracts", prediction.SportsListings()),
+		container.NewTabItem("Favorites", prediction.SportsFavorites()),
+		container.NewTabItem("Owned", prediction.SportsOwned()),
 		container.NewTabItem("Scores", score_tabs))
 
 	tabs.OnSelected = func(ti *container.TabItem) {

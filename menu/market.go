@@ -235,13 +235,14 @@ func AuctionListings() fyne.Widget {
 		if id != 0 {
 			split := strings.Split(Market.Auctions[id], "   ")
 			if split[3] != Market.Viewing {
+				clearNfaImages()
 				Market.Viewing = split[3]
-				go ResetAuctionInfo()
-				go GetAuctionImages(split[3])
-				GetAuctionDetails(split[3])
+				go GetNfaImages(split[3])
+				go GetAuctionDetails(split[3])
 				value := float64(Market.Bid_amt)
 				str := fmt.Sprintf("%.5f", value/100000)
 				Market.Entry.SetText(str)
+
 			}
 		}
 	}
@@ -264,10 +265,12 @@ func BuyNowListings() fyne.Widget {
 	Market.Buy_list.OnSelected = func(id widget.ListItemID) {
 		if id != 0 {
 			split := strings.Split(Market.Buy_now[id], "   ")
-			Market.Viewing = split[3]
-			ResetBuyInfo()
-			go GetBuyNowImages(split[3])
-			GetBuyNowDetails(split[3])
+			if split[3] != Market.Viewing {
+				clearNfaImages()
+				Market.Viewing = split[3]
+				go GetNfaImages(split[3])
+				go GetBuyNowDetails(split[3])
+			}
 		}
 	}
 
@@ -275,7 +278,6 @@ func BuyNowListings() fyne.Widget {
 }
 
 func NfaIcon(res fyne.Resource) fyne.CanvasObject {
-	Market.Icon.SetMinSize(fyne.NewSize(94, 94))
 	Market.Icon.Resize(fyne.NewSize(94, 94))
 	Market.Icon.Move(fyne.NewPos(8, 3))
 
@@ -290,13 +292,23 @@ func NfaIcon(res fyne.Resource) fyne.CanvasObject {
 }
 
 func NfaImg(img canvas.Image) *fyne.Container {
-	Market.Cover.SetMinSize(fyne.NewSize(133, 200))
 	Market.Cover.Resize(fyne.NewSize(266, 400))
-	Market.Cover.Move(fyne.NewPos(400, -50))
+	Market.Cover.Move(fyne.NewPos(400, -250))
 
 	cont := container.NewWithoutLayout(&img)
 
 	return cont
+}
+
+func clearNfaImages() {
+	Market.Icon = *canvas.NewImageFromImage(nil)
+	Market.Details_box.Objects[1].Refresh()
+
+	Market.Cover = *canvas.NewImageFromImage(nil)
+	Market.Details_box.Objects[0] = &Market.Cover
+	Market.Details_box.Objects[0].Refresh()
+	Market.Details_box.Refresh()
+
 }
 
 func NfaMarketInfo() fyne.CanvasObject {
@@ -326,6 +338,9 @@ func NfaMarketInfo() fyne.CanvasObject {
 	Market.Bid_count.TextSize = 18
 	Market.End_time.TextSize = 18
 
+	Market.Icon.SetMinSize(fyne.NewSize(94, 94))
+	Market.Cover.SetMinSize(fyne.NewSize(133, 200))
+
 	return AuctionInfo()
 }
 
@@ -350,10 +365,23 @@ func AuctionInfo() fyne.CanvasObject {
 	return &Market.Details_box
 }
 
+func RefreshNfaImages() {
+	if Market.Cover.Resource != nil {
+		Market.Details_box.Objects[0] = NfaImg(Market.Cover)
+		Market.Details_box.Objects[0].Refresh()
+	}
+
+	if Market.Icon.Resource != nil {
+		Market.Details_box.Objects[1] = NfaIcon(Resource.Frame)
+		Market.Details_box.Objects[1].Refresh()
+	}
+
+	Market.Details_box.Refresh()
+}
+
 func ResetAuctionInfo() {
 	Market.Bid_amt = 0
-	Market.Icon = *canvas.NewImageFromImage(nil)
-	Market.Cover = *canvas.NewImageFromImage(nil)
+	clearNfaImages()
 	Market.Name.Text = (" Name: ")
 	Market.Name.Refresh()
 	Market.Collection.Text = (" Collection: ")
@@ -378,6 +406,7 @@ func ResetAuctionInfo() {
 	Market.Bid_count.Refresh()
 	Market.End_time.Text = (" Ends At: ")
 	Market.End_time.Refresh()
+	Market.Details_box.Refresh()
 }
 
 func BuyNowInfo() fyne.CanvasObject {
@@ -400,8 +429,7 @@ func BuyNowInfo() fyne.CanvasObject {
 
 func ResetBuyInfo() {
 	Market.Buy_amt = 0
-	Market.Icon = *canvas.NewImageFromImage(nil)
-	Market.Cover = *canvas.NewImageFromImage(nil)
+	clearNfaImages()
 	Market.Name.Text = (" Name: ")
 	Market.Name.Refresh()
 	Market.Collection.Text = (" Collection: ")
@@ -420,4 +448,5 @@ func ResetBuyInfo() {
 	Market.Owner_update.Refresh()
 	Market.End_time.Text = (" Ends At: ")
 	Market.End_time.Refresh()
+	Market.Details_box.Refresh()
 }

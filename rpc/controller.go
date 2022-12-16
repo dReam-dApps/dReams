@@ -37,18 +37,8 @@ type displayStrings struct {
 	BaccMin  string
 	BaccRes  string
 
-	Preiction string
-	P_amt     string
-	P_end     string
-	P_count   string
-	P_pot     string
-	P_up      string
-	P_down    string
-	P_played  string
-	P_final   string
-	P_mark    string
-	P_feed    string
-	P_txid    string
+	Prediction string
+	P_feed     string
 
 	Game    string
 	S_count string
@@ -112,6 +102,7 @@ type holderoValues struct {
 	Asset     bool
 	Printed   bool
 	Notified  bool
+	Tourney   bool
 	Face      string
 	Back      string
 	F_url     string
@@ -128,6 +119,8 @@ type holderoValues struct {
 	P4_url    string
 	P5_url    string
 	P6_url    string
+	Bettor    string
+	Raisor    string
 }
 
 type baccValues struct {
@@ -145,12 +138,7 @@ type baccValues struct {
 }
 
 type predictionValues struct {
-	Init   bool
-	Mark   bool
 	Amount uint64
-	Time_a int
-	Time_b int
-	Time_c int
 }
 
 type signals struct {
@@ -170,9 +158,11 @@ type signals struct {
 	In4       bool
 	In5       bool
 	In6       bool
+	Out1      bool
 	My_turn   bool
 	PlacedBet bool
 	Paid      bool
+	Log       bool
 	Clicked   bool
 	CHeight   int
 }
@@ -225,8 +215,152 @@ func addOne(v interface{}) string {
 	return str
 }
 
+func closedTable() {
+	Round.Winner = ""
+	Round.ID = 0
+	Round.Tourney = false
+	Round.P1_url = ""
+	Round.P2_url = ""
+	Round.P3_url = ""
+	Round.P4_url = ""
+	Round.P5_url = ""
+	Round.P6_url = ""
+	Round.P1_name = ""
+	Round.P2_name = ""
+	Round.P3_name = ""
+	Round.P4_name = ""
+	Round.P5_name = ""
+	Round.P6_name = ""
+	Round.Bettor = ""
+	Round.Raisor = ""
+	Signal.Out1 = false
+	Signal.Sit = true
+	Signal.In1 = false
+	Signal.In2 = false
+	Signal.In3 = false
+	Signal.In4 = false
+	Signal.In5 = false
+	Signal.In6 = false
+	Display.Seats = ""
+	Display.Pot = ""
+	Display.Blinds = ""
+	Display.Ante = ""
+	Display.Dealer = ""
+	Display.Turn = ""
+	Display.PlayerId = ""
+}
+
+func singleNameClear(p int) {
+	switch p {
+	case 1:
+		Round.P1_name = ""
+		Round.P1_url = ""
+	case 2:
+		Round.P2_name = ""
+		Round.P2_url = ""
+	case 3:
+		Round.P3_name = ""
+		Round.P3_url = ""
+	case 4:
+		Round.P4_name = ""
+		Round.P4_url = ""
+	case 5:
+		Round.P5_name = ""
+		Round.P5_url = ""
+	case 6:
+		Round.P6_name = ""
+		Round.P6_url = ""
+	default:
+
+	}
+}
+
+func findBettor(p interface{}) string {
+	if p != nil {
+		switch p.(float64) {
+		case 0:
+			if Round.P6_name != "" && !Round.F6 {
+				return Round.P6_name
+			} else if Round.P5_name != "" && !Round.F5 {
+				return Round.P5_name
+			} else if Round.P4_name != "" && !Round.F4 {
+				return Round.P4_name
+			} else if Round.P3_name != "" && !Round.F3 {
+				return Round.P3_name
+			} else if Round.P2_name != "" && !Round.F2 {
+				return Round.P2_name
+			}
+		case 1:
+			if Round.P1_name != "" && !Round.F1 {
+				return Round.P1_name
+			} else if Round.P6_name != "" && !Round.F6 {
+				return Round.P6_name
+			} else if Round.P5_name != "" && !Round.F5 {
+				return Round.P5_name
+			} else if Round.P4_name != "" && !Round.F4 {
+				return Round.P4_name
+			} else if Round.P3_name != "" && !Round.F3 {
+				return Round.P3_name
+			}
+		case 2:
+			if Round.P2_name != "" && !Round.F2 {
+				return Round.P2_name
+			} else if Round.P1_name != "" && !Round.F1 {
+				return Round.P1_name
+			} else if Round.P6_name != "" && !Round.F6 {
+				return Round.P6_name
+			} else if Round.P5_name != "" && !Round.F5 {
+				return Round.P5_name
+			} else if Round.P4_name != "" && !Round.F4 {
+				return Round.P4_name
+			}
+		case 3:
+			if Round.P3_name != "" && !Round.F3 {
+				return Round.P3_name
+			} else if Round.P2_name != "" && !Round.F2 {
+				return Round.P2_name
+			} else if Round.P1_name != "" && !Round.F1 {
+				return Round.P1_name
+			} else if Round.P6_name != "" && !Round.F6 {
+				return Round.P6_name
+			} else if Round.P5_name != "" && !Round.F5 {
+				return Round.P5_name
+			}
+		case 4:
+			if Round.P4_name != "" && !Round.F4 {
+				return Round.P4_name
+			} else if Round.P3_name != "" && !Round.F3 {
+				return Round.P3_name
+			} else if Round.P2_name != "" && !Round.F2 {
+				return Round.P2_name
+			} else if Round.P1_name != "" && !Round.F1 {
+				return Round.P1_name
+			} else if Round.P6_name != "" && !Round.F6 {
+				return Round.P6_name
+			}
+		case 5:
+			if Round.P5_name != "" && !Round.F5 {
+				return Round.P5_name
+			} else if Round.P4_name != "" && !Round.F4 {
+				return Round.P4_name
+			} else if Round.P3_name != "" && !Round.F3 {
+				return Round.P3_name
+			} else if Round.P2_name != "" && !Round.F2 {
+				return Round.P2_name
+			} else if Round.P1_name != "" && !Round.F1 {
+				return Round.P1_name
+			}
+		default:
+			return ""
+		}
+	}
+
+	return ""
+}
+
 func getAvatar(p int, id interface{}) string {
 	if id == nil {
+		singleNameClear(p)
 		return "nil"
 	}
 
@@ -242,44 +376,68 @@ func getAvatar(p int, id interface{}) string {
 	case 1:
 		if len(split) == 2 {
 			Round.P1_name = split[1]
+			Round.P1_url = ""
 		} else if len(split) == 3 {
 			Round.P1_name = split[1]
 			Round.P1_url = split[2]
+		} else {
+			Round.P1_name = ""
+			Round.P1_url = ""
 		}
 	case 2:
 		if len(split) == 2 {
 			Round.P2_name = split[1]
+			Round.P2_url = ""
 		} else if len(split) == 3 {
 			Round.P2_name = split[1]
 			Round.P2_url = split[2]
+		} else {
+			Round.P2_name = ""
+			Round.P2_url = ""
 		}
 	case 3:
 		if len(split) == 2 {
 			Round.P3_name = split[1]
+			Round.P3_url = ""
 		} else if len(split) == 3 {
 			Round.P3_name = split[1]
 			Round.P3_url = split[2]
+		} else {
+			Round.P3_name = ""
+			Round.P3_url = ""
 		}
 	case 4:
 		if len(split) == 2 {
 			Round.P4_name = split[1]
+			Round.P4_url = ""
 		} else if len(split) == 3 {
 			Round.P4_name = split[1]
 			Round.P4_url = split[2]
+		} else {
+			Round.P4_name = ""
+			Round.P4_url = ""
 		}
 	case 5:
 		if len(split) == 2 {
 			Round.P5_name = split[1]
+			Round.P5_url = ""
 		} else if len(split) == 3 {
 			Round.P5_name = split[1]
 			Round.P5_url = split[2]
+		} else {
+			Round.P5_name = ""
+			Round.P5_url = ""
 		}
 	case 6:
 		if len(split) == 2 {
 			Round.P6_name = split[1]
+			Round.P6_url = ""
 		} else if len(split) == 3 {
 			Round.P6_name = split[1]
 			Round.P6_url = split[2]
+		} else {
+			Round.P6_name = ""
+			Round.P6_url = ""
 		}
 	}
 
@@ -317,7 +475,6 @@ func checkPlayerId(one, two, three, four, five, six string) string {
 }
 
 func setHolderoName(one, two, three, four, five, six interface{}) {
-
 	if one != nil {
 		Signal.In1 = true
 	} else {
@@ -393,44 +550,36 @@ func potIsEmpty(pot uint64) {
 		Signal.Reveal = false
 		Signal.End = false
 		Signal.Paid = false
+		Signal.Log = false
 		Display.Res = ""
-	}
-}
-
-func tableClosed(seats interface{}) {
-	if seats == nil || seats == 0 {
-		Display.Seats = ""
-		Display.Pot = ""
-		Display.Blinds = ""
-		Display.Ante = ""
-		Display.Dealer = ""
-		Display.Turn = ""
-		Display.PlayerId = ""
-		Round.Winner = ""
-		Round.ID = 0
-		Signal.Sit = true
+		Round.Bettor = ""
+		Round.Raisor = ""
 	}
 }
 
 func tableOpen(seats, full, two, three, four, five, six interface{}) {
+	if Round.ID > 1 {
+		Signal.Sit = true
+		return
+	}
 	s := int(seats.(float64))
-	if s >= 2 && two == nil {
+	if s >= 2 && two == nil && Round.ID != 1 {
 		Signal.Sit = false
 	}
 
-	if s >= 3 && three == nil {
+	if s >= 3 && three == nil && Round.ID != 1 {
 		Signal.Sit = false
 	}
 
-	if s >= 4 && four == nil {
+	if s >= 4 && four == nil && Round.ID != 1 {
 		Signal.Sit = false
 	}
 
-	if s >= 5 && five == nil {
+	if s >= 5 && five == nil && Round.ID != 1 {
 		Signal.Sit = false
 	}
 
-	if s == 6 && six == nil {
+	if s == 6 && six == nil && Round.ID != 1 {
 		Signal.Sit = false
 	}
 
@@ -442,22 +591,32 @@ func tableOpen(seats, full, two, three, four, five, six interface{}) {
 func getCommCardValues(f1, f2, f3, t, r interface{}) {
 	if f1 != nil {
 		Round.Flop1 = int(f1.(float64))
+	} else {
+		Round.Flop1 = 0
 	}
 
 	if f2 != nil {
 		Round.Flop2 = int(f2.(float64))
+	} else {
+		Round.Flop2 = 0
 	}
 
 	if f3 != nil {
 		Round.Flop3 = int(f3.(float64))
+	} else {
+		Round.Flop3 = 0
 	}
 
 	if t != nil {
 		Round.TurnCard = int(t.(float64))
+	} else {
+		Round.TurnCard = 0
 	}
 
 	if r != nil {
 		Round.RiverCard = int(r.(float64))
+	} else {
+		Round.RiverCard = 0
 	}
 }
 
@@ -710,6 +869,11 @@ func allFolded(p1, p2, p3, p4, p5, p6, s interface{}) {
 		Round.LocalEnd = true
 		Round.Winner = who
 		Display.Res = display + " Wins, All Players Have Folded"
+		if !Signal.Log {
+			Signal.Log = true
+			addLog(Display.Res)
+		}
+
 	}
 }
 

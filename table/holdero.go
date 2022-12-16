@@ -71,6 +71,7 @@ func Player1_label(a, f, t fyne.Resource) fyne.CanvasObject {
 	var name fyne.CanvasObject
 	var avatar fyne.CanvasObject
 	var frame fyne.CanvasObject
+	var out fyne.CanvasObject
 	if rpc.Signal.In1 {
 		if rpc.Display.Turn == "1" {
 			name = canvas.NewText(rpc.Round.P1_name, color.RGBA{105, 90, 205, 210})
@@ -102,6 +103,14 @@ func Player1_label(a, f, t fyne.Resource) fyne.CanvasObject {
 		frame = canvas.NewRectangle(color.RGBA{0, 0, 0, 0})
 	}
 
+	if rpc.Signal.Out1 {
+		out = canvas.NewText("Sitting out", color.White)
+		out.Resize(fyne.NewSize(100, 25))
+		out.Move(fyne.NewPos(253, 45))
+	} else {
+		out = canvas.NewText("", color.RGBA{0, 0, 0, 0})
+	}
+
 	name.Resize(fyne.NewSize(100, 25))
 	name.Move(fyne.NewPos(253, 20))
 
@@ -111,7 +120,7 @@ func Player1_label(a, f, t fyne.Resource) fyne.CanvasObject {
 	frame.Resize(fyne.NewSize(78, 78))
 	frame.Move(fyne.NewPos(357, 20))
 
-	p := container.NewWithoutLayout(name, avatar, frame)
+	p := container.NewWithoutLayout(name, out, avatar, frame)
 
 	return p
 }
@@ -379,16 +388,18 @@ type tableWidgets struct {
 
 	Bacc_actions *fyne.Container
 
-	Dreams *widget.Button
-	Dero   *widget.Button
-	DEntry *NumericalEntry
+	Dreams     *widget.Button
+	Dero       *widget.Button
+	DEntry     *dReamsAmt
+	Tournament *widget.Button
 
-	Higher     *widget.Button
-	Lower      *widget.Button
-	Change     *widget.Button
-	Remove     *widget.Button
-	NameEntry  *widget.Entry
-	P_contract *widget.SelectEntry
+	Higher         *widget.Button
+	Lower          *widget.Button
+	Change         *widget.Button
+	Remove         *widget.Button
+	NameEntry      *widget.Entry
+	Prediction_box *fyne.Container
+	P_contract     *widget.SelectEntry
 
 	Game_select  *widget.Select
 	Game_options []string
@@ -414,6 +425,10 @@ func holderoButtonBuffer() {
 }
 
 func CheckNames(seats string) bool {
+	if rpc.Round.ID == 1 {
+		return true
+	}
+
 	switch seats {
 	case "2":
 		if Poker_name == rpc.Round.P1_name {
@@ -567,13 +582,22 @@ func BetAmount() fyne.CanvasObject {
 							Actions.BetEntry.SetText(strconv.FormatFloat(roundFloat(f, 1), 'f', 1, 64))
 						}
 					}
+					if rpc.Round.Ante > 0 {
+						if s < strconv.FormatFloat(float64(rpc.Round.Ante)/100000, 'f', 1, 64) {
+							Actions.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.Ante)/100000, 'f', 1, 64))
+						}
 
-					if s < strconv.FormatFloat(float64(rpc.Round.BB)/100000, 'f', 1, 64) {
-						Actions.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.BB)/100000, 'f', 1, 64))
-					}
+						if Actions.BetEntry.Validate() != nil {
+							Actions.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.Ante)/100000, 'f', 1, 64))
+						}
+					} else {
+						if s < strconv.FormatFloat(float64(rpc.Round.BB)/100000, 'f', 1, 64) {
+							Actions.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.BB)/100000, 'f', 1, 64))
+						}
 
-					if Actions.BetEntry.Validate() != nil {
-						Actions.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.BB)/100000, 'f', 1, 64))
+						if Actions.BetEntry.Validate() != nil {
+							Actions.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.BB)/100000, 'f', 1, 64))
+						}
 					}
 				}
 			}
