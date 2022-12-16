@@ -533,35 +533,35 @@ func BetAmount() fyne.CanvasObject {
 	}
 	Actions.BetEntry.Validator = validation.NewRegexp(`[^0]\d{1,}\.\d{1,1}|\d{0,1}\.\d{0,1}$`, "Format Not Valid")
 	Actions.BetEntry.OnChanged = func(s string) {
-		if rpc.Signal.PlacedBet {
-			Actions.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.Raised)/100000, 'f', 1, 64))
-			if Actions.BetEntry.Validate() != nil {
+		if f, err := strconv.ParseFloat(s, 64); err == nil {
+			if rpc.Signal.PlacedBet {
 				Actions.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.Raised)/100000, 'f', 1, 64))
-			}
-		} else {
+				if Actions.BetEntry.Validate() != nil {
+					Actions.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.Raised)/100000, 'f', 1, 64))
+				}
+			} else {
 
-			if rpc.Round.Wager > 0 {
-				if rpc.Round.Raised > 0 {
-					if rpc.Signal.PlacedBet {
-						Actions.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.Raised)/100000, 'f', 1, 64))
-					} else {
-						Actions.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.Wager)/100000, 'f', 1, 64))
-					}
-					if Actions.BetEntry.Validate() != nil {
+				if rpc.Round.Wager > 0 {
+					if rpc.Round.Raised > 0 {
 						if rpc.Signal.PlacedBet {
 							Actions.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.Raised)/100000, 'f', 1, 64))
 						} else {
 							Actions.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.Wager)/100000, 'f', 1, 64))
 						}
-					}
-				} else {
+						if Actions.BetEntry.Validate() != nil {
+							if rpc.Signal.PlacedBet {
+								Actions.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.Raised)/100000, 'f', 1, 64))
+							} else {
+								Actions.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.Wager)/100000, 'f', 1, 64))
+							}
+						}
+					} else {
 
-					if s < strconv.FormatFloat(float64(rpc.Round.Wager)/100000, 'f', 5, 64) {
-						Actions.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.Wager)/100000, 'f', 1, 64))
-					}
+						if f < float64(rpc.Round.Wager)/100000 {
+							Actions.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.Wager)/100000, 'f', 1, 64))
+						}
 
-					if Actions.BetEntry.Validate() != nil {
-						if f, err := strconv.ParseFloat(s, 64); err == nil {
+						if Actions.BetEntry.Validate() != nil {
 							float := f * 100000
 							if uint64(float)%10000 == 0 {
 								Actions.BetEntry.SetText(strconv.FormatFloat(roundFloat(f, 1), 'f', 1, 64))
@@ -570,37 +570,39 @@ func BetAmount() fyne.CanvasObject {
 							}
 						}
 					}
-				}
-			} else {
+				} else {
 
-				if rpc.Signal.Daemon {
-					if f, err := strconv.ParseFloat(s, 64); err == nil {
+					if rpc.Signal.Daemon {
 						float := f * 100000
 						if uint64(float)%10000 == 0 {
 							Actions.BetEntry.SetText(strconv.FormatFloat(roundFloat(f, 1), 'f', 1, 64))
 						} else if Actions.BetEntry.Validate() != nil {
 							Actions.BetEntry.SetText(strconv.FormatFloat(roundFloat(f, 1), 'f', 1, 64))
 						}
-					}
-					if rpc.Round.Ante > 0 {
-						if s < strconv.FormatFloat(float64(rpc.Round.Ante)/100000, 'f', 1, 64) {
-							Actions.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.Ante)/100000, 'f', 1, 64))
-						}
 
-						if Actions.BetEntry.Validate() != nil {
-							Actions.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.Ante)/100000, 'f', 1, 64))
-						}
-					} else {
-						if s < strconv.FormatFloat(float64(rpc.Round.BB)/100000, 'f', 1, 64) {
-							Actions.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.BB)/100000, 'f', 1, 64))
-						}
+						if rpc.Round.Ante > 0 {
+							if f < float64(rpc.Round.Ante)/100000 {
+								Actions.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.Ante)/100000, 'f', 1, 64))
+							}
 
-						if Actions.BetEntry.Validate() != nil {
-							Actions.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.BB)/100000, 'f', 1, 64))
+							if Actions.BetEntry.Validate() != nil {
+								Actions.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.Ante)/100000, 'f', 1, 64))
+							}
+
+						} else {
+							if f < float64(rpc.Round.BB)/100000 {
+								Actions.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.BB)/100000, 'f', 1, 64))
+							}
+
+							if Actions.BetEntry.Validate() != nil {
+								Actions.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.BB)/100000, 'f', 1, 64))
+							}
 						}
 					}
 				}
 			}
+		} else {
+			log.Println(err)
 		}
 	}
 
