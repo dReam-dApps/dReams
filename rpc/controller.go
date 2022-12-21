@@ -1,6 +1,7 @@
 package rpc
 
 import (
+	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"log"
@@ -46,6 +47,8 @@ type displayStrings struct {
 	S_end   string
 	TeamA   string
 	TeamB   string
+
+	Readings string
 }
 
 type hashValue struct {
@@ -131,6 +134,18 @@ type baccValues struct {
 	B_card2  int
 	B_card3  int
 	CHeight  int
+	Last     string
+	Found    bool
+	Display  bool
+	Notified bool
+}
+
+type tarotValues struct {
+	T_card1  int
+	T_card2  int
+	T_card3  int
+	CHeight  int
+	Num      int
 	Last     string
 	Found    bool
 	Display  bool
@@ -923,4 +938,20 @@ func TeamReturn(t int) string {
 	}
 
 	return team
+}
+
+// / Tarot
+func findTarotCard(hash interface{}) int { /// Tarot card hash
+	if hash != nil {
+		for i := 1; i < 79; i++ {
+			finder := strconv.Itoa(i)
+			card := sha256.Sum256([]byte(finder))
+			str := hex.EncodeToString(card[:])
+
+			if str == hash.(string) {
+				return i
+			}
+		}
+	}
+	return 0
 }

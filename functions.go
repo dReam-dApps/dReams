@@ -103,6 +103,8 @@ func init() {
 
 	rpc.Signal.Sit = true
 
+	table.InitTableSettings()
+
 	c := make(chan os.Signal)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
@@ -122,6 +124,9 @@ func notification(title, content string, g int) *fyne.Notification {
 		rpc.Round.Notified = true
 	case 1:
 		rpc.Bacc.Notified = true
+	case 2:
+		rpc.Tarot.Notified = true
+	default:
 	}
 
 	return &fyne.Notification{Title: title, Content: content}
@@ -157,8 +162,9 @@ func makeConfig(name, daemon string) (data save) {
 	switch daemon {
 	case "127.0.0.1:10102":
 	case "89.38.99.117:10102":
-	case "dero-node.mysrv.cloud:10102":
-	case "derostats.io:10102":
+	// case "dero-node.mysrv.cloud:10102":
+	// case "derostats.io:10102":
+	case "publicrpc1.dero.io:10102":
 	default:
 		data.Daemon = []string{daemon}
 	}
@@ -331,6 +337,7 @@ func fetch(quit chan struct{}) { /// main loop
 	var ticker = time.NewTicker(3 * time.Second)
 	var trigger bool
 	var skip int
+	setLabels()
 	for {
 		select {
 		case <-ticker.C: /// do on interval
@@ -344,6 +351,7 @@ func fetch(quit chan struct{}) { /// main loop
 				menu.GnomonEndPoint(rpc.Signal.Daemon, menu.Gnomes.Init, menu.Gnomes.Sync)
 				rpc.FetchHolderoSC(rpc.Signal.Daemon, rpc.Signal.Contract)
 				rpc.FetchBaccSC(rpc.Signal.Daemon)
+				rpc.FetchTarotSC(rpc.Signal.Daemon)
 				menu.GnomonState(rpc.Signal.Daemon, menu.Gnomes.Init, isWindows())
 				background.Refresh()
 
@@ -364,6 +372,8 @@ func fetch(quit chan struct{}) { /// main loop
 
 				BaccRefresh()
 				PredictionRefresh(dReams.predict)
+				S.RightLabel.SetText("dReams Balance: " + rpc.Wallet.TokenBal + "      Dero Balance: " + rpc.Wallet.Balance + "      Height: " + rpc.Wallet.Height)
+				TarotRefresh()
 
 				go MenuRefresh(dReams.menu, menu.Gnomes.Init)
 				if !rpc.Signal.Clicked {
@@ -578,8 +588,44 @@ func PredictionRefresh(tab bool) {
 
 func SportsRefresh(tab bool) {
 	if tab {
-		S.RightLabel.SetText("dReams Balance: " + rpc.Wallet.TokenBal + "      Dero Balance: " + rpc.Wallet.Balance + "      Height: " + rpc.Wallet.Height)
 		go prediction.SetSportsInfo(prediction.SportsControl.Contract)
+	}
+}
+
+func TarotRefresh() {
+	T.LeftLabel.SetText("Total Readings: " + rpc.Display.Readings + "      Click your card for Iluma reading")
+	T.RightLabel.SetText("dReams Balance: " + rpc.Wallet.TokenBal + "      Dero Balance: " + rpc.Wallet.Balance + "      Height: " + rpc.Wallet.Height)
+
+	if !rpc.Tarot.Display {
+		rpc.FetchTarotReading(rpc.Signal.Daemon, rpc.Tarot.Last)
+		table.Iluma.Box.Refresh()
+		if rpc.Tarot.Found {
+			rpc.Tarot.Display = true
+			table.Iluma.Label.SetText("")
+			if rpc.Tarot.Num == 3 {
+				table.Iluma.Card1.Objects[1] = TarotCard(rpc.Tarot.T_card1)
+				table.Iluma.Card2.Objects[1] = TarotCard(rpc.Tarot.T_card2)
+				table.Iluma.Card3.Objects[1] = TarotCard(rpc.Tarot.T_card3)
+			} else {
+				table.Iluma.Card1.Objects[1] = TarotCard(0)
+				table.Iluma.Card2.Objects[1] = TarotCard(rpc.Tarot.T_card1)
+				table.Iluma.Card3.Objects[1] = TarotCard(0)
+			}
+			table.TarotBuffer(false)
+			table.Iluma.Box.Refresh()
+		}
+	}
+
+	if rpc.StringToInt(rpc.Wallet.Height) > rpc.Tarot.CHeight+3 {
+		table.TarotBuffer(false)
+	}
+
+	T.TableItems.Refresh()
+
+	if rpc.Tarot.Found && !rpc.Tarot.Notified {
+		if !isWindows() {
+			dReams.App.SendNotification(notification("dReams - Tarot", "Your Reading has Arrvied", 2))
+		}
 	}
 }
 
@@ -775,6 +821,7 @@ func MainTab(ti *container.TabItem) {
 		dReams.bacc = false
 		dReams.predict = false
 		dReams.sports = false
+		dReams.tarot = false
 		if rpc.Round.ID == 1 {
 			table.Settings.FaceSelect.Enable()
 			table.Settings.BackSelect.Enable()
@@ -786,6 +833,7 @@ func MainTab(ti *container.TabItem) {
 		dReams.bacc = false
 		dReams.predict = false
 		dReams.sports = false
+		dReams.tarot = false
 		HolderoRefresh()
 	case "Baccarat":
 		dReams.menu = false
@@ -793,6 +841,7 @@ func MainTab(ti *container.TabItem) {
 		dReams.bacc = true
 		dReams.predict = false
 		dReams.sports = false
+		dReams.tarot = false
 		BaccRefresh()
 		if rpc.Wallet.Connect && rpc.Bacc.Display {
 			table.BaccBuffer(false)
@@ -803,6 +852,7 @@ func MainTab(ti *container.TabItem) {
 		dReams.bacc = false
 		dReams.predict = true
 		dReams.sports = false
+		dReams.tarot = false
 		go func() {
 			table.Actions.NameEntry.Text = menu.CheckPredictionName(prediction.PredictControl.Contract)
 			table.Actions.NameEntry.Refresh()
@@ -815,7 +865,18 @@ func MainTab(ti *container.TabItem) {
 		dReams.bacc = false
 		dReams.predict = false
 		dReams.sports = true
+		dReams.tarot = false
 		go menu.PopulateSports(rpc.Signal.Daemon, menu.Gnomes.Sync, nil)
+	case "Tarot":
+		dReams.menu = false
+		dReams.holdero = false
+		dReams.bacc = false
+		dReams.predict = false
+		dReams.sports = false
+		dReams.tarot = true
+		if rpc.Wallet.Connect && rpc.Tarot.Display {
+			table.TarotBuffer(false)
+		}
 	}
 }
 

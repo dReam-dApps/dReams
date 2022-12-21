@@ -57,12 +57,15 @@ type assetWidgets struct {
 var Assets assetWidgets
 var Resource resources
 
-func GetTableResources(r1, r2, r3, r4, r5 fyne.Resource) {
+func GetTableResources(r1, r2, r3, r4, r5, r6, r7, r8 fyne.Resource) {
 	Resource.SmallIcon = r1
 	Resource.Back2 = r2
 	Resource.Back3 = r3
 	Resource.Background = r4
 	Resource.Back4 = r5
+	Iluma.Background1 = r6
+	Iluma.Background2 = r7
+	Iluma.Back = r8
 
 }
 

@@ -26,6 +26,7 @@ const (
 	pPredictSCID = "e5e49c9a6dc1c0dc8a94429a01bf758e705de49487cbd0b3e3550648d2460cdf"
 	SportsSCID   = "ad11377c29a863523c1cc50a33ca13e861cc146a7c0496da58deaa1973e0a39f"
 	pSportsSCID  = "fffdc4ea6d157880841feab335ab4755edcde4e60fec2fff661009b16f44fa94"
+	TarotSCID    = "a6fc0033327073dd54e448192af929466596fce4d689302e558bc85ea8734a82"
 	GnomonSCID   = "a05395bb0cf77adc850928b0db00eb5ca7a9ccbafd9a38d021c8d299ad5ce1a4"
 	DevAddress   = "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn"
 	ArtAddress   = "dero1qy0khp9s9yw2h0eu20xmy9lth3zp5cacmx3rwt6k45l568d2mmcf6qgcsevzx"
@@ -38,6 +39,7 @@ var Round holderoValues
 var Bacc baccValues
 var Signal signals
 var Predict predictionValues
+var Tarot tarotValues
 
 func fromHextoString(h string) string {
 	str, err := hex.DecodeString(h)
@@ -114,7 +116,7 @@ func GasEstimate(scid string, args rpc.Arguments, t []rpc.Transfer) (uint64, err
 		return 0, nil
 	}
 
-	log.Println("Gas Fee:", result.GasStorage+100)
+	log.Println("Gas Fee:", result.GasStorage+120)
 
 	if result.GasStorage < 1200 {
 		return result.GasStorage + 120, err
@@ -821,4 +823,78 @@ func GetSportsCode(dc bool, pub int) (string, error) {
 		return result.Code, err
 	}
 	return "", nil
+}
+
+func FetchTarotSC(dc bool) error {
+	if dc {
+		rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
+		defer cancel()
+
+		var result *rpc.GetSC_Result
+		params := rpc.GetSC_Params{
+			SCID:      TarotSCID,
+			Code:      false,
+			Variables: true,
+		}
+
+		err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params)
+		if err != nil {
+			log.Println(err)
+			return nil
+		}
+
+		Reading_jv := result.VariableStringKeys["readings:"]
+		if Reading_jv != nil {
+			Display.Readings = fmt.Sprint(Reading_jv)
+		}
+
+		return err
+	}
+
+	return nil
+}
+
+func FetchTarotReading(dc bool, tx string) error {
+	if dc && len(tx) == 64 {
+		rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
+		defer cancel()
+
+		var result *rpc.GetSC_Result
+		params := rpc.GetSC_Params{
+			SCID:      TarotSCID,
+			Code:      false,
+			Variables: true,
+		}
+
+		err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params)
+		if err != nil {
+			log.Println(err)
+			return nil
+		}
+
+		Reading_jv := result.VariableStringKeys["readings:"]
+		if Reading_jv != nil {
+			start := int(Reading_jv.(float64))
+			i := int(Reading_jv.(float64))
+			for i < start+24 {
+				h := "-readingTXID:"
+				w := strconv.Itoa(i)
+				TXID_jv := result.VariableStringKeys[w+h]
+
+				if TXID_jv != nil {
+					if TXID_jv.(string) == tx {
+						Tarot.Found = true
+						Tarot.T_card1 = findTarotCard(result.VariableStringKeys[w+"-card1:"])
+						Tarot.T_card2 = findTarotCard(result.VariableStringKeys[w+"-card2:"])
+						Tarot.T_card3 = findTarotCard(result.VariableStringKeys[w+"-card3:"])
+					}
+				}
+				i++
+			}
+		}
+
+		return err
+	}
+
+	return nil
 }

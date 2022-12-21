@@ -47,6 +47,9 @@ var Settings settings
 var Poker_name string
 
 func InitTableSettings() {
+	rpc.Signal.Startup = true
+	rpc.Bacc.Display = true
+	rpc.Tarot.Display = true
 	rpc.Times.Delay = 30
 	rpc.Times.Kick = 0
 	Settings.Faces = "light/"

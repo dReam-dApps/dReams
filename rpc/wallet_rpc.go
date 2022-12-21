@@ -1764,3 +1764,46 @@ func NfaCancelClose(scid, c string) error {
 
 	return err
 }
+
+func TarotReading(num int) error {
+	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
+	defer cancel()
+
+	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "Draw"}
+	arg2 := rpc.Argument{Name: "num", DataType: "U", Value: num}
+	args := rpc.Arguments{arg1, arg2}
+	txid := rpc.Transfer_Result{}
+
+	t1 := rpc.Transfer{
+		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
+		Amount:      0,
+		Burn:        10000,
+	}
+
+	t := []rpc.Transfer{t1}
+	fee, _ := GasEstimate(TarotSCID, args, t)
+	params := &rpc.Transfer_Params{
+		Transfers: t,
+		SC_ID:     TarotSCID,
+		SC_RPC:    args,
+		Ringsize:  2,
+		Fees:      fee,
+	}
+
+	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+
+	Tarot.Num = num
+	Tarot.Last = txid.TXID
+	Tarot.Notified = false
+
+	log.Println("Reading TX:", txid)
+	addLog("Reading TX: " + txid.TXID)
+
+	Tarot.CHeight = StringToInt(Wallet.Height)
+
+	return err
+}

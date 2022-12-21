@@ -885,6 +885,9 @@ func CheckG45owner(gs, gc bool, g45s map[string]string) {
 		log.Println("Checking G45 Assets")
 
 		for scid := range g45s {
+			if GnomonClosing() {
+				break
+			}
 			data, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "metadata", Gnomes.Indexer.LastIndexedHeight, true)
 			owner, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "owner", Gnomes.Indexer.LastIndexedHeight, true)
 			minter, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "minter", Gnomes.Indexer.LastIndexedHeight, true)

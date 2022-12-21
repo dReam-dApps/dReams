@@ -23,6 +23,7 @@ import (
 const (
 	DAEMON_RPC_DEFAULT = "127.0.0.1:10102"
 	DAEMON_RPC_REMOTE1 = "89.38.99.117:10102"
+	DAEMON_RPC_REMOTE2 = "publicrpc1.dero.io:10102"
 	// DAEMON_RPC_REMOTE2 = "dero-node.mysrv.cloud:10102"
 	// DAEMON_RPC_REMOTE3 = "derostats.io:10102"
 )
@@ -210,7 +211,7 @@ func HolderoContractConnectedBox() fyne.Widget {
 }
 
 func DaemonRpcEntry() fyne.Widget {
-	var options = []string{"", DAEMON_RPC_DEFAULT, DAEMON_RPC_REMOTE1}
+	var options = []string{"", DAEMON_RPC_DEFAULT, DAEMON_RPC_REMOTE1, DAEMON_RPC_REMOTE2}
 	if MenuControl.Daemon_config != "" {
 		options = append(options, MenuControl.Daemon_config)
 	}
@@ -834,6 +835,8 @@ func disableActions(d bool) {
 		MenuControl.Bet_unlock.Hide()
 		MenuControl.Bet_menu.Hide()
 		table.Actions.Tournament.Hide()
+		table.Iluma.Draw1.Hide()
+		table.Iluma.Draw3.Hide()
 	} else {
 		table.Actions.Dreams.Show()
 		table.Actions.Dero.Show()
@@ -849,6 +852,8 @@ func disableActions(d bool) {
 	MenuControl.Bet_unlock.Refresh()
 	MenuControl.Bet_menu.Refresh()
 	table.Actions.Tournament.Refresh()
+	table.Iluma.Draw1.Refresh()
+	table.Iluma.Draw3.Refresh()
 }
 
 func disableBaccActions(d bool) {
@@ -1245,7 +1250,7 @@ func IntroTree() fyne.CanvasObject {
 		"":                      {"Welcome to dReams"},
 		"Welcome to dReams":     {"Get Started", "Contracts", "Assets", "Market"},
 		"Get Started":           {"You will need a Dero wallet to play", "Can use local daemon, or remote daemon options are availible in drop down", "Enter daemon rpc address, wallet rpc address and user:pass", "Press connect, D & W indicators at top right of screen will light up on successful connection", "On first start start up of app, Gnomon will take ~10 seconds to create your local db", "Gnomon idicator will have a stripe when starting or syncing, indicator will turn solid when startup, sync and scan are completed"},
-		"Contracts":             {"Holdero", "Baccarat", "Predictions", "Sports"},
+		"Contracts":             {"Holdero", "Baccarat", "Predictions", "Sports", "Tarot"},
 		"Holdero":               {"Multiplayer Texas Hold'em style on chian poker", "No limit, single raise game. Table owners choose game params", "Six players max at a table", "No side pots, must call or fold", "Can use Dero or dReam Tokens", "View table listings or launch your own Holdero contract from the contracts tab"},
 		"Baccarat":              {"A popular table game, where closest to 9 wins", "Uses dReam Tokens for betting"},
 		"Predictions":           {"Prediction contracts are for binary based predictions, (higher/lower, yes/no)", "How predictions works", "Current Markets", "dReams Client aggregated price feed", "View active prediction contracts in predictions tab or launch your own prediction contract from the contracts tab"},
@@ -1254,6 +1259,7 @@ func IntroTree() fyne.CanvasObject {
 		"Sports":                {"Sports contracts are for sports wagers", "How sports works", "Current Leagues", "Live game scores, and game schedules", "View active sports contracts in sports tab or launch your own sports contract from the contracts tab"},
 		"How sports works":      {"P2P betting", "Variable time limits, one contract can run miltiple games at the same time", "Click a contract from the list to view it", "Any active games on the contract will populate, you can pick which game you'd like to play from the drop down", "Closes at, is when the contrcts stops accepting picks", "Default payout time after close is 4hr, this is when winner will be posted from client feed", "Default refund time is 8hr after close, meaning if team winner is not provided past that time you will be refunded", "Ties refund pot to all all participants"},
 		"Current Leagues":       {"FIFA", "NBA", "NFL", "NHL"},
+		"Tarot":                 {"On chian Taort readings", "Iluma cards and readings created by Kalina Lux"},
 		"Assets":                {"View any owned assets held in wallet", "Put owned assets up for auction or for sale", "Indexer, add custom contracts to your index and search current index db"},
 		"Market":                {"View any in game assets up for auction or sale", "Bid on or buy assets", "Cancel or close out any existing listings"},
 	}
