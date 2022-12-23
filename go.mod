@@ -7,6 +7,7 @@ require (
 	fyne.io/fyne/v2 v2.2.4
 	github.com/civilware/Gnomon v0.0.0-20221208192504-80c0dc69fea7
 	github.com/deroproject/derohe v0.0.0-20221027103319-358fab62bdf4
+	github.com/superoo7/go-gecko v1.0.0
 	github.com/ybbus/jsonrpc/v3 v3.1.1
 )
 

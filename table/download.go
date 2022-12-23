@@ -12,6 +12,9 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
+
+	coingecko "github.com/superoo7/go-gecko/v3"
 
 	"github.com/SixofClubsss/dReams/rpc"
 
@@ -21,60 +24,60 @@ import (
 type sharedCards struct {
 	//window   fyne.Window
 	//progress *widget.ProgressBar
-	Back   canvas.Image
-	Card1  canvas.Image
-	Card2  canvas.Image
-	Card3  canvas.Image
-	Card4  canvas.Image
-	Card5  canvas.Image
-	Card6  canvas.Image
-	Card7  canvas.Image
-	Card8  canvas.Image
-	Card9  canvas.Image
-	Card10 canvas.Image
-	Card11 canvas.Image
-	Card12 canvas.Image
-	Card13 canvas.Image
-	Card14 canvas.Image
-	Card15 canvas.Image
-	Card16 canvas.Image
-	Card17 canvas.Image
-	Card18 canvas.Image
-	Card19 canvas.Image
-	Card20 canvas.Image
-	Card21 canvas.Image
-	Card22 canvas.Image
-	Card23 canvas.Image
-	Card24 canvas.Image
-	Card25 canvas.Image
-	Card26 canvas.Image
-	Card27 canvas.Image
-	Card28 canvas.Image
-	Card29 canvas.Image
-	Card30 canvas.Image
-	Card31 canvas.Image
-	Card32 canvas.Image
-	Card33 canvas.Image
-	Card34 canvas.Image
-	Card35 canvas.Image
-	Card36 canvas.Image
-	Card37 canvas.Image
-	Card38 canvas.Image
-	Card39 canvas.Image
-	Card40 canvas.Image
-	Card41 canvas.Image
-	Card42 canvas.Image
-	Card43 canvas.Image
-	Card44 canvas.Image
-	Card45 canvas.Image
-	Card46 canvas.Image
-	Card47 canvas.Image
-	Card48 canvas.Image
-	Card49 canvas.Image
-	Card50 canvas.Image
-	Card51 canvas.Image
-	Card52 canvas.Image
-	Empty  canvas.Image
+	//Back canvas.Image
+	// Card1  canvas.Image
+	// Card2  canvas.Image
+	// Card3  canvas.Image
+	// Card4  canvas.Image
+	// Card5  canvas.Image
+	// Card6  canvas.Image
+	// Card7  canvas.Image
+	// Card8  canvas.Image
+	// Card9  canvas.Image
+	// Card10 canvas.Image
+	// Card11 canvas.Image
+	// Card12 canvas.Image
+	// Card13 canvas.Image
+	// Card14 canvas.Image
+	// Card15 canvas.Image
+	// Card16 canvas.Image
+	// Card17 canvas.Image
+	// Card18 canvas.Image
+	// Card19 canvas.Image
+	// Card20 canvas.Image
+	// Card21 canvas.Image
+	// Card22 canvas.Image
+	// Card23 canvas.Image
+	// Card24 canvas.Image
+	// Card25 canvas.Image
+	// Card26 canvas.Image
+	// Card27 canvas.Image
+	// Card28 canvas.Image
+	// Card29 canvas.Image
+	// Card30 canvas.Image
+	// Card31 canvas.Image
+	// Card32 canvas.Image
+	// Card33 canvas.Image
+	// Card34 canvas.Image
+	// Card35 canvas.Image
+	// Card36 canvas.Image
+	// Card37 canvas.Image
+	// Card38 canvas.Image
+	// Card39 canvas.Image
+	// Card40 canvas.Image
+	// Card41 canvas.Image
+	// Card42 canvas.Image
+	// Card43 canvas.Image
+	// Card44 canvas.Image
+	// Card45 canvas.Image
+	// Card46 canvas.Image
+	// Card47 canvas.Image
+	// Card48 canvas.Image
+	// Card49 canvas.Image
+	// Card50 canvas.Image
+	// Card51 canvas.Image
+	// Card52 canvas.Image
+	//Empty canvas.Image
 
 	P1_avatar canvas.Image
 	P2_avatar canvas.Image
@@ -133,12 +136,12 @@ func GetUrls(face, back string) {
 func DownloadFile(Url, fileName string) (canvas.Image, error) {
 	response, err := http.Get(Url)
 	if err != nil {
-		return Shared.Empty, err
+		return *canvas.NewImageFromImage(nil), err
 	}
 	defer response.Body.Close()
 
 	if response.StatusCode != 200 {
-		return Shared.Empty, errors.New("received non 200 response code")
+		return *canvas.NewImageFromImage(nil), errors.New("received non 200 response code")
 	}
 
 	img := *canvas.NewImageFromReader(response.Body, fileName)
@@ -631,8 +634,10 @@ type kuFeed struct {
 func GetPrice(coin string) (price float64, display string) {
 	var t float64
 	var k float64
+	var g float64
 	priceT := getOgre(coin)
 	priceK := getKucoin(coin)
+	priceG := getGeko(coin)
 
 	if tf, err := strconv.ParseFloat(priceT, 64); err == nil {
 		t = tf * 100
@@ -642,15 +647,26 @@ func GetPrice(coin string) (price float64, display string) {
 		k = kf * 100
 	}
 
-	if t > 0 && k > 0 {
+	if gf, err := strconv.ParseFloat(priceG, 64); err == nil {
+		g = gf * 100
+	}
+
+	if t > 0 && k > 0 && g > 0 {
+		price = (t + k + g) / 3
+	} else if t > 0 && k > 0 {
 		price = (t + k) / 2
+	} else if k > 0 && g > 0 {
+		price = (k + g) / 2
+	} else if t > 0 && g > 0 {
+		price = (t + g) / 2
 	} else if t > 0 {
 		price = t
 	} else if k > 0 {
 		price = k
-	}
-
-	if price == 0 {
+	} else if g > 0 {
+		price = g
+	} else {
+		price = 0
 		log.Println("Error getting dReams price feed")
 	}
 
@@ -751,6 +767,31 @@ func getKucoin(coin string) string {
 	}
 
 	return found.Data.Price
+}
+
+func getGeko(coin string) string {
+	client := &http.Client{Timeout: time.Second * 10}
+	CG := coingecko.NewClient(client)
+
+	var url string
+	switch coin {
+	case "BTC-USDT":
+		url = "bitcoin"
+	case "DERO-USDT":
+		url = "dero"
+	case "XMR-USDT":
+		url = "monero"
+	default:
+		return ""
+	}
+
+	price, err := CG.SimpleSinglePrice(url, "usd")
+	if err != nil {
+		log.Println(err.Error())
+		return ""
+	}
+
+	return fmt.Sprintf("%.2f", price.MarketPrice)
 }
 
 func downloadFileLocal(filepath string, url string) (err error) {

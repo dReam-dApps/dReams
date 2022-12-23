@@ -69,7 +69,7 @@ func main() {
 	})
 
 	menu.GetMenuResources(resourceDTGnomonIconPng, resourceAvatarFramePng, resourceCwBackgroundPng, resourceMwBackgroundPng, resourceOwBackgroundPng, resourceUwBackgroundPng, resourceGnomoniconPng)
-	table.GetTableResources(resourceDTGnomonIconPng, resourceMwBackgroundPng, resourceOwBackgroundPng, resourceBackgroundPng, resourceUwBackgroundPng, resourceIlumabackground1Png, resourceIlumabackground2Png, resourceIluma81Jpg)
+	table.GetTableResources(resourceDTGnomonIconPng, resourceMwBackgroundPng, resourceOwBackgroundPng, resourceBackgroundPng, resourceUwBackgroundPng, resourceIlumabackground1Png, resourceIlumabackground2Png, resourceIluma81Png)
 
 	dReams.menu = true
 

@@ -153,7 +153,9 @@ type tarotValues struct {
 }
 
 type predictionValues struct {
+	Init   bool
 	Amount uint64
+	Buffer int64
 }
 
 type signals struct {

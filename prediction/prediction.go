@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/SixofClubsss/dReams/menu"
 	"github.com/SixofClubsss/dReams/rpc"
@@ -297,7 +298,7 @@ func Remove() fyne.Widget {
 	return PredictControl.Remove_button
 }
 
-func P_initResults(p, amt, eA, c, to, u, d, r, f, m string, ta, tb, tc, offset int, post bool) (info string) { /// prediction info, initialized
+func P_initResults(p, amt, eA, c, to, u, d, r, f, m string, ta, tb, tc int) (info string) { /// prediction info, initialized
 	end_time, _ := rpc.MsToTime(eA)
 	utc := end_time.String()
 	add := rpc.StringToInt(eA)
@@ -313,15 +314,43 @@ func P_initResults(p, amt, eA, c, to, u, d, r, f, m string, ta, tb, tc, offset i
 
 	s := fmt.Sprintf("%.5f", result/100000)
 
-	if post {
-		info = "SCID: \n" + PredictControl.Contract + "\n" + "\n" + p + " Price Posted" +
-			"\nMark: " + m + "\nPredictions: " + c +
-			"\nRound Pot: " + s + "\nUp Predictions: " + u + "\nDown Predictions: " + d + "\nPayout After: " + end_pay.String() + "\nRefund if not paid within " + rf + " minutes\nRounds Completed: " + r
+	now := time.Now().Unix()
+	done := now > end_time.Unix()
+
+	if done {
+		mark := m
+		if mark == "0" {
+			mark = ""
+		}
+
+		var wfp string
+		if mark == "" {
+			wfp = "   Waiting for Mark"
+		} else {
+			wfp = "   Waiting for Payout"
+		}
+
+		if isOnChainPrediction(p) {
+			info = "SCID: \n" + PredictControl.Contract + "\n\n" + p + wfp + "\n\nNode: " + rpc.Display.P_feed + "\n\nMark: " + mark + "\nRound Pot: " + s +
+				"\n\nPredictions: " + c + "\nHigher Predictions: " + u + "\nLower Predictions: " + d +
+				"\n\nPayout After: " + end_pay.String() + "\nRefund if not paid within " + rf + " minutes\n\nRounds Completed: " + r
+		} else {
+			info = "SCID: \n" + PredictControl.Contract + "\n\n" + p + wfp + "\n\nMark: " + mark + "\nRound Pot: " + s +
+				"\n\nPredictions: " + c + "\nHigher Predictions: " + u + "\nLower Predictions: " + d +
+				"\n\nPayout After: " + end_pay.String() + "\nRefund if not paid within " + rf + " minutes\n\nRounds Completed: " + r
+		}
+
 	} else {
-		pw := strconv.Itoa(ta / 60)
-		info = "SCID: \n" + PredictControl.Contract + "\n" + "\nAccepting " + p + " Predictions " +
-			"\nPrediction Amount: " + amt + " Dero\nCloses at: " + utc + "\nMark posted with in " + pw + " minutes of close\nPredictions: " + c +
-			"\nRound Pot: " + s + "\nHigher Predictions: " + u + "\nLower Predictions: " + d + "\nPayout After: " + end_pay.String() + "\nRefund if not paid within " + rf + " minutes\nRounds Completed: " + r
+		if m == "0" {
+			pw := strconv.Itoa(ta / 60)
+			info = "SCID: \n" + PredictControl.Contract + "\n\nAccepting " + p + " Predictions " +
+				"\n\nCloses at: " + utc + "\nMark posted with in " + pw + " minutes of close\n\nPrediction Amount: " + amt + " Dero\nRound Pot: " + s + " \n\nPredictions: " + c +
+				"\nHigher Predictions: " + u + "\nLower Predictions: " + d + "\n\nPayout After: " + end_pay.String() + "\nRefund if not paid within " + rf + " minutes\n\nRounds Completed: " + r
+		} else {
+			info = "SCID: \n" + PredictControl.Contract + "\n\nAccepting " + p + " Predictions " +
+				"\n\nCloses at: " + utc + "\nMark: " + m + "\n\nPrediction Amount: " + amt + " Dero\nRound Pot: " + s + "\n\nPredictions: " + c +
+				"\nHigher Predictions: " + u + "\nLower Predictions: " + d + "\n\nPayout After: " + end_pay.String() + "\nRefund if not paid within " + rf + " minutes\n\nRounds Completed: " + r
+		}
 	}
 
 	return
@@ -332,12 +361,28 @@ func roundResults(fr, m string) string { /// prediction results text
 		split := strings.Split(fr, "_")
 		var res string
 		var def string
+		var x float64
+
+		if isOnChainPrediction(split[0]) {
+			switch onChainPrediction(split[0]) {
+			case 1:
+				x = 1
+			case 2:
+				x = 100000
+			case 3:
+				x = 1
+			default:
+				x = 1
+			}
+		} else {
+			x = 100
+		}
 
 		if mark, err := strconv.ParseFloat(m, 64); err == nil {
-			if rpc.StringToInt(split[1]) > int(mark*100) {
+			if rpc.StringToInt(split[1]) > int(mark*x) {
 				res = "Higher "
 				def = " > "
-			} else if rpc.StringToInt(split[1]) == int(mark*100) {
+			} else if rpc.StringToInt(split[1]) == int(mark*x) {
 				res = "Equal "
 				def = " == "
 			} else {
@@ -347,7 +392,21 @@ func roundResults(fr, m string) string { /// prediction results text
 		}
 
 		if final, err := strconv.ParseFloat(split[1], 64); err == nil {
-			fStr := fmt.Sprintf("%.2f", final/100)
+			var fStr string
+			if isOnChainPrediction(split[0]) {
+				switch onChainPrediction(split[0]) {
+				case 1:
+					fStr = fmt.Sprintf("%.0f", final/x)
+				case 2:
+					fStr = fmt.Sprintf("%.5f", final/x)
+				case 3:
+					fStr = fmt.Sprintf("%.0f", final/x)
+				default:
+
+				}
+			} else {
+				fStr = fmt.Sprintf("%.2f", final/x)
+			}
 
 			return split[0] + " " + res + fStr + def + m
 		}
@@ -358,7 +417,9 @@ func roundResults(fr, m string) string { /// prediction results text
 
 func P_no_initResults(fr, tx, r, m string) (info string) { /// prediction info, not initialized
 	info = "SCID: \n" + PredictControl.Contract + "\n" + "\nRound Completed\n\nRound Mark: " + m +
-		"\nRound Results: " + roundResults(fr, m) + "\nPayout TXID: " + tx + "\n\nRounds Completed: " + r
+		"\nRound Results: " + roundResults(fr, m) + "\n\nPayout TXID: " + tx + "\n\nRounds Completed: " + r
+
+	rpc.Display.Prediction = ""
 
 	return
 }
@@ -375,6 +436,7 @@ func GetPrediction(d bool, scid string) (info string) {
 		_, down := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "p_down", menu.Gnomes.Indexer.ChainHeight, true)
 		_, count := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "p_#", menu.Gnomes.Indexer.ChainHeight, true)
 		_, end := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "p_end_at", menu.Gnomes.Indexer.ChainHeight, true)
+		_, buffer := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "buffer", menu.Gnomes.Indexer.ChainHeight, true)
 		_, pot := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "p_total", menu.Gnomes.Indexer.ChainHeight, true)
 		_, rounds := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "p_played", menu.Gnomes.Indexer.ChainHeight, true)
 		_, mark := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "mark", menu.Gnomes.Indexer.ChainHeight, true)
@@ -385,6 +447,12 @@ func GetPrediction(d bool, scid string) (info string) {
 		var pre, p_played, p_final, p_mark string
 		if init != nil {
 			if init[0] == 1 {
+				rpc.Predict.Init = true
+
+				if buffer != nil {
+					rpc.Predict.Buffer = int64(buffer[0])
+				}
+
 				rpc.Predict.Amount = amt[0]
 				if predicting != nil {
 					pre = predicting[0]
@@ -407,40 +475,58 @@ func GetPrediction(d bool, scid string) (info string) {
 				}
 
 				if mark != nil {
-					p_mark = fmt.Sprintf("%.2f", float64(mark[0])/100)
+					if predicting != nil {
+						if isOnChainPrediction(predicting[0]) {
+							i := onChainPrediction(predicting[0])
+							switch i {
+							case 1:
+								p_mark = fmt.Sprintf("%d", mark[0])
+							case 2:
+								p_mark = fmt.Sprintf("%.5f", float64(mark[0])/100000)
+							case 3:
+								p_mark = fmt.Sprintf("%d", mark[0])
+							}
+						} else {
+							p_mark = fmt.Sprintf("%.2f", float64(mark[0])/100)
+						}
+					}
 				} else {
 					p_mark = "0"
 				}
 
 				var p_end string
-				var marked bool
 				if init[0] == 1 {
 					end_at := uint(end[0])
 					p_end = fmt.Sprint(end_at * 1000)
-					if mark != nil {
-						marked = true
-					} else {
-						marked = false
-					}
-
 				}
 
-				if marked {
-					info = P_initResults(pre, p_amt, p_end, p_count, p_pot, p_up, p_down, p_played, p_feed, p_mark, int(time_a[0]), int(time_b[0]), int(time_c[0]), 11, true)
-
-				} else {
-					info = P_initResults(pre, p_amt, p_end, p_count, p_pot, p_up, p_down, p_played, p_feed, "", int(time_a[0]), int(time_b[0]), int(time_c[0]), 11, false)
-				}
+				info = P_initResults(pre, p_amt, p_end, p_count, p_pot, p_up, p_down, p_played, p_feed, p_mark, int(time_a[0]), int(time_b[0]), int(time_c[0]))
 
 			} else {
 				if final != nil {
 					p_final = final[0]
 				}
 
+				rpc.Predict.Init = false
 				txid, _ := rpc.FetchPredictionFinal(rpc.Signal.Daemon, scid)
 
 				if mark != nil {
-					p_mark = fmt.Sprintf("%.2f", float64(mark[0])/100)
+					split := strings.Split(p_final, "_")
+					if isOnChainPrediction(split[0]) {
+						i := onChainPrediction(split[0])
+
+						switch i {
+						case 1:
+							p_mark = fmt.Sprintf("%d", mark[0])
+						case 2:
+							p_mark = fmt.Sprintf("%.5f", float64(mark[0])/100000)
+						case 3:
+							p_mark = fmt.Sprintf("%d", mark[0])
+						}
+					} else {
+						p_mark = fmt.Sprintf("%.2f", float64(mark[0])/100)
+					}
+
 				} else {
 					p_mark = "0"
 				}

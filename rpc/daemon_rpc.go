@@ -77,8 +77,8 @@ func Ping() error { /// ping blockchain for connection
 	return err
 }
 
-func DaemonHeight() (uint64, error) {
-	rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
+func DaemonHeight(ep string) (uint64, error) {
+	rpcClientD, ctx, cancel := SetDaemonClient(ep)
 	defer cancel()
 
 	var result *rpc.GetHeight_Result
@@ -897,4 +897,32 @@ func FetchTarotReading(dc bool, tx string) error {
 	}
 
 	return nil
+}
+
+func GetDifficulty(ep string) (float64, error) {
+	rpcClientD, ctx, cancel := SetDaemonClient(ep)
+	defer cancel()
+
+	var result *rpc.GetInfo_Result
+	err := rpcClientD.CallFor(ctx, &result, "DERO.GetInfo")
+	if err != nil {
+		log.Println(err)
+		return 0, nil
+	}
+
+	return float64(result.Difficulty), err
+}
+
+func GetBlockTime(ep string) (float64, error) {
+	rpcClientD, ctx, cancel := SetDaemonClient(ep)
+	defer cancel()
+
+	var result *rpc.GetInfo_Result
+	err := rpcClientD.CallFor(ctx, &result, "DERO.GetInfo")
+	if err != nil {
+		log.Println(err)
+		return 0, nil
+	}
+
+	return float64(result.AverageBlockTime50), err
 }

@@ -1361,7 +1361,7 @@ func SetSports(end int, amt, dep uint64, scid, league, game, feed string) error 
 	return err
 }
 
-func SetPrediction(end int, amt, dep uint64, scid, predict, feed string) error {
+func SetPrediction(end, mark int, amt, dep uint64, scid, predict, feed string) error {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
@@ -1370,7 +1370,8 @@ func SetPrediction(end int, amt, dep uint64, scid, predict, feed string) error {
 	arg3 := rpc.Argument{Name: "amt", DataType: "U", Value: amt}
 	arg4 := rpc.Argument{Name: "predict", DataType: "S", Value: predict}
 	arg5 := rpc.Argument{Name: "feed", DataType: "S", Value: feed}
-	args := rpc.Arguments{arg1, arg2, arg3, arg4, arg5}
+	arg6 := rpc.Argument{Name: "mark", DataType: "U", Value: mark}
+	args := rpc.Arguments{arg1, arg2, arg3, arg4, arg5, arg6}
 	txid := rpc.Transfer_Result{}
 
 	t1 := rpc.Transfer{
@@ -1397,6 +1398,42 @@ func SetPrediction(end int, amt, dep uint64, scid, predict, feed string) error {
 
 	log.Println("Set Prediction TX:", txid)
 	addLog("Set Prediction TX: " + txid.TXID)
+
+	return err
+}
+
+func CancelPrediction(scid string) error {
+	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
+	defer cancel()
+
+	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "Cancel"}
+	args := rpc.Arguments{arg1}
+	txid := rpc.Transfer_Result{}
+
+	t1 := rpc.Transfer{
+		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
+		Amount:      0,
+		Burn:        0,
+	}
+
+	t := []rpc.Transfer{t1}
+	fee, _ := GasEstimate(scid, args, t)
+	params := &rpc.Transfer_Params{
+		Transfers: t,
+		SC_ID:     scid,
+		SC_RPC:    args,
+		Ringsize:  2,
+		Fees:      fee,
+	}
+
+	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+
+	log.Println("Cancel Prediction TX:", txid)
+	addLog("Cancel Prediction TX: " + txid.TXID)
 
 	return err
 }

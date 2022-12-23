@@ -257,11 +257,11 @@ func clearBaccCards() *fyne.Container {
 	return &content
 }
 
-func showHolderoCards(l1, l2 string) *fyne.Container {
+func placeHolderoCards() *fyne.Container {
 	size := dReams.Window.Content().Size()
-	content := *container.NewWithoutLayout(
-		Hole_1(Card(l1), size.Width, size.Height),
-		Hole_2(Card(l2), size.Width, size.Height),
+	Cards.Layout = container.NewWithoutLayout(
+		Hole_1(0, size.Width, size.Height),
+		Hole_2(0, size.Width, size.Height),
 		P1_a(Is_In(rpc.CardHash.P1C1, 1, rpc.Signal.End)),
 		P1_b(Is_In(rpc.CardHash.P1C2, 1, rpc.Signal.End)),
 		P2_a(Is_In(rpc.CardHash.P2C1, 2, rpc.Signal.End)),
@@ -277,10 +277,72 @@ func showHolderoCards(l1, l2 string) *fyne.Container {
 		Flop_1(rpc.Round.Flop1),
 		Flop_2(rpc.Round.Flop2),
 		Flop_3(rpc.Round.Flop3),
-		River(rpc.Round.TurnCard),
-		Turn(rpc.Round.RiverCard))
+		Turn(rpc.Round.TurnCard),
+		River(rpc.Round.RiverCard))
 
-	return &content
+	return Cards.Layout
+}
+
+func refreshHolderoCards(l1, l2 string) {
+	size := dReams.Window.Content().Size()
+	Cards.Layout.Objects[0] = Hole_1(Card(l1), size.Width, size.Height)
+	Cards.Layout.Objects[0].Refresh()
+
+	Cards.Layout.Objects[1] = Hole_2(Card(l2), size.Width, size.Height)
+	Cards.Layout.Objects[1].Refresh()
+
+	Cards.Layout.Objects[2] = P1_a(Is_In(rpc.CardHash.P1C1, 1, rpc.Signal.End))
+	Cards.Layout.Objects[2].Refresh()
+
+	Cards.Layout.Objects[3] = P1_b(Is_In(rpc.CardHash.P1C2, 1, rpc.Signal.End))
+	Cards.Layout.Objects[3].Refresh()
+
+	Cards.Layout.Objects[4] = P2_a(Is_In(rpc.CardHash.P2C1, 2, rpc.Signal.End))
+	Cards.Layout.Objects[4].Refresh()
+
+	Cards.Layout.Objects[5] = P2_b(Is_In(rpc.CardHash.P2C2, 2, rpc.Signal.End))
+	Cards.Layout.Objects[5].Refresh()
+
+	Cards.Layout.Objects[6] = P3_a(Is_In(rpc.CardHash.P3C1, 3, rpc.Signal.End))
+	Cards.Layout.Objects[6].Refresh()
+
+	Cards.Layout.Objects[7] = P3_b(Is_In(rpc.CardHash.P3C2, 3, rpc.Signal.End))
+	Cards.Layout.Objects[7].Refresh()
+
+	Cards.Layout.Objects[8] = P4_a(Is_In(rpc.CardHash.P4C1, 4, rpc.Signal.End))
+	Cards.Layout.Objects[8].Refresh()
+
+	Cards.Layout.Objects[9] = P4_b(Is_In(rpc.CardHash.P4C2, 4, rpc.Signal.End))
+	Cards.Layout.Objects[9].Refresh()
+
+	Cards.Layout.Objects[10] = P5_a(Is_In(rpc.CardHash.P5C1, 5, rpc.Signal.End))
+	Cards.Layout.Objects[10].Refresh()
+
+	Cards.Layout.Objects[11] = P5_b(Is_In(rpc.CardHash.P5C2, 5, rpc.Signal.End))
+	Cards.Layout.Objects[11].Refresh()
+
+	Cards.Layout.Objects[12] = P6_a(Is_In(rpc.CardHash.P6C1, 6, rpc.Signal.End))
+	Cards.Layout.Objects[12].Refresh()
+
+	Cards.Layout.Objects[13] = P6_b(Is_In(rpc.CardHash.P6C2, 6, rpc.Signal.End))
+	Cards.Layout.Objects[13].Refresh()
+
+	Cards.Layout.Objects[14] = Flop_1(rpc.Round.Flop1)
+	Cards.Layout.Objects[14].Refresh()
+
+	Cards.Layout.Objects[15] = Flop_2(rpc.Round.Flop2)
+	Cards.Layout.Objects[15].Refresh()
+
+	Cards.Layout.Objects[16] = Flop_3(rpc.Round.Flop3)
+	Cards.Layout.Objects[16].Refresh()
+
+	Cards.Layout.Objects[17] = Turn(rpc.Round.TurnCard)
+	Cards.Layout.Objects[17].Refresh()
+
+	Cards.Layout.Objects[18] = River(rpc.Round.RiverCard)
+	Cards.Layout.Objects[18].Refresh()
+
+	Cards.Layout.Refresh()
 }
 
 func ifBet(w, r uint64) { /// sets bet amount on turn
@@ -447,7 +509,7 @@ func waitLabel() {
 
 func HolderoRefresh() {
 	go table.ShowAvatar(dReams.holdero)
-	H.CardsContent = *container.NewWithoutLayout(showHolderoCards(rpc.CardHash.Local1, rpc.CardHash.Local2))
+	refreshHolderoCards(rpc.CardHash.Local1, rpc.CardHash.Local2)
 	if !rpc.Signal.Clicked {
 		if rpc.Round.ID == 0 && rpc.Wallet.Connect {
 			if rpc.Signal.Sit {
@@ -525,16 +587,26 @@ func HolderoRefresh() {
 	}
 
 	go func() {
-		H.TableContent = *container.NewWithoutLayout(
-			table.HolderoTable(resourceTablePng),
-			table.Player1_label(resourceUnknownPng, resourceAvatarFramePng, resourceTurnFramePng),
-			table.Player2_label(resourceUnknownPng, resourceAvatarFramePng, resourceTurnFramePng),
-			table.Player3_label(resourceUnknownPng, resourceAvatarFramePng, resourceTurnFramePng),
-			table.Player4_label(resourceUnknownPng, resourceAvatarFramePng, resourceTurnFramePng),
-			table.Player5_label(resourceUnknownPng, resourceAvatarFramePng, resourceTurnFramePng),
-			table.Player6_label(resourceUnknownPng, resourceAvatarFramePng, resourceTurnFramePng),
-			H.TopLabel,
-		)
+		H.TableContent.Objects[0] = table.HolderoTable(resourceTablePng)
+		H.TableContent.Objects[0].Refresh()
+
+		H.TableContent.Objects[1] = table.Player1_label(resourceUnknownPng, resourceAvatarFramePng, resourceTurnFramePng)
+		H.TableContent.Objects[1].Refresh()
+
+		H.TableContent.Objects[2] = table.Player2_label(resourceUnknownPng, resourceAvatarFramePng, resourceTurnFramePng)
+		H.TableContent.Objects[2].Refresh()
+
+		H.TableContent.Objects[3] = table.Player3_label(resourceUnknownPng, resourceAvatarFramePng, resourceTurnFramePng)
+		H.TableContent.Objects[3].Refresh()
+
+		H.TableContent.Objects[4] = table.Player4_label(resourceUnknownPng, resourceAvatarFramePng, resourceTurnFramePng)
+		H.TableContent.Objects[4].Refresh()
+
+		H.TableContent.Objects[5] = table.Player5_label(resourceUnknownPng, resourceAvatarFramePng, resourceTurnFramePng)
+		H.TableContent.Objects[5].Refresh()
+
+		H.TableContent.Objects[6] = table.Player6_label(resourceUnknownPng, resourceAvatarFramePng, resourceTurnFramePng)
+		H.TableContent.Objects[6].Refresh()
 
 		H.TableContent.Refresh()
 		H.TableItems.Refresh()
@@ -699,7 +771,7 @@ func refreshIndexDisplay(c bool) {
 
 func refreshDaemonDisplay(c bool) {
 	if c && rpc.Signal.Daemon {
-		dHeight, _ := rpc.DaemonHeight()
+		dHeight, _ := rpc.DaemonHeight(rpc.Round.Daemon)
 		d := strconv.Itoa(int(dHeight))
 		table.Assets.Daem_height.Text = (" Daemon Height: " + d)
 		table.Assets.Daem_height.Refresh()

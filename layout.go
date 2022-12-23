@@ -42,6 +42,7 @@ func place() *fyne.Container {
 	H.LeftLabel = widget.NewLabel("")
 	H.RightLabel = widget.NewLabel("")
 	H.TopLabel = widget.NewLabel("")
+	H.TopLabel.Move(fyne.NewPos(380, 194))
 
 	B.LeftLabel = widget.NewLabel("")
 	B.RightLabel = widget.NewLabel("")
@@ -290,6 +291,8 @@ func placeHoldero() *fyne.Container {
 	)
 
 	holdero_label := container.NewHBox(H.LeftLabel, layout.NewSpacer(), H.RightLabel)
+
+	H.CardsContent = *placeHolderoCards()
 
 	H.ActionButtons = *container.NewVBox(
 		table.SitButton(),
