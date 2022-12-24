@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -274,17 +275,16 @@ func SitDown(name, av string) error { /// sit at holdero table
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
-	var hx string
-	if av != "" {
-		with := "_" + name + "_" + av
-		hx = hex.EncodeToString([]byte(with))
-	} else {
-		out := "_" + name
-		hx = hex.EncodeToString([]byte(out))
-	}
+	var player playerId
+	player.Id = Wallet.idHash
+	player.Name = name
+	player.Avatar = av
+
+	mar, _ := json.Marshal(player)
+	hx := hex.EncodeToString(mar)
 
 	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "PlayerEntry"}
-	arg2 := rpc.Argument{Name: "address", DataType: "S", Value: Wallet.idHash + hx}
+	arg2 := rpc.Argument{Name: "address", DataType: "S", Value: hx}
 	args := rpc.Arguments{arg1, arg2}
 	txid := rpc.Transfer_Result{}
 
@@ -359,14 +359,13 @@ func SetTable(seats int, bb, sb, ante uint64, chips, name, av string) error { //
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
-	var hx string
-	if av != "" {
-		with := "_" + name + "_" + av
-		hx = hex.EncodeToString([]byte(with))
-	} else {
-		out := "_" + name
-		hx = hex.EncodeToString([]byte(out))
-	}
+	var player playerId
+	player.Id = Wallet.idHash
+	player.Name = name
+	player.Avatar = av
+
+	mar, _ := json.Marshal(player)
+	hx := hex.EncodeToString(mar)
 
 	var args rpc.Arguments
 	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "SetTable"}
@@ -374,7 +373,7 @@ func SetTable(seats int, bb, sb, ante uint64, chips, name, av string) error { //
 	arg3 := rpc.Argument{Name: "bigBlind", DataType: "U", Value: bb}
 	arg4 := rpc.Argument{Name: "smallBlind", DataType: "U", Value: sb}
 	arg5 := rpc.Argument{Name: "ante", DataType: "U", Value: ante}
-	arg6 := rpc.Argument{Name: "address", DataType: "S", Value: Wallet.idHash + hx}
+	arg6 := rpc.Argument{Name: "address", DataType: "S", Value: hx}
 
 	if Round.Version < 110 {
 		args = rpc.Arguments{arg1, arg2, arg3, arg4, arg5, arg6}

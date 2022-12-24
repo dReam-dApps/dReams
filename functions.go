@@ -399,6 +399,7 @@ func fetch(quit chan struct{}) { /// main loop
 	var ticker = time.NewTicker(3 * time.Second)
 	var trigger bool
 	var skip int
+	var delay int
 	setLabels()
 	for {
 		select {
@@ -439,12 +440,20 @@ func fetch(quit chan struct{}) { /// main loop
 
 				go MenuRefresh(dReams.menu, menu.Gnomes.Init)
 				if !rpc.Signal.Clicked {
-					setHolderoLabel()
-					table.GetUrls(rpc.Round.F_url, rpc.Round.B_url)
-					rpc.Called(rpc.Round.Flop, rpc.Round.Wager)
-					trigger = singleShot(rpc.Signal.My_turn, trigger)
-					HolderoRefresh()
-					skip = 0
+					if rpc.Round.Card_delay {
+						delay++
+						if delay >= 6 {
+							delay = 0
+							rpc.Round.Card_delay = false
+						}
+					} else {
+						setHolderoLabel()
+						table.GetUrls(rpc.Round.F_url, rpc.Round.B_url)
+						rpc.Called(rpc.Round.Flop, rpc.Round.Wager)
+						trigger = singleShot(rpc.Signal.My_turn, trigger)
+						HolderoRefresh()
+						skip = 0
+					}
 				} else {
 					waitLabel()
 					skip++
@@ -509,7 +518,7 @@ func waitLabel() {
 
 func HolderoRefresh() {
 	go table.ShowAvatar(dReams.holdero)
-	refreshHolderoCards(rpc.CardHash.Local1, rpc.CardHash.Local2)
+	go refreshHolderoCards(rpc.CardHash.Local1, rpc.CardHash.Local2)
 	if !rpc.Signal.Clicked {
 		if rpc.Round.ID == 0 && rpc.Wallet.Connect {
 			if rpc.Signal.Sit {

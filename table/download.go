@@ -109,6 +109,10 @@ func ClearShared() {
 	rpc.Round.P6_name = ""
 	rpc.Round.Bettor = ""
 	rpc.Round.Raisor = ""
+	rpc.Round.Local_trigger = false
+	rpc.Round.Flop_trigger = false
+	rpc.Round.Turn_trigger = false
+	rpc.Round.River_trigger = false
 	rpc.Signal.Out1 = false
 	Shared.GotP1 = false
 	Shared.GotP2 = false

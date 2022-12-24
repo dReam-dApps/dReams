@@ -3,11 +3,11 @@ package rpc
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"log"
 	"math"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -15,6 +15,12 @@ type times struct {
 	Kick       int
 	Delay      int
 	Kick_block int
+}
+
+type playerId struct {
+	Id     string `json:"id"`
+	Name   string `json:"name"`
+	Avatar string `json:"avatar"`
 }
 
 type displayStrings struct {
@@ -124,6 +130,12 @@ type holderoValues struct {
 	P6_url    string
 	Bettor    string
 	Raisor    string
+
+	Card_delay    bool
+	Local_trigger bool
+	Flop_trigger  bool
+	Turn_trigger  bool
+	River_trigger bool
 }
 
 type baccValues struct {
@@ -250,6 +262,10 @@ func closedTable() {
 	Round.P6_name = ""
 	Round.Bettor = ""
 	Round.Raisor = ""
+	Round.Local_trigger = false
+	Round.Flop_trigger = false
+	Round.Turn_trigger = false
+	Round.River_trigger = false
 	Signal.Out1 = false
 	Signal.Sit = true
 	Signal.In1 = false
@@ -388,79 +404,36 @@ func getAvatar(p int, id interface{}) string {
 	}
 
 	av := fromHextoString(str)
-	split := strings.Split(av, "_")
-	switch p {
-	case 1:
-		if len(split) == 2 {
-			Round.P1_name = split[1]
-			Round.P1_url = ""
-		} else if len(split) == 3 {
-			Round.P1_name = split[1]
-			Round.P1_url = split[2]
-		} else {
-			Round.P1_name = ""
-			Round.P1_url = ""
-		}
-	case 2:
-		if len(split) == 2 {
-			Round.P2_name = split[1]
-			Round.P2_url = ""
-		} else if len(split) == 3 {
-			Round.P2_name = split[1]
-			Round.P2_url = split[2]
-		} else {
-			Round.P2_name = ""
-			Round.P2_url = ""
-		}
-	case 3:
-		if len(split) == 2 {
-			Round.P3_name = split[1]
-			Round.P3_url = ""
-		} else if len(split) == 3 {
-			Round.P3_name = split[1]
-			Round.P3_url = split[2]
-		} else {
-			Round.P3_name = ""
-			Round.P3_url = ""
-		}
-	case 4:
-		if len(split) == 2 {
-			Round.P4_name = split[1]
-			Round.P4_url = ""
-		} else if len(split) == 3 {
-			Round.P4_name = split[1]
-			Round.P4_url = split[2]
-		} else {
-			Round.P4_name = ""
-			Round.P4_url = ""
-		}
-	case 5:
-		if len(split) == 2 {
-			Round.P5_name = split[1]
-			Round.P5_url = ""
-		} else if len(split) == 3 {
-			Round.P5_name = split[1]
-			Round.P5_url = split[2]
-		} else {
-			Round.P5_name = ""
-			Round.P5_url = ""
-		}
-	case 6:
-		if len(split) == 2 {
-			Round.P6_name = split[1]
-			Round.P6_url = ""
-		} else if len(split) == 3 {
-			Round.P6_name = split[1]
-			Round.P6_url = split[2]
-		} else {
-			Round.P6_name = ""
-			Round.P6_url = ""
-		}
+
+	var player playerId
+
+	if err := json.Unmarshal([]byte(av), &player); err != nil {
+		log.Println(err)
+		return ""
 	}
 
-	s := hex.EncodeToString([]byte(split[0]))
+	switch p {
+	case 1:
+		Round.P1_name = player.Name
+		Round.P1_url = player.Avatar
+	case 2:
+		Round.P2_name = player.Name
+		Round.P2_url = player.Avatar
+	case 3:
+		Round.P3_name = player.Name
+		Round.P3_url = player.Avatar
+	case 4:
+		Round.P4_name = player.Name
+		Round.P4_url = player.Avatar
+	case 5:
+		Round.P5_name = player.Name
+		Round.P5_url = player.Avatar
+	case 6:
+		Round.P6_name = player.Name
+		Round.P6_url = player.Avatar
+	}
 
-	return s
+	return player.Id
 }
 
 func checkPlayerId(one, two, three, four, five, six string) string {
@@ -571,6 +544,10 @@ func potIsEmpty(pot uint64) {
 		Display.Res = ""
 		Round.Bettor = ""
 		Round.Raisor = ""
+		Round.Local_trigger = false
+		Round.Flop_trigger = false
+		Round.Turn_trigger = false
+		Round.River_trigger = false
 	}
 }
 
@@ -608,8 +585,13 @@ func tableOpen(seats, full, two, three, four, five, six interface{}) {
 func getCommCardValues(f1, f2, f3, t, r interface{}) {
 	if f1 != nil {
 		Round.Flop1 = int(f1.(float64))
+		if !Round.Flop_trigger {
+			Round.Card_delay = true
+		}
+		Round.Flop_trigger = true
 	} else {
 		Round.Flop1 = 0
+		Round.Flop_trigger = false
 	}
 
 	if f2 != nil {
@@ -626,70 +608,164 @@ func getCommCardValues(f1, f2, f3, t, r interface{}) {
 
 	if t != nil {
 		Round.TurnCard = int(t.(float64))
+		if !Round.Turn_trigger {
+			Round.Card_delay = true
+		}
+		Round.Turn_trigger = true
 	} else {
 		Round.TurnCard = 0
+		Round.Turn_trigger = false
 	}
 
 	if r != nil {
 		Round.RiverCard = int(r.(float64))
+		if !Round.River_trigger {
+			Round.Card_delay = true
+		}
+		Round.River_trigger = true
 	} else {
 		Round.RiverCard = 0
+		Round.River_trigger = false
 	}
 }
 
 func getPlayerCardValues(a1, a2, b1, b2, c1, c2, d1, d2, e1, e2, f1, f2 interface{}) {
-	if a1 != nil {
-		if Round.ID == 1 {
+	if Round.ID == 1 {
+		if a1 != nil {
 			CardHash.Local1 = a1.(string)
 			CardHash.Local2 = a2.(string)
+			if !Round.Local_trigger {
+				Round.Card_delay = true
+			}
+			Round.Local_trigger = true
+		} else {
+			CardHash.Local1 = ""
+			CardHash.Local2 = ""
+			Round.Local_trigger = false
 		}
+	}
+
+	if a1 != nil {
 		CardHash.P1C1 = a1.(string)
 		CardHash.P1C2 = a2.(string)
+	} else {
+		CardHash.P1C1 = ""
+		CardHash.P1C2 = ""
+	}
+
+	if Round.ID == 2 {
+		if b1 != nil {
+			CardHash.Local1 = b1.(string)
+			CardHash.Local2 = b2.(string)
+			if !Round.Local_trigger {
+				Round.Card_delay = true
+			}
+			Round.Local_trigger = true
+		} else {
+			CardHash.Local1 = ""
+			CardHash.Local2 = ""
+			Round.Local_trigger = false
+		}
 	}
 
 	if b1 != nil {
-		if Round.ID == 2 {
-			CardHash.Local1 = b1.(string)
-			CardHash.Local2 = b2.(string)
-		}
 		CardHash.P2C1 = b1.(string)
 		CardHash.P2C2 = b2.(string)
+	} else {
+		CardHash.P2C1 = ""
+		CardHash.P2C2 = ""
+	}
+
+	if Round.ID == 3 {
+		if c1 != nil {
+			CardHash.Local1 = c1.(string)
+			CardHash.Local2 = c2.(string)
+			if !Round.Local_trigger {
+				Round.Card_delay = true
+			}
+			Round.Local_trigger = true
+		} else {
+			CardHash.Local1 = ""
+			CardHash.Local2 = ""
+			Round.Local_trigger = false
+		}
 	}
 
 	if c1 != nil {
-		if Round.ID == 3 {
-			CardHash.Local1 = c1.(string)
-			CardHash.Local2 = c2.(string)
-		}
 		CardHash.P3C1 = c1.(string)
 		CardHash.P3C2 = c2.(string)
+	} else {
+		CardHash.P3C1 = ""
+		CardHash.P3C2 = ""
+	}
+
+	if Round.ID == 4 {
+		if d1 != nil {
+			CardHash.Local1 = d1.(string)
+			CardHash.Local2 = d2.(string)
+			if !Round.Local_trigger {
+				Round.Card_delay = true
+			}
+			Round.Local_trigger = true
+		} else {
+			CardHash.Local1 = ""
+			CardHash.Local2 = ""
+			Round.Local_trigger = false
+		}
 	}
 
 	if d1 != nil {
-		if Round.ID == 4 {
-			CardHash.Local1 = d1.(string)
-			CardHash.Local2 = d2.(string)
-		}
 		CardHash.P4C1 = d1.(string)
 		CardHash.P4C2 = d2.(string)
+	} else {
+		CardHash.P4C1 = ""
+		CardHash.P4C2 = ""
+	}
+
+	if Round.ID == 5 {
+		if e1 != nil {
+			CardHash.Local1 = e1.(string)
+			CardHash.Local2 = e2.(string)
+			if !Round.Local_trigger {
+				Round.Card_delay = true
+			}
+			Round.Local_trigger = true
+		} else {
+			CardHash.Local1 = ""
+			CardHash.Local2 = ""
+			Round.Local_trigger = false
+		}
 	}
 
 	if e1 != nil {
-		if Round.ID == 5 {
-			CardHash.Local1 = e1.(string)
-			CardHash.Local2 = e2.(string)
-		}
 		CardHash.P5C1 = e1.(string)
 		CardHash.P5C2 = e2.(string)
+	} else {
+		CardHash.P5C1 = ""
+		CardHash.P5C2 = ""
+	}
+
+	if Round.ID == 6 {
+		if f1 != nil {
+			CardHash.Local1 = f1.(string)
+			CardHash.Local2 = f2.(string)
+			if !Round.Local_trigger {
+				Round.Card_delay = true
+			}
+			Round.Local_trigger = true
+		} else {
+			CardHash.Local1 = ""
+			CardHash.Local2 = ""
+			Round.Local_trigger = false
+		}
 	}
 
 	if f1 != nil {
-		if Round.ID == 6 {
-			CardHash.Local1 = f1.(string)
-			CardHash.Local2 = f2.(string)
-		}
 		CardHash.P6C1 = f1.(string)
 		CardHash.P6C2 = f2.(string)
+	} else {
+		CardHash.P6C1 = ""
+		CardHash.P6C2 = ""
 	}
 
 	if Round.ID == 0 {
