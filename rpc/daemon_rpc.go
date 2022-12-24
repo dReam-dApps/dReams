@@ -52,7 +52,7 @@ func fromHextoString(h string) string {
 
 func SetDaemonClient(addr string) (jsonrpc.RPCClient, context.Context, context.CancelFunc) {
 	client := jsonrpc.NewClient(pre + addr + suff)
-	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 
 	return client, ctx, cancel
 }

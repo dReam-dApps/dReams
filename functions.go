@@ -143,7 +143,7 @@ func systemTray(w fyne.App) bool {
 				log.Println("Tapped show")
 			}),
 			fyne.NewMenuItem("Reveal Key", func() {
-				rpc.RevealKey(rpc.Wallet.ClientKey)
+				go rpc.RevealKey(rpc.Wallet.ClientKey)
 			}))
 		desk.SetSystemTrayMenu(m)
 		return true

@@ -122,7 +122,7 @@ func SetWalletClient(addr, pass string) (jsonrpc.RPCClient, context.Context, con
 		},
 	})
 
-	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 
 	return client, ctx, cancel
 }
@@ -723,6 +723,7 @@ func PayoutSplit(r ranker, f1, f2, f3, f4, f5, f6 bool) error { /// holdero spli
 }
 
 func RevealKey(key string) error { /// holdero reveal
+	time.Sleep(6 * time.Second)
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
