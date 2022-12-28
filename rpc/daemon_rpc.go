@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/deroproject/derohe/rpc"
@@ -148,36 +147,27 @@ func CheckForIndex(scid string) (interface{}, error) {
 	return address, err
 }
 
-func GetSCHeaders(scid string) ([]string, error) {
-	rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
-	defer cancel()
+func GetGnomonCode(dc bool, pub int) (string, error) {
+	if dc {
+		rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
+		defer cancel()
 
-	var result *rpc.GetSC_Result
-	params := rpc.GetSC_Params{
-		SCID:      GnomonSCID,
-		Code:      false,
-		Variables: true,
+		var result *rpc.GetSC_Result
+		params := rpc.GetSC_Params{
+			SCID:      GnomonSCID,
+			Code:      true,
+			Variables: false,
+		}
+
+		err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params)
+		if err != nil {
+			log.Println(err)
+			return "", nil
+		}
+
+		return result.Code, err
 	}
-
-	err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params)
-	if err != nil {
-		log.Println(err)
-		return nil, nil
-	}
-
-	headers := result.VariableStringKeys[scid]
-
-	if headers == nil {
-		return nil, err
-	}
-
-	split := strings.Split(fromHextoString(headers.(string)), ";")
-
-	if split[0] == "" {
-		return nil, err
-	}
-
-	return split, err
+	return "", nil
 }
 
 func CheckHolderoContract() error {

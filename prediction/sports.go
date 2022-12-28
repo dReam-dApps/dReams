@@ -352,7 +352,17 @@ func S_Results(g, gN, l, min, eA, c, tA, tB, tAV, tBV, total string, a, b uint64
 	pa := strconv.Itoa(int(a/60) / 60)
 	rf := strconv.Itoa(int(b/60) / 60)
 
-	info = ("\nGame " + gN + " - " + g + "\nLeague: " + l + "\nMinimum: " + min +
+	event := "Game "
+	switch l {
+	case "Bellator":
+		event = "Fight "
+	case "UFC":
+		event = "Fight "
+	default:
+
+	}
+
+	info = ("\n" + event + gN + ": " + g + "\nLeague: " + l + "\nMinimum: " + min +
 		" Dero\nCloses at: " + utc_end + "\nPayout " + pa + " hours after close\nRefund if not paid " + rf + " within hours\nPot Total: " + s + "\nPicks: " + c + "\n" + tA + " Picks: " + tAV + "\n" + tB + " Picks: " + tBV + "\n")
 
 	return
@@ -362,12 +372,18 @@ func sports(league string) (api string) {
 	switch league {
 	case "NHL":
 		api = "http://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard"
-	case "FIFA":
-		api = "http://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard"
+		// case "FIFA":
+		// 	api = "http://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard"
+	case "EPL":
+		api = "http://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard"
 	case "NFL":
 		api = "http://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard"
 	case "NBA":
 		api = "http://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard"
+	case "UFC":
+		api = "http://site.api.espn.com/apis/site/v2/sports/mma/ufc/scoreboard"
+	case "Bellator":
+		api = "http://site.api.espn.com/apis/site/v2/sports/mma/bellator/scoreboard"
 	default:
 		api = ""
 	}
@@ -382,14 +398,31 @@ func GetCurrentWeek(league string) {
 		date = date[0:10]
 		comp := date[0:4] + date[5:7] + date[8:10]
 		switch league {
-		case "FIFA":
-			GetSoccer(comp)
+		case "EPL":
+			GetSoccer(comp, league)
 		case "NBA":
-			GetBasketball(comp)
+			GetBasketball(comp, league)
 		case "NFL":
-			GetFootball(comp)
+			GetFootball(comp, league)
 		case "NHL":
-			GetHockey(comp)
+			GetHockey(comp, league)
+		default:
+
+		}
+	}
+}
+
+func GetCurrentMonth(league string) {
+	for i := 0; i < 45; i++ {
+		now := time.Now().AddDate(0, 0, i)
+		date := time.Unix(now.Unix(), 0).String()
+		date = date[0:10]
+		comp := date[0:4] + date[5:7] + date[8:10]
+		switch league {
+		case "UFC":
+			GetMma(comp, league)
+		case "Bellator":
+			GetMma(comp, league)
 		default:
 
 		}
@@ -424,6 +457,36 @@ func callSoccer(date, league string) (s *soccer) {
 	json.Unmarshal(b, &s)
 
 	return s
+}
+
+func callMma(date, league string) (m *mma) {
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", sports(league)+"?dates="+date, nil)
+	if err != nil {
+		log.Println(err.Error())
+		return
+	}
+
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := client.Do(req)
+
+	if err != nil {
+		log.Println(err.Error())
+		return
+	}
+
+	defer resp.Body.Close()
+	b, err := io.ReadAll(resp.Body)
+
+	if err != nil {
+		log.Println(err.Error())
+		return
+	}
+
+	json.Unmarshal(b, &m)
+
+	return m
 }
 
 func callBasketball(date, league string) (bb *basketball) {
@@ -517,7 +580,6 @@ func callHockey(date, league string) (h *hockey) {
 }
 
 func GetGameEnd(date, game, league string) {
-	var found hockey
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", sports(league)+"?dates="+date, nil)
 
@@ -543,21 +605,41 @@ func GetGameEnd(date, game, league string) {
 		return
 	}
 
-	json.Unmarshal(b, &found)
+	if league == "UFC" || league == "Bellator" {
+		var found mma
+		json.Unmarshal(b, &found)
+		for i := range found.Events {
+			trimmed := strings.Trim(found.Events[i].Competitions[0].StartDate, "Z")
+			utc_time, err := time.Parse("2006-01-02T15:04", trimmed)
+			if err != nil {
+				log.Println(err)
+			}
 
-	for i := range found.Events {
-		trimmed := strings.Trim(found.Events[i].Competitions[0].StartDate, "Z")
-		utc_time, err := time.Parse("2006-01-02T15:04", trimmed)
-		if err != nil {
-			log.Println(err)
+			a := found.Events[i].Competitions[0].Competitors[0].Athlete.DisplayName
+			b := found.Events[i].Competitions[0].Competitors[1].Athlete.DisplayName
+			g := a + "--" + b
+
+			if g == game {
+				PS_Control.S_end.SetText(strconv.Itoa(int(utc_time.Unix())))
+			}
+
 		}
+	} else {
+		var found scores
+		json.Unmarshal(b, &found)
+		for i := range found.Events {
+			trimmed := strings.Trim(found.Events[i].Competitions[0].StartDate, "Z")
+			utc_time, err := time.Parse("2006-01-02T15:04", trimmed)
+			if err != nil {
+				log.Println(err)
+			}
 
-		a := found.Events[i].Competitions[0].Competitors[0].Team.Abbreviation
-		b := found.Events[i].Competitions[0].Competitors[1].Team.Abbreviation
-		g := a + "-" + b
-
-		if g == game {
-			PS_Control.S_end.SetText(strconv.Itoa(int(utc_time.Unix())))
+			a := found.Events[i].Competitions[0].Competitors[0].Team.Abbreviation
+			b := found.Events[i].Competitions[0].Competitors[1].Team.Abbreviation
+			g := a + "--" + b
+			if g == game {
+				PS_Control.S_end.SetText(strconv.Itoa(int(utc_time.Unix())))
+			}
 		}
 	}
 }
@@ -625,7 +707,7 @@ func GetScores(label *widget.Label, league string) {
 
 				var format string
 				switch league {
-				case "FIFA":
+				case "EPL":
 					format = " Half "
 				case "NBA":
 					format = " Quarter "
@@ -665,8 +747,76 @@ func GetScores(label *widget.Label, league string) {
 	label.Refresh()
 }
 
-func GetHockey(date string) {
-	found := callHockey(date, "NHL")
+func GetMmaResults(label *widget.Label, league string) {
+	var single bool
+	for i := -15; i < 1; i++ {
+		day := time.Now().AddDate(0, 0, i)
+		date := time.Unix(day.Unix(), 0).String()
+		date = date[0:10]
+		comp := date[0:4] + date[5:7] + date[8:10]
+		found := callMma(comp, league)
+		if found != nil {
+			if !single {
+				label.SetText(found.Leagues[0].Abbreviation + "\n" + found.Day.Date + "\n")
+			}
+
+			for i := range found.Events {
+				trimmed := strings.Trim(found.Events[i].Competitions[0].StartDate, "Z")
+				utc_time, err := time.Parse("2006-01-02T15:04", trimmed)
+				if err != nil {
+					log.Println(err)
+				}
+
+				tz, _ := time.LoadLocation("Local")
+				local := utc_time.In(tz).String()
+				state := found.Events[i].Competitions[0].Status.Type.State
+				team_a := found.Events[i].Competitions[0].Competitors[0].Athlete.DisplayName
+				team_b := found.Events[i].Competitions[0].Competitors[1].Athlete.DisplayName
+				winner_a := found.Events[i].Competitions[0].Competitors[0].Winner
+				winner_b := found.Events[i].Competitions[0].Competitors[1].Winner
+				period := found.Events[i].Competitions[0].Status.Period
+				clock := found.Events[i].Competitions[0].Status.DisplayClock
+				complete := found.Events[i].Status.Type.Completed
+
+				var abv string
+				switch period {
+				case 0:
+					abv = ""
+				case 1:
+					abv = "st "
+				case 2:
+					abv = "nd "
+				case 3:
+					abv = "rd "
+				case 4:
+					abv = "th "
+				default:
+					abv = "th "
+				}
+				if state == "pre" {
+					label.SetText(label.Text + team_a + " - " + team_b + "\nStart time: " + local + "\nState: " + state + "\nComplete: " + strconv.FormatBool(complete) + "\n\n")
+				} else {
+					var winner string
+					if winner_a {
+						winner = team_a
+					} else if winner_b {
+						winner = team_b
+					} else {
+						winner = "Draw"
+					}
+					label.SetText(label.Text + team_a + " - " + team_b + "\nStart time: " + local + "\nState: " + state +
+						"\n" + strconv.Itoa(period) + abv + "Round " + " " + clock + "\nWinner: " + winner + "\nComplete: " + strconv.FormatBool(complete) + "\n\n")
+				}
+
+				single = true
+			}
+		}
+	}
+	label.Refresh()
+}
+
+func GetHockey(date, league string) {
+	found := callHockey(date, league)
 	if found != nil {
 		for i := range found.Events {
 			pregame := found.Events[i].Competitions[0].Status.Type.State
@@ -683,15 +833,15 @@ func GetHockey(date string) {
 
 			if !found.Events[i].Status.Type.Completed && pregame == "pre" {
 				current := PS_Control.S_game.Options
-				new := append(current, utc_time.In(tz).String()[0:16]+"   "+teamA+"-"+teamB)
+				new := append(current, utc_time.In(tz).String()[0:16]+"   "+teamA+"--"+teamB)
 				PS_Control.S_game.Options = new
 			}
 		}
 	}
 }
 
-func GetSoccer(date string) {
-	found := callSoccer(date, "FIFA")
+func GetSoccer(date, league string) {
+	found := callSoccer(date, league)
 	if found != nil {
 		for i := range found.Events {
 			pregame := found.Events[i].Competitions[0].Status.Type.State
@@ -709,14 +859,14 @@ func GetSoccer(date string) {
 
 			if !found.Events[i].Status.Type.Completed && pregame == "pre" {
 				current := PS_Control.S_game.Options
-				new := append(current, utc_time.In(tz).String()[0:16]+"   "+teamA+"-"+teamB)
+				new := append(current, utc_time.In(tz).String()[0:16]+"   "+teamA+"--"+teamB)
 				PS_Control.S_game.Options = new
 			}
 		}
 	}
 }
 
-func GetWinner(sport, game, league string) (string, string) {
+func GetWinner(game, league string) (string, string) {
 	for i := -2; i < 1; i++ {
 		day := time.Now().AddDate(0, 0, i)
 		date := time.Unix(day.Unix(), 0).String()
@@ -728,7 +878,7 @@ func GetWinner(sport, game, league string) (string, string) {
 			for i := range found.Events {
 				a := found.Events[i].Competitions[0].Competitors[0].Team.Abbreviation
 				b := found.Events[i].Competitions[0].Competitors[1].Team.Abbreviation
-				g := a + "-" + b
+				g := a + "--" + b
 
 				if g == game {
 					if found.Events[i].Status.Type.Completed {
@@ -753,8 +903,45 @@ func GetWinner(sport, game, league string) (string, string) {
 	return "", ""
 }
 
-func GetFootball(date string) {
-	found := callFootball(date, "NFL")
+func GetMmaWinner(game, league string) (string, string) {
+	for i := -2; i < 1; i++ {
+		day := time.Now().AddDate(0, 0, i)
+		date := time.Unix(day.Unix(), 0).String()
+		date = date[0:10]
+		comp := date[0:4] + date[5:7] + date[8:10]
+
+		found := callMma(comp, league)
+		if found != nil {
+			for i := range found.Events {
+				a := found.Events[i].Competitions[0].Competitors[0].Athlete.DisplayName
+				b := found.Events[i].Competitions[0].Competitors[1].Athlete.DisplayName
+				g := a + "--" + b
+
+				if g == game {
+					if found.Events[i].Status.Type.Completed {
+						teamA := found.Events[i].Competitions[0].Competitors[0].Athlete.DisplayName
+						a_win := found.Events[i].Competitions[0].Competitors[0].Winner
+
+						teamB := found.Events[i].Competitions[0].Competitors[1].Athlete.DisplayName
+						b_win := found.Events[i].Competitions[0].Competitors[1].Winner
+
+						if a_win && !b_win {
+							return "team_a", teamA
+						} else if b_win && !a_win {
+							return "team_b", teamB
+						} else {
+							return "", ""
+						}
+					}
+				}
+			}
+		}
+	}
+	return "", ""
+}
+
+func GetFootball(date, league string) {
+	found := callFootball(date, league)
 	if found != nil {
 		for i := range found.Events {
 			pregame := found.Events[i].Competitions[0].Status.Type.State
@@ -771,15 +958,15 @@ func GetFootball(date string) {
 
 			if !found.Events[i].Status.Type.Completed && pregame == "pre" {
 				current := PS_Control.S_game.Options
-				new := append(current, utc_time.In(tz).String()[0:16]+"   "+teamA+"-"+teamB)
+				new := append(current, utc_time.In(tz).String()[0:16]+"   "+teamA+"--"+teamB)
 				PS_Control.S_game.Options = new
 			}
 		}
 	}
 }
 
-func GetBasketball(date string) {
-	found := callBasketball(date, "NBA")
+func GetBasketball(date, league string) {
+	found := callBasketball(date, league)
 	if found != nil {
 		for i := range found.Events {
 			pregame := found.Events[i].Competitions[0].Status.Type.State
@@ -796,8 +983,35 @@ func GetBasketball(date string) {
 
 			if !found.Events[i].Status.Type.Completed && pregame == "pre" {
 				current := PS_Control.S_game.Options
-				new := append(current, utc_time.In(tz).String()[0:16]+"   "+teamA+"-"+teamB)
+				new := append(current, utc_time.In(tz).String()[0:16]+"   "+teamA+"--"+teamB)
 				PS_Control.S_game.Options = new
+			}
+		}
+	}
+}
+
+func GetMma(date, league string) {
+	found := callMma(date, league)
+	if found != nil {
+		for i := range found.Events {
+			pregame := found.Events[i].Competitions[0].Status.Type.State
+			trimmed := strings.Trim(found.Events[i].Competitions[0].StartDate, "Z")
+			utc_time, err := time.Parse("2006-01-02T15:04", trimmed)
+			if err != nil {
+				log.Println(err)
+			}
+
+			tz, _ := time.LoadLocation("Local")
+
+			for f := range found.Events[i].Competitions {
+				fighterA := found.Events[i].Competitions[f].Competitors[0].Athlete.DisplayName
+				fighterB := found.Events[i].Competitions[f].Competitors[1].Athlete.DisplayName
+
+				if !found.Events[i].Status.Type.Completed && pregame == "pre" {
+					current := PS_Control.S_game.Options
+					new := append(current, utc_time.In(tz).String()[0:16]+"   "+fighterA+"--"+fighterB)
+					PS_Control.S_game.Options = new
+				}
 			}
 		}
 	}
@@ -1958,6 +2172,172 @@ type basketball struct {
 			DisplayClock string  `json:"displayClock"`
 			Period       int     `json:"period"`
 			Type         struct {
+				ID          string `json:"id"`
+				Name        string `json:"name"`
+				State       string `json:"state"`
+				Completed   bool   `json:"completed"`
+				Description string `json:"description"`
+				Detail      string `json:"detail"`
+				ShortDetail string `json:"shortDetail"`
+			} `json:"type"`
+		} `json:"status"`
+	} `json:"events"`
+}
+
+type mma struct {
+	Leagues []struct {
+		ID           string `json:"id"`
+		UID          string `json:"uid"`
+		Name         string `json:"name"`
+		Abbreviation string `json:"abbreviation"`
+		Slug         string `json:"slug"`
+		Season       struct {
+			Year      int    `json:"year"`
+			StartDate string `json:"startDate"`
+			EndDate   string `json:"endDate"`
+			Type      struct {
+				ID           string `json:"id"`
+				Type         int    `json:"type"`
+				Name         string `json:"name"`
+				Abbreviation string `json:"abbreviation"`
+			} `json:"type"`
+		} `json:"season"`
+		Logos []struct {
+			Href        string   `json:"href"`
+			Width       int      `json:"width"`
+			Height      int      `json:"height"`
+			Alt         string   `json:"alt"`
+			Rel         []string `json:"rel"`
+			LastUpdated string   `json:"lastUpdated"`
+		} `json:"logos"`
+		CalendarType        string `json:"calendarType"`
+		CalendarIsWhitelist bool   `json:"calendarIsWhitelist"`
+		CalendarStartDate   string `json:"calendarStartDate"`
+		CalendarEndDate     string `json:"calendarEndDate"`
+		Calendar            []struct {
+			Label     string `json:"label"`
+			StartDate string `json:"startDate"`
+			EndDate   string `json:"endDate"`
+			Event     struct {
+				Ref string `json:"$ref"`
+			} `json:"event"`
+		} `json:"calendar"`
+	} `json:"leagues"`
+	Season struct {
+		Type int `json:"type"`
+		Year int `json:"year"`
+	} `json:"season"`
+	Day struct {
+		Date string `json:"date"`
+	} `json:"day"`
+	Events []struct {
+		ID        string `json:"id"`
+		UID       string `json:"uid"`
+		Date      string `json:"date"`
+		Name      string `json:"name"`
+		ShortName string `json:"shortName"`
+		Season    struct {
+			Year int    `json:"year"`
+			Type int    `json:"type"`
+			Slug string `json:"slug"`
+		} `json:"season"`
+		Competitions []struct {
+			ID          string `json:"id"`
+			UID         string `json:"uid"`
+			Date        string `json:"date"`
+			EndDate     string `json:"endDate"`
+			TimeValid   bool   `json:"timeValid"`
+			NeutralSite bool   `json:"neutralSite"`
+			Recent      bool   `json:"recent"`
+			Venue       struct {
+				ID       string `json:"id"`
+				FullName string `json:"fullName"`
+				Address  struct {
+					City  string `json:"city"`
+					State string `json:"state"`
+				} `json:"address"`
+				Indoor bool `json:"indoor"`
+			} `json:"venue"`
+			Competitors []struct {
+				ID      string `json:"id"`
+				UID     string `json:"uid"`
+				Type    string `json:"type"`
+				Order   int    `json:"order"`
+				Winner  bool   `json:"winner"`
+				Athlete struct {
+					FullName    string `json:"fullName"`
+					DisplayName string `json:"displayName"`
+					ShortName   string `json:"shortName"`
+					Flag        struct {
+						Href string   `json:"href"`
+						Alt  string   `json:"alt"`
+						Rel  []string `json:"rel"`
+					} `json:"flag"`
+				} `json:"athlete"`
+			} `json:"competitors"`
+			Status struct {
+				Clock        float64 `json:"clock"`
+				DisplayClock string  `json:"displayClock"`
+				Period       int     `json:"period"`
+				Type         struct {
+					ID          string `json:"id"`
+					Name        string `json:"name"`
+					State       string `json:"state"`
+					Completed   bool   `json:"completed"`
+					Description string `json:"description"`
+					Detail      string `json:"detail"`
+					ShortDetail string `json:"shortDetail"`
+				} `json:"type"`
+			} `json:"status"`
+			Broadcasts []struct {
+				Market string   `json:"market"`
+				Names  []string `json:"names"`
+			} `json:"broadcasts"`
+			Format struct {
+				Regulation struct {
+					Periods int `json:"periods"`
+				} `json:"regulation"`
+			} `json:"format"`
+			StartDate     string `json:"startDate"`
+			GeoBroadcasts []struct {
+				Type struct {
+					ID        string `json:"id"`
+					ShortName string `json:"shortName"`
+				} `json:"type"`
+				Market struct {
+					ID   string `json:"id"`
+					Type string `json:"type"`
+				} `json:"market"`
+				Media struct {
+					ShortName string `json:"shortName"`
+				} `json:"media"`
+				Lang   string `json:"lang"`
+				Region string `json:"region"`
+			} `json:"geoBroadcasts"`
+			Type struct {
+				ID           string `json:"id"`
+				Abbreviation string `json:"abbreviation"`
+			} `json:"type,omitempty"`
+		} `json:"competitions"`
+		Links []struct {
+			Language   string   `json:"language"`
+			Rel        []string `json:"rel"`
+			Href       string   `json:"href"`
+			Text       string   `json:"text"`
+			ShortText  string   `json:"shortText"`
+			IsExternal bool     `json:"isExternal"`
+			IsPremium  bool     `json:"isPremium"`
+		} `json:"links"`
+		Venues []struct {
+			ID       string `json:"id"`
+			FullName string `json:"fullName"`
+			Address  struct {
+				City  string `json:"city"`
+				State string `json:"state"`
+			} `json:"address"`
+		} `json:"venues"`
+		Status struct {
+			Type struct {
 				ID          string `json:"id"`
 				Name        string `json:"name"`
 				State       string `json:"state"`

@@ -394,9 +394,9 @@ func placeSports() *fyne.Container {
 		layout.NewSpacer(),
 		prediction.SportsBox())
 
-	fifa := widget.NewLabel("")
-	fifa.Wrapping = fyne.TextWrapWord
-	fifa_scroll := container.NewVScroll(fifa)
+	epl := widget.NewLabel("")
+	epl.Wrapping = fyne.TextWrapWord
+	epl_scroll := container.NewVScroll(epl)
 	nba := widget.NewLabel("")
 	nba.Wrapping = fyne.TextWrapWord
 	nba_scroll := container.NewVScroll(nba)
@@ -406,23 +406,35 @@ func placeSports() *fyne.Container {
 	nhl := widget.NewLabel("")
 	nhl.Wrapping = fyne.TextWrapWord
 	nhl_scroll := container.NewVScroll(nhl)
+	bellator := widget.NewLabel("")
+	bellator.Wrapping = fyne.TextWrapWord
+	bellator_scroll := container.NewVScroll(bellator)
+	ufc := widget.NewLabel("")
+	ufc.Wrapping = fyne.TextWrapWord
+	ufc_scroll := container.NewVScroll(ufc)
 	score_tabs := container.NewAppTabs(
-		container.NewTabItem("FIFA", fifa_scroll),
+		container.NewTabItem("EPL", epl_scroll),
 		container.NewTabItem("NBA", nba_scroll),
 		container.NewTabItem("NFL", nfl_scroll),
 		container.NewTabItem("NHL", nhl_scroll),
+		container.NewTabItem("Bellator", bellator_scroll),
+		container.NewTabItem("UFC", ufc_scroll),
 	)
 
 	score_tabs.OnSelected = func(ti *container.TabItem) {
 		switch ti.Text {
-		case "FIFA":
-			go prediction.GetScores(fifa, "FIFA")
+		case "EPL":
+			go prediction.GetScores(epl, "EPL")
 		case "NBA":
 			go prediction.GetScores(nba, "NBA")
 		case "NFL":
 			go prediction.GetScores(nfl, "NFL")
 		case "NHL":
 			go prediction.GetScores(nhl, "NHL")
+		case "Bellator":
+			go prediction.GetMmaResults(bellator, "Bellator")
+		case "UFC":
+			go prediction.GetMmaResults(ufc, "UFC")
 		default:
 		}
 	}

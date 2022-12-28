@@ -149,21 +149,32 @@ func sportsOpts() fyne.CanvasObject { /// set sports options
 	})
 	PS_Control.S_game.PlaceHolder = "Game:"
 
-	leagues := []string{"FIFA", "NBA", "NFL", "NHL"}
+	leagues := []string{"EPL", "NBA", "NFL", "NHL", "Bellator", "UFC"}
 	PS_Control.S_league = widget.NewSelectEntry(leagues)
 	PS_Control.S_league.OnChanged = func(s string) {
 		PS_Control.S_game.Options = []string{}
 		PS_Control.S_game.Selected = ""
+		if s == "Bellator" || s == "UFC" {
+			PS_Control.S_game.PlaceHolder = "Fight:"
+		} else {
+			PS_Control.S_game.PlaceHolder = "Game:"
+		}
 		PS_Control.S_game.Refresh()
 		switch s {
-		case "FIFA":
-			go GetCurrentWeek("FIFA")
+		case "EPL":
+			go GetCurrentWeek("EPL")
 		case "NBA":
 			go GetCurrentWeek("NBA")
 		case "NFL":
 			go GetCurrentWeek("NFL")
 		case "NHL":
 			go GetCurrentWeek("NHL")
+		case "UFC":
+			go GetCurrentMonth("UFC")
+		case "Bellator":
+			go GetCurrentMonth("Bellator")
+		default:
+
 		}
 	}
 	PS_Control.S_league.SetPlaceHolder("League:")
@@ -610,7 +621,7 @@ func ownerConfirmPopUp(i int, p float64) { /// bet owner action confirmation
 
 	var win, team string
 	if i == 3 {
-		win, team = GetWinner("NHL", n_split[2], n_split[1])
+		win, team = GetWinner(n_split[2], n_split[1])
 	}
 
 	switch i {

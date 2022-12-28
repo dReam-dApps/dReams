@@ -253,6 +253,11 @@ func searchFilters() (filter []string) {
 		filter = append(filter, sports)
 	}
 
+	gnomon, _ := rpc.GetGnomonCode(rpc.Signal.Daemon, 0)
+	if sports != "" {
+		filter = append(filter, gnomon)
+	}
+
 	filter = append(filter, nfa_search_filter)
 	filter = append(filter, g45_search_filter)
 
@@ -299,7 +304,7 @@ func startGnomon(ep string) {
 	closeondisconnect := false
 
 	filters := searchFilters()
-	if len(filters) == 7 {
+	if len(filters) == 8 {
 		table.Assets.Asset_map = make(map[string]string)
 		Gnomes.Indexer = indexer.NewIndexer(backend, filters, last_height, daemon_endpoint, runmode, mbl, closeondisconnect, Gnomes.Fast)
 		go Gnomes.Indexer.StartDaemonMode(Gnomes.Para)
@@ -466,6 +471,23 @@ func CheckBetContractOwner(gs, gc bool, contracts map[string]string) {
 	}
 }
 
+func GetSCHeaders(scid string) []string {
+	if !GnomonClosing() {
+		headers, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(rpc.GnomonSCID, scid, Gnomes.Indexer.ChainHeight, true)
+
+		if headers != nil {
+			split := strings.Split(headers[0], ";")
+
+			if split[0] == "" {
+				return nil
+			}
+
+			return split
+		}
+	}
+	return nil
+}
+
 func verifyBetContractOwner(scid, t string) {
 	if !GnomonClosing() {
 		owner, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "owner", Gnomes.Indexer.ChainHeight, true)
@@ -488,7 +510,7 @@ func checkBetContract(scid, t string, list, owned []string) ([]string, []string)
 
 		if owner != nil && dev != nil && init != nil {
 			if dev[0] == rpc.DevAddress {
-				headers, _ := rpc.GetSCHeaders(scid)
+				headers := GetSCHeaders(scid)
 				name := "?"
 				desc := "?"
 				if headers != nil {
@@ -736,7 +758,7 @@ func CreateTableList(gc bool, tables map[string]string) {
 				d := valid[0]
 				v := version[0]
 				if d >= 1 && v >= 100 {
-					headers, _ := rpc.GetSCHeaders(scid)
+					headers := GetSCHeaders(scid)
 					name := "?"
 					desc := "?"
 					if headers != nil {
@@ -804,7 +826,7 @@ func GetTableStats(scid string, single bool) {
 		p4, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "Player4 ID:", Gnomes.Indexer.LastIndexedHeight, true)
 		p5, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "Player5 ID:", Gnomes.Indexer.LastIndexedHeight, true)
 		p6, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "Player6 ID:", Gnomes.Indexer.LastIndexedHeight, true)
-		h, _ := rpc.GetSCHeaders(scid)
+		h := GetSCHeaders(scid)
 
 		if single {
 			if h != nil {
@@ -1009,13 +1031,13 @@ func GetSportsTeams(scid, n string) (string, string) {
 }
 
 func TrimTeamA(s string) string {
-	split := strings.Split(s, "-")
+	split := strings.Split(s, "--")
 
 	return split[0]
 }
 
 func TrimTeamB(s string) string {
-	split := strings.Split(s, "-")
+	split := strings.Split(s, "--")
 
 	return split[1]
 }
@@ -1046,6 +1068,10 @@ func FindNfaListings(gs bool, assets map[string]string) {
 			}
 
 			i++
+		}
+
+		if GnomonClosing() {
+			return
 		}
 
 		Market.Auctions = auction
