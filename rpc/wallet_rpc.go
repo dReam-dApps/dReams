@@ -37,6 +37,7 @@ type wallet struct {
 	Connect    bool
 	PokerOwner bool
 	BetOwner   bool
+	KeyLock    bool
 }
 
 var Wallet wallet
@@ -414,6 +415,7 @@ func GenerateKey() string {
 	random, _ := rand.Prime(rand.Reader, 128)
 	shasum := sha256.Sum256([]byte(random.String()))
 	str := hex.EncodeToString(shasum[:])
+	Wallet.KeyLock = true
 	log.Println("Round Key: ", str)
 	addLog("Round Key: " + str)
 
@@ -424,7 +426,10 @@ func DealHand() error { /// holdero hand
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
-	Wallet.ClientKey = GenerateKey()
+	if !Wallet.KeyLock {
+		Wallet.ClientKey = GenerateKey()
+	}
+
 	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "DealHand"}
 	arg2 := rpc.Argument{Name: "pcSeed", DataType: "H", Value: Wallet.ClientKey}
 	args := rpc.Arguments{arg1, arg2}

@@ -378,6 +378,7 @@ func FetchHolderoSC(dc, cc bool) error {
 
 			if FlopBool_jv != nil {
 				Round.Flop = true
+				Wallet.KeyLock = false
 			} else {
 				Round.Flop = false
 			}

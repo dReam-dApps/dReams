@@ -407,7 +407,7 @@ func fetch(quit chan struct{}) { /// main loop
 		case <-ticker.C: /// do on interval
 			rpc.Ping()
 			rpc.GetBalance(rpc.Wallet.Connect)
-			rpc.DreamsBalance(rpc.Wallet.Connect)
+			go rpc.DreamsBalance(rpc.Wallet.Connect)
 			rpc.TourneyBalance(rpc.Wallet.Connect, rpc.Round.Tourney, rpc.TourneySCID)
 			rpc.GetHeight(rpc.Wallet.Connect)
 			if !rpc.Signal.Startup {

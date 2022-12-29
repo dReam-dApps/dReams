@@ -506,6 +506,9 @@ func setHolderoName(one, two, three, four, five, six interface{}) {
 
 func potIsEmpty(pot uint64) {
 	if pot == 0 {
+		if !Signal.My_turn {
+			Wallet.KeyLock = false
+		}
 		Round.Flop1 = 0
 		Round.Flop2 = 0
 		Round.Flop3 = 0
