@@ -187,6 +187,7 @@ func DaemonConnectedBox() fyne.Widget {
 	MenuControl.daemon_check = widget.NewCheck("", func(b bool) {
 		if !Gnomes.Init && !Gnomes.Start {
 			startGnomon(rpc.Round.Daemon)
+			rpc.CheckHolderoContract()
 		}
 
 		if !b {

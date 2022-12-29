@@ -397,6 +397,7 @@ func singleShot(turn, trigger bool) bool {
 func fetch(quit chan struct{}) { /// main loop
 	time.Sleep(3 * time.Second)
 	var ticker = time.NewTicker(3 * time.Second)
+	var autoCF bool
 	var trigger bool
 	var skip int
 	var delay int
@@ -425,10 +426,11 @@ func fetch(quit chan struct{}) { /// main loop
 					SportsRefresh(dReams.sports)
 				}
 
-				if (rpc.StringToInt(rpc.Display.Turn) == rpc.Round.ID && rpc.StringToInt(rpc.Wallet.Height) > rpc.Signal.CHeight+3) ||
+				if (rpc.StringToInt(rpc.Display.Turn) == rpc.Round.ID && rpc.StringToInt(rpc.Wallet.Height) > rpc.Signal.CHeight+4) ||
 					(rpc.StringToInt(rpc.Display.Turn) != rpc.Round.ID && rpc.Round.ID >= 1) || (!rpc.Signal.My_turn && rpc.Round.ID >= 1) {
 					if rpc.Signal.Clicked {
 						trigger = false
+						autoCF = false
 					}
 					rpc.Signal.Clicked = false
 				}
@@ -441,10 +443,16 @@ func fetch(quit chan struct{}) { /// main loop
 				go MenuRefresh(dReams.menu, menu.Gnomes.Init)
 				if !rpc.Signal.Clicked {
 					if rpc.Round.Card_delay {
-						delay++
-						if delay >= 6 {
+						if rpc.Round.First_try {
+							rpc.Round.First_try = false
 							delay = 0
 							rpc.Round.Card_delay = false
+						} else {
+							delay++
+							if delay >= 7 {
+								delay = 0
+								rpc.Round.Card_delay = false
+							}
 						}
 					} else {
 						setHolderoLabel()
@@ -452,6 +460,15 @@ func fetch(quit chan struct{}) { /// main loop
 						rpc.Called(rpc.Round.Flop, rpc.Round.Wager)
 						trigger = singleShot(rpc.Signal.My_turn, trigger)
 						HolderoRefresh()
+						if table.Settings.Auto_check && rpc.Signal.My_turn && !autoCF {
+							if !rpc.Signal.Reveal && !rpc.Signal.End && !rpc.Round.LocalEnd {
+								if rpc.CardHash.Local1 != "" {
+									table.HolderoButtonBuffer()
+									rpc.Check()
+									autoCF = true
+								}
+							}
+						}
 						skip = 0
 					}
 				} else {
@@ -461,6 +478,7 @@ func fetch(quit chan struct{}) { /// main loop
 						rpc.Signal.Clicked = false
 						skip = 0
 						trigger = false
+						autoCF = false
 					}
 				}
 			}

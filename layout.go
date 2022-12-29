@@ -302,7 +302,9 @@ func placeHoldero() *fyne.Container {
 		table.BetButton(),
 		table.BetAmount())
 
-	holdero_actions := container.NewHBox(layout.NewSpacer(), &H.ActionButtons)
+	options := container.NewVBox(layout.NewSpacer(), table.AutoCheckFold())
+
+	holdero_actions := container.NewHBox(options, layout.NewSpacer(), &H.ActionButtons)
 
 	H.TableItems = container.NewVBox(
 		labelColorBlack(holdero_label),

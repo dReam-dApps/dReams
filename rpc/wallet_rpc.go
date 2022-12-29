@@ -164,7 +164,6 @@ func GetBalance(wc bool) error { /// get wallet dero balance
 		var result *rpc.GetBalance_Result
 		err := rpcClientW.CallFor(ctx, &result, "GetBalance")
 		if err != nil {
-			Wallet.Connect = false
 			log.Println(err)
 			return nil
 		}

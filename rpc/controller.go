@@ -131,6 +131,7 @@ type holderoValues struct {
 	Bettor    string
 	Raisor    string
 
+	First_try     bool
 	Card_delay    bool
 	Local_trigger bool
 	Flop_trigger  bool

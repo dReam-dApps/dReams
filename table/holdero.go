@@ -18,15 +18,16 @@ import (
 )
 
 type settings struct {
-	Faces     string
-	Backs     string
-	Theme     string
-	Avatar    string
-	FaceUrl   string
-	BackUrl   string
-	AvatarUrl string
-	ThemeUrl  string
-	Shared    bool
+	Faces      string
+	Backs      string
+	Theme      string
+	Avatar     string
+	FaceUrl    string
+	BackUrl    string
+	AvatarUrl  string
+	ThemeUrl   string
+	Shared     bool
+	Auto_check bool
 
 	P1_avatar_url string
 	P2_avatar_url string
@@ -415,7 +416,7 @@ type tableWidgets struct {
 
 var Actions tableWidgets
 
-func holderoButtonBuffer() {
+func HolderoButtonBuffer() {
 	Actions.Sit.Hide()
 	Actions.Leave.Hide()
 	Actions.Deal.Hide()
@@ -473,7 +474,7 @@ func SitButton() fyne.Widget {
 		if Poker_name != "" {
 			if CheckNames(rpc.Display.Seats) {
 				rpc.SitDown(Poker_name, Settings.AvatarUrl)
-				holderoButtonBuffer()
+				HolderoButtonBuffer()
 			}
 		} else {
 			log.Println("Pick a name")
@@ -488,7 +489,7 @@ func SitButton() fyne.Widget {
 func LeaveButton() fyne.Widget {
 	Actions.Leave = widget.NewButton("Leave", func() {
 		rpc.Leave()
-		holderoButtonBuffer()
+		HolderoButtonBuffer()
 	})
 
 	Actions.Leave.Hide()
@@ -499,7 +500,7 @@ func LeaveButton() fyne.Widget {
 func DealHandButton() fyne.Widget {
 	Actions.Deal = widget.NewButton("Deal Hand", func() {
 		rpc.DealHand()
-		holderoButtonBuffer()
+		HolderoButtonBuffer()
 	})
 
 	Actions.Deal.Hide()
@@ -627,7 +628,7 @@ func BetButton() fyne.Widget {
 		if Actions.BetEntry.Validate() == nil {
 			rpc.Bet(Actions.BetEntry.Text)
 			rpc.Signal.Bet = true
-			holderoButtonBuffer()
+			HolderoButtonBuffer()
 		}
 	})
 
@@ -640,13 +641,25 @@ func CheckButton() fyne.Widget {
 	Actions.Check = widget.NewButton("Check", func() {
 		rpc.Check()
 		rpc.Signal.Bet = true
-		holderoButtonBuffer()
+		HolderoButtonBuffer()
 
 	})
 
 	Actions.Check.Hide()
 
 	return Actions.Check
+}
+
+func AutoCheckFold() fyne.Widget {
+	auto := widget.NewCheck("Auto Check/Fold", func(b bool) {
+		if b {
+			Settings.Auto_check = true
+		} else {
+			Settings.Auto_check = false
+		}
+	})
+
+	return auto
 }
 
 type NumericalEntry struct {

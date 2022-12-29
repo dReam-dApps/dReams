@@ -445,8 +445,8 @@ func FetchHolderoSC(dc, cc bool) error {
 
 			if RevealBool_jv != nil && !Signal.Reveal && !Round.LocalEnd {
 				if addOne(Turn_jv) == Display.PlayerId {
-					RevealKey(Wallet.ClientKey)
 					Signal.Reveal = true
+					RevealKey(Wallet.ClientKey)
 				}
 			}
 

@@ -95,6 +95,7 @@ type sharedCards struct {
 }
 
 func ClearShared() {
+	rpc.Round.First_try = true
 	rpc.Round.P1_url = ""
 	rpc.Round.P2_url = ""
 	rpc.Round.P3_url = ""
@@ -109,10 +110,7 @@ func ClearShared() {
 	rpc.Round.P6_name = ""
 	rpc.Round.Bettor = ""
 	rpc.Round.Raisor = ""
-	rpc.Round.Local_trigger = false
-	rpc.Round.Flop_trigger = false
-	rpc.Round.Turn_trigger = false
-	rpc.Round.River_trigger = false
+	rpc.Signal.Reveal = false
 	rpc.Signal.Out1 = false
 	Shared.GotP1 = false
 	Shared.GotP2 = false
@@ -126,6 +124,7 @@ func ClearShared() {
 	Shared.P4_avatar = *canvas.NewImageFromImage(nil)
 	Shared.P5_avatar = *canvas.NewImageFromImage(nil)
 	Shared.P6_avatar = *canvas.NewImageFromImage(nil)
+
 }
 
 var Shared sharedCards
