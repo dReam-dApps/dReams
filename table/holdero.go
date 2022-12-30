@@ -28,6 +28,7 @@ type settings struct {
 	ThemeUrl   string
 	Shared     bool
 	Auto_check bool
+	Auto_deal  bool
 
 	P1_avatar_url string
 	P2_avatar_url string
@@ -650,14 +651,24 @@ func CheckButton() fyne.Widget {
 	return Actions.Check
 }
 
-func AutoCheckFold() fyne.Widget {
-	auto := widget.NewCheck("Auto Check/Fold", func(b bool) {
+func AutoOptions() fyne.CanvasObject {
+	cf := widget.NewCheck("Auto Check/Fold", func(b bool) {
 		if b {
 			Settings.Auto_check = true
 		} else {
 			Settings.Auto_check = false
 		}
 	})
+
+	deal := widget.NewCheck("Auto Deal", func(b bool) {
+		if b {
+			Settings.Auto_deal = true
+		} else {
+			Settings.Auto_deal = false
+		}
+	})
+
+	auto := container.NewVBox(deal, cf)
 
 	return auto
 }

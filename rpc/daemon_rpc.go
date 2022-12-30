@@ -446,6 +446,8 @@ func FetchHolderoSC(dc, cc bool) error {
 
 			if RevealBool_jv != nil && !Signal.Reveal && !Round.LocalEnd {
 				if addOne(Turn_jv) == Display.PlayerId {
+					Signal.Clicked = true
+					Signal.CHeight = StringToInt(Wallet.Height)
 					Signal.Reveal = true
 					RevealKey(Wallet.ClientKey)
 				}

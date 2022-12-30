@@ -95,6 +95,7 @@ type sharedCards struct {
 }
 
 func ClearShared() {
+	rpc.Display.Res = ""
 	rpc.Round.First_try = true
 	rpc.Round.P1_url = ""
 	rpc.Round.P2_url = ""

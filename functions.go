@@ -398,6 +398,7 @@ func fetch(quit chan struct{}) { /// main loop
 	time.Sleep(3 * time.Second)
 	var ticker = time.NewTicker(3 * time.Second)
 	var autoCF bool
+	var autoD bool
 	var trigger bool
 	var skip int
 	var delay int
@@ -431,6 +432,8 @@ func fetch(quit chan struct{}) { /// main loop
 					if rpc.Signal.Clicked {
 						trigger = false
 						autoCF = false
+						autoD = false
+						rpc.Signal.Reveal = false
 					}
 					rpc.Signal.Clicked = false
 				}
@@ -442,17 +445,17 @@ func fetch(quit chan struct{}) { /// main loop
 
 				go MenuRefresh(dReams.menu, menu.Gnomes.Init)
 				if !rpc.Signal.Clicked {
+					if rpc.Round.First_try {
+						rpc.Round.First_try = false
+						delay = 0
+						rpc.Round.Card_delay = false
+					}
+
 					if rpc.Round.Card_delay {
-						if rpc.Round.First_try {
-							rpc.Round.First_try = false
+						delay++
+						if delay >= 10 {
 							delay = 0
 							rpc.Round.Card_delay = false
-						} else {
-							delay++
-							if delay >= 7 {
-								delay = 0
-								rpc.Round.Card_delay = false
-							}
 						}
 					} else {
 						setHolderoLabel()
@@ -465,10 +468,39 @@ func fetch(quit chan struct{}) { /// main loop
 								if rpc.CardHash.Local1 != "" {
 									table.HolderoButtonBuffer()
 									rpc.Check()
+									H.TopLabel.SetText("Auto Check/Fold Tx Sent")
+									H.TopLabel.Refresh()
 									autoCF = true
+
+									go func() {
+										if !isWindows() {
+											time.Sleep(500 * time.Millisecond)
+											dReams.App.SendNotification(notification("dReams - Holdero", "Auto Check/Fold Tx Sent", 9))
+										}
+									}()
 								}
 							}
 						}
+
+						if table.Settings.Auto_deal && rpc.Signal.My_turn && !autoD {
+							if !rpc.Signal.Reveal && !rpc.Signal.End && !rpc.Round.LocalEnd {
+								if rpc.CardHash.Local1 == "" {
+									table.HolderoButtonBuffer()
+									rpc.DealHand()
+									H.TopLabel.SetText("Auto Deal Tx Sent")
+									H.TopLabel.Refresh()
+									autoD = true
+
+									go func() {
+										if !isWindows() {
+											time.Sleep(500 * time.Millisecond)
+											dReams.App.SendNotification(notification("dReams - Holdero", "Auto Deal Tx Sent", 9))
+										}
+									}()
+								}
+							}
+						}
+
 						skip = 0
 					}
 				} else {
@@ -479,6 +511,7 @@ func fetch(quit chan struct{}) { /// main loop
 						skip = 0
 						trigger = false
 						autoCF = false
+						autoD = false
 					}
 				}
 			}
