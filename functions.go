@@ -512,6 +512,7 @@ func fetch(quit chan struct{}) { /// main loop
 						trigger = false
 						autoCF = false
 						autoD = false
+						rpc.Signal.Reveal = false
 					}
 				}
 			}
