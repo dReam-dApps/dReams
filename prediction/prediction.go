@@ -341,7 +341,7 @@ func P_initResults(p, amt, eA, c, to, u, d, r, f, m string, ta, tb, tc int) (inf
 		}
 
 		if isOnChainPrediction(p) {
-			info = "SCID: \n" + PredictControl.Contract + "\n\n" + p + wfp + "\n\nNode: " + rpc.Display.P_feed + "\n\nMark: " + mark + "\nRound Pot: " + s +
+			info = "SCID: \n" + PredictControl.Contract + "\n\n" + p + wfp + "\n\nNode: " + f + "\n\nMark: " + mark + "\nRound Pot: " + s +
 				"\n\nPredictions: " + c + "\nHigher Predictions: " + u + "\nLower Predictions: " + d +
 				"\n\nPayout After: " + end_pay.String() + "\nRefund if not paid within " + rf + " minutes\n\nRounds Completed: " + r
 		} else {
@@ -359,13 +359,18 @@ func P_initResults(p, amt, eA, c, to, u, d, r, f, m string, ta, tb, tc int) (inf
 			live = "\n\n" + p + "\nBuffer ends in " + strconv.Itoa(int(left)) + " seconds"
 		}
 
+		node := ""
+		if isOnChainPrediction(p) {
+			node = "\n\nNode: " + f
+		}
+
 		if m == "0" {
 			pw := strconv.Itoa(ta / 60)
-			info = "SCID: \n" + PredictControl.Contract + live +
+			info = "SCID: \n" + PredictControl.Contract + live + node +
 				"\n\nCloses at: " + utc + "\nMark posted with in " + pw + " minutes of close\n\nPrediction Amount: " + amt + " Dero\nRound Pot: " + s + " \n\nPredictions: " + c +
 				"\nHigher Predictions: " + u + "\nLower Predictions: " + d + "\n\nPayout After: " + end_pay.String() + "\nRefund if not paid within " + rf + " minutes\n\nRounds Completed: " + r
 		} else {
-			info = "SCID: \n" + PredictControl.Contract + live +
+			info = "SCID: \n" + PredictControl.Contract + live + node +
 				"\n\nCloses at: " + utc + "\nMark: " + m + "\n\nPrediction Amount: " + amt + " Dero\nRound Pot: " + s + "\n\nPredictions: " + c +
 				"\nHigher Predictions: " + u + "\nLower Predictions: " + d + "\n\nPayout After: " + end_pay.String() + "\nRefund if not paid within " + rf + " minutes\n\nRounds Completed: " + r
 		}
