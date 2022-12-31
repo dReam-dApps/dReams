@@ -757,21 +757,25 @@ func CreateTableList(gc bool, tables map[string]string) {
 			if valid != nil && version != nil {
 				d := valid[0]
 				v := version[0]
-				if d >= 1 && v >= 100 {
-					headers := GetSCHeaders(scid)
-					name := "?"
-					desc := "?"
-					if headers != nil {
-						if headers[1] != "" {
-							desc = headers[1]
-						}
 
-						if headers[0] != "" {
-							name = " " + headers[0]
-						}
+				headers := GetSCHeaders(scid)
+				name := "?"
+				desc := "?"
+				if headers != nil {
+					if headers[1] != "" {
+						desc = headers[1]
 					}
 
+					if headers[0] != "" {
+						name = " " + headers[0]
+					}
+				}
+
+				if d >= 1 && v == 110 {
 					list = append(list, name+"   "+desc+"   "+scid)
+				}
+
+				if d >= 1 && v >= 100 {
 					if checkTableOwner(scid) {
 						owned = append(owned, name+"   "+desc+"   "+scid)
 						HolderoControl.holdero_unlock.Hide()
@@ -947,11 +951,12 @@ func CheckG45owner(gs, gc bool, g45s map[string]string) {
 }
 
 func CheckActivePrediction(scid string) bool {
-	if len(scid) == 64 {
+	if len(scid) == 64 && Gnomes.Init && !GnomonClosing() {
 		_, ends := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "p_end_at", Gnomes.Indexer.ChainHeight, true)
-		if ends != nil {
+		_, buff := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "buffer", Gnomes.Indexer.ChainHeight, true)
+		if ends != nil && buff != nil {
 			now := time.Now().Unix()
-			if now < int64(ends[0]) {
+			if now < int64(ends[0]) && now > int64(buff[0]) {
 				return true
 			}
 		}

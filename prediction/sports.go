@@ -52,17 +52,23 @@ func SportsContractEntry() fyne.Widget {
 	table.Actions.S_contract.PlaceHolder = "Contract Address: "
 	table.Actions.S_contract.OnCursorChanged = func() {
 		if rpc.Signal.Daemon {
-			yes, _ := rpc.ValidBetContract(SportsControl.Contract)
-			if yes {
-				menu.MenuControl.Sports_check.SetChecked(true)
-				if !menu.CheckActiveGames(SportsControl.Contract) {
-					table.Actions.Game_select.Show()
+			go func() {
+				if len(SportsControl.Contract) == 64 {
+					yes, _ := rpc.ValidBetContract(SportsControl.Contract)
+					if yes {
+						menu.MenuControl.Sports_check.SetChecked(true)
+						if !menu.CheckActiveGames(SportsControl.Contract) {
+							table.Actions.Game_select.Show()
+						} else {
+							table.Actions.Game_select.Hide()
+						}
+					} else {
+						menu.MenuControl.Sports_check.SetChecked(false)
+					}
 				} else {
-					table.Actions.Game_select.Hide()
+					menu.MenuControl.Sports_check.SetChecked(false)
 				}
-			} else {
-				menu.MenuControl.Sports_check.SetChecked(false)
-			}
+			}()
 		}
 	}
 

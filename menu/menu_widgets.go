@@ -187,7 +187,12 @@ func DaemonConnectedBox() fyne.Widget {
 	MenuControl.daemon_check = widget.NewCheck("", func(b bool) {
 		if !Gnomes.Init && !Gnomes.Start {
 			startGnomon(rpc.Round.Daemon)
-			rpc.CheckHolderoContract()
+			HolderoControl.contract_input.CursorColumn = 1
+			HolderoControl.contract_input.Refresh()
+			table.Actions.P_contract.CursorColumn = 1
+			table.Actions.P_contract.Refresh()
+			table.Actions.S_contract.CursorColumn = 1
+			table.Actions.S_contract.Refresh()
 		}
 
 		if !b {
@@ -311,9 +316,12 @@ func RpcConnectButton() fyne.Widget {
 			rpc.Ping()
 			rpc.GetAddress()
 			CheckConnection()
-			if len(HolderoControl.contract_input.Text) == 64 {
-				rpc.CheckHolderoContract()
-			}
+			HolderoControl.contract_input.CursorColumn = 1
+			HolderoControl.contract_input.Refresh()
+			table.Actions.P_contract.CursorColumn = 1
+			table.Actions.P_contract.Refresh()
+			table.Actions.S_contract.CursorColumn = 1
+			table.Actions.S_contract.Refresh()
 		}()
 	})
 

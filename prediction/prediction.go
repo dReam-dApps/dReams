@@ -56,12 +56,18 @@ func PreictionContractEntry() fyne.Widget {
 	table.Actions.P_contract.PlaceHolder = "Contract Address: "
 	table.Actions.P_contract.OnCursorChanged = func() {
 		if rpc.Signal.Daemon {
-			yes, _ := rpc.ValidBetContract(PredictControl.Contract)
-			if yes {
-				menu.MenuControl.Predict_check.SetChecked(true)
-			} else {
-				menu.MenuControl.Predict_check.SetChecked(false)
-			}
+			go func() {
+				if len(PredictControl.Contract) == 64 {
+					yes, _ := rpc.ValidBetContract(PredictControl.Contract)
+					if yes {
+						menu.MenuControl.Predict_check.SetChecked(true)
+					} else {
+						menu.MenuControl.Predict_check.SetChecked(false)
+					}
+				} else {
+					menu.MenuControl.Predict_check.SetChecked(false)
+				}
+			}()
 		}
 	}
 
@@ -127,6 +133,15 @@ func LeadersDisplay() fyne.Widget {
 	return PredictControl.Leaders_list
 }
 
+func ShowPredictionControls() {
+	menu.DisablePreditions(false)
+	table.Actions.Higher.Show()
+	table.Actions.Lower.Show()
+	table.Actions.NameEntry.Show()
+	table.Actions.NameEntry.Text = menu.CheckPredictionName(PredictControl.Contract)
+	table.Actions.NameEntry.Refresh()
+}
+
 func setPredictionControls(str string) (item string) {
 	split := strings.Split(str, "   ")
 	if len(split) >= 3 {
@@ -136,12 +151,7 @@ func setPredictionControls(str string) (item string) {
 			table.Actions.P_contract.SetText(trimmed)
 			go SetPredictionInfo(trimmed)
 			if menu.CheckActivePrediction(trimmed) {
-				menu.DisablePreditions(false)
-				table.Actions.Higher.Show()
-				table.Actions.Lower.Show()
-				table.Actions.NameEntry.Show()
-				table.Actions.NameEntry.Text = menu.CheckPredictionName(PredictControl.Contract)
-				table.Actions.NameEntry.Refresh()
+				ShowPredictionControls()
 			} else {
 				menu.DisablePreditions(true)
 			}
@@ -341,13 +351,21 @@ func P_initResults(p, amt, eA, c, to, u, d, r, f, m string, ta, tb, tc int) (inf
 		}
 
 	} else {
+		var live string
+		if now > rpc.Predict.Buffer {
+			live = "\n\nAccepting " + p + " Predictions "
+		} else {
+			left := rpc.Predict.Buffer - now
+			live = "\n\n" + p + "\nBuffer ends in " + strconv.Itoa(int(left)) + " seconds"
+		}
+
 		if m == "0" {
 			pw := strconv.Itoa(ta / 60)
-			info = "SCID: \n" + PredictControl.Contract + "\n\nAccepting " + p + " Predictions " +
+			info = "SCID: \n" + PredictControl.Contract + live +
 				"\n\nCloses at: " + utc + "\nMark posted with in " + pw + " minutes of close\n\nPrediction Amount: " + amt + " Dero\nRound Pot: " + s + " \n\nPredictions: " + c +
 				"\nHigher Predictions: " + u + "\nLower Predictions: " + d + "\n\nPayout After: " + end_pay.String() + "\nRefund if not paid within " + rf + " minutes\n\nRounds Completed: " + r
 		} else {
-			info = "SCID: \n" + PredictControl.Contract + "\n\nAccepting " + p + " Predictions " +
+			info = "SCID: \n" + PredictControl.Contract + live +
 				"\n\nCloses at: " + utc + "\nMark: " + m + "\n\nPrediction Amount: " + amt + " Dero\nRound Pot: " + s + "\n\nPredictions: " + c +
 				"\nHigher Predictions: " + u + "\nLower Predictions: " + d + "\n\nPayout After: " + end_pay.String() + "\nRefund if not paid within " + rf + " minutes\n\nRounds Completed: " + r
 		}

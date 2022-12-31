@@ -715,6 +715,12 @@ func PredictionRefresh(tab bool) {
 		}
 
 		P.RightLabel.SetText("dReams Balance: " + rpc.Wallet.TokenBal + "      Dero Balance: " + rpc.Wallet.Balance + "      Height: " + rpc.Wallet.Height)
+
+		if menu.CheckActivePrediction(prediction.PredictControl.Contract) {
+			go prediction.ShowPredictionControls()
+		} else {
+			menu.DisablePreditions(true)
+		}
 	}
 }
 
