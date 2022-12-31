@@ -147,7 +147,7 @@ func TarotPadding() fyne.CanvasObject {
 
 func TarotDrawText() (text string) {
 	rand.Seed(time.Now().UnixNano())
-	i := rand.Intn(3-1) + 1
+	i := rand.Intn(6-1) + 1
 
 	switch i {
 	case 1:
@@ -156,6 +156,12 @@ func TarotDrawText() (text string) {
 		text = "                               Consulting your Angels & Ancestors"
 	case 3:
 		text = "                               Scanning your Auroa"
+	case 4:
+		text = "                               Reading your Light Codes"
+	case 5:
+		text = "                               Channeling the Divine"
+	case 6:
+		text = "                               Trust in your intuition"
 	default:
 
 	}
