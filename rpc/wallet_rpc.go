@@ -128,6 +128,29 @@ func SetWalletClient(addr, pass string) (jsonrpc.RPCClient, context.Context, con
 	return client, ctx, cancel
 }
 
+func EchoWallet(wc bool) error { /// echo wallet for connection
+	if wc {
+		rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
+		defer cancel()
+
+		var result string
+		params := []string{"Hello", "World", "!"}
+		err := rpcClientW.CallFor(ctx, &result, "Echo", params)
+		if err != nil {
+			Wallet.Connect = false
+			log.Println(err)
+			return nil
+		}
+
+		if result != "WALLET Hello World !" {
+			Wallet.Connect = false
+		}
+
+		return err
+	}
+	return nil
+}
+
 func GetAddress() error {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
