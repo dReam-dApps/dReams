@@ -621,7 +621,11 @@ func ownerConfirmPopUp(i int, p float64) { /// bet owner action confirmation
 
 	var win, team string
 	if i == 3 {
-		win, team = GetWinner(n_split[2], n_split[1])
+		if n_split[1] == "Bellator" || n_split[1] == "UFC" {
+			win, team = GetMmaWinner(n_split[2], n_split[1])
+		} else {
+			win, team = GetWinner(n_split[2], n_split[1])
+		}
 	}
 
 	switch i {

@@ -775,46 +775,49 @@ func GetMmaResults(label *widget.Label, league string) {
 
 				tz, _ := time.LoadLocation("Local")
 				local := utc_time.In(tz).String()
-				state := found.Events[i].Competitions[0].Status.Type.State
-				team_a := found.Events[i].Competitions[0].Competitors[0].Athlete.DisplayName
-				team_b := found.Events[i].Competitions[0].Competitors[1].Athlete.DisplayName
-				winner_a := found.Events[i].Competitions[0].Competitors[0].Winner
-				winner_b := found.Events[i].Competitions[0].Competitors[1].Winner
-				period := found.Events[i].Competitions[0].Status.Period
-				clock := found.Events[i].Competitions[0].Status.DisplayClock
-				complete := found.Events[i].Status.Type.Completed
 
-				var abv string
-				switch period {
-				case 0:
-					abv = ""
-				case 1:
-					abv = "st "
-				case 2:
-					abv = "nd "
-				case 3:
-					abv = "rd "
-				case 4:
-					abv = "th "
-				default:
-					abv = "th "
-				}
-				if state == "pre" {
-					label.SetText(label.Text + team_a + " - " + team_b + "\nStart time: " + local + "\nState: " + state + "\nComplete: " + strconv.FormatBool(complete) + "\n\n")
-				} else {
-					var winner string
-					if winner_a {
-						winner = team_a
-					} else if winner_b {
-						winner = team_b
-					} else {
-						winner = "Draw"
+				for f := range found.Events[i].Competitions {
+					state := found.Events[i].Competitions[f].Status.Type.State
+					team_a := found.Events[i].Competitions[f].Competitors[0].Athlete.DisplayName
+					team_b := found.Events[i].Competitions[f].Competitors[1].Athlete.DisplayName
+					winner_a := found.Events[i].Competitions[f].Competitors[0].Winner
+					winner_b := found.Events[i].Competitions[f].Competitors[1].Winner
+					period := found.Events[i].Competitions[f].Status.Period
+					clock := found.Events[i].Competitions[f].Status.DisplayClock
+					complete := found.Events[i].Competitions[f].Status.Type.Completed
+
+					var abv string
+					switch period {
+					case 0:
+						abv = ""
+					case 1:
+						abv = "st "
+					case 2:
+						abv = "nd "
+					case 3:
+						abv = "rd "
+					case 4:
+						abv = "th "
+					default:
+						abv = "th "
 					}
-					label.SetText(label.Text + team_a + " - " + team_b + "\nStart time: " + local + "\nState: " + state +
-						"\n" + strconv.Itoa(period) + abv + "Round " + " " + clock + "\nWinner: " + winner + "\nComplete: " + strconv.FormatBool(complete) + "\n\n")
-				}
+					if state == "pre" {
+						label.SetText(label.Text + team_a + " - " + team_b + "\nStart time: " + local + "\nState: " + state + "\nComplete: " + strconv.FormatBool(complete) + "\n\n")
+					} else {
+						var winner string
+						if winner_a {
+							winner = team_a
+						} else if winner_b {
+							winner = team_b
+						} else {
+							winner = "Draw"
+						}
+						label.SetText(label.Text + team_a + " - " + team_b + "\nStart time: " + local + "\nState: " + state +
+							"\n" + strconv.Itoa(period) + abv + "Round " + " " + clock + "\nWinner: " + winner + "\nComplete: " + strconv.FormatBool(complete) + "\n\n")
+					}
 
-				single = true
+					single = true
+				}
 			}
 		}
 	}
@@ -919,24 +922,26 @@ func GetMmaWinner(game, league string) (string, string) {
 		found := callMma(comp, league)
 		if found != nil {
 			for i := range found.Events {
-				a := found.Events[i].Competitions[0].Competitors[0].Athlete.DisplayName
-				b := found.Events[i].Competitions[0].Competitors[1].Athlete.DisplayName
-				g := a + "--" + b
+				for f := range found.Events[i].Competitions {
+					a := found.Events[i].Competitions[f].Competitors[0].Athlete.DisplayName
+					b := found.Events[i].Competitions[f].Competitors[1].Athlete.DisplayName
+					g := a + "--" + b
 
-				if g == game {
-					if found.Events[i].Status.Type.Completed {
-						teamA := found.Events[i].Competitions[0].Competitors[0].Athlete.DisplayName
-						a_win := found.Events[i].Competitions[0].Competitors[0].Winner
+					if g == game {
+						if found.Events[i].Competitions[f].Status.Type.Completed {
+							teamA := found.Events[i].Competitions[f].Competitors[0].Athlete.DisplayName
+							a_win := found.Events[i].Competitions[f].Competitors[0].Winner
 
-						teamB := found.Events[i].Competitions[0].Competitors[1].Athlete.DisplayName
-						b_win := found.Events[i].Competitions[0].Competitors[1].Winner
+							teamB := found.Events[i].Competitions[f].Competitors[1].Athlete.DisplayName
+							b_win := found.Events[i].Competitions[f].Competitors[1].Winner
 
-						if a_win && !b_win {
-							return "team_a", teamA
-						} else if b_win && !a_win {
-							return "team_b", teamB
-						} else {
-							return "", ""
+							if a_win && !b_win {
+								return "team_a", teamA
+							} else if b_win && !a_win {
+								return "team_b", teamB
+							} else {
+								return "", ""
+							}
 						}
 					}
 				}
