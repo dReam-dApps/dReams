@@ -521,11 +521,12 @@ func checkBetContract(scid, t string, list, owned []string) ([]string, []string)
 					if headers[0] != "" {
 						name = " " + headers[0]
 					}
-
-					if owner[0] == rpc.Wallet.Address {
-						owned = append(owned, name+"   "+desc+"   "+scid)
-					}
 				}
+
+				if owner[0] == rpc.Wallet.Address {
+					owned = append(owned, name+"   "+desc+"   "+scid)
+				}
+
 				list = append(list, name+"   "+desc+"   "+scid)
 				DisableBetOwner(owner[0])
 			}
