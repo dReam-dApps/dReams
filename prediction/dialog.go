@@ -618,7 +618,7 @@ func ownerConfirmPopUp(i int, p float64) { /// bet owner action confirmation
 	p_feed := PS_Control.P_feed.Text
 	p_dep := PS_Control.P_deposit.Text
 	var price string
-	if table.CoinDecimal(pre) == 8 || table.CoinDecimal(p_pre) == 8 {
+	if table.CoinDecimal(pre) == 8 {
 		price = fmt.Sprintf("%.8f", p/100000000)
 	} else {
 		price = fmt.Sprintf("%.2f", p/100)
@@ -660,7 +660,7 @@ func ownerConfirmPopUp(i int, p float64) { /// bet owner action confirmation
 		if p_mark == "0" || p_mark == "" {
 			mark = "Not Set"
 		} else {
-			if onChainPrediction(pre) == 2 || onChainPrediction(p_pre) == 2 { /// decimal of one place for block time
+			if onChainPrediction(pre) == 2 || onChainPrediction(p_pre) == 2 { /// one decimal place for block time
 				fn = "Node: "
 				i := rpc.StringToInt(p_mark) * 10000
 				x := float64(i) / 100000
