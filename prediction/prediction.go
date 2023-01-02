@@ -398,7 +398,11 @@ func roundResults(fr, m string) string { /// prediction results text
 				x = 1
 			}
 		} else {
-			x = 100
+			if table.CoinDecimal(split[0]) == 8 {
+				x = 100000000
+			} else {
+				x = 100
+			}
 		}
 
 		if mark, err := strconv.ParseFloat(m, 64); err == nil {
@@ -428,7 +432,11 @@ func roundResults(fr, m string) string { /// prediction results text
 
 				}
 			} else {
-				fStr = fmt.Sprintf("%.2f", final/x)
+				if table.CoinDecimal(split[0]) == 8 {
+					fStr = fmt.Sprintf("%.8f", final/x)
+				} else {
+					fStr = fmt.Sprintf("%.2f", final/x)
+				}
 			}
 
 			return split[0] + " " + res + fStr + def + m
@@ -510,7 +518,11 @@ func GetPrediction(d bool, scid string) (info string) {
 								p_mark = fmt.Sprintf("%d", mark[0])
 							}
 						} else {
-							p_mark = fmt.Sprintf("%.2f", float64(mark[0])/100)
+							if table.CoinDecimal(pre) == 8 {
+								p_mark = fmt.Sprintf("%.8f", float64(mark[0])/100000000)
+							} else {
+								p_mark = fmt.Sprintf("%.2f", float64(mark[0])/100)
+							}
 						}
 					}
 				} else {
@@ -547,7 +559,11 @@ func GetPrediction(d bool, scid string) (info string) {
 							p_mark = fmt.Sprintf("%d", mark[0])
 						}
 					} else {
-						p_mark = fmt.Sprintf("%.2f", float64(mark[0])/100)
+						if table.CoinDecimal(split[0]) == 8 {
+							p_mark = fmt.Sprintf("%.8f", float64(mark[0])/100000000)
+						} else {
+							p_mark = fmt.Sprintf("%.2f", float64(mark[0])/100)
+						}
 					}
 
 				} else {

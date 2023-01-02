@@ -63,7 +63,7 @@ func onChainPrediction(s string) int {
 }
 
 func preditctionOpts() fyne.CanvasObject { /// set prediction options
-	pred := []string{"BTC-USDT", "DERO-USDT", "XMR-USDT", "DERO-Difficulty", "DERO-Block Time", "DERO-Block Number"}
+	pred := []string{"DERO-BTC", "XMR-BTC", "BTC-USDT", "DERO-USDT", "XMR-USDT", "DERO-Difficulty", "DERO-Block Time", "DERO-Block Number"}
 	PS_Control.P_Name = widget.NewSelectEntry(pred)
 	PS_Control.P_Name.SetPlaceHolder("Name:")
 	PS_Control.P_Name.OnChanged = func(s string) {
@@ -616,8 +616,13 @@ func ownerConfirmPopUp(i int, p float64) { /// bet owner action confirmation
 	p_end := PS_Control.P_end.Text
 	p_end_time, _ := rpc.MsToTime(p_end + "000")
 	p_feed := PS_Control.P_feed.Text
-	price := fmt.Sprintf("%.2f", p/100)
 	p_dep := PS_Control.P_deposit.Text
+	var price string
+	if table.CoinDecimal(pre) == 8 || table.CoinDecimal(p_pre) == 8 {
+		price = fmt.Sprintf("%.8f", p/100000000)
+	} else {
+		price = fmt.Sprintf("%.2f", p/100)
+	}
 
 	var s_game string
 	s_scid := SportsControl.Contract
@@ -665,9 +670,16 @@ func ownerConfirmPopUp(i int, p float64) { /// bet owner action confirmation
 					fn = "Node: "
 					mark = p_mark
 				} else {
-					if f, err := strconv.ParseFloat(p_mark, 32); err == nil {
-						x := f / 100
-						mark = fmt.Sprintf("%.2f", x)
+					if table.CoinDecimal(pre) == 8 || table.CoinDecimal(p_pre) == 8 {
+						if f, err := strconv.ParseFloat(p_mark, 32); err == nil { /// eight decimal place for btc
+							x := f / 100000000
+							mark = fmt.Sprintf("%.8f", x)
+						}
+					} else {
+						if f, err := strconv.ParseFloat(p_mark, 32); err == nil {
+							x := f / 100
+							mark = fmt.Sprintf("%.2f", x)
+						}
 					}
 				}
 			}

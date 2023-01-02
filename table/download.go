@@ -635,6 +635,20 @@ type kuFeed struct {
 	} `json:"data"`
 }
 
+func CoinDecimal(ticker string) int {
+	split := strings.Split(ticker, "-")
+
+	if len(split) == 2 {
+		switch split[1] {
+		case "BTC":
+			return 8
+		default:
+			return 2
+		}
+	}
+	return 2
+}
+
 func GetPrice(coin string) (price float64, display string) {
 	var t float64
 	var k float64
@@ -643,16 +657,30 @@ func GetPrice(coin string) (price float64, display string) {
 	priceK := getKucoin(coin)
 	priceG := getGeko(coin)
 
-	if tf, err := strconv.ParseFloat(priceT, 64); err == nil {
-		t = tf * 100
-	}
+	if CoinDecimal(coin) == 8 {
+		if tf, err := strconv.ParseFloat(priceT, 64); err == nil {
+			t = tf * 100000000
+		}
 
-	if kf, err := strconv.ParseFloat(priceK, 64); err == nil {
-		k = kf * 100
-	}
+		if kf, err := strconv.ParseFloat(priceK, 64); err == nil {
+			k = kf * 100000000
+		}
 
-	if gf, err := strconv.ParseFloat(priceG, 64); err == nil {
-		g = gf * 100
+		if gf, err := strconv.ParseFloat(priceG, 64); err == nil {
+			g = gf * 100000000
+		}
+	} else {
+		if tf, err := strconv.ParseFloat(priceT, 64); err == nil {
+			t = tf * 100
+		}
+
+		if kf, err := strconv.ParseFloat(priceK, 64); err == nil {
+			k = kf * 100
+		}
+
+		if gf, err := strconv.ParseFloat(priceG, 64); err == nil {
+			g = gf * 100
+		}
 	}
 
 	if t > 0 && k > 0 && g > 0 {
@@ -674,12 +702,17 @@ func GetPrice(coin string) (price float64, display string) {
 		log.Println("Error getting dReams price feed")
 	}
 
-	display = fmt.Sprintf("%.2f", price/100)
+	if CoinDecimal(coin) == 8 {
+		display = fmt.Sprintf("%.8f", price/100000000)
+	} else {
+		display = fmt.Sprintf("%.2f", price/100)
+	}
 
 	return
 }
 
 func getOgre(coin string) string {
+	decimal := 2
 	var url string
 	var found ogreFeed
 	switch coin {
@@ -689,6 +722,12 @@ func getOgre(coin string) string {
 		url = "https://tradeogre.com/api/v1/ticker/usdt-dero"
 	case "XMR-USDT":
 		url = "https://tradeogre.com/api/v1/ticker/usdt-xmr"
+	case "DERO-BTC":
+		url = "https://tradeogre.com/api/v1/ticker/btc-dero"
+		decimal = 8
+	case "XMR-BTC":
+		url = "https://tradeogre.com/api/v1/ticker/btc-xmr"
+		decimal = 8
 	default:
 		return ""
 	}
@@ -720,6 +759,9 @@ func getOgre(coin string) string {
 	json.Unmarshal(b, &found)
 
 	if s, err := strconv.ParseFloat(found.Price, 64); err == nil {
+		if decimal == 8 {
+			return fmt.Sprintf("%.8f", s)
+		}
 		return fmt.Sprintf("%.2f", s)
 	}
 
@@ -727,6 +769,7 @@ func getOgre(coin string) string {
 }
 
 func getKucoin(coin string) string {
+	decimal := 2
 	var url string
 	var found kuFeed
 	switch coin {
@@ -736,6 +779,12 @@ func getKucoin(coin string) string {
 		url = "https://api.kucoin.com/api/v1/market/orderbook/level1?symbol=DERO-USDT"
 	case "XMR-USDT":
 		url = "https://api.kucoin.com/api/v1/market/orderbook/level1?symbol=XMR-USDT"
+	case "DERO-BTC":
+		url = "https://api.kucoin.com/api/v1/market/orderbook/level1?symbol=DERO-BTC"
+		decimal = 8
+	case "XMR-BTC":
+		url = "https://api.kucoin.com/api/v1/market/orderbook/level1?symbol=XMR-BTC"
+		decimal = 8
 	default:
 		return ""
 	}
@@ -767,6 +816,9 @@ func getKucoin(coin string) string {
 	json.Unmarshal(b, &found)
 
 	if s, err := strconv.ParseFloat(found.Data.Price, 64); err == nil {
+		if decimal == 8 {
+			return fmt.Sprintf("%.8f", s)
+		}
 		return fmt.Sprintf("%.2f", s)
 	}
 
@@ -777,6 +829,7 @@ func getGeko(coin string) string {
 	client := &http.Client{Timeout: time.Second * 10}
 	CG := coingecko.NewClient(client)
 
+	pair := "usd"
 	var url string
 	switch coin {
 	case "BTC-USDT":
@@ -785,14 +838,24 @@ func getGeko(coin string) string {
 		url = "dero"
 	case "XMR-USDT":
 		url = "monero"
+	case "DERO-BTC":
+		url = "dero"
+		pair = "btc"
+	case "XMR-BTC":
+		url = "monero"
+		pair = "btc"
 	default:
 		return ""
 	}
 
-	price, err := CG.SimpleSinglePrice(url, "usd")
+	price, err := CG.SimpleSinglePrice(url, pair)
 	if err != nil {
 		log.Println(err.Error())
 		return ""
+	}
+
+	if pair == "btc" {
+		return fmt.Sprintf("%.8f", price.MarketPrice)
 	}
 
 	return fmt.Sprintf("%.2f", price.MarketPrice)
