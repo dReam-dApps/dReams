@@ -24,6 +24,7 @@ import (
 
 type sportsItems struct {
 	Contract      string
+	Buffer        bool
 	Info          *widget.Label
 	Sports_list   *widget.List
 	Favorite_list *widget.List
@@ -289,6 +290,7 @@ func GetBook(gi bool, scid string) (info string) {
 			played_str := strconv.Itoa(int(played))
 			if init == played {
 				info = "SCID: \n" + scid + "\n\nGames Completed: " + played_str + "\n\nNo current Games\n"
+				SportsControl.Buffer = false
 				return
 			}
 
@@ -308,11 +310,19 @@ func GetBook(gi bool, scid string) (info string) {
 					_, s_tb := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "team_b_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
 					_, time_a := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "time_a", menu.Gnomes.Indexer.ChainHeight, true)
 					_, time_b := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "time_b", menu.Gnomes.Indexer.ChainHeight, true)
+					_, buffer := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "buffer"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
 
 					team_a := menu.TrimTeamA(game[0])
 					team_b := menu.TrimTeamB(game[0])
 
-					if s_end[0] > uint64(time.Now().Unix()) {
+					now := uint64(time.Now().Unix())
+					if now < buffer[0] {
+						SportsControl.Buffer = true
+					} else {
+						SportsControl.Buffer = false
+					}
+
+					if s_end[0] > now && now > buffer[0] {
 						current := table.Actions.Game_select.Options
 						new := append(current, strconv.Itoa(iv)+"   "+game[0])
 						table.Actions.Game_select.Options = new
@@ -621,12 +631,14 @@ func GetGameEnd(date, game, league string) {
 				log.Println(err)
 			}
 
-			a := found.Events[i].Competitions[0].Competitors[0].Athlete.DisplayName
-			b := found.Events[i].Competitions[0].Competitors[1].Athlete.DisplayName
-			g := a + "--" + b
+			for f := range found.Events[i].Competitions {
+				a := found.Events[i].Competitions[f].Competitors[0].Athlete.DisplayName
+				b := found.Events[i].Competitions[f].Competitors[1].Athlete.DisplayName
+				g := a + "--" + b
 
-			if g == game {
-				PS_Control.S_end.SetText(strconv.Itoa(int(utc_time.Unix())))
+				if g == game {
+					PS_Control.S_end.SetText(strconv.Itoa(int(utc_time.Unix())))
+				}
 			}
 
 		}

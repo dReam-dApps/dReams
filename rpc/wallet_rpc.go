@@ -1429,7 +1429,7 @@ func SetPrediction(end, mark int, amt, dep uint64, scid, predict, feed string) e
 	return err
 }
 
-func CancelPrediction(scid string) error {
+func CancelInitiatedBet(scid string, b int) error {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
@@ -1459,8 +1459,13 @@ func CancelPrediction(scid string) error {
 		return nil
 	}
 
-	log.Println("Cancel Prediction TX:", txid)
-	addLog("Cancel Prediction TX: " + txid.TXID)
+	if b == 0 {
+		log.Println("Cancel Prediction TX:", txid)
+		addLog("Cancel Prediction TX: " + txid.TXID)
+	} else {
+		log.Println("Cancel Sports TX:", txid)
+		addLog("Cancel Sports TX: " + txid.TXID)
+	}
 
 	return err
 }

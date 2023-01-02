@@ -26,6 +26,8 @@ type psOwnerWidgets struct {
 	S_league     *widget.SelectEntry
 	S_feed       *widget.SelectEntry
 	S_deposit    *table.NumericalEntry
+	S_set        *widget.Button
+	S_cancel     *widget.Button
 	P_end        *widget.Entry
 	P_mark       *widget.Entry
 	P_amt        *table.NumericalEntry
@@ -195,13 +197,19 @@ func sportsOpts() fyne.CanvasObject { /// set sports options
 	PS_Control.S_deposit.SetPlaceHolder("Deposit Amount:")
 	PS_Control.S_deposit.Validator = validation.NewRegexp(`^\d{1,}\.\d{1,5}$`, "Format Not Valid")
 
-	confirmButton := widget.NewButton("Set Game", func() {
+	PS_Control.S_set = widget.NewButton("Set Game", func() {
 		if PS_Control.S_deposit.Validate() == nil && PS_Control.S_amt.Validate() == nil && PS_Control.S_end.Validate() == nil {
 			if len(SportsControl.Contract) == 64 {
 				ownerConfirmPopUp(1, 100)
 			}
 		}
 	})
+
+	PS_Control.S_cancel = widget.NewButton("Cancel", func() {
+		ownerConfirmPopUp(9, 0)
+	})
+
+	PS_Control.S_cancel.Hide()
 
 	sports := container.NewVBox(
 		humanTimeConvert(),
@@ -212,7 +220,9 @@ func sportsOpts() fyne.CanvasObject { /// set sports options
 		PS_Control.S_amt,
 		PS_Control.S_feed,
 		PS_Control.S_deposit,
-		confirmButton,
+		PS_Control.S_set,
+		layout.NewSpacer(),
+		PS_Control.S_cancel,
 		layout.NewSpacer())
 
 	return sports
@@ -561,6 +571,14 @@ func ownersMenu() { /// bet owners menu
 				} else {
 					PS_Control.P_cancel.Hide()
 				}
+
+				if SportsControl.Buffer {
+					PS_Control.S_cancel.Show()
+					PS_Control.S_set.Hide()
+				} else {
+					PS_Control.S_cancel.Hide()
+					PS_Control.S_set.Show()
+				}
 			case <-quit:
 				ticker.Stop()
 				return
@@ -685,6 +703,8 @@ func ownerConfirmPopUp(i int, p float64) { /// bet owner action confirmation
 
 	case 8:
 		confirm_display.SetText("SCID: " + p_scid + "\n\nThis will Cancel the current prediction")
+	case 9:
+		confirm_display.SetText("SCID: " + s_scid + "\n\nThis will Cancel the last initiated bet on this contract")
 	default:
 		log.Println("No Confirm Input")
 		confirm_display.SetText("Error")
@@ -732,7 +752,9 @@ func ownerConfirmPopUp(i int, p float64) { /// bet owner action confirmation
 			default:
 			}
 		case 8:
-			rpc.CancelPrediction(PredictControl.Contract)
+			rpc.CancelInitiatedBet(PredictControl.Contract, 0)
+		case 9:
+			rpc.CancelInitiatedBet(SportsControl.Contract, 1)
 		default:
 
 		}

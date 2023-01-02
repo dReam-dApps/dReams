@@ -1038,13 +1038,21 @@ func GetSportsTeams(scid, n string) (string, string) {
 func TrimTeamA(s string) string {
 	split := strings.Split(s, "--")
 
-	return split[0]
+	if len(split) == 2 {
+		return split[0]
+	}
+
+	return ""
+
 }
 
 func TrimTeamB(s string) string {
 	split := strings.Split(s, "--")
 
-	return split[1]
+	if len(split) == 2 {
+		return split[1]
+	}
+	return ""
 }
 
 func FindNfaListings(gs bool, assets map[string]string) {
