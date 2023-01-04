@@ -445,7 +445,8 @@ func placeSports() *fyne.Container {
 		container.NewTabItem("Contracts", prediction.SportsListings()),
 		container.NewTabItem("Favorites", prediction.SportsFavorites()),
 		container.NewTabItem("Owned", prediction.SportsOwned()),
-		container.NewTabItem("Scores", score_tabs))
+		container.NewTabItem("Scores", score_tabs),
+		container.NewTabItem("Payouts", prediction.SportsPayouts()))
 
 	tabs.OnSelected = func(ti *container.TabItem) {
 

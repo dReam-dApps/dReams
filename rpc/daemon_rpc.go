@@ -818,6 +818,52 @@ func GetSportsCode(dc bool, pub int) (string, error) {
 	return "", nil
 }
 
+func FetchSportsFinal(d bool, scid string) ([]string, error) {
+	if d {
+		rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
+		defer cancel()
+
+		params := &rpc.GetSC_Params{
+			SCID:      scid,
+			Code:      false,
+			Variables: true,
+		}
+
+		var result *rpc.GetSC_Result
+		err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params)
+		if err != nil {
+			log.Println(err)
+			return nil, nil
+		}
+
+		finals := []string{}
+		played := result.VariableStringKeys["s_played"]
+		if played != nil {
+			start := int(played.(float64)) - 4
+			i := start
+			for {
+				str := fmt.Sprint(i)
+				game := result.VariableStringKeys["s_final_"+str]
+				s_txid := result.VariableStringKeys["s_final_txid_"+str]
+
+				if s_txid != nil && game != nil {
+					decode, _ := hex.DecodeString(game.(string))
+					final := str + "   " + string(decode) + "   " + s_txid.(string)
+					finals = append(finals, final)
+				}
+
+				i++
+				if i > start+4 {
+					break
+				}
+			}
+		}
+		return finals, err
+
+	}
+	return nil, nil
+}
+
 func FetchTarotSC(dc bool) error {
 	if dc {
 		rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)

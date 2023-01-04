@@ -29,6 +29,7 @@ type sportsItems struct {
 	Sports_list   *widget.List
 	Favorite_list *widget.List
 	Owned_list    *widget.List
+	Payout_log    *widget.Entry
 }
 
 var SportsControl sportsItems
@@ -147,10 +148,58 @@ func setSportsControls(str string) (item string) {
 			go SetSportsInfo(trimmed)
 			item = str
 			table.Actions.S_contract.SetText(trimmed)
+			finals, _ := rpc.FetchSportsFinal(rpc.Signal.Daemon, trimmed)
+			SportsControl.Payout_log.SetText(formatFinals(trimmed, finals))
+
 		}
 	}
 
 	return
+}
+
+func formatFinals(scid string, finals []string) (text string) {
+	text = "Last Payouts from SCID: \n" + scid
+	for i := range finals {
+		split := strings.Split(finals[i], "   ")
+		game := strings.Split(split[1], "_")
+		var str string
+		if len(game) == 5 {
+			str = "Game #" + split[0] + "\n" + game[2] + "  Winner: " + WinningTeam(game[2], game[4])
+		} else if len(game) == 4 {
+			/// condition until results catch up to v0.9.2 format
+			str = "Game #" + split[0] + "\n" + game[1] + "  Winner: " + WinningTeam(game[1], game[3])
+		} else {
+			str = "Game #" + split[0] + "\n" + game[2] + "  Tie"
+		}
+		text = text + "\n\n" + str + "\nTXID: " + split[2]
+	}
+
+	return
+}
+
+func WinningTeam(teams, winner string) string {
+	split := strings.Split(teams, "--")
+	if len(split) >= 2 {
+		switch winner {
+		case "a":
+			return split[0]
+		case "b":
+			return split[1]
+		default:
+			return ""
+		}
+	} else {
+		/// condition until results catch up to v0.9.2 format
+		split = strings.Split(teams, "-")
+		switch winner {
+		case "a":
+			return split[0]
+		case "b":
+			return split[1]
+		default:
+			return ""
+		}
+	}
 }
 
 func SetSportsInfo(scid string) {
@@ -274,6 +323,13 @@ func SportsOwned() fyne.CanvasObject {
 	}
 
 	return SportsControl.Owned_list
+}
+
+func SportsPayouts() fyne.CanvasObject {
+	SportsControl.Payout_log = widget.NewMultiLineEntry()
+	SportsControl.Payout_log.Disable()
+
+	return SportsControl.Payout_log
 }
 
 func GetBook(gi bool, scid string) (info string) {
