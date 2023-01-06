@@ -320,6 +320,7 @@ func startGnomon(ep string) {
 			for {
 				contracts := len(Gnomes.Indexer.Backend.GetAllOwnersAndSCIDs())
 				if contracts >= 3960 {
+					Gnomes.Trim = false
 					break
 				}
 
