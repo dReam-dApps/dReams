@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/deroproject/derohe/rpc"
@@ -168,6 +169,51 @@ func GetGnomonCode(dc bool, pub int) (string, error) {
 		return result.Code, err
 	}
 	return "", nil
+}
+
+func GetG45Collection(scid string) ([]string, error) {
+	rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
+	defer cancel()
+
+	var result *rpc.GetSC_Result
+	params := rpc.GetSC_Params{
+		SCID:      scid,
+		Code:      false,
+		Variables: true,
+	}
+
+	err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params)
+	if err != nil {
+		log.Println(err)
+		return nil, nil
+	}
+
+	i := 0
+	scids := []string{}
+	for {
+		n := strconv.Itoa(i)
+		asset := result.VariableStringKeys["assets_"+n]
+
+		if asset == nil {
+			break
+		} else {
+			hx, err := hex.DecodeString(fmt.Sprint(asset))
+			if err != nil {
+				log.Println(err)
+				i++
+			} else {
+				split := strings.Split(string(hx), ",")
+				for i := range split {
+					sc := strings.Split(split[i], ":")
+					trim := strings.Trim(sc[0], `{"`)
+					scids = append(scids, trim)
+				}
+				i++
+			}
+		}
+	}
+
+	return scids, err
 }
 
 func CheckHolderoContract() error {

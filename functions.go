@@ -48,6 +48,7 @@ Usage:
 
 Options:
   -h --help     Show this screen.
+  --trim=<false>	dReams option, set true to trim index seach filters.
   --fastsync=<false>	Gnomon option,  true/false value to define loading at chain height on start up.
   --num-parallel-blocks=<5>   Gnomon option,  defines the number of parallel blocks to index.`
 
@@ -58,6 +59,13 @@ func flags() {
 
 	if err != nil {
 		log.Fatalf("Error while parsing arguments: %s\n", err)
+	}
+
+	trim := false
+	if arguments["--trim"] != nil {
+		if arguments["--trim"].(string) == "true" {
+			trim = true
+		}
 	}
 
 	fastsync := true
@@ -84,6 +92,7 @@ func flags() {
 		}
 	}
 
+	menu.Gnomes.Trim = trim
 	menu.Gnomes.Fast = fastsync
 	menu.Gnomes.Para = parallel
 }
@@ -957,7 +966,7 @@ func RecheckButton() fyne.CanvasObject {
 func RecheckAssets() {
 	table.Assets.Assets = []string{}
 	menu.CheckAssets(menu.Gnomes.Sync, false, nil)
-	menu.CheckG45owner(menu.Gnomes.Sync, false, nil)
+	menu.CheckG45Assets(menu.Gnomes.Sync, false, nil)
 	sort.Strings(table.Assets.Assets)
 	table.Assets.Asset_list.UnselectAll()
 	table.Assets.Asset_list.Refresh()
