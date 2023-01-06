@@ -122,7 +122,7 @@ func init() {
 		fmt.Println()
 		menu.StopGnomon(menu.Gnomes.Init)
 		menu.StopIndicators()
-		log.Println("Closing dReams.")
+		log.Println("[dReams] Closing")
 		os.Exit(0)
 	}()
 }
@@ -149,7 +149,7 @@ func systemTray(w fyne.App) bool {
 	if desk, ok := w.(desktop.App); ok {
 		m := fyne.NewMenu("MyApp",
 			fyne.NewMenuItem("Show", func() {
-				log.Println("Tapped show")
+				log.Println("[dReams] Tapped show")
 			}),
 			fyne.NewMenuItem("Reveal Key", func() {
 				go rpc.RevealKey(rpc.Wallet.ClientKey)
@@ -191,7 +191,7 @@ func writeConfig(u save) {
 			file, err := os.Create("config.json")
 
 			if err != nil {
-				log.Println(err)
+				log.Println("[writeConfig]", err)
 			}
 
 			u.Tables = menu.MenuControl.Holdero_favorites
@@ -204,7 +204,7 @@ func writeConfig(u save) {
 			_, err = file.Write(json)
 
 			if err != nil {
-				log.Println("Error writing config file: ", err)
+				log.Println("[writeConfig]", err)
 			}
 		}
 	}
@@ -218,14 +218,14 @@ func readConfig() (saved save) {
 	file, err := os.ReadFile("config.json")
 
 	if err != nil {
-		log.Println("Error reading config file: ", err)
+		log.Println("[readConfig]", err)
 		return
 	}
 
 	var config save
 	err = json.Unmarshal(file, &config)
 	if err != nil {
-		log.Println("Error during unmarshal: ", err)
+		log.Println("[readConfig]", err)
 		return
 	}
 
@@ -534,7 +534,7 @@ func fetch(quit chan struct{}) { /// main loop
 			}
 
 		case <-quit: /// exit loop
-			log.Println("Closing dReams.")
+			log.Println("[dReams] Closing")
 			ticker.Stop()
 			return
 		}
@@ -956,7 +956,7 @@ func MenuRefresh(tab, gi bool) {
 
 func RecheckButton() fyne.CanvasObject {
 	button := widget.NewButton("Check Assets", func() {
-		log.Println("Rechecking Assets")
+		log.Println("[dReams] Rechecking Assets")
 		go RecheckAssets()
 	})
 

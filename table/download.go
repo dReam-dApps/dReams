@@ -236,7 +236,7 @@ func downloadMemoryDeck(url string) {
 
 func downloadSharedImages(Url string, i int) int {
 	fileName := "card" + strconv.Itoa(i) + ".png"
-	log.Println("Downloading ", Url+fileName)
+	log.Println("[dReams] Downloading ", Url+fileName)
 
 	switch i {
 	case 0:
@@ -700,7 +700,7 @@ func GetPrice(coin string) (price float64, display string) {
 		price = g
 	} else {
 		price = 0
-		log.Println("Error getting dReams price feed")
+		log.Println("[dReams] Error getting price feed")
 	}
 
 	if CoinDecimal(coin) == 8 {
@@ -736,7 +736,7 @@ func getOgre(coin string) string {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		log.Println(err.Error())
+		log.Println("[getOgre]", err)
 		return ""
 	}
 
@@ -745,7 +745,7 @@ func getOgre(coin string) string {
 	resp, err := client.Do(req)
 
 	if err != nil {
-		log.Println(err.Error())
+		log.Println("[getOgre]", err)
 		return ""
 	}
 
@@ -753,7 +753,7 @@ func getOgre(coin string) string {
 	b, err := io.ReadAll(resp.Body)
 
 	if err != nil {
-		log.Println(err.Error())
+		log.Println("[getOgre]", err)
 		return ""
 	}
 
@@ -793,7 +793,7 @@ func getKucoin(coin string) string {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		log.Println(err.Error())
+		log.Println("[getKucoin]", err)
 		return ""
 	}
 
@@ -802,7 +802,7 @@ func getKucoin(coin string) string {
 	resp, err := client.Do(req)
 
 	if err != nil {
-		log.Println(err.Error())
+		log.Println("[getKucoin]", err)
 		return ""
 	}
 
@@ -810,7 +810,7 @@ func getKucoin(coin string) string {
 	b, err := io.ReadAll(resp.Body)
 
 	if err != nil {
-		log.Println(err.Error())
+		log.Println("[getKucoin]", err)
 		return ""
 	}
 
@@ -851,7 +851,7 @@ func getGeko(coin string) string {
 
 	price, err := CG.SimpleSinglePrice(url, pair)
 	if err != nil {
-		log.Println(err.Error())
+		log.Println("[getGeko]", err)
 		return ""
 	}
 
@@ -865,14 +865,14 @@ func getGeko(coin string) string {
 func downloadFileLocal(filepath string, url string) (err error) {
 	_, dir := os.Stat("cards")
 	if os.IsNotExist(dir) {
-		log.Println("Creating Cards Dir")
+		log.Println("[dReams] Creating Cards Dir")
 		mkdir := os.Mkdir("cards", 0755)
 		if mkdir != nil {
-			log.Println(mkdir)
+			log.Println("[dReams]", mkdir)
 		} else {
 			mksub := os.Mkdir("cards/backs", 0755)
 			if mksub != nil {
-				log.Println(mksub)
+				log.Println("[dReams]", mksub)
 			}
 		}
 
@@ -907,10 +907,10 @@ func GetZipDeck(face, url string) {
 	files, err := Unzip("cards/"+face+".zip", "cards/"+face)
 
 	if err != nil {
-		log.Println(err)
+		log.Println("[GetZipDeck]", err)
 	}
 
-	log.Println("Unzipped files:\n" + strings.Join(files, "\n"))
+	log.Println("[dReams] Unzipped files:\n" + strings.Join(files, "\n"))
 }
 
 func Unzip(src string, destination string) ([]string, error) {

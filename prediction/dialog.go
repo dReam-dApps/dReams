@@ -362,7 +362,7 @@ func confirmPopUp(i int, teamA, teamB string) { /// bet action confirmation
 		}
 		confirm_display.SetText("SCID: " + s_scid + "\n\nBetting on Game # " + game + "\n\n" + teamB + " for " + x + " Dero\n\nConfirm")
 	default:
-		log.Println("No Confirm Input")
+		log.Println("[dReams] No Confirm Input")
 		confirm_display.SetText("Error")
 	}
 
@@ -718,7 +718,7 @@ func ownerConfirmPopUp(i int, p float64) { /// bet owner action confirmation
 	case 9:
 		confirm_display.SetText("SCID: " + s_scid + "\n\nThis will Cancel the last initiated bet on this contract")
 	default:
-		log.Println("No Confirm Input")
+		log.Println("[dReams] No Confirm Input")
 		confirm_display.SetText("Error")
 	}
 
@@ -742,7 +742,7 @@ func ownerConfirmPopUp(i int, p float64) { /// bet owner action confirmation
 		case 4:
 			rpc.PostPrediction(p_scid, int(p))
 		case 5:
-			rpc.EndPredition(p_scid, int(p))
+			rpc.EndPrediction(p_scid, int(p))
 		case 6:
 			switch onChainPrediction(pre) {
 			case 1:
@@ -756,11 +756,11 @@ func ownerConfirmPopUp(i int, p float64) { /// bet owner action confirmation
 		case 7:
 			switch onChainPrediction(pre) {
 			case 1:
-				rpc.EndPredition(p_scid, int(p))
+				rpc.EndPrediction(p_scid, int(p))
 			case 2:
-				rpc.EndPredition(p_scid, int(p*100000))
+				rpc.EndPrediction(p_scid, int(p*100000))
 			case 3:
-				rpc.EndPredition(p_scid, int(p))
+				rpc.EndPrediction(p_scid, int(p))
 			default:
 			}
 		case 8:

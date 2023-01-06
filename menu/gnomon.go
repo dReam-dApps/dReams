@@ -74,7 +74,7 @@ func stringToInt64(s string) int64 {
 	if s != "" {
 		i, err := strconv.Atoi(s)
 		if err != nil {
-			log.Println("String Conversion Error", err)
+			log.Println("[stringToInt64]", err)
 			return 0
 		}
 		return int64(i)
@@ -297,7 +297,7 @@ func GnomonDB() *storage.GravitonStore {
 func startGnomon(ep string) {
 	Gnomes.Start = true
 	go startLabel()
-	log.Println("Starting Gnomon.")
+	log.Println("[dReams] Starting Gnomon")
 	backend := GnomonDB()
 
 	last_height := backend.GetLastIndexHeight()
@@ -327,7 +327,7 @@ func startGnomon(ep string) {
 				i++
 				if i == 30 {
 					Gnomes.Trim = false
-					log.Println("Could not add G45 Collections")
+					log.Println("[dReams] Could not add G45 Collections")
 					break
 				}
 			}
@@ -338,7 +338,7 @@ func startGnomon(ep string) {
 }
 
 func g45Index() {
-	log.Println("Adding G45 Collections")
+	log.Println("[dReams] Adding G45 Collections")
 	filters := Gnomes.Indexer.SearchFilter
 	Gnomes.Indexer.SearchFilter = []string{}
 	scidstoadd := make(map[string]*structures.FastSyncImport)
@@ -370,11 +370,11 @@ func GnomonEndPoint(dc, gi, gs bool) {
 func StopGnomon(gi bool) {
 	if gi && !GnomonClosing() {
 		go stopLabel()
-		log.Println("Putting Gnomon to Sleep.")
+		log.Println("[dReams] Putting Gnomon to Sleep")
 		Gnomes.Indexer.Close()
 		Gnomes.Init = false
 		time.Sleep(1 * time.Second)
-		log.Println("Gnomon is Sleeping.")
+		log.Println("[dReams] Gnomon is Sleeping")
 		go sleepLabel()
 	}
 }
@@ -457,12 +457,12 @@ func searchIndex(scid string) {
 		all := Gnomes.Indexer.Backend.GetAllOwnersAndSCIDs()
 		for sc := range all {
 			if scid == sc {
-				log.Println(scid + " Indxed")
+				log.Println("[dReams] " + scid + " Indxed")
 				found = true
 			}
 		}
 		if !found {
-			log.Println(scid + " Not Found")
+			log.Println("[dReams] " + scid + " Not Found")
 		}
 	}
 }
@@ -474,7 +474,7 @@ func CheckAssets(gs, gc bool, scids map[string]string) {
 			scids = Gnomes.Indexer.Backend.GetAllOwnersAndSCIDs()
 		}
 		keys := make([]string, len(scids))
-		log.Println("Checking NFA Assets")
+		log.Println("[dReams] Checking NFA Assets")
 		table.Settings.FaceSelect.Options = []string{}
 		table.Settings.BackSelect.Options = []string{}
 		table.Settings.ThemeSelect.Options = []string{}
@@ -955,7 +955,7 @@ func CheckG45Assets(gs, gc bool, g45s map[string]string) {
 		if g45s == nil {
 			g45s = Gnomes.Indexer.Backend.GetAllOwnersAndSCIDs()
 		}
-		log.Println("Checking G45 Assets")
+		log.Println("[dReams] Checking G45 Assets")
 
 		for scid := range g45s {
 			if GnomonClosing() {

@@ -18,7 +18,7 @@ func GenerateKey() string {
 	str := hex.EncodeToString(shasum[:])
 	Wallet.KeyLock = true
 	EncryptFile([]byte(str), ".key", Wallet.UserPass, Wallet.Address)
-	log.Println("Round Key: ", str)
+	log.Println("[Holdero] Round Key: ", str)
 	addLog("Round Key: " + str)
 
 	return str

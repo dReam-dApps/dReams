@@ -216,7 +216,7 @@ func ToAtomicOne(v string) uint64 {
 	f, err := strconv.ParseFloat(v, 64)
 
 	if err != nil {
-		log.Println("To Atmoic Conversion Error", err)
+		log.Println("[ToAtomicOne]", err)
 		return 0
 	}
 
@@ -410,7 +410,7 @@ func getAvatar(p int, id interface{}) string {
 	var player playerId
 
 	if err := json.Unmarshal([]byte(av), &player); err != nil {
-		log.Println(err)
+		log.Println("[getAvatar]", err)
 		return ""
 	}
 

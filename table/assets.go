@@ -89,7 +89,7 @@ func FaceSelect() fyne.Widget {
 			dir := GetDir()
 			face := dir + "/cards/" + Settings.Faces + "/card1.png"
 			if !FileExists(face) {
-				log.Println("Downloading " + Settings.FaceUrl)
+				log.Println("[dReams] Downloading " + Settings.FaceUrl)
 				go GetZipDeck(Settings.Faces, Settings.FaceUrl)
 			}
 		} else if check == "SIXPC" {
@@ -97,7 +97,7 @@ func FaceSelect() fyne.Widget {
 			dir := GetDir()
 			face := dir + "/cards/" + Settings.Faces + "/card1.png"
 			if !FileExists(face) {
-				log.Println("Downloading " + Settings.FaceUrl)
+				log.Println("[dReams] Downloading " + Settings.FaceUrl)
 				go GetZipDeck(Settings.Faces, Settings.FaceUrl)
 			}
 		} else {
@@ -132,7 +132,7 @@ func BackSelect() fyne.Widget {
 				dir := GetDir()
 				file := dir + "/cards/backs/" + s + ".png"
 				if !FileExists(file) {
-					log.Println("Downloading " + Settings.BackUrl)
+					log.Println("[dReams] Downloading " + Settings.BackUrl)
 					downloadFileLocal("cards/backs/"+Settings.Backs+".png", Settings.BackUrl)
 				}
 			} else if check == "SIXPCB" {
@@ -140,7 +140,7 @@ func BackSelect() fyne.Widget {
 				dir := GetDir()
 				back := dir + "/cards/backs/" + s + ".png"
 				if !FileExists(back) {
-					log.Println("Downloading " + Settings.BackUrl)
+					log.Println("[dReams] Downloading " + Settings.BackUrl)
 					downloadFileLocal("cards/backs/"+Settings.Backs+".png", Settings.BackUrl)
 				}
 			} else {
@@ -175,7 +175,7 @@ func ThemeSelect() fyne.Widget {
 					Settings.ThemeImg = *canvas.NewImageFromFile(file)
 				} else {
 					Settings.ThemeUrl = "https://raw.githubusercontent.com/Azylem/" + s + "/main/" + s + ".png"
-					log.Println("Downloading", Settings.ThemeUrl)
+					log.Println("[dReams] Downloading", Settings.ThemeUrl)
 					Settings.ThemeImg, _ = DownloadFile(Settings.ThemeUrl, s)
 
 				}
@@ -248,7 +248,7 @@ func getAgentNumber(dc bool, scid string) (int, error) {
 
 		err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params)
 		if err != nil {
-			log.Println(err)
+			log.Println("[getAgentNumber]", err)
 			return 1200, nil
 		}
 
@@ -269,7 +269,7 @@ func FileExists(path string) bool {
 		return true
 
 	} else if errors.Is(err, os.ErrNotExist) {
-		log.Println(path, "Not Found")
+		log.Println("[dReams]", path, "Not Found")
 
 		return false
 	}
@@ -281,12 +281,12 @@ func SharedDecks() fyne.Widget {
 	options := []string{"Shared Decks"}
 	Settings.SharedOn = widget.NewRadioGroup(options, func(string) {
 		if Settings.Shared || ((len(rpc.Round.Face) < 3 || len(rpc.Round.Back) < 3) && rpc.Round.ID != 1) {
-			log.Println("Shared Decks Off")
+			log.Println("[Holdero] Shared Decks Off")
 			Settings.Shared = false
 			Settings.FaceSelect.Enable()
 			Settings.BackSelect.Enable()
 		} else {
-			log.Println("Shared Decks On")
+			log.Println("[Holdero] Shared Decks On")
 			Settings.Shared = true
 			if rpc.Round.ID == 1 {
 				if Settings.Faces != "" && Settings.FaceUrl != "" && Settings.Backs != "" && Settings.BackUrl != "" {

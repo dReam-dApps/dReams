@@ -660,7 +660,7 @@ func OwnersBoxLeft() fyne.CanvasObject {
 		if err == nil {
 			rpc.CleanTable(uint64(c))
 		} else {
-			log.Println("Invalid Clean Amount")
+			log.Println("[dReams] Invalid Clean Amount")
 		}
 	})
 
@@ -1245,7 +1245,7 @@ func ToAtomicFive(v string) uint64 {
 	f, err := strconv.ParseFloat(v, 64)
 
 	if err != nil {
-		log.Println("To Atmoic Conversion Error", err)
+		log.Println("[ToAtomicFive]", err)
 		return 0
 	}
 

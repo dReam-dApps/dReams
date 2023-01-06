@@ -65,7 +65,7 @@ func InitTableSettings() {
 func GetDir() string {
 	pre, err := os.Getwd()
 	if err != nil {
-		log.Println(err)
+		log.Println("[GetDir]", err)
 		return ""
 	}
 
@@ -434,34 +434,36 @@ func CheckNames(seats string) bool {
 		return true
 	}
 
+	err := "[Holdero] Name already used"
+
 	switch seats {
 	case "2":
 		if Poker_name == rpc.Round.P1_name {
-			log.Println("Name already used")
+			log.Println(err)
 			return false
 		}
 		return true
 	case "3":
 		if Poker_name == rpc.Round.P1_name || Poker_name == rpc.Round.P2_name || Poker_name == rpc.Round.P3_name {
-			log.Println("Name already used")
+			log.Println(err)
 			return false
 		}
 		return true
 	case "4":
 		if Poker_name == rpc.Round.P1_name || Poker_name == rpc.Round.P2_name || Poker_name == rpc.Round.P3_name || Poker_name == rpc.Round.P4_name {
-			log.Println("Name already used")
+			log.Println(err)
 			return false
 		}
 		return true
 	case "5":
 		if Poker_name == rpc.Round.P1_name || Poker_name == rpc.Round.P2_name || Poker_name == rpc.Round.P3_name || Poker_name == rpc.Round.P4_name || Poker_name == rpc.Round.P5_name {
-			log.Println("Name already used")
+			log.Println(err)
 			return false
 		}
 		return true
 	case "6":
 		if Poker_name == rpc.Round.P1_name || Poker_name == rpc.Round.P2_name || Poker_name == rpc.Round.P3_name || Poker_name == rpc.Round.P4_name || Poker_name == rpc.Round.P5_name || Poker_name == rpc.Round.P6_name {
-			log.Println("Name already used")
+			log.Println(err)
 			return false
 		}
 		return true
@@ -478,7 +480,7 @@ func SitButton() fyne.Widget {
 				HolderoButtonBuffer()
 			}
 		} else {
-			log.Println("Pick a name")
+			log.Println("[Holdero] Pick a name")
 		}
 	})
 
@@ -607,7 +609,7 @@ func BetAmount() fyne.CanvasObject {
 				}
 			}
 		} else {
-			log.Println(err)
+			log.Println("[BetAmount]", err)
 		}
 	}
 

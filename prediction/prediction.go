@@ -319,7 +319,7 @@ func P_initResults(p, amt, eA, c, to, u, d, r, f, m string, ta, tb, tc int) (inf
 	result, err := strconv.ParseFloat(to, 32)
 
 	if err != nil {
-		log.Println("Float Conversion Error", err)
+		log.Println("[Predictions]", err)
 	}
 
 	s := fmt.Sprintf("%.5f", result/100000)

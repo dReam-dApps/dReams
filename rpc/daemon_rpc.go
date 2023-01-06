@@ -44,7 +44,7 @@ var Tarot tarotValues
 func fromHextoString(h string) string {
 	str, err := hex.DecodeString(h)
 	if err != nil {
-		log.Println("Hex Conversion Error", err)
+		log.Println("[fromHextoString]", err)
 		return ""
 	}
 	return string(str)
@@ -84,14 +84,14 @@ func DaemonHeight(ep string) (uint64, error) {
 	var result *rpc.GetHeight_Result
 	err := rpcClientD.CallFor(ctx, &result, "DERO.GetHeight")
 	if err != nil {
-		log.Println(err)
+		log.Println("[dReams]", err)
 		return 0, nil
 	}
 
 	return result.Height, err
 }
 
-func GasEstimate(scid string, args rpc.Arguments, t []rpc.Transfer) (uint64, error) {
+func GasEstimate(scid, tag string, args rpc.Arguments, t []rpc.Transfer) (uint64, error) {
 	rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
 	defer cancel()
 
@@ -112,11 +112,11 @@ func GasEstimate(scid string, args rpc.Arguments, t []rpc.Transfer) (uint64, err
 
 	err := rpcClientD.CallFor(ctx, &result, "DERO.GetGasEstimate", params)
 	if err != nil {
-		log.Println(err)
+		log.Println(tag, err)
 		return 0, nil
 	}
 
-	log.Println("Gas Fee:", result.GasStorage+120)
+	log.Println(tag+" Gas Fee:", result.GasStorage+120)
 
 	if result.GasStorage < 1200 {
 		return result.GasStorage + 120, err
@@ -138,7 +138,7 @@ func CheckForIndex(scid string) (interface{}, error) {
 
 	err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params)
 	if err != nil {
-		log.Println(err)
+		log.Println("[CheckForIndex]", err)
 		return nil, nil
 	}
 
@@ -162,7 +162,7 @@ func GetGnomonCode(dc bool, pub int) (string, error) {
 
 		err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params)
 		if err != nil {
-			log.Println(err)
+			log.Println("[GetGnomonCode]", err)
 			return "", nil
 		}
 
@@ -184,7 +184,7 @@ func GetG45Collection(scid string) ([]string, error) {
 
 	err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params)
 	if err != nil {
-		log.Println(err)
+		log.Println("[GetG45Collection]", err)
 		return nil, nil
 	}
 
@@ -199,7 +199,7 @@ func GetG45Collection(scid string) ([]string, error) {
 		} else {
 			hx, err := hex.DecodeString(fmt.Sprint(asset))
 			if err != nil {
-				log.Println(err)
+				log.Println("[GetG45Collection]", err)
 				i++
 			} else {
 				split := strings.Split(string(hx), ",")
@@ -229,7 +229,7 @@ func CheckHolderoContract() error {
 
 	err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params)
 	if err != nil {
-		log.Println(err)
+		log.Println("[CheckHolderoContract]", err)
 		return nil
 	}
 
@@ -261,7 +261,7 @@ func CheckTournamentTable() (bool, error) {
 
 	err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params)
 	if err != nil {
-		log.Println(err)
+		log.Println("[CheckTournamentTable]", err)
 		return false, nil
 	}
 
@@ -292,7 +292,7 @@ func FetchHolderoSC(dc, cc bool) error {
 
 		err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params)
 		if err != nil {
-			log.Println(err)
+			log.Println("[FetchHolderoSC]", err)
 			return nil
 		}
 
@@ -566,7 +566,7 @@ func GetHoldero100Code(dc bool) (string, error) { /// v 1.0.0
 
 		err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params)
 		if err != nil {
-			log.Println(err)
+			log.Println("[GetHoldero100Code]", err)
 			return "", nil
 		}
 
@@ -600,7 +600,7 @@ func GetHoldero110Code(dc bool, pub int) (string, error) { /// v 1.1.0
 
 		err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params)
 		if err != nil {
-			log.Println(err)
+			log.Println("[GetHoldero110Code]", err)
 			return "", nil
 		}
 
@@ -625,7 +625,7 @@ func FetchBaccSC(dc bool) error {
 
 		err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params)
 		if err != nil {
-			log.Println(err)
+			log.Println("[FetchBaccSC]", err)
 			return nil
 		}
 
@@ -681,7 +681,7 @@ func GetBaccCode(dc bool) (string, error) {
 
 		err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params)
 		if err != nil {
-			log.Println(err)
+			log.Println("[GetBaccCode]", err)
 			return "", nil
 		}
 
@@ -705,7 +705,7 @@ func FetchBaccHand(dc bool, tx string) error { /// find played hand
 
 		err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params)
 		if err != nil {
-			log.Println(err)
+			log.Println("[FetchBaccHand]", err)
 			return nil
 		}
 		Total_jv := result.VariableStringKeys["TotalHandsPlayed:"]
@@ -763,7 +763,7 @@ func ValidBetContract(scid string) (bool, error) {
 
 	err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params)
 	if err != nil {
-		log.Println(err)
+		log.Println("[ValidBetContract]", err)
 		return false, nil
 	}
 
@@ -790,7 +790,7 @@ func FetchPredictionFinal(d bool, scid string) (string, error) {
 		var result *rpc.GetSC_Result
 		err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params)
 		if err != nil {
-			log.Println(err)
+			log.Println("[FetchPredictionFinal]", err)
 			return "", nil
 		}
 
@@ -830,7 +830,7 @@ func GetPredictCode(dc bool, pub int) (string, error) {
 
 		err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params)
 		if err != nil {
-			log.Println(err)
+			log.Println("[GetPredictCode]", err)
 			return "", nil
 		}
 
@@ -862,7 +862,7 @@ func GetSportsCode(dc bool, pub int) (string, error) {
 
 		err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params)
 		if err != nil {
-			log.Println(err)
+			log.Println("[GetSportsCode]", err)
 			return "", nil
 		}
 
@@ -885,7 +885,7 @@ func FetchSportsFinal(d bool, scid string) ([]string, error) {
 		var result *rpc.GetSC_Result
 		err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params)
 		if err != nil {
-			log.Println(err)
+			log.Println("[FetchSportsFinal]", err)
 			return nil, nil
 		}
 
@@ -931,7 +931,7 @@ func FetchTarotSC(dc bool) error {
 
 		err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params)
 		if err != nil {
-			log.Println(err)
+			log.Println("[FetchTarotSC]", err)
 			return nil
 		}
 
@@ -960,7 +960,7 @@ func FetchTarotReading(dc bool, tx string) error {
 
 		err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params)
 		if err != nil {
-			log.Println(err)
+			log.Println("[FetchTarotReading]", err)
 			return nil
 		}
 
@@ -998,7 +998,7 @@ func GetDifficulty(ep string) (float64, error) {
 	var result *rpc.GetInfo_Result
 	err := rpcClientD.CallFor(ctx, &result, "DERO.GetInfo")
 	if err != nil {
-		log.Println(err)
+		log.Println("[GetDifficulty]", err)
 		return 0, nil
 	}
 
@@ -1012,7 +1012,7 @@ func GetBlockTime(ep string) (float64, error) {
 	var result *rpc.GetInfo_Result
 	err := rpcClientD.CallFor(ctx, &result, "DERO.GetInfo")
 	if err != nil {
-		log.Println(err)
+		log.Println("[GetBlockTime]", err)
 		return 0, nil
 	}
 

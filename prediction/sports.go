@@ -414,7 +414,7 @@ func S_Results(g, gN, l, min, eA, c, tA, tB, tAV, tBV, total string, a, b uint64
 	result, err := strconv.ParseFloat(total, 32)
 
 	if err != nil {
-		log.Println("Float Conversion Error", err)
+		log.Println("[Sports]", err)
 	}
 
 	s := fmt.Sprintf("%.5f", result/100000)
@@ -505,7 +505,7 @@ func callSoccer(date, league string) (s *soccer) {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", sports(league)+"?dates="+date, nil)
 	if err != nil {
-		log.Println(err.Error())
+		log.Println("[callSoccer]", err)
 		return
 	}
 
@@ -514,7 +514,7 @@ func callSoccer(date, league string) (s *soccer) {
 	resp, err := client.Do(req)
 
 	if err != nil {
-		log.Println(err.Error())
+		log.Println("[callSoccer]", err)
 		return
 	}
 
@@ -522,7 +522,7 @@ func callSoccer(date, league string) (s *soccer) {
 	b, err := io.ReadAll(resp.Body)
 
 	if err != nil {
-		log.Println(err.Error())
+		log.Println("[callSoccer]", err)
 		return
 	}
 
@@ -535,7 +535,7 @@ func callMma(date, league string) (m *mma) {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", sports(league)+"?dates="+date, nil)
 	if err != nil {
-		log.Println(err.Error())
+		log.Println("[callMma]", err)
 		return
 	}
 
@@ -544,7 +544,7 @@ func callMma(date, league string) (m *mma) {
 	resp, err := client.Do(req)
 
 	if err != nil {
-		log.Println(err.Error())
+		log.Println("[callMma]", err)
 		return
 	}
 
@@ -552,7 +552,7 @@ func callMma(date, league string) (m *mma) {
 	b, err := io.ReadAll(resp.Body)
 
 	if err != nil {
-		log.Println(err.Error())
+		log.Println("[callMma]", err)
 		return
 	}
 
@@ -565,7 +565,7 @@ func callBasketball(date, league string) (bb *basketball) {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", sports(league)+"?dates="+date, nil)
 	if err != nil {
-		log.Println(err.Error())
+		log.Println("[callBasketball]", err)
 		return
 	}
 
@@ -574,7 +574,7 @@ func callBasketball(date, league string) (bb *basketball) {
 	resp, err := client.Do(req)
 
 	if err != nil {
-		log.Println(err.Error())
+		log.Println("[callBasketball]", err)
 		return
 	}
 
@@ -582,7 +582,7 @@ func callBasketball(date, league string) (bb *basketball) {
 	b, err := io.ReadAll(resp.Body)
 
 	if err != nil {
-		log.Println(err.Error())
+		log.Println("[callBasketball]", err)
 		return
 	}
 
@@ -595,7 +595,7 @@ func callFootball(date, league string) (f *football) {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", sports(league)+"?dates="+date, nil)
 	if err != nil {
-		log.Println(err.Error())
+		log.Println("[callFootball]", err)
 		return
 	}
 
@@ -604,7 +604,7 @@ func callFootball(date, league string) (f *football) {
 	resp, err := client.Do(req)
 
 	if err != nil {
-		log.Println(err.Error())
+		log.Println("[callFootball]", err)
 		return
 	}
 
@@ -612,7 +612,7 @@ func callFootball(date, league string) (f *football) {
 	b, err := io.ReadAll(resp.Body)
 
 	if err != nil {
-		log.Println(err.Error())
+		log.Println("[callFootball]", err)
 		return
 	}
 
@@ -625,7 +625,7 @@ func callHockey(date, league string) (h *hockey) {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", sports(league)+"?dates="+date, nil)
 	if err != nil {
-		log.Println(err.Error())
+		log.Println("[callHockey]", err)
 		return
 	}
 
@@ -634,7 +634,7 @@ func callHockey(date, league string) (h *hockey) {
 	resp, err := client.Do(req)
 
 	if err != nil {
-		log.Println(err.Error())
+		log.Println("[callHockey]", err)
 		return
 	}
 
@@ -642,7 +642,7 @@ func callHockey(date, league string) (h *hockey) {
 	b, err := io.ReadAll(resp.Body)
 
 	if err != nil {
-		log.Println(err.Error())
+		log.Println("[callHockey]", err)
 		return
 	}
 
@@ -656,7 +656,7 @@ func GetGameEnd(date, game, league string) {
 	req, err := http.NewRequest("GET", sports(league)+"?dates="+date, nil)
 
 	if err != nil {
-		log.Println(err.Error())
+		log.Println("[GetGameEnd]", err)
 		return
 	}
 
@@ -665,7 +665,7 @@ func GetGameEnd(date, game, league string) {
 	resp, err := client.Do(req)
 
 	if err != nil {
-		log.Println(err.Error())
+		log.Println("[GetGameEnd]", err)
 		return
 	}
 
@@ -673,7 +673,7 @@ func GetGameEnd(date, game, league string) {
 	b, err := io.ReadAll(resp.Body)
 
 	if err != nil {
-		log.Println(err.Error())
+		log.Println("[GetGameEnd]", err)
 		return
 	}
 
@@ -684,7 +684,7 @@ func GetGameEnd(date, game, league string) {
 			trimmed := strings.Trim(found.Events[i].Competitions[0].StartDate, "Z")
 			utc_time, err := time.Parse("2006-01-02T15:04", trimmed)
 			if err != nil {
-				log.Println(err)
+				log.Println("[GetGameEnd]", err)
 			}
 
 			for f := range found.Events[i].Competitions {
@@ -705,7 +705,7 @@ func GetGameEnd(date, game, league string) {
 			trimmed := strings.Trim(found.Events[i].Competitions[0].StartDate, "Z")
 			utc_time, err := time.Parse("2006-01-02T15:04", trimmed)
 			if err != nil {
-				log.Println(err)
+				log.Println("[GetGameEnd]", err)
 			}
 
 			a := found.Events[i].Competitions[0].Competitors[0].Team.Abbreviation
@@ -722,7 +722,7 @@ func callScores(date, league string) (s *scores) {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", sports(league)+"?dates="+date, nil)
 	if err != nil {
-		log.Println(err.Error())
+		log.Println("[callScores]", err)
 		return
 	}
 
@@ -731,7 +731,7 @@ func callScores(date, league string) (s *scores) {
 	resp, err := client.Do(req)
 
 	if err != nil {
-		log.Println(err.Error())
+		log.Println("[callScores]", err)
 		return
 	}
 
@@ -739,7 +739,7 @@ func callScores(date, league string) (s *scores) {
 	b, err := io.ReadAll(resp.Body)
 
 	if err != nil {
-		log.Println(err.Error())
+		log.Println("[callScores]", err)
 		return
 	}
 
@@ -765,7 +765,7 @@ func GetScores(label *widget.Label, league string) {
 				trimmed := strings.Trim(found.Events[i].Competitions[0].StartDate, "Z")
 				utc_time, err := time.Parse("2006-01-02T15:04", trimmed)
 				if err != nil {
-					log.Println(err)
+					log.Println("[GetScores]", err)
 				}
 
 				tz, _ := time.LoadLocation("Local")
@@ -838,7 +838,7 @@ func GetMmaResults(label *widget.Label, league string) {
 				trimmed := strings.Trim(found.Events[i].Competitions[0].StartDate, "Z")
 				utc_time, err := time.Parse("2006-01-02T15:04", trimmed)
 				if err != nil {
-					log.Println(err)
+					log.Println("[GetMmaResults]", err)
 				}
 
 				tz, _ := time.LoadLocation("Local")
@@ -900,7 +900,7 @@ func GetHockey(date, league string) {
 			trimmed := strings.Trim(found.Events[i].Competitions[0].StartDate, "Z")
 			utc_time, err := time.Parse("2006-01-02T15:04", trimmed)
 			if err != nil {
-				log.Println(err)
+				log.Println("[GetHockey]", err)
 			}
 
 			tz, _ := time.LoadLocation("Local")
@@ -926,7 +926,7 @@ func GetSoccer(date, league string) {
 			trimmed := strings.Trim(found.Events[i].Competitions[0].StartDate, "Z")
 			utc_time, err := time.Parse("2006-01-02T15:04", trimmed)
 			if err != nil {
-				log.Println(err)
+				log.Println("[GetSoccer]", err)
 			}
 
 			tz, _ := time.LoadLocation("Local")
@@ -1027,7 +1027,7 @@ func GetFootball(date, league string) {
 			trimmed := strings.Trim(found.Events[i].Competitions[0].StartDate, "Z")
 			utc_time, err := time.Parse("2006-01-02T15:04", trimmed)
 			if err != nil {
-				log.Println(err)
+				log.Println("[GetFootball]", err)
 			}
 
 			tz, _ := time.LoadLocation("Local")
@@ -1052,7 +1052,7 @@ func GetBasketball(date, league string) {
 			trimmed := strings.Trim(found.Events[i].Competitions[0].StartDate, "Z")
 			utc_time, err := time.Parse("2006-01-02T15:04", trimmed)
 			if err != nil {
-				log.Println(err)
+				log.Println("[GetBasketball]", err)
 			}
 
 			tz, _ := time.LoadLocation("Local")
@@ -1077,7 +1077,7 @@ func GetMma(date, league string) {
 			trimmed := strings.Trim(found.Events[i].Competitions[0].StartDate, "Z")
 			utc_time, err := time.Parse("2006-01-02T15:04", trimmed)
 			if err != nil {
-				log.Println(err)
+				log.Println("[GetMma]", err)
 			}
 
 			tz, _ := time.LoadLocation("Local")
