@@ -86,7 +86,7 @@ type holderoValues struct {
 	Daemon    string
 	Contract  string
 	ID        int
-	Last      int
+	Last      int64
 	Pot       uint64
 	BB        uint64
 	SB        uint64
@@ -263,6 +263,7 @@ func closedTable() {
 	Round.P6_name = ""
 	Round.Bettor = ""
 	Round.Raisor = ""
+	Round.Last = 0
 	Round.Local_trigger = false
 	Round.Flop_trigger = false
 	Round.Turn_trigger = false

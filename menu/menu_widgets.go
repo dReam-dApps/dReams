@@ -322,6 +322,7 @@ func RpcConnectButton() fyne.Widget {
 			table.Actions.P_contract.Refresh()
 			table.Actions.S_contract.CursorColumn = 1
 			table.Actions.S_contract.Refresh()
+			rpc.CheckExisitingKey()
 		}()
 	})
 

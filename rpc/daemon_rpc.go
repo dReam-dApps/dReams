@@ -321,6 +321,13 @@ func FetchHolderoSC(dc, cc bool) error {
 			End_jv := result.VariableStringKeys["End"]
 			Chips_jv := result.VariableStringKeys["Chips"]
 			Tourney_jv := result.VariableStringKeys["Tournament"]
+			Last_jv := result.VariableStringKeys["Last"]
+
+			if Last_jv != nil {
+				Round.Last = int64(Last_jv.(float64))
+			} else {
+				Round.Last = 0
+			}
 
 			if Tourney_jv == nil {
 				Round.Tourney = false
@@ -449,7 +456,7 @@ func FetchHolderoSC(dc, cc bool) error {
 					Signal.Clicked = true
 					Signal.CHeight = StringToInt(Wallet.Height)
 					Signal.Reveal = true
-					RevealKey(Wallet.ClientKey)
+					go RevealKey(Wallet.ClientKey)
 				}
 			}
 

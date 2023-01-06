@@ -2,7 +2,6 @@ package rpc
 
 import (
 	"context"
-	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
@@ -432,17 +431,6 @@ func SetTable(seats int, bb, sb, ante uint64, chips, name, av string) error { //
 	addLog("Set Table TX: " + txid.TXID)
 
 	return err
-}
-
-func GenerateKey() string {
-	random, _ := rand.Prime(rand.Reader, 128)
-	shasum := sha256.Sum256([]byte(random.String()))
-	str := hex.EncodeToString(shasum[:])
-	Wallet.KeyLock = true
-	log.Println("Round Key: ", str)
-	addLog("Round Key: " + str)
-
-	return str
 }
 
 func DealHand() error { /// holdero hand

@@ -450,11 +450,13 @@ func fetch(quit chan struct{}) { /// main loop
 						rpc.Round.First_try = false
 						delay = 0
 						rpc.Round.Card_delay = false
+						go refreshHolderoPlayers()
 					}
 
 					if rpc.Round.Card_delay {
+						now := time.Now().Unix()
 						delay++
-						if delay >= 10 {
+						if delay >= 10 || now > rpc.Round.Last+39 {
 							delay = 0
 							rpc.Round.Card_delay = false
 						}
@@ -506,6 +508,7 @@ func fetch(quit chan struct{}) { /// main loop
 					}
 				} else {
 					waitLabel()
+					revealingKey()
 					skip++
 					if skip >= 18 {
 						rpc.Signal.Clicked = false
@@ -632,15 +635,6 @@ func HolderoRefresh() {
 			table.Actions.Bet.Hide()
 			table.Actions.BetEntry.Hide()
 
-			if rpc.Signal.Reveal && rpc.Signal.My_turn && !rpc.Signal.End {
-				if !rpc.Round.Notified {
-					rpc.Display.Res = "Revealing Key"
-					if !isWindows() {
-						dReams.App.SendNotification(notification("dReams - Holdero", "Revealing Key", 0))
-					}
-				}
-			}
-
 			if !rpc.Signal.My_turn && !rpc.Signal.End && !rpc.Round.LocalEnd {
 				rpc.Display.Res = ""
 				rpc.Round.Notified = false
@@ -649,30 +643,47 @@ func HolderoRefresh() {
 	}
 
 	go func() {
-		H.TableContent.Objects[0] = table.HolderoTable(resourceTablePng)
-		H.TableContent.Objects[0].Refresh()
-
-		H.TableContent.Objects[1] = table.Player1_label(resourceUnknownPng, resourceAvatarFramePng, resourceTurnFramePng)
-		H.TableContent.Objects[1].Refresh()
-
-		H.TableContent.Objects[2] = table.Player2_label(resourceUnknownPng, resourceAvatarFramePng, resourceTurnFramePng)
-		H.TableContent.Objects[2].Refresh()
-
-		H.TableContent.Objects[3] = table.Player3_label(resourceUnknownPng, resourceAvatarFramePng, resourceTurnFramePng)
-		H.TableContent.Objects[3].Refresh()
-
-		H.TableContent.Objects[4] = table.Player4_label(resourceUnknownPng, resourceAvatarFramePng, resourceTurnFramePng)
-		H.TableContent.Objects[4].Refresh()
-
-		H.TableContent.Objects[5] = table.Player5_label(resourceUnknownPng, resourceAvatarFramePng, resourceTurnFramePng)
-		H.TableContent.Objects[5].Refresh()
-
-		H.TableContent.Objects[6] = table.Player6_label(resourceUnknownPng, resourceAvatarFramePng, resourceTurnFramePng)
-		H.TableContent.Objects[6].Refresh()
-
-		H.TableContent.Refresh()
+		refreshHolderoPlayers()
 		H.TableItems.Refresh()
 	}()
+}
+
+func refreshHolderoPlayers() {
+	H.TableContent.Objects[0] = table.HolderoTable(resourceTablePng)
+	H.TableContent.Objects[0].Refresh()
+
+	H.TableContent.Objects[1] = table.Player1_label(resourceUnknownPng, resourceAvatarFramePng, resourceTurnFramePng)
+	H.TableContent.Objects[1].Refresh()
+
+	H.TableContent.Objects[2] = table.Player2_label(resourceUnknownPng, resourceAvatarFramePng, resourceTurnFramePng)
+	H.TableContent.Objects[2].Refresh()
+
+	H.TableContent.Objects[3] = table.Player3_label(resourceUnknownPng, resourceAvatarFramePng, resourceTurnFramePng)
+	H.TableContent.Objects[3].Refresh()
+
+	H.TableContent.Objects[4] = table.Player4_label(resourceUnknownPng, resourceAvatarFramePng, resourceTurnFramePng)
+	H.TableContent.Objects[4].Refresh()
+
+	H.TableContent.Objects[5] = table.Player5_label(resourceUnknownPng, resourceAvatarFramePng, resourceTurnFramePng)
+	H.TableContent.Objects[5].Refresh()
+
+	H.TableContent.Objects[6] = table.Player6_label(resourceUnknownPng, resourceAvatarFramePng, resourceTurnFramePng)
+	H.TableContent.Objects[6].Refresh()
+
+	H.TableContent.Refresh()
+}
+
+func revealingKey() {
+	if rpc.Signal.Reveal && rpc.Signal.My_turn && !rpc.Signal.End {
+		if !rpc.Round.Notified {
+			rpc.Display.Res = "Revealing Key"
+			H.TopLabel.SetText(rpc.Display.Res)
+			H.TopLabel.Refresh()
+			if !isWindows() {
+				dReams.App.SendNotification(notification("dReams - Holdero", "Revealing Key", 0))
+			}
+		}
+	}
 }
 
 func BaccRefresh() {
@@ -974,7 +985,13 @@ func MainTab(ti *container.TabItem) {
 		dReams.predict = false
 		dReams.sports = false
 		dReams.tarot = false
-		HolderoRefresh()
+		go func() {
+			now := time.Now().Unix()
+			rpc.FetchHolderoSC(rpc.Signal.Daemon, rpc.Signal.Contract)
+			if now > rpc.Round.Last+33 {
+				HolderoRefresh()
+			}
+		}()
 	case "Baccarat":
 		dReams.menu = false
 		dReams.holdero = false
