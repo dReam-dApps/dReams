@@ -319,6 +319,10 @@ func startGnomon(ep string) {
 			i := 0
 			for {
 				contracts := len(Gnomes.Indexer.Backend.GetAllOwnersAndSCIDs())
+				if contracts >= 3960 {
+					break
+				}
+
 				if contracts >= 1 {
 					go g45Index()
 					break
