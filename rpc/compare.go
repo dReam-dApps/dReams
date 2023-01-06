@@ -54,7 +54,6 @@ type ranker struct {
 }
 
 func KeyCard(hash string, who int) int { /// Gets other player cards and decrypt with their keys after reveal
-
 	var keyCheck string
 	switch who {
 	case 1:
@@ -85,6 +84,14 @@ func KeyCard(hash string, who int) int { /// Gets other player cards and decrypt
 
 }
 
+func revealed(c [2]int) bool {
+	if c[0] != 0 && c[1] != 0 {
+		return true
+	}
+
+	return false
+}
+
 func getHands(totalHands int) { /// start hand ranking
 	var r ranker
 	r.p1Rank = 100
@@ -110,72 +117,72 @@ func getHands(totalHands int) { /// start hand ranking
 	switch totalHands {
 	case 2:
 		r.cc1, r.cc2, r.cc3, r.cc4, r.cc5 = getFlop()
-		if !Round.F1 {
+		if !Round.F1 && revealed(r.p1HandRaw) {
 			r = getHand1(r)
 		}
-		if !Round.F2 {
+		if !Round.F2 && revealed(r.p2HandRaw) {
 			r = getHand2(r)
 		}
 	case 3:
 		r.cc1, r.cc2, r.cc3, r.cc4, r.cc5 = getFlop()
-		if !Round.F1 {
+		if !Round.F1 && revealed(r.p1HandRaw) {
 			r = getHand1(r)
 		}
-		if !Round.F2 {
+		if !Round.F2 && revealed(r.p2HandRaw) {
 			r = getHand2(r)
 		}
-		if !Round.F3 {
+		if !Round.F3 && revealed(r.p3HandRaw) {
 			r = getHand3(r)
 		}
 	case 4:
 		r.cc1, r.cc2, r.cc3, r.cc4, r.cc5 = getFlop()
-		if !Round.F1 {
+		if !Round.F1 && revealed(r.p1HandRaw) {
 			r = getHand1(r)
 		}
-		if !Round.F2 {
+		if !Round.F2 && revealed(r.p2HandRaw) {
 			r = getHand2(r)
 		}
-		if !Round.F3 {
+		if !Round.F3 && revealed(r.p3HandRaw) {
 			r = getHand3(r)
 		}
-		if !Round.F4 {
+		if !Round.F4 && revealed(r.p4HandRaw) {
 			r = getHand4(r)
 		}
 	case 5:
 		r.cc1, r.cc2, r.cc3, r.cc4, r.cc5 = getFlop()
-		if !Round.F1 {
+		if !Round.F1 && revealed(r.p1HandRaw) {
 			r = getHand1(r)
 		}
-		if !Round.F2 {
+		if !Round.F2 && revealed(r.p2HandRaw) {
 			r = getHand2(r)
 		}
-		if !Round.F3 {
+		if !Round.F3 && revealed(r.p3HandRaw) {
 			r = getHand3(r)
 		}
-		if !Round.F4 {
+		if !Round.F4 && revealed(r.p4HandRaw) {
 			r = getHand4(r)
 		}
-		if !Round.F5 {
+		if !Round.F5 && revealed(r.p5HandRaw) {
 			r = getHand5(r)
 		}
 	case 6:
 		r.cc1, r.cc2, r.cc3, r.cc4, r.cc5 = getFlop()
-		if !Round.F1 {
+		if !Round.F1 && revealed(r.p1HandRaw) {
 			r = getHand1(r)
 		}
-		if !Round.F2 {
+		if !Round.F2 && revealed(r.p2HandRaw) {
 			r = getHand2(r)
 		}
-		if !Round.F3 {
+		if !Round.F3 && revealed(r.p3HandRaw) {
 			r = getHand3(r)
 		}
-		if !Round.F4 {
+		if !Round.F4 && revealed(r.p4HandRaw) {
 			r = getHand4(r)
 		}
-		if !Round.F5 {
+		if !Round.F5 && revealed(r.p5HandRaw) {
 			r = getHand5(r)
 		}
-		if !Round.F6 {
+		if !Round.F6 && revealed(r.p6HandRaw) {
 			r = getHand6(r)
 		}
 	}
@@ -272,7 +279,6 @@ func getHand6(r ranker) ranker {
 }
 
 func compareThese(r *ranker) (int, ranker) { /// Search thorugh all hand combinations to find best
-
 	e0Hand := []int{r.cc1[0], r.cc2[0], r.cc3[0], r.cc4[0], r.cc5[0]}
 	e0Suits := []int{r.cc1[1], r.cc2[1], r.cc3[1], r.cc4[1], r.cc5[1]}
 	fRank := makeHand(e0Hand, e0Suits)
@@ -524,7 +530,6 @@ func compareThese(r *ranker) (int, ranker) { /// Search thorugh all hand combina
 }
 
 func findBest(rank int, fR, h []int, r *ranker) []int { /// If better hand exists when comparing
-
 	var hand = h
 	var swap = fR
 	hole := []int{r.pc1[0], r.pc2[0]}
@@ -569,7 +574,6 @@ func findBest(rank int, fR, h []int, r *ranker) []int { /// If better hand exist
 }
 
 func getHighPair(h [5]int) (int, int) {
-
 	var highPair int
 	var lowPair int
 
@@ -592,7 +596,6 @@ func getHighPair(h [5]int) (int, int) {
 }
 
 func makeHand(h, s []int) int { /// Determines hand rank after suit slipt
-
 	pHand := h
 	pSuits := s
 
