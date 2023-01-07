@@ -49,6 +49,7 @@ func main() {
 	runtime.GOMAXPROCS(n)
 
 	flags()
+	stamp()
 	dReams.App = app.NewWithID(App_ID)
 	dReams.App.Settings().SetTheme(Theme())
 	dReams.Window = dReams.App.NewWindow(App_Name)

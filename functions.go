@@ -55,7 +55,7 @@ Options:
 var offset int
 
 func flags() {
-	arguments, err := docopt.ParseArgs(command_line, nil, "v0.9.0")
+	arguments, err := docopt.ParseArgs(command_line, nil, "v0.9.2")
 
 	if err != nil {
 		log.Fatalf("Error while parsing arguments: %s\n", err)
@@ -125,6 +125,14 @@ func init() {
 		log.Println("[dReams] Closing")
 		os.Exit(0)
 	}()
+}
+
+func stamp() {
+	fmt.Println(`♤♡♧♢♧♡♤♡♧♢♧♡♤♡♧♢♧♡♤♡♧♢♧♡♤♡♧♢♧♡♤`)
+	fmt.Println(`        dReams v0.9.2`)
+	fmt.Println(`   https://dreamtables.net`)
+	fmt.Println(`   ©2022-2023 dReam Tables`)
+	fmt.Println(`♤♡♧♢♧♡♤♡♧♢♧♡♤♡♧♢♧♡♤♡♧♢♧♡♤♡♧♢♧♡♤`)
 }
 
 func notification(title, content string, g int) *fyne.Notification {
