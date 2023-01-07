@@ -48,7 +48,7 @@ Usage:
 
 Options:
   -h --help     Show this screen.
-  --trim=<false>	dReams option, set true to trim index seach filters.
+  --trim=<false>	dReams option, set true to trim index search filters.
   --fastsync=<false>	Gnomon option,  true/false value to define loading at chain height on start up.
   --num-parallel-blocks=<5>   Gnomon option,  defines the number of parallel blocks to index.`
 
