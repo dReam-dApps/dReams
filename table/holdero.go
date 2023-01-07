@@ -18,15 +18,17 @@ import (
 )
 
 type settings struct {
-	Faces     string
-	Backs     string
-	Theme     string
-	Avatar    string
-	FaceUrl   string
-	BackUrl   string
-	AvatarUrl string
-	ThemeUrl  string
-	Shared    bool
+	Faces      string
+	Backs      string
+	Theme      string
+	Avatar     string
+	FaceUrl    string
+	BackUrl    string
+	AvatarUrl  string
+	ThemeUrl   string
+	Shared     bool
+	Auto_check bool
+	Auto_deal  bool
 
 	P1_avatar_url string
 	P2_avatar_url string
@@ -47,6 +49,9 @@ var Settings settings
 var Poker_name string
 
 func InitTableSettings() {
+	rpc.Signal.Startup = true
+	rpc.Bacc.Display = true
+	rpc.Tarot.Display = true
 	rpc.Times.Delay = 30
 	rpc.Times.Kick = 0
 	Settings.Faces = "light/"
@@ -60,7 +65,7 @@ func InitTableSettings() {
 func GetDir() string {
 	pre, err := os.Getwd()
 	if err != nil {
-		log.Println(err)
+		log.Println("[GetDir]", err)
 		return ""
 	}
 
@@ -412,7 +417,7 @@ type tableWidgets struct {
 
 var Actions tableWidgets
 
-func holderoButtonBuffer() {
+func HolderoButtonBuffer() {
 	Actions.Sit.Hide()
 	Actions.Leave.Hide()
 	Actions.Deal.Hide()
@@ -429,34 +434,36 @@ func CheckNames(seats string) bool {
 		return true
 	}
 
+	err := "[Holdero] Name already used"
+
 	switch seats {
 	case "2":
 		if Poker_name == rpc.Round.P1_name {
-			log.Println("Name already used")
+			log.Println(err)
 			return false
 		}
 		return true
 	case "3":
 		if Poker_name == rpc.Round.P1_name || Poker_name == rpc.Round.P2_name || Poker_name == rpc.Round.P3_name {
-			log.Println("Name already used")
+			log.Println(err)
 			return false
 		}
 		return true
 	case "4":
 		if Poker_name == rpc.Round.P1_name || Poker_name == rpc.Round.P2_name || Poker_name == rpc.Round.P3_name || Poker_name == rpc.Round.P4_name {
-			log.Println("Name already used")
+			log.Println(err)
 			return false
 		}
 		return true
 	case "5":
 		if Poker_name == rpc.Round.P1_name || Poker_name == rpc.Round.P2_name || Poker_name == rpc.Round.P3_name || Poker_name == rpc.Round.P4_name || Poker_name == rpc.Round.P5_name {
-			log.Println("Name already used")
+			log.Println(err)
 			return false
 		}
 		return true
 	case "6":
 		if Poker_name == rpc.Round.P1_name || Poker_name == rpc.Round.P2_name || Poker_name == rpc.Round.P3_name || Poker_name == rpc.Round.P4_name || Poker_name == rpc.Round.P5_name || Poker_name == rpc.Round.P6_name {
-			log.Println("Name already used")
+			log.Println(err)
 			return false
 		}
 		return true
@@ -470,10 +477,10 @@ func SitButton() fyne.Widget {
 		if Poker_name != "" {
 			if CheckNames(rpc.Display.Seats) {
 				rpc.SitDown(Poker_name, Settings.AvatarUrl)
-				holderoButtonBuffer()
+				HolderoButtonBuffer()
 			}
 		} else {
-			log.Println("Pick a name")
+			log.Println("[Holdero] Pick a name")
 		}
 	})
 
@@ -485,7 +492,7 @@ func SitButton() fyne.Widget {
 func LeaveButton() fyne.Widget {
 	Actions.Leave = widget.NewButton("Leave", func() {
 		rpc.Leave()
-		holderoButtonBuffer()
+		HolderoButtonBuffer()
 	})
 
 	Actions.Leave.Hide()
@@ -496,7 +503,7 @@ func LeaveButton() fyne.Widget {
 func DealHandButton() fyne.Widget {
 	Actions.Deal = widget.NewButton("Deal Hand", func() {
 		rpc.DealHand()
-		holderoButtonBuffer()
+		HolderoButtonBuffer()
 	})
 
 	Actions.Deal.Hide()
@@ -602,7 +609,7 @@ func BetAmount() fyne.CanvasObject {
 				}
 			}
 		} else {
-			log.Println(err)
+			log.Println("[BetAmount]", err)
 		}
 	}
 
@@ -624,7 +631,7 @@ func BetButton() fyne.Widget {
 		if Actions.BetEntry.Validate() == nil {
 			rpc.Bet(Actions.BetEntry.Text)
 			rpc.Signal.Bet = true
-			holderoButtonBuffer()
+			HolderoButtonBuffer()
 		}
 	})
 
@@ -637,13 +644,35 @@ func CheckButton() fyne.Widget {
 	Actions.Check = widget.NewButton("Check", func() {
 		rpc.Check()
 		rpc.Signal.Bet = true
-		holderoButtonBuffer()
+		HolderoButtonBuffer()
 
 	})
 
 	Actions.Check.Hide()
 
 	return Actions.Check
+}
+
+func AutoOptions() fyne.CanvasObject {
+	cf := widget.NewCheck("Auto Check/Fold", func(b bool) {
+		if b {
+			Settings.Auto_check = true
+		} else {
+			Settings.Auto_check = false
+		}
+	})
+
+	deal := widget.NewCheck("Auto Deal", func(b bool) {
+		if b {
+			Settings.Auto_deal = true
+		} else {
+			Settings.Auto_deal = false
+		}
+	})
+
+	auto := container.NewVBox(deal, cf)
+
+	return auto
 }
 
 type NumericalEntry struct {

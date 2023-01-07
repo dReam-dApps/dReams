@@ -26,25 +26,71 @@ type psOwnerWidgets struct {
 	S_league     *widget.SelectEntry
 	S_feed       *widget.SelectEntry
 	S_deposit    *table.NumericalEntry
+	S_set        *widget.Button
+	S_cancel     *widget.Button
 	P_end        *widget.Entry
+	P_mark       *widget.Entry
 	P_amt        *table.NumericalEntry
 	P_Name       *widget.SelectEntry
 	P_feed       *widget.SelectEntry
 	P_deposit    *table.NumericalEntry
+	P_cancel     *widget.Button
 	Payout_n     *widget.SelectEntry
 	Owner_button *widget.Button
 }
 
 var PS_Control psOwnerWidgets
 
+func isOnChainPrediction(s string) bool {
+	if s == "DERO-Difficulty" || s == "DERO-Block Time" || s == "DERO-Block Number" {
+		return true
+	}
+
+	return false
+}
+
+func onChainPrediction(s string) int {
+	switch s {
+	case "DERO-Difficulty":
+		return 1
+	case "DERO-Block Time":
+		return 2
+	case "DERO-Block Number":
+		return 3
+	default:
+		return 0
+	}
+}
+
 func preditctionOpts() fyne.CanvasObject { /// set prediction options
-	pred := []string{"BTC-USDT", "DERO-USDT", "XMR-USDT"}
+	pred := []string{"DERO-BTC", "XMR-BTC", "BTC-USDT", "DERO-USDT", "XMR-USDT", "DERO-Difficulty", "DERO-Block Time", "DERO-Block Number"}
 	PS_Control.P_Name = widget.NewSelectEntry(pred)
 	PS_Control.P_Name.SetPlaceHolder("Name:")
+	PS_Control.P_Name.OnChanged = func(s string) {
+		if isOnChainPrediction(s) {
+			opts := []string{menu.DAEMON_RPC_REMOTE1, menu.DAEMON_RPC_REMOTE2}
+			PS_Control.P_feed.SetOptions(opts)
+			if PS_Control.P_feed.Text != opts[1] {
+				PS_Control.P_feed.SetText(opts[0])
+			}
+			PS_Control.P_feed.SetPlaceHolder("Node:")
+			PS_Control.P_feed.Refresh()
+		} else {
+			opts := []string{"dReams Client"}
+			PS_Control.P_feed.SetOptions(opts)
+			PS_Control.P_feed.SetText(opts[0])
+			PS_Control.P_feed.SetPlaceHolder("Feed:")
+			PS_Control.P_feed.Refresh()
+		}
+	}
 
 	PS_Control.P_end = widget.NewEntry()
 	PS_Control.P_end.SetPlaceHolder("Closes At:")
 	PS_Control.P_end.Validator = validation.NewRegexp(`^\d{10,}$`, "Format Not Valid")
+
+	PS_Control.P_mark = widget.NewEntry()
+	PS_Control.P_mark.SetPlaceHolder("Mark:")
+	PS_Control.P_mark.Validator = validation.NewRegexp(`^\d{1,}$`, "Format Not Valid")
 
 	PS_Control.P_amt = table.NilNumericalEntry()
 	PS_Control.P_amt.SetPlaceHolder("Minimum Amount:")
@@ -59,23 +105,33 @@ func preditctionOpts() fyne.CanvasObject { /// set prediction options
 	PS_Control.P_deposit.Validator = validation.NewRegexp(`^\d{1,}\.\d{1,5}$`, "Format Not Valid")
 
 	confirm := widget.NewButton("Set Prediction", func() {
-		if PS_Control.P_deposit.Validate() == nil && PS_Control.P_amt.Validate() == nil && PS_Control.P_end.Validate() == nil {
+		if PS_Control.P_deposit.Validate() == nil && PS_Control.P_amt.Validate() == nil && PS_Control.P_end.Validate() == nil && PS_Control.P_mark.Validate() == nil {
 			if len(PredictControl.Contract) == 64 {
 				ownerConfirmPopUp(2, 100)
 			}
 		}
 	})
 
+	PS_Control.P_cancel = widget.NewButton("Cancel", func() {
+		ownerConfirmPopUp(8, 0)
+	})
+
+	PS_Control.P_cancel.Hide()
+
 	owner_p := container.NewVBox(
 		humanTimeConvert(),
 		layout.NewSpacer(),
 		PS_Control.P_Name,
 		PS_Control.P_end,
+		PS_Control.P_mark,
 		PS_Control.P_amt,
 		PS_Control.P_feed,
 		PS_Control.P_deposit,
 		confirm,
-		layout.NewSpacer())
+		layout.NewSpacer(),
+		PS_Control.P_cancel,
+		layout.NewSpacer(),
+	)
 
 	return owner_p
 }
@@ -95,21 +151,32 @@ func sportsOpts() fyne.CanvasObject { /// set sports options
 	})
 	PS_Control.S_game.PlaceHolder = "Game:"
 
-	leagues := []string{"FIFA", "NBA", "NFL", "NHL"}
+	leagues := []string{"EPL", "NBA", "NFL", "NHL", "Bellator", "UFC"}
 	PS_Control.S_league = widget.NewSelectEntry(leagues)
 	PS_Control.S_league.OnChanged = func(s string) {
 		PS_Control.S_game.Options = []string{}
 		PS_Control.S_game.Selected = ""
+		if s == "Bellator" || s == "UFC" {
+			PS_Control.S_game.PlaceHolder = "Fight:"
+		} else {
+			PS_Control.S_game.PlaceHolder = "Game:"
+		}
 		PS_Control.S_game.Refresh()
 		switch s {
-		case "FIFA":
-			go GetCurrentWeek("FIFA")
+		case "EPL":
+			go GetCurrentWeek("EPL")
 		case "NBA":
 			go GetCurrentWeek("NBA")
 		case "NFL":
 			go GetCurrentWeek("NFL")
 		case "NHL":
 			go GetCurrentWeek("NHL")
+		case "UFC":
+			go GetCurrentMonth("UFC")
+		case "Bellator":
+			go GetCurrentMonth("Bellator")
+		default:
+
 		}
 	}
 	PS_Control.S_league.SetPlaceHolder("League:")
@@ -130,13 +197,19 @@ func sportsOpts() fyne.CanvasObject { /// set sports options
 	PS_Control.S_deposit.SetPlaceHolder("Deposit Amount:")
 	PS_Control.S_deposit.Validator = validation.NewRegexp(`^\d{1,}\.\d{1,5}$`, "Format Not Valid")
 
-	confirmButton := widget.NewButton("Set Game", func() {
+	PS_Control.S_set = widget.NewButton("Set Game", func() {
 		if PS_Control.S_deposit.Validate() == nil && PS_Control.S_amt.Validate() == nil && PS_Control.S_end.Validate() == nil {
 			if len(SportsControl.Contract) == 64 {
 				ownerConfirmPopUp(1, 100)
 			}
 		}
 	})
+
+	PS_Control.S_cancel = widget.NewButton("Cancel", func() {
+		ownerConfirmPopUp(9, 0)
+	})
+
+	PS_Control.S_cancel.Hide()
 
 	sports := container.NewVBox(
 		humanTimeConvert(),
@@ -147,7 +220,9 @@ func sportsOpts() fyne.CanvasObject { /// set sports options
 		PS_Control.S_amt,
 		PS_Control.S_feed,
 		PS_Control.S_deposit,
-		confirmButton,
+		PS_Control.S_set,
+		layout.NewSpacer(),
+		PS_Control.S_cancel,
 		layout.NewSpacer())
 
 	return sports
@@ -163,15 +238,58 @@ func payoutOpts() fyne.CanvasObject {
 		}
 	})
 
-	post_button := widget.NewButton("Post Price", func() {
-		a, _ := table.GetPrice(rpc.Display.Prediction)
-		ownerConfirmPopUp(4, a)
+	post_button := widget.NewButton("Post", func() {
+		go SetPredictionPrices(rpc.Signal.Daemon)
+		var a float64
+		prediction := rpc.Display.Prediction
+		if isOnChainPrediction(prediction) {
+			switch onChainPrediction(prediction) {
+			case 1:
+				a, _ = rpc.GetDifficulty(rpc.Display.P_feed)
+				ownerConfirmPopUp(6, a)
+			case 2:
+				a, _ = rpc.GetBlockTime(rpc.Display.P_feed)
+				ownerConfirmPopUp(6, a)
+			case 3:
+				d, _ := rpc.DaemonHeight(rpc.Display.P_feed)
+				a = float64(d)
+				ownerConfirmPopUp(6, a)
+			default:
+
+			}
+
+		} else {
+			a, _ = table.GetPrice(prediction)
+			ownerConfirmPopUp(4, a)
+		}
 
 	})
 
 	predict_confirm := widget.NewButton("Prediction Payout", func() {
-		a, _ := table.GetPrice(rpc.Display.Prediction)
-		ownerConfirmPopUp(5, a)
+		go SetPredictionPrices(rpc.Signal.Daemon)
+		var a float64
+		prediction := rpc.Display.Prediction
+		if isOnChainPrediction(prediction) {
+			switch onChainPrediction(prediction) {
+			case 1:
+				a, _ = rpc.GetDifficulty(rpc.Display.P_feed)
+				ownerConfirmPopUp(7, a)
+			case 2:
+				a, _ = rpc.GetBlockTime(rpc.Display.P_feed)
+				ownerConfirmPopUp(7, a)
+			case 3:
+				d, _ := rpc.DaemonHeight(rpc.Display.P_feed)
+				a = float64(d)
+				ownerConfirmPopUp(7, a)
+			default:
+
+			}
+
+		} else {
+			a, _ = table.GetPrice(prediction)
+			ownerConfirmPopUp(5, a)
+		}
+
 	})
 
 	payout := container.NewVBox(
@@ -244,7 +362,7 @@ func confirmPopUp(i int, teamA, teamB string) { /// bet action confirmation
 		}
 		confirm_display.SetText("SCID: " + s_scid + "\n\nBetting on Game # " + game + "\n\n" + teamB + " for " + x + " Dero\n\nConfirm")
 	default:
-		log.Println("No Confirm Input")
+		log.Println("[dReams] No Confirm Input")
 		confirm_display.SetText("Error")
 	}
 
@@ -444,6 +562,23 @@ func ownersMenu() { /// bet owners menu
 				now := time.Now()
 				utime = strconv.Itoa(int(now.Unix()))
 				clock.SetText("Unix Time: " + utime)
+				if now.Unix() < rpc.Predict.Buffer {
+					if rpc.Predict.Init {
+						PS_Control.P_cancel.Show()
+					} else {
+						PS_Control.P_cancel.Hide()
+					}
+				} else {
+					PS_Control.P_cancel.Hide()
+				}
+
+				if SportsControl.Buffer {
+					PS_Control.S_cancel.Show()
+					PS_Control.S_set.Hide()
+				} else {
+					PS_Control.S_cancel.Hide()
+					PS_Control.S_set.Show()
+				}
 			case <-quit:
 				ticker.Stop()
 				return
@@ -473,13 +608,21 @@ func ownerConfirmPopUp(i int, p float64) { /// bet owner action confirmation
 	var confirm_display = widget.NewLabel("")
 	confirm_display.Wrapping = fyne.TextWrapWord
 
+	pre := rpc.Display.Prediction
 	p_scid := PredictControl.Contract
 	p_pre := PS_Control.P_Name.Text
 	p_amt := PS_Control.P_amt.Text
-	p_end, _ := rpc.MsToTime(PS_Control.P_end.Text + "000")
+	p_mark := PS_Control.P_mark.Text
+	p_end := PS_Control.P_end.Text
+	p_end_time, _ := rpc.MsToTime(p_end + "000")
 	p_feed := PS_Control.P_feed.Text
-	price := fmt.Sprintf("%.2f", p/100)
 	p_dep := PS_Control.P_deposit.Text
+	var price string
+	if table.CoinDecimal(pre) == 8 {
+		price = fmt.Sprintf("%.8f", p/100000000)
+	} else {
+		price = fmt.Sprintf("%.2f", p/100)
+	}
 
 	var s_game string
 	s_scid := SportsControl.Contract
@@ -492,7 +635,8 @@ func ownerConfirmPopUp(i int, p float64) { /// bet owner action confirmation
 
 	s_league := PS_Control.S_league.Text
 	s_amt := PS_Control.S_amt.Text
-	s_end, _ := rpc.MsToTime(PS_Control.S_end.Text + "000")
+	s_end := PS_Control.S_end.Text
+	s_end_time, _ := rpc.MsToTime(s_end + "000")
 	s_feed := PS_Control.S_feed.Text
 	n_split := strings.Split(PS_Control.Payout_n.Text, "   ")
 	s_pay_n := n_split[0]
@@ -500,22 +644,81 @@ func ownerConfirmPopUp(i int, p float64) { /// bet owner action confirmation
 
 	var win, team string
 	if i == 3 {
-		win, team = GetWinner("NHL", n_split[2], n_split[1])
+		if n_split[1] == "Bellator" || n_split[1] == "UFC" {
+			win, team = GetMmaWinner(n_split[2], n_split[1])
+		} else {
+			win, team = GetWinner(n_split[2], n_split[1])
+		}
 	}
 
 	switch i {
 	case 1:
-		confirm_display.SetText("SCID: " + s_scid + "\n\nGame: " + s_game + "\n\nMinimum: " + s_amt + "\n\nCloses At: " + s_end.String() + "\n\nFeed: " + s_feed + "\n\nInitial Deposit: " + s_dep + " Dero\n\nConfirm")
+		confirm_display.SetText("SCID: " + s_scid + "\n\nGame: " + s_game + "\n\nMinimum: " + s_amt + "\n\nCloses At: " + s_end_time.String() + "\n\nFeed: " + s_feed + "\n\nInitial Deposit: " + s_dep + " Dero")
 	case 2:
-		confirm_display.SetText("SCID: " + p_scid + "\n\nPredicing: " + p_pre + "\nMinimum: " + p_amt + "\nCloses At: " + p_end.String() + "\nFeed: " + p_feed + "\nInitial Deposit: " + p_dep + " Dero\n\nConfirm")
+		fn := "Feed: "
+		var mark string
+		if p_mark == "0" || p_mark == "" {
+			mark = "Not Set"
+		} else {
+			if onChainPrediction(pre) == 2 || onChainPrediction(p_pre) == 2 { /// one decimal place for block time
+				fn = "Node: "
+				i := rpc.StringToInt(p_mark) * 10000
+				x := float64(i) / 100000
+				mark = fmt.Sprintf("%.5f", x)
+			} else {
+				if isOnChainPrediction(pre) || isOnChainPrediction(p_pre) {
+					fn = "Node: "
+					mark = p_mark
+				} else {
+					if table.CoinDecimal(pre) == 8 || table.CoinDecimal(p_pre) == 8 {
+						if f, err := strconv.ParseFloat(p_mark, 32); err == nil { /// eight decimal place for btc
+							x := f / 100000000
+							mark = fmt.Sprintf("%.8f", x)
+						}
+					} else {
+						if f, err := strconv.ParseFloat(p_mark, 32); err == nil {
+							x := f / 100
+							mark = fmt.Sprintf("%.2f", x)
+						}
+					}
+				}
+			}
+		}
+
+		confirm_display.SetText("SCID: " + p_scid + "\n\nPredicting: " + p_pre + "\n\nMinimum: " + p_amt + "\n\nCloses At: " + p_end_time.String() + "\n\nMark: " + mark + "\n\n" + fn + p_feed + "\n\nInitial Deposit: " + p_dep + " Dero")
+
 	case 3:
 		confirm_display.SetText("SCID: " + s_scid + "\n\nGame: " + PS_Control.Payout_n.Text + "\nTeam: " + team + "\n\nConfirm")
 	case 4:
-		confirm_display.SetText("SCID: " + p_scid + "\n\nPost Price: " + price + "\n\nConfirm")
+		confirm_display.SetText("SCID: " + p_scid + "Feed from: dReams Client\n\nPost Price: " + price + "\n\nConfirm")
 	case 5:
-		confirm_display.SetText("SCID: " + p_scid + "\n\nFinal Price: " + price + "\n\nConfirm")
+		confirm_display.SetText("SCID: " + p_scid + "Feed from: dReams Client\n\nFinal Price: " + price + "\n\nConfirm")
+	case 6:
+		switch onChainPrediction(pre) {
+		case 1:
+			confirm_display.SetText("SCID: " + p_scid + "\n\n" + pre + ": " + fmt.Sprintf("%.0f", p) + "\n\nNode: " + rpc.Display.P_feed + "\n\nConfirm Post")
+		case 2:
+			confirm_display.SetText("SCID: " + p_scid + "\n\n" + pre + ": " + fmt.Sprintf("%.5f", p) + "\n\nNode: " + rpc.Display.P_feed + "\n\nConfirm Post")
+		case 3:
+			confirm_display.SetText("SCID: " + p_scid + "\n\n" + pre + ": " + fmt.Sprintf("%.0f", p) + "\n\nNode: " + rpc.Display.P_feed + "\n\nConfirm Post")
+		}
+
+	case 7:
+		switch onChainPrediction(pre) {
+		case 1:
+			confirm_display.SetText("SCID: " + p_scid + "\n\n" + pre + ": " + fmt.Sprintf("%.0f", p) + "\n\nNode: " + rpc.Display.P_feed + "\n\nConfirm Payout")
+		case 2:
+			confirm_display.SetText("SCID: " + p_scid + "\n\n" + pre + ": " + fmt.Sprintf("%.5f", p) + "\n\nNode: " + rpc.Display.P_feed + "\n\nConfirm Payout")
+		case 3:
+			confirm_display.SetText("SCID: " + p_scid + "\n\n" + pre + ": " + fmt.Sprintf("%.0f", p) + "\n\nNode: " + rpc.Display.P_feed + "\n\nConfirm Payout")
+		}
+
+	case 8:
+		confirm_display.SetText("SCID: " + p_scid + "\n\nThis will Cancel the current prediction")
+	case 9:
+		confirm_display.SetText("SCID: " + s_scid + "\n\nThis will Cancel the last initiated bet on this contract")
 	default:
-		log.Println("No Confirm Input")
+		log.Println("[dReams] No Confirm Input")
 		confirm_display.SetText("Error")
 	}
 
@@ -527,15 +730,43 @@ func ownerConfirmPopUp(i int, p float64) { /// bet owner action confirmation
 		PS_Control.Payout_n.SetText("")
 		switch i {
 		case 1:
-			rpc.SetSports(rpc.StringToInt(PS_Control.S_end.Text), menu.ToAtomicFive(s_amt), menu.ToAtomicFive(s_dep), s_scid, s_league, s_game, s_feed)
+			rpc.SetSports(rpc.StringToInt(s_end), menu.ToAtomicFive(s_amt), menu.ToAtomicFive(s_dep), s_scid, s_league, s_game, s_feed)
 		case 2:
-			rpc.SetPrediction(rpc.StringToInt(PS_Control.P_end.Text), menu.ToAtomicFive(p_amt), menu.ToAtomicFive(p_dep), p_scid, p_pre, p_feed)
+			if onChainPrediction(pre) == 2 || onChainPrediction(p_pre) == 2 { /// decimal of one place for block time
+				rpc.SetPrediction(rpc.StringToInt(p_end), rpc.StringToInt(p_mark)*10000, menu.ToAtomicFive(p_amt), menu.ToAtomicFive(p_dep), p_scid, p_pre, p_feed)
+			} else {
+				rpc.SetPrediction(rpc.StringToInt(p_end), rpc.StringToInt(p_mark), menu.ToAtomicFive(p_amt), menu.ToAtomicFive(p_dep), p_scid, p_pre, p_feed)
+			}
 		case 3:
 			rpc.EndSports(s_scid, s_pay_n, win)
 		case 4:
 			rpc.PostPrediction(p_scid, int(p))
 		case 5:
-			rpc.EndPredition(p_scid, int(p))
+			rpc.EndPrediction(p_scid, int(p))
+		case 6:
+			switch onChainPrediction(pre) {
+			case 1:
+				rpc.PostPrediction(p_scid, int(p))
+			case 2:
+				rpc.PostPrediction(p_scid, int(p*100000))
+			case 3:
+				rpc.PostPrediction(p_scid, int(p))
+			default:
+			}
+		case 7:
+			switch onChainPrediction(pre) {
+			case 1:
+				rpc.EndPrediction(p_scid, int(p))
+			case 2:
+				rpc.EndPrediction(p_scid, int(p*100000))
+			case 3:
+				rpc.EndPrediction(p_scid, int(p))
+			default:
+			}
+		case 8:
+			rpc.CancelInitiatedBet(PredictControl.Contract, 0)
+		case 9:
+			rpc.CancelInitiatedBet(SportsControl.Contract, 1)
 		default:
 
 		}

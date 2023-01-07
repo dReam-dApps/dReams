@@ -15,6 +15,38 @@ import (
 	"fyne.io/fyne/v2/container"
 )
 
+type cards struct {
+	Hole1 fyne.CanvasObject
+	Hole2 fyne.CanvasObject
+	Flop1 fyne.CanvasObject
+	Flop2 fyne.CanvasObject
+	Flop3 fyne.CanvasObject
+	Turn  fyne.CanvasObject
+	River fyne.CanvasObject
+
+	P1a fyne.CanvasObject
+	P1b fyne.CanvasObject
+
+	P2a fyne.CanvasObject
+	P2b fyne.CanvasObject
+
+	P3a fyne.CanvasObject
+	P3b fyne.CanvasObject
+
+	P4a fyne.CanvasObject
+	P4b fyne.CanvasObject
+
+	P5a fyne.CanvasObject
+	P5b fyne.CanvasObject
+
+	P6a fyne.CanvasObject
+	P6b fyne.CanvasObject
+
+	Layout *fyne.Container
+}
+
+var Cards cards
+
 func Card(hash string) int { /// Gets local cards with local key
 	for i := 1; i < 53; i++ {
 		finder := strconv.Itoa(i)
@@ -32,156 +64,156 @@ func Card(hash string) int { /// Gets local cards with local key
 
 // / Table cards
 func Hole_1(c int, w, h float32) fyne.CanvasObject {
-	card := DisplayCard(c)
-	card.Resize(fyne.NewSize(165, 225))
-	card.Move(fyne.NewPos(w-335, h-350))
+	Cards.Hole1 = DisplayCard(c)
+	Cards.Hole1.Resize(fyne.NewSize(165, 225))
+	Cards.Hole1.Move(fyne.NewPos(w-335, h-350))
 
-	return card
+	return Cards.Hole1
 }
 
 func Hole_2(c int, w, h float32) fyne.CanvasObject {
-	card := DisplayCard(c)
-	card.Resize(fyne.NewSize(165, 225))
-	card.Move(fyne.NewPos(w-275, h-350))
+	Cards.Hole2 = DisplayCard(c)
+	Cards.Hole2.Resize(fyne.NewSize(165, 225))
+	Cards.Hole2.Move(fyne.NewPos(w-275, h-350))
 
-	return card
+	return Cards.Hole2
 }
 
 func Flop_1(c int) fyne.CanvasObject {
-	card := DisplayCard(c)
-	card.Resize(fyne.NewSize(110, 150))
-	card.Move(fyne.NewPos(257, 185))
+	Cards.Flop1 = DisplayCard(c)
+	Cards.Flop1.Resize(fyne.NewSize(110, 150))
+	Cards.Flop1.Move(fyne.NewPos(257, 185))
 
-	return card
+	return Cards.Flop1
 }
 
 func Flop_2(c int) fyne.CanvasObject {
-	card := DisplayCard(c)
-	card.Resize(fyne.NewSize(110, 150))
-	card.Move(fyne.NewPos(377, 185))
+	Cards.Flop2 = DisplayCard(c)
+	Cards.Flop2.Resize(fyne.NewSize(110, 150))
+	Cards.Flop2.Move(fyne.NewPos(377, 185))
 
-	return card
+	return Cards.Flop2
 }
 
 func Flop_3(c int) fyne.CanvasObject {
-	card := DisplayCard(c)
-	card.Resize(fyne.NewSize(110, 150))
-	card.Move(fyne.NewPos(497, 185))
+	Cards.Flop3 = DisplayCard(c)
+	Cards.Flop3.Resize(fyne.NewSize(110, 150))
+	Cards.Flop3.Move(fyne.NewPos(497, 185))
 
-	return card
-}
-
-func River(c int) fyne.CanvasObject {
-	card := DisplayCard(c)
-	card.Resize(fyne.NewSize(110, 150))
-	card.Move(fyne.NewPos(617, 185))
-
-	return card
+	return Cards.Flop3
 }
 
 func Turn(c int) fyne.CanvasObject {
-	card := DisplayCard(c)
-	card.Resize(fyne.NewSize(110, 150))
-	card.Move(fyne.NewPos(737, 185))
+	Cards.Turn = DisplayCard(c)
+	Cards.Turn.Resize(fyne.NewSize(110, 150))
+	Cards.Turn.Move(fyne.NewPos(617, 185))
 
-	return card
+	return Cards.Turn
+}
+
+func River(c int) fyne.CanvasObject {
+	Cards.River = DisplayCard(c)
+	Cards.River.Resize(fyne.NewSize(110, 150))
+	Cards.River.Move(fyne.NewPos(737, 185))
+
+	return Cards.River
 }
 
 func P1_a(c int) fyne.CanvasObject {
-	card := DisplayCard(c)
-	card.Resize(fyne.NewSize(110, 150))
-	card.Move(fyne.NewPos(190, 10))
+	Cards.P1a = DisplayCard(c)
+	Cards.P1a.Resize(fyne.NewSize(110, 150))
+	Cards.P1a.Move(fyne.NewPos(190, 10))
 
-	return card
+	return Cards.P1a
 }
 
 func P1_b(c int) fyne.CanvasObject {
-	card := DisplayCard(c)
-	card.Resize(fyne.NewSize(110, 150))
-	card.Move(fyne.NewPos(242, 10))
+	Cards.P1b = DisplayCard(c)
+	Cards.P1b.Resize(fyne.NewSize(110, 150))
+	Cards.P1b.Move(fyne.NewPos(242, 10))
 
-	return card
+	return Cards.P1b
 }
 
 func P2_a(c int) fyne.CanvasObject {
-	card := DisplayCard(c)
-	card.Resize(fyne.NewSize(110, 150))
-	card.Move(fyne.NewPos(614, 10))
+	Cards.P2a = DisplayCard(c)
+	Cards.P2a.Resize(fyne.NewSize(110, 150))
+	Cards.P2a.Move(fyne.NewPos(614, 10))
 
-	return card
+	return Cards.P2a
 }
 
 func P2_b(c int) fyne.CanvasObject {
-	card := DisplayCard(c)
-	card.Resize(fyne.NewSize(110, 150))
-	card.Move(fyne.NewPos(666, 10))
+	Cards.P2b = DisplayCard(c)
+	Cards.P2b.Resize(fyne.NewSize(110, 150))
+	Cards.P2b.Move(fyne.NewPos(666, 10))
 
-	return card
+	return Cards.P2b
 }
 
 func P3_a(c int) fyne.CanvasObject {
-	card := DisplayCard(c)
-	card.Resize(fyne.NewSize(110, 150))
-	card.Move(fyne.NewPos(886, 115))
+	Cards.P3a = DisplayCard(c)
+	Cards.P3a.Resize(fyne.NewSize(110, 150))
+	Cards.P3a.Move(fyne.NewPos(886, 115))
 
-	return card
+	return Cards.P3a
 
 }
 
 func P3_b(c int) fyne.CanvasObject {
-	card := DisplayCard(c)
-	card.Resize(fyne.NewSize(110, 150))
-	card.Move(fyne.NewPos(938, 115))
+	Cards.P3b = DisplayCard(c)
+	Cards.P3b.Resize(fyne.NewSize(110, 150))
+	Cards.P3b.Move(fyne.NewPos(938, 115))
 
-	return card
+	return Cards.P3b
 }
 
 func P4_a(c int) fyne.CanvasObject {
-	card := DisplayCard(c)
-	card.Resize(fyne.NewSize(110, 150))
-	card.Move(fyne.NewPos(766, 361))
+	Cards.P4a = DisplayCard(c)
+	Cards.P4a.Resize(fyne.NewSize(110, 150))
+	Cards.P4a.Move(fyne.NewPos(766, 361))
 
-	return card
+	return Cards.P4a
 }
 
 func P4_b(c int) fyne.CanvasObject {
-	card := DisplayCard(c)
-	card.Resize(fyne.NewSize(110, 150))
-	card.Move(fyne.NewPos(818, 361))
+	Cards.P4b = DisplayCard(c)
+	Cards.P4b.Resize(fyne.NewSize(110, 150))
+	Cards.P4b.Move(fyne.NewPos(818, 361))
 
-	return card
+	return Cards.P4b
 }
 
 func P5_a(c int) fyne.CanvasObject {
-	card := DisplayCard(c)
-	card.Resize(fyne.NewSize(110, 150))
-	card.Move(fyne.NewPos(336, 361))
+	Cards.P5a = DisplayCard(c)
+	Cards.P5a.Resize(fyne.NewSize(110, 150))
+	Cards.P5a.Move(fyne.NewPos(336, 361))
 
-	return card
+	return Cards.P5a
 }
 
 func P5_b(c int) fyne.CanvasObject {
-	card := DisplayCard(c)
-	card.Resize(fyne.NewSize(110, 150))
-	card.Move(fyne.NewPos(388, 361))
+	Cards.P5b = DisplayCard(c)
+	Cards.P5b.Resize(fyne.NewSize(110, 150))
+	Cards.P5b.Move(fyne.NewPos(388, 361))
 
-	return card
+	return Cards.P5b
 }
 
 func P6_a(c int) fyne.CanvasObject {
-	card := DisplayCard(c)
-	card.Resize(fyne.NewSize(110, 150))
-	card.Move(fyne.NewPos(63, 254))
+	Cards.P6a = DisplayCard(c)
+	Cards.P6a.Resize(fyne.NewSize(110, 150))
+	Cards.P6a.Move(fyne.NewPos(63, 254))
 
-	return card
+	return Cards.P6a
 }
 
 func P6_b(c int) fyne.CanvasObject {
-	card := DisplayCard(c)
-	card.Resize(fyne.NewSize(110, 150))
-	card.Move(fyne.NewPos(115, 254))
+	Cards.P6b = DisplayCard(c)
+	Cards.P6b.Resize(fyne.NewSize(110, 150))
+	Cards.P6b.Move(fyne.NewPos(115, 254))
 
-	return card
+	return Cards.P6b
 }
 
 func Is_In(hash string, who int, end bool) int {
@@ -583,4 +615,167 @@ func BaccSuit(card int) int {
 	}
 
 	return suited
+}
+
+func TarotCard(c int) *canvas.Image {
+	switch c {
+	case 1:
+		return canvas.NewImageFromResource(resourceIluma1Jpg)
+	case 2:
+		return canvas.NewImageFromResource(resourceIluma2Jpg)
+	case 3:
+		return canvas.NewImageFromResource(resourceIluma3Jpg)
+	case 4:
+		return canvas.NewImageFromResource(resourceIluma4Jpg)
+	case 5:
+		return canvas.NewImageFromResource(resourceIluma5Jpg)
+	case 6:
+		return canvas.NewImageFromResource(resourceIluma6Jpg)
+	case 7:
+		return canvas.NewImageFromResource(resourceIluma7Jpg)
+	case 8:
+		return canvas.NewImageFromResource(resourceIluma8Jpg)
+	case 9:
+		return canvas.NewImageFromResource(resourceIluma9Jpg)
+	case 10:
+		return canvas.NewImageFromResource(resourceIluma10Jpg)
+	case 11:
+		return canvas.NewImageFromResource(resourceIluma11Jpg)
+	case 12:
+		return canvas.NewImageFromResource(resourceIluma12Jpg)
+	case 13:
+		return canvas.NewImageFromResource(resourceIluma13Jpg)
+	case 14:
+		return canvas.NewImageFromResource(resourceIluma14Jpg)
+	case 15:
+		return canvas.NewImageFromResource(resourceIluma15Jpg)
+	case 16:
+		return canvas.NewImageFromResource(resourceIluma16Jpg)
+	case 17:
+		return canvas.NewImageFromResource(resourceIluma17Jpg)
+	case 18:
+		return canvas.NewImageFromResource(resourceIluma18Jpg)
+	case 19:
+		return canvas.NewImageFromResource(resourceIluma19Jpg)
+	case 20:
+		return canvas.NewImageFromResource(resourceIluma20Jpg)
+	case 21:
+		return canvas.NewImageFromResource(resourceIluma21Jpg)
+	case 22:
+		return canvas.NewImageFromResource(resourceIluma22Jpg)
+	case 23:
+		return canvas.NewImageFromResource(resourceIluma23Jpg)
+	case 24:
+		return canvas.NewImageFromResource(resourceIluma24Jpg)
+	case 25:
+		return canvas.NewImageFromResource(resourceIluma25Jpg)
+	case 26:
+		return canvas.NewImageFromResource(resourceIluma26Jpg)
+	case 27:
+		return canvas.NewImageFromResource(resourceIluma27Jpg)
+	case 28:
+		return canvas.NewImageFromResource(resourceIluma28Jpg)
+	case 29:
+		return canvas.NewImageFromResource(resourceIluma29Jpg)
+	case 30:
+		return canvas.NewImageFromResource(resourceIluma30Jpg)
+	case 31:
+		return canvas.NewImageFromResource(resourceIluma31Jpg)
+	case 32:
+		return canvas.NewImageFromResource(resourceIluma32Jpg)
+	case 33:
+		return canvas.NewImageFromResource(resourceIluma33Jpg)
+	case 34:
+		return canvas.NewImageFromResource(resourceIluma34Jpg)
+	case 35:
+		return canvas.NewImageFromResource(resourceIluma35Jpg)
+	case 36:
+		return canvas.NewImageFromResource(resourceIluma36Jpg)
+	case 37:
+		return canvas.NewImageFromResource(resourceIluma37Jpg)
+	case 38:
+		return canvas.NewImageFromResource(resourceIluma38Jpg)
+	case 39:
+		return canvas.NewImageFromResource(resourceIluma39Jpg)
+	case 40:
+		return canvas.NewImageFromResource(resourceIluma40Jpg)
+	case 41:
+		return canvas.NewImageFromResource(resourceIluma41Jpg)
+	case 42:
+		return canvas.NewImageFromResource(resourceIluma42Jpg)
+	case 43:
+		return canvas.NewImageFromResource(resourceIluma43Jpg)
+	case 44:
+		return canvas.NewImageFromResource(resourceIluma44Jpg)
+	case 45:
+		return canvas.NewImageFromResource(resourceIluma45Jpg)
+	case 46:
+		return canvas.NewImageFromResource(resourceIluma46Jpg)
+	case 47:
+		return canvas.NewImageFromResource(resourceIluma47Jpg)
+	case 48:
+		return canvas.NewImageFromResource(resourceIluma48Jpg)
+	case 49:
+		return canvas.NewImageFromResource(resourceIluma49Jpg)
+	case 50:
+		return canvas.NewImageFromResource(resourceIluma50Jpg)
+	case 51:
+		return canvas.NewImageFromResource(resourceIluma51Jpg)
+	case 52:
+		return canvas.NewImageFromResource(resourceIluma52Jpg)
+	case 53:
+		return canvas.NewImageFromResource(resourceIluma53Jpg)
+	case 54:
+		return canvas.NewImageFromResource(resourceIluma54Jpg)
+	case 55:
+		return canvas.NewImageFromResource(resourceIluma55Jpg)
+	case 56:
+		return canvas.NewImageFromResource(resourceIluma56Jpg)
+	case 57:
+		return canvas.NewImageFromResource(resourceIluma57Jpg)
+	case 58:
+		return canvas.NewImageFromResource(resourceIluma58Jpg)
+	case 59:
+		return canvas.NewImageFromResource(resourceIluma59Jpg)
+	case 60:
+		return canvas.NewImageFromResource(resourceIluma60Jpg)
+	case 61:
+		return canvas.NewImageFromResource(resourceIluma61Jpg)
+	case 62:
+		return canvas.NewImageFromResource(resourceIluma62Jpg)
+	case 63:
+		return canvas.NewImageFromResource(resourceIluma63Jpg)
+	case 64:
+		return canvas.NewImageFromResource(resourceIluma64Jpg)
+	case 65:
+		return canvas.NewImageFromResource(resourceIluma65Jpg)
+	case 66:
+		return canvas.NewImageFromResource(resourceIluma66Jpg)
+	case 67:
+		return canvas.NewImageFromResource(resourceIluma67Jpg)
+	case 68:
+		return canvas.NewImageFromResource(resourceIluma68Jpg)
+	case 69:
+		return canvas.NewImageFromResource(resourceIluma69Jpg)
+	case 70:
+		return canvas.NewImageFromResource(resourceIluma70Jpg)
+	case 71:
+		return canvas.NewImageFromResource(resourceIluma71Jpg)
+	case 72:
+		return canvas.NewImageFromResource(resourceIluma72Jpg)
+	case 73:
+		return canvas.NewImageFromResource(resourceIluma73Jpg)
+	case 74:
+		return canvas.NewImageFromResource(resourceIluma74Jpg)
+	case 75:
+		return canvas.NewImageFromResource(resourceIluma75Jpg)
+	case 76:
+		return canvas.NewImageFromResource(resourceIluma76Jpg)
+	case 77:
+		return canvas.NewImageFromResource(resourceIluma77Jpg)
+	case 78:
+		return canvas.NewImageFromResource(resourceIluma78Jpg)
+	default:
+		return canvas.NewImageFromResource(resourceIluma81Png)
+	}
 }

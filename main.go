@@ -32,6 +32,7 @@ type dReamTables struct {
 	bacc      bool
 	predict   bool
 	sports    bool
+	tarot     bool
 	menu_tabs struct {
 		wallet    bool
 		contracts bool
@@ -46,7 +47,9 @@ var background *fyne.Container
 func main() {
 	n := runtime.NumCPU()
 	runtime.GOMAXPROCS(n)
+
 	flags()
+	stamp()
 	dReams.App = app.NewWithID(App_ID)
 	dReams.App.Settings().SetTheme(Theme())
 	dReams.Window = dReams.App.NewWindow(App_Name)
@@ -56,6 +59,7 @@ func main() {
 	dReams.Window.SetIcon(resourceCardSharkTrayPng)
 	dReams.Window.SetMaster()
 	quit := make(chan struct{})
+
 	dReams.Window.SetCloseIntercept(func() {
 		writeConfig(makeConfig(table.Poker_name, rpc.Round.Daemon))
 		menu.StopGnomon(menu.Gnomes.Init)
@@ -66,12 +70,10 @@ func main() {
 	})
 
 	menu.GetMenuResources(resourceDTGnomonIconPng, resourceAvatarFramePng, resourceCwBackgroundPng, resourceMwBackgroundPng, resourceOwBackgroundPng, resourceUwBackgroundPng, resourceGnomoniconPng)
-	table.GetTableResources(resourceDTGnomonIconPng, resourceMwBackgroundPng, resourceOwBackgroundPng, resourceBackgroundPng, resourceUwBackgroundPng)
+	table.GetTableResources(resourceDTGnomonIconPng, resourceMwBackgroundPng, resourceOwBackgroundPng, resourceBackgroundPng, resourceUwBackgroundPng, resourceIlumabackground1Png, resourceIlumabackground2Png, resourceIluma81Png)
 
-	rpc.Signal.Startup = true
-	rpc.Bacc.Display = true
 	dReams.menu = true
-	table.InitTableSettings()
+
 	table.Settings.ThemeImg = *canvas.NewImageFromResource(resourceBackgroundPng)
 	background = container.NewMax(&table.Settings.ThemeImg)
 
@@ -86,6 +88,7 @@ func main() {
 	if systemTray(dReams.App) {
 		dReams.App.(desktop.App).SetSystemTrayIcon(resourceCardSharkTrayPng)
 	}
+
 	go fetch(quit)
 	dReams.Window.ShowAndRun()
 }

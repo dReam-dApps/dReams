@@ -26,6 +26,7 @@ const (
 	pPredictSCID = "e5e49c9a6dc1c0dc8a94429a01bf758e705de49487cbd0b3e3550648d2460cdf"
 	SportsSCID   = "ad11377c29a863523c1cc50a33ca13e861cc146a7c0496da58deaa1973e0a39f"
 	pSportsSCID  = "fffdc4ea6d157880841feab335ab4755edcde4e60fec2fff661009b16f44fa94"
+	TarotSCID    = "a6fc0033327073dd54e448192af929466596fce4d689302e558bc85ea8734a82"
 	GnomonSCID   = "a05395bb0cf77adc850928b0db00eb5ca7a9ccbafd9a38d021c8d299ad5ce1a4"
 	DevAddress   = "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn"
 	ArtAddress   = "dero1qy0khp9s9yw2h0eu20xmy9lth3zp5cacmx3rwt6k45l568d2mmcf6qgcsevzx"
@@ -38,11 +39,12 @@ var Round holderoValues
 var Bacc baccValues
 var Signal signals
 var Predict predictionValues
+var Tarot tarotValues
 
 func fromHextoString(h string) string {
 	str, err := hex.DecodeString(h)
 	if err != nil {
-		log.Println("Hex Conversion Error", err)
+		log.Println("[fromHextoString]", err)
 		return ""
 	}
 	return string(str)
@@ -50,7 +52,7 @@ func fromHextoString(h string) string {
 
 func SetDaemonClient(addr string) (jsonrpc.RPCClient, context.Context, context.CancelFunc) {
 	client := jsonrpc.NewClient(pre + addr + suff)
-	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 
 	return client, ctx, cancel
 }
@@ -75,21 +77,21 @@ func Ping() error { /// ping blockchain for connection
 	return err
 }
 
-func DaemonHeight() (uint64, error) {
-	rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
+func DaemonHeight(ep string) (uint64, error) {
+	rpcClientD, ctx, cancel := SetDaemonClient(ep)
 	defer cancel()
 
 	var result *rpc.GetHeight_Result
 	err := rpcClientD.CallFor(ctx, &result, "DERO.GetHeight")
 	if err != nil {
-		log.Println(err)
+		log.Println("[dReams]", err)
 		return 0, nil
 	}
 
 	return result.Height, err
 }
 
-func GasEstimate(scid string, args rpc.Arguments, t []rpc.Transfer) (uint64, error) {
+func GasEstimate(scid, tag string, args rpc.Arguments, t []rpc.Transfer) (uint64, error) {
 	rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
 	defer cancel()
 
@@ -110,11 +112,11 @@ func GasEstimate(scid string, args rpc.Arguments, t []rpc.Transfer) (uint64, err
 
 	err := rpcClientD.CallFor(ctx, &result, "DERO.GetGasEstimate", params)
 	if err != nil {
-		log.Println(err)
+		log.Println(tag, err)
 		return 0, nil
 	}
 
-	log.Println("Gas Fee:", result.GasStorage+100)
+	log.Println(tag+" Gas Fee:", result.GasStorage+120)
 
 	if result.GasStorage < 1200 {
 		return result.GasStorage + 120, err
@@ -136,7 +138,7 @@ func CheckForIndex(scid string) (interface{}, error) {
 
 	err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params)
 	if err != nil {
-		log.Println(err)
+		log.Println("[CheckForIndex]", err)
 		return nil, nil
 	}
 
@@ -146,36 +148,72 @@ func CheckForIndex(scid string) (interface{}, error) {
 	return address, err
 }
 
-func GetSCHeaders(scid string) ([]string, error) {
+func GetGnomonCode(dc bool, pub int) (string, error) {
+	if dc {
+		rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
+		defer cancel()
+
+		var result *rpc.GetSC_Result
+		params := rpc.GetSC_Params{
+			SCID:      GnomonSCID,
+			Code:      true,
+			Variables: false,
+		}
+
+		err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params)
+		if err != nil {
+			log.Println("[GetGnomonCode]", err)
+			return "", nil
+		}
+
+		return result.Code, err
+	}
+	return "", nil
+}
+
+func GetG45Collection(scid string) ([]string, error) {
 	rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
 	defer cancel()
 
 	var result *rpc.GetSC_Result
 	params := rpc.GetSC_Params{
-		SCID:      GnomonSCID,
+		SCID:      scid,
 		Code:      false,
 		Variables: true,
 	}
 
 	err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params)
 	if err != nil {
-		log.Println(err)
+		log.Println("[GetG45Collection]", err)
 		return nil, nil
 	}
 
-	headers := result.VariableStringKeys[scid]
+	i := 0
+	scids := []string{}
+	for {
+		n := strconv.Itoa(i)
+		asset := result.VariableStringKeys["assets_"+n]
 
-	if headers == nil {
-		return nil, err
+		if asset == nil {
+			break
+		} else {
+			hx, err := hex.DecodeString(fmt.Sprint(asset))
+			if err != nil {
+				log.Println("[GetG45Collection]", err)
+				i++
+			} else {
+				split := strings.Split(string(hx), ",")
+				for i := range split {
+					sc := strings.Split(split[i], ":")
+					trim := strings.Trim(sc[0], `{"`)
+					scids = append(scids, trim)
+				}
+				i++
+			}
+		}
 	}
 
-	split := strings.Split(fromHextoString(headers.(string)), ";")
-
-	if split[0] == "" {
-		return nil, err
-	}
-
-	return split, err
+	return scids, err
 }
 
 func CheckHolderoContract() error {
@@ -191,7 +229,7 @@ func CheckHolderoContract() error {
 
 	err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params)
 	if err != nil {
-		log.Println(err)
+		log.Println("[CheckHolderoContract]", err)
 		return nil
 	}
 
@@ -223,7 +261,7 @@ func CheckTournamentTable() (bool, error) {
 
 	err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params)
 	if err != nil {
-		log.Println(err)
+		log.Println("[CheckTournamentTable]", err)
 		return false, nil
 	}
 
@@ -254,7 +292,7 @@ func FetchHolderoSC(dc, cc bool) error {
 
 		err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params)
 		if err != nil {
-			log.Println(err)
+			log.Println("[FetchHolderoSC]", err)
 			return nil
 		}
 
@@ -329,6 +367,13 @@ func FetchHolderoSC(dc, cc bool) error {
 			End_jv := result.VariableStringKeys["End"]
 			Chips_jv := result.VariableStringKeys["Chips"]
 			Tourney_jv := result.VariableStringKeys["Tournament"]
+			Last_jv := result.VariableStringKeys["Last"]
+
+			if Last_jv != nil {
+				Round.Last = int64(Last_jv.(float64))
+			} else {
+				Round.Last = 0
+			}
 
 			if Tourney_jv == nil {
 				Round.Tourney = false
@@ -386,6 +431,7 @@ func FetchHolderoSC(dc, cc bool) error {
 
 			if FlopBool_jv != nil {
 				Round.Flop = true
+				Wallet.KeyLock = false
 			} else {
 				Round.Flop = false
 			}
@@ -453,8 +499,10 @@ func FetchHolderoSC(dc, cc bool) error {
 
 			if RevealBool_jv != nil && !Signal.Reveal && !Round.LocalEnd {
 				if addOne(Turn_jv) == Display.PlayerId {
-					RevealKey(Wallet.ClientKey)
+					Signal.Clicked = true
+					Signal.CHeight = StringToInt(Wallet.Height)
 					Signal.Reveal = true
+					go RevealKey(Wallet.ClientKey)
 				}
 			}
 
@@ -518,7 +566,7 @@ func GetHoldero100Code(dc bool) (string, error) { /// v 1.0.0
 
 		err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params)
 		if err != nil {
-			log.Println(err)
+			log.Println("[GetHoldero100Code]", err)
 			return "", nil
 		}
 
@@ -552,7 +600,7 @@ func GetHoldero110Code(dc bool, pub int) (string, error) { /// v 1.1.0
 
 		err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params)
 		if err != nil {
-			log.Println(err)
+			log.Println("[GetHoldero110Code]", err)
 			return "", nil
 		}
 
@@ -577,7 +625,7 @@ func FetchBaccSC(dc bool) error {
 
 		err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params)
 		if err != nil {
-			log.Println(err)
+			log.Println("[FetchBaccSC]", err)
 			return nil
 		}
 
@@ -633,7 +681,7 @@ func GetBaccCode(dc bool) (string, error) {
 
 		err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params)
 		if err != nil {
-			log.Println(err)
+			log.Println("[GetBaccCode]", err)
 			return "", nil
 		}
 
@@ -657,7 +705,7 @@ func FetchBaccHand(dc bool, tx string) error { /// find played hand
 
 		err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params)
 		if err != nil {
-			log.Println(err)
+			log.Println("[FetchBaccHand]", err)
 			return nil
 		}
 		Total_jv := result.VariableStringKeys["TotalHandsPlayed:"]
@@ -715,7 +763,7 @@ func ValidBetContract(scid string) (bool, error) {
 
 	err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params)
 	if err != nil {
-		log.Println(err)
+		log.Println("[ValidBetContract]", err)
 		return false, nil
 	}
 
@@ -742,7 +790,7 @@ func FetchPredictionFinal(d bool, scid string) (string, error) {
 		var result *rpc.GetSC_Result
 		err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params)
 		if err != nil {
-			log.Println(err)
+			log.Println("[FetchPredictionFinal]", err)
 			return "", nil
 		}
 
@@ -782,7 +830,7 @@ func GetPredictCode(dc bool, pub int) (string, error) {
 
 		err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params)
 		if err != nil {
-			log.Println(err)
+			log.Println("[GetPredictCode]", err)
 			return "", nil
 		}
 
@@ -814,11 +862,159 @@ func GetSportsCode(dc bool, pub int) (string, error) {
 
 		err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params)
 		if err != nil {
-			log.Println(err)
+			log.Println("[GetSportsCode]", err)
 			return "", nil
 		}
 
 		return result.Code, err
 	}
 	return "", nil
+}
+
+func FetchSportsFinal(d bool, scid string) ([]string, error) {
+	if d {
+		rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
+		defer cancel()
+
+		params := &rpc.GetSC_Params{
+			SCID:      scid,
+			Code:      false,
+			Variables: true,
+		}
+
+		var result *rpc.GetSC_Result
+		err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params)
+		if err != nil {
+			log.Println("[FetchSportsFinal]", err)
+			return nil, nil
+		}
+
+		finals := []string{}
+		played := result.VariableStringKeys["s_played"]
+		if played != nil {
+			start := int(played.(float64)) - 4
+			i := start
+			for {
+				str := fmt.Sprint(i)
+				game := result.VariableStringKeys["s_final_"+str]
+				s_txid := result.VariableStringKeys["s_final_txid_"+str]
+
+				if s_txid != nil && game != nil {
+					decode, _ := hex.DecodeString(game.(string))
+					final := str + "   " + string(decode) + "   " + s_txid.(string)
+					finals = append(finals, final)
+				}
+
+				i++
+				if i > start+4 {
+					break
+				}
+			}
+		}
+		return finals, err
+
+	}
+	return nil, nil
+}
+
+func FetchTarotSC(dc bool) error {
+	if dc {
+		rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
+		defer cancel()
+
+		var result *rpc.GetSC_Result
+		params := rpc.GetSC_Params{
+			SCID:      TarotSCID,
+			Code:      false,
+			Variables: true,
+		}
+
+		err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params)
+		if err != nil {
+			log.Println("[FetchTarotSC]", err)
+			return nil
+		}
+
+		Reading_jv := result.VariableStringKeys["readings:"]
+		if Reading_jv != nil {
+			Display.Readings = fmt.Sprint(Reading_jv)
+		}
+
+		return err
+	}
+
+	return nil
+}
+
+func FetchTarotReading(dc bool, tx string) error {
+	if dc && len(tx) == 64 {
+		rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
+		defer cancel()
+
+		var result *rpc.GetSC_Result
+		params := rpc.GetSC_Params{
+			SCID:      TarotSCID,
+			Code:      false,
+			Variables: true,
+		}
+
+		err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params)
+		if err != nil {
+			log.Println("[FetchTarotReading]", err)
+			return nil
+		}
+
+		Reading_jv := result.VariableStringKeys["readings:"]
+		if Reading_jv != nil {
+			start := int(Reading_jv.(float64))
+			i := int(Reading_jv.(float64))
+			for i < start+24 {
+				h := "-readingTXID:"
+				w := strconv.Itoa(i)
+				TXID_jv := result.VariableStringKeys[w+h]
+
+				if TXID_jv != nil {
+					if TXID_jv.(string) == tx {
+						Tarot.Found = true
+						Tarot.T_card1 = findTarotCard(result.VariableStringKeys[w+"-card1:"])
+						Tarot.T_card2 = findTarotCard(result.VariableStringKeys[w+"-card2:"])
+						Tarot.T_card3 = findTarotCard(result.VariableStringKeys[w+"-card3:"])
+					}
+				}
+				i++
+			}
+		}
+
+		return err
+	}
+
+	return nil
+}
+
+func GetDifficulty(ep string) (float64, error) {
+	rpcClientD, ctx, cancel := SetDaemonClient(ep)
+	defer cancel()
+
+	var result *rpc.GetInfo_Result
+	err := rpcClientD.CallFor(ctx, &result, "DERO.GetInfo")
+	if err != nil {
+		log.Println("[GetDifficulty]", err)
+		return 0, nil
+	}
+
+	return float64(result.Difficulty), err
+}
+
+func GetBlockTime(ep string) (float64, error) {
+	rpcClientD, ctx, cancel := SetDaemonClient(ep)
+	defer cancel()
+
+	var result *rpc.GetInfo_Result
+	err := rpcClientD.CallFor(ctx, &result, "DERO.GetInfo")
+	if err != nil {
+		log.Println("[GetBlockTime]", err)
+		return 0, nil
+	}
+
+	return float64(result.AverageBlockTime50), err
 }

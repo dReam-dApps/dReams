@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "embed"
 	"image/color"
 
 	"github.com/SixofClubsss/dReams/menu"
@@ -20,12 +21,28 @@ var B table.Items
 var P table.Items
 var S table.Items
 var A table.Items
+var T table.Items
+
+func setLabels() {
+	H.LeftLabel.SetText("Seats: " + rpc.Display.Seats + "      Pot: " + rpc.Display.Pot + "      Blinds: " + rpc.Display.Blinds + "      Ante: " + rpc.Display.Ante + "      Dealer: " + rpc.Display.Dealer + "      Turn: " + rpc.Display.Turn)
+	H.RightLabel.SetText(rpc.Display.Readout + "      Player ID: " + rpc.Display.PlayerId + "      Dero Balance: " + rpc.Wallet.Balance + "      Height: " + rpc.Wallet.Height)
+
+	B.LeftLabel.SetText("Total Hands Played: " + rpc.Display.Total_w + "      Player Wins: " + rpc.Display.Player_w + "      Ties: " + rpc.Display.Ties + "      Banker Wins: " + rpc.Display.Banker_w + "      Min Bet is " + rpc.Display.BaccMin + " dReams, Max Bet is " + rpc.Display.BaccMax)
+	B.RightLabel.SetText("dReams Balance: " + rpc.Wallet.TokenBal + "      Dero Balance: " + rpc.Wallet.Balance + "      Height: " + rpc.Wallet.Height)
+
+	P.RightLabel.SetText("dReams Balance: " + rpc.Wallet.TokenBal + "      Dero Balance: " + rpc.Wallet.Balance + "      Height: " + rpc.Wallet.Height)
+
+	S.RightLabel.SetText("dReams Balance: " + rpc.Wallet.TokenBal + "      Dero Balance: " + rpc.Wallet.Balance + "      Height: " + rpc.Wallet.Height)
+
+	T.LeftLabel.SetText("Total Readings: " + rpc.Display.Readings + "      Click your card for Iluma reading")
+	T.RightLabel.SetText("dReams Balance: " + rpc.Wallet.TokenBal + "      Dero Balance: " + rpc.Wallet.Balance + "      Height: " + rpc.Wallet.Height)
+}
 
 func place() *fyne.Container {
 	H.LeftLabel = widget.NewLabel("")
 	H.RightLabel = widget.NewLabel("")
 	H.TopLabel = widget.NewLabel("")
-	H.TopLabel.Move(fyne.NewPos(345, 192))
+	H.TopLabel.Move(fyne.NewPos(380, 194))
 
 	B.LeftLabel = widget.NewLabel("")
 	B.RightLabel = widget.NewLabel("")
@@ -39,6 +56,9 @@ func place() *fyne.Container {
 
 	S.LeftLabel = widget.NewLabel("")
 	S.RightLabel = widget.NewLabel("")
+
+	T.LeftLabel = widget.NewLabel("")
+	T.RightLabel = widget.NewLabel("")
 
 	prediction.SportsControl.Info = widget.NewLabel("SCID: \n" + prediction.SportsControl.Contract + "\n")
 	prediction.SportsControl.Info.Wrapping = fyne.TextWrapWord
@@ -55,17 +75,29 @@ func place() *fyne.Container {
 
 	menu_tabs.SetTabLocation(container.TabLocationBottom)
 
+	tarot_tabs := container.NewAppTabs(
+		container.NewTabItem("Iluma", placeIluma()),
+		container.NewTabItem("Reading", placeTarot()))
+
+	tarot_tabs.SetTabLocation(container.TabLocationBottom)
+
 	top := canvas.NewRectangle(color.RGBA{0, 0, 0, 180})
-	top.SetMinSize(fyne.NewSize(410, 40))
+	top.SetMinSize(fyne.NewSize(465, 40))
 	top_box := container.NewHBox(top, layout.NewSpacer())
 	top_bar := container.NewVBox(top_box, layout.NewSpacer())
 
-	bottom := canvas.NewRectangle(color.RGBA{0, 0, 0, 180})
-	bottom.SetMinSize(fyne.NewSize(295, 40))
-	bottom_box := container.NewHBox(bottom, layout.NewSpacer())
-	bottom_bar := container.NewVBox(layout.NewSpacer(), bottom_box)
+	menu_bottom := canvas.NewRectangle(color.RGBA{0, 0, 0, 180})
+	menu_bottom.SetMinSize(fyne.NewSize(291, 40))
+	menu_bottom_box := container.NewHBox(menu_bottom, layout.NewSpacer())
+	menu_bottom_bar := container.NewVBox(layout.NewSpacer(), menu_bottom_box)
 
-	alpha := container.NewMax(top_bar, bottom_bar, canvas.NewRectangle(color.RGBA{0, 0, 0, 150}), menu.StartIndicators())
+	tarot_bottom := canvas.NewRectangle(color.RGBA{0, 0, 0, 180})
+	tarot_bottom.SetMinSize(fyne.NewSize(135, 40))
+	tarot_bottom_box := container.NewHBox(tarot_bottom, layout.NewSpacer())
+	tarot_bottom_bar := container.NewVBox(layout.NewSpacer(), tarot_bottom_box)
+
+	alpha := canvas.NewRectangle(color.RGBA{0, 0, 0, 150})
+	alpha_box := container.NewMax(top_bar, menu_bottom_bar, tarot_bottom_bar, alpha, menu.StartIndicators())
 
 	tabs := container.NewAppTabs(
 		container.NewTabItem("Menu", menu_tabs),
@@ -73,18 +105,25 @@ func place() *fyne.Container {
 		container.NewTabItem("Baccarat", placeBacc()),
 		container.NewTabItem("Predict", placePredict()),
 		container.NewTabItem("Sports", placeSports()),
+		container.NewTabItem("Tarot", tarot_tabs),
 		container.NewTabItem("Log", rpc.SessionLog()))
 
 	tabs.OnSelected = func(ti *container.TabItem) {
 		MainTab(ti)
 		if ti.Text == "Menu" {
-			bottom.Show()
+			menu_bottom.Show()
 		} else {
-			bottom.Hide()
+			menu_bottom.Hide()
+		}
+
+		if ti.Text == "Tarot" {
+			tarot_bottom.Show()
+		} else {
+			tarot_bottom.Hide()
 		}
 	}
 
-	max := container.NewMax(alpha, tabs)
+	max := container.NewMax(alpha_box, tabs)
 
 	return max
 }
@@ -253,6 +292,8 @@ func placeHoldero() *fyne.Container {
 
 	holdero_label := container.NewHBox(H.LeftLabel, layout.NewSpacer(), H.RightLabel)
 
+	H.CardsContent = *placeHolderoCards()
+
 	H.ActionButtons = *container.NewVBox(
 		table.SitButton(),
 		table.LeaveButton(),
@@ -261,7 +302,9 @@ func placeHoldero() *fyne.Container {
 		table.BetButton(),
 		table.BetAmount())
 
-	holdero_actions := container.NewHBox(layout.NewSpacer(), &H.ActionButtons)
+	options := container.NewVBox(layout.NewSpacer(), table.AutoOptions())
+
+	holdero_actions := container.NewHBox(options, layout.NewSpacer(), &H.ActionButtons)
 
 	H.TableItems = container.NewVBox(
 		labelColorBlack(holdero_label),
@@ -353,9 +396,9 @@ func placeSports() *fyne.Container {
 		layout.NewSpacer(),
 		prediction.SportsBox())
 
-	fifa := widget.NewLabel("")
-	fifa.Wrapping = fyne.TextWrapWord
-	fifa_scroll := container.NewVScroll(fifa)
+	epl := widget.NewLabel("")
+	epl.Wrapping = fyne.TextWrapWord
+	epl_scroll := container.NewVScroll(epl)
 	nba := widget.NewLabel("")
 	nba.Wrapping = fyne.TextWrapWord
 	nba_scroll := container.NewVScroll(nba)
@@ -365,23 +408,35 @@ func placeSports() *fyne.Container {
 	nhl := widget.NewLabel("")
 	nhl.Wrapping = fyne.TextWrapWord
 	nhl_scroll := container.NewVScroll(nhl)
+	bellator := widget.NewLabel("")
+	bellator.Wrapping = fyne.TextWrapWord
+	bellator_scroll := container.NewVScroll(bellator)
+	ufc := widget.NewLabel("")
+	ufc.Wrapping = fyne.TextWrapWord
+	ufc_scroll := container.NewVScroll(ufc)
 	score_tabs := container.NewAppTabs(
-		container.NewTabItem("FIFA", fifa_scroll),
+		container.NewTabItem("EPL", epl_scroll),
 		container.NewTabItem("NBA", nba_scroll),
 		container.NewTabItem("NFL", nfl_scroll),
 		container.NewTabItem("NHL", nhl_scroll),
+		container.NewTabItem("Bellator", bellator_scroll),
+		container.NewTabItem("UFC", ufc_scroll),
 	)
 
 	score_tabs.OnSelected = func(ti *container.TabItem) {
 		switch ti.Text {
-		case "FIFA":
-			go prediction.GetScores(fifa, "FIFA")
+		case "EPL":
+			go prediction.GetScores(epl, "EPL")
 		case "NBA":
 			go prediction.GetScores(nba, "NBA")
 		case "NFL":
 			go prediction.GetScores(nfl, "NFL")
 		case "NHL":
 			go prediction.GetScores(nhl, "NHL")
+		case "Bellator":
+			go prediction.GetMmaResults(bellator, "Bellator")
+		case "UFC":
+			go prediction.GetMmaResults(ufc, "UFC")
 		default:
 		}
 	}
@@ -390,7 +445,8 @@ func placeSports() *fyne.Container {
 		container.NewTabItem("Contracts", prediction.SportsListings()),
 		container.NewTabItem("Favorites", prediction.SportsFavorites()),
 		container.NewTabItem("Owned", prediction.SportsOwned()),
-		container.NewTabItem("Scores", score_tabs))
+		container.NewTabItem("Scores", score_tabs),
+		container.NewTabItem("Payouts", prediction.SportsPayouts()))
 
 	tabs.OnSelected = func(ti *container.TabItem) {
 
@@ -407,4 +463,74 @@ func placeSports() *fyne.Container {
 		sports_box)
 
 	return S.TableItems
+}
+
+//go:embed table/iluma/iluma.txt
+var iluma_intro string
+
+func placeIluma() *fyne.Container {
+	var first, second, third bool
+	var display int
+	img := canvas.NewImageFromResource(resourceIluma82Png)
+	intro := widget.NewLabel(iluma_intro)
+	scroll := container.NewScroll(intro)
+
+	cont := container.NewGridWithColumns(2, scroll, img)
+	alpha := canvas.NewRectangle(color.RGBA{0, 0, 0, 150})
+	max := container.NewMax(alpha, cont)
+
+	scroll.OnScrolled = func(p fyne.Position) {
+		if p.Y <= 400 {
+			second = false
+			third = false
+			display = 1
+		} else if p.Y >= 400 && p.Y <= 800 {
+			first = false
+			third = false
+			display = 2
+		} else if p.Y >= 800 {
+			first = false
+			second = false
+			display = 3
+		}
+
+		switch display {
+		case 1:
+			if !first {
+				cont.Objects[1] = canvas.NewImageFromResource(resourceIluma82Png)
+				cont.Refresh()
+				first = true
+			}
+		case 2:
+			if !second {
+				cont.Objects[1] = canvas.NewImageFromResource(resourceIluma80Png)
+				cont.Refresh()
+				second = true
+			}
+		case 3:
+			if !third {
+				cont.Objects[1] = canvas.NewImageFromResource(resourceIluma83Png)
+				cont.Refresh()
+				third = true
+			}
+		default:
+
+		}
+	}
+
+	return max
+}
+
+func placeTarot() *fyne.Container {
+	tarot_label := container.NewHBox(T.LeftLabel, layout.NewSpacer(), T.RightLabel)
+
+	T.TableItems = container.NewBorder(
+		labelColorBlack(tarot_label),
+		nil,
+		nil,
+		nil,
+		table.TarotCardBox(),
+	)
+
+	return T.TableItems
 }

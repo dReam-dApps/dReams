@@ -55,6 +55,7 @@ End Function`
 
 type gnomon struct {
 	Para     int
+	Trim     bool
 	Fast     bool
 	Start    bool
 	Init     bool
@@ -73,7 +74,7 @@ func stringToInt64(s string) int64 {
 	if s != "" {
 		i, err := strconv.Atoi(s)
 		if err != nil {
-			log.Println("String Conversion Error", err)
+			log.Println("[stringToInt64]", err)
 			return 0
 		}
 		return int64(i)
@@ -253,8 +254,15 @@ func searchFilters() (filter []string) {
 		filter = append(filter, sports)
 	}
 
+	gnomon, _ := rpc.GetGnomonCode(rpc.Signal.Daemon, 0)
+	if sports != "" {
+		filter = append(filter, gnomon)
+	}
+
 	filter = append(filter, nfa_search_filter)
-	filter = append(filter, g45_search_filter)
+	if !Gnomes.Trim {
+		filter = append(filter, g45_search_filter)
+	}
 
 	return filter
 }
@@ -289,7 +297,7 @@ func GnomonDB() *storage.GravitonStore {
 func startGnomon(ep string) {
 	Gnomes.Start = true
 	go startLabel()
-	log.Println("Starting Gnomon.")
+	log.Println("[dReams] Starting Gnomon")
 	backend := GnomonDB()
 
 	last_height := backend.GetLastIndexHeight()
@@ -299,15 +307,63 @@ func startGnomon(ep string) {
 	closeondisconnect := false
 
 	filters := searchFilters()
-	if len(filters) == 7 {
+	search := len(filters)
+	if search == 8 || (Gnomes.Trim && search == 7) {
 		table.Assets.Asset_map = make(map[string]string)
 		Gnomes.Indexer = indexer.NewIndexer(backend, filters, last_height, daemon_endpoint, runmode, mbl, closeondisconnect, Gnomes.Fast)
 		go Gnomes.Indexer.StartDaemonMode(Gnomes.Para)
 		time.Sleep(3 * time.Second)
 		Gnomes.Init = true
+
+		if Gnomes.Trim {
+			i := 0
+			for {
+				contracts := len(Gnomes.Indexer.Backend.GetAllOwnersAndSCIDs())
+				if contracts >= 3960 {
+					Gnomes.Trim = false
+					break
+				}
+
+				if contracts >= 1 {
+					go g45Index()
+					break
+				}
+				time.Sleep(1 * time.Second)
+				i++
+				if i == 30 {
+					Gnomes.Trim = false
+					log.Println("[dReams] Could not add G45 Collections")
+					break
+				}
+			}
+		}
 	}
 
 	Gnomes.Start = false
+}
+
+func g45Index() {
+	log.Println("[dReams] Adding G45 Collections")
+	filters := Gnomes.Indexer.SearchFilter
+	Gnomes.Indexer.SearchFilter = []string{}
+	scidstoadd := make(map[string]*structures.FastSyncImport)
+
+	a, _ := rpc.GetG45Collection(table.ATeam_coll)
+	for i := range a {
+		scidstoadd[a[i]] = &structures.FastSyncImport{}
+	}
+
+	s, _ := rpc.GetG45Collection(table.Seals_coll)
+	for i := range s {
+		scidstoadd[s[i]] = &structures.FastSyncImport{}
+	}
+
+	err := Gnomes.Indexer.AddSCIDToIndex(scidstoadd)
+	if err != nil {
+		log.Printf("Err - %v", err)
+	}
+	Gnomes.Indexer.SearchFilter = filters
+	Gnomes.Trim = false
 }
 
 func GnomonEndPoint(dc, gi, gs bool) {
@@ -319,11 +375,11 @@ func GnomonEndPoint(dc, gi, gs bool) {
 func StopGnomon(gi bool) {
 	if gi && !GnomonClosing() {
 		go stopLabel()
-		log.Println("Putting Gnomon to Sleep.")
+		log.Println("[dReams] Putting Gnomon to Sleep")
 		Gnomes.Indexer.Close()
 		Gnomes.Init = false
 		time.Sleep(1 * time.Second)
-		log.Println("Gnomon is Sleeping.")
+		log.Println("[dReams] Gnomon is Sleeping")
 		go sleepLabel()
 	}
 }
@@ -360,7 +416,7 @@ func GnomonState(dc, gi bool, windows bool) {
 	if dc && Gnomes.Init && !GnomonWriting() && !GnomonClosing() {
 		contracts := Gnomes.Indexer.Backend.GetAllOwnersAndSCIDs()
 		Gnomes.SCIDS = uint64(len(contracts))
-		if FastSynced() {
+		if FastSynced() && !Gnomes.Trim {
 			height := stringToInt64(rpc.Wallet.Height)
 			if Gnomes.Indexer.ChainHeight >= height-1 && height != 0 && !GnomonClosing() {
 				Gnomes.Sync = true
@@ -368,7 +424,7 @@ func GnomonState(dc, gi bool, windows bool) {
 					if !Gnomes.Checked {
 						go CheckBetContractOwner(Gnomes.Sync, Gnomes.Checked, contracts)
 						CreateTableList(Gnomes.Checked, contracts)
-						go CheckG45owner(Gnomes.Sync, Gnomes.Checked, contracts)
+						go CheckG45Assets(Gnomes.Sync, Gnomes.Checked, contracts)
 						go CheckAssets(Gnomes.Sync, Gnomes.Checked, contracts)
 						if !windows {
 							go PopulateSports(rpc.Signal.Daemon, Gnomes.Sync, contracts)
@@ -406,12 +462,12 @@ func searchIndex(scid string) {
 		all := Gnomes.Indexer.Backend.GetAllOwnersAndSCIDs()
 		for sc := range all {
 			if scid == sc {
-				log.Println(scid + " Indxed")
+				log.Println("[dReams] " + scid + " Indxed")
 				found = true
 			}
 		}
 		if !found {
-			log.Println(scid + " Not Found")
+			log.Println("[dReams] " + scid + " Not Found")
 		}
 	}
 }
@@ -423,7 +479,7 @@ func CheckAssets(gs, gc bool, scids map[string]string) {
 			scids = Gnomes.Indexer.Backend.GetAllOwnersAndSCIDs()
 		}
 		keys := make([]string, len(scids))
-		log.Println("Checking NFA Assets")
+		log.Println("[dReams] Checking NFA Assets")
 		table.Settings.FaceSelect.Options = []string{}
 		table.Settings.BackSelect.Options = []string{}
 		table.Settings.ThemeSelect.Options = []string{}
@@ -466,6 +522,23 @@ func CheckBetContractOwner(gs, gc bool, contracts map[string]string) {
 	}
 }
 
+func GetSCHeaders(scid string) []string {
+	if !GnomonClosing() {
+		headers, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(rpc.GnomonSCID, scid, Gnomes.Indexer.ChainHeight, true)
+
+		if headers != nil {
+			split := strings.Split(headers[0], ";")
+
+			if split[0] == "" {
+				return nil
+			}
+
+			return split
+		}
+	}
+	return nil
+}
+
 func verifyBetContractOwner(scid, t string) {
 	if !GnomonClosing() {
 		owner, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "owner", Gnomes.Indexer.ChainHeight, true)
@@ -488,7 +561,7 @@ func checkBetContract(scid, t string, list, owned []string) ([]string, []string)
 
 		if owner != nil && dev != nil && init != nil {
 			if dev[0] == rpc.DevAddress {
-				headers, _ := rpc.GetSCHeaders(scid)
+				headers := GetSCHeaders(scid)
 				name := "?"
 				desc := "?"
 				if headers != nil {
@@ -499,11 +572,12 @@ func checkBetContract(scid, t string, list, owned []string) ([]string, []string)
 					if headers[0] != "" {
 						name = " " + headers[0]
 					}
-
-					if owner[0] == rpc.Wallet.Address {
-						owned = append(owned, name+"   "+desc+"   "+scid)
-					}
 				}
+
+				if owner[0] == rpc.Wallet.Address {
+					owned = append(owned, name+"   "+desc+"   "+scid)
+				}
+
 				list = append(list, name+"   "+desc+"   "+scid)
 				DisableBetOwner(owner[0])
 			}
@@ -735,21 +809,25 @@ func CreateTableList(gc bool, tables map[string]string) {
 			if valid != nil && version != nil {
 				d := valid[0]
 				v := version[0]
-				if d >= 1 && v >= 100 {
-					headers, _ := rpc.GetSCHeaders(scid)
-					name := "?"
-					desc := "?"
-					if headers != nil {
-						if headers[1] != "" {
-							desc = headers[1]
-						}
 
-						if headers[0] != "" {
-							name = " " + headers[0]
-						}
+				headers := GetSCHeaders(scid)
+				name := "?"
+				desc := "?"
+				if headers != nil {
+					if headers[1] != "" {
+						desc = headers[1]
 					}
 
+					if headers[0] != "" {
+						name = " " + headers[0]
+					}
+				}
+
+				if d >= 1 && v == 110 {
 					list = append(list, name+"   "+desc+"   "+scid)
+				}
+
+				if d >= 1 && v >= 100 {
 					if checkTableOwner(scid) {
 						owned = append(owned, name+"   "+desc+"   "+scid)
 						HolderoControl.holdero_unlock.Hide()
@@ -804,7 +882,7 @@ func GetTableStats(scid string, single bool) {
 		p4, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "Player4 ID:", Gnomes.Indexer.LastIndexedHeight, true)
 		p5, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "Player5 ID:", Gnomes.Indexer.LastIndexedHeight, true)
 		p6, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "Player6 ID:", Gnomes.Indexer.LastIndexedHeight, true)
-		h, _ := rpc.GetSCHeaders(scid)
+		h := GetSCHeaders(scid)
 
 		if single {
 			if h != nil {
@@ -877,14 +955,17 @@ func GetTableStats(scid string, single bool) {
 	}
 }
 
-func CheckG45owner(gs, gc bool, g45s map[string]string) {
+func CheckG45Assets(gs, gc bool, g45s map[string]string) {
 	if Gnomes.Init && gs && !gc && !GnomonClosing() {
 		if g45s == nil {
 			g45s = Gnomes.Indexer.Backend.GetAllOwnersAndSCIDs()
 		}
-		log.Println("Checking G45 Assets")
+		log.Println("[dReams] Checking G45 Assets")
 
 		for scid := range g45s {
+			if GnomonClosing() {
+				break
+			}
 			data, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "metadata", Gnomes.Indexer.LastIndexedHeight, true)
 			owner, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "owner", Gnomes.Indexer.LastIndexedHeight, true)
 			minter, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "minter", Gnomes.Indexer.LastIndexedHeight, true)
@@ -922,11 +1003,12 @@ func CheckG45owner(gs, gc bool, g45s map[string]string) {
 }
 
 func CheckActivePrediction(scid string) bool {
-	if len(scid) == 64 {
+	if len(scid) == 64 && Gnomes.Init && !GnomonClosing() {
 		_, ends := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "p_end_at", Gnomes.Indexer.ChainHeight, true)
-		if ends != nil {
+		_, buff := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "buffer", Gnomes.Indexer.ChainHeight, true)
+		if ends != nil && buff != nil {
 			now := time.Now().Unix()
-			if now < int64(ends[0]) {
+			if now < int64(ends[0]) && now > int64(buff[0]) {
 				return true
 			}
 		}
@@ -1006,15 +1088,23 @@ func GetSportsTeams(scid, n string) (string, string) {
 }
 
 func TrimTeamA(s string) string {
-	split := strings.Split(s, "-")
+	split := strings.Split(s, "--")
 
-	return split[0]
+	if len(split) == 2 {
+		return split[0]
+	}
+
+	return ""
+
 }
 
 func TrimTeamB(s string) string {
-	split := strings.Split(s, "-")
+	split := strings.Split(s, "--")
 
-	return split[1]
+	if len(split) == 2 {
+		return split[1]
+	}
+	return ""
 }
 
 func FindNfaListings(gs bool, assets map[string]string) {
@@ -1043,6 +1133,10 @@ func FindNfaListings(gs bool, assets map[string]string) {
 			}
 
 			i++
+		}
+
+		if GnomonClosing() {
+			return
 		}
 
 		Market.Auctions = auction

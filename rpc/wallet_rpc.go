@@ -2,10 +2,10 @@ package rpc
 
 import (
 	"context"
-	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -36,6 +36,7 @@ type wallet struct {
 	Connect    bool
 	PokerOwner bool
 	BetOwner   bool
+	KeyLock    bool
 }
 
 var Wallet wallet
@@ -45,7 +46,7 @@ func StringToInt(s string) int {
 	if s != "" {
 		i, err := strconv.Atoi(s)
 		if err != nil {
-			log.Println("String Conversion Error", err)
+			log.Println("[StringToInt]", err)
 			return 0
 		}
 		return i
@@ -82,7 +83,7 @@ func saveLog(data string) {
 	f, err := os.Create("Log " + time.Now().Format(time.UnixDate))
 
 	if err != nil {
-		log.Println(err)
+		log.Println("[saveLog]", err)
 		return
 	}
 
@@ -91,11 +92,11 @@ func saveLog(data string) {
 	_, err = f.WriteString(data)
 
 	if err != nil {
-		log.Println(err)
+		log.Println("[saveLog]", err)
 		return
 	}
 
-	log.Println("Log File Saved")
+	log.Println("[dReams] Log File Saved")
 }
 
 func DeroAddress(v interface{}) (address string) {
@@ -121,9 +122,32 @@ func SetWalletClient(addr, pass string) (jsonrpc.RPCClient, context.Context, con
 		},
 	})
 
-	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 
 	return client, ctx, cancel
+}
+
+func EchoWallet(wc bool) error { /// echo wallet for connection
+	if wc {
+		rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
+		defer cancel()
+
+		var result string
+		params := []string{"Hello", "World", "!"}
+		err := rpcClientW.CallFor(ctx, &result, "Echo", params)
+		if err != nil {
+			Wallet.Connect = false
+			log.Println("[dReams]", err)
+			return nil
+		}
+
+		if result != "WALLET Hello World !" {
+			Wallet.Connect = false
+		}
+
+		return err
+	}
+	return nil
 }
 
 func GetAddress() error {
@@ -135,15 +159,15 @@ func GetAddress() error {
 
 	if err != nil {
 		Wallet.Connect = false
-		log.Println(err)
+		log.Println("[dReams]", err)
 		return nil
 	}
 
 	address := len(result.Address)
 	if address == 66 {
 		Wallet.Connect = true
-		log.Println("Wallet Connected")
-		log.Println("Dero Address: " + result.Address)
+		log.Println("[dReams] Wallet Connected")
+		log.Println("[dReams] Dero Address: " + result.Address)
 		Wallet.Address = result.Address
 		id := []byte(result.Address)
 		hash := sha256.Sum256(id)
@@ -163,8 +187,7 @@ func GetBalance(wc bool) error { /// get wallet dero balance
 		var result *rpc.GetBalance_Result
 		err := rpcClientW.CallFor(ctx, &result, "GetBalance")
 		if err != nil {
-			Wallet.Connect = false
-			log.Println(err)
+			log.Println("[GetBalance]", err)
 			return nil
 		}
 
@@ -187,7 +210,7 @@ func TokenBalance(scid string) (uint64, error) { /// get wallet token balance
 
 	err := rpcClientW.CallFor(ctx, &result, "GetBalance", params)
 	if err != nil {
-		log.Println(err)
+		log.Println("[TokenBalance]", err)
 		return 0, nil
 	}
 
@@ -228,7 +251,7 @@ func TourneyDeposit(bal uint64, name string) error {
 		}
 
 		t := []rpc.Transfer{t1}
-		fee, _ := GasEstimate(TourneySCID, args, t)
+		fee, _ := GasEstimate(TourneySCID, "[Holdero]", args, t)
 		params := &rpc.Transfer_Params{
 			Transfers: t,
 			SC_ID:     TourneySCID,
@@ -239,16 +262,16 @@ func TourneyDeposit(bal uint64, name string) error {
 
 		err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
 		if err != nil {
-			log.Println(err)
+			log.Println("[TourneyDeposit]", err)
 			return nil
 		}
 
-		log.Println("Tournament Deposit TX:", txid)
+		log.Println("[Holdero] Tournament Deposit TX:", txid)
 		addLog("Tournament Deposit TX: " + txid.TXID)
 
 		return err
 	}
-	log.Println("No Tournament Chips")
+	log.Println("[Holdero] No Tournament Chips")
 	return nil
 }
 
@@ -260,6 +283,7 @@ func GetHeight(wc bool) error { /// get wallet height
 		var result *rpc.GetHeight_Result
 		err := rpcClientW.CallFor(ctx, &result, "GetHeight")
 		if err != nil {
+			log.Println("[dReams]", err)
 			return nil
 		}
 
@@ -274,17 +298,16 @@ func SitDown(name, av string) error { /// sit at holdero table
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
-	var hx string
-	if av != "" {
-		with := "_" + name + "_" + av
-		hx = hex.EncodeToString([]byte(with))
-	} else {
-		out := "_" + name
-		hx = hex.EncodeToString([]byte(out))
-	}
+	var player playerId
+	player.Id = Wallet.idHash
+	player.Name = name
+	player.Avatar = av
+
+	mar, _ := json.Marshal(player)
+	hx := hex.EncodeToString(mar)
 
 	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "PlayerEntry"}
-	arg2 := rpc.Argument{Name: "address", DataType: "S", Value: Wallet.idHash + hx}
+	arg2 := rpc.Argument{Name: "address", DataType: "S", Value: hx}
 	args := rpc.Arguments{arg1, arg2}
 	txid := rpc.Transfer_Result{}
 
@@ -295,7 +318,7 @@ func SitDown(name, av string) error { /// sit at holdero table
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(Round.Contract, args, t)
+	fee, _ := GasEstimate(Round.Contract, "[Holdero]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     Round.Contract,
@@ -306,11 +329,11 @@ func SitDown(name, av string) error { /// sit at holdero table
 
 	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
 	if err != nil {
-		log.Println(err)
+		log.Println("[SitDown]", err)
 		return nil
 	}
 
-	log.Println("Sit Down TX:", txid)
+	log.Println("[Holdero] Sit Down TX:", txid)
 	addLog("Sit Down TX: " + txid.TXID)
 
 	return err
@@ -334,7 +357,7 @@ func Leave() error { /// leave holdero table
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(Round.Contract, args, t)
+	fee, _ := GasEstimate(Round.Contract, "[Holdero]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     Round.Contract,
@@ -345,11 +368,11 @@ func Leave() error { /// leave holdero table
 
 	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
 	if err != nil {
-		log.Println(err)
+		log.Println("[Leave]", err)
 		return nil
 	}
 
-	log.Println("Leave TX:", txid)
+	log.Println("[Holdero] Leave TX:", txid)
 	addLog("Leave Down TX: " + txid.TXID)
 
 	return err
@@ -359,14 +382,13 @@ func SetTable(seats int, bb, sb, ante uint64, chips, name, av string) error { //
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
-	var hx string
-	if av != "" {
-		with := "_" + name + "_" + av
-		hx = hex.EncodeToString([]byte(with))
-	} else {
-		out := "_" + name
-		hx = hex.EncodeToString([]byte(out))
-	}
+	var player playerId
+	player.Id = Wallet.idHash
+	player.Name = name
+	player.Avatar = av
+
+	mar, _ := json.Marshal(player)
+	hx := hex.EncodeToString(mar)
 
 	var args rpc.Arguments
 	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "SetTable"}
@@ -374,7 +396,7 @@ func SetTable(seats int, bb, sb, ante uint64, chips, name, av string) error { //
 	arg3 := rpc.Argument{Name: "bigBlind", DataType: "U", Value: bb}
 	arg4 := rpc.Argument{Name: "smallBlind", DataType: "U", Value: sb}
 	arg5 := rpc.Argument{Name: "ante", DataType: "U", Value: ante}
-	arg6 := rpc.Argument{Name: "address", DataType: "S", Value: Wallet.idHash + hx}
+	arg6 := rpc.Argument{Name: "address", DataType: "S", Value: hx}
 
 	if Round.Version < 110 {
 		args = rpc.Arguments{arg1, arg2, arg3, arg4, arg5, arg6}
@@ -391,7 +413,7 @@ func SetTable(seats int, bb, sb, ante uint64, chips, name, av string) error { //
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(Round.Contract, args, t)
+	fee, _ := GasEstimate(Round.Contract, "[Holdero]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     Round.Contract,
@@ -402,31 +424,24 @@ func SetTable(seats int, bb, sb, ante uint64, chips, name, av string) error { //
 
 	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
 	if err != nil {
-		log.Println(err)
+		log.Println("[SetTable]", err)
 		return nil
 	}
 
-	log.Println("Set Table TX:", txid)
+	log.Println("[Holdero] Set Table TX:", txid)
 	addLog("Set Table TX: " + txid.TXID)
 
 	return err
-}
-
-func GenerateKey() string {
-	random, _ := rand.Prime(rand.Reader, 128)
-	shasum := sha256.Sum256([]byte(random.String()))
-	str := hex.EncodeToString(shasum[:])
-	log.Println("Round Key: ", str)
-	addLog("Round Key: " + str)
-
-	return str
 }
 
 func DealHand() error { /// holdero hand
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
-	Wallet.ClientKey = GenerateKey()
+	if !Wallet.KeyLock {
+		Wallet.ClientKey = GenerateKey()
+	}
+
 	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "DealHand"}
 	arg2 := rpc.Argument{Name: "pcSeed", DataType: "H", Value: Wallet.ClientKey}
 	args := rpc.Arguments{arg1, arg2}
@@ -476,7 +491,7 @@ func DealHand() error { /// holdero hand
 		t = append(t, t1)
 	}
 
-	fee, _ := GasEstimate(Round.Contract, args, t)
+	fee, _ := GasEstimate(Round.Contract, "[Holdero]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     Round.Contract,
@@ -487,12 +502,12 @@ func DealHand() error { /// holdero hand
 
 	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
 	if err != nil {
-		log.Println(err)
+		log.Println("[DealHand]", err)
 		return nil
 	}
 
 	Display.Res = ""
-	log.Println("Deal TX:", txid)
+	log.Println("[Holdero] Deal TX:", txid)
 	addLog("Deal TX: " + txid.TXID)
 
 	return err
@@ -530,7 +545,7 @@ func Bet(amt string) error { /// holdero bet
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(Round.Contract, args, t)
+	fee, _ := GasEstimate(Round.Contract, "[Holdero]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     Round.Contract,
@@ -541,13 +556,13 @@ func Bet(amt string) error { /// holdero bet
 
 	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
 	if err != nil {
-		log.Println(err)
+		log.Println("[Bet]", err)
 		return nil
 	}
 
 	Display.Res = ""
 	Signal.PlacedBet = true
-	log.Println("Bet TX:", txid)
+	log.Println("[Holdero] Bet TX:", txid)
 	addLog("Bet TX: " + txid.TXID)
 
 	return err
@@ -585,7 +600,7 @@ func Check() error { /// holdero check and fold
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(Round.Contract, args, t)
+	fee, _ := GasEstimate(Round.Contract, "[Holdero]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     Round.Contract,
@@ -596,12 +611,12 @@ func Check() error { /// holdero check and fold
 
 	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
 	if err != nil {
-		log.Println(err)
+		log.Println("[Check]", err)
 		return nil
 	}
 
 	Display.Res = ""
-	log.Println("Check/Fold TX:", txid)
+	log.Println("[Holdero] Check/Fold TX:", txid)
 	addLog("Check/Fold TX: " + txid.TXID)
 
 	return err
@@ -623,7 +638,7 @@ func PayOut(w string) error { /// holdero single winner
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(Round.Contract, args, t)
+	fee, _ := GasEstimate(Round.Contract, "[Holdero]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     Round.Contract,
@@ -634,12 +649,12 @@ func PayOut(w string) error { /// holdero single winner
 
 	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
 	if err != nil {
-		log.Println(err)
+		log.Println("[PayOut]", err)
 		return nil
 	}
 
-	log.Println("Winner TX:", txid)
-	addLog("Winnner TX: " + txid.TXID)
+	log.Println("[Holdero] Payout TX:", txid)
+	addLog("Holdero Payout TX: " + txid.TXID)
 
 	return err
 }
@@ -702,7 +717,7 @@ func PayoutSplit(r ranker, f1, f2, f3, f4, f5, f6 bool) error { /// holdero spli
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(Round.Contract, args, t)
+	fee, _ := GasEstimate(Round.Contract, "[Holdero]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     Round.Contract,
@@ -713,17 +728,18 @@ func PayoutSplit(r ranker, f1, f2, f3, f4, f5, f6 bool) error { /// holdero spli
 
 	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
 	if err != nil {
-		log.Println(err)
+		log.Println("[PayoutSplit]", err)
 		return nil
 	}
 
-	log.Println("Split Winner TX:", txid)
+	log.Println("[Holdero] Split Winner TX:", txid)
 	addLog("Split Winner TX: " + txid.TXID)
 
 	return err
 }
 
 func RevealKey(key string) error { /// holdero reveal
+	time.Sleep(6 * time.Second)
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
@@ -739,7 +755,7 @@ func RevealKey(key string) error { /// holdero reveal
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(Round.Contract, args, t)
+	fee, _ := GasEstimate(Round.Contract, "[Holdero]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     Round.Contract,
@@ -750,12 +766,12 @@ func RevealKey(key string) error { /// holdero reveal
 
 	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
 	if err != nil {
-		log.Println(err)
+		log.Println("[RevealKey]", err)
 		return nil
 	}
 
 	Display.Res = ""
-	log.Println("Reveal TX:", txid)
+	log.Println("[Holdero] Reveal TX:", txid)
 	addLog("Reveal TX: " + txid.TXID)
 
 	return err
@@ -777,7 +793,7 @@ func CleanTable(amt uint64) error { /// shuffle and clean holdero
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(Round.Contract, args, t)
+	fee, _ := GasEstimate(Round.Contract, "[Holdero]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     Round.Contract,
@@ -788,11 +804,11 @@ func CleanTable(amt uint64) error { /// shuffle and clean holdero
 
 	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
 	if err != nil {
-		log.Println(err)
+		log.Println("[CleanTable]", err)
 		return nil
 	}
 
-	log.Println("Clean Table TX:", txid)
+	log.Println("[Holdero] Clean Table TX:", txid)
 	addLog("Clean Table TX: " + txid.TXID)
 
 	return err
@@ -813,7 +829,7 @@ func TimeOut() error {
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(Round.Contract, args, t)
+	fee, _ := GasEstimate(Round.Contract, "[Holdero]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     Round.Contract,
@@ -824,11 +840,11 @@ func TimeOut() error {
 
 	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
 	if err != nil {
-		log.Println(err)
+		log.Println("[TimeOut]", err)
 		return nil
 	}
 
-	log.Println("Timeout TX:", txid)
+	log.Println("[Holdero] Timeout TX:", txid)
 	addLog("Timeout TX: " + txid.TXID)
 
 	return err
@@ -849,7 +865,7 @@ func ForceStat() error {
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(Round.Contract, args, t)
+	fee, _ := GasEstimate(Round.Contract, "[Holdero]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     Round.Contract,
@@ -860,11 +876,11 @@ func ForceStat() error {
 
 	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
 	if err != nil {
-		log.Println(err)
+		log.Println("[ForceStart]", err)
 		return nil
 	}
 
-	log.Println("Force Start TX:", txid)
+	log.Println("[Holdero] Force Start TX:", txid)
 	addLog("Force Start TX: " + txid.TXID)
 
 	return err
@@ -915,7 +931,7 @@ func SharedDeckUrl(face, faceUrl, back, backUrl string) error {
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(Round.Contract, args, t)
+	fee, _ := GasEstimate(Round.Contract, "[Holdero]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     Round.Contract,
@@ -926,11 +942,11 @@ func SharedDeckUrl(face, faceUrl, back, backUrl string) error {
 
 	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
 	if err != nil {
-		log.Println(err)
+		log.Println("[SharedDeckUrl]", err)
 		return nil
 	}
 
-	log.Println("Shared TX:", txid)
+	log.Println("[Holdero] Shared TX:", txid)
 	addLog("Shared TX: " + txid.TXID)
 
 	return err
@@ -951,7 +967,7 @@ func GetdReams(amt uint64) error {
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(BaccSCID, args, t)
+	fee, _ := GasEstimate(BaccSCID, "[dReams]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     BaccSCID,
@@ -962,11 +978,11 @@ func GetdReams(amt uint64) error {
 
 	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
 	if err != nil {
-		log.Println(err)
+		log.Println("[GetdReams]", err)
 		return nil
 	}
 
-	log.Println("Get dReams", txid)
+	log.Println("[dReams] Get dReams", txid)
 	addLog("Get dReams " + txid.TXID)
 
 	return err
@@ -989,7 +1005,7 @@ func TradedReams(amt uint64) error {
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(BaccSCID, args, t)
+	fee, _ := GasEstimate(BaccSCID, "[dReams]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     BaccSCID,
@@ -1000,11 +1016,11 @@ func TradedReams(amt uint64) error {
 
 	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
 	if err != nil {
-		log.Println(err)
+		log.Println("[TradedReams]", err)
 		return nil
 	}
 
-	log.Println("Trade dReams TX:", txid)
+	log.Println("[dReams] Trade dReams TX:", txid)
 	addLog("Trade dReams TX: " + txid.TXID)
 
 	return err
@@ -1033,7 +1049,7 @@ func UploadHolderoContract(d, w bool, pub int) error {
 
 		code, code_err := GetHoldero110Code(d, pub)
 		if code_err != nil {
-			log.Println(code_err)
+			log.Println("[UploadHolderoContract]", code_err)
 			return nil
 		}
 
@@ -1051,12 +1067,12 @@ func UploadHolderoContract(d, w bool, pub int) error {
 
 		err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
 		if err != nil {
-			log.Println(err)
+			log.Println("[UploadHolderoContract]", err)
 			return nil
 		}
 
-		log.Println("Upload", txid)
-		addLog("Upload " + txid.TXID)
+		log.Println("[Holdero] Upload TX:", txid)
+		addLog("Holdero Upload TX:" + txid.TXID)
 
 		return err
 	}
@@ -1082,7 +1098,7 @@ func BaccBet(amt, w string) error {
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(BaccSCID, args, t)
+	fee, _ := GasEstimate(BaccSCID, "[Baccarat]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     BaccSCID,
@@ -1093,20 +1109,20 @@ func BaccBet(amt, w string) error {
 
 	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
 	if err != nil {
-		log.Println(err)
+		log.Println("[BaccBet]", err)
 		return nil
 	}
 
 	Bacc.Last = txid.TXID
 	Bacc.Notified = false
 	if w == "player" {
-		log.Println("Baccarat Player TX:", txid)
+		log.Println("[Baccarat] Player TX:", txid)
 		addLog("Baccarat Player TX: " + txid.TXID)
 	} else if w == "banker" {
-		log.Println("Baccarat Banker TX:", txid)
+		log.Println("[Baccarat] Banker TX:", txid)
 		addLog("Baccarat Banker TX: " + txid.TXID)
 	} else {
-		log.Println("Baccarat Tie TX:", txid)
+		log.Println("[Baccarat] Tie TX:", txid)
 		addLog("Baccarat Tie TX: " + txid.TXID)
 	}
 
@@ -1134,7 +1150,7 @@ func PredictHigher(scid, name string) error {
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(scid, args, t)
+	fee, _ := GasEstimate(scid, "[Predictions]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     scid,
@@ -1145,11 +1161,11 @@ func PredictHigher(scid, name string) error {
 
 	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
 	if err != nil {
-		log.Println(err)
+		log.Println("[PredictHigher]", err)
 		return nil
 	}
 
-	log.Println("Prediction TX:", txid)
+	log.Println("[Predictions] Prediction TX:", txid)
 	addLog("Prediction TX: " + txid.TXID)
 
 	return err
@@ -1174,7 +1190,7 @@ func PredictLower(scid, name string) error {
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(scid, args, t)
+	fee, _ := GasEstimate(scid, "[Predictions]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     scid,
@@ -1185,11 +1201,11 @@ func PredictLower(scid, name string) error {
 
 	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
 	if err != nil {
-		log.Println(err)
+		log.Println("[PredictLower]", err)
 		return nil
 	}
 
-	log.Println("Prediction TX:", txid)
+	log.Println("[Predictions] Prediction TX:", txid)
 	addLog("Prediction TX: " + txid.TXID)
 
 	return err
@@ -1211,7 +1227,7 @@ func NameChange(scid, name string) error { /// change leaderboard name
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(scid, args, t)
+	fee, _ := GasEstimate(scid, "[Predictions]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     scid,
@@ -1222,11 +1238,11 @@ func NameChange(scid, name string) error { /// change leaderboard name
 
 	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
 	if err != nil {
-		log.Println(err)
+		log.Println("[NameChange]", err)
 		return nil
 	}
 
-	log.Println("Name Change TX:", txid)
+	log.Println("[Predictions] Name Change TX:", txid)
 	addLog("Name Change TX: " + txid.TXID)
 
 	return err
@@ -1248,7 +1264,7 @@ func RemoveAddress(scid, name string) error {
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(scid, args, t)
+	fee, _ := GasEstimate(scid, "[Predictions]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     scid,
@@ -1259,11 +1275,11 @@ func RemoveAddress(scid, name string) error {
 
 	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
 	if err != nil {
-		log.Println(err)
+		log.Println("[RemoveAddress]", err)
 		return nil
 	}
 
-	log.Println("Remove TX:", txid)
+	log.Println("[Predictions] Remove TX:", txid)
 	addLog("Remove TX: " + txid.TXID)
 
 	return err
@@ -1299,7 +1315,7 @@ func PickTeam(scid, multi, n string, a uint64, pick int) error { /// pick sports
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(scid, args, t)
+	fee, _ := GasEstimate(scid, "[Sports]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     scid,
@@ -1310,11 +1326,11 @@ func PickTeam(scid, multi, n string, a uint64, pick int) error { /// pick sports
 
 	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
 	if err != nil {
-		log.Println(err)
+		log.Println("[PickTeam]", err)
 		return nil
 	}
 
-	log.Println("Pick TX:", txid)
+	log.Println("[Sports] Pick TX:", txid)
 	addLog("Pick TX: " + txid.TXID)
 
 	return err
@@ -1340,7 +1356,7 @@ func SetSports(end int, amt, dep uint64, scid, league, game, feed string) error 
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(scid, args, t)
+	fee, _ := GasEstimate(scid, "[Sports]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     scid,
@@ -1351,17 +1367,17 @@ func SetSports(end int, amt, dep uint64, scid, league, game, feed string) error 
 
 	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
 	if err != nil {
-		log.Println(err)
+		log.Println("[SetSports]", err)
 		return nil
 	}
 
-	log.Println("Set Sports TX:", txid)
+	log.Println("[Sports] Set TX:", txid)
 	addLog("Set Sports TX: " + txid.TXID)
 
 	return err
 }
 
-func SetPrediction(end int, amt, dep uint64, scid, predict, feed string) error {
+func SetPrediction(end, mark int, amt, dep uint64, scid, predict, feed string) error {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
@@ -1370,7 +1386,8 @@ func SetPrediction(end int, amt, dep uint64, scid, predict, feed string) error {
 	arg3 := rpc.Argument{Name: "amt", DataType: "U", Value: amt}
 	arg4 := rpc.Argument{Name: "predict", DataType: "S", Value: predict}
 	arg5 := rpc.Argument{Name: "feed", DataType: "S", Value: feed}
-	args := rpc.Arguments{arg1, arg2, arg3, arg4, arg5}
+	arg6 := rpc.Argument{Name: "mark", DataType: "U", Value: mark}
+	args := rpc.Arguments{arg1, arg2, arg3, arg4, arg5, arg6}
 	txid := rpc.Transfer_Result{}
 
 	t1 := rpc.Transfer{
@@ -1380,7 +1397,7 @@ func SetPrediction(end int, amt, dep uint64, scid, predict, feed string) error {
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(scid, args, t)
+	fee, _ := GasEstimate(scid, "[Predictions]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     scid,
@@ -1391,12 +1408,60 @@ func SetPrediction(end int, amt, dep uint64, scid, predict, feed string) error {
 
 	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
 	if err != nil {
-		log.Println(err)
+		log.Println("[SetPrediction]", err)
 		return nil
 	}
 
-	log.Println("Set Prediction TX:", txid)
+	log.Println("[Predictions] Set TX:", txid)
 	addLog("Set Prediction TX: " + txid.TXID)
+
+	return err
+}
+
+func CancelInitiatedBet(scid string, b int) error {
+	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
+	defer cancel()
+
+	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "Cancel"}
+	args := rpc.Arguments{arg1}
+	txid := rpc.Transfer_Result{}
+
+	t1 := rpc.Transfer{
+		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
+		Amount:      0,
+		Burn:        0,
+	}
+
+	var tag string
+	if b == 0 {
+		tag = "[Predictions]"
+	} else {
+		tag = "[Sports]"
+	}
+
+	t := []rpc.Transfer{t1}
+	fee, _ := GasEstimate(scid, tag, args, t)
+	params := &rpc.Transfer_Params{
+		Transfers: t,
+		SC_ID:     scid,
+		SC_RPC:    args,
+		Ringsize:  2,
+		Fees:      fee,
+	}
+
+	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
+	if err != nil {
+		log.Println("[CancelInitiatedBet]", err)
+		return nil
+	}
+
+	if b == 0 {
+		log.Println("[Predictions] Cancel TX:", txid)
+		addLog("Cancel Prediction TX: " + txid.TXID)
+	} else {
+		log.Println("[Sports] Cancel TX:", txid)
+		addLog("Cancel Sports TX: " + txid.TXID)
+	}
 
 	return err
 }
@@ -1417,7 +1482,7 @@ func PostPrediction(scid string, price int) error {
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(scid, args, t)
+	fee, _ := GasEstimate(scid, "[Predictions]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     scid,
@@ -1428,11 +1493,11 @@ func PostPrediction(scid string, price int) error {
 
 	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
 	if err != nil {
-		log.Println(err)
+		log.Println("[PostPrediction]", err)
 		return nil
 	}
 
-	log.Println("Post TX:", txid)
+	log.Println("[Predictions] Post TX:", txid)
 	addLog("Post TX: " + txid.TXID)
 
 	return err
@@ -1449,7 +1514,7 @@ func EndSports(scid, num, team string) error {
 	txid := rpc.Transfer_Result{}
 
 	t := []rpc.Transfer{}
-	fee, _ := GasEstimate(scid, args, t)
+	fee, _ := GasEstimate(scid, "[Sports]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     scid,
@@ -1460,17 +1525,17 @@ func EndSports(scid, num, team string) error {
 
 	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
 	if err != nil {
-		log.Println(err)
+		log.Println("[EndSports]", err)
 		return nil
 	}
 
-	log.Println("End Sports TX:", txid)
-	addLog("End Sports TX: " + txid.TXID)
+	log.Println("[Sports] Payout TX:", txid)
+	addLog("Sports Payout TX: " + txid.TXID)
 
 	return err
 }
 
-func EndPredition(scid string, price int) error {
+func EndPrediction(scid string, price int) error {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
@@ -1480,7 +1545,7 @@ func EndPredition(scid string, price int) error {
 	txid := rpc.Transfer_Result{}
 
 	t := []rpc.Transfer{}
-	fee, _ := GasEstimate(scid, args, t)
+	fee, _ := GasEstimate(scid, "[Predictions]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_Value:  0,
@@ -1492,12 +1557,12 @@ func EndPredition(scid string, price int) error {
 
 	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
 	if err != nil {
-		log.Println(err)
+		log.Println("[EndPrediction]", err)
 		return nil
 	}
 
-	log.Println("End Predition TX:", txid)
-	addLog("End Prediction TX: " + txid.TXID)
+	log.Println("[Predictions] Payout TX:", txid)
+	addLog("Prediction Payout TX: " + txid.TXID)
 
 	return err
 }
@@ -1513,13 +1578,13 @@ func UploadBetContract(d, w, c bool, pub int) error {
 		if c {
 			code, code_err = GetPredictCode(d, pub)
 			if code_err != nil {
-				log.Println(code_err)
+				log.Println("[UploadBetContract]", code_err)
 				return nil
 			}
 		} else {
 			code, code_err = GetSportsCode(d, pub)
 			if code_err != nil {
-				log.Println(code_err)
+				log.Println("[UploadBetContract]", code_err)
 				return nil
 			}
 		}
@@ -1538,12 +1603,17 @@ func UploadBetContract(d, w, c bool, pub int) error {
 
 		err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
 		if err != nil {
-			log.Println(err)
+			log.Println("[UploadBetContract]", err)
 			return nil
 		}
 
-		log.Println("Upload", txid)
-		addLog("Upload " + txid.TXID)
+		if c {
+			log.Println("[Predictions] Upload TX:", txid)
+			addLog("Prediction Upload TX:" + txid.TXID)
+		} else {
+			log.Println("[Sports] Upload TX:", txid)
+			addLog("Sports Upload TX:" + txid.TXID)
+		}
 
 		return err
 	}
@@ -1570,7 +1640,7 @@ func SetHeaders(name, desc, icon, scid string) error {
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(GnomonSCID, args, t)
+	fee, _ := GasEstimate(GnomonSCID, "[dReams]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_Value:  0,
@@ -1581,10 +1651,10 @@ func SetHeaders(name, desc, icon, scid string) error {
 	}
 	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
 	if err != nil {
-		log.Println(err)
+		log.Println("[SetHeaders]", err)
 		return nil
 	}
-	log.Println("Set Headers TX:", txid)
+	log.Println("[dReams] Set Headers TX:", txid)
 	addLog("Set Headers TX: " + txid.TXID)
 
 	return err
@@ -1607,7 +1677,7 @@ func ClaimNfa(scid string) error {
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(scid, args, t)
+	fee, _ := GasEstimate(scid, "[dReams]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     scid,
@@ -1618,11 +1688,11 @@ func ClaimNfa(scid string) error {
 
 	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
 	if err != nil {
-		log.Println(err)
+		log.Println("[ClaimNfa]", err)
 		return nil
 	}
 
-	log.Println("Claim TX:", txid)
+	log.Println("[dReams] Claim TX:", txid)
 	addLog("Claim TX: " + txid.TXID)
 
 	return err
@@ -1643,7 +1713,7 @@ func NfaBidBuy(scid, bidor string, amt uint64) error {
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(scid, args, t)
+	fee, _ := GasEstimate(scid, "[dReams]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     scid,
@@ -1654,15 +1724,15 @@ func NfaBidBuy(scid, bidor string, amt uint64) error {
 
 	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
 	if err != nil {
-		log.Println(err)
+		log.Println("[NfaBidBuy]", err)
 		return nil
 	}
 
 	if bidor == "Bid" {
-		log.Println("Bid TX:", txid)
+		log.Println("[dReams] NFA Bid TX:", txid)
 		addLog("Bid TX: " + txid.TXID)
 	} else {
-		log.Println("Buy TX:", txid)
+		log.Println("[dReams] NFA Buy TX:", txid)
 		addLog("Buy TX: " + txid.TXID)
 	}
 
@@ -1705,7 +1775,7 @@ func NfaSetListing(scid, list, char string, dur, amt, perc uint64) error {
 	}
 
 	t := []rpc.Transfer{t1, t2, t3}
-	fee, _ := GasEstimate(scid, args, t)
+	fee, _ := GasEstimate(scid, "[dReams]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     scid,
@@ -1715,10 +1785,10 @@ func NfaSetListing(scid, list, char string, dur, amt, perc uint64) error {
 	}
 	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
 	if err != nil {
-		log.Println(err)
+		log.Println("[NfaSetListing]", err)
 		return nil
 	}
-	log.Println("NFA List TX:", txid)
+	log.Println("[dReams] NFA List TX:", txid)
 	addLog("NFA List TX: " + txid.TXID)
 
 	return err
@@ -1739,7 +1809,7 @@ func NfaCancelClose(scid, c string) error {
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(scid, args, t)
+	fee, _ := GasEstimate(scid, "[dReams]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     scid,
@@ -1750,17 +1820,60 @@ func NfaCancelClose(scid, c string) error {
 
 	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
 	if err != nil {
-		log.Println(err)
+		log.Println("[NfaCancelClose]", err)
 		return nil
 	}
 
 	if c == "CloseListing" {
-		log.Println("Close Listing TX:", txid)
+		log.Println("[dReams] Close NFA Listing TX:", txid)
 		addLog("Close Listing TX: " + txid.TXID)
 	} else {
-		log.Println("Cancel Listing TX:", txid)
+		log.Println("[dReams] Cancel NFA Listing TX:", txid)
 		addLog("Cancel Listing TX: " + txid.TXID)
 	}
+
+	return err
+}
+
+func TarotReading(num int) error {
+	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
+	defer cancel()
+
+	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "Draw"}
+	arg2 := rpc.Argument{Name: "num", DataType: "U", Value: num}
+	args := rpc.Arguments{arg1, arg2}
+	txid := rpc.Transfer_Result{}
+
+	t1 := rpc.Transfer{
+		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
+		Amount:      0,
+		Burn:        10000,
+	}
+
+	t := []rpc.Transfer{t1}
+	fee, _ := GasEstimate(TarotSCID, "[Tarot]", args, t)
+	params := &rpc.Transfer_Params{
+		Transfers: t,
+		SC_ID:     TarotSCID,
+		SC_RPC:    args,
+		Ringsize:  2,
+		Fees:      fee,
+	}
+
+	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
+	if err != nil {
+		log.Println("[TarotReading]", err)
+		return nil
+	}
+
+	Tarot.Num = num
+	Tarot.Last = txid.TXID
+	Tarot.Notified = false
+
+	log.Println("[Tarot] Reading TX:", txid)
+	addLog("Reading TX: " + txid.TXID)
+
+	Tarot.CHeight = StringToInt(Wallet.Height)
 
 	return err
 }

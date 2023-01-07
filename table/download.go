@@ -12,6 +12,9 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
+
+	coingecko "github.com/superoo7/go-gecko/v3"
 
 	"github.com/SixofClubsss/dReams/rpc"
 
@@ -21,60 +24,60 @@ import (
 type sharedCards struct {
 	//window   fyne.Window
 	//progress *widget.ProgressBar
-	Back   canvas.Image
-	Card1  canvas.Image
-	Card2  canvas.Image
-	Card3  canvas.Image
-	Card4  canvas.Image
-	Card5  canvas.Image
-	Card6  canvas.Image
-	Card7  canvas.Image
-	Card8  canvas.Image
-	Card9  canvas.Image
-	Card10 canvas.Image
-	Card11 canvas.Image
-	Card12 canvas.Image
-	Card13 canvas.Image
-	Card14 canvas.Image
-	Card15 canvas.Image
-	Card16 canvas.Image
-	Card17 canvas.Image
-	Card18 canvas.Image
-	Card19 canvas.Image
-	Card20 canvas.Image
-	Card21 canvas.Image
-	Card22 canvas.Image
-	Card23 canvas.Image
-	Card24 canvas.Image
-	Card25 canvas.Image
-	Card26 canvas.Image
-	Card27 canvas.Image
-	Card28 canvas.Image
-	Card29 canvas.Image
-	Card30 canvas.Image
-	Card31 canvas.Image
-	Card32 canvas.Image
-	Card33 canvas.Image
-	Card34 canvas.Image
-	Card35 canvas.Image
-	Card36 canvas.Image
-	Card37 canvas.Image
-	Card38 canvas.Image
-	Card39 canvas.Image
-	Card40 canvas.Image
-	Card41 canvas.Image
-	Card42 canvas.Image
-	Card43 canvas.Image
-	Card44 canvas.Image
-	Card45 canvas.Image
-	Card46 canvas.Image
-	Card47 canvas.Image
-	Card48 canvas.Image
-	Card49 canvas.Image
-	Card50 canvas.Image
-	Card51 canvas.Image
-	Card52 canvas.Image
-	Empty  canvas.Image
+	//Back canvas.Image
+	// Card1  canvas.Image
+	// Card2  canvas.Image
+	// Card3  canvas.Image
+	// Card4  canvas.Image
+	// Card5  canvas.Image
+	// Card6  canvas.Image
+	// Card7  canvas.Image
+	// Card8  canvas.Image
+	// Card9  canvas.Image
+	// Card10 canvas.Image
+	// Card11 canvas.Image
+	// Card12 canvas.Image
+	// Card13 canvas.Image
+	// Card14 canvas.Image
+	// Card15 canvas.Image
+	// Card16 canvas.Image
+	// Card17 canvas.Image
+	// Card18 canvas.Image
+	// Card19 canvas.Image
+	// Card20 canvas.Image
+	// Card21 canvas.Image
+	// Card22 canvas.Image
+	// Card23 canvas.Image
+	// Card24 canvas.Image
+	// Card25 canvas.Image
+	// Card26 canvas.Image
+	// Card27 canvas.Image
+	// Card28 canvas.Image
+	// Card29 canvas.Image
+	// Card30 canvas.Image
+	// Card31 canvas.Image
+	// Card32 canvas.Image
+	// Card33 canvas.Image
+	// Card34 canvas.Image
+	// Card35 canvas.Image
+	// Card36 canvas.Image
+	// Card37 canvas.Image
+	// Card38 canvas.Image
+	// Card39 canvas.Image
+	// Card40 canvas.Image
+	// Card41 canvas.Image
+	// Card42 canvas.Image
+	// Card43 canvas.Image
+	// Card44 canvas.Image
+	// Card45 canvas.Image
+	// Card46 canvas.Image
+	// Card47 canvas.Image
+	// Card48 canvas.Image
+	// Card49 canvas.Image
+	// Card50 canvas.Image
+	// Card51 canvas.Image
+	// Card52 canvas.Image
+	//Empty canvas.Image
 
 	P1_avatar canvas.Image
 	P2_avatar canvas.Image
@@ -92,6 +95,8 @@ type sharedCards struct {
 }
 
 func ClearShared() {
+	rpc.Display.Res = ""
+	rpc.Round.First_try = true
 	rpc.Round.P1_url = ""
 	rpc.Round.P2_url = ""
 	rpc.Round.P3_url = ""
@@ -106,6 +111,8 @@ func ClearShared() {
 	rpc.Round.P6_name = ""
 	rpc.Round.Bettor = ""
 	rpc.Round.Raisor = ""
+	rpc.Round.Last = 0
+	rpc.Signal.Reveal = false
 	rpc.Signal.Out1 = false
 	Shared.GotP1 = false
 	Shared.GotP2 = false
@@ -119,6 +126,7 @@ func ClearShared() {
 	Shared.P4_avatar = *canvas.NewImageFromImage(nil)
 	Shared.P5_avatar = *canvas.NewImageFromImage(nil)
 	Shared.P6_avatar = *canvas.NewImageFromImage(nil)
+
 }
 
 var Shared sharedCards
@@ -133,12 +141,12 @@ func GetUrls(face, back string) {
 func DownloadFile(Url, fileName string) (canvas.Image, error) {
 	response, err := http.Get(Url)
 	if err != nil {
-		return Shared.Empty, err
+		return *canvas.NewImageFromImage(nil), err
 	}
 	defer response.Body.Close()
 
 	if response.StatusCode != 200 {
-		return Shared.Empty, errors.New("received non 200 response code")
+		return *canvas.NewImageFromImage(nil), errors.New("received non 200 response code")
 	}
 
 	img := *canvas.NewImageFromReader(response.Body, fileName)
@@ -228,7 +236,7 @@ func downloadMemoryDeck(url string) {
 
 func downloadSharedImages(Url string, i int) int {
 	fileName := "card" + strconv.Itoa(i) + ".png"
-	log.Println("Downloading ", Url+fileName)
+	log.Println("[dReams] Downloading ", Url+fileName)
 
 	switch i {
 	case 0:
@@ -628,38 +636,84 @@ type kuFeed struct {
 	} `json:"data"`
 }
 
+func CoinDecimal(ticker string) int {
+	split := strings.Split(ticker, "-")
+
+	if len(split) == 2 {
+		switch split[1] {
+		case "BTC":
+			return 8
+		default:
+			return 2
+		}
+	}
+	return 2
+}
+
 func GetPrice(coin string) (price float64, display string) {
 	var t float64
 	var k float64
+	var g float64
 	priceT := getOgre(coin)
 	priceK := getKucoin(coin)
+	priceG := getGeko(coin)
 
-	if tf, err := strconv.ParseFloat(priceT, 64); err == nil {
-		t = tf * 100
+	if CoinDecimal(coin) == 8 {
+		if tf, err := strconv.ParseFloat(priceT, 64); err == nil {
+			t = tf * 100000000
+		}
+
+		if kf, err := strconv.ParseFloat(priceK, 64); err == nil {
+			k = kf * 100000000
+		}
+
+		if gf, err := strconv.ParseFloat(priceG, 64); err == nil {
+			g = gf * 100000000
+		}
+	} else {
+		if tf, err := strconv.ParseFloat(priceT, 64); err == nil {
+			t = tf * 100
+		}
+
+		if kf, err := strconv.ParseFloat(priceK, 64); err == nil {
+			k = kf * 100
+		}
+
+		if gf, err := strconv.ParseFloat(priceG, 64); err == nil {
+			g = gf * 100
+		}
 	}
 
-	if kf, err := strconv.ParseFloat(priceK, 64); err == nil {
-		k = kf * 100
-	}
-
-	if t > 0 && k > 0 {
+	if t > 0 && k > 0 && g > 0 {
+		price = (t + k + g) / 3
+	} else if t > 0 && k > 0 {
 		price = (t + k) / 2
+	} else if k > 0 && g > 0 {
+		price = (k + g) / 2
+	} else if t > 0 && g > 0 {
+		price = (t + g) / 2
 	} else if t > 0 {
 		price = t
 	} else if k > 0 {
 		price = k
+	} else if g > 0 {
+		price = g
+	} else {
+		price = 0
+		log.Println("[dReams] Error getting price feed")
 	}
 
-	if price == 0 {
-		log.Println("Error getting dReams price feed")
+	if CoinDecimal(coin) == 8 {
+		display = fmt.Sprintf("%.8f", price/100000000)
+	} else {
+		display = fmt.Sprintf("%.2f", price/100)
 	}
-
-	display = fmt.Sprintf("%.2f", price/100)
 
 	return
 }
 
 func getOgre(coin string) string {
+	decimal := 2
 	var url string
 	var found ogreFeed
 	switch coin {
@@ -669,6 +723,12 @@ func getOgre(coin string) string {
 		url = "https://tradeogre.com/api/v1/ticker/usdt-dero"
 	case "XMR-USDT":
 		url = "https://tradeogre.com/api/v1/ticker/usdt-xmr"
+	case "DERO-BTC":
+		url = "https://tradeogre.com/api/v1/ticker/btc-dero"
+		decimal = 8
+	case "XMR-BTC":
+		url = "https://tradeogre.com/api/v1/ticker/btc-xmr"
+		decimal = 8
 	default:
 		return ""
 	}
@@ -676,7 +736,7 @@ func getOgre(coin string) string {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		log.Println(err.Error())
+		log.Println("[getOgre]", err)
 		return ""
 	}
 
@@ -685,7 +745,7 @@ func getOgre(coin string) string {
 	resp, err := client.Do(req)
 
 	if err != nil {
-		log.Println(err.Error())
+		log.Println("[getOgre]", err)
 		return ""
 	}
 
@@ -693,13 +753,16 @@ func getOgre(coin string) string {
 	b, err := io.ReadAll(resp.Body)
 
 	if err != nil {
-		log.Println(err.Error())
+		log.Println("[getOgre]", err)
 		return ""
 	}
 
 	json.Unmarshal(b, &found)
 
 	if s, err := strconv.ParseFloat(found.Price, 64); err == nil {
+		if decimal == 8 {
+			return fmt.Sprintf("%.8f", s)
+		}
 		return fmt.Sprintf("%.2f", s)
 	}
 
@@ -707,6 +770,7 @@ func getOgre(coin string) string {
 }
 
 func getKucoin(coin string) string {
+	decimal := 2
 	var url string
 	var found kuFeed
 	switch coin {
@@ -716,6 +780,12 @@ func getKucoin(coin string) string {
 		url = "https://api.kucoin.com/api/v1/market/orderbook/level1?symbol=DERO-USDT"
 	case "XMR-USDT":
 		url = "https://api.kucoin.com/api/v1/market/orderbook/level1?symbol=XMR-USDT"
+	case "DERO-BTC":
+		url = "https://api.kucoin.com/api/v1/market/orderbook/level1?symbol=DERO-BTC"
+		decimal = 8
+	case "XMR-BTC":
+		url = "https://api.kucoin.com/api/v1/market/orderbook/level1?symbol=XMR-BTC"
+		decimal = 8
 	default:
 		return ""
 	}
@@ -723,7 +793,7 @@ func getKucoin(coin string) string {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		log.Println(err.Error())
+		log.Println("[getKucoin]", err)
 		return ""
 	}
 
@@ -732,7 +802,7 @@ func getKucoin(coin string) string {
 	resp, err := client.Do(req)
 
 	if err != nil {
-		log.Println(err.Error())
+		log.Println("[getKucoin]", err)
 		return ""
 	}
 
@@ -740,30 +810,69 @@ func getKucoin(coin string) string {
 	b, err := io.ReadAll(resp.Body)
 
 	if err != nil {
-		log.Println(err.Error())
+		log.Println("[getKucoin]", err)
 		return ""
 	}
 
 	json.Unmarshal(b, &found)
 
 	if s, err := strconv.ParseFloat(found.Data.Price, 64); err == nil {
+		if decimal == 8 {
+			return fmt.Sprintf("%.8f", s)
+		}
 		return fmt.Sprintf("%.2f", s)
 	}
 
 	return found.Data.Price
 }
 
+func getGeko(coin string) string {
+	client := &http.Client{Timeout: time.Second * 10}
+	CG := coingecko.NewClient(client)
+
+	pair := "usd"
+	var url string
+	switch coin {
+	case "BTC-USDT":
+		url = "bitcoin"
+	case "DERO-USDT":
+		url = "dero"
+	case "XMR-USDT":
+		url = "monero"
+	case "DERO-BTC":
+		url = "dero"
+		pair = "btc"
+	case "XMR-BTC":
+		url = "monero"
+		pair = "btc"
+	default:
+		return ""
+	}
+
+	price, err := CG.SimpleSinglePrice(url, pair)
+	if err != nil {
+		log.Println("[getGeko]", err)
+		return ""
+	}
+
+	if pair == "btc" {
+		return fmt.Sprintf("%.8f", price.MarketPrice)
+	}
+
+	return fmt.Sprintf("%.2f", price.MarketPrice)
+}
+
 func downloadFileLocal(filepath string, url string) (err error) {
 	_, dir := os.Stat("cards")
 	if os.IsNotExist(dir) {
-		log.Println("Creating Cards Dir")
+		log.Println("[dReams] Creating Cards Dir")
 		mkdir := os.Mkdir("cards", 0755)
 		if mkdir != nil {
-			log.Println(mkdir)
+			log.Println("[dReams]", mkdir)
 		} else {
 			mksub := os.Mkdir("cards/backs", 0755)
 			if mksub != nil {
-				log.Println(mksub)
+				log.Println("[dReams]", mksub)
 			}
 		}
 
@@ -798,10 +907,10 @@ func GetZipDeck(face, url string) {
 	files, err := Unzip("cards/"+face+".zip", "cards/"+face)
 
 	if err != nil {
-		log.Println(err)
+		log.Println("[GetZipDeck]", err)
 	}
 
-	log.Println("Unzipped files:\n" + strings.Join(files, "\n"))
+	log.Println("[dReams] Unzipped files:\n" + strings.Join(files, "\n"))
 }
 
 func Unzip(src string, destination string) ([]string, error) {

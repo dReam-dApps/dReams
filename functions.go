@@ -48,16 +48,24 @@ Usage:
 
 Options:
   -h --help     Show this screen.
+  --trim=<false>	dReams option, set true to trim index search filters.
   --fastsync=<false>	Gnomon option,  true/false value to define loading at chain height on start up.
   --num-parallel-blocks=<5>   Gnomon option,  defines the number of parallel blocks to index.`
 
 var offset int
 
 func flags() {
-	arguments, err := docopt.ParseArgs(command_line, nil, "v0.9.0")
+	arguments, err := docopt.ParseArgs(command_line, nil, "v0.9.2")
 
 	if err != nil {
 		log.Fatalf("Error while parsing arguments: %s\n", err)
+	}
+
+	trim := false
+	if arguments["--trim"] != nil {
+		if arguments["--trim"].(string) == "true" {
+			trim = true
+		}
 	}
 
 	fastsync := true
@@ -84,6 +92,7 @@ func flags() {
 		}
 	}
 
+	menu.Gnomes.Trim = trim
 	menu.Gnomes.Fast = fastsync
 	menu.Gnomes.Para = parallel
 }
@@ -103,6 +112,8 @@ func init() {
 
 	rpc.Signal.Sit = true
 
+	table.InitTableSettings()
+
 	c := make(chan os.Signal)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
@@ -111,9 +122,17 @@ func init() {
 		fmt.Println()
 		menu.StopGnomon(menu.Gnomes.Init)
 		menu.StopIndicators()
-		log.Println("Closing dReams.")
+		log.Println("[dReams] Closing")
 		os.Exit(0)
 	}()
+}
+
+func stamp() {
+	fmt.Println(`♤♡♧♢♧♡♤♡♧♢♧♡♤♡♧♢♧♡♤♡♧♢♧♡♤♡♧♢♧♡♤`)
+	fmt.Println(`        dReams v0.9.2`)
+	fmt.Println(`   https://dreamtables.net`)
+	fmt.Println(`   ©2022-2023 dReam Tables`)
+	fmt.Println(`♤♡♧♢♧♡♤♡♧♢♧♡♤♡♧♢♧♡♤♡♧♢♧♡♤♡♧♢♧♡♤`)
 }
 
 func notification(title, content string, g int) *fyne.Notification {
@@ -122,6 +141,9 @@ func notification(title, content string, g int) *fyne.Notification {
 		rpc.Round.Notified = true
 	case 1:
 		rpc.Bacc.Notified = true
+	case 2:
+		rpc.Tarot.Notified = true
+	default:
 	}
 
 	return &fyne.Notification{Title: title, Content: content}
@@ -135,10 +157,10 @@ func systemTray(w fyne.App) bool {
 	if desk, ok := w.(desktop.App); ok {
 		m := fyne.NewMenu("MyApp",
 			fyne.NewMenuItem("Show", func() {
-				log.Println("Tapped show")
+				log.Println("[dReams] Tapped show")
 			}),
 			fyne.NewMenuItem("Reveal Key", func() {
-				rpc.RevealKey(rpc.Wallet.ClientKey)
+				go rpc.RevealKey(rpc.Wallet.ClientKey)
 			}))
 		desk.SetSystemTrayMenu(m)
 		return true
@@ -157,8 +179,9 @@ func makeConfig(name, daemon string) (data save) {
 	switch daemon {
 	case "127.0.0.1:10102":
 	case "89.38.99.117:10102":
-	case "dero-node.mysrv.cloud:10102":
-	case "derostats.io:10102":
+	// case "dero-node.mysrv.cloud:10102":
+	// case "derostats.io:10102":
+	case "publicrpc1.dero.io:10102":
 	default:
 		data.Daemon = []string{daemon}
 	}
@@ -176,7 +199,7 @@ func writeConfig(u save) {
 			file, err := os.Create("config.json")
 
 			if err != nil {
-				log.Println(err)
+				log.Println("[writeConfig]", err)
 			}
 
 			u.Tables = menu.MenuControl.Holdero_favorites
@@ -189,7 +212,7 @@ func writeConfig(u save) {
 			_, err = file.Write(json)
 
 			if err != nil {
-				log.Println("Error writing config file: ", err)
+				log.Println("[writeConfig]", err)
 			}
 		}
 	}
@@ -203,14 +226,14 @@ func readConfig() (saved save) {
 	file, err := os.ReadFile("config.json")
 
 	if err != nil {
-		log.Println("Error reading config file: ", err)
+		log.Println("[readConfig]", err)
 		return
 	}
 
 	var config save
 	err = json.Unmarshal(file, &config)
 	if err != nil {
-		log.Println("Error during unmarshal: ", err)
+		log.Println("[readConfig]", err)
 		return
 	}
 
@@ -251,11 +274,11 @@ func clearBaccCards() *fyne.Container {
 	return &content
 }
 
-func showHolderoCards(l1, l2 string) *fyne.Container {
+func placeHolderoCards() *fyne.Container {
 	size := dReams.Window.Content().Size()
-	content := *container.NewWithoutLayout(
-		Hole_1(Card(l1), size.Width, size.Height),
-		Hole_2(Card(l2), size.Width, size.Height),
+	Cards.Layout = container.NewWithoutLayout(
+		Hole_1(0, size.Width, size.Height),
+		Hole_2(0, size.Width, size.Height),
 		P1_a(Is_In(rpc.CardHash.P1C1, 1, rpc.Signal.End)),
 		P1_b(Is_In(rpc.CardHash.P1C2, 1, rpc.Signal.End)),
 		P2_a(Is_In(rpc.CardHash.P2C1, 2, rpc.Signal.End)),
@@ -271,10 +294,72 @@ func showHolderoCards(l1, l2 string) *fyne.Container {
 		Flop_1(rpc.Round.Flop1),
 		Flop_2(rpc.Round.Flop2),
 		Flop_3(rpc.Round.Flop3),
-		River(rpc.Round.TurnCard),
-		Turn(rpc.Round.RiverCard))
+		Turn(rpc.Round.TurnCard),
+		River(rpc.Round.RiverCard))
 
-	return &content
+	return Cards.Layout
+}
+
+func refreshHolderoCards(l1, l2 string) {
+	size := dReams.Window.Content().Size()
+	Cards.Layout.Objects[0] = Hole_1(Card(l1), size.Width, size.Height)
+	Cards.Layout.Objects[0].Refresh()
+
+	Cards.Layout.Objects[1] = Hole_2(Card(l2), size.Width, size.Height)
+	Cards.Layout.Objects[1].Refresh()
+
+	Cards.Layout.Objects[2] = P1_a(Is_In(rpc.CardHash.P1C1, 1, rpc.Signal.End))
+	Cards.Layout.Objects[2].Refresh()
+
+	Cards.Layout.Objects[3] = P1_b(Is_In(rpc.CardHash.P1C2, 1, rpc.Signal.End))
+	Cards.Layout.Objects[3].Refresh()
+
+	Cards.Layout.Objects[4] = P2_a(Is_In(rpc.CardHash.P2C1, 2, rpc.Signal.End))
+	Cards.Layout.Objects[4].Refresh()
+
+	Cards.Layout.Objects[5] = P2_b(Is_In(rpc.CardHash.P2C2, 2, rpc.Signal.End))
+	Cards.Layout.Objects[5].Refresh()
+
+	Cards.Layout.Objects[6] = P3_a(Is_In(rpc.CardHash.P3C1, 3, rpc.Signal.End))
+	Cards.Layout.Objects[6].Refresh()
+
+	Cards.Layout.Objects[7] = P3_b(Is_In(rpc.CardHash.P3C2, 3, rpc.Signal.End))
+	Cards.Layout.Objects[7].Refresh()
+
+	Cards.Layout.Objects[8] = P4_a(Is_In(rpc.CardHash.P4C1, 4, rpc.Signal.End))
+	Cards.Layout.Objects[8].Refresh()
+
+	Cards.Layout.Objects[9] = P4_b(Is_In(rpc.CardHash.P4C2, 4, rpc.Signal.End))
+	Cards.Layout.Objects[9].Refresh()
+
+	Cards.Layout.Objects[10] = P5_a(Is_In(rpc.CardHash.P5C1, 5, rpc.Signal.End))
+	Cards.Layout.Objects[10].Refresh()
+
+	Cards.Layout.Objects[11] = P5_b(Is_In(rpc.CardHash.P5C2, 5, rpc.Signal.End))
+	Cards.Layout.Objects[11].Refresh()
+
+	Cards.Layout.Objects[12] = P6_a(Is_In(rpc.CardHash.P6C1, 6, rpc.Signal.End))
+	Cards.Layout.Objects[12].Refresh()
+
+	Cards.Layout.Objects[13] = P6_b(Is_In(rpc.CardHash.P6C2, 6, rpc.Signal.End))
+	Cards.Layout.Objects[13].Refresh()
+
+	Cards.Layout.Objects[14] = Flop_1(rpc.Round.Flop1)
+	Cards.Layout.Objects[14].Refresh()
+
+	Cards.Layout.Objects[15] = Flop_2(rpc.Round.Flop2)
+	Cards.Layout.Objects[15].Refresh()
+
+	Cards.Layout.Objects[16] = Flop_3(rpc.Round.Flop3)
+	Cards.Layout.Objects[16].Refresh()
+
+	Cards.Layout.Objects[17] = Turn(rpc.Round.TurnCard)
+	Cards.Layout.Objects[17].Refresh()
+
+	Cards.Layout.Objects[18] = River(rpc.Round.RiverCard)
+	Cards.Layout.Objects[18].Refresh()
+
+	Cards.Layout.Refresh()
 }
 
 func ifBet(w, r uint64) { /// sets bet amount on turn
@@ -329,14 +414,19 @@ func singleShot(turn, trigger bool) bool {
 func fetch(quit chan struct{}) { /// main loop
 	time.Sleep(3 * time.Second)
 	var ticker = time.NewTicker(3 * time.Second)
+	var autoCF bool
+	var autoD bool
 	var trigger bool
 	var skip int
+	var delay int
+	setLabels()
 	for {
 		select {
 		case <-ticker.C: /// do on interval
 			rpc.Ping()
+			rpc.EchoWallet(rpc.Wallet.Connect)
 			rpc.GetBalance(rpc.Wallet.Connect)
-			rpc.DreamsBalance(rpc.Wallet.Connect)
+			go rpc.DreamsBalance(rpc.Wallet.Connect)
 			rpc.TourneyBalance(rpc.Wallet.Connect, rpc.Round.Tourney, rpc.TourneySCID)
 			rpc.GetHeight(rpc.Wallet.Connect)
 			if !rpc.Signal.Startup {
@@ -344,6 +434,7 @@ func fetch(quit chan struct{}) { /// main loop
 				menu.GnomonEndPoint(rpc.Signal.Daemon, menu.Gnomes.Init, menu.Gnomes.Sync)
 				rpc.FetchHolderoSC(rpc.Signal.Daemon, rpc.Signal.Contract)
 				rpc.FetchBaccSC(rpc.Signal.Daemon)
+				rpc.FetchTarotSC(rpc.Signal.Daemon)
 				menu.GnomonState(rpc.Signal.Daemon, menu.Gnomes.Init, isWindows())
 				background.Refresh()
 
@@ -354,32 +445,95 @@ func fetch(quit chan struct{}) { /// main loop
 					SportsRefresh(dReams.sports)
 				}
 
-				if (rpc.StringToInt(rpc.Display.Turn) == rpc.Round.ID && rpc.StringToInt(rpc.Wallet.Height) > rpc.Signal.CHeight+3) ||
+				if (rpc.StringToInt(rpc.Display.Turn) == rpc.Round.ID && rpc.StringToInt(rpc.Wallet.Height) > rpc.Signal.CHeight+4) ||
 					(rpc.StringToInt(rpc.Display.Turn) != rpc.Round.ID && rpc.Round.ID >= 1) || (!rpc.Signal.My_turn && rpc.Round.ID >= 1) {
 					if rpc.Signal.Clicked {
 						trigger = false
+						autoCF = false
+						autoD = false
+						rpc.Signal.Reveal = false
 					}
 					rpc.Signal.Clicked = false
 				}
 
 				BaccRefresh()
 				PredictionRefresh(dReams.predict)
+				S.RightLabel.SetText("dReams Balance: " + rpc.Wallet.TokenBal + "      Dero Balance: " + rpc.Wallet.Balance + "      Height: " + rpc.Wallet.Height)
+				TarotRefresh()
 
 				go MenuRefresh(dReams.menu, menu.Gnomes.Init)
 				if !rpc.Signal.Clicked {
-					setHolderoLabel()
-					table.GetUrls(rpc.Round.F_url, rpc.Round.B_url)
-					rpc.Called(rpc.Round.Flop, rpc.Round.Wager)
-					trigger = singleShot(rpc.Signal.My_turn, trigger)
-					HolderoRefresh()
-					skip = 0
+					if rpc.Round.First_try {
+						rpc.Round.First_try = false
+						delay = 0
+						rpc.Round.Card_delay = false
+						go refreshHolderoPlayers()
+					}
+
+					if rpc.Round.Card_delay {
+						now := time.Now().Unix()
+						delay++
+						if delay >= 10 || now > rpc.Round.Last+39 {
+							delay = 0
+							rpc.Round.Card_delay = false
+						}
+					} else {
+						setHolderoLabel()
+						table.GetUrls(rpc.Round.F_url, rpc.Round.B_url)
+						rpc.Called(rpc.Round.Flop, rpc.Round.Wager)
+						trigger = singleShot(rpc.Signal.My_turn, trigger)
+						HolderoRefresh()
+						if table.Settings.Auto_check && rpc.Signal.My_turn && !autoCF {
+							if !rpc.Signal.Reveal && !rpc.Signal.End && !rpc.Round.LocalEnd {
+								if rpc.CardHash.Local1 != "" {
+									table.HolderoButtonBuffer()
+									rpc.Check()
+									H.TopLabel.SetText("Auto Check/Fold Tx Sent")
+									H.TopLabel.Refresh()
+									autoCF = true
+
+									go func() {
+										if !isWindows() {
+											time.Sleep(500 * time.Millisecond)
+											dReams.App.SendNotification(notification("dReams - Holdero", "Auto Check/Fold Tx Sent", 9))
+										}
+									}()
+								}
+							}
+						}
+
+						if table.Settings.Auto_deal && rpc.Signal.My_turn && !autoD {
+							if !rpc.Signal.Reveal && !rpc.Signal.End && !rpc.Round.LocalEnd {
+								if rpc.CardHash.Local1 == "" {
+									table.HolderoButtonBuffer()
+									rpc.DealHand()
+									H.TopLabel.SetText("Auto Deal Tx Sent")
+									H.TopLabel.Refresh()
+									autoD = true
+
+									go func() {
+										if !isWindows() {
+											time.Sleep(500 * time.Millisecond)
+											dReams.App.SendNotification(notification("dReams - Holdero", "Auto Deal Tx Sent", 9))
+										}
+									}()
+								}
+							}
+						}
+
+						skip = 0
+					}
 				} else {
 					waitLabel()
+					revealingKey()
 					skip++
 					if skip >= 18 {
 						rpc.Signal.Clicked = false
 						skip = 0
 						trigger = false
+						autoCF = false
+						autoD = false
+						rpc.Signal.Reveal = false
 					}
 				}
 			}
@@ -388,7 +542,7 @@ func fetch(quit chan struct{}) { /// main loop
 			}
 
 		case <-quit: /// exit loop
-			log.Println("Closing dReams.")
+			log.Println("[dReams] Closing")
 			ticker.Stop()
 			return
 		}
@@ -437,7 +591,7 @@ func waitLabel() {
 
 func HolderoRefresh() {
 	go table.ShowAvatar(dReams.holdero)
-	H.CardsContent = *container.NewWithoutLayout(showHolderoCards(rpc.CardHash.Local1, rpc.CardHash.Local2))
+	go refreshHolderoCards(rpc.CardHash.Local1, rpc.CardHash.Local2)
 	if !rpc.Signal.Clicked {
 		if rpc.Round.ID == 0 && rpc.Wallet.Connect {
 			if rpc.Signal.Sit {
@@ -498,15 +652,6 @@ func HolderoRefresh() {
 			table.Actions.Bet.Hide()
 			table.Actions.BetEntry.Hide()
 
-			if rpc.Signal.Reveal && rpc.Signal.My_turn && !rpc.Signal.End {
-				if !rpc.Round.Notified {
-					rpc.Display.Res = "Revealing Key"
-					if !isWindows() {
-						dReams.App.SendNotification(notification("dReams - Holdero", "Revealing Key", 0))
-					}
-				}
-			}
-
 			if !rpc.Signal.My_turn && !rpc.Signal.End && !rpc.Round.LocalEnd {
 				rpc.Display.Res = ""
 				rpc.Round.Notified = false
@@ -515,20 +660,47 @@ func HolderoRefresh() {
 	}
 
 	go func() {
-		H.TableContent = *container.NewWithoutLayout(
-			table.HolderoTable(resourceTablePng),
-			table.Player1_label(resourceUnknownPng, resourceAvatarFramePng, resourceTurnFramePng),
-			table.Player2_label(resourceUnknownPng, resourceAvatarFramePng, resourceTurnFramePng),
-			table.Player3_label(resourceUnknownPng, resourceAvatarFramePng, resourceTurnFramePng),
-			table.Player4_label(resourceUnknownPng, resourceAvatarFramePng, resourceTurnFramePng),
-			table.Player5_label(resourceUnknownPng, resourceAvatarFramePng, resourceTurnFramePng),
-			table.Player6_label(resourceUnknownPng, resourceAvatarFramePng, resourceTurnFramePng),
-			H.TopLabel,
-		)
-
-		H.TableContent.Refresh()
+		refreshHolderoPlayers()
 		H.TableItems.Refresh()
 	}()
+}
+
+func refreshHolderoPlayers() {
+	H.TableContent.Objects[0] = table.HolderoTable(resourceTablePng)
+	H.TableContent.Objects[0].Refresh()
+
+	H.TableContent.Objects[1] = table.Player1_label(resourceUnknownPng, resourceAvatarFramePng, resourceTurnFramePng)
+	H.TableContent.Objects[1].Refresh()
+
+	H.TableContent.Objects[2] = table.Player2_label(resourceUnknownPng, resourceAvatarFramePng, resourceTurnFramePng)
+	H.TableContent.Objects[2].Refresh()
+
+	H.TableContent.Objects[3] = table.Player3_label(resourceUnknownPng, resourceAvatarFramePng, resourceTurnFramePng)
+	H.TableContent.Objects[3].Refresh()
+
+	H.TableContent.Objects[4] = table.Player4_label(resourceUnknownPng, resourceAvatarFramePng, resourceTurnFramePng)
+	H.TableContent.Objects[4].Refresh()
+
+	H.TableContent.Objects[5] = table.Player5_label(resourceUnknownPng, resourceAvatarFramePng, resourceTurnFramePng)
+	H.TableContent.Objects[5].Refresh()
+
+	H.TableContent.Objects[6] = table.Player6_label(resourceUnknownPng, resourceAvatarFramePng, resourceTurnFramePng)
+	H.TableContent.Objects[6].Refresh()
+
+	H.TableContent.Refresh()
+}
+
+func revealingKey() {
+	if rpc.Signal.Reveal && rpc.Signal.My_turn && !rpc.Signal.End {
+		if !rpc.Round.Notified {
+			rpc.Display.Res = "Revealing Key"
+			H.TopLabel.SetText(rpc.Display.Res)
+			H.TopLabel.Refresh()
+			if !isWindows() {
+				dReams.App.SendNotification(notification("dReams - Holdero", "Revealing Key", 0))
+			}
+		}
+	}
 }
 
 func BaccRefresh() {
@@ -573,13 +745,55 @@ func PredictionRefresh(tab bool) {
 		}
 
 		P.RightLabel.SetText("dReams Balance: " + rpc.Wallet.TokenBal + "      Dero Balance: " + rpc.Wallet.Balance + "      Height: " + rpc.Wallet.Height)
+
+		if menu.CheckActivePrediction(prediction.PredictControl.Contract) {
+			go prediction.ShowPredictionControls()
+		} else {
+			menu.DisablePreditions(true)
+		}
 	}
 }
 
 func SportsRefresh(tab bool) {
 	if tab {
-		S.RightLabel.SetText("dReams Balance: " + rpc.Wallet.TokenBal + "      Dero Balance: " + rpc.Wallet.Balance + "      Height: " + rpc.Wallet.Height)
 		go prediction.SetSportsInfo(prediction.SportsControl.Contract)
+	}
+}
+
+func TarotRefresh() {
+	T.LeftLabel.SetText("Total Readings: " + rpc.Display.Readings + "      Click your card for Iluma reading")
+	T.RightLabel.SetText("dReams Balance: " + rpc.Wallet.TokenBal + "      Dero Balance: " + rpc.Wallet.Balance + "      Height: " + rpc.Wallet.Height)
+
+	if !rpc.Tarot.Display {
+		rpc.FetchTarotReading(rpc.Signal.Daemon, rpc.Tarot.Last)
+		table.Iluma.Box.Refresh()
+		if rpc.Tarot.Found {
+			rpc.Tarot.Display = true
+			table.Iluma.Label.SetText("")
+			if rpc.Tarot.Num == 3 {
+				table.Iluma.Card1.Objects[1] = TarotCard(rpc.Tarot.T_card1)
+				table.Iluma.Card2.Objects[1] = TarotCard(rpc.Tarot.T_card2)
+				table.Iluma.Card3.Objects[1] = TarotCard(rpc.Tarot.T_card3)
+			} else {
+				table.Iluma.Card1.Objects[1] = TarotCard(0)
+				table.Iluma.Card2.Objects[1] = TarotCard(rpc.Tarot.T_card1)
+				table.Iluma.Card3.Objects[1] = TarotCard(0)
+			}
+			table.TarotBuffer(false)
+			table.Iluma.Box.Refresh()
+		}
+	}
+
+	if rpc.StringToInt(rpc.Wallet.Height) > rpc.Tarot.CHeight+3 {
+		table.TarotBuffer(false)
+	}
+
+	T.TableItems.Refresh()
+
+	if rpc.Tarot.Found && !rpc.Tarot.Notified {
+		if !isWindows() {
+			dReams.App.SendNotification(notification("dReams - Tarot", "Your Reading has Arrvied", 2))
+		}
 	}
 }
 
@@ -653,7 +867,7 @@ func refreshIndexDisplay(c bool) {
 
 func refreshDaemonDisplay(c bool) {
 	if c && rpc.Signal.Daemon {
-		dHeight, _ := rpc.DaemonHeight()
+		dHeight, _ := rpc.DaemonHeight(rpc.Round.Daemon)
 		d := strconv.Itoa(int(dHeight))
 		table.Assets.Daem_height.Text = (" Daemon Height: " + d)
 		table.Assets.Daem_height.Refresh()
@@ -750,7 +964,7 @@ func MenuRefresh(tab, gi bool) {
 
 func RecheckButton() fyne.CanvasObject {
 	button := widget.NewButton("Check Assets", func() {
-		log.Println("Rechecking Assets")
+		log.Println("[dReams] Rechecking Assets")
 		go RecheckAssets()
 	})
 
@@ -760,7 +974,7 @@ func RecheckButton() fyne.CanvasObject {
 func RecheckAssets() {
 	table.Assets.Assets = []string{}
 	menu.CheckAssets(menu.Gnomes.Sync, false, nil)
-	menu.CheckG45owner(menu.Gnomes.Sync, false, nil)
+	menu.CheckG45Assets(menu.Gnomes.Sync, false, nil)
 	sort.Strings(table.Assets.Assets)
 	table.Assets.Asset_list.UnselectAll()
 	table.Assets.Asset_list.Refresh()
@@ -775,6 +989,7 @@ func MainTab(ti *container.TabItem) {
 		dReams.bacc = false
 		dReams.predict = false
 		dReams.sports = false
+		dReams.tarot = false
 		if rpc.Round.ID == 1 {
 			table.Settings.FaceSelect.Enable()
 			table.Settings.BackSelect.Enable()
@@ -786,13 +1001,21 @@ func MainTab(ti *container.TabItem) {
 		dReams.bacc = false
 		dReams.predict = false
 		dReams.sports = false
-		HolderoRefresh()
+		dReams.tarot = false
+		go func() {
+			now := time.Now().Unix()
+			rpc.FetchHolderoSC(rpc.Signal.Daemon, rpc.Signal.Contract)
+			if now > rpc.Round.Last+33 {
+				HolderoRefresh()
+			}
+		}()
 	case "Baccarat":
 		dReams.menu = false
 		dReams.holdero = false
 		dReams.bacc = true
 		dReams.predict = false
 		dReams.sports = false
+		dReams.tarot = false
 		BaccRefresh()
 		if rpc.Wallet.Connect && rpc.Bacc.Display {
 			table.BaccBuffer(false)
@@ -803,6 +1026,7 @@ func MainTab(ti *container.TabItem) {
 		dReams.bacc = false
 		dReams.predict = true
 		dReams.sports = false
+		dReams.tarot = false
 		go func() {
 			table.Actions.NameEntry.Text = menu.CheckPredictionName(prediction.PredictControl.Contract)
 			table.Actions.NameEntry.Refresh()
@@ -815,7 +1039,18 @@ func MainTab(ti *container.TabItem) {
 		dReams.bacc = false
 		dReams.predict = false
 		dReams.sports = true
+		dReams.tarot = false
 		go menu.PopulateSports(rpc.Signal.Daemon, menu.Gnomes.Sync, nil)
+	case "Tarot":
+		dReams.menu = false
+		dReams.holdero = false
+		dReams.bacc = false
+		dReams.predict = false
+		dReams.sports = false
+		dReams.tarot = true
+		if rpc.Wallet.Connect && rpc.Tarot.Display {
+			table.TarotBuffer(false)
+		}
 	}
 }
 
