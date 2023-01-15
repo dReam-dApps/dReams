@@ -847,6 +847,7 @@ func disableActions(d bool) {
 		table.Actions.Tournament.Hide()
 		table.Iluma.Draw1.Hide()
 		table.Iluma.Draw3.Hide()
+		table.Iluma.Search.Hide()
 	} else {
 		table.Actions.Dreams.Show()
 		table.Actions.Dero.Show()
@@ -864,6 +865,7 @@ func disableActions(d bool) {
 	table.Actions.Tournament.Refresh()
 	table.Iluma.Draw1.Refresh()
 	table.Iluma.Draw3.Refresh()
+	table.Iluma.Search.Refresh()
 }
 
 func disableBaccActions(d bool) {

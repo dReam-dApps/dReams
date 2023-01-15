@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"log"
 	"math/rand"
 	"strconv"
 	"time"
@@ -13,6 +14,8 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/layout"
+	"fyne.io/fyne/v2/widget"
 )
 
 type cards struct {
@@ -778,4 +781,65 @@ func TarotCard(c int) *canvas.Image {
 	default:
 		return canvas.NewImageFromResource(resourceIluma81Png)
 	}
+}
+
+func TarotItems(tabs *container.AppTabs) fyne.CanvasObject {
+	search_entry := widget.NewEntry()
+	search_entry.SetPlaceHolder("TXID:")
+	search_button := widget.NewButton("    Search   ", func() {
+		txid := search_entry.Text
+		if len(txid) == 64 {
+			signer, _ := rpc.VerifySigner(search_entry.Text)
+			if signer {
+				rpc.Tarot.Display = true
+				table.Iluma.Label.SetText("")
+				rpc.FetchTarotReading(rpc.Signal.Daemon, txid)
+				if rpc.Tarot.T_card2 != 0 && rpc.Tarot.T_card3 != 0 {
+					table.Iluma.Card1.Objects[1] = TarotCard(rpc.Tarot.T_card1)
+					table.Iluma.Card2.Objects[1] = TarotCard(rpc.Tarot.T_card2)
+					table.Iluma.Card3.Objects[1] = TarotCard(rpc.Tarot.T_card3)
+					rpc.Tarot.Num = 3
+				} else {
+					table.Iluma.Card1.Objects[1] = TarotCard(0)
+					table.Iluma.Card2.Objects[1] = TarotCard(rpc.Tarot.T_card1)
+					table.Iluma.Card3.Objects[1] = TarotCard(0)
+					rpc.Tarot.Num = 1
+				}
+				table.Iluma.Box.Refresh()
+			} else {
+				log.Println("[Tarot] This is not your reading")
+			}
+		}
+	})
+
+	table.Iluma.Draw1 = widget.NewButton("Draw One", func() {
+		if !table.Iluma.Open {
+			table.TarotConfirm(1)
+		}
+	})
+
+	table.Iluma.Draw3 = widget.NewButton("Draw Three", func() {
+		if !table.Iluma.Open {
+			table.TarotConfirm(3)
+		}
+	})
+
+	draw_cont := container.NewAdaptiveGrid(5,
+		layout.NewSpacer(),
+		layout.NewSpacer(),
+		table.Iluma.Draw1,
+		table.Iluma.Draw3,
+		layout.NewSpacer())
+
+	table.Iluma.Search = container.NewBorder(nil, nil, nil, search_button, search_entry)
+
+	table.Iluma.Actions = container.NewVBox(
+		layout.NewSpacer(),
+		container.NewAdaptiveGrid(2, draw_cont, table.Iluma.Search))
+
+	table.Iluma.Search.Hide()
+	table.Iluma.Actions.Hide()
+	max := container.NewMax(tabs, table.Iluma.Actions)
+
+	return max
 }

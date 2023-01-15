@@ -79,6 +79,10 @@ func place() *fyne.Container {
 		container.NewTabItem("Iluma", placeIluma()),
 		container.NewTabItem("Reading", placeTarot()))
 
+	tarot_tabs.OnSelected = func(ti *container.TabItem) {
+		TarotTab(ti)
+	}
+
 	tarot_tabs.SetTabLocation(container.TabLocationBottom)
 
 	top := canvas.NewRectangle(color.RGBA{0, 0, 0, 180})
@@ -105,7 +109,7 @@ func place() *fyne.Container {
 		container.NewTabItem("Baccarat", placeBacc()),
 		container.NewTabItem("Predict", placePredict()),
 		container.NewTabItem("Sports", placeSports()),
-		container.NewTabItem("Tarot", tarot_tabs),
+		container.NewTabItem("Tarot", TarotItems(tarot_tabs)),
 		container.NewTabItem("Log", rpc.SessionLog()))
 
 	tabs.OnSelected = func(ti *container.TabItem) {

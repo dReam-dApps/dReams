@@ -57,7 +57,9 @@ func BaccBuffer(d bool) {
 		rpc.Bacc.Last = ""
 		rpc.Display.BaccRes = "Wait for Block..."
 	} else {
-		Actions.Bacc_actions.Show()
+		if rpc.Signal.Daemon {
+			Actions.Bacc_actions.Show()
+		}
 	}
 
 	Actions.Bacc_actions.Refresh()
@@ -65,7 +67,7 @@ func BaccBuffer(d bool) {
 
 func BaccResult(r string) fyne.Widget {
 	label := widget.NewLabel(r)
-	label.Move(fyne.NewPos(485, 220))
+	label.Move(fyne.NewPos(485, 225))
 
 	return label
 }
@@ -125,8 +127,33 @@ func BaccaratButtons() fyne.CanvasObject {
 		tie_button,
 		amt_box)
 
+	var searched string
+	search_entry := widget.NewEntry()
+	search_entry.SetPlaceHolder("TXID:")
+	search_button := widget.NewButton("    Search   ", func() {
+		txid := search_entry.Text
+		if len(txid) == 64 && txid != searched {
+			searched = txid
+			BaccBuffer(true)
+			rpc.Display.BaccRes = "Searching..."
+			rpc.Bacc.Found = false
+			rpc.Bacc.Display = false
+			rpc.FetchBaccHand(rpc.Signal.Daemon, txid)
+			if !rpc.Bacc.Found {
+				rpc.Display.BaccRes = "Hand Not Found"
+				BaccBuffer(false)
+			}
+		}
+	})
+
+	search := container.NewVBox(
+		layout.NewSpacer(),
+		container.NewAdaptiveGrid(2,
+			layout.NewSpacer(),
+			container.NewBorder(nil, nil, nil, search_button, search_entry)))
+
 	hBox := container.NewHBox(layout.NewSpacer(), vBox)
-	Actions.Bacc_actions = container.NewVBox(layout.NewSpacer(), hBox)
+	Actions.Bacc_actions = container.NewVBox(layout.NewSpacer(), hBox, search)
 
 	Actions.Bacc_actions.Hide()
 

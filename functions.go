@@ -1048,7 +1048,7 @@ func MainTab(ti *container.TabItem) {
 		dReams.predict = false
 		dReams.sports = false
 		dReams.tarot = true
-		if rpc.Wallet.Connect && rpc.Tarot.Display {
+		if rpc.Tarot.Display {
 			table.TarotBuffer(false)
 		}
 	}
@@ -1134,6 +1134,17 @@ func PredictTab(ti *container.TabItem) {
 		go menu.PopulatePredictions(rpc.Signal.Daemon, menu.Gnomes.Sync, nil)
 	case "Leaderboard":
 		go MakeLeaderBoard(rpc.Signal.Daemon, menu.Gnomes.Sync, prediction.PredictControl.Contract)
+
+	default:
+	}
+}
+
+func TarotTab(ti *container.TabItem) {
+	switch ti.Text {
+	case "Iluma":
+		table.Iluma.Actions.Hide()
+	case "Reading":
+		table.Iluma.Actions.Show()
 
 	default:
 	}

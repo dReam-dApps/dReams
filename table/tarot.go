@@ -23,6 +23,8 @@ type tarot struct {
 	Background2 fyne.Resource
 	Draw1       *widget.Button
 	Draw3       *widget.Button
+	Search      *fyne.Container
+	Actions     *fyne.Container
 	Label       *widget.Label
 	Box         *fyne.Container
 	Open        bool
@@ -44,9 +46,13 @@ func TarotBuffer(d bool) {
 		rpc.Tarot.T_card2 = 0
 		rpc.Tarot.T_card3 = 0
 		rpc.Tarot.Last = ""
+		Iluma.Search.Hide()
 	} else {
-		Iluma.Draw1.Show()
-		Iluma.Draw3.Show()
+		if rpc.Signal.Daemon && rpc.Wallet.Connect {
+			Iluma.Draw1.Show()
+			Iluma.Draw3.Show()
+			Iluma.Search.Show()
+		}
 	}
 
 	Iluma.Draw1.Refresh()
@@ -90,22 +96,10 @@ func TarotCardBox() fyne.CanvasObject {
 	Iluma.Card3 = *container.NewMax(three, TarotBack())
 	pad3 := container.NewBorder(nil, nil, TarotPadding(), TarotPadding(), &Iluma.Card3)
 
-	Iluma.Draw1 = widget.NewButton("Draw One", func() {
-		if !Iluma.Open {
-			tarotConfirm(1)
-		}
-	})
-
-	Iluma.Draw3 = widget.NewButton("Draw Three", func() {
-		if !Iluma.Open {
-			tarotConfirm(3)
-		}
-	})
-
 	actions := container.NewAdaptiveGrid(3,
-		container.NewAdaptiveGrid(3, layout.NewSpacer(), Iluma.Draw1, layout.NewSpacer()),
+		layout.NewSpacer(),
 		Iluma.Label,
-		container.NewAdaptiveGrid(3, layout.NewSpacer(), Iluma.Draw3, layout.NewSpacer()))
+		layout.NewSpacer())
 
 	Iluma.Box = container.NewAdaptiveGrid(3,
 		pad1,
@@ -169,7 +163,7 @@ func TarotDrawText() (text string) {
 	return text
 }
 
-func tarotConfirm(i int) {
+func TarotConfirm(i int) {
 	c := fyne.CurrentApp().NewWindow("Confirm")
 	c.Resize(fyne.NewSize(405, 150))
 	c.SetFixedSize(true)
@@ -246,6 +240,8 @@ func Dialog(c int, text string) {
 	d.SetIcon(Resource.SmallIcon)
 	d.SetCloseIntercept(func() {
 		Iluma.Open = false
+		Iluma.Actions.Show()
+		Iluma.Search.Show()
 		d.Close()
 	})
 
@@ -253,6 +249,8 @@ func Dialog(c int, text string) {
 	scroll := container.NewVScroll(label)
 
 	Iluma.Open = true
+	Iluma.Actions.Hide()
+	Iluma.Search.Hide()
 
 	alpha := container.NewMax(canvas.NewRectangle(color.RGBA{0, 0, 0, 195}))
 	d.SetContent(

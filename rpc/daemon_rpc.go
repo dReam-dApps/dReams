@@ -216,6 +216,28 @@ func GetG45Collection(scid string) ([]string, error) {
 	return scids, err
 }
 
+func VerifySigner(txid string) (bool, error) {
+	rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
+	defer cancel()
+
+	var result *rpc.GetTransaction_Result
+	params := rpc.GetTransaction_Params{
+		Tx_Hashes: []string{txid},
+	}
+
+	err := rpcClientD.CallFor(ctx, &result, "DERO.GetTransaction", params)
+	if err != nil {
+		log.Println("[VerifySigner]", err)
+		return false, nil
+	}
+
+	if result.Txs[0].Signer == Wallet.Address {
+		return true, err
+	}
+
+	return false, err
+}
+
 func CheckHolderoContract() error {
 	rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
 	defer cancel()
@@ -710,9 +732,9 @@ func FetchBaccHand(dc bool, tx string) error { /// find played hand
 		}
 		Total_jv := result.VariableStringKeys["TotalHandsPlayed:"]
 		if Total_jv != nil {
-			start := int(Total_jv.(float64))
-			i := int(Total_jv.(float64))
-			for i < start+24 {
+			start := int(Total_jv.(float64)) - 21
+			i := start
+			for i < start+45 {
 				h := "-Hand#TXID:"
 				w := strconv.Itoa(i)
 				TXID_jv := result.VariableStringKeys[w+h]
@@ -729,14 +751,15 @@ func FetchBaccHand(dc bool, tx string) error { /// find played hand
 						PTotal_jv := result.VariableStringKeys[w+"-Player total:"]
 						BTotal_jv := result.VariableStringKeys[w+"-Banker total:"]
 
+						prefix := "Hand# " + w + "\n"
 						p := int(PTotal_jv.(float64))
 						b := int(BTotal_jv.(float64))
 						if PTotal_jv.(float64) == BTotal_jv.(float64) {
-							Display.BaccRes = "Tie, " + strconv.Itoa(p) + " & " + strconv.Itoa(b)
+							Display.BaccRes = prefix + "Tie, " + strconv.Itoa(p) + " & " + strconv.Itoa(b)
 						} else if PTotal_jv.(float64) > BTotal_jv.(float64) {
-							Display.BaccRes = "Player Wins, " + strconv.Itoa(p) + " over " + strconv.Itoa(b)
+							Display.BaccRes = prefix + "Player Wins, " + strconv.Itoa(p) + " over " + strconv.Itoa(b)
 						} else {
-							Display.BaccRes = "Banker Wins, " + strconv.Itoa(b) + " over " + strconv.Itoa(p)
+							Display.BaccRes = prefix + "Banker Wins, " + strconv.Itoa(b) + " over " + strconv.Itoa(p)
 						}
 					}
 				}
@@ -966,9 +989,9 @@ func FetchTarotReading(dc bool, tx string) error {
 
 		Reading_jv := result.VariableStringKeys["readings:"]
 		if Reading_jv != nil {
-			start := int(Reading_jv.(float64))
-			i := int(Reading_jv.(float64))
-			for i < start+24 {
+			start := int(Reading_jv.(float64)) - 21
+			i := start
+			for i < start+45 {
 				h := "-readingTXID:"
 				w := strconv.Itoa(i)
 				TXID_jv := result.VariableStringKeys[w+h]
