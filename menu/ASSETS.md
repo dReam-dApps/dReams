@@ -29,6 +29,7 @@ In app marketplace powered by [Gnomon](https://github.com/civilware/Gnomon).
 - [DBC0006](https://github.com/Azylem/DBC0006)
 - [DBC0007](https://github.com/Azylem/DBC0007)
 - [DBC0008](https://github.com/Azylem/DBC0008)
+- [DBC0009](https://github.com/Azylem/DBC0009)
 
 --- 
 ## Themes & Avatars
