@@ -179,6 +179,17 @@ func ThemeSelect() fyne.Widget {
 					Settings.ThemeImg, _ = DownloadFile(Settings.ThemeUrl, s)
 
 				}
+			} else if check == "SIXART" {
+				dir := GetDir()
+				file := dir + "/cards/" + s + "/" + s + ".png"
+				if FileExists(file) {
+					Settings.ThemeImg = *canvas.NewImageFromFile(file)
+				} else {
+					Settings.ThemeUrl = "https://raw.githubusercontent.com/SixofClubsss/" + s + "/main/" + s + ".png"
+					log.Println("[dReams] Downloading", Settings.ThemeUrl)
+					Settings.ThemeImg, _ = DownloadFile(Settings.ThemeUrl, s)
+
+				}
 			}
 
 			if s == "Main" {

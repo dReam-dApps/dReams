@@ -658,7 +658,7 @@ func checkNFAOwner(scid string) {
 		if owner != nil && header != nil && file != nil {
 			if owner[0] == rpc.Wallet.Address && validNfa(file[0]) {
 				check := strings.Trim(header[0], "0123456789")
-				if check == "AZYDS" {
+				if check == "AZYDS" || check == "SIXART" {
 					current := table.Settings.ThemeSelect.Options
 					new := append(current, header[0])
 					table.Settings.ThemeSelect.Options = new
