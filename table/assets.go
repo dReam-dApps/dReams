@@ -216,6 +216,10 @@ func AvatarSelect() fyne.Widget {
 		check := strings.Trim(s, " #0123456789")
 		if check == "DBC" {
 			Settings.AvatarUrl = "https://raw.githubusercontent.com/Azylem/" + s + "/main/" + s + ".PNG"
+		} else if check == "AZYDS" {
+			Settings.AvatarUrl = "https://raw.githubusercontent.com/Azylem/" + s + "/main/" + s + "-IC.png"
+		} else if check == "SIXART" {
+			Settings.AvatarUrl = "https://raw.githubusercontent.com/SixofClubsss/" + s + "/main/" + s + "-IC.png"
 		} else if check == "Dero Seals" {
 			seal := strings.Trim(s, "Dero Sals#")
 			Settings.AvatarUrl = "https://ipfs.io/ipfs/QmP3HnzWpiaBA6ZE8c3dy5ExeG7hnYjSqkNfVbeVW5iEp6/low/" + seal + ".jpg"
