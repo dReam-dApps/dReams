@@ -658,12 +658,11 @@ func checkNFAOwner(scid string) {
 		if owner != nil && header != nil && file != nil {
 			if owner[0] == rpc.Wallet.Address && validNfa(file[0]) {
 				check := strings.Trim(header[0], "0123456789")
-				if check == "AZYDS" {
+				if check == "AZYDS" || check == "SIXART" {
 					themes := table.Settings.ThemeSelect.Options
 					new_themes := append(themes, header[0])
 					table.Settings.ThemeSelect.Options = new_themes
 					table.Settings.ThemeSelect.Refresh()
-					table.Assets.Assets = append(table.Assets.Assets, header[0]+"   "+scid)
 
 					avatars := table.Settings.AvatarSelect.Options
 					new_avatar := append(avatars, header[0])
@@ -686,18 +685,6 @@ func checkNFAOwner(scid string) {
 					current := table.Settings.AvatarSelect.Options
 					new := append(current, header[0])
 					table.Settings.AvatarSelect.Options = new
-					table.Settings.AvatarSelect.Refresh()
-					table.Assets.Assets = append(table.Assets.Assets, header[0]+"   "+scid)
-				} else if check == "SIXART" {
-					themes := table.Settings.ThemeSelect.Options
-					new_themes := append(themes, header[0])
-					table.Settings.ThemeSelect.Options = new_themes
-					table.Settings.ThemeSelect.Refresh()
-					table.Assets.Assets = append(table.Assets.Assets, header[0]+"   "+scid)
-
-					avatars := table.Settings.AvatarSelect.Options
-					new_avatar := append(avatars, header[0])
-					table.Settings.AvatarSelect.Options = new_avatar
 					table.Settings.AvatarSelect.Refresh()
 					table.Assets.Assets = append(table.Assets.Assets, header[0]+"   "+scid)
 				}
