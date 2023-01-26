@@ -271,7 +271,6 @@ func HolderoContractEntry() fyne.Widget {
 	HolderoControl.contract_input.SetOptions(options)
 	HolderoControl.contract_input.PlaceHolder = "Holdero Contract Address: "
 	HolderoControl.contract_input.OnCursorChanged = func() {
-		HolderoControl.contract_input.Validate()
 		if rpc.Signal.Daemon {
 			text := HolderoControl.contract_input.Text
 			table.ClearShared()
@@ -281,9 +280,11 @@ func HolderoContractEntry() fyne.Widget {
 					disableOwnerControls(false)
 					if checkTableVersion(text) >= 110 {
 						ownerControl.chips.Show()
+						ownerControl.timeout.Show()
 						ownerControl.owners_mid.Show()
 					} else {
 						ownerControl.chips.Hide()
+						ownerControl.timeout.Hide()
 						ownerControl.owners_mid.Hide()
 					}
 				} else {
@@ -507,6 +508,7 @@ type tableOwnerOptions struct {
 	blindAmount uint64
 	anteAmount  uint64
 	chips       *widget.RadioGroup
+	timeout     *widget.Button
 	owners_left *fyne.Container
 	owners_mid  *fyne.Container
 }
@@ -664,7 +666,7 @@ func OwnersBoxLeft() fyne.CanvasObject {
 		}
 	})
 
-	timeout := widget.NewButton("Timeout", func() {
+	ownerControl.timeout = widget.NewButton("Timeout", func() {
 		TimeOutConfirm()
 	})
 
@@ -676,7 +678,7 @@ func OwnersBoxLeft() fyne.CanvasObject {
 	blind_items := container.NewAdaptiveGrid(2, blinds_entry, ownerControl.chips)
 	ante_items := container.NewAdaptiveGrid(2, ante_entry, set_button)
 	clean_items := container.NewAdaptiveGrid(2, clean_entry, clean_button)
-	time_items := container.NewAdaptiveGrid(2, timeout, force)
+	time_items := container.NewAdaptiveGrid(2, ownerControl.timeout, force)
 
 	ownerControl.owners_left = container.NewVBox(players_items, blind_items, ante_items, clean_items, time_items)
 	ownerControl.owners_left.Hide()
