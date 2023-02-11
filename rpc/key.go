@@ -10,7 +10,23 @@ import (
 	"io"
 	"log"
 	"os"
+	"strconv"
 )
+
+func Card(hash string) int { /// Gets local cards with local key
+	for i := 1; i < 53; i++ {
+		finder := strconv.Itoa(i)
+		add := Wallet.ClientKey + finder + Round.SC_seed
+		card := sha256.Sum256([]byte(add))
+		str := hex.EncodeToString(card[:])
+
+		if str == hash {
+			return i
+		}
+
+	}
+	return 0
+}
 
 func GenerateKey() string {
 	random, _ := rand.Prime(rand.Reader, 128)

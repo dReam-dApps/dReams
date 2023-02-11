@@ -114,6 +114,7 @@ func ClearShared() {
 	rpc.Round.Last = 0
 	rpc.Signal.Reveal = false
 	rpc.Signal.Out1 = false
+	rpc.Signal.Odds = false
 	Shared.GotP1 = false
 	Shared.GotP2 = false
 	Shared.GotP3 = false

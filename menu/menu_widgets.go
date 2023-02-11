@@ -117,6 +117,7 @@ func disconnected() {
 	table.Actions.NameEntry.Text = ""
 	table.Actions.NameEntry.Enable()
 	table.Actions.NameEntry.Refresh()
+	table.DisableHolderoTools()
 	Market.Auction_list.UnselectAll()
 	Market.Buy_list.UnselectAll()
 	Market.Icon = *canvas.NewImageFromImage(nil)

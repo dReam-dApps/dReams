@@ -55,6 +55,8 @@ type displayStrings struct {
 	TeamB   string
 
 	Readings string
+
+	Dero_balance string
 }
 
 type hashValue struct {
@@ -86,6 +88,7 @@ type holderoValues struct {
 	Daemon    string
 	Contract  string
 	ID        int
+	Players   int
 	Last      int64
 	Pot       uint64
 	BB        uint64
@@ -193,6 +196,7 @@ type signals struct {
 	PlacedBet bool
 	Paid      bool
 	Log       bool
+	Odds      bool
 	Clicked   bool
 	CHeight   int
 }
@@ -247,6 +251,7 @@ func addOne(v interface{}) string {
 
 func closedTable() {
 	Round.Winner = ""
+	Round.Players = 0
 	Round.ID = 0
 	Round.Tourney = false
 	Round.P1_url = ""
@@ -546,6 +551,7 @@ func potIsEmpty(pot uint64) {
 		Signal.End = false
 		Signal.Paid = false
 		Signal.Log = false
+		Signal.Odds = false
 		Display.Res = ""
 		Round.Bettor = ""
 		Round.Raisor = ""
@@ -557,6 +563,33 @@ func potIsEmpty(pot uint64) {
 }
 
 func tableOpen(seats, full, two, three, four, five, six interface{}) {
+	players := 1
+	if two != nil {
+		players++
+	}
+
+	if three != nil {
+		players++
+	}
+
+	if four != nil {
+		players++
+	}
+
+	if five != nil {
+		players++
+	}
+
+	if six != nil {
+		players++
+	}
+
+	if Signal.Out1 {
+		players--
+	}
+
+	Round.Players = players
+
 	if Round.ID > 1 {
 		Signal.Sit = true
 		return
@@ -972,6 +1005,7 @@ func allFolded(p1, p2, p3, p4, p5, p6, s interface{}) {
 			addLog(Display.Res)
 		}
 
+		updateStatsWins(Round.Pot, who, true)
 	}
 }
 

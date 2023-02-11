@@ -1,11 +1,8 @@
 package main
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"log"
 	"math/rand"
-	"strconv"
 	"time"
 
 	"github.com/SixofClubsss/dReams/rpc"
@@ -49,21 +46,6 @@ type cards struct {
 }
 
 var Cards cards
-
-func Card(hash string) int { /// Gets local cards with local key
-	for i := 1; i < 53; i++ {
-		finder := strconv.Itoa(i)
-		add := rpc.Wallet.ClientKey + finder + rpc.Round.SC_seed
-		card := sha256.Sum256([]byte(add))
-		str := hex.EncodeToString(card[:])
-
-		if str == hash {
-			return i
-		}
-
-	}
-	return 0
-}
 
 // / Table cards
 func Hole_1(c int, w, h float32) fyne.CanvasObject {

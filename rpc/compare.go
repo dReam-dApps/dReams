@@ -713,6 +713,9 @@ func payWinningHand(w int) {
 	case 6:
 		winner = "Player6"
 	}
+
+	updateStatsWins(Round.Pot, winner, false)
+
 	if Display.PlayerId == "1" {
 		if !Signal.Paid {
 			Signal.Paid = true
@@ -724,8 +727,7 @@ func payWinningHand(w int) {
 	}
 }
 
-func compareAll(r *ranker) string { /// Main compare to determine winner
-	var end_res string
+func compareAll(r *ranker) (end_res string) { /// Main compare to determine winner
 	winningRank := []int{r.p1Rank, r.p2Rank, r.p3Rank, r.p4Rank, r.p5Rank, r.p6Rank}
 	sort.Ints(winningRank)
 
@@ -1053,6 +1055,7 @@ func compareAll(r *ranker) string { /// Main compare to determine winner
 
 		} else {
 			end_res = "Push"
+			updateStatsPush(*r, Round.Pot, Round.F1, Round.F2, Round.F3, Round.F4, Round.F5, Round.F6)
 			if Display.PlayerId == "1" {
 				if !Signal.Paid {
 					Signal.Paid = true

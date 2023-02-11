@@ -501,6 +501,7 @@ func CheckAssets(gs, gc bool, scids map[string]string) {
 		table.Settings.ThemeSelect.Options = append([]string{"Main"}, table.Settings.ThemeSelect.Options...)
 
 		table.Assets.Asset_list.Refresh()
+		table.DisableHolderoTools()
 	}
 	sort.Strings(table.Assets.Assets)
 }

@@ -29,7 +29,7 @@ type wallet struct {
 	Rpc        string
 	Address    string
 	ClientKey  string
-	Balance    string
+	Balance    uint64
 	TokenBal   string
 	TourneyBal string
 	Height     string
@@ -191,7 +191,8 @@ func GetBalance(wc bool) error { /// get wallet dero balance
 			return nil
 		}
 
-		Wallet.Balance = fromAtomic(result.Unlocked_Balance)
+		Wallet.Balance = result.Unlocked_Balance
+		Display.Dero_balance = fromAtomic(result.Unlocked_Balance)
 
 		return err
 	}
@@ -508,6 +509,7 @@ func DealHand() error { /// holdero hand
 
 	Display.Res = ""
 	log.Println("[Holdero] Deal TX:", txid)
+	updateStatsWager(float64(amount) / 100000)
 	addLog("Deal TX: " + txid.TXID)
 
 	return err
@@ -558,6 +560,10 @@ func Bet(amt string) error { /// holdero bet
 	if err != nil {
 		log.Println("[Bet]", err)
 		return nil
+	}
+
+	if f, err := strconv.ParseFloat(amt, 32); err == nil {
+		updateStatsWager(float64(f))
 	}
 
 	Display.Res = ""
