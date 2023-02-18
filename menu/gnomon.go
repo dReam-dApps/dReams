@@ -289,7 +289,7 @@ func manualIndex(scid []string) {
 func GnomonDB() *storage.GravitonStore {
 	shasum := fmt.Sprintf("%x", sha1.Sum([]byte("gnomon")))
 	db_folder := fmt.Sprintf("gnomondb\\%s_%s", "GNOMON", shasum)
-	db := storage.NewGravDB(db_folder, "25ms")
+	db, _ := storage.NewGravDB(db_folder, "25ms")
 
 	return db
 }
