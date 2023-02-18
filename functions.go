@@ -196,7 +196,7 @@ func makeConfig(name, daemon string) (data save) {
 func writeConfig(u save) {
 	if u.Daemon != nil && u.Name != "" {
 		if u.Daemon[0] != "" {
-			file, err := os.Create("config.json")
+			file, err := os.Create("config/config.json")
 
 			if err != nil {
 				log.Println("[writeConfig]", err)
@@ -216,11 +216,17 @@ func writeConfig(u save) {
 }
 
 func readConfig() (saved save) {
-	if !table.FileExists("config.json") {
+	if !table.FileExists("config/config.json") {
+		log.Println("[dReams] Creating Config Dir")
+		mkdir := os.Mkdir("config", 0755)
+		if mkdir != nil {
+			log.Println("[dReams]", mkdir)
+		}
+
 		return
 	}
 
-	file, err := os.ReadFile("config.json")
+	file, err := os.ReadFile("config/config.json")
 
 	if err != nil {
 		log.Println("[readConfig]", err)

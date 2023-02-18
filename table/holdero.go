@@ -1182,7 +1182,7 @@ func DisableHolderoTools() {
 	if len(Settings.BackSelect.Options) > 2 && len(Settings.FaceSelect.Options) > 2 {
 		rpc.Odds.Enabled = true
 		Settings.Tools.Show()
-		if !FileExists("stats.json") {
+		if !FileExists("config/stats.json") {
 			rpc.WriteHolderoStats(rpc.Stats)
 			log.Println("[dReams] Created stats.json")
 		} else {
@@ -1195,7 +1195,7 @@ func DisableHolderoTools() {
 }
 
 func ReadSavedStats() (saved rpc.Player_stats) {
-	file, err := os.ReadFile("stats.json")
+	file, err := os.ReadFile("config/stats.json")
 
 	if err != nil {
 		log.Println("[readSavedStats]", err)

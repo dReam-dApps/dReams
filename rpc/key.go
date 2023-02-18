@@ -33,7 +33,7 @@ func GenerateKey() string {
 	shasum := sha256.Sum256([]byte(random.String()))
 	str := hex.EncodeToString(shasum[:])
 	Wallet.KeyLock = true
-	EncryptFile([]byte(str), ".key", Wallet.UserPass, Wallet.Address)
+	EncryptFile([]byte(str), "config/.key", Wallet.UserPass, Wallet.Address)
 	log.Println("[Holdero] Round Key: ", str)
 	addLog("Round Key: " + str)
 
@@ -110,8 +110,8 @@ func DecryptFile(filename, pass, add string) []byte {
 }
 
 func CheckExisitingKey() {
-	if _, err := os.Stat(".key"); err == nil {
-		key := DecryptFile(".key", Wallet.UserPass, Wallet.Address)
+	if _, err := os.Stat("config/.key"); err == nil {
+		key := DecryptFile("config/.key", Wallet.UserPass, Wallet.Address)
 		if key != nil {
 			Wallet.ClientKey = string(key)
 			Wallet.KeyLock = true

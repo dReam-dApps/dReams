@@ -1406,7 +1406,7 @@ func SaveBotConfig(i int, opt Bot_config) {
 }
 
 func WriteHolderoStats(config Player_stats) bool {
-	file, err := os.Create("stats.json")
+	file, err := os.Create("config/stats.json")
 	if err != nil {
 		log.Println("[WriteHolderoStats]", err)
 		return false
