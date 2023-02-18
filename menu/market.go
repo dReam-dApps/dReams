@@ -21,6 +21,7 @@ type marketItems struct {
 	Tab           string
 	Entry         *marketAmt
 	Name          *canvas.Text
+	Type          *canvas.Text
 	Collection    *canvas.Text
 	Description   *canvas.Text
 	Creator       *canvas.Text
@@ -313,6 +314,7 @@ func clearNfaImages() {
 
 func NfaMarketInfo() fyne.CanvasObject {
 	Market.Name = canvas.NewText(" Name: ", color.White)
+	Market.Type = canvas.NewText(" Asset Type: ", color.White)
 	Market.Collection = canvas.NewText(" Collection: ", color.White)
 	Market.Description = canvas.NewText(" Description: ", color.White)
 	Market.Creator = canvas.NewText(" Creator: ", color.White)
@@ -326,6 +328,7 @@ func NfaMarketInfo() fyne.CanvasObject {
 	Market.End_time = canvas.NewText(" Ends At: ", color.White)
 
 	Market.Name.TextSize = 18
+	Market.Type.TextSize = 18
 	Market.Collection.TextSize = 18
 	Market.Description.TextSize = 18
 	Market.Creator.TextSize = 18
@@ -349,6 +352,7 @@ func AuctionInfo() fyne.CanvasObject {
 		NfaImg(Market.Cover),
 		NfaIcon(Resource.Frame),
 		Market.Name,
+		Market.Type,
 		Market.Collection,
 		Market.Description,
 		Market.Creator,
@@ -384,6 +388,8 @@ func ResetAuctionInfo() {
 	clearNfaImages()
 	Market.Name.Text = (" Name: ")
 	Market.Name.Refresh()
+	Market.Type.Text = (" Asset Type: ")
+	Market.Type.Refresh()
 	Market.Collection.Text = (" Collection: ")
 	Market.Collection.Refresh()
 	Market.Description.Text = (" Description: ")
@@ -414,6 +420,7 @@ func BuyNowInfo() fyne.CanvasObject {
 		NfaImg(Market.Cover),
 		NfaIcon(Resource.Frame),
 		Market.Name,
+		Market.Type,
 		Market.Collection,
 		Market.Description,
 		Market.Creator,
@@ -432,6 +439,8 @@ func ResetBuyInfo() {
 	clearNfaImages()
 	Market.Name.Text = (" Name: ")
 	Market.Name.Refresh()
+	Market.Type.Text = (" Asset Type: ")
+	Market.Type.Refresh()
 	Market.Collection.Text = (" Collection: ")
 	Market.Collection.Refresh()
 	Market.Description.Text = (" Description: ")

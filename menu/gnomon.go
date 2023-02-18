@@ -1231,8 +1231,22 @@ func GetAuctionDetails(scid string) {
 		_, startTime := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "startBlockTime", Gnomes.Indexer.ChainHeight, true)
 
 		if name != nil {
+			var ty string
+			check := strings.Trim(name[0], "0123456789")
+			if check == "AZYPC" || check == "SIXPC" {
+				ty = "Playing card deck"
+			} else if check == "AZYPCB" || check == "SIXPCB" {
+				ty = "Playing card back"
+			} else if check == "AZYDS" || check == "SIXART" {
+				ty = "Theme/Avatar"
+			} else if check == "DBC" {
+				ty = "Avatar"
+			}
+
 			Market.Name.Text = (" Name: " + name[0])
 			Market.Name.Refresh()
+			Market.Type.Text = (" Asset Type: " + ty)
+			Market.Type.Refresh()
 			Market.Collection.Text = (" Collection: " + collection[0])
 			Market.Collection.Refresh()
 			Market.Description.Text = (" Description: " + description[0])
@@ -1316,8 +1330,22 @@ func GetBuyNowDetails(scid string) {
 		_, startTime := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "startBlockTime", Gnomes.Indexer.ChainHeight, true)
 
 		if name != nil {
+			var ty string
+			check := strings.Trim(name[0], "0123456789")
+			if check == "AZYPC" || check == "SIXPC" {
+				ty = "Playing card deck"
+			} else if check == "AZYPCB" || check == "SIXPCB" {
+				ty = "Playing card back"
+			} else if check == "AZYDS" || check == "SIXART" {
+				ty = "Theme/Avatar"
+			} else if check == "DBC" {
+				ty = "Avatar"
+			}
+
 			Market.Name.Text = (" Name: " + name[0])
 			Market.Name.Refresh()
+			Market.Type.Text = (" Asset Type: " + ty)
+			Market.Type.Refresh()
 			Market.Collection.Text = (" Collection: " + collection[0])
 			Market.Collection.Refresh()
 			Market.Description.Text = (" Description: " + description[0])
