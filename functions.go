@@ -472,7 +472,7 @@ func fetch(quit chan struct{}) { /// main loop
 					if rpc.Round.Card_delay {
 						now := time.Now().Unix()
 						delay++
-						if delay >= 10 || now > rpc.Round.Last+39 {
+						if delay >= 14 || now > rpc.Round.Last+42 {
 							delay = 0
 							rpc.Round.Card_delay = false
 						}
