@@ -682,7 +682,7 @@ func checkNFAOwner(scid string) {
 					table.Settings.FaceSelect.Options = new
 					table.Settings.FaceSelect.Refresh()
 					table.Assets.Assets = append(table.Assets.Assets, header[0]+"   "+scid)
-				} else if check == "DBC" {
+				} else if check == "DBC" || check == "HighStrangeness" {
 					current := table.Settings.AvatarSelect.Options
 					new := append(current, header[0])
 					table.Settings.AvatarSelect.Options = new
@@ -1239,7 +1239,7 @@ func GetAuctionDetails(scid string) {
 				ty = "Playing card back"
 			} else if check == "AZYDS" || check == "SIXART" {
 				ty = "Theme/Avatar"
-			} else if check == "DBC" {
+			} else if check == "DBC" || check == "HighStrangeness" {
 				ty = "Avatar"
 			}
 
@@ -1338,7 +1338,7 @@ func GetBuyNowDetails(scid string) {
 				ty = "Playing card back"
 			} else if check == "AZYDS" || check == "SIXART" {
 				ty = "Theme/Avatar"
-			} else if check == "DBC" {
+			} else if check == "DBC" || check == "HighStrangeness" {
 				ty = "Avatar"
 			}
 
