@@ -548,6 +548,17 @@ func fetch(quit chan struct{}) { /// main loop
 							}
 						}
 
+						if rpc.Signal.My_turn {
+							now := time.Now().Unix()
+							if now > rpc.Round.Last+90 {
+								table.Actions.Warning.Show()
+							} else {
+								table.Actions.Warning.Hide()
+							}
+						} else {
+							table.Actions.Warning.Hide()
+						}
+
 						skip = 0
 					}
 				} else {

@@ -395,6 +395,7 @@ type tableWidgets struct {
 	Bet      *widget.Button
 	Check    *widget.Button
 	BetEntry *betAmt
+	Warning  *fyne.Container
 
 	Bacc_actions *fyne.Container
 
@@ -429,6 +430,7 @@ func HolderoButtonBuffer() {
 	Actions.Bet.Hide()
 	Actions.Check.Hide()
 	Actions.BetEntry.Hide()
+	Actions.Warning.Hide()
 	rpc.Display.Res = ""
 	rpc.Signal.Clicked = true
 	rpc.Signal.CHeight = rpc.StringToInt(rpc.Wallet.Height)
@@ -695,6 +697,18 @@ func AutoOptions() fyne.CanvasObject {
 	auto := container.NewVBox(checks, cont)
 
 	return auto
+}
+
+func TimeOutWarning() *fyne.Container {
+	rect := canvas.NewRectangle(color.RGBA{0, 0, 0, 210})
+	msg := canvas.NewText("Make your move, or you will be Timed Out", color.RGBA{240, 0, 0, 240})
+	msg.TextSize = 15
+
+	Actions.Warning = container.NewMax(rect, msg)
+
+	Actions.Warning.Hide()
+
+	return container.NewVBox(layout.NewSpacer(), Actions.Warning)
 }
 
 func autoBetDefault() {
