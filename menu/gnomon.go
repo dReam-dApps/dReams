@@ -712,16 +712,24 @@ func GetOwnedAssetStats(scid string) {
 				table.Assets.Name.Refresh()
 			}
 
+			var a []string
 			if c != nil {
 				table.Assets.Collection.Text = (" Collection: " + c[0])
 				table.Assets.Collection.Refresh()
+				if c[0] == "High Strangeness" {
+					a, _ = Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "fileURL", Gnomes.Indexer.ChainHeight, true)
+				}
 			} else {
 				table.Assets.Collection.Text = (" Collection: ?")
 				table.Assets.Collection.Refresh()
 			}
 
 			if i != nil {
-				table.Assets.Icon, _ = table.DownloadFile(i[0], n[0])
+				if a != nil {
+					table.Assets.Icon, _ = table.DownloadFile(a[0], n[0])
+				} else {
+					table.Assets.Icon, _ = table.DownloadFile(i[0], n[0])
+				}
 			} else {
 				table.Assets.Icon = *canvas.NewImageFromImage(nil)
 			}
