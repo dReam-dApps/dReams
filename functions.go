@@ -548,9 +548,9 @@ func fetch(quit chan struct{}) { /// main loop
 							}
 						}
 
-						if rpc.Signal.My_turn {
+						if rpc.Round.ID > 1 && rpc.Signal.My_turn && !rpc.Signal.End && !rpc.Round.LocalEnd {
 							now := time.Now().Unix()
-							if now > rpc.Round.Last+90 {
+							if now > rpc.Round.Last+100 {
 								table.Actions.Warning.Show()
 							} else {
 								table.Actions.Warning.Hide()
