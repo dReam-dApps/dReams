@@ -32,7 +32,6 @@ type Notification struct {
 }
 
 type save struct {
-	Name    string   `json:"name"`
 	Daemon  []string `json:"daemon"`
 	Tables  []string `json:"tables"`
 	Predict []string `json:"predict"`
@@ -99,8 +98,6 @@ func flags() {
 
 func init() {
 	saved := readConfig()
-
-	table.Poker_name = saved.Name
 
 	if saved.Daemon != nil {
 		menu.MenuControl.Daemon_config = saved.Daemon[0]
@@ -175,7 +172,6 @@ func labelColorBlack(c *fyne.Container) *fyne.Container {
 }
 
 func makeConfig(name, daemon string) (data save) {
-	data.Name = name
 	switch daemon {
 	case "127.0.0.1:10102":
 	case "89.38.99.117:10102":
@@ -194,7 +190,7 @@ func makeConfig(name, daemon string) (data save) {
 }
 
 func writeConfig(u save) {
-	if u.Daemon != nil && u.Name != "" {
+	if u.Daemon != nil {
 		if u.Daemon[0] != "" {
 			file, err := os.Create("config/config.json")
 

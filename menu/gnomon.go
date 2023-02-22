@@ -254,9 +254,14 @@ func searchFilters() (filter []string) {
 		filter = append(filter, sports)
 	}
 
-	gnomon, _ := rpc.GetGnomonCode(rpc.Signal.Daemon, 0)
+	gnomon, _ := rpc.GetGnomonCode(rpc.Signal.Daemon)
 	if sports != "" {
 		filter = append(filter, gnomon)
+	}
+
+	names, _ := rpc.GetNameServiceCode(rpc.Signal.Daemon)
+	if names != "" {
+		filter = append(filter, names)
 	}
 
 	filter = append(filter, nfa_search_filter)
@@ -308,7 +313,7 @@ func startGnomon(ep string) {
 
 	filters := searchFilters()
 	search := len(filters)
-	if search == 8 || (Gnomes.Trim && search == 7) {
+	if search == 9 || (Gnomes.Trim && search == 8) {
 		table.Assets.Asset_map = make(map[string]string)
 		Gnomes.Indexer = indexer.NewIndexer(backend, filters, last_height, daemon_endpoint, runmode, mbl, closeondisconnect, Gnomes.Fast)
 		go Gnomes.Indexer.StartDaemonMode(Gnomes.Para)
@@ -430,6 +435,7 @@ func GnomonState(dc, gi bool, windows bool) {
 							go PopulateSports(rpc.Signal.Daemon, Gnomes.Sync, contracts)
 							go PopulatePredictions(rpc.Signal.Daemon, Gnomes.Sync, contracts)
 							FindNfaListings(Gnomes.Sync, contracts)
+							CheckWalletNames(rpc.Wallet.Address)
 						}
 						Gnomes.Checked = true
 					}
@@ -987,6 +993,14 @@ func GetTableStats(scid string, single bool) {
 			Stats.Seats.Refresh()
 		}
 	}
+}
+
+func CheckWalletNames(value string) []string {
+	names, _ := Gnomes.Indexer.Backend.GetSCIDKeysByValue(rpc.NameSCID, value, Gnomes.Indexer.LastIndexedHeight, true)
+
+	MenuControl.Names.Options = append(MenuControl.Names.Options, names...)
+
+	return names
 }
 
 func CheckG45Assets(gs, gc bool, g45s map[string]string) {

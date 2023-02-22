@@ -42,6 +42,7 @@ type menuOptions struct {
 	Sports_contracts  []string
 	Sports_favorites  []string
 	Sports_owned      []string
+	Names             *widget.Select
 	Bet_unlock        *widget.Button
 	Bet_new           *widget.Button
 	Bet_menu          *widget.Button
@@ -120,6 +121,9 @@ func disconnected() {
 	table.Actions.NameEntry.Enable()
 	table.Actions.NameEntry.Refresh()
 	table.DisableHolderoTools()
+	MenuControl.Names.ClearSelected()
+	MenuControl.Names.Options = []string{}
+	MenuControl.Names.Refresh()
 	Market.Auction_list.UnselectAll()
 	Market.Buy_list.UnselectAll()
 	Market.Icon = *canvas.NewImageFromImage(nil)
@@ -327,6 +331,15 @@ func RpcConnectButton() fyne.Widget {
 			table.Actions.S_contract.CursorColumn = 1
 			table.Actions.S_contract.Refresh()
 			rpc.CheckExisitingKey()
+			if len(rpc.Wallet.Address) == 66 {
+				MenuControl.Names.ClearSelected()
+				MenuControl.Names.Options = []string{}
+				MenuControl.Names.Refresh()
+				MenuControl.Names.Options = append(MenuControl.Names.Options, rpc.Wallet.Address[0:12])
+				if Gnomes.Sync {
+					go CheckWalletNames(rpc.Wallet.Address)
+				}
+			}
 		}()
 	})
 
@@ -497,13 +510,13 @@ func MyTables() fyne.CanvasObject {
 }
 
 func NameEntry() fyne.CanvasObject {
-	name := widget.NewEntry()
-	name.PlaceHolder = "Name:"
-	this := binding.BindString(&table.Poker_name)
-	name.Bind(this)
-	name.Validator = validation.NewRegexp(`^.{3,12}$`, "Format Not Valid")
+	MenuControl.Names = widget.NewSelect([]string{}, func(s string) {
+		table.Poker_name = s
+	})
 
-	return name
+	MenuControl.Names.PlaceHolder = "Name:"
+
+	return MenuControl.Names
 }
 
 // / Owner

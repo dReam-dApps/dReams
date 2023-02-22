@@ -118,7 +118,7 @@ func DeroAddress(v interface{}) (address string) {
 }
 
 func SetWalletClient(addr, pass string) (jsonrpc.RPCClient, context.Context, context.CancelFunc) { /// user:pass auth
-	client := jsonrpc.NewClientWithOpts(pre+addr+suff, &jsonrpc.RPCClientOpts{
+	client := jsonrpc.NewClientWithOpts("http://"+addr+"/json_rpc", &jsonrpc.RPCClientOpts{
 		CustomHeaders: map[string]string{
 			"Authorization": "Basic " + base64.StdEncoding.EncodeToString([]byte(pass)),
 		},

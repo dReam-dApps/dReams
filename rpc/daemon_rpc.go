@@ -15,8 +15,7 @@ import (
 )
 
 const (
-	pre          = "http://"
-	suff         = "/json_rpc"
+	NameSCID     = "0000000000000000000000000000000000000000000000000000000000000001"
 	dReamsSCID   = "ad2e7b37c380cc1aed3a6b27224ddfc92a2d15962ca1f4d35e530dba0f9575a9"
 	TourneySCID  = "c2e1ec16aed6f653aef99a06826b2b6f633349807d01fbb74cc0afb5ff99c3c7"
 	HolderoSCID  = "e3f37573de94560e126a9020c0a5b3dfc7a4f3a4fbbe369fba93fbd219dc5fe9"
@@ -51,7 +50,7 @@ func fromHextoString(h string) string {
 }
 
 func SetDaemonClient(addr string) (jsonrpc.RPCClient, context.Context, context.CancelFunc) {
-	client := jsonrpc.NewClient(pre + addr + suff)
+	client := jsonrpc.NewClient("http://" + addr + "/json_rpc")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 
 	return client, ctx, cancel
@@ -148,7 +147,30 @@ func CheckForIndex(scid string) (interface{}, error) {
 	return address, err
 }
 
-func GetGnomonCode(dc bool, pub int) (string, error) {
+func GetNameServiceCode(dc bool) (string, error) {
+	if dc {
+		rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
+		defer cancel()
+
+		var result *rpc.GetSC_Result
+		params := rpc.GetSC_Params{
+			SCID:      NameSCID,
+			Code:      true,
+			Variables: false,
+		}
+
+		err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params)
+		if err != nil {
+			log.Println("[GetNameServiceCode]", err)
+			return "", nil
+		}
+
+		return result.Code, err
+	}
+	return "", nil
+}
+
+func GetGnomonCode(dc bool) (string, error) {
 	if dc {
 		rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
 		defer cancel()
