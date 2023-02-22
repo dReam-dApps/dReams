@@ -704,15 +704,15 @@ func OwnersBoxLeft() fyne.CanvasObject {
 
 func OwnersBoxMid() fyne.CanvasObject {
 	kick_label := widget.NewLabel("      Auto Kick after")
-	k_times := []string{"Off", "2m", "1m"}
+	k_times := []string{"Off", "2m", "5m"}
 	auto_remove := widget.NewSelect(k_times, func(s string) {
 		switch s {
 		case "Off":
 			rpc.Times.Kick = 0
 		case "2m":
 			rpc.Times.Kick = 120
-		case "1m":
-			rpc.Times.Kick = 60
+		case "5m":
+			rpc.Times.Kick = 300
 		default:
 			rpc.Times.Kick = 0
 		}
