@@ -2,8 +2,10 @@ package rpc
 
 import (
 	"context"
+	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -1880,6 +1882,58 @@ func TarotReading(num int) error {
 	addLog("Reading TX: " + txid.TXID)
 
 	Tarot.CHeight = StringToInt(Wallet.Height)
+
+	return err
+}
+
+func SendAsset(scid, dest string, payload bool) error {
+	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
+	defer cancel()
+
+	asset_scid := crypto.HashHexToHash(scid)
+	t1 := rpc.Transfer{
+		SCID:        asset_scid,
+		Destination: dest,
+		Amount:      1,
+	}
+
+	t := []rpc.Transfer{t1}
+
+	if payload {
+		var dstport [8]byte
+		rand.Read(dstport[:])
+
+		response := rpc.Arguments{
+			{Name: rpc.RPC_DESTINATION_PORT, DataType: rpc.DataUint64, Value: binary.BigEndian.Uint64(dstport[:])},
+			{Name: rpc.RPC_SOURCE_PORT, DataType: rpc.DataUint64, Value: uint64(0)},
+			{Name: rpc.RPC_COMMENT, DataType: rpc.DataString, Value: fmt.Sprintf("Sent you asset %s at height %s", scid, Wallet.Height)},
+		}
+
+		t2 := rpc.Transfer{
+			Destination: dest,
+			Amount:      1,
+			Burn:        0,
+			Payload_RPC: response,
+		}
+		t = append(t, t2)
+	}
+
+	txid := rpc.Transfer_Result{}
+
+	params := &rpc.Transfer_Params{
+		Transfers: t,
+		SC_RPC:    rpc.Arguments{},
+		Ringsize:  16,
+	}
+
+	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
+	if err != nil {
+		log.Println("[SendAsset]", err)
+		return nil
+	}
+
+	log.Println("[SendAsset] Send Asset TX:", txid)
+	addLog("Send Asset TX: " + txid.TXID)
 
 	return err
 }

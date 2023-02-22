@@ -706,6 +706,7 @@ func GetOwnedAssetStats(scid string) {
 				table.Assets.Name.Text = (" Name: " + n[0])
 				table.Assets.Name.Refresh()
 				MenuControl.List_button.Show()
+				MenuControl.Send_asset.Show()
 
 			} else {
 				table.Assets.Name.Text = (" Name: ?")
@@ -736,6 +737,7 @@ func GetOwnedAssetStats(scid string) {
 
 		} else {
 			MenuControl.List_button.Hide()
+			MenuControl.Send_asset.Hide()
 			data, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "metadata", Gnomes.Indexer.LastIndexedHeight, true)
 			minter, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "minter", Gnomes.Indexer.LastIndexedHeight, true)
 			coll, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "collection", Gnomes.Indexer.LastIndexedHeight, true)
@@ -775,6 +777,24 @@ func GetOwnedAssetStats(scid string) {
 			}
 		}
 	}
+}
+
+func GetAssetUrl(w int, scid string) (url string) {
+	var link []string
+	switch w {
+	case 0:
+		link, _ = Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "fileURL", Gnomes.Indexer.ChainHeight, true)
+	case 1:
+		link, _ = Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "iconURLHdr", Gnomes.Indexer.LastIndexedHeight, true)
+	case 2:
+		link, _ = Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "coverURLHdr", Gnomes.Indexer.LastIndexedHeight, true)
+	}
+
+	if link != nil {
+		url = link[0]
+	}
+
+	return
 }
 
 func checkTableOwner(scid string) bool {

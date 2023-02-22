@@ -30,6 +30,7 @@ const (
 
 type menuOptions struct {
 	list_open         bool
+	send_open         bool
 	Daemon_config     string
 	Viewing_asset     string
 	Holdero_tables    []string
@@ -44,6 +45,7 @@ type menuOptions struct {
 	Bet_unlock        *widget.Button
 	Bet_new           *widget.Button
 	Bet_menu          *widget.Button
+	Send_asset        *widget.Button
 	Claim_button      *widget.Button
 	List_button       *widget.Button
 	Set_list          *widget.Button
@@ -1095,6 +1097,10 @@ func IndexEntry() fyne.CanvasObject {
 		searchIndex(table.Assets.Index_entry.Text)
 	})
 
+	MenuControl.Send_asset = widget.NewButton("Send Asset", func() {
+		go sendAssetMenu(MenuControl.Viewing_asset)
+	})
+
 	MenuControl.List_button = widget.NewButton("List Asset", func() {
 		listMenu()
 	})
@@ -1111,12 +1117,13 @@ func IndexEntry() fyne.CanvasObject {
 	table.Assets.Index_search.Hide()
 	MenuControl.List_button.Hide()
 	MenuControl.Claim_button.Hide()
+	MenuControl.Send_asset.Hide()
 
 	table.Assets.Gnomes_index = canvas.NewText(" Indexed SCIDs: ", color.White)
 	table.Assets.Gnomes_index.TextSize = 18
 
 	bottom_grid := container.NewAdaptiveGrid(3, table.Assets.Gnomes_index, table.Assets.Index_button, table.Assets.Index_search)
-	top_grid := container.NewAdaptiveGrid(3, layout.NewSpacer(), MenuControl.Claim_button, MenuControl.List_button)
+	top_grid := container.NewAdaptiveGrid(3, container.NewMax(MenuControl.Send_asset), MenuControl.Claim_button, MenuControl.List_button)
 	box := container.NewVBox(top_grid, layout.NewSpacer(), bottom_grid)
 
 	cont := container.NewAdaptiveGrid(2, table.Assets.Index_entry, box)
@@ -1148,6 +1155,103 @@ func AssetList() fyne.CanvasObject {
 	box := container.NewMax(table.Assets.Asset_list)
 
 	return box
+}
+
+func sendAssetMenu(scid string) {
+	MenuControl.send_open = true
+	saw := fyne.CurrentApp().NewWindow("Send Asset")
+	saw.Resize(fyne.NewSize(330, 700))
+	saw.SetIcon(Resource.SmallIcon)
+	MenuControl.Send_asset.Hide()
+	saw.SetCloseIntercept(func() {
+		MenuControl.send_open = false
+		if rpc.Wallet.Connect {
+			MenuControl.Send_asset.Show()
+		}
+		saw.Close()
+	})
+	saw.SetFixedSize(true)
+
+	label := widget.NewLabel("You are about to send asset:\n\n" + scid + " \n\nEnter destination address below.\n\nSCID can be sent to reciever as payload.\n\n")
+	label.Wrapping = fyne.TextWrapWord
+
+	var check *widget.Check
+	payload := widget.NewCheck("Send SCID as payload.", func(b bool) {})
+
+	entry := widget.NewMultiLineEntry()
+	entry.SetPlaceHolder("Destination Address:")
+	entry.Wrapping = fyne.TextWrapWord
+	entry.Validator = validation.NewRegexp(`^(dero)\w{62}`, "Invalid Address")
+	entry.OnChanged = func(s string) {
+		if entry.Validate() == nil {
+			check.Text = "I have confirmed all info is correct."
+			check.Refresh()
+			check.Enable()
+		} else {
+			check.Text = "Enter all info before sending."
+			check.Refresh()
+			check.Disable()
+		}
+	}
+
+	var dest string
+	confirm := widget.NewButton("Confirm", func() {
+		dest = entry.Text
+		if entry.Validate() == nil {
+			var load bool
+			if payload.Checked {
+				load = true
+			}
+			go rpc.SendAsset(MenuControl.Viewing_asset, dest, load)
+			saw.Close()
+		}
+	})
+
+	cancel := widget.NewButton("Cancel", func() {
+		saw.Close()
+	})
+
+	check = widget.NewCheck("Enter all info before sending.", func(b bool) {
+		if b {
+			if entry.Validate() == nil {
+				entry.Disable()
+				confirm.Show()
+			}
+		} else {
+			entry.Enable()
+			confirm.Hide()
+		}
+	})
+
+	confirm.Hide()
+	check.Disable()
+
+	url := GetAssetUrl(1, scid)
+	icon, _ := table.DownloadFile(url, "sending")
+
+	grid := container.NewAdaptiveGrid(2, confirm, container.NewMax(cancel))
+	box := container.NewVBox(label, sendAssetImg(&icon, Resource.Frame), layout.NewSpacer(), entry, payload, check, layout.NewSpacer(), grid)
+
+	img := *canvas.NewImageFromResource(Resource.Back3)
+	saw.SetContent(
+		container.New(layout.NewMaxLayout(),
+			&img,
+			box))
+	saw.Show()
+}
+
+func sendAssetImg(img *canvas.Image, res fyne.Resource) fyne.CanvasObject {
+	img.SetMinSize(fyne.NewSize(100, 100))
+	img.Resize(fyne.NewSize(94, 94))
+	img.Move(fyne.NewPos(118, 3))
+
+	frame := canvas.NewImageFromResource(res)
+	frame.Resize(fyne.NewSize(100, 100))
+	frame.Move(fyne.NewPos(115, 0))
+
+	cont := container.NewWithoutLayout(img, frame)
+
+	return cont
 }
 
 func listMenu() { /// asset listing
