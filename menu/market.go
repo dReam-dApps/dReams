@@ -5,6 +5,7 @@ import (
 	"image/color"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/SixofClubsss/dReams/rpc"
 	"github.com/SixofClubsss/dReams/table"
@@ -34,6 +35,7 @@ type marketItems struct {
 	Current_bid   *canvas.Text
 	Bid_price     *canvas.Text
 	End_time      *canvas.Text
+	Loading       *canvas.Text
 	Market_button *widget.Button
 	Cancel_button *widget.Button
 	Close_button  *widget.Button
@@ -294,11 +296,32 @@ func NfaIcon(res fyne.Resource) fyne.CanvasObject {
 
 func NfaImg(img canvas.Image) *fyne.Container {
 	Market.Cover.Resize(fyne.NewSize(266, 400))
-	Market.Cover.Move(fyne.NewPos(400, -250))
+	Market.Cover.Move(fyne.NewPos(400, -230))
 
 	cont := container.NewWithoutLayout(&img)
 
 	return cont
+}
+
+func loadingText() *fyne.Container {
+	Market.Loading = canvas.NewText("Loading", color.White)
+	Market.Loading.TextSize = 18
+	Market.Loading.Move(fyne.NewPos(400, 0))
+
+	cont := container.NewWithoutLayout(Market.Loading)
+
+	return cont
+}
+
+func loadingTextLoop() {
+	if len(Market.Loading.Text) < 21 {
+		for i := 0; i < 3; i++ {
+			Market.Loading.Text = Market.Loading.Text + "."
+			Market.Loading.Refresh()
+			Market.Details_box.Objects[0].Refresh()
+			time.Sleep(250 * time.Millisecond)
+		}
+	}
 }
 
 func clearNfaImages() {
@@ -306,7 +329,7 @@ func clearNfaImages() {
 	Market.Details_box.Objects[1].Refresh()
 
 	Market.Cover = *canvas.NewImageFromImage(nil)
-	Market.Details_box.Objects[0] = &Market.Cover
+	Market.Details_box.Objects[0] = loadingText()
 	Market.Details_box.Objects[0].Refresh()
 	Market.Details_box.Refresh()
 
@@ -373,6 +396,8 @@ func RefreshNfaImages() {
 	if Market.Cover.Resource != nil {
 		Market.Details_box.Objects[0] = NfaImg(Market.Cover)
 		Market.Details_box.Objects[0].Refresh()
+	} else {
+		go loadingTextLoop()
 	}
 
 	if Market.Icon.Resource != nil {
