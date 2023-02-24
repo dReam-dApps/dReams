@@ -1205,7 +1205,7 @@ func checkNfaAuctionListing(scid string) string {
 		desc, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "descrHdr", Gnomes.Indexer.ChainHeight, true)
 		if listType != nil && header != nil {
 			check := strings.Trim(header[0], "0123456789")
-			if check == "AZYDS" || check == "DBC" || check == "AZYPC" || check == "SIXPC" || check == "AZYPCB" || check == "SIXPCB" {
+			if check == "AZYDS" || check == "DBC" || check == "AZYPC" || check == "SIXPC" || check == "AZYPCB" || check == "SIXPCB" || check == "HighStrangeness" {
 				switch listType[0] {
 				case "auction":
 					return coll[0] + "   " + header[0] + "   " + desc[0] + "   " + scid
@@ -1227,7 +1227,7 @@ func checkNfaBuyListing(scid string) string {
 		desc, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "descrHdr", Gnomes.Indexer.ChainHeight, true)
 		if listType != nil && header != nil {
 			check := strings.Trim(header[0], "0123456789")
-			if check == "AZYDS" || check == "DBC" || check == "AZYPC" || check == "SIXPC" || check == "AZYPCB" || check == "SIXPCB" {
+			if check == "AZYDS" || check == "DBC" || check == "AZYPC" || check == "SIXPC" || check == "AZYPCB" || check == "SIXPCB" || check == "HighStrangeness" {
 				switch listType[0] {
 				case "sale":
 					return coll[0] + "   " + header[0] + "   " + desc[0] + "   " + scid
