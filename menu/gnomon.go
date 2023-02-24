@@ -329,7 +329,7 @@ func startGnomon(ep string) {
 					break
 				}
 
-				if contracts >= 1 {
+				if contracts >= 520 {
 					go g45Index()
 					break
 				}
