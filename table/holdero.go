@@ -8,6 +8,7 @@ import (
 	"math"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/SixofClubsss/dReams/rpc"
 
@@ -1193,18 +1194,56 @@ func holderoTools(deal, check *widget.Check, button *fyne.Container) {
 }
 
 func DisableHolderoTools() {
+	rpc.Odds.Enabled = false
+	Settings.Tools.Hide()
 	if len(Settings.BackSelect.Options) > 2 && len(Settings.FaceSelect.Options) > 2 {
-		rpc.Odds.Enabled = true
-		Settings.Tools.Show()
-		if !FileExists("config/stats.json") {
-			rpc.WriteHolderoStats(rpc.Stats)
-			log.Println("[dReams] Created stats.json")
-		} else {
-			rpc.Stats = ReadSavedStats()
+		cards := false
+		for _, f := range Settings.FaceSelect.Options {
+			asset := strings.Trim(f, "0123456789")
+			switch asset {
+			case "AZYPC":
+				cards = true
+			case "SIXPC":
+				cards = true
+			default:
+
+			}
+
+			if cards {
+				break
+			}
 		}
-	} else {
-		rpc.Odds.Enabled = false
-		Settings.Tools.Hide()
+
+		if !cards {
+			backs := 0
+			for _, b := range Settings.BackSelect.Options {
+				asset := strings.Trim(b, "0123456789")
+				switch asset {
+				case "AZYPCB":
+					backs++
+				case "SIXPCB":
+					backs++
+				default:
+
+				}
+
+				if backs > 1 {
+					cards = true
+					break
+				}
+			}
+		}
+
+		if cards {
+			rpc.Odds.Enabled = true
+			Settings.Tools.Show()
+			if !FileExists("config/stats.json") {
+				rpc.WriteHolderoStats(rpc.Stats)
+				log.Println("[dReams] Created stats.json")
+			} else {
+				rpc.Stats = ReadSavedStats()
+			}
+		}
 	}
 }
 
