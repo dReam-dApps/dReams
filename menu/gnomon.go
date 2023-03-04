@@ -738,12 +738,46 @@ func checkNFAOwner(scid string) {
 					table.Settings.FaceSelect.Options = new
 					table.Settings.FaceSelect.Refresh()
 					table.Assets.Assets = append(table.Assets.Assets, header[0]+"   "+scid)
-				} else if check == "DBC" || check == "HighStrangeness" {
+				} else if check == "DBC" {
 					current := table.Settings.AvatarSelect.Options
 					new := append(current, header[0])
 					table.Settings.AvatarSelect.Options = new
 					table.Settings.AvatarSelect.Refresh()
 					table.Assets.Assets = append(table.Assets.Assets, header[0]+"   "+scid)
+				} else if check == "HighStrangeness" {
+					current_av := table.Settings.AvatarSelect.Options
+					new_av := append(current_av, header[0])
+					table.Settings.AvatarSelect.Options = new_av
+					table.Settings.AvatarSelect.Refresh()
+					table.Assets.Assets = append(table.Assets.Assets, header[0]+"   "+scid)
+
+					current_d := table.Settings.FaceSelect.Options
+					new_d := append(current_d, "High-Strangeness")
+					table.Settings.FaceSelect.Options = new_d
+					table.Settings.FaceSelect.Refresh()
+
+					current_b := table.Settings.BackSelect.Options
+					new_b := append(current_b, "High-Strangeness")
+					table.Settings.BackSelect.Options = new_b
+					table.Settings.BackSelect.Refresh()
+
+					tower := 0
+					switch header[0] {
+					case "HighStrangeness363":
+						tower = 5
+					case "HighStrangeness364":
+						tower = 9
+					case "HighStrangeness365":
+						tower = 13
+					default:
+					}
+
+					for i := 1; i < tower; i++ {
+						themes := table.Settings.ThemeSelect.Options
+						new_themes := append(themes, "HSTheme"+strconv.Itoa(i))
+						table.Settings.ThemeSelect.Options = new_themes
+						table.Settings.ThemeSelect.Refresh()
+					}
 				}
 			}
 		}

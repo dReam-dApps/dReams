@@ -876,7 +876,15 @@ func downloadFileLocal(filepath string, url string) (err error) {
 				log.Println("[dReams]", mksub)
 			}
 		}
+	}
 
+	_, subdir := os.Stat("cards/backs")
+	if os.IsNotExist(subdir) {
+		log.Println("[dReams] Creating Backs Dir")
+		mkdir := os.Mkdir("cards/backs", 0755)
+		if mkdir != nil {
+			log.Println("[dReams]", mkdir)
+		}
 	}
 
 	out, err := os.Create(filepath)
