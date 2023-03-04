@@ -1,6 +1,7 @@
 package menu
 
 import (
+	"fmt"
 	"image/color"
 	"log"
 	"math"
@@ -42,6 +43,7 @@ type menuOptions struct {
 	Sports_contracts  []string
 	Sports_favorites  []string
 	Sports_owned      []string
+	Contract_rating   map[string]uint64
 	Names             *widget.Select
 	Bet_unlock        *widget.Button
 	Bet_new           *widget.Button
@@ -76,13 +78,17 @@ type resources struct {
 	Back3     fyne.Resource
 	Back4     fyne.Resource
 	Gnomon    fyne.Resource
+	BBadge    fyne.Resource
+	B2Badge   fyne.Resource
+	B3Badge   fyne.Resource
+	RBadge    fyne.Resource
 }
 
 var Resource resources
 var HolderoControl holderoOptions
 var MenuControl menuOptions
 
-func GetMenuResources(r1, r2, r3, r4, r5, r6, r7 fyne.Resource) {
+func GetMenuResources(r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11 fyne.Resource) {
 	Resource.SmallIcon = r1
 	Resource.Frame = r2
 	Resource.Back1 = r3
@@ -90,9 +96,14 @@ func GetMenuResources(r1, r2, r3, r4, r5, r6, r7 fyne.Resource) {
 	Resource.Back3 = r5
 	Resource.Back4 = r6
 	Resource.Gnomon = r7
+	Resource.BBadge = r8
+	Resource.B2Badge = r9
+	Resource.B3Badge = r10
+	Resource.RBadge = r11
 }
 
 func disconnected() {
+	rpc.Wallet.Service = false
 	rpc.Wallet.PokerOwner = false
 	rpc.Wallet.BetOwner = false
 	rpc.Round.ID = 0
@@ -117,9 +128,10 @@ func disconnected() {
 	table.Assets.Collection.Text = (" Collection:")
 	table.Assets.Collection.Refresh()
 	table.Assets.Icon = *canvas.NewImageFromImage(nil)
-	table.Actions.NameEntry.Text = ""
-	table.Actions.NameEntry.Enable()
-	table.Actions.NameEntry.Refresh()
+	// prediction leaderboard
+	// table.Actions.NameEntry.Text = ""
+	// table.Actions.NameEntry.Enable()
+	// table.Actions.NameEntry.Refresh()
 	table.DisableHolderoTools()
 	MenuControl.Names.ClearSelected()
 	MenuControl.Names.Options = []string{}
@@ -283,7 +295,7 @@ func HolderoContractEntry() fyne.Widget {
 			table.ClearShared()
 			if len(text) == 64 {
 				go rpc.CheckHolderoContract()
-				if checkTableOwner(text) {
+				if CheckTableOwner(text) {
 					disableOwnerControls(false)
 					if checkTableVersion(text) >= 110 {
 						ownerControl.chips.Show()
@@ -401,25 +413,55 @@ func setHolderoControls(str string) (item string) {
 	return
 }
 
+func DisplayRating(i uint64) fyne.Resource {
+	if i > 250000 {
+		return Resource.B3Badge
+	} else if i > 150000 {
+		return Resource.B2Badge
+	} else if i > 90000 {
+		return Resource.BBadge
+	} else if i > 50000 {
+		return Resource.RBadge
+	} else {
+		return nil
+	}
+}
+
 func TableListings() fyne.CanvasObject { /// tables contracts
 	HolderoControl.Table_list = widget.NewList(
 		func() int {
 			return len(MenuControl.Holdero_tables)
 		},
 		func() fyne.CanvasObject {
-			return widget.NewLabel("")
+			return container.NewHBox(canvas.NewImageFromImage(nil), widget.NewLabel(""))
 		},
 		func(i widget.ListItemID, o fyne.CanvasObject) {
-			o.(*widget.Label).SetText(MenuControl.Holdero_tables[i])
+			o.(*fyne.Container).Objects[1].(*widget.Label).SetText(MenuControl.Holdero_tables[i])
+			if MenuControl.Holdero_tables[i][0:2] != "  " {
+				var key string
+				split := strings.Split(MenuControl.Holdero_tables[i], "   ")
+				if len(split) >= 3 {
+					trimmed := strings.Trim(split[2], " ")
+					if len(trimmed) == 64 {
+						key = trimmed
+					}
+				}
+
+				badge := canvas.NewImageFromResource(DisplayRating(MenuControl.Contract_rating[key]))
+				badge.SetMinSize(fyne.NewSize(35, 35))
+				o.(*fyne.Container).Objects[0] = badge
+			}
 		})
 
 	var item string
 
 	HolderoControl.Table_list.OnSelected = func(id widget.ListItemID) {
 		if id != 0 && Connected() {
-			item = setHolderoControls(MenuControl.Holdero_tables[id])
-			HolderoControl.Favorite_list.UnselectAll()
-			HolderoControl.Owned_list.UnselectAll()
+			go func() {
+				item = setHolderoControls(MenuControl.Holdero_tables[id])
+				HolderoControl.Favorite_list.UnselectAll()
+				HolderoControl.Owned_list.UnselectAll()
+			}()
 		}
 	}
 
@@ -428,14 +470,93 @@ func TableListings() fyne.CanvasObject { /// tables contracts
 		sort.Strings(MenuControl.Holdero_favorites)
 	})
 
+	rate := widget.NewButton("Rate", func() {
+		if len(rpc.Round.Contract) == 64 {
+			if !CheckTableOwner(rpc.Round.Contract) {
+				RateConfirm(rpc.Round.Contract)
+			} else {
+				log.Println("[dReams] You own this contract")
+			}
+		}
+	})
+
 	cont := container.NewBorder(
 		nil,
-		container.NewBorder(nil, nil, nil, save, layout.NewSpacer()),
+		container.NewBorder(nil, nil, save, rate, layout.NewSpacer()),
 		nil,
 		nil,
 		HolderoControl.Table_list)
 
 	return cont
+}
+
+func RateConfirm(scid string) {
+	cw := fyne.CurrentApp().NewWindow("Rate SCID")
+	cw.Resize(fyne.NewSize(350, 350))
+	cw.SetFixedSize(true)
+	cw.SetIcon(Resource.SmallIcon)
+	cw.SetCloseIntercept(func() {
+		cw.Close()
+	})
+
+	label := widget.NewLabel(fmt.Sprintf("Rate your experience with this contract\n\n%s", scid))
+	label.Wrapping = fyne.TextWrapWord
+
+	rating_label := widget.NewLabel("")
+
+	fee_label := widget.NewLabel("")
+
+	var slider *widget.Slider
+	confirm := widget.NewButton("Confirm", func() {
+		var pos uint64
+		if slider.Value > 0 {
+			pos = 1
+		}
+
+		fee := uint64(math.Abs(slider.Value * 100000))
+		rpc.RateSCID(scid, fee, pos)
+		cw.Close()
+	})
+
+	confirm.Hide()
+
+	cancel := widget.NewButton("Cancel", func() {
+		cw.Close()
+	})
+
+	slider = widget.NewSlider(-5, 5)
+	slider.Step = 0.5
+	slider.OnChanged = func(f float64) {
+		if slider.Value != 0 {
+			rating_label.SetText(fmt.Sprintf("Rating: %.0f", f*10000))
+			fee_label.SetText(fmt.Sprintf("Fee: %.5f Dero", math.Abs(f)))
+			confirm.Show()
+		} else {
+			rating_label.SetText("Pick a rating")
+			fee_label.SetText("")
+			confirm.Hide()
+		}
+	}
+
+	good := canvas.NewImageFromResource(Resource.B3Badge)
+	good.SetMinSize(fyne.NewSize(30, 30))
+	bad := canvas.NewImageFromResource(Resource.RBadge)
+	bad.SetMinSize(fyne.NewSize(30, 30))
+
+	rate_cont := container.NewBorder(nil, nil, bad, good, slider)
+
+	left := container.NewVBox(confirm)
+	right := container.NewVBox(cancel)
+	buttons := container.NewAdaptiveGrid(2, left, right)
+
+	content := container.NewVBox(label, rating_label, fee_label, layout.NewSpacer(), rate_cont, layout.NewSpacer(), buttons)
+
+	img := *canvas.NewImageFromResource(Resource.Back2)
+	cw.SetContent(
+		container.New(layout.NewMaxLayout(),
+			&img,
+			content))
+	cw.Show()
 }
 
 func HolderoFavorites() fyne.CanvasObject {
@@ -909,9 +1030,8 @@ func disableOwnerControls(d bool) {
 	ownerControl.owners_mid.Refresh()
 }
 
-func DisableBetOwner(o string) {
-
-	if o == rpc.Wallet.Address {
+func DisableBetOwner(owner string) {
+	if owner == rpc.Wallet.Address {
 		rpc.Wallet.BetOwner = true
 		MenuControl.Bet_new.Show()
 		MenuControl.Bet_unlock.Hide()

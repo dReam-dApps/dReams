@@ -9,7 +9,6 @@ import (
 	"os/signal"
 	"sort"
 	"strconv"
-	"strings"
 	"syscall"
 	"time"
 
@@ -54,7 +53,7 @@ Options:
 var offset int
 
 func flags() {
-	arguments, err := docopt.ParseArgs(command_line, nil, "v0.9.2")
+	arguments, err := docopt.ParseArgs(command_line, nil, "v0.9.2d")
 
 	if err != nil {
 		log.Fatalf("Error while parsing arguments: %s\n", err)
@@ -117,6 +116,7 @@ func init() {
 		<-c
 		writeConfig(makeConfig(table.Poker_name, rpc.Round.Daemon))
 		fmt.Println()
+		serviceRunning()
 		menu.StopGnomon(menu.Gnomes.Init)
 		menu.StopIndicators()
 		log.Println("[dReams] Closing")
@@ -124,12 +124,16 @@ func init() {
 	}()
 }
 
+func serviceRunning() {
+	rpc.Wallet.Service = false
+	for prediction.Service.Processing {
+		log.Println("[dReams] Waiting for service to close")
+		time.Sleep(3 * time.Second)
+	}
+}
+
 func stamp() {
-	fmt.Println(`♤♡♧♢♧♡♤♡♧♢♧♡♤♡♧♢♧♡♤♡♧♢♧♡♤♡♧♢♧♡♤`)
-	fmt.Println(`        dReams v0.9.2`)
-	fmt.Println(`   https://dreamtables.net`)
-	fmt.Println(`   ©2022-2023 dReam Tables`)
-	fmt.Println(`♤♡♧♢♧♡♤♡♧♢♧♡♤♡♧♢♧♡♤♡♧♢♧♡♤♡♧♢♧♡♤`)
+	fmt.Println(string(resourceStampTxt.StaticContent))
 }
 
 func notification(title, content string, g int) *fyne.Notification {
@@ -704,22 +708,22 @@ func refreshHolderoPlayers() {
 	H.TableContent.Objects[0] = table.HolderoTable(resourceTablePng)
 	H.TableContent.Objects[0].Refresh()
 
-	H.TableContent.Objects[1] = table.Player1_label(resourceUnknownPng, resourceAvatarFramePng, resourceTurnFramePng)
+	H.TableContent.Objects[1] = table.Player1_label(resourceUnknownAvatarPng, resourceAvatarFramePng, resourceTurnFramePng)
 	H.TableContent.Objects[1].Refresh()
 
-	H.TableContent.Objects[2] = table.Player2_label(resourceUnknownPng, resourceAvatarFramePng, resourceTurnFramePng)
+	H.TableContent.Objects[2] = table.Player2_label(resourceUnknownAvatarPng, resourceAvatarFramePng, resourceTurnFramePng)
 	H.TableContent.Objects[2].Refresh()
 
-	H.TableContent.Objects[3] = table.Player3_label(resourceUnknownPng, resourceAvatarFramePng, resourceTurnFramePng)
+	H.TableContent.Objects[3] = table.Player3_label(resourceUnknownAvatarPng, resourceAvatarFramePng, resourceTurnFramePng)
 	H.TableContent.Objects[3].Refresh()
 
-	H.TableContent.Objects[4] = table.Player4_label(resourceUnknownPng, resourceAvatarFramePng, resourceTurnFramePng)
+	H.TableContent.Objects[4] = table.Player4_label(resourceUnknownAvatarPng, resourceAvatarFramePng, resourceTurnFramePng)
 	H.TableContent.Objects[4].Refresh()
 
-	H.TableContent.Objects[5] = table.Player5_label(resourceUnknownPng, resourceAvatarFramePng, resourceTurnFramePng)
+	H.TableContent.Objects[5] = table.Player5_label(resourceUnknownAvatarPng, resourceAvatarFramePng, resourceTurnFramePng)
 	H.TableContent.Objects[5].Refresh()
 
-	H.TableContent.Objects[6] = table.Player6_label(resourceUnknownPng, resourceAvatarFramePng, resourceTurnFramePng)
+	H.TableContent.Objects[6] = table.Player6_label(resourceUnknownAvatarPng, resourceAvatarFramePng, resourceTurnFramePng)
 	H.TableContent.Objects[6].Refresh()
 
 	H.TableContent.Refresh()
@@ -832,51 +836,52 @@ func TarotRefresh() {
 	}
 }
 
-func MakeLeaderBoard(dc, gs bool, scid string) {
-	if dc && gs && len(scid) == 64 {
-		leaders := make(map[string]uint64)
-		findLeaders := menu.Gnomes.Indexer.Backend.GetAllSCIDVariableDetails(scid)
-
-		keys := make([]int64, 0, len(findLeaders))
-		for k := range findLeaders {
-			keys = append(keys, k)
-
-		}
-
-		sort.Slice(keys, func(i, j int) bool { return keys[i] > keys[j] })
-		for val := range findLeaders[keys[0]] {
-			a := findLeaders[keys[0]][val].Key
-			split := strings.Split(a.(string), "_")
-			if split[0] == "u" {
-				leaders[split[1]] = uint64(findLeaders[keys[0]][val].Value.(float64))
-			}
-		}
-
-		prediction.PredictControl.Leaders_map = leaders
-
-		printLeaders()
-	}
-}
-
-func printLeaders() {
-	prediction.PredictControl.Leaders_display = []string{" Leaders: " + strconv.Itoa(len(prediction.PredictControl.Leaders_map))}
-	keys := make([]string, 0, len(prediction.PredictControl.Leaders_map))
-
-	for key := range prediction.PredictControl.Leaders_map {
-		keys = append(keys, key)
-	}
-
-	sort.SliceStable(keys, func(i, j int) bool {
-		return prediction.PredictControl.Leaders_map[keys[i]] > prediction.PredictControl.Leaders_map[keys[j]]
-	})
-
-	for _, k := range keys {
-		prediction.PredictControl.Leaders_list.Refresh()
-		prediction.PredictControl.Leaders_display = append(prediction.PredictControl.Leaders_display, k+": "+strconv.FormatUint(prediction.PredictControl.Leaders_map[k], 10))
-	}
-
-	prediction.PredictControl.Leaders_list.Refresh()
-}
+// prediction leaderboard
+// func MakeLeaderBoard(dc, gs bool, scid string) {
+// 	if dc && gs && len(scid) == 64 {
+// 		leaders := make(map[string]uint64)
+// 		findLeaders := menu.Gnomes.Indexer.Backend.GetAllSCIDVariableDetails(scid)
+//
+// 		keys := make([]int64, 0, len(findLeaders))
+// 		for k := range findLeaders {
+// 			keys = append(keys, k)
+//
+// 		}
+//
+// 		sort.Slice(keys, func(i, j int) bool { return keys[i] > keys[j] })
+// 		for val := range findLeaders[keys[0]] {
+// 			a := findLeaders[keys[0]][val].Key
+// 			split := strings.Split(a.(string), "_")
+// 			if split[0] == "u" {
+// 				leaders[split[1]] = uint64(findLeaders[keys[0]][val].Value.(float64))
+// 			}
+// 		}
+//
+// 		prediction.PredictControl.Leaders_map = leaders
+//
+// 		//printLeaders()
+// 	}
+// }
+//
+// func printLeaders() {
+// 	prediction.PredictControl.Leaders_display = []string{" Leaders: " + strconv.Itoa(len(prediction.PredictControl.Leaders_map))}
+// 	keys := make([]string, 0, len(prediction.PredictControl.Leaders_map))
+//
+// 	for key := range prediction.PredictControl.Leaders_map {
+// 		keys = append(keys, key)
+// 	}
+//
+// 	sort.SliceStable(keys, func(i, j int) bool {
+// 		return prediction.PredictControl.Leaders_map[keys[i]] > prediction.PredictControl.Leaders_map[keys[j]]
+// 	})
+//
+// 	for _, k := range keys {
+// 		prediction.PredictControl.Leaders_list.Refresh()
+// 		prediction.PredictControl.Leaders_display = append(prediction.PredictControl.Leaders_display, k+": "+strconv.FormatUint(prediction.PredictControl.Leaders_map[k], 10))
+// 	}
+//
+// 	prediction.PredictControl.Leaders_list.Refresh()
+// }
 
 func refreshGnomonDisplay(index, c int) {
 	if c == 1 {
@@ -1063,8 +1068,9 @@ func MainTab(ti *container.TabItem) {
 		dReams.sports = false
 		dReams.tarot = false
 		go func() {
-			table.Actions.NameEntry.Text = menu.CheckPredictionName(prediction.PredictControl.Contract)
-			table.Actions.NameEntry.Refresh()
+			// prediction leaderboard
+			// table.Actions.NameEntry.Text = menu.CheckPredictionName(prediction.PredictControl.Contract)
+			// table.Actions.NameEntry.Refresh()
 			menu.PopulatePredictions(rpc.Signal.Daemon, menu.Gnomes.Sync, nil)
 		}()
 		PredictionRefresh(dReams.predict)
@@ -1167,8 +1173,8 @@ func PredictTab(ti *container.TabItem) {
 	switch ti.Text {
 	case "Contracts":
 		go menu.PopulatePredictions(rpc.Signal.Daemon, menu.Gnomes.Sync, nil)
-	case "Leaderboard":
-		go MakeLeaderBoard(rpc.Signal.Daemon, menu.Gnomes.Sync, prediction.PredictControl.Contract)
+	// case "Leaderboard":
+	// 	go MakeLeaderBoard(rpc.Signal.Daemon, menu.Gnomes.Sync, prediction.PredictControl.Contract)
 
 	default:
 	}

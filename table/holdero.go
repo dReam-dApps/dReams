@@ -405,11 +405,12 @@ type tableWidgets struct {
 	DEntry     *dReamsAmt
 	Tournament *widget.Button
 
-	Higher         *widget.Button
-	Lower          *widget.Button
-	Change         *widget.Button
-	Remove         *widget.Button
-	NameEntry      *widget.Entry
+	Higher *widget.Button
+	Lower  *widget.Button
+	// prediction leaderboard
+	//Change         *widget.Button
+	//Remove         *widget.Button
+	//NameEntry      *widget.Entry
 	Prediction_box *fyne.Container
 	P_contract     *widget.SelectEntry
 

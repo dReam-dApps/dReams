@@ -16,12 +16,13 @@ import (
 
 const (
 	NameSCID     = "0000000000000000000000000000000000000000000000000000000000000001"
+	RatingSCID   = "c66a11ddb22912e92b0a7ab777ed0d343632d9e3c6e8a81452396ca84d2decb6"
 	dReamsSCID   = "ad2e7b37c380cc1aed3a6b27224ddfc92a2d15962ca1f4d35e530dba0f9575a9"
 	TourneySCID  = "c2e1ec16aed6f653aef99a06826b2b6f633349807d01fbb74cc0afb5ff99c3c7"
 	HolderoSCID  = "e3f37573de94560e126a9020c0a5b3dfc7a4f3a4fbbe369fba93fbd219dc5fe9"
 	pHolderoSCID = "896834d57628d3a65076d3f4d84ddc7c5daf3e86b66a47f018abda6068afe2e6"
 	BaccSCID     = "8289c6109f41cbe1f6d5f27a419db537bf3bf30a25eff285241a36e1ae3e48a4"
-	PredictSCID  = "c89c2f514300413fd6922c28591196a7c48b42b07e7f4d7d8d9f7643e253a6ff"
+	PredictSCID  = "eaa62b220fa1c411785f43c0c08ec59c761261cb58a0ccedc5b358e5ed2d2c95"
 	pPredictSCID = "e5e49c9a6dc1c0dc8a94429a01bf758e705de49487cbd0b3e3550648d2460cdf"
 	SportsSCID   = "ad11377c29a863523c1cc50a33ca13e861cc146a7c0496da58deaa1973e0a39f"
 	pSportsSCID  = "fffdc4ea6d157880841feab335ab4755edcde4e60fec2fff661009b16f44fa94"
@@ -145,6 +146,29 @@ func CheckForIndex(scid string) (interface{}, error) {
 	address := DeroAddress(owner)
 
 	return address, err
+}
+
+func GetSCCode(dc bool, scid string) (string, error) {
+	if dc {
+		rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
+		defer cancel()
+
+		var result *rpc.GetSC_Result
+		params := rpc.GetSC_Params{
+			SCID:      scid,
+			Code:      true,
+			Variables: false,
+		}
+
+		err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params)
+		if err != nil {
+			log.Println("[GetNameServiceCode]", err)
+			return "", nil
+		}
+
+		return result.Code, err
+	}
+	return "", nil
 }
 
 func GetNameServiceCode(dc bool) (string, error) {

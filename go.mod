@@ -6,9 +6,10 @@ require (
 	fyne.io/fyne v1.4.3
 	fyne.io/fyne/v2 v2.2.4
 	github.com/civilware/Gnomon v0.0.0-20230130224610-7e5b7651ce52
-	github.com/deroproject/derohe v0.0.0-20221027103319-358fab62bdf4
+	github.com/deroproject/derohe v0.0.0-20230219151438-e855701f67c9
 	github.com/superoo7/go-gecko v1.0.0
 	github.com/ybbus/jsonrpc/v3 v3.1.1
+	go.etcd.io/bbolt v1.3.6
 )
 
 require (
@@ -36,6 +37,7 @@ require (
 	github.com/gopherjs/gopherjs v1.17.2 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/jsummers/gobmp v0.0.0-20151104160322-e2ba15ffa76e // indirect
+	github.com/klauspost/compress v1.15.13 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.2 // indirect
 	github.com/minio/sha256-simd v1.0.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
@@ -61,4 +63,5 @@ require (
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	honnef.co/go/js/dom v0.0.0-20210725211120-f030747120f2 // indirect
+	nhooyr.io/websocket v1.8.7 // indirect
 )

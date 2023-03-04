@@ -62,6 +62,7 @@ func main() {
 
 	dReams.Window.SetCloseIntercept(func() {
 		writeConfig(makeConfig(table.Poker_name, rpc.Round.Daemon))
+		serviceRunning()
 		menu.StopGnomon(menu.Gnomes.Init)
 		quit <- struct{}{}
 		menu.StopIndicators()
@@ -69,7 +70,7 @@ func main() {
 		dReams.Window.Close()
 	})
 
-	menu.GetMenuResources(resourceDTGnomonIconPng, resourceAvatarFramePng, resourceCwBackgroundPng, resourceMwBackgroundPng, resourceOwBackgroundPng, resourceUwBackgroundPng, resourceGnomoniconPng)
+	menu.GetMenuResources(resourceDTGnomonIconPng, resourceAvatarFramePng, resourceCwBackgroundPng, resourceMwBackgroundPng, resourceOwBackgroundPng, resourceUwBackgroundPng, resourceGnomoniconPng, resourceBlueBadgePng, resourceBlueBadge2Png, resourceBlueBadge3Png, resourceRedBadgePng)
 	table.GetTableResources(resourceDTGnomonIconPng, resourceMwBackgroundPng, resourceOwBackgroundPng, resourceBackgroundPng, resourceUwBackgroundPng, resourceIlumabackground1Png, resourceIlumabackground2Png, resourceIluma81Png)
 
 	dReams.menu = true
@@ -84,6 +85,7 @@ func main() {
 				place()))
 	}()
 
+	time.Sleep(500 * time.Millisecond)
 	dReams.os = runtime.GOOS
 	if systemTray(dReams.App) {
 		dReams.App.(desktop.App).SetSystemTrayIcon(resourceCardSharkTrayPng)

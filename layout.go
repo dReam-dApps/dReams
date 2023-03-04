@@ -356,15 +356,15 @@ func placePredict() *fyne.Container {
 		layout.NewSpacer(),
 		prediction.PredictBox())
 
-	leaders_scroll := container.NewScroll(prediction.LeadersDisplay())
-	leaders_scroll.SetMinSize(fyne.NewSize(180, 500))
-	leaders_contnet := container.NewVBox(leaders_scroll)
+	// leaders_scroll := container.NewScroll(prediction.LeadersDisplay())
+	// leaders_scroll.SetMinSize(fyne.NewSize(180, 500))
+	// leaders_contnet := container.NewVBox(leaders_scroll)
 
 	tabs := container.NewAppTabs(
 		container.NewTabItem("Contracts", prediction.PredictionListings()),
 		container.NewTabItem("Favorites", prediction.PredicitionFavorites()),
-		container.NewTabItem("Owned", prediction.PredictionOwned()),
-		container.NewTabItem("Leaderboard", leaders_contnet))
+		container.NewTabItem("Owned", prediction.PredictionOwned()))
+	// container.NewTabItem("Leaderboard", leaders_contnet))
 
 	tabs.OnSelected = func(ti *container.TabItem) {
 		PredictTab(ti)
