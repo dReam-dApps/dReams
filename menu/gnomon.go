@@ -764,19 +764,28 @@ func checkNFAOwner(scid string) {
 					tower := 0
 					switch header[0] {
 					case "HighStrangeness363":
-						tower = 5
+						tower = 4
 					case "HighStrangeness364":
-						tower = 9
+						tower = 8
 					case "HighStrangeness365":
-						tower = 13
+						tower = 12
 					default:
 					}
 
-					for i := 1; i < tower; i++ {
+					var have bool
+					for i := tower; i > 0; i-- {
 						themes := table.Settings.ThemeSelect.Options
-						new_themes := append(themes, "HSTheme"+strconv.Itoa(i))
-						table.Settings.ThemeSelect.Options = new_themes
-						table.Settings.ThemeSelect.Refresh()
+						for _, th := range themes {
+							if th == "HSTheme"+strconv.Itoa(i) {
+								have = true
+							}
+						}
+
+						if !have {
+							new_themes := append(themes, "HSTheme"+strconv.Itoa(i))
+							table.Settings.ThemeSelect.Options = new_themes
+							table.Settings.ThemeSelect.Refresh()
+						}
 					}
 				}
 			}
