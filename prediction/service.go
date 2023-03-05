@@ -22,6 +22,7 @@ type service struct {
 	Dest_port  uint64
 	Debug      bool
 	Processing bool
+	Last_block int
 }
 
 var Service service
@@ -239,17 +240,23 @@ func makeIntegratedAddr(print bool) {
 
 	var live bool
 	for _, sc := range p_contracts {
-		higher, lower := intgPredictionArgs(sc, true)
+		higher, lower := intgPredictionArgs(sc, print)
 		if higher != nil && lower != nil {
-			serviceDebug(print, "[makeIntegratedAddr]", fmt.Sprintf("%d DST Port", higher.Value(dero.RPC_DESTINATION_PORT, dero.DataUint64)))
+			if print {
+				log.Println("[makeIntegratedAddr]", fmt.Sprintf("%d DST Port", higher.Value(dero.RPC_DESTINATION_PORT, dero.DataUint64)))
+			}
 
 			service_address.Arguments = higher
 			comment := higher.Value(dero.RPC_COMMENT, dero.DataString)
-			serviceDebug(print, "[makeIntegratedAddr]", fmt.Sprintf("%s %s \n%s\n", walletapi.FormatMoney(higher.Value(dero.RPC_VALUE_TRANSFER, dero.DataUint64).(uint64)), comment, service_address.String()))
+			if print {
+				log.Println("[makeIntegratedAddr]", fmt.Sprintf("%s %s \n%s\n", walletapi.FormatMoney(higher.Value(dero.RPC_VALUE_TRANSFER, dero.DataUint64).(uint64)), comment, service_address.String()))
+			}
 
 			service_address.Arguments = lower
 			comment = lower.Value(dero.RPC_COMMENT, dero.DataString)
-			serviceDebug(print, "[makeIntegratedAddr]", fmt.Sprintf("%s %s \n%s\n", walletapi.FormatMoney(lower.Value(dero.RPC_VALUE_TRANSFER, dero.DataUint64).(uint64)), comment, service_address.String()))
+			if print {
+				log.Println("[makeIntegratedAddr]", fmt.Sprintf("%s %s \n%s\n", walletapi.FormatMoney(lower.Value(dero.RPC_VALUE_TRANSFER, dero.DataUint64).(uint64)), comment, service_address.String()))
+			}
 			live = true
 		}
 	}
@@ -257,21 +264,29 @@ func makeIntegratedAddr(print bool) {
 	for _, sc := range s_contracts {
 		all_args := intgSportsArgs(sc, true)
 		for _, arg := range all_args {
-			serviceDebug(print, "[makeIntegratedAddr]", fmt.Sprintf("%d DST Port", arg[0].Value(dero.RPC_DESTINATION_PORT, dero.DataUint64)))
+			if print {
+				log.Println("[makeIntegratedAddr]", fmt.Sprintf("%d DST Port", arg[0].Value(dero.RPC_DESTINATION_PORT, dero.DataUint64)))
+			}
 
 			service_address.Arguments = arg[0]
 			comment := arg[0].Value(dero.RPC_COMMENT, dero.DataString)
-			serviceDebug(print, "[makeIntegratedAddr]", fmt.Sprintf("%s %s \n%s\n", walletapi.FormatMoney(arg[0].Value(dero.RPC_VALUE_TRANSFER, dero.DataUint64).(uint64)), comment, service_address.String()))
+			if print {
+				log.Println("[makeIntegratedAddr]", fmt.Sprintf("%s %s \n%s\n", walletapi.FormatMoney(arg[0].Value(dero.RPC_VALUE_TRANSFER, dero.DataUint64).(uint64)), comment, service_address.String()))
+			}
 
 			service_address.Arguments = arg[1]
 			comment = arg[1].Value(dero.RPC_COMMENT, dero.DataString)
-			serviceDebug(print, "[makeIntegratedAddr]", fmt.Sprintf("%s %s \n%s\n", walletapi.FormatMoney(arg[1].Value(dero.RPC_VALUE_TRANSFER, dero.DataUint64).(uint64)), comment, service_address.String()))
+			if print {
+				log.Println("[makeIntegratedAddr]", fmt.Sprintf("%s %s \n%s\n", walletapi.FormatMoney(arg[1].Value(dero.RPC_VALUE_TRANSFER, dero.DataUint64).(uint64)), comment, service_address.String()))
+			}
 			live = true
 		}
 	}
 
 	if !live {
-		serviceDebug(print, "[makeIntegratedAddr]", "No addresses")
+		if print {
+			log.Println("[makeIntegratedAddr]", "No addresses")
+		}
 	}
 }
 
@@ -323,7 +338,13 @@ func dReamService(start uint64, payouts, transfers bool) {
 					runPredictionPayouts(Service.Debug)
 					runSportsPayouts(Service.Debug)
 				}
-				time.Sleep(9 * time.Second)
+
+				for i := 0; i < 10; i++ {
+					time.Sleep(1 * time.Second)
+					if !rpc.Wallet.Service || !rpc.Wallet.Connect || !rpc.Signal.Daemon {
+						break
+					}
+				}
 			}
 			Service.Processing = false
 			log.Println("[dReamService] Shutting down")
@@ -464,7 +485,7 @@ func runSportsPayouts(print bool) {
 						}
 					}
 				} else {
-					serviceDebug(print, "[runSportsPayouts]", fmt.Sprintf("%s Nothing live\n", split[2]))
+					serviceDebug(print, "[runSportsPayouts]", fmt.Sprintf("%s Nothing live", split[2]))
 				}
 			}
 		}
@@ -600,7 +621,7 @@ func processBetTx(start uint64, db *bbolt.DB, print bool) {
 						game_num = strings.Trim(full_prefix, "s")
 						if rpc.StringToInt(game_num) < 1 {
 							serviceDebug(print, "[processBetTx]", fmt.Sprintf("%s No game number", e.TXID))
-							sendRefund(e.Amount, e.SourcePort, scid, destination_expected, "No game number")
+							sendRefund(scid, destination_expected, "No game number", e)
 							storeBetTx("BET", "done", db, e)
 							continue
 						}
@@ -614,14 +635,14 @@ func processBetTx(start uint64, db *bbolt.DB, print bool) {
 						_, amt = menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "s_amount_"+game_num, menu.Gnomes.Indexer.ChainHeight, true)
 					default:
 						serviceDebug(print, "[processBetTx]", fmt.Sprintf("%s No prefix", e.TXID))
-						sendRefund(e.Amount, e.SourcePort, scid, destination_expected, "No prefix")
+						sendRefund(scid, destination_expected, "No prefix", e)
 						storeBetTx("BET", "done", db, e)
 						continue
 					}
 
 					if amt == nil || amt[0] == 0 {
 						serviceDebug(print, "[processBetTx]", fmt.Sprintf("%s  Amount is nil", e.TXID))
-						sendRefund(e.Amount, e.SourcePort, scid, destination_expected, "Void")
+						sendRefund(scid, destination_expected, "Void", e)
 						storeBetTx("BET", "done", db, e)
 						continue
 					}
@@ -629,7 +650,7 @@ func processBetTx(start uint64, db *bbolt.DB, print bool) {
 					value_expected := amt[0]
 					if e.Amount != value_expected {
 						serviceDebug(print, "[processBetTx]", fmt.Sprintf("User transferred %d, we were expecting %d. so we will refund", e.Amount, value_expected)) // this is an unexpected situation
-						sendRefund(e.Amount, e.SourcePort, scid, destination_expected, "Wrong Amount")
+						sendRefund(scid, destination_expected, "Wrong Amount", e)
 						storeBetTx("BET", "done", db, e)
 						continue
 					}
@@ -654,7 +675,7 @@ func processBetTx(start uint64, db *bbolt.DB, print bool) {
 								default:
 									sent = true
 									serviceDebug(print, "[processBetTx]", fmt.Sprintf("%s No prediction", e.TXID))
-									sendRefund(e.Amount, e.SourcePort, scid, destination_expected, "No prediction")
+									sendRefund(scid, destination_expected, "No prediction", e)
 								}
 
 							case "s":
@@ -680,14 +701,14 @@ func processBetTx(start uint64, db *bbolt.DB, print bool) {
 								default:
 									sent = true
 									serviceDebug(print, "[processBetTx]", fmt.Sprintf("%s No team", e.TXID))
-									sendRefund(e.Amount, e.SourcePort, scid, destination_expected, "No team")
+									sendRefund(scid, destination_expected, "No team", e)
 
 								}
 
 							default:
 								sent = true
 								serviceDebug(print, "[processBetTx]", fmt.Sprintf("%s No prefix", e.TXID))
-								sendRefund(e.Amount, e.SourcePort, scid, destination_expected, "No prefix")
+								sendRefund(scid, destination_expected, "No prefix", e)
 
 							}
 
@@ -850,7 +871,7 @@ func processSingleTx(txid string) {
 					game_num = strings.Trim(full_prefix, "s")
 					if rpc.StringToInt(game_num) < 1 {
 						log.Println("[processSingleTx]", e.TXID, "No game number")
-						rpc.ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "No game number")
+						rpc.ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "No game number", e.TXID)
 						storeBetTx("BET", "done", db, e)
 						return
 					}
@@ -864,14 +885,14 @@ func processSingleTx(txid string) {
 					_, amt = menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "s_amount_"+game_num, menu.Gnomes.Indexer.ChainHeight, true)
 				default:
 					log.Println("[processSingleTx]", e.TXID, "No prefix")
-					rpc.ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "No prefix")
+					rpc.ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "No prefix", e.TXID)
 					storeBetTx("BET", "done", db, e)
 					return
 				}
 
 				if amt == nil || amt[0] == 0 {
 					log.Println("[processSingleTx]", e.TXID, "amount is nil")
-					rpc.ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "Void")
+					rpc.ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "Void", e.TXID)
 					storeBetTx("BET", "done", db, e)
 					return
 				}
@@ -879,7 +900,7 @@ func processSingleTx(txid string) {
 				value_expected := amt[0]
 				if e.Amount != value_expected {
 					log.Println(nil, fmt.Sprintf("[processSingleTx] user transferred %d, we were expecting %d. so we will refund", e.Amount, value_expected)) // this is an unexpected situation
-					rpc.ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "Wrong Amount")
+					rpc.ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "Wrong Amount", e.TXID)
 					storeBetTx("BET", "done", db, e)
 					return
 				}
@@ -904,7 +925,7 @@ func processSingleTx(txid string) {
 							default:
 								sent = true
 								log.Println("[processSingleTx]", e.TXID, "No prediction")
-								rpc.ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "No prediction")
+								rpc.ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "No prediction", e.TXID)
 							}
 
 						case "s":
@@ -930,14 +951,14 @@ func processSingleTx(txid string) {
 							default:
 								sent = true
 								log.Println("[processSingleTx]", e.TXID, "No team")
-								rpc.ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "No team")
+								rpc.ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "No team", e.TXID)
 
 							}
 
 						default:
 							sent = true
 							log.Println("[processSingleTx]", e.TXID, "No prefix")
-							rpc.ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "No prefix")
+							rpc.ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "No prefix", e.TXID)
 
 						}
 
@@ -1064,6 +1085,7 @@ func deleteBetTx(bucket string, e *dero.Entry) {
 }
 
 func sendToPrediction(pre int, scid, destination_expected string, e dero.Entry) bool {
+	waitForBlock()
 	_, end := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "p_end_at", menu.Gnomes.Indexer.ChainHeight, true)
 	_, buffer := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "buffer", menu.Gnomes.Indexer.ChainHeight, true)
 	if end == nil || buffer == nil {
@@ -1072,18 +1094,25 @@ func sendToPrediction(pre int, scid, destination_expected string, e dero.Entry) 
 
 	now := time.Now().Unix()
 	if now > int64(end[0]) {
-		rpc.ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "Past Deadline")
+		rpc.ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "Past Deadline", e.TXID)
 	} else if now < int64(buffer[0]) {
-		rpc.ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "Before Buffer")
+		rpc.ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "Before Buffer", e.TXID)
 	} else {
-		rpc.AuotPredict(pre, e.Amount, e.SourcePort, scid, destination_expected)
+		rpc.AuotPredict(pre, e.Amount, e.SourcePort, scid, destination_expected, e.TXID)
 	}
+
+	Service.Last_block = rpc.Wallet.Height
 
 	t := 0
 	if Service.Debug {
 		log.Println("[sendToPrediction] Tx delay")
 	}
+
 	for t < 36 {
+		if !rpc.Wallet.Service || !rpc.Wallet.Connect || !rpc.Signal.Daemon {
+			break
+		}
+
 		t++
 		time.Sleep(1 * time.Second)
 	}
@@ -1092,6 +1121,7 @@ func sendToPrediction(pre int, scid, destination_expected string, e dero.Entry) 
 }
 
 func sendToSports(n, abv, team, scid, destination_expected string, e dero.Entry) bool {
+	waitForBlock()
 	_, end := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "s_end_at_"+n, menu.Gnomes.Indexer.ChainHeight, true)
 	_, buffer := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "buffer"+n, menu.Gnomes.Indexer.ChainHeight, true)
 	if end == nil || buffer == nil {
@@ -1107,18 +1137,25 @@ func sendToSports(n, abv, team, scid, destination_expected string, e dero.Entry)
 
 	now := time.Now().Unix()
 	if now > int64(end[0]) {
-		rpc.ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "Past Deadline")
+		rpc.ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "Past Deadline", e.TXID)
 	} else if now < int64(buffer[0]) {
-		rpc.ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "Before Buffer")
+		rpc.ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "Before Buffer", e.TXID)
 	} else {
-		rpc.AuotBook(e.Amount, pre, e.SourcePort, n, abv, scid, destination_expected)
+		rpc.AuotBook(e.Amount, pre, e.SourcePort, n, abv, scid, destination_expected, e.TXID)
 	}
+
+	Service.Last_block = rpc.Wallet.Height
 
 	t := 0
 	if Service.Debug {
 		log.Println("[sendToSports] Tx delay")
 	}
+
 	for t < 36 {
+		if !rpc.Wallet.Service || !rpc.Wallet.Connect || !rpc.Signal.Daemon {
+			break
+		}
+
 		t++
 		time.Sleep(1 * time.Second)
 	}
@@ -1126,15 +1163,33 @@ func sendToSports(n, abv, team, scid, destination_expected string, e dero.Entry)
 	return true
 }
 
-func sendRefund(amt, src uint64, scid, addr, msg string) {
-	rpc.ServiceRefund(amt, src, scid, addr, msg)
+func sendRefund(scid, addr, msg string, e dero.Entry) {
+	waitForBlock()
+	rpc.ServiceRefund(e.Amount, e.SourcePort, scid, addr, msg, e.TXID)
+	Service.Last_block = rpc.Wallet.Height
 
 	t := 0
 	if Service.Debug {
 		log.Println("[sendRefund] Tx delay")
 	}
 	for t < 36 {
+		if !rpc.Wallet.Service || !rpc.Wallet.Connect || !rpc.Signal.Daemon {
+			break
+		}
+
 		t++
 		time.Sleep(1 * time.Second)
+	}
+}
+
+func waitForBlock() {
+	i := 0
+	if Service.Debug {
+		log.Println("[waitForBlock] Waiting for block")
+	}
+
+	for rpc.Wallet.Height < Service.Last_block+3 && i < 20 {
+		i++
+		time.Sleep(3 * time.Second)
 	}
 }

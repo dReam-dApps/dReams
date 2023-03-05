@@ -56,7 +56,8 @@ type displayStrings struct {
 
 	Readings string
 
-	Dero_balance string
+	Dero_balance  string
+	Wallet_height string
 }
 
 type hashValue struct {

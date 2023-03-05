@@ -256,7 +256,8 @@ func WalletRpcEntry() fyne.Widget {
 	entry.OnCursorChanged = func() {
 		if rpc.Wallet.Connect {
 			rpc.Wallet.Address = ""
-			rpc.Wallet.Height = "0"
+			rpc.Display.Wallet_height = "0"
+			rpc.Wallet.Height = 0
 			rpc.Wallet.Connect = false
 			CheckConnection()
 		}
@@ -406,7 +407,7 @@ func setHolderoControls(str string) (item string) {
 			item = str
 			HolderoControl.contract_input.SetText(trimmed)
 			go GetTableStats(trimmed, true)
-			rpc.Times.Kick_block = rpc.StringToInt(rpc.Wallet.Height)
+			rpc.Times.Kick_block = rpc.Wallet.Height
 		}
 	}
 

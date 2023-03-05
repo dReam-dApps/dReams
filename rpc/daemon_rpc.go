@@ -568,7 +568,7 @@ func FetchHolderoSC(dc, cc bool) error {
 			if RevealBool_jv != nil && !Signal.Reveal && !Round.LocalEnd {
 				if addOne(Turn_jv) == Display.PlayerId {
 					Signal.Clicked = true
-					Signal.CHeight = StringToInt(Wallet.Height)
+					Signal.CHeight = Wallet.Height
 					Signal.Reveal = true
 					go RevealKey(Wallet.ClientKey)
 				}
@@ -598,9 +598,9 @@ func FetchHolderoSC(dc, cc bool) error {
 				if Last_jv != nil {
 					now := time.Now().Unix()
 					if int(now) > int(Last_jv.(float64))+Times.Kick+12 {
-						if StringToInt(Wallet.Height) > Times.Kick_block+2 {
+						if Wallet.Height > Times.Kick_block+2 {
 							TimeOut()
-							Times.Kick_block = StringToInt(Wallet.Height)
+							Times.Kick_block = Wallet.Height
 						}
 					}
 				}

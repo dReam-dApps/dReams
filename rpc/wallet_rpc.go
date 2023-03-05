@@ -35,7 +35,7 @@ type wallet struct {
 	Balance    uint64
 	TokenBal   string
 	TourneyBal string
-	Height     string
+	Height     int
 	Connect    bool
 	PokerOwner bool
 	BetOwner   bool
@@ -310,7 +310,8 @@ func GetHeight(wc bool) error { /// get wallet height
 			return nil
 		}
 
-		Wallet.Height = fmt.Sprint(result.Height)
+		Wallet.Height = int(result.Height)
+		Display.Wallet_height = fmt.Sprint(result.Height)
 
 		return err
 	}
@@ -1154,7 +1155,7 @@ func BaccBet(amt, w string) error {
 		addLog("Baccarat Tie TX: " + txid.TXID)
 	}
 
-	Bacc.CHeight = StringToInt(Wallet.Height)
+	Bacc.CHeight = Wallet.Height
 
 	return err
 }
@@ -1352,12 +1353,13 @@ func RateSCID(scid string, amt, pos uint64) error {
 // 	return err
 // }
 
-func AuotPredict(p int, amt, src uint64, scid, addr string) error {
+func AuotPredict(p int, amt, src uint64, scid, addr, tx string) error {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
 	var hl string
 	chopped_scid := scid[:6] + "..." + scid[58:]
+	chopped_txid := tx[0:9]
 	switch p {
 	case 0:
 		hl = "Lower"
@@ -1374,7 +1376,7 @@ func AuotPredict(p int, amt, src uint64, scid, addr string) error {
 	response := rpc.Arguments{
 		{Name: rpc.RPC_DESTINATION_PORT, DataType: rpc.DataUint64, Value: uint64(0)},
 		{Name: rpc.RPC_SOURCE_PORT, DataType: rpc.DataUint64, Value: src},
-		{Name: rpc.RPC_COMMENT, DataType: rpc.DataString, Value: fmt.Sprintf("Placed a %s %s bet on %s at height %s", walletapi.FormatMoney(amt), hl, chopped_scid, Wallet.Height)},
+		{Name: rpc.RPC_COMMENT, DataType: rpc.DataString, Value: fmt.Sprintf("Placed a %s %s bet on %s at height %s, %s", walletapi.FormatMoney(amt), hl, chopped_scid, Display.Wallet_height, chopped_txid)},
 	}
 
 	t1 := rpc.Transfer{
@@ -1406,15 +1408,16 @@ func AuotPredict(p int, amt, src uint64, scid, addr string) error {
 	return err
 }
 
-func ServiceRefund(amt, src uint64, scid, addr, msg string) error {
+func ServiceRefund(amt, src uint64, scid, addr, msg, tx string) error {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
 	chopped_scid := scid[:6] + "..." + scid[58:]
+	chopped_txid := tx[0:9]
 	response := rpc.Arguments{
 		{Name: rpc.RPC_DESTINATION_PORT, DataType: rpc.DataUint64, Value: uint64(0)},
 		{Name: rpc.RPC_SOURCE_PORT, DataType: rpc.DataUint64, Value: src},
-		{Name: rpc.RPC_COMMENT, DataType: rpc.DataString, Value: msg + fmt.Sprintf(", refunded %s bet on %s at height %s", walletapi.FormatMoney(amt), chopped_scid, Wallet.Height)},
+		{Name: rpc.RPC_COMMENT, DataType: rpc.DataString, Value: msg + fmt.Sprintf(", refunded %s bet on %s at height %s, %s", walletapi.FormatMoney(amt), chopped_scid, Display.Wallet_height, chopped_txid)},
 	}
 
 	t1 := rpc.Transfer{
@@ -1444,11 +1447,12 @@ func ServiceRefund(amt, src uint64, scid, addr, msg string) error {
 	return err
 }
 
-func AuotBook(amt, pre, src uint64, n, abv, scid, addr string) error {
+func AuotBook(amt, pre, src uint64, n, abv, scid, addr, tx string) error {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
 	chopped_scid := scid[:6] + "..." + scid[58:]
+	chopped_txid := tx[0:9]
 	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "Book"}
 	arg2 := rpc.Argument{Name: "pre", DataType: "U", Value: pre}
 	arg3 := rpc.Argument{Name: "n", DataType: "S", Value: n}
@@ -1459,7 +1463,7 @@ func AuotBook(amt, pre, src uint64, n, abv, scid, addr string) error {
 	response := rpc.Arguments{
 		{Name: rpc.RPC_DESTINATION_PORT, DataType: rpc.DataUint64, Value: uint64(0)},
 		{Name: rpc.RPC_SOURCE_PORT, DataType: rpc.DataUint64, Value: src},
-		{Name: rpc.RPC_COMMENT, DataType: rpc.DataString, Value: fmt.Sprintf("Placed a %s %s bet on %s at height %s", walletapi.FormatMoney(amt), abv, chopped_scid, Wallet.Height)},
+		{Name: rpc.RPC_COMMENT, DataType: rpc.DataString, Value: fmt.Sprintf("Placed a %s %s bet on %s at height %s, %s", walletapi.FormatMoney(amt), abv, chopped_scid, Display.Wallet_height, chopped_txid)},
 	}
 
 	t1 := rpc.Transfer{
@@ -2278,7 +2282,7 @@ func TarotReading(num int) error {
 	log.Println("[Tarot] Reading TX:", txid)
 	addLog("Reading TX: " + txid.TXID)
 
-	Tarot.CHeight = StringToInt(Wallet.Height)
+	Tarot.CHeight = Wallet.Height
 
 	return err
 }

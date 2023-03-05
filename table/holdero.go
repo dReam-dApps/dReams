@@ -435,7 +435,7 @@ func HolderoButtonBuffer() {
 	Actions.Warning.Hide()
 	rpc.Display.Res = ""
 	rpc.Signal.Clicked = true
-	rpc.Signal.CHeight = rpc.StringToInt(rpc.Wallet.Height)
+	rpc.Signal.CHeight = rpc.Wallet.Height
 }
 
 func CheckNames(seats string) bool {
