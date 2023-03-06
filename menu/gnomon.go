@@ -201,6 +201,7 @@ func StartIndicators() fyne.CanvasObject {
 				canvas.Refresh(w_rect)
 			}
 		})
+
 	MenuControl.Wallet_ind.RepeatCount = fyne.AnimationRepeatForever
 	MenuControl.Wallet_ind.AutoReverse = true
 	MenuControl.Wallet_ind.Start()
@@ -214,7 +215,55 @@ func StartIndicators() fyne.CanvasObject {
 		container.NewMax(d_rect, container.NewCenter(d)),
 		container.NewMax(w_rect, container.NewCenter(w)))
 
-	top_box := container.NewHBox(layout.NewSpacer(), hbox, container.NewMax(g_full, sync_box, icon))
+	pbot := canvas.NewImageFromResource(Resource.PBot)
+	pbot.SetMinSize(fyne.NewSize(30, 30))
+	p_rect := canvas.NewRectangle(alpha)
+	p_rect.SetMinSize(fyne.NewSize(36, 36))
+
+	dService := canvas.NewImageFromResource(Resource.dService)
+	dService.SetMinSize(fyne.NewSize(30, 30))
+	s_rect := canvas.NewRectangle(alpha)
+	s_rect.SetMinSize(fyne.NewSize(36, 36))
+
+	hbox2 := container.NewHBox(
+		container.NewMax(p_rect, container.NewCenter(pbot)),
+		container.NewMax(s_rect, container.NewCenter(dService)))
+
+	MenuControl.Poker_ind = canvas.NewColorRGBAAnimation(purple, blue,
+		time.Second*3, func(c color.Color) {
+			if rpc.Odds.Run {
+				p_rect.FillColor = c
+				pbot.Show()
+				canvas.Refresh(p_rect)
+			} else {
+				p_rect.FillColor = alpha
+				pbot.Hide()
+				canvas.Refresh(p_rect)
+			}
+		})
+
+	MenuControl.Service_ind = canvas.NewColorRGBAAnimation(purple, blue,
+		time.Second*3, func(c color.Color) {
+			if rpc.Wallet.Service {
+				s_rect.FillColor = c
+				dService.Show()
+				canvas.Refresh(s_rect)
+			} else {
+				s_rect.FillColor = alpha
+				dService.Hide()
+				canvas.Refresh(s_rect)
+			}
+		})
+
+	MenuControl.Poker_ind.RepeatCount = fyne.AnimationRepeatForever
+	MenuControl.Poker_ind.AutoReverse = true
+	MenuControl.Poker_ind.Start()
+
+	MenuControl.Service_ind.RepeatCount = fyne.AnimationRepeatForever
+	MenuControl.Service_ind.AutoReverse = true
+	MenuControl.Service_ind.Start()
+
+	top_box := container.NewHBox(layout.NewSpacer(), hbox2, hbox, container.NewMax(g_full, sync_box, icon))
 	place := container.NewVBox(top_box, layout.NewSpacer())
 
 	return container.NewMax(place)
@@ -226,6 +275,8 @@ func StopIndicators() {
 	Gnomes.Full_ind.Stop()
 	MenuControl.Daemon_ind.Stop()
 	MenuControl.Wallet_ind.Stop()
+	MenuControl.Poker_ind.Stop()
+	MenuControl.Service_ind.Stop()
 }
 
 func searchFilters() (filter []string) {

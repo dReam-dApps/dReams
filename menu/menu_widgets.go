@@ -58,6 +58,8 @@ type menuOptions struct {
 	Sports_check      *widget.Check
 	Wallet_ind        *fyne.Animation
 	Daemon_ind        *fyne.Animation
+	Poker_ind         *fyne.Animation
+	Service_ind       *fyne.Animation
 }
 
 type holderoOptions struct {
@@ -82,13 +84,15 @@ type resources struct {
 	B2Badge   fyne.Resource
 	B3Badge   fyne.Resource
 	RBadge    fyne.Resource
+	PBot      fyne.Resource
+	dService  fyne.Resource
 }
 
 var Resource resources
 var HolderoControl holderoOptions
 var MenuControl menuOptions
 
-func GetMenuResources(r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11 fyne.Resource) {
+func GetMenuResources(r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13 fyne.Resource) {
 	Resource.SmallIcon = r1
 	Resource.Frame = r2
 	Resource.Back1 = r3
@@ -100,6 +104,8 @@ func GetMenuResources(r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11 fyne.Resource
 	Resource.B2Badge = r9
 	Resource.B3Badge = r10
 	Resource.RBadge = r11
+	Resource.PBot = r12
+	Resource.dService = r13
 }
 
 func disconnected() {

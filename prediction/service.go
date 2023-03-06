@@ -586,6 +586,10 @@ func processBetTx(start uint64, db *bbolt.DB, print bool) {
 	serviceDebug(print, "[processBetTx]", fmt.Sprintf("Processing %d entries", l))
 
 	for i, e := range transfers.Entries {
+		if !rpc.Wallet.Service {
+			break
+		}
+
 		if e.Coinbase || !e.Incoming {
 			serviceDebug(print, "[processBetTx]", fmt.Sprintf("%s Coinbase or outgoing", e.TXID))
 			continue
