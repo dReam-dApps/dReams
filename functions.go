@@ -46,7 +46,7 @@ Usage:
 
 Options:
   -h --help     Show this screen.
-  --trim=<false>	dReams option, set true to trim index search filters.
+  --trim=<false>	dReams option, defaults true for minimum index search filters.
   --fastsync=<false>	Gnomon option,  true/false value to define loading at chain height on start up.
   --num-parallel-blocks=<5>   Gnomon option,  defines the number of parallel blocks to index.`
 
@@ -59,10 +59,10 @@ func flags() {
 		log.Fatalf("Error while parsing arguments: %s\n", err)
 	}
 
-	trim := false
+	trim := true
 	if arguments["--trim"] != nil {
-		if arguments["--trim"].(string) == "true" {
-			trim = true
+		if arguments["--trim"].(string) == "false" {
+			trim = false
 		}
 	}
 
