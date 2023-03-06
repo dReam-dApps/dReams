@@ -18,6 +18,9 @@ import (
 	"go.etcd.io/bbolt"
 )
 
+// block height of last payload format chance
+const PAYLOAD_FORMAT = uint64(1728000)
+
 type service struct {
 	Dest_port  uint64
 	Debug      bool
@@ -435,8 +438,17 @@ func runPredictionPayouts(print bool) {
 		}
 
 		if sent {
+			t := 0
+			Service.Last_block = rpc.Wallet.Height
 			serviceDebug(print, "[runPredictionPayouts]", "Tx Delay")
-			time.Sleep(36 * time.Second)
+			for rpc.Wallet.Height < Service.Last_block+3 {
+				if !rpc.Wallet.Service || !rpc.Wallet.Connect || !rpc.Signal.Daemon || t > 36 {
+					break
+				}
+
+				t++
+				time.Sleep(1 * time.Second)
+			}
 		}
 	}
 }
@@ -476,8 +488,17 @@ func runSportsPayouts(print bool) {
 								}
 
 								if sent {
+									t := 0
+									Service.Last_block = rpc.Wallet.Height
 									serviceDebug(print, "[runSportsPayouts]", "Tx Delay")
-									time.Sleep(36 * time.Second)
+									for rpc.Wallet.Height < Service.Last_block+3 {
+										if !rpc.Wallet.Service || !rpc.Wallet.Connect || !rpc.Signal.Daemon || t > 36 {
+											break
+										}
+
+										t++
+										time.Sleep(1 * time.Second)
+									}
 								}
 							} else {
 								serviceDebug(print, "[runSportsPayouts]", fmt.Sprintf("%s Not ready for payout", game[0]))
@@ -525,6 +546,26 @@ func processBetTx(start uint64, db *bbolt.DB, print bool) {
 		}
 	}
 
+	out_params := dero.Get_Transfers_Params{
+		Coinbase:   false,
+		In:         false,
+		Out:        true,
+		Min_Height: PAYLOAD_FORMAT,
+	}
+
+	var outgoing dero.Get_Transfers_Result
+	err := rpcClient.CallFor(context.TODO(), &outgoing, "GetTransfers", out_params)
+	if err != nil {
+		log.Println("[viewProcessedTx]", err)
+		return
+	}
+
+	reply_id := checkReplies(outgoing)
+
+	if start < PAYLOAD_FORMAT {
+		start = PAYLOAD_FORMAT
+	}
+
 	params := dero.Get_Transfers_Params{
 		Coinbase:        false,
 		In:              true,
@@ -534,7 +575,7 @@ func processBetTx(start uint64, db *bbolt.DB, print bool) {
 	}
 
 	var transfers dero.Get_Transfers_Result
-	err := rpcClient.CallFor(context.TODO(), &transfers, "GetTransfers", params)
+	err = rpcClient.CallFor(context.TODO(), &transfers, "GetTransfers", params)
 	if err != nil {
 		log.Println("[processBetTx]", err)
 		return
@@ -562,21 +603,35 @@ func processBetTx(start uint64, db *bbolt.DB, print bool) {
 
 		if already_processed {
 			if i > l-10 {
-				serviceDebug(print, "[processBetTx]", fmt.Sprintf("%s Already processed", e.TXID))
+				serviceDebug(print, "[processBetTx]", fmt.Sprintf("\033[32m%s Received: %d Already processed\033[0m", e.TXID, e.Height))
+				if print {
+					var reply_txid string
+					for id, repTx := range reply_id {
+						if id == e.TXID[:6]+"..."+e.TXID[58:] {
+							reply_txid = repTx
+							serviceDebug(print, "[processBetTx]", fmt.Sprintf("\033[33mReplied: %s\033[0m", reply_txid))
+							break
+						}
+					}
+
+					if len(reply_txid) != 64 {
+						serviceDebug(print, "[processBetTx]", fmt.Sprintf("\033[31mReply missing for %d blocks\033[0m", rpc.Wallet.Height-int(e.Height)))
+					}
+				}
 			}
 			continue
 		}
 
 		if !e.Payload_RPC.Has(dero.RPC_DESTINATION_PORT, dero.DataUint64) {
 			if i > l-10 {
-				serviceDebug(print, "[processBetTx]", fmt.Sprintf("%s No DST Port", e.TXID))
+				serviceDebug(print, "[processBetTx]", fmt.Sprintf("\033[31m%s No DST Port\033[0m", e.TXID))
 			}
 			continue
 		}
 
 		if Service.Dest_port != e.Payload_RPC.Value(dero.RPC_DESTINATION_PORT, dero.DataUint64).(uint64) {
 			if i > l-10 {
-				serviceDebug(print, "[processBetTx]", fmt.Sprintf("%s Bad DST port", e.TXID))
+				serviceDebug(print, "[processBetTx]", fmt.Sprintf("\033[31m%s Bad DST port\033[0m", e.TXID))
 			}
 			continue
 		}
@@ -586,7 +641,7 @@ func processBetTx(start uint64, db *bbolt.DB, print bool) {
 			addr, err := dero.NewAddress(destination_expected)
 			if err != nil {
 				serviceDebug(print, "[processBetTx]", err.Error())
-				storeBetTx("BET", "done", db, e)
+				storeTx("BET", "done", db, e)
 				continue
 			}
 
@@ -622,7 +677,7 @@ func processBetTx(start uint64, db *bbolt.DB, print bool) {
 						if rpc.StringToInt(game_num) < 1 {
 							serviceDebug(print, "[processBetTx]", fmt.Sprintf("%s No game number", e.TXID))
 							sendRefund(scid, destination_expected, "No game number", e)
-							storeBetTx("BET", "done", db, e)
+							storeTx("BET", "done", db, e)
 							continue
 						}
 					}
@@ -636,14 +691,14 @@ func processBetTx(start uint64, db *bbolt.DB, print bool) {
 					default:
 						serviceDebug(print, "[processBetTx]", fmt.Sprintf("%s No prefix", e.TXID))
 						sendRefund(scid, destination_expected, "No prefix", e)
-						storeBetTx("BET", "done", db, e)
+						storeTx("BET", "done", db, e)
 						continue
 					}
 
 					if amt == nil || amt[0] == 0 {
 						serviceDebug(print, "[processBetTx]", fmt.Sprintf("%s  Amount is nil", e.TXID))
 						sendRefund(scid, destination_expected, "Void", e)
-						storeBetTx("BET", "done", db, e)
+						storeTx("BET", "done", db, e)
 						continue
 					}
 
@@ -651,7 +706,7 @@ func processBetTx(start uint64, db *bbolt.DB, print bool) {
 					if e.Amount != value_expected {
 						serviceDebug(print, "[processBetTx]", fmt.Sprintf("User transferred %d, we were expecting %d. so we will refund", e.Amount, value_expected)) // this is an unexpected situation
 						sendRefund(scid, destination_expected, "Wrong Amount", e)
-						storeBetTx("BET", "done", db, e)
+						storeTx("BET", "done", db, e)
 						continue
 					}
 
@@ -728,7 +783,7 @@ func processBetTx(start uint64, db *bbolt.DB, print bool) {
 		} else {
 			serviceDebug(print, "[processBetTx]", fmt.Sprintf("%s No comment or reply address", e.TXID))
 		}
-		storeBetTx("BET", "done", db, e)
+		storeTx("BET", "done", db, e)
 	}
 	serviceDebug(print, "[processBetTx]", "Done\n")
 }
@@ -815,19 +870,17 @@ func processSingleTx(txid string) {
 	})
 
 	if already_processed {
-		log.Println("[processSingleTx]", e.TXID, "Already processed")
+		log.Println("[processSingleTx]", fmt.Sprintf("\033[32m%s Received: %d Already processed\033[0m", e.TXID, e.Height))
 		return
 	}
 
 	if !e.Payload_RPC.Has(dero.RPC_DESTINATION_PORT, dero.DataUint64) {
-		log.Println("[processSingleTx]", e.TXID, "No DST Port")
-		storeBetTx("BET", "done", db, e)
+		log.Println("[processSingleTx]", fmt.Sprintf("\033[31m%s No DST Port\033[0m", e.TXID))
 		return
 	}
 
 	if Service.Dest_port != e.Payload_RPC.Value(dero.RPC_DESTINATION_PORT, dero.DataUint64).(uint64) {
-		log.Println("[processSingleTx]", e.TXID, "Bad DST Port")
-		storeBetTx("BET", "done", db, e)
+		log.Println("[processSingleTx]", fmt.Sprintf("\033[31m%s Bad DST port\033[0m", e.TXID))
 		return
 	}
 
@@ -836,7 +889,7 @@ func processSingleTx(txid string) {
 		addr, err := dero.NewAddress(destination_expected)
 		if err != nil {
 			log.Println("[processSingleTx] err while while parsing incoming addr", err)
-			storeBetTx("BET", "done", db, e)
+			storeTx("BET", "done", db, e)
 			return
 		}
 
@@ -872,7 +925,7 @@ func processSingleTx(txid string) {
 					if rpc.StringToInt(game_num) < 1 {
 						log.Println("[processSingleTx]", e.TXID, "No game number")
 						rpc.ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "No game number", e.TXID)
-						storeBetTx("BET", "done", db, e)
+						storeTx("BET", "done", db, e)
 						return
 					}
 				}
@@ -886,14 +939,14 @@ func processSingleTx(txid string) {
 				default:
 					log.Println("[processSingleTx]", e.TXID, "No prefix")
 					rpc.ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "No prefix", e.TXID)
-					storeBetTx("BET", "done", db, e)
+					storeTx("BET", "done", db, e)
 					return
 				}
 
 				if amt == nil || amt[0] == 0 {
 					log.Println("[processSingleTx]", e.TXID, "amount is nil")
 					rpc.ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "Void", e.TXID)
-					storeBetTx("BET", "done", db, e)
+					storeTx("BET", "done", db, e)
 					return
 				}
 
@@ -901,7 +954,7 @@ func processSingleTx(txid string) {
 				if e.Amount != value_expected {
 					log.Println(nil, fmt.Sprintf("[processSingleTx] user transferred %d, we were expecting %d. so we will refund", e.Amount, value_expected)) // this is an unexpected situation
 					rpc.ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "Wrong Amount", e.TXID)
-					storeBetTx("BET", "done", db, e)
+					storeTx("BET", "done", db, e)
 					return
 				}
 
@@ -978,7 +1031,7 @@ func processSingleTx(txid string) {
 	} else {
 		log.Println("[processSingleTx]", e.TXID, "No comment or reply address")
 	}
-	storeBetTx("BET", "done", db, e)
+	storeTx("BET", "done", db, e)
 
 	log.Printf("[processSingleTx] Done\n\n")
 }
@@ -1005,7 +1058,23 @@ func viewProcessedTx(start uint64) {
 
 	rpcClient, _, _ := rpc.SetWalletClient(rpc.Wallet.Rpc, rpc.Wallet.UserPass)
 
-	params := dero.Get_Transfers_Params{
+	out_params := dero.Get_Transfers_Params{
+		Coinbase:   false,
+		In:         false,
+		Out:        true,
+		Min_Height: PAYLOAD_FORMAT,
+	}
+
+	var outgoing dero.Get_Transfers_Result
+	err = rpcClient.CallFor(context.TODO(), &outgoing, "GetTransfers", out_params)
+	if err != nil {
+		log.Println("[viewProcessedTx]", err)
+		return
+	}
+
+	reply_id := checkReplies(outgoing)
+
+	in_params := dero.Get_Transfers_Params{
 		Coinbase:        false,
 		In:              true,
 		Out:             false,
@@ -1014,7 +1083,7 @@ func viewProcessedTx(start uint64) {
 	}
 
 	var transfers dero.Get_Transfers_Result
-	err = rpcClient.CallFor(context.TODO(), &transfers, "GetTransfers", params)
+	err = rpcClient.CallFor(context.TODO(), &transfers, "GetTransfers", in_params)
 	if err != nil {
 		log.Println("[ViewProcessedTx] Could not obtain gettransfers from wallet", err)
 		return
@@ -1023,7 +1092,6 @@ func viewProcessedTx(start uint64) {
 	log.Println("[ViewProcessedTx] Viewing", len(transfers.Entries), "Entries from Height", strconv.Itoa(int(start)))
 
 	for _, e := range transfers.Entries {
-
 		if e.Coinbase || !e.Incoming {
 			log.Println("[ViewProcessedTx]", e.TXID, "coinbase or outgoing")
 			continue
@@ -1039,31 +1107,42 @@ func viewProcessedTx(start uint64) {
 			return nil
 		})
 
-		when := e.Time
-		format := when.Format("2006/01/02 15:04")
+		var replied bool
+		var reply_txid string
+		for id, repTx := range reply_id {
+			if id == e.TXID[:6]+"..."+e.TXID[58:] {
+				replied = true
+				reply_txid = repTx
+			}
+		}
+
+		when := e.Height
 		if already_processed {
-			log.Println("[ViewProcessedTx]", e.TXID, "Received:", format, "Already processed")
+			log.Println("[ViewProcessedTx]", fmt.Sprintf("\033[32m%s Received: %d Already processed\033[0m", e.TXID, when))
+			if replied {
+				log.Println("[ViewProcessedTx]", fmt.Sprintf("\033[33mReplied: %s\033[0m", reply_txid))
+			}
 		} else {
-			log.Println("[ViewProcessedTx]", e.TXID, "Received:", format, "Not processed")
+			log.Println("[ViewProcessedTx]", fmt.Sprintf("\033[31m%s Received: %d Not processed\033[0m", e.TXID, when))
 		}
 	}
 	log.Println("[ViewProcessedTx] Done")
 }
 
-func storeBetTx(bucket, value string, db *bbolt.DB, e dero.Entry) {
+func storeTx(bucket, value string, db *bbolt.DB, e dero.Entry) {
 	err := db.Update(func(tx *bbolt.Tx) error {
 		b := tx.Bucket([]byte(bucket))
 		return b.Put([]byte(e.TXID), []byte(value))
 	})
 
 	if err != nil {
-		log.Println("[storeBetTx]", err)
+		log.Println("[storeTx]", bucket, err)
 	} else {
-		log.Println("[storeBetTx]", e.TXID, "Stored")
+		log.Println("[storeTx]", e.TXID, bucket, "Stored")
 	}
 }
 
-func deleteBetTx(bucket string, e *dero.Entry) {
+func deleteTx(bucket string, e *dero.Entry) {
 	db_name := fmt.Sprintf("config/dReamService_%s.bbolt.db", rpc.Wallet.Address)
 	db, err := bbolt.Open(db_name, 0600, nil)
 	if err != nil {
@@ -1078,9 +1157,9 @@ func deleteBetTx(bucket string, e *dero.Entry) {
 	})
 
 	if err != nil {
-		log.Println("[deleteBetTx]", err)
+		log.Println("[deleteTx]", bucket, err)
 	} else {
-		log.Println("[deleteBetTx]", e.TXID, "Deleted")
+		log.Println("[deleteTx]", e.TXID, bucket, "Deleted")
 	}
 }
 
@@ -1088,7 +1167,9 @@ func sendToPrediction(pre int, scid, destination_expected string, e dero.Entry) 
 	waitForBlock()
 	_, end := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "p_end_at", menu.Gnomes.Indexer.ChainHeight, true)
 	_, buffer := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "buffer", menu.Gnomes.Indexer.ChainHeight, true)
-	if end == nil || buffer == nil {
+	_, limit := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "limit", menu.Gnomes.Indexer.ChainHeight, true)
+	_, played := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "p_#", menu.Gnomes.Indexer.ChainHeight, true)
+	if end == nil || buffer == nil || limit == nil || played == nil {
 		return false
 	}
 
@@ -1097,6 +1178,8 @@ func sendToPrediction(pre int, scid, destination_expected string, e dero.Entry) 
 		rpc.ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "Past Deadline", e.TXID)
 	} else if now < int64(buffer[0]) {
 		rpc.ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "Before Buffer", e.TXID)
+	} else if played[0] >= limit[0] {
+		rpc.ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "Bet Limit Reached", e.TXID)
 	} else {
 		rpc.AuotPredict(pre, e.Amount, e.SourcePort, scid, destination_expected, e.TXID)
 	}
@@ -1108,8 +1191,8 @@ func sendToPrediction(pre int, scid, destination_expected string, e dero.Entry) 
 		log.Println("[sendToPrediction] Tx delay")
 	}
 
-	for t < 36 {
-		if !rpc.Wallet.Service || !rpc.Wallet.Connect || !rpc.Signal.Daemon {
+	for rpc.Wallet.Height < Service.Last_block+3 {
+		if !rpc.Wallet.Service || !rpc.Wallet.Connect || !rpc.Signal.Daemon || t > 36 {
 			break
 		}
 
@@ -1124,7 +1207,9 @@ func sendToSports(n, abv, team, scid, destination_expected string, e dero.Entry)
 	waitForBlock()
 	_, end := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "s_end_at_"+n, menu.Gnomes.Indexer.ChainHeight, true)
 	_, buffer := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "buffer"+n, menu.Gnomes.Indexer.ChainHeight, true)
-	if end == nil || buffer == nil {
+	_, limit := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "limit", menu.Gnomes.Indexer.ChainHeight, true)
+	_, played := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "s_#_"+n, menu.Gnomes.Indexer.ChainHeight, true)
+	if end == nil || buffer == nil || limit == nil || played == nil {
 		return false
 	}
 
@@ -1140,6 +1225,8 @@ func sendToSports(n, abv, team, scid, destination_expected string, e dero.Entry)
 		rpc.ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "Past Deadline", e.TXID)
 	} else if now < int64(buffer[0]) {
 		rpc.ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "Before Buffer", e.TXID)
+	} else if played[0] >= limit[0] {
+		rpc.ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "Bet Limit Reached", e.TXID)
 	} else {
 		rpc.AuotBook(e.Amount, pre, e.SourcePort, n, abv, scid, destination_expected, e.TXID)
 	}
@@ -1151,8 +1238,8 @@ func sendToSports(n, abv, team, scid, destination_expected string, e dero.Entry)
 		log.Println("[sendToSports] Tx delay")
 	}
 
-	for t < 36 {
-		if !rpc.Wallet.Service || !rpc.Wallet.Connect || !rpc.Signal.Daemon {
+	for rpc.Wallet.Height < Service.Last_block+3 {
+		if !rpc.Wallet.Service || !rpc.Wallet.Connect || !rpc.Signal.Daemon || t > 36 {
 			break
 		}
 
@@ -1172,8 +1259,8 @@ func sendRefund(scid, addr, msg string, e dero.Entry) {
 	if Service.Debug {
 		log.Println("[sendRefund] Tx delay")
 	}
-	for t < 36 {
-		if !rpc.Wallet.Service || !rpc.Wallet.Connect || !rpc.Signal.Daemon {
+	for rpc.Wallet.Height < Service.Last_block+3 {
+		if !rpc.Wallet.Service || !rpc.Wallet.Connect || !rpc.Signal.Daemon || t > 36 {
 			break
 		}
 
@@ -1184,7 +1271,7 @@ func sendRefund(scid, addr, msg string, e dero.Entry) {
 
 func waitForBlock() {
 	i := 0
-	if Service.Debug {
+	if Service.Debug && rpc.Wallet.Height < Service.Last_block+3 {
 		log.Println("[waitForBlock] Waiting for block")
 	}
 
@@ -1192,4 +1279,22 @@ func waitForBlock() {
 		i++
 		time.Sleep(3 * time.Second)
 	}
+}
+
+func checkReplies(outgoing dero.Get_Transfers_Result) (reply_id map[string]string) {
+	reply_id = make(map[string]string)
+	for _, out := range outgoing.Entries {
+		fmt.Println(out.TXID)
+		if out.Payload_RPC.Has(dero.RPC_COMMENT, dero.DataString) {
+			comm := out.Payload_RPC.Value(dero.RPC_COMMENT, dero.DataString).(string)
+			split := strings.Split(comm, ",  ")
+			if len(split) == 2 {
+				if len(split[1]) == 15 {
+					reply_id[split[1]] = out.TXID
+				}
+			}
+		}
+	}
+
+	return
 }

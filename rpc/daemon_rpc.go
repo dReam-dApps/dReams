@@ -162,7 +162,7 @@ func GetSCCode(dc bool, scid string) (string, error) {
 
 		err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params)
 		if err != nil {
-			log.Println("[GetNameServiceCode]", err)
+			log.Println("[GetSCCode]", err)
 			return "", nil
 		}
 

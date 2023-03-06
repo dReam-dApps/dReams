@@ -338,7 +338,7 @@ func serviceOpts() fyne.CanvasObject {
 			if txid.Validate() == nil {
 				e, _ := rpc.GetTransaction(txid.Text)
 				if e != nil {
-					deleteBetTx("BET", e)
+					deleteTx("BET", e)
 				}
 			}
 		} else {
@@ -415,6 +415,9 @@ func serviceOpts() fyne.CanvasObject {
 			if entry.Validate() == nil {
 				if !height.Checked {
 					start = uint64(rpc.StringToInt(entry.Text))
+					if start < PAYLOAD_FORMAT {
+						start = PAYLOAD_FORMAT
+					}
 				}
 				if PS_Control.Service_pay.Checked || PS_Control.Transactions.Checked {
 					rpc.Wallet.Service = true

@@ -1359,7 +1359,7 @@ func AuotPredict(p int, amt, src uint64, scid, addr, tx string) error {
 
 	var hl string
 	chopped_scid := scid[:6] + "..." + scid[58:]
-	chopped_txid := tx[0:9]
+	chopped_txid := tx[:6] + "..." + tx[58:]
 	switch p {
 	case 0:
 		hl = "Lower"
@@ -1376,7 +1376,7 @@ func AuotPredict(p int, amt, src uint64, scid, addr, tx string) error {
 	response := rpc.Arguments{
 		{Name: rpc.RPC_DESTINATION_PORT, DataType: rpc.DataUint64, Value: uint64(0)},
 		{Name: rpc.RPC_SOURCE_PORT, DataType: rpc.DataUint64, Value: src},
-		{Name: rpc.RPC_COMMENT, DataType: rpc.DataString, Value: fmt.Sprintf("Placed a %s %s bet on %s at height %s, %s", walletapi.FormatMoney(amt), hl, chopped_scid, Display.Wallet_height, chopped_txid)},
+		{Name: rpc.RPC_COMMENT, DataType: rpc.DataString, Value: fmt.Sprintf("Placed a %s %s bet on %s at height %s,  %s", walletapi.FormatMoney(amt), hl, chopped_scid, Display.Wallet_height, chopped_txid)},
 	}
 
 	t1 := rpc.Transfer{
@@ -1413,11 +1413,11 @@ func ServiceRefund(amt, src uint64, scid, addr, msg, tx string) error {
 	defer cancel()
 
 	chopped_scid := scid[:6] + "..." + scid[58:]
-	chopped_txid := tx[0:9]
+	chopped_txid := tx[:6] + "..." + tx[58:]
 	response := rpc.Arguments{
 		{Name: rpc.RPC_DESTINATION_PORT, DataType: rpc.DataUint64, Value: uint64(0)},
 		{Name: rpc.RPC_SOURCE_PORT, DataType: rpc.DataUint64, Value: src},
-		{Name: rpc.RPC_COMMENT, DataType: rpc.DataString, Value: msg + fmt.Sprintf(", refunded %s bet on %s at height %s, %s", walletapi.FormatMoney(amt), chopped_scid, Display.Wallet_height, chopped_txid)},
+		{Name: rpc.RPC_COMMENT, DataType: rpc.DataString, Value: msg + fmt.Sprintf(", refunded %s bet on %s at height %s,  %s", walletapi.FormatMoney(amt), chopped_scid, Display.Wallet_height, chopped_txid)},
 	}
 
 	t1 := rpc.Transfer{
@@ -1452,7 +1452,7 @@ func AuotBook(amt, pre, src uint64, n, abv, scid, addr, tx string) error {
 	defer cancel()
 
 	chopped_scid := scid[:6] + "..." + scid[58:]
-	chopped_txid := tx[0:9]
+	chopped_txid := tx[:6] + "..." + tx[58:]
 	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "Book"}
 	arg2 := rpc.Argument{Name: "pre", DataType: "U", Value: pre}
 	arg3 := rpc.Argument{Name: "n", DataType: "S", Value: n}
@@ -1463,7 +1463,7 @@ func AuotBook(amt, pre, src uint64, n, abv, scid, addr, tx string) error {
 	response := rpc.Arguments{
 		{Name: rpc.RPC_DESTINATION_PORT, DataType: rpc.DataUint64, Value: uint64(0)},
 		{Name: rpc.RPC_SOURCE_PORT, DataType: rpc.DataUint64, Value: src},
-		{Name: rpc.RPC_COMMENT, DataType: rpc.DataString, Value: fmt.Sprintf("Placed a %s %s bet on %s at height %s, %s", walletapi.FormatMoney(amt), abv, chopped_scid, Display.Wallet_height, chopped_txid)},
+		{Name: rpc.RPC_COMMENT, DataType: rpc.DataString, Value: fmt.Sprintf("Placed a %s %s bet on %s at height %s,  %s", walletapi.FormatMoney(amt), abv, chopped_scid, Display.Wallet_height, chopped_txid)},
 	}
 
 	t1 := rpc.Transfer{
@@ -2307,7 +2307,7 @@ func SendAsset(scid, dest string, payload bool) error {
 		response := rpc.Arguments{
 			{Name: rpc.RPC_DESTINATION_PORT, DataType: rpc.DataUint64, Value: binary.BigEndian.Uint64(dstport[:])},
 			{Name: rpc.RPC_SOURCE_PORT, DataType: rpc.DataUint64, Value: uint64(0)},
-			{Name: rpc.RPC_COMMENT, DataType: rpc.DataString, Value: fmt.Sprintf("Sent you asset %s at height %s", scid, Wallet.Height)},
+			{Name: rpc.RPC_COMMENT, DataType: rpc.DataString, Value: fmt.Sprintf("Sent you asset %s at height %d", scid, Wallet.Height)},
 		}
 
 		t2 := rpc.Transfer{
