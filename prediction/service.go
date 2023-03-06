@@ -1284,7 +1284,6 @@ func waitForBlock() {
 func checkReplies(outgoing dero.Get_Transfers_Result) (reply_id map[string]string) {
 	reply_id = make(map[string]string)
 	for _, out := range outgoing.Entries {
-		fmt.Println(out.TXID)
 		if out.Payload_RPC.Has(dero.RPC_COMMENT, dero.DataString) {
 			comm := out.Payload_RPC.Value(dero.RPC_COMMENT, dero.DataString).(string)
 			split := strings.Split(comm, ",  ")
