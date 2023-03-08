@@ -86,13 +86,15 @@ type resources struct {
 	RBadge    fyne.Resource
 	PBot      fyne.Resource
 	dService  fyne.Resource
+	Tools     fyne.Resource
+	ToolsH    fyne.Resource
 }
 
 var Resource resources
 var HolderoControl holderoOptions
 var MenuControl menuOptions
 
-func GetMenuResources(r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13 fyne.Resource) {
+func GetMenuResources(r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, r15 fyne.Resource) {
 	Resource.SmallIcon = r1
 	Resource.Frame = r2
 	Resource.Back1 = r3
@@ -106,6 +108,8 @@ func GetMenuResources(r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13 fyn
 	Resource.RBadge = r11
 	Resource.PBot = r12
 	Resource.dService = r13
+	Resource.Tools = r14
+	Resource.ToolsH = r15
 }
 
 func disconnected() {
@@ -147,6 +151,7 @@ func disconnected() {
 	Market.Icon = *canvas.NewImageFromImage(nil)
 	Market.Cover = *canvas.NewImageFromImage(nil)
 	Market.Viewing = ""
+	Market.Viewing_coll = ""
 	ResetAuctionInfo()
 	AuctionInfo()
 }
@@ -1432,8 +1437,10 @@ func listMenu() { /// asset listing
 
 	MenuControl.Set_list = widget.NewButton("Set Listing", func() {
 		if duration.Validate() == nil && start.Validate() == nil && charAddr.Validate() == nil && charPerc.Validate() == nil {
-			MenuControl.Set_list.Hide()
-			confirmAssetList(list.Selected, duration.Text, start.Text, charAddr.Text, charPerc.Text)
+			if list.Selected != "" {
+				MenuControl.Set_list.Hide()
+				confirmAssetList(list.Selected, duration.Text, start.Text, charAddr.Text, charPerc.Text)
+			}
 		}
 	})
 

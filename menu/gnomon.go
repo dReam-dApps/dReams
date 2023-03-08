@@ -765,80 +765,85 @@ func checkNFAOwner(scid string) {
 		file, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "fileURL", Gnomes.Indexer.ChainHeight, true)
 		if owner != nil && header != nil && file != nil {
 			if owner[0] == rpc.Wallet.Address && validNfa(file[0]) {
-				check := strings.Trim(header[0], "0123456789")
-				if check == "AZYDS" || check == "SIXART" {
-					themes := table.Settings.ThemeSelect.Options
-					new_themes := append(themes, header[0])
-					table.Settings.ThemeSelect.Options = new_themes
-					table.Settings.ThemeSelect.Refresh()
-
-					avatars := table.Settings.AvatarSelect.Options
-					new_avatar := append(avatars, header[0])
-					table.Settings.AvatarSelect.Options = new_avatar
-					table.Settings.AvatarSelect.Refresh()
-					table.Assets.Assets = append(table.Assets.Assets, header[0]+"   "+scid)
-				} else if check == "AZYPCB" || check == "SIXPCB" {
-					current := table.Settings.BackSelect.Options
-					new := append(current, header[0])
-					table.Settings.BackSelect.Options = new
-					table.Settings.BackSelect.Refresh()
-					table.Assets.Assets = append(table.Assets.Assets, header[0]+"   "+scid)
-				} else if check == "AZYPC" || check == "SIXPC" {
-					current := table.Settings.FaceSelect.Options
-					new := append(current, header[0])
-					table.Settings.FaceSelect.Options = new
-					table.Settings.FaceSelect.Refresh()
-					table.Assets.Assets = append(table.Assets.Assets, header[0]+"   "+scid)
-				} else if check == "DBC" {
-					current := table.Settings.AvatarSelect.Options
-					new := append(current, header[0])
-					table.Settings.AvatarSelect.Options = new
-					table.Settings.AvatarSelect.Refresh()
-					table.Assets.Assets = append(table.Assets.Assets, header[0]+"   "+scid)
-				} else if check == "HighStrangeness" {
-					current_av := table.Settings.AvatarSelect.Options
-					new_av := append(current_av, header[0])
-					table.Settings.AvatarSelect.Options = new_av
-					table.Settings.AvatarSelect.Refresh()
-					table.Assets.Assets = append(table.Assets.Assets, header[0]+"   "+scid)
-
-					current_d := table.Settings.FaceSelect.Options
-					new_d := append(current_d, "High-Strangeness")
-					table.Settings.FaceSelect.Options = new_d
-					table.Settings.FaceSelect.Refresh()
-
-					current_b := table.Settings.BackSelect.Options
-					new_b := append(current_b, "High-Strangeness")
-					table.Settings.BackSelect.Options = new_b
-					table.Settings.BackSelect.Refresh()
-
-					tower := 0
-					switch header[0] {
-					case "HighStrangeness363":
-						tower = 4
-					case "HighStrangeness364":
-						tower = 8
-					case "HighStrangeness365":
-						tower = 12
-					default:
-					}
-
-					var have bool
-					for i := tower; i > 0; i-- {
-						themes := table.Settings.ThemeSelect.Options
-						for _, th := range themes {
-							if th == "HSTheme"+strconv.Itoa(i) {
-								have = true
-							}
-						}
-
-						if !have {
-							new_themes := append(themes, "HSTheme"+strconv.Itoa(i))
+				go func() {
+					bal, _ := rpc.TokenBalance(scid)
+					if bal == 1 {
+						check := strings.Trim(header[0], "0123456789")
+						if check == "AZYDS" || check == "SIXART" {
+							themes := table.Settings.ThemeSelect.Options
+							new_themes := append(themes, header[0])
 							table.Settings.ThemeSelect.Options = new_themes
 							table.Settings.ThemeSelect.Refresh()
+
+							avatars := table.Settings.AvatarSelect.Options
+							new_avatar := append(avatars, header[0])
+							table.Settings.AvatarSelect.Options = new_avatar
+							table.Settings.AvatarSelect.Refresh()
+							table.Assets.Assets = append(table.Assets.Assets, header[0]+"   "+scid)
+						} else if check == "AZYPCB" || check == "SIXPCB" {
+							current := table.Settings.BackSelect.Options
+							new := append(current, header[0])
+							table.Settings.BackSelect.Options = new
+							table.Settings.BackSelect.Refresh()
+							table.Assets.Assets = append(table.Assets.Assets, header[0]+"   "+scid)
+						} else if check == "AZYPC" || check == "SIXPC" {
+							current := table.Settings.FaceSelect.Options
+							new := append(current, header[0])
+							table.Settings.FaceSelect.Options = new
+							table.Settings.FaceSelect.Refresh()
+							table.Assets.Assets = append(table.Assets.Assets, header[0]+"   "+scid)
+						} else if check == "DBC" {
+							current := table.Settings.AvatarSelect.Options
+							new := append(current, header[0])
+							table.Settings.AvatarSelect.Options = new
+							table.Settings.AvatarSelect.Refresh()
+							table.Assets.Assets = append(table.Assets.Assets, header[0]+"   "+scid)
+						} else if check == "HighStrangeness" {
+							current_av := table.Settings.AvatarSelect.Options
+							new_av := append(current_av, header[0])
+							table.Settings.AvatarSelect.Options = new_av
+							table.Settings.AvatarSelect.Refresh()
+							table.Assets.Assets = append(table.Assets.Assets, header[0]+"   "+scid)
+
+							current_d := table.Settings.FaceSelect.Options
+							new_d := append(current_d, "High-Strangeness")
+							table.Settings.FaceSelect.Options = new_d
+							table.Settings.FaceSelect.Refresh()
+
+							current_b := table.Settings.BackSelect.Options
+							new_b := append(current_b, "High-Strangeness")
+							table.Settings.BackSelect.Options = new_b
+							table.Settings.BackSelect.Refresh()
+
+							tower := 0
+							switch header[0] {
+							case "HighStrangeness363":
+								tower = 4
+							case "HighStrangeness364":
+								tower = 8
+							case "HighStrangeness365":
+								tower = 12
+							default:
+							}
+
+							var have bool
+							for i := tower; i > 0; i-- {
+								themes := table.Settings.ThemeSelect.Options
+								for _, th := range themes {
+									if th == "HSTheme"+strconv.Itoa(i) {
+										have = true
+									}
+								}
+
+								if !have {
+									new_themes := append(themes, "HSTheme"+strconv.Itoa(i))
+									table.Settings.ThemeSelect.Options = new_themes
+									table.Settings.ThemeSelect.Refresh()
+								}
+							}
 						}
 					}
-				}
+				}()
 			}
 		}
 	}
@@ -1166,6 +1171,7 @@ func GetTableStats(scid string, single bool) {
 func CheckWalletNames(value string) []string {
 	names, _ := Gnomes.Indexer.Backend.GetSCIDKeysByValue(rpc.NameSCID, value, Gnomes.Indexer.LastIndexedHeight, true)
 
+	sort.Strings(names)
 	MenuControl.Names.Options = append(MenuControl.Names.Options, names...)
 
 	return names
@@ -1366,6 +1372,14 @@ func FindNfaListings(gs bool, assets map[string]string) {
 	}
 }
 
+func isNfaCollection(check string) bool {
+	if check == "AZYDS" || check == "DBC" || check == "AZYPC" || check == "SIXPC" || check == "AZYPCB" || check == "SIXPCB" || check == "SIXART" || check == "HighStrangeness" {
+		return true
+	}
+
+	return false
+}
+
 func checkNfaAuctionListing(scid string) string {
 	if !GnomonClosing() {
 		listType, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "listType", Gnomes.Indexer.ChainHeight, true)
@@ -1374,7 +1388,7 @@ func checkNfaAuctionListing(scid string) string {
 		desc, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "descrHdr", Gnomes.Indexer.ChainHeight, true)
 		if listType != nil && header != nil {
 			check := strings.Trim(header[0], "0123456789")
-			if check == "AZYDS" || check == "DBC" || check == "AZYPC" || check == "SIXPC" || check == "AZYPCB" || check == "SIXPCB" || check == "HighStrangeness" {
+			if isNfaCollection(check) {
 				switch listType[0] {
 				case "auction":
 					return coll[0] + "   " + header[0] + "   " + desc[0] + "   " + scid
@@ -1396,7 +1410,7 @@ func checkNfaBuyListing(scid string) string {
 		desc, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "descrHdr", Gnomes.Indexer.ChainHeight, true)
 		if listType != nil && header != nil {
 			check := strings.Trim(header[0], "0123456789")
-			if check == "AZYDS" || check == "DBC" || check == "AZYPC" || check == "SIXPC" || check == "AZYPCB" || check == "SIXPCB" || check == "HighStrangeness" {
+			if isNfaCollection(check) {
 				switch listType[0] {
 				case "sale":
 					return coll[0] + "   " + header[0] + "   " + desc[0] + "   " + scid
@@ -1441,88 +1455,113 @@ func GetAuctionDetails(scid string) {
 		_, endTime := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "endBlockTime", Gnomes.Indexer.ChainHeight, true)
 		_, startTime := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "startBlockTime", Gnomes.Indexer.ChainHeight, true)
 
-		if name != nil {
-			var ty string
-			check := strings.Trim(name[0], "0123456789")
-			if check == "AZYPC" || check == "SIXPC" {
-				ty = "Playing card deck"
-			} else if check == "AZYPCB" || check == "SIXPCB" {
-				ty = "Playing card back"
-			} else if check == "AZYDS" || check == "SIXART" {
-				ty = "Theme/Avatar"
-			} else if check == "DBC" || check == "HighStrangeness" {
-				ty = "Avatar"
-			}
-
-			Market.Name.Text = (" Name: " + name[0])
-			Market.Name.Refresh()
-			Market.Type.Text = (" Asset Type: " + ty)
-			Market.Type.Refresh()
-			Market.Collection.Text = (" Collection: " + collection[0])
-			Market.Collection.Refresh()
-			Market.Description.Text = (" Description: " + description[0])
-			Market.Description.Refresh()
-
-			Market.Creator.Text = (" Creator: " + creator[0])
-			Market.Creator.Refresh()
-			Market.Owner.Text = (" Owner: " + owner[0])
-			Market.Owner.Refresh()
-			if owner_update[0] == 1 {
-				Market.Owner_update.Text = (" Owner can update: Yes")
-			} else {
-				Market.Owner_update.Text = (" Owner can update: No")
-			}
-			Market.Owner_update.Refresh()
-
-			Market.Royalty.Text = (" Royalty: " + strconv.Itoa(int(royalty[0])) + "%")
-			Market.Royalty.Refresh()
-			price := float64(start[0])
-			str := fmt.Sprintf("%.5f", price/100000)
-			Market.Start_price.Text = (" Start Price: " + str + " Dero")
-			Market.Start_price.Refresh()
-			Market.Bid_count.Text = (" Bids: " + strconv.Itoa(int(bids[0])))
-			Market.Bid_count.Refresh()
-
-			end, _ := rpc.MsToTime(strconv.Itoa(int(endTime[0]) * 1000))
-			Market.End_time.Text = (" Ends At: " + end.String())
-			Market.End_time.Refresh()
-
-			if current != nil {
-				value := float64(current[0])
-				str := fmt.Sprintf("%.5f", value/100000)
-				Market.Current_bid.Text = (" Current Bid: " + str)
-				Market.Current_bid.Refresh()
-			} else {
-				Market.Current_bid.Text = (" Current Bid: ")
-				Market.Current_bid.Refresh()
-			}
-			if bid_price != nil {
-				value := float64(bid_price[0])
-				str := fmt.Sprintf("%.5f", value/100000)
-				Market.Bid_amt = bid_price[0]
-				Market.Bid_price.Text = (" Minimum Bid: " + str)
-				Market.Bid_price.Refresh()
-			} else {
-				Market.Bid_amt = 0
-				Market.Bid_price.Text = (" Minimum Bid: ")
-				Market.Bid_price.Refresh()
-			}
-
-			if owner[0] == rpc.Wallet.Address {
-				now := uint64(time.Now().Unix())
-
-				if now < startTime[0]+300 && startTime[0] > 0 {
-					Market.Cancel_button.Show()
+		if name != nil && collection != nil && start != nil && royalty != nil && endTime != nil {
+			go func() {
+				var ty string
+				check := strings.Trim(name[0], "0123456789")
+				if check == "AZYPC" || check == "SIXPC" {
+					ty = "Playing card deck"
+				} else if check == "AZYPCB" || check == "SIXPCB" {
+					ty = "Playing card back"
+				} else if check == "AZYDS" || check == "SIXART" {
+					ty = "Theme/Avatar"
+				} else if check == "DBC" || check == "HighStrangeness" {
+					ty = "Avatar"
 				} else {
+					return
+				}
+
+				Market.Viewing_coll = check
+				Market.Name.Text = (" Name: " + name[0])
+				Market.Name.Refresh()
+				Market.Type.Text = (" Asset Type: " + ty)
+				Market.Type.Refresh()
+				Market.Collection.Text = (" Collection: " + collection[0])
+				Market.Collection.Refresh()
+				Market.Description.Text = (" Description: " + description[0])
+				Market.Description.Refresh()
+
+				Market.Creator.Text = (" Creator: " + creator[0])
+				Market.Creator.Refresh()
+				Market.Owner.Text = (" Owner: " + owner[0])
+				Market.Owner.Refresh()
+				if owner_update[0] == 1 {
+					Market.Owner_update.Text = (" Owner can update: Yes")
+				} else {
+					Market.Owner_update.Text = (" Owner can update: No")
+				}
+				Market.Owner_update.Refresh()
+
+				Market.Royalty.Text = (" Royalty: " + strconv.Itoa(int(royalty[0])) + "%")
+				Market.Royalty.Refresh()
+				price := float64(start[0])
+				str := fmt.Sprintf("%.5f", price/100000)
+				Market.Start_price.Text = (" Start Price: " + str + " Dero")
+				Market.Start_price.Refresh()
+				Market.Bid_count.Text = (" Bids: " + strconv.Itoa(int(bids[0])))
+				Market.Bid_count.Refresh()
+
+				end, _ := rpc.MsToTime(strconv.Itoa(int(endTime[0]) * 1000))
+				Market.End_time.Text = (" Ends At: " + end.String())
+				Market.End_time.Refresh()
+
+				if current != nil {
+					value := float64(current[0])
+					str := fmt.Sprintf("%.5f", value/100000)
+					Market.Current_bid.Text = (" Current Bid: " + str)
+					Market.Current_bid.Refresh()
+				} else {
+					Market.Current_bid.Text = (" Current Bid: ")
+					Market.Current_bid.Refresh()
+				}
+
+				if bid_price != nil {
+					value := float64(bid_price[0])
+					str := fmt.Sprintf("%.5f", value/100000)
+					if bid_price[0] == 0 {
+						Market.Bid_amt = start[0]
+					} else {
+						Market.Bid_amt = bid_price[0]
+					}
+					Market.Bid_price.Text = (" Minimum Bid: " + str)
+					Market.Bid_price.Refresh()
+				} else {
+					Market.Bid_amt = 0
+					Market.Bid_price.Text = (" Minimum Bid: ")
+					Market.Bid_price.Refresh()
+				}
+
+				if amt, err := strconv.ParseFloat(Market.Entry.Text, 64); err == nil {
+					value := float64(Market.Bid_amt) / 100000
+					if amt == 0 || amt < value {
+						amt := fmt.Sprintf("%.5f", value)
+						Market.Entry.SetText(amt)
+					}
+				}
+
+				now := uint64(time.Now().Unix())
+				if owner[0] == rpc.Wallet.Address {
+					if now < startTime[0]+300 && startTime[0] > 0 {
+						Market.Cancel_button.Show()
+					} else {
+						Market.Cancel_button.Hide()
+					}
+
+					if now > endTime[0] && endTime[0] > 0 {
+						Market.Close_button.Show()
+					} else {
+						Market.Close_button.Hide()
+					}
+				} else {
+					Market.Close_button.Hide()
 					Market.Cancel_button.Hide()
 				}
 
-				if now > endTime[0] && endTime[0] > 0 {
-					Market.Close_button.Show()
-				} else {
-					Market.Close_button.Hide()
+				Market.Market_button.Show()
+				if now > endTime[0] {
+					Market.Market_button.Hide()
 				}
-			}
+			}()
 		}
 	}
 }
@@ -1540,68 +1579,80 @@ func GetBuyNowDetails(scid string) {
 		_, endTime := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "endBlockTime", Gnomes.Indexer.ChainHeight, true)
 		_, startTime := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "startBlockTime", Gnomes.Indexer.ChainHeight, true)
 
-		if name != nil {
-			var ty string
-			check := strings.Trim(name[0], "0123456789")
-			if check == "AZYPC" || check == "SIXPC" {
-				ty = "Playing card deck"
-			} else if check == "AZYPCB" || check == "SIXPCB" {
-				ty = "Playing card back"
-			} else if check == "AZYDS" || check == "SIXART" {
-				ty = "Theme/Avatar"
-			} else if check == "DBC" || check == "HighStrangeness" {
-				ty = "Avatar"
-			}
-
-			Market.Name.Text = (" Name: " + name[0])
-			Market.Name.Refresh()
-			Market.Type.Text = (" Asset Type: " + ty)
-			Market.Type.Refresh()
-			Market.Collection.Text = (" Collection: " + collection[0])
-			Market.Collection.Refresh()
-			Market.Description.Text = (" Description: " + description[0])
-			Market.Description.Refresh()
-
-			Market.Creator.Text = (" Creator: " + creator[0])
-			Market.Creator.Refresh()
-			Market.Owner.Text = (" Owner: " + owner[0])
-			Market.Owner.Refresh()
-			if owner_update[0] == 1 {
-				Market.Owner_update.Text = (" Owner can update: Yes")
-			} else {
-				Market.Owner_update.Text = (" Owner can update: No")
-			}
-			Market.Owner_update.Refresh()
-
-			Market.Royalty.Text = (" Royalty: " + strconv.Itoa(int(royalty[0])) + "%")
-			Market.Royalty.Refresh()
-			Market.Buy_amt = start[0]
-			value := float64(start[0])
-			str := fmt.Sprintf("%.5f", value/100000)
-			Market.Start_price.Text = (" Buy now for: " + str + " Dero")
-			Market.Start_price.Refresh()
-
-			Market.Entry.SetText(str)
-			Market.Entry.Disable()
-			end, _ := rpc.MsToTime(strconv.Itoa(int(endTime[0]) * 1000))
-			Market.End_time.Text = (" Ends At: " + end.String())
-			Market.End_time.Refresh()
-
-			if owner[0] == rpc.Wallet.Address {
-				now := uint64(time.Now().Unix())
-
-				if now < startTime[0]+300 && startTime[0] > 0 {
-					Market.Cancel_button.Show()
+		if name != nil && collection != nil && start != nil && royalty != nil && endTime != nil {
+			go func() {
+				var ty string
+				check := strings.Trim(name[0], "0123456789")
+				if check == "AZYPC" || check == "SIXPC" {
+					ty = "Playing card deck"
+				} else if check == "AZYPCB" || check == "SIXPCB" {
+					ty = "Playing card back"
+				} else if check == "AZYDS" || check == "SIXART" {
+					ty = "Theme/Avatar"
+				} else if check == "DBC" || check == "HighStrangeness" {
+					ty = "Avatar"
 				} else {
+					return
+				}
+
+				Market.Viewing_coll = check
+				Market.Name.Text = (" Name: " + name[0])
+				Market.Name.Refresh()
+				Market.Type.Text = (" Asset Type: " + ty)
+				Market.Type.Refresh()
+				Market.Collection.Text = (" Collection: " + collection[0])
+				Market.Collection.Refresh()
+				Market.Description.Text = (" Description: " + description[0])
+				Market.Description.Refresh()
+
+				Market.Creator.Text = (" Creator: " + creator[0])
+				Market.Creator.Refresh()
+				Market.Owner.Text = (" Owner: " + owner[0])
+				Market.Owner.Refresh()
+				if owner_update[0] == 1 {
+					Market.Owner_update.Text = (" Owner can update: Yes")
+				} else {
+					Market.Owner_update.Text = (" Owner can update: No")
+				}
+				Market.Owner_update.Refresh()
+
+				Market.Royalty.Text = (" Royalty: " + strconv.Itoa(int(royalty[0])) + "%")
+				Market.Royalty.Refresh()
+				Market.Buy_amt = start[0]
+				value := float64(start[0])
+				str := fmt.Sprintf("%.5f", value/100000)
+				Market.Start_price.Text = (" Buy now for: " + str + " Dero")
+				Market.Start_price.Refresh()
+
+				Market.Entry.SetText(str)
+				Market.Entry.Disable()
+				end, _ := rpc.MsToTime(strconv.Itoa(int(endTime[0]) * 1000))
+				Market.End_time.Text = (" Ends At: " + end.String())
+				Market.End_time.Refresh()
+
+				now := uint64(time.Now().Unix())
+				if owner[0] == rpc.Wallet.Address {
+					if now < startTime[0]+300 && startTime[0] > 0 {
+						Market.Cancel_button.Show()
+					} else {
+						Market.Cancel_button.Hide()
+					}
+
+					if now > endTime[0] && endTime[0] > 0 {
+						Market.Close_button.Show()
+					} else {
+						Market.Close_button.Hide()
+					}
+				} else {
+					Market.Close_button.Hide()
 					Market.Cancel_button.Hide()
 				}
 
-				if now > endTime[0] && endTime[0] > 0 {
-					Market.Close_button.Show()
-				} else {
-					Market.Close_button.Hide()
+				Market.Market_button.Show()
+				if now > endTime[0] {
+					Market.Market_button.Hide()
 				}
-			}
+			}()
 		}
 	}
 }

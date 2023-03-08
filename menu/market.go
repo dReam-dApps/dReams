@@ -48,6 +48,7 @@ type marketItems struct {
 	Buy_amt       uint64
 	Bid_amt       uint64
 	Viewing       string
+	Viewing_coll  string
 	Auctions      []string
 	Buy_now       []string
 }
@@ -77,6 +78,7 @@ func (e *marketAmt) TypedKey(k *fyne.KeyEvent) {
 func MarketItems() fyne.CanvasObject {
 	Market.Entry = &marketAmt{}
 	Market.Entry.ExtendBaseWidget(Market.Entry)
+	Market.Entry.SetText("0.0")
 	Market.Entry.PlaceHolder = "Dero:"
 	Market.Entry.Validator = validation.NewRegexp(`\d{1,}\.\d{1,5}$`, "Format Not Valid")
 	Market.Entry.OnChanged = func(s string) {
@@ -98,6 +100,8 @@ func MarketItems() fyne.CanvasObject {
 			}
 		}
 	})
+
+	Market.Market_button.Hide()
 
 	Market.Cancel_button = widget.NewButton("Cancel", func() {
 		confirmCancelClose(Market.Viewing, 1)
@@ -200,6 +204,7 @@ func confirmCancelClose(scid string, c int) {
 			}
 			Market.Cancel_button.Hide()
 			Market.Viewing = ""
+			Market.Viewing_coll = ""
 			cw.Close()
 		})
 
@@ -238,14 +243,11 @@ func AuctionListings() fyne.Widget {
 		if id != 0 {
 			split := strings.Split(Market.Auctions[id], "   ")
 			if split[3] != Market.Viewing {
+				Market.Entry.SetText("")
 				clearNfaImages()
 				Market.Viewing = split[3]
 				go GetNfaImages(split[3])
 				go GetAuctionDetails(split[3])
-				value := float64(Market.Bid_amt)
-				str := fmt.Sprintf("%.5f", value/100000)
-				Market.Entry.SetText(str)
-
 			}
 		}
 	}
@@ -294,6 +296,28 @@ func NfaIcon(res fyne.Resource) fyne.CanvasObject {
 	return &cont
 }
 
+func ToolsBadge(half bool, res fyne.Resource) fyne.CanvasObject {
+	var badge canvas.Image
+	if !half {
+		badge = *canvas.NewImageFromResource(Resource.Tools)
+		badge.Resize(fyne.NewSize(94, 94))
+		badge.Move(fyne.NewPos(8, 3))
+	} else {
+		badge = *canvas.NewImageFromResource(Resource.ToolsH)
+		badge.Resize(fyne.NewSize(94, 94))
+		badge.Move(fyne.NewPos(8, 3))
+	}
+
+	frame := canvas.NewImageFromResource(res)
+	frame.SetMinSize(fyne.NewSize(100, 100))
+	frame.Resize(fyne.NewSize(100, 100))
+	frame.Move(fyne.NewPos(5, 0))
+
+	cont := *container.NewWithoutLayout(&badge, frame)
+
+	return &cont
+}
+
 func NfaImg(img canvas.Image) *fyne.Container {
 	Market.Cover.Resize(fyne.NewSize(266, 400))
 	Market.Cover.Move(fyne.NewPos(400, -230))
@@ -319,7 +343,7 @@ func loadingTextLoop() {
 			Market.Loading.Text = Market.Loading.Text + "."
 			Market.Loading.Refresh()
 			Market.Details_box.Objects[0].Refresh()
-			time.Sleep(250 * time.Millisecond)
+			time.Sleep(300 * time.Millisecond)
 		}
 	}
 }
@@ -373,7 +397,7 @@ func NfaMarketInfo() fyne.CanvasObject {
 func AuctionInfo() fyne.CanvasObject {
 	Market.Details_box = *container.NewVBox(
 		NfaImg(Market.Cover),
-		NfaIcon(Resource.Frame),
+		container.NewHBox(NfaIcon(Resource.Frame), layout.NewSpacer()),
 		Market.Name,
 		Market.Type,
 		Market.Collection,
@@ -401,11 +425,19 @@ func RefreshNfaImages() {
 	}
 
 	if Market.Icon.Resource != nil {
-		Market.Details_box.Objects[1] = NfaIcon(Resource.Frame)
+		Market.Details_box.Objects[1].(*fyne.Container).Objects[0] = NfaIcon(Resource.Frame)
 		Market.Details_box.Objects[1].Refresh()
 	}
+	view := Market.Viewing_coll
+	if view == "AZYPC" || view == "SIXPC" {
+		Market.Details_box.Objects[1].(*fyne.Container).Objects[1] = ToolsBadge(false, Resource.Frame)
+	} else if view == "AZYPCB" || view == "SIXPCB" {
+		Market.Details_box.Objects[1].(*fyne.Container).Objects[1] = ToolsBadge(true, Resource.Frame)
+	} else {
+		Market.Details_box.Objects[1].(*fyne.Container).Objects[1] = layout.NewSpacer()
+	}
 
-	Market.Details_box.Refresh()
+	Market.Details_box.Objects[1].Refresh()
 }
 
 func ResetAuctionInfo() {
@@ -443,7 +475,7 @@ func ResetAuctionInfo() {
 func BuyNowInfo() fyne.CanvasObject {
 	Market.Details_box = *container.NewVBox(
 		NfaImg(Market.Cover),
-		NfaIcon(Resource.Frame),
+		container.NewHBox(NfaIcon(Resource.Frame), layout.NewSpacer()),
 		Market.Name,
 		Market.Type,
 		Market.Collection,

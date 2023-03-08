@@ -999,6 +999,7 @@ func MenuRefresh(tab, gi bool) {
 
 	if !dReams.menu {
 		menu.Market.Viewing = ""
+		menu.Market.Viewing_coll = ""
 	}
 }
 
@@ -1149,6 +1150,7 @@ func MarketTab(ti *container.TabItem) {
 		menu.Market.Tab = "Auction"
 		menu.Market.Auction_list.UnselectAll()
 		menu.Market.Viewing = ""
+		menu.Market.Viewing_coll = ""
 		menu.Market.Market_button.Text = "Bid"
 		menu.Market.Market_button.Refresh()
 		menu.Market.Entry.SetText("0.0")
@@ -1160,6 +1162,7 @@ func MarketTab(ti *container.TabItem) {
 		menu.Market.Tab = "Buy"
 		menu.Market.Buy_list.UnselectAll()
 		menu.Market.Viewing = ""
+		menu.Market.Viewing_coll = ""
 		menu.Market.Market_button.Text = "Buy"
 		menu.Market.Entry.Disable()
 		menu.Market.Market_button.Refresh()
