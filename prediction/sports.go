@@ -527,7 +527,7 @@ func GetCurrentMonth(league string) {
 }
 
 func callSoccer(date, league string) (s *soccer) {
-	client := &http.Client{}
+	client := &http.Client{Timeout: 9 * time.Second}
 	req, err := http.NewRequest("GET", sports(league)+"?dates="+date, nil)
 	if err != nil {
 		log.Println("[callSoccer]", err)
@@ -557,7 +557,7 @@ func callSoccer(date, league string) (s *soccer) {
 }
 
 func callMma(date, league string) (m *mma) {
-	client := &http.Client{}
+	client := &http.Client{Timeout: 9 * time.Second}
 	req, err := http.NewRequest("GET", sports(league)+"?dates="+date, nil)
 	if err != nil {
 		log.Println("[callMma]", err)
@@ -587,7 +587,7 @@ func callMma(date, league string) (m *mma) {
 }
 
 func callBasketball(date, league string) (bb *basketball) {
-	client := &http.Client{}
+	client := &http.Client{Timeout: 9 * time.Second}
 	req, err := http.NewRequest("GET", sports(league)+"?dates="+date, nil)
 	if err != nil {
 		log.Println("[callBasketball]", err)
@@ -617,7 +617,7 @@ func callBasketball(date, league string) (bb *basketball) {
 }
 
 func callFootball(date, league string) (f *football) {
-	client := &http.Client{}
+	client := &http.Client{Timeout: 9 * time.Second}
 	req, err := http.NewRequest("GET", sports(league)+"?dates="+date, nil)
 	if err != nil {
 		log.Println("[callFootball]", err)
@@ -647,7 +647,7 @@ func callFootball(date, league string) (f *football) {
 }
 
 func callHockey(date, league string) (h *hockey) {
-	client := &http.Client{}
+	client := &http.Client{Timeout: 9 * time.Second}
 	req, err := http.NewRequest("GET", sports(league)+"?dates="+date, nil)
 	if err != nil {
 		log.Println("[callHockey]", err)
@@ -677,7 +677,7 @@ func callHockey(date, league string) (h *hockey) {
 }
 
 func GetGameEnd(date, game, league string) {
-	client := &http.Client{}
+	client := &http.Client{Timeout: 9 * time.Second}
 	req, err := http.NewRequest("GET", sports(league)+"?dates="+date, nil)
 
 	if err != nil {
@@ -744,7 +744,7 @@ func GetGameEnd(date, game, league string) {
 }
 
 func callScores(date, league string) (s *scores) {
-	client := &http.Client{}
+	client := &http.Client{Timeout: 9 * time.Second}
 	req, err := http.NewRequest("GET", sports(league)+"?dates="+date, nil)
 	if err != nil {
 		log.Println("[callScores]", err)

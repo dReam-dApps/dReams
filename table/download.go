@@ -734,7 +734,7 @@ func getOgre(coin string) string {
 		return ""
 	}
 
-	client := &http.Client{}
+	client := &http.Client{Timeout: 10 * time.Second}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		log.Println("[getOgre]", err)
@@ -791,7 +791,7 @@ func getKucoin(coin string) string {
 		return ""
 	}
 
-	client := &http.Client{}
+	client := &http.Client{Timeout: 10 * time.Second}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		log.Println("[getKucoin]", err)

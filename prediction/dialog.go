@@ -1031,12 +1031,12 @@ func ownerConfirmPopUp(i int, p float64) { /// bet owner action confirmation
 	s_pay_n := n_split[0]
 	s_dep := PS_Control.S_deposit.Text
 
-	if len(n_split) < 3 {
-		return
-	}
-
 	var win, team string
 	if i == 3 {
+		if len(n_split) < 3 {
+			log.Println("[dReams] Could not format game string")
+			return
+		}
 		if n_split[1] == "Bellator" || n_split[1] == "UFC" {
 			win, team = GetMmaWinner(n_split[2], n_split[1])
 		} else {
