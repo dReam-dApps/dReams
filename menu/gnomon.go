@@ -765,85 +765,80 @@ func checkNFAOwner(scid string) {
 		file, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "fileURL", Gnomes.Indexer.ChainHeight, true)
 		if owner != nil && header != nil && file != nil {
 			if owner[0] == rpc.Wallet.Address && validNfa(file[0]) {
-				go func() {
-					bal, _ := rpc.TokenBalance(scid)
-					if bal == 1 {
-						check := strings.Trim(header[0], "0123456789")
-						if check == "AZYDS" || check == "SIXART" {
-							themes := table.Settings.ThemeSelect.Options
-							new_themes := append(themes, header[0])
-							table.Settings.ThemeSelect.Options = new_themes
-							table.Settings.ThemeSelect.Refresh()
+				check := strings.Trim(header[0], "0123456789")
+				if check == "AZYDS" || check == "SIXART" {
+					themes := table.Settings.ThemeSelect.Options
+					new_themes := append(themes, header[0])
+					table.Settings.ThemeSelect.Options = new_themes
+					table.Settings.ThemeSelect.Refresh()
 
-							avatars := table.Settings.AvatarSelect.Options
-							new_avatar := append(avatars, header[0])
-							table.Settings.AvatarSelect.Options = new_avatar
-							table.Settings.AvatarSelect.Refresh()
-							table.Assets.Assets = append(table.Assets.Assets, header[0]+"   "+scid)
-						} else if check == "AZYPCB" || check == "SIXPCB" {
-							current := table.Settings.BackSelect.Options
-							new := append(current, header[0])
-							table.Settings.BackSelect.Options = new
-							table.Settings.BackSelect.Refresh()
-							table.Assets.Assets = append(table.Assets.Assets, header[0]+"   "+scid)
-						} else if check == "AZYPC" || check == "SIXPC" {
-							current := table.Settings.FaceSelect.Options
-							new := append(current, header[0])
-							table.Settings.FaceSelect.Options = new
-							table.Settings.FaceSelect.Refresh()
-							table.Assets.Assets = append(table.Assets.Assets, header[0]+"   "+scid)
-						} else if check == "DBC" {
-							current := table.Settings.AvatarSelect.Options
-							new := append(current, header[0])
-							table.Settings.AvatarSelect.Options = new
-							table.Settings.AvatarSelect.Refresh()
-							table.Assets.Assets = append(table.Assets.Assets, header[0]+"   "+scid)
-						} else if check == "HighStrangeness" {
-							current_av := table.Settings.AvatarSelect.Options
-							new_av := append(current_av, header[0])
-							table.Settings.AvatarSelect.Options = new_av
-							table.Settings.AvatarSelect.Refresh()
-							table.Assets.Assets = append(table.Assets.Assets, header[0]+"   "+scid)
+					avatars := table.Settings.AvatarSelect.Options
+					new_avatar := append(avatars, header[0])
+					table.Settings.AvatarSelect.Options = new_avatar
+					table.Settings.AvatarSelect.Refresh()
+					table.Assets.Assets = append(table.Assets.Assets, header[0]+"   "+scid)
+				} else if check == "AZYPCB" || check == "SIXPCB" {
+					current := table.Settings.BackSelect.Options
+					new := append(current, header[0])
+					table.Settings.BackSelect.Options = new
+					table.Settings.BackSelect.Refresh()
+					table.Assets.Assets = append(table.Assets.Assets, header[0]+"   "+scid)
+				} else if check == "AZYPC" || check == "SIXPC" {
+					current := table.Settings.FaceSelect.Options
+					new := append(current, header[0])
+					table.Settings.FaceSelect.Options = new
+					table.Settings.FaceSelect.Refresh()
+					table.Assets.Assets = append(table.Assets.Assets, header[0]+"   "+scid)
+				} else if check == "DBC" {
+					current := table.Settings.AvatarSelect.Options
+					new := append(current, header[0])
+					table.Settings.AvatarSelect.Options = new
+					table.Settings.AvatarSelect.Refresh()
+					table.Assets.Assets = append(table.Assets.Assets, header[0]+"   "+scid)
+				} else if check == "HighStrangeness" {
+					current_av := table.Settings.AvatarSelect.Options
+					new_av := append(current_av, header[0])
+					table.Settings.AvatarSelect.Options = new_av
+					table.Settings.AvatarSelect.Refresh()
+					table.Assets.Assets = append(table.Assets.Assets, header[0]+"   "+scid)
 
-							current_d := table.Settings.FaceSelect.Options
-							new_d := append(current_d, "High-Strangeness")
-							table.Settings.FaceSelect.Options = new_d
-							table.Settings.FaceSelect.Refresh()
+					current_d := table.Settings.FaceSelect.Options
+					new_d := append(current_d, "High-Strangeness")
+					table.Settings.FaceSelect.Options = new_d
+					table.Settings.FaceSelect.Refresh()
 
-							current_b := table.Settings.BackSelect.Options
-							new_b := append(current_b, "High-Strangeness")
-							table.Settings.BackSelect.Options = new_b
-							table.Settings.BackSelect.Refresh()
+					current_b := table.Settings.BackSelect.Options
+					new_b := append(current_b, "High-Strangeness")
+					table.Settings.BackSelect.Options = new_b
+					table.Settings.BackSelect.Refresh()
 
-							tower := 0
-							switch header[0] {
-							case "HighStrangeness363":
-								tower = 4
-							case "HighStrangeness364":
-								tower = 8
-							case "HighStrangeness365":
-								tower = 12
-							default:
-							}
+					tower := 0
+					switch header[0] {
+					case "HighStrangeness363":
+						tower = 4
+					case "HighStrangeness364":
+						tower = 8
+					case "HighStrangeness365":
+						tower = 12
+					default:
+					}
 
-							var have bool
-							for i := tower; i > 0; i-- {
-								themes := table.Settings.ThemeSelect.Options
-								for _, th := range themes {
-									if th == "HSTheme"+strconv.Itoa(i) {
-										have = true
-									}
-								}
-
-								if !have {
-									new_themes := append(themes, "HSTheme"+strconv.Itoa(i))
-									table.Settings.ThemeSelect.Options = new_themes
-									table.Settings.ThemeSelect.Refresh()
-								}
+					var have bool
+					for i := tower; i > 0; i-- {
+						themes := table.Settings.ThemeSelect.Options
+						for _, th := range themes {
+							if th == "HSTheme"+strconv.Itoa(i) {
+								have = true
 							}
 						}
+
+						if !have {
+							new_themes := append(themes, "HSTheme"+strconv.Itoa(i))
+							table.Settings.ThemeSelect.Options = new_themes
+							table.Settings.ThemeSelect.Refresh()
+						}
 					}
-				}()
+				}
 			}
 		}
 	}
