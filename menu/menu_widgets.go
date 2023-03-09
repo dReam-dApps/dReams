@@ -118,6 +118,7 @@ func disconnected() {
 	rpc.Wallet.BetOwner = false
 	rpc.Round.ID = 0
 	rpc.Display.PlayerId = ""
+	rpc.Odds.Run = false
 	table.Settings.FaceSelect.Options = []string{"Light", "Dark"}
 	table.Settings.BackSelect.Options = []string{"Light", "Dark"}
 	table.Settings.ThemeSelect.Options = []string{"Main"}

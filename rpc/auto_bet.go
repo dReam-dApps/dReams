@@ -1024,7 +1024,6 @@ func callBet(m float64, live bool) bool {
 	oddsLog("[callBet]", fmt.Sprintln("Call", fmt.Sprintf("%.2f", m)+"x", fmt.Sprintf("%.1f", amt), "Dero"))
 	if live {
 		Bet(fmt.Sprintf("%.1f", amt))
-		updateStatsWager(amt)
 	}
 
 	return true
@@ -1045,7 +1044,6 @@ func raiseBet(m float64, live bool) bool {
 	oddsLog("[raiseBet]", fmt.Sprintln("Raise bet, multiplier and amount", m, fmt.Sprintf("%.1f", amt)))
 	if live {
 		Bet(fmt.Sprintf("%.1f", amt))
-		updateStatsWager(amt)
 	}
 
 	return true
@@ -1298,7 +1296,6 @@ func BetLogic(odds, future float64, live bool) {
 			} else {
 				Bet(fmt.Sprintf("%.1f", amt))
 			}
-			updateStatsWager(amt)
 		}
 
 	} else if Round.Wager > 0 {

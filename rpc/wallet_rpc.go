@@ -585,8 +585,8 @@ func Bet(amt string) error { /// holdero bet
 		return nil
 	}
 
-	if f, err := strconv.ParseFloat(amt, 32); err == nil {
-		updateStatsWager(float64(f))
+	if f, err := strconv.ParseFloat(amt, 64); err == nil {
+		updateStatsWager(f)
 	}
 
 	Display.Res = ""

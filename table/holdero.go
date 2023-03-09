@@ -9,6 +9,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/SixofClubsss/dReams/rpc"
 
@@ -684,19 +685,15 @@ func AutoOptions() fyne.CanvasObject {
 		}
 	})
 
-	var cont *fyne.Container
 	checks := container.NewVBox(deal, cf)
 
 	Settings.Tools = widget.NewButton("Tools", func() {
-		go holderoTools(deal, cf, cont)
+		go holderoTools(deal, cf, Settings.Tools)
 	})
 
 	DisableHolderoTools()
 
-	rect := canvas.NewRectangle(color.RGBA{0, 0, 0, 0})
-	cont = container.NewMax(rect, Settings.Tools)
-
-	auto := container.NewVBox(checks, cont)
+	auto := container.NewVBox(checks, Settings.Tools)
 
 	return auto
 }
@@ -745,7 +742,7 @@ func setRandomOpts(opts *widget.RadioGroup) {
 	}
 }
 
-func holderoTools(deal, check *widget.Check, button *fyne.Container) {
+func holderoTools(deal, check *widget.Check, button *widget.Button) {
 	button.Hide()
 	bm := fyne.CurrentApp().NewWindow("Holdero Tools")
 	bm.Resize(fyne.NewSize(330, 700))
@@ -1077,8 +1074,6 @@ func holderoTools(deal, check *widget.Check, button *fyne.Container) {
 
 	enable := widget.NewCheck("Auto Bet Enabled", func(b bool) {
 		if b {
-			button.Objects[0] = canvas.NewRectangle(color.RGBA{105, 90, 205, 210})
-			button.Refresh()
 			rpc.Odds.Run = true
 			if check.Checked {
 				check.SetChecked(false)
@@ -1086,8 +1081,6 @@ func holderoTools(deal, check *widget.Check, button *fyne.Container) {
 			check.Disable()
 			deal.SetChecked(true)
 		} else {
-			button.Objects[0] = canvas.NewRectangle(color.RGBA{0, 0, 0, 0})
-			button.Refresh()
 			rpc.Odds.Run = false
 			check.Enable()
 			if deal.Checked {
@@ -1183,6 +1176,15 @@ func holderoTools(deal, check *widget.Check, button *fyne.Container) {
 			}
 		}
 	}
+
+	go func() {
+		for rpc.Wallet.Connect {
+			time.Sleep(1 * time.Second)
+		}
+
+		button.Show()
+		bm.Close()
+	}()
 
 	img := *canvas.NewImageFromResource(Resource.Back3)
 	alpha := *container.NewMax(canvas.NewRectangle(color.RGBA{0, 0, 0, 120}))
