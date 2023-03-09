@@ -507,7 +507,7 @@ func fetch(quit chan struct{}) { /// main loop
 							}
 						}
 
-						if table.Settings.Auto_deal && rpc.Signal.My_turn && !autoD {
+						if table.Settings.Auto_deal && rpc.Signal.My_turn && !autoD && rpc.GameIsActive() {
 							if !rpc.Signal.Reveal && !rpc.Signal.End && !rpc.Round.LocalEnd {
 								if rpc.CardHash.Local1 == "" {
 									autoD = true

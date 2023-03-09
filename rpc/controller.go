@@ -1001,12 +1001,14 @@ func allFolded(p1, p2, p3, p4, p5, p6, s interface{}) {
 		Round.LocalEnd = true
 		Round.Winner = who
 		Display.Res = display + " Wins, All Players Have Folded"
-		if !Signal.Log {
-			Signal.Log = true
-			addLog(Display.Res)
-		}
+		if GameIsActive() && Round.Pot > 0 {
+			if !Signal.Log {
+				Signal.Log = true
+				addLog(Display.Res)
+			}
 
-		updateStatsWins(Round.Pot, who, true)
+			updateStatsWins(Round.Pot, who, true)
+		}
 	}
 }
 
@@ -1016,7 +1018,7 @@ func allFoldedWinner() {
 			if !Signal.Paid {
 				Signal.Paid = true
 				go func() {
-					time.Sleep(time.Duration(Times.Delay) / 2 * time.Second)
+					time.Sleep(time.Duration(Times.Delay) * time.Second)
 					PayOut(Round.Winner)
 				}()
 			}

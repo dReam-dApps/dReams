@@ -1364,12 +1364,7 @@ func oddsLog(f, str string) {
 }
 
 func GameIsActive() bool {
-	if Round.Players > 1 {
-		return true
-	}
-
-	log.Println("[GameIsActive]", false, Round.Players, "players")
-	return false
+	return Round.Players > 1
 }
 
 func SetBotConfig(opt Bot_config) {
