@@ -155,6 +155,8 @@ func preditctionOpts() fyne.CanvasObject { /// set prediction options
 
 	})
 
+	PS_Control.P_post.Hide()
+
 	PS_Control.P_pay = widget.NewButton("Prediction Payout", func() {
 		go SetPredictionPrices(rpc.Signal.Daemon)
 		var a float64
@@ -181,6 +183,8 @@ func preditctionOpts() fyne.CanvasObject { /// set prediction options
 		}
 
 	})
+
+	PS_Control.P_pay.Hide()
 
 	owner_p := container.NewVBox(
 		humanTimeConvert(),
