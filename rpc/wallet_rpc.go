@@ -1981,16 +1981,19 @@ func UploadBetContract(d, w, c bool, pub int) error {
 		rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 		defer cancel()
 
+		var fee uint64
 		var code string
 		var code_err error
 
 		if c {
+			fee = 12500
 			code, code_err = GetPredictCode(d, pub)
 			if code_err != nil {
 				log.Println("[UploadBetContract]", code_err)
 				return nil
 			}
 		} else {
+			fee = 14500
 			code, code_err = GetSportsCode(d, pub)
 			if code_err != nil {
 				log.Println("[UploadBetContract]", code_err)
@@ -2007,7 +2010,7 @@ func UploadBetContract(d, w, c bool, pub int) error {
 			SC_Value:  0,
 			SC_RPC:    args,
 			Ringsize:  2,
-			Fees:      11000,
+			Fees:      fee,
 		}
 
 		err := rpcClientW.CallFor(ctx, &txid, "transfer", params)

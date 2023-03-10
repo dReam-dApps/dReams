@@ -361,9 +361,6 @@ func RpcConnectButton() fyne.Widget {
 				MenuControl.Names.Options = []string{}
 				MenuControl.Names.Refresh()
 				MenuControl.Names.Options = append(MenuControl.Names.Options, rpc.Wallet.Address[0:12])
-				if Gnomes.Sync {
-					go CheckWalletNames(rpc.Wallet.Address)
-				}
 			}
 		}()
 	})
@@ -1149,7 +1146,7 @@ To help support the project, there is a 3 DERO donation attached to preform this
 
 Once you've unlocked betting, you can upload as many new betting contracts free of donation
 
-Total transaction will be 3.1 DERO (0.1 gas fee for contract install)
+Total transaction will be 3.14 DERO (0.14 gas fee for contract install)
 
 Select a public or private contract.
 
@@ -1161,7 +1158,7 @@ Choose Predictions or Sports to proceed with unlock and installing chosen contra
 	case 2:
 		text = `You are about to install a new betting contract. 
 
-Gas fee to install new betting contract is 0.1 DERO.
+Gas fee to install new betting contract is 0.14 DERO.
 
 Select a public or private contract.
 
