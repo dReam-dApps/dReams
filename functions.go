@@ -1099,6 +1099,7 @@ func MainTab(ti *container.TabItem) {
 func MenuTab(ti *container.TabItem) {
 	switch ti.Text {
 	case "Wallet":
+		ti.Content.(*container.Split).Leading.(*container.Split).Trailing.Refresh()
 		dReams.menu_tabs.wallet = true
 		dReams.menu_tabs.contracts = false
 		dReams.menu_tabs.assets = false
