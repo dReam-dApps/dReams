@@ -815,9 +815,10 @@ func CheckPredictionStatus(dc bool) {
 		_, ends := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(PredictControl.Contract, "p_end_at", menu.Gnomes.Indexer.ChainHeight, true)
 		_, time_a := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(PredictControl.Contract, "time_a", menu.Gnomes.Indexer.ChainHeight, true)
 		_, time_c := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(PredictControl.Contract, "time_c", menu.Gnomes.Indexer.ChainHeight, true)
+		_, mark := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(PredictControl.Contract, "mark", menu.Gnomes.Indexer.ChainHeight, true)
 		if ends != nil && time_a != nil && time_c != nil {
 			now := uint64(time.Now().Unix())
-			if now >= ends[0] && now <= ends[0]+time_a[0] {
+			if now >= ends[0] && now <= ends[0]+time_a[0] && mark == nil {
 				PS_Control.P_post.Show()
 			} else {
 				PS_Control.P_post.Hide()
@@ -1085,11 +1086,11 @@ func ownerConfirmPopUp(i int, p float64) { /// bet owner action confirmation
 		confirm_display.SetText("SCID: " + p_scid + "\n\nPredicting: " + p_pre + "\n\nMinimum: " + p_amt + "\n\nCloses At: " + p_end_time.String() + "\n\nMark: " + mark + "\n\n" + fn + p_feed + "\n\nInitial Deposit: " + p_dep + " Dero")
 
 	case 3:
-		confirm_display.SetText("SCID: " + s_scid + "\n\nGame: " + PS_Control.Payout_n.Text + "\nTeam: " + team + "\n\nConfirm")
+		confirm_display.SetText("SCID: " + s_scid + "\n\nGame: " + PS_Control.Payout_n.Text + "\n\nTeam: " + team + "\n\nConfirm")
 	case 4:
-		confirm_display.SetText("SCID: " + p_scid + "Feed from: dReams Client\n\nPost Price: " + price + "\n\nConfirm")
+		confirm_display.SetText("SCID: " + p_scid + "\n\nFeed from: dReams Client\n\nPost Price: " + price + "\n\nConfirm")
 	case 5:
-		confirm_display.SetText("SCID: " + p_scid + "Feed from: dReams Client\n\nFinal Price: " + price + "\n\nConfirm")
+		confirm_display.SetText("SCID: " + p_scid + "\n\nFeed from: dReams Client\n\nFinal Price: " + price + "\n\nConfirm")
 	case 6:
 		switch onChainPrediction(pre) {
 		case 1:
@@ -1111,9 +1112,9 @@ func ownerConfirmPopUp(i int, p float64) { /// bet owner action confirmation
 		}
 
 	case 8:
-		confirm_display.SetText("SCID: " + p_scid + "\n\nThis will Cancel the current prediction")
+		confirm_display.SetText("SCID:\n" + p_scid + "\n\nThis will Cancel the current prediction")
 	case 9:
-		confirm_display.SetText("SCID: " + s_scid + "\n\nThis will Cancel the last initiated bet on this contract")
+		confirm_display.SetText("SCID:\n" + s_scid + "\n\nThis will Cancel the last initiated bet on this contract")
 	default:
 		log.Println("[dReams] No Confirm Input")
 		confirm_display.SetText("Error")

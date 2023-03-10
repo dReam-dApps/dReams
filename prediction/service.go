@@ -67,10 +67,26 @@ func intgPredictionArgs(scid string, print bool) (higher_arg dero.Arguments, low
 				pre = predicting[0] + "  "
 				end = p_end[0]
 				if p_mark != nil {
-					div := float64(p_mark[0]) / 100
-					mark = fmt.Sprintf("%.2f", div) + "  "
+					if isOnChainPrediction(predicting[0]) {
+						switch onChainPrediction(predicting[0]) {
+						case 2:
+							div := float64(p_mark[0]) / 100000
+							mark = fmt.Sprintf("%.5f", div) + "  "
+						default:
+							mark = fmt.Sprintf("%d", p_mark[0]) + "  "
+
+						}
+					} else {
+						if predicting[0] == "DERO-BTC" || predicting[0] == "XMR-BTC" {
+							div := float64(p_mark[0]) / 100000000
+							mark = fmt.Sprintf("%.8f", div) + "  "
+						} else {
+							div := float64(p_mark[0]) / 100
+							mark = fmt.Sprintf("%.2f", div) + "  "
+						}
+					}
 				} else {
-					mark = "0"
+					mark = "0  "
 				}
 
 				ensn := time.Unix(int64(end), 0).UTC()
@@ -110,10 +126,14 @@ func intgPredictionArgs(scid string, print bool) (higher_arg dero.Arguments, low
 				}
 			}
 		} else {
-			serviceDebug(print, "[intgPredictionArgs]", fmt.Sprintf("%s Not initalized", scid))
+			if Service.Debug {
+				serviceDebug(print, "[intgPredictionArgs]", fmt.Sprintf("%s Not initalized", scid))
+			}
 		}
 	} else {
-		serviceDebug(print, "[intgPredictionArgs]", "Gnomon is not initalized")
+		if Service.Debug {
+			serviceDebug(print, "[intgPredictionArgs]", "Gnomon is not initalized")
+		}
 	}
 
 	return
@@ -206,10 +226,14 @@ func intgSportsArgs(scid string, print bool) (args [][]dero.Arguments) {
 					args = append(args, move)
 				}
 			} else {
-				serviceDebug(print, "[intgSportsArgs]", fmt.Sprintf("%s No games initialized", scid))
+				if Service.Debug {
+					serviceDebug(print, "[intgSportsArgs]", fmt.Sprintf("%s No games initialized", scid))
+				}
 			}
 		} else {
-			serviceDebug(print, "[intgSportsArgs]", fmt.Sprintf("%s No contract info", scid))
+			if Service.Debug {
+				serviceDebug(print, "[intgSportsArgs]", fmt.Sprintf("%s No contract info", scid))
+			}
 		}
 	}
 
@@ -361,7 +385,7 @@ func dReamService(start uint64, payouts, transfers bool) {
 
 func runPredictionPayouts(print bool) {
 	contracts := menu.MenuControl.Predict_owned
-	var queue []string
+	var pay_queue, post_queue []string
 	for i := range contracts {
 		split := strings.Split(contracts[i], "   ")
 		if len(split) > 2 {
@@ -371,14 +395,22 @@ func runPredictionPayouts(print bool) {
 					serviceDebug(print, "[runPredictionPayouts]", fmt.Sprintf("%s Live", split[2]))
 					now := uint64(time.Now().Unix())
 					_, end := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(split[2], "p_end_at", menu.Gnomes.Indexer.ChainHeight, true)
+					_, time_a := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(split[2], "time_a", menu.Gnomes.Indexer.ChainHeight, true)
 					_, time_c := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(split[2], "time_c", menu.Gnomes.Indexer.ChainHeight, true)
+					_, mark := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(split[2], "mark", menu.Gnomes.Indexer.ChainHeight, true)
 					predict, _ := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(split[2], "predicting", menu.Gnomes.Indexer.ChainHeight, true)
 					if end != nil && time_c != nil {
 						if now >= end[0]+time_c[0] {
 							serviceDebug(print, "[runPredictionPayouts]", "Adding for payout")
-							queue = append(queue, split[2])
+							pay_queue = append(pay_queue, split[2])
 						} else {
 							serviceDebug(print, "[runPredictionPayouts]", fmt.Sprintf("%s Not ready for payout", predict[0]))
+						}
+
+						if time_a != nil && mark == nil {
+							if now >= end[0] && now <= end[0]+time_a[0] {
+								post_queue = append(post_queue, split[2])
+							}
 						}
 					}
 				} else {
@@ -388,12 +420,71 @@ func runPredictionPayouts(print bool) {
 		}
 	}
 
-	for _, sc := range queue {
+	for _, sc := range post_queue {
+		var sent bool
+		var value float64
+		GetPrediction(rpc.Signal.Daemon, sc)
+		pre := rpc.Display.Prediction
+		if isOnChainPrediction(pre) {
+			switch onChainPrediction(pre) {
+			case 1:
+				value, _ = rpc.GetDifficulty(rpc.Display.P_feed)
+			case 2:
+				value, _ = rpc.GetBlockTime(rpc.Display.P_feed)
+			case 3:
+				d, _ := rpc.DaemonHeight(rpc.Display.P_feed)
+				value = float64(d)
+			default:
+
+			}
+
+			if value > 0 {
+				sent = true
+				switch onChainPrediction(pre) {
+				case 1:
+					rpc.PostPrediction(sc, int(value))
+				case 2:
+					rpc.PostPrediction(sc, int(value*100000))
+				case 3:
+					rpc.PostPrediction(sc, int(value))
+				default:
+					sent = false
+				}
+
+			} else {
+				serviceDebug(print, "[runPredictionPayouts]", "0 value from node, not sending")
+			}
+
+		} else {
+			value, _ = table.GetPrice(pre)
+			if value > 0 {
+				sent = true
+				rpc.PostPrediction(sc, int(value))
+			} else {
+				serviceDebug(print, "[runPredictionPayouts]", "0 price, not posting")
+			}
+		}
+
+		if sent {
+			t := 0
+			Service.Last_block = rpc.Wallet.Height
+			serviceDebug(print, "[runPredictionPayouts]", "Tx Delay")
+			for rpc.Wallet.Height < Service.Last_block+3 {
+				if !rpc.Wallet.Service || !rpc.Wallet.Connect || !rpc.Signal.Daemon || t > 36 {
+					break
+				}
+
+				t++
+				time.Sleep(1 * time.Second)
+			}
+		}
+	}
+
+	for _, sc := range pay_queue {
 		serviceDebug(print, "[runPredictionPayouts]", fmt.Sprintf("%s Paying out", sc))
 		var sent bool
 		var amt float64
 		GetPrediction(rpc.Signal.Daemon, sc)
-		time.Sleep(1 * time.Second)
 		pre := rpc.Display.Prediction
 		if isOnChainPrediction(pre) {
 			sent = true
@@ -583,7 +674,7 @@ func processBetTx(start uint64, db *bbolt.DB, print bool) {
 
 	l := len(transfers.Entries)
 
-	serviceDebug(print, "[processBetTx]", fmt.Sprintf("Processing %d entries", l))
+	serviceDebug(print, "[processBetTx]", fmt.Sprintf("%d Entries since Height %d", l, start))
 
 	for i, e := range transfers.Entries {
 		if !rpc.Wallet.Service {
@@ -641,6 +732,7 @@ func processBetTx(start uint64, db *bbolt.DB, print bool) {
 		}
 
 		if e.Payload_RPC.Has(dero.RPC_COMMENT, dero.DataString) && e.Payload_RPC.Has(dero.RPC_REPLYBACK_ADDRESS, dero.DataAddress) {
+			serviceDebug(print, "[processBetTx]", fmt.Sprintf("Processing %s", e.TXID))
 			destination_expected := e.Payload_RPC.Value(dero.RPC_REPLYBACK_ADDRESS, dero.DataAddress).(dero.Address).String()
 			addr, err := dero.NewAddress(destination_expected)
 			if err != nil {
@@ -714,11 +806,11 @@ func processBetTx(start uint64, db *bbolt.DB, print bool) {
 						continue
 					}
 
+					var sent bool
 					for _, arg := range all_args {
 						if arg.Value(dero.RPC_COMMENT, dero.DataString).(string) == payload {
 							serviceDebug(print, "[processBetTx]", "Hit payload")
 
-							var sent bool
 							switch prefix {
 							case "p":
 								serviceDebug(print, "[processBetTx]", "Payload is prediction")
@@ -774,9 +866,12 @@ func processBetTx(start uint64, db *bbolt.DB, print bool) {
 							if sent {
 								break
 							}
-						} else {
-							serviceDebug(print, "[processBetTx]", fmt.Sprintf("%s comment != payload", e.TXID))
 						}
+					}
+
+					if !sent {
+						serviceDebug(print, "[processBetTx]", fmt.Sprintf("%s Could not make out payload", e.TXID))
+						sendRefund(scid, destination_expected, "Bad payload", e)
 					}
 				} else {
 					serviceDebug(print, "[processBetTx]", fmt.Sprintf("%s Scid not found", e.TXID))
