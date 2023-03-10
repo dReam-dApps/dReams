@@ -550,6 +550,9 @@ func CheckAssets(gs, gc bool, scids map[string]string) {
 
 		i := 0
 		for k := range scids {
+			if !rpc.Wallet.Connect || GnomonClosing() {
+				break
+			}
 			keys[i] = k
 			checkNFAOwner(keys[i])
 			i++
@@ -1199,7 +1202,7 @@ func CheckG45Assets(gs, gc bool, g45s map[string]string) {
 		log.Println("[dReams] Checking G45 Assets")
 
 		for scid := range g45s {
-			if GnomonClosing() {
+			if !rpc.Wallet.Connect || GnomonClosing() {
 				break
 			}
 			data, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "metadata", Gnomes.Indexer.LastIndexedHeight, true)
