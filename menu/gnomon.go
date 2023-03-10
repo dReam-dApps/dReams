@@ -965,6 +965,25 @@ func CheckTableOwner(scid string) bool {
 	return false
 }
 
+func CheckHolderoContract(scid string) bool {
+	if len(scid) != 64 || !Gnomes.Init || GnomonClosing() {
+		return false
+	}
+
+	_, deck := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "Deck Count:", Gnomes.Indexer.LastIndexedHeight, true)
+	_, version := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "V:", Gnomes.Indexer.LastIndexedHeight, true)
+	_, tourney := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "Tournament", Gnomes.Indexer.LastIndexedHeight, true)
+	if deck != nil && version != nil && version[0] >= 100 {
+		rpc.Signal.Contract = true
+	}
+
+	if tourney != nil && tourney[0] == 1 {
+		return true
+	}
+
+	return false
+}
+
 func CheckOwner(scid string) bool {
 	if len(scid) != 64 || !Gnomes.Init || GnomonClosing() {
 		return false

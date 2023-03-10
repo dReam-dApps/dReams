@@ -284,68 +284,6 @@ func VerifySigner(txid string) (bool, error) {
 	return false, err
 }
 
-func CheckHolderoContract() error {
-	rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
-	defer cancel()
-
-	var result *rpc.GetSC_Result
-	params := rpc.GetSC_Params{
-		SCID:      Round.Contract,
-		Code:      false,
-		Variables: true,
-	}
-
-	err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params)
-	if err != nil {
-		log.Println("[CheckHolderoContract]", err)
-		return nil
-	}
-
-	cards := fmt.Sprint(result.VariableStringKeys["Deck Count:"])
-	version := fmt.Sprint(result.VariableStringKeys["V:"])
-
-	v, _ := strconv.Atoi(version)
-	c, _ := strconv.Atoi(cards)
-
-	if c > 0 && v >= 100 {
-		Signal.Contract = true
-	} else {
-		Signal.Contract = false
-	}
-
-	return err
-}
-
-func CheckTournamentTable() (bool, error) {
-	rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
-	defer cancel()
-
-	var result *rpc.GetSC_Result
-	params := rpc.GetSC_Params{
-		SCID:      Round.Contract,
-		Code:      false,
-		Variables: true,
-	}
-
-	err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params)
-	if err != nil {
-		log.Println("[CheckTournamentTable]", err)
-		return false, nil
-	}
-
-	tourney := fmt.Sprint(result.VariableStringKeys["Tournament"])
-	version := fmt.Sprint(result.VariableStringKeys["V:"])
-
-	t, _ := strconv.Atoi(tourney)
-	v, _ := strconv.Atoi(version)
-
-	if t == 1 && v >= 110 {
-		return true, err
-	}
-
-	return false, err
-}
-
 func FetchHolderoSC(dc, cc bool) error {
 	if dc && cc {
 		rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)

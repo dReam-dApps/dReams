@@ -298,16 +298,17 @@ func UserPassEntry() fyne.Widget {
 }
 
 func HolderoContractEntry() fyne.Widget {
+	var wait bool
 	HolderoControl.contract_input = widget.NewSelectEntry(nil)
 	options := []string{""}
 	HolderoControl.contract_input.SetOptions(options)
 	HolderoControl.contract_input.PlaceHolder = "Holdero Contract Address: "
 	HolderoControl.contract_input.OnCursorChanged = func() {
-		if rpc.Signal.Daemon {
+		if rpc.Signal.Daemon && !wait {
+			wait = true
 			text := HolderoControl.contract_input.Text
 			table.ClearShared()
 			if len(text) == 64 {
-				go rpc.CheckHolderoContract()
 				if CheckTableOwner(text) {
 					disableOwnerControls(false)
 					if checkTableVersion(text) >= 110 {
@@ -323,7 +324,7 @@ func HolderoContractEntry() fyne.Widget {
 					disableOwnerControls(true)
 				}
 
-				tourney, _ := rpc.CheckTournamentTable()
+				tourney := CheckHolderoContract(text)
 				if rpc.Wallet.Connect && tourney {
 					table.Actions.Tournament.Show()
 				} else {
@@ -334,6 +335,7 @@ func HolderoContractEntry() fyne.Widget {
 				MenuControl.holdero_check.SetChecked(false)
 				table.Actions.Tournament.Hide()
 			}
+			wait = false
 		}
 	}
 
