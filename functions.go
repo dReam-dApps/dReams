@@ -114,6 +114,9 @@ func init() {
 
 	table.InitTableSettings()
 
+	dReams.os = runtime.GOOS
+	prediction.SetPrintColors(dReams.os)
+
 	c := make(chan os.Signal)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
@@ -137,7 +140,7 @@ func serviceRunning() {
 }
 
 func stamp(v string) {
-	if runtime.GOOS != "darwin" {
+	if dReams.os == "linux" {
 		fmt.Println(string(resourceStampTxt.StaticContent))
 	}
 	log.Println("[dReams]", v, runtime.GOOS, runtime.GOARCH)

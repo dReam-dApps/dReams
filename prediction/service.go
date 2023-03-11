@@ -28,7 +28,24 @@ type service struct {
 	Last_block int
 }
 
+type printColors struct {
+	Reset  string
+	Yellow string
+	Green  string
+	Red    string
+}
+
 var Service service
+var PrintColor printColors
+
+func SetPrintColors(os string) {
+	if os != "windows" {
+		PrintColor.Reset = "\033[0m"
+		PrintColor.Yellow = "\033[33m"
+		PrintColor.Green = "\033[32m"
+		PrintColor.Red = "\033[31m"
+	}
+}
 
 func integratedAddress() (uint64, *dero.Address) {
 	var err error
@@ -698,19 +715,19 @@ func processBetTx(start uint64, db *bbolt.DB, print bool) {
 
 		if already_processed {
 			if i > l-10 {
-				serviceDebug(print, "[processBetTx]", fmt.Sprintf("\033[32m%s Received: %d Already processed\033[0m", e.TXID, e.Height))
+				serviceDebug(print, "[processBetTx]", fmt.Sprintf(PrintColor.Green+"%s Received: %d Already processed"+PrintColor.Reset, e.TXID, e.Height))
 				if print {
 					var reply_txid string
 					for id, repTx := range reply_id {
 						if id == e.TXID[:6]+"..."+e.TXID[58:] {
 							reply_txid = repTx
-							serviceDebug(print, "[processBetTx]", fmt.Sprintf("\033[33mReplied: %s\033[0m", reply_txid))
+							serviceDebug(print, "[processBetTx]", fmt.Sprintf(PrintColor.Yellow+"Replied: %s"+PrintColor.Reset, reply_txid))
 							break
 						}
 					}
 
 					if len(reply_txid) != 64 {
-						serviceDebug(print, "[processBetTx]", fmt.Sprintf("\033[31mReply missing for %d blocks\033[0m", rpc.Wallet.Height-int(e.Height)))
+						serviceDebug(print, "[processBetTx]", fmt.Sprintf(PrintColor.Red+"Reply missing for %d blocks"+PrintColor.Reset, rpc.Wallet.Height-int(e.Height)))
 					}
 				}
 			}
@@ -719,14 +736,14 @@ func processBetTx(start uint64, db *bbolt.DB, print bool) {
 
 		if !e.Payload_RPC.Has(dero.RPC_DESTINATION_PORT, dero.DataUint64) {
 			if i > l-10 {
-				serviceDebug(print, "[processBetTx]", fmt.Sprintf("\033[31m%s No DST Port\033[0m", e.TXID))
+				serviceDebug(print, "[processBetTx]", fmt.Sprintf(PrintColor.Red+"%s No DST Port"+PrintColor.Reset, e.TXID))
 			}
 			continue
 		}
 
 		if Service.Dest_port != e.Payload_RPC.Value(dero.RPC_DESTINATION_PORT, dero.DataUint64).(uint64) {
 			if i > l-10 {
-				serviceDebug(print, "[processBetTx]", fmt.Sprintf("\033[31m%s Bad DST port\033[0m", e.TXID))
+				serviceDebug(print, "[processBetTx]", fmt.Sprintf(PrintColor.Red+"%s Bad DST port"+PrintColor.Reset, e.TXID))
 			}
 			continue
 		}
@@ -969,17 +986,17 @@ func processSingleTx(txid string) {
 	})
 
 	if already_processed {
-		log.Println("[processSingleTx]", fmt.Sprintf("\033[32m%s Received: %d Already processed\033[0m", e.TXID, e.Height))
+		log.Println("[processSingleTx]", fmt.Sprintf(PrintColor.Green+"%s Received: %d Already processed"+PrintColor.Reset, e.TXID, e.Height))
 		return
 	}
 
 	if !e.Payload_RPC.Has(dero.RPC_DESTINATION_PORT, dero.DataUint64) {
-		log.Println("[processSingleTx]", fmt.Sprintf("\033[31m%s No DST Port\033[0m", e.TXID))
+		log.Println("[processSingleTx]", fmt.Sprintf(PrintColor.Red+"%s No DST Port"+PrintColor.Reset, e.TXID))
 		return
 	}
 
 	if Service.Dest_port != e.Payload_RPC.Value(dero.RPC_DESTINATION_PORT, dero.DataUint64).(uint64) {
-		log.Println("[processSingleTx]", fmt.Sprintf("\033[31m%s Bad DST port\033[0m", e.TXID))
+		log.Println("[processSingleTx]", fmt.Sprintf(PrintColor.Red+"%s Bad DST port"+PrintColor.Reset, e.TXID))
 		return
 	}
 
@@ -1217,12 +1234,12 @@ func viewProcessedTx(start uint64) {
 
 		when := e.Height
 		if already_processed {
-			log.Println("[ViewProcessedTx]", fmt.Sprintf("\033[32m%s Received: %d Already processed\033[0m", e.TXID, when))
+			log.Println("[ViewProcessedTx]", fmt.Sprintf(PrintColor.Green+"%s Received: %d Already processed"+PrintColor.Reset, e.TXID, when))
 			if replied {
-				log.Println("[ViewProcessedTx]", fmt.Sprintf("\033[33mReplied: %s\033[0m", reply_txid))
+				log.Println("[ViewProcessedTx]", fmt.Sprintf(PrintColor.Yellow+"Replied: %s"+PrintColor.Reset, reply_txid))
 			}
 		} else {
-			log.Println("[ViewProcessedTx]", fmt.Sprintf("\033[31m%s Received: %d Not processed\033[0m", e.TXID, when))
+			log.Println("[ViewProcessedTx]", fmt.Sprintf(PrintColor.Red+"%s Received: %d Not processed"+PrintColor.Reset, e.TXID, when))
 		}
 	}
 	log.Println("[ViewProcessedTx] Done")

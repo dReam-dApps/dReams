@@ -86,7 +86,6 @@ func main() {
 	}()
 
 	time.Sleep(500 * time.Millisecond)
-	dReams.os = runtime.GOOS
 	if systemTray(dReams.App) {
 		dReams.App.(desktop.App).SetSystemTrayIcon(resourceCardSharkTrayPng)
 	}
