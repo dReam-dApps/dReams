@@ -525,7 +525,7 @@ func RateConfirm(scid string) {
 			pos = 1
 		}
 
-		fee := uint64(math.Abs(slider.Value * 100000))
+		fee := uint64(math.Abs(slider.Value * 10000))
 		rpc.RateSCID(scid, fee, pos)
 		cw.Close()
 	})
@@ -541,7 +541,7 @@ func RateConfirm(scid string) {
 	slider.OnChanged = func(f float64) {
 		if slider.Value != 0 {
 			rating_label.SetText(fmt.Sprintf("Rating: %.0f", f*10000))
-			fee_label.SetText(fmt.Sprintf("Fee: %.5f Dero", math.Abs(f)))
+			fee_label.SetText(fmt.Sprintf("Fee: %.5f Dero", math.Abs(f)/10))
 			confirm.Show()
 		} else {
 			rating_label.SetText("Pick a rating")
