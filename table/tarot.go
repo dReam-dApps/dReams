@@ -4,7 +4,6 @@ import (
 	_ "embed"
 	"image/color"
 	"math/rand"
-	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -140,7 +139,6 @@ func TarotPadding() fyne.CanvasObject {
 }
 
 func TarotDrawText() (text string) {
-	rand.Seed(time.Now().UnixNano())
 	i := rand.Intn(6-1) + 1
 
 	switch i {
