@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"runtime"
 	"sort"
 	"strconv"
 	"syscall"
@@ -52,8 +53,9 @@ Options:
 
 var offset int
 
-func flags() {
-	arguments, err := docopt.ParseArgs(command_line, nil, "v0.9.2d")
+func flags() (version string) {
+	version = "v0.9.3"
+	arguments, err := docopt.ParseArgs(command_line, nil, version)
 
 	if err != nil {
 		log.Fatalf("Error while parsing arguments: %s\n", err)
@@ -93,6 +95,8 @@ func flags() {
 	menu.Gnomes.Trim = trim
 	menu.Gnomes.Fast = fastsync
 	menu.Gnomes.Para = parallel
+
+	return
 }
 
 func init() {
@@ -132,8 +136,11 @@ func serviceRunning() {
 	}
 }
 
-func stamp() {
-	fmt.Println(string(resourceStampTxt.StaticContent))
+func stamp(v string) {
+	if runtime.GOOS != "darwin" {
+		fmt.Println(string(resourceStampTxt.StaticContent))
+	}
+	log.Println("[dReams]", v, runtime.GOOS, runtime.GOARCH)
 }
 
 func notification(title, content string, g int) *fyne.Notification {
