@@ -25,17 +25,17 @@ var T table.Items
 
 func setLabels() {
 	H.LeftLabel.SetText("Seats: " + rpc.Display.Seats + "      Pot: " + rpc.Display.Pot + "      Blinds: " + rpc.Display.Blinds + "      Ante: " + rpc.Display.Ante + "      Dealer: " + rpc.Display.Dealer + "      Turn: " + rpc.Display.Turn)
-	H.RightLabel.SetText(rpc.Display.Readout + "      Player ID: " + rpc.Display.PlayerId + "      Dero Balance: " + rpc.Wallet.Balance + "      Height: " + rpc.Wallet.Height)
+	H.RightLabel.SetText(rpc.Display.Readout + "      Player ID: " + rpc.Display.PlayerId + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
 
 	B.LeftLabel.SetText("Total Hands Played: " + rpc.Display.Total_w + "      Player Wins: " + rpc.Display.Player_w + "      Ties: " + rpc.Display.Ties + "      Banker Wins: " + rpc.Display.Banker_w + "      Min Bet is " + rpc.Display.BaccMin + " dReams, Max Bet is " + rpc.Display.BaccMax)
-	B.RightLabel.SetText("dReams Balance: " + rpc.Wallet.TokenBal + "      Dero Balance: " + rpc.Wallet.Balance + "      Height: " + rpc.Wallet.Height)
+	B.RightLabel.SetText("dReams Balance: " + rpc.Wallet.TokenBal + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
 
-	P.RightLabel.SetText("dReams Balance: " + rpc.Wallet.TokenBal + "      Dero Balance: " + rpc.Wallet.Balance + "      Height: " + rpc.Wallet.Height)
+	P.RightLabel.SetText("dReams Balance: " + rpc.Wallet.TokenBal + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
 
-	S.RightLabel.SetText("dReams Balance: " + rpc.Wallet.TokenBal + "      Dero Balance: " + rpc.Wallet.Balance + "      Height: " + rpc.Wallet.Height)
+	S.RightLabel.SetText("dReams Balance: " + rpc.Wallet.TokenBal + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
 
 	T.LeftLabel.SetText("Total Readings: " + rpc.Display.Readings + "      Click your card for Iluma reading")
-	T.RightLabel.SetText("dReams Balance: " + rpc.Wallet.TokenBal + "      Dero Balance: " + rpc.Wallet.Balance + "      Height: " + rpc.Wallet.Height)
+	T.RightLabel.SetText("dReams Balance: " + rpc.Wallet.TokenBal + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
 }
 
 func place() *fyne.Container {
@@ -79,6 +79,10 @@ func place() *fyne.Container {
 		container.NewTabItem("Iluma", placeIluma()),
 		container.NewTabItem("Reading", placeTarot()))
 
+	tarot_tabs.OnSelected = func(ti *container.TabItem) {
+		TarotTab(ti)
+	}
+
 	tarot_tabs.SetTabLocation(container.TabLocationBottom)
 
 	top := canvas.NewRectangle(color.RGBA{0, 0, 0, 180})
@@ -105,7 +109,7 @@ func place() *fyne.Container {
 		container.NewTabItem("Baccarat", placeBacc()),
 		container.NewTabItem("Predict", placePredict()),
 		container.NewTabItem("Sports", placeSports()),
-		container.NewTabItem("Tarot", tarot_tabs),
+		container.NewTabItem("Tarot", TarotItems(tarot_tabs)),
 		container.NewTabItem("Log", rpc.SessionLog()))
 
 	tabs.OnSelected = func(ti *container.TabItem) {
@@ -304,7 +308,7 @@ func placeHoldero() *fyne.Container {
 
 	options := container.NewVBox(layout.NewSpacer(), table.AutoOptions())
 
-	holdero_actions := container.NewHBox(options, layout.NewSpacer(), &H.ActionButtons)
+	holdero_actions := container.NewHBox(options, layout.NewSpacer(), table.TimeOutWarning(), layout.NewSpacer(), layout.NewSpacer(), &H.ActionButtons)
 
 	H.TableItems = container.NewVBox(
 		labelColorBlack(holdero_label),
@@ -352,15 +356,15 @@ func placePredict() *fyne.Container {
 		layout.NewSpacer(),
 		prediction.PredictBox())
 
-	leaders_scroll := container.NewScroll(prediction.LeadersDisplay())
-	leaders_scroll.SetMinSize(fyne.NewSize(180, 500))
-	leaders_contnet := container.NewVBox(leaders_scroll)
+	// leaders_scroll := container.NewScroll(prediction.LeadersDisplay())
+	// leaders_scroll.SetMinSize(fyne.NewSize(180, 500))
+	// leaders_contnet := container.NewVBox(leaders_scroll)
 
 	tabs := container.NewAppTabs(
 		container.NewTabItem("Contracts", prediction.PredictionListings()),
 		container.NewTabItem("Favorites", prediction.PredicitionFavorites()),
-		container.NewTabItem("Owned", prediction.PredictionOwned()),
-		container.NewTabItem("Leaderboard", leaders_contnet))
+		container.NewTabItem("Owned", prediction.PredictionOwned()))
+	// container.NewTabItem("Leaderboard", leaders_contnet))
 
 	tabs.OnSelected = func(ti *container.TabItem) {
 		PredictTab(ti)

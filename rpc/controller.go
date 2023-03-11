@@ -55,6 +55,9 @@ type displayStrings struct {
 	TeamB   string
 
 	Readings string
+
+	Dero_balance  string
+	Wallet_height string
 }
 
 type hashValue struct {
@@ -86,6 +89,7 @@ type holderoValues struct {
 	Daemon    string
 	Contract  string
 	ID        int
+	Players   int
 	Last      int64
 	Pot       uint64
 	BB        uint64
@@ -193,6 +197,7 @@ type signals struct {
 	PlacedBet bool
 	Paid      bool
 	Log       bool
+	Odds      bool
 	Clicked   bool
 	CHeight   int
 }
@@ -247,6 +252,7 @@ func addOne(v interface{}) string {
 
 func closedTable() {
 	Round.Winner = ""
+	Round.Players = 0
 	Round.ID = 0
 	Round.Tourney = false
 	Round.P1_url = ""
@@ -546,6 +552,7 @@ func potIsEmpty(pot uint64) {
 		Signal.End = false
 		Signal.Paid = false
 		Signal.Log = false
+		Signal.Odds = false
 		Display.Res = ""
 		Round.Bettor = ""
 		Round.Raisor = ""
@@ -557,6 +564,33 @@ func potIsEmpty(pot uint64) {
 }
 
 func tableOpen(seats, full, two, three, four, five, six interface{}) {
+	players := 1
+	if two != nil {
+		players++
+	}
+
+	if three != nil {
+		players++
+	}
+
+	if four != nil {
+		players++
+	}
+
+	if five != nil {
+		players++
+	}
+
+	if six != nil {
+		players++
+	}
+
+	if Signal.Out1 {
+		players--
+	}
+
+	Round.Players = players
+
 	if Round.ID > 1 {
 		Signal.Sit = true
 		return
@@ -967,11 +1001,14 @@ func allFolded(p1, p2, p3, p4, p5, p6, s interface{}) {
 		Round.LocalEnd = true
 		Round.Winner = who
 		Display.Res = display + " Wins, All Players Have Folded"
-		if !Signal.Log {
-			Signal.Log = true
-			addLog(Display.Res)
-		}
+		if GameIsActive() && Round.Pot > 0 {
+			if !Signal.Log {
+				Signal.Log = true
+				addLog(Display.Res)
+			}
 
+			updateStatsWins(Round.Pot, who, true)
+		}
 	}
 }
 
@@ -981,7 +1018,7 @@ func allFoldedWinner() {
 			if !Signal.Paid {
 				Signal.Paid = true
 				go func() {
-					time.Sleep(time.Duration(Times.Delay) / 2 * time.Second)
+					time.Sleep(time.Duration(Times.Delay) * time.Second)
 					PayOut(Round.Winner)
 				}()
 			}

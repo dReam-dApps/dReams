@@ -2,8 +2,10 @@ package rpc
 
 import (
 	"context"
+	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -20,6 +22,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 	"github.com/deroproject/derohe/cryptography/crypto"
 	"github.com/deroproject/derohe/rpc"
+	"github.com/deroproject/derohe/walletapi"
 	"github.com/ybbus/jsonrpc/v3"
 )
 
@@ -29,14 +32,15 @@ type wallet struct {
 	Rpc        string
 	Address    string
 	ClientKey  string
-	Balance    string
+	Balance    uint64
 	TokenBal   string
 	TourneyBal string
-	Height     string
+	Height     int
 	Connect    bool
 	PokerOwner bool
 	BetOwner   bool
 	KeyLock    bool
+	Service    bool
 }
 
 var Wallet wallet
@@ -116,7 +120,7 @@ func DeroAddress(v interface{}) (address string) {
 }
 
 func SetWalletClient(addr, pass string) (jsonrpc.RPCClient, context.Context, context.CancelFunc) { /// user:pass auth
-	client := jsonrpc.NewClientWithOpts(pre+addr+suff, &jsonrpc.RPCClientOpts{
+	client := jsonrpc.NewClientWithOpts("http://"+addr+"/json_rpc", &jsonrpc.RPCClientOpts{
 		CustomHeaders: map[string]string{
 			"Authorization": "Basic " + base64.StdEncoding.EncodeToString([]byte(pass)),
 		},
@@ -179,6 +183,24 @@ func GetAddress() error {
 	return err
 }
 
+func GetTransaction(txid string) (*rpc.Entry, error) {
+	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
+	defer cancel()
+
+	var result *rpc.Get_Transfer_By_TXID_Result
+	params := rpc.Get_Transfer_By_TXID_Params{
+		TXID: txid,
+	}
+	err := rpcClientW.CallFor(ctx, &result, "GetTransferbyTXID", params)
+
+	if err != nil {
+		log.Println("[dReams]", err)
+		return nil, nil
+	}
+
+	return &result.Entry, err
+}
+
 func GetBalance(wc bool) error { /// get wallet dero balance
 	if wc {
 		rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
@@ -191,7 +213,8 @@ func GetBalance(wc bool) error { /// get wallet dero balance
 			return nil
 		}
 
-		Wallet.Balance = fromAtomic(result.Unlocked_Balance)
+		Wallet.Balance = result.Unlocked_Balance
+		Display.Dero_balance = fromAtomic(result.Unlocked_Balance)
 
 		return err
 	}
@@ -287,7 +310,8 @@ func GetHeight(wc bool) error { /// get wallet height
 			return nil
 		}
 
-		Wallet.Height = fmt.Sprint(result.Height)
+		Wallet.Height = int(result.Height)
+		Display.Wallet_height = fmt.Sprint(result.Height)
 
 		return err
 	}
@@ -508,6 +532,7 @@ func DealHand() error { /// holdero hand
 
 	Display.Res = ""
 	log.Println("[Holdero] Deal TX:", txid)
+	updateStatsWager(float64(amount) / 100000)
 	addLog("Deal TX: " + txid.TXID)
 
 	return err
@@ -558,6 +583,10 @@ func Bet(amt string) error { /// holdero bet
 	if err != nil {
 		log.Println("[Bet]", err)
 		return nil
+	}
+
+	if f, err := strconv.ParseFloat(amt, 64); err == nil {
+		updateStatsWager(f)
 	}
 
 	Display.Res = ""
@@ -1126,12 +1155,12 @@ func BaccBet(amt, w string) error {
 		addLog("Baccarat Tie TX: " + txid.TXID)
 	}
 
-	Bacc.CHeight = StringToInt(Wallet.Height)
+	Bacc.CHeight = Wallet.Height
 
 	return err
 }
 
-func PredictHigher(scid, name string) error {
+func PredictHigher(scid, addr string) error {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
@@ -1139,7 +1168,7 @@ func PredictHigher(scid, name string) error {
 
 	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "Predict"}
 	arg2 := rpc.Argument{Name: "pre", DataType: "U", Value: 1}
-	arg3 := rpc.Argument{Name: "name", DataType: "S", Value: name}
+	arg3 := rpc.Argument{Name: "addr", DataType: "S", Value: addr}
 	args := rpc.Arguments{arg1, arg2, arg3}
 	txid := rpc.Transfer_Result{}
 
@@ -1171,7 +1200,7 @@ func PredictHigher(scid, name string) error {
 	return err
 }
 
-func PredictLower(scid, name string) error {
+func PredictLower(scid, addr string) error {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
@@ -1179,7 +1208,7 @@ func PredictLower(scid, name string) error {
 
 	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "Predict"}
 	arg2 := rpc.Argument{Name: "pre", DataType: "U", Value: 0}
-	arg3 := rpc.Argument{Name: "name", DataType: "S", Value: name}
+	arg3 := rpc.Argument{Name: "addr", DataType: "S", Value: addr}
 	args := rpc.Arguments{arg1, arg2, arg3}
 	txid := rpc.Transfer_Result{}
 
@@ -1211,26 +1240,27 @@ func PredictLower(scid, name string) error {
 	return err
 }
 
-func NameChange(scid, name string) error { /// change leaderboard name
+func RateSCID(scid string, amt, pos uint64) error {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
-	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "NameChange"}
-	arg2 := rpc.Argument{Name: "name", DataType: "S", Value: name}
-	args := rpc.Arguments{arg1, arg2}
+	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "Rate"}
+	arg2 := rpc.Argument{Name: "scid", DataType: "S", Value: scid}
+	arg3 := rpc.Argument{Name: "pos", DataType: "U", Value: pos}
+	args := rpc.Arguments{arg1, arg2, arg3}
 	txid := rpc.Transfer_Result{}
 
 	t1 := rpc.Transfer{
 		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
 		Amount:      0,
-		Burn:        10000,
+		Burn:        amt,
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(scid, "[Predictions]", args, t)
+	fee, _ := GasEstimate(RatingSCID, "[RateSCID]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
-		SC_ID:     scid,
+		SC_ID:     RatingSCID,
 		SC_RPC:    args,
 		Ringsize:  2,
 		Fees:      fee,
@@ -1238,29 +1268,295 @@ func NameChange(scid, name string) error { /// change leaderboard name
 
 	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
 	if err != nil {
-		log.Println("[NameChange]", err)
+		log.Println("[RateSCID]", err)
 		return nil
 	}
 
-	log.Println("[Predictions] Name Change TX:", txid)
-	addLog("Name Change TX: " + txid.TXID)
+	log.Println("[RateSCID] Rate TX:", txid)
+	addLog("Rate TX: " + txid.TXID)
 
 	return err
 }
 
-func RemoveAddress(scid, name string) error {
+// prediction leaderboard
+// func NameChange(scid, name string) error { /// change leaderboard name
+// 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
+// 	defer cancel()
+//
+// 	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "NameChange"}
+// 	arg2 := rpc.Argument{Name: "name", DataType: "S", Value: name}
+// 	args := rpc.Arguments{arg1, arg2}
+// 	txid := rpc.Transfer_Result{}
+//
+// 	t1 := rpc.Transfer{
+// 		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
+// 		Amount:      0,
+// 		Burn:        10000,
+// 	}
+//
+// 	t := []rpc.Transfer{t1}
+// 	fee, _ := GasEstimate(scid, "[Predictions]", args, t)
+// 	params := &rpc.Transfer_Params{
+// 		Transfers: t,
+// 		SC_ID:     scid,
+// 		SC_RPC:    args,
+// 		Ringsize:  2,
+// 		Fees:      fee,
+// 	}
+//
+// 	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
+// 	if err != nil {
+// 		log.Println("[NameChange]", err)
+// 		return nil
+// 	}
+//
+// 	log.Println("[Predictions] Name Change TX:", txid)
+// 	addLog("Name Change TX: " + txid.TXID)
+//
+// 	return err
+// }
+//
+// func RemoveAddress(scid, name string) error {
+// 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
+// 	defer cancel()
+//
+// 	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "Remove"}
+// 	arg2 := rpc.Argument{Name: "name", DataType: "S", Value: name}
+// 	args := rpc.Arguments{arg1, arg2}
+// 	txid := rpc.Transfer_Result{}
+//
+// 	t1 := rpc.Transfer{
+// 		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
+// 		Amount:      0,
+// 		Burn:        10000,
+// 	}
+//
+// 	t := []rpc.Transfer{t1}
+// 	fee, _ := GasEstimate(scid, "[Predictions]", args, t)
+// 	params := &rpc.Transfer_Params{
+// 		Transfers: t,
+// 		SC_ID:     scid,
+// 		SC_RPC:    args,
+// 		Ringsize:  2,
+// 		Fees:      fee,
+// 	}
+//
+// 	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
+// 	if err != nil {
+// 		log.Println("[RemoveAddress]", err)
+// 		return nil
+// 	}
+//
+// 	log.Println("[Predictions] Remove TX:", txid)
+// 	addLog("Remove TX: " + txid.TXID)
+//
+// 	return err
+// }
+
+func AuotPredict(p int, amt, src uint64, scid, addr, tx string) error {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
-	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "Remove"}
-	arg2 := rpc.Argument{Name: "name", DataType: "S", Value: name}
+	var hl string
+	chopped_scid := scid[:6] + "..." + scid[58:]
+	chopped_txid := tx[:6] + "..." + tx[58:]
+	switch p {
+	case 0:
+		hl = "Lower"
+	case 1:
+		hl = "Higher"
+	}
+
+	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "Predict"}
+	arg2 := rpc.Argument{Name: "pre", DataType: "U", Value: p}
+	arg3 := rpc.Argument{Name: "addr", DataType: "S", Value: addr}
+	args := rpc.Arguments{arg1, arg2, arg3}
+	txid := rpc.Transfer_Result{}
+
+	response := rpc.Arguments{
+		{Name: rpc.RPC_DESTINATION_PORT, DataType: rpc.DataUint64, Value: uint64(0)},
+		{Name: rpc.RPC_SOURCE_PORT, DataType: rpc.DataUint64, Value: src},
+		{Name: rpc.RPC_COMMENT, DataType: rpc.DataString, Value: fmt.Sprintf("Placed a %s %s bet on %s at height %s,  %s", walletapi.FormatMoney(amt), hl, chopped_scid, Display.Wallet_height, chopped_txid)},
+	}
+
+	t1 := rpc.Transfer{
+		Destination: addr,
+		Amount:      1,
+		Burn:        amt,
+		Payload_RPC: response,
+	}
+
+	t := []rpc.Transfer{t1}
+	fee, _ := GasEstimate(scid, "[AuotPredict]", args, t)
+	params := &rpc.Transfer_Params{
+		Transfers: t,
+		SC_ID:     scid,
+		SC_RPC:    args,
+		Ringsize:  2,
+		Fees:      fee,
+	}
+
+	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
+	if err != nil {
+		log.Println("[AuotPredict]", err)
+		return nil
+	}
+
+	log.Println("[AuotPredict] Prediction TX:", txid)
+	addLog("AuotPredict TX: " + txid.TXID)
+
+	return err
+}
+
+func ServiceRefund(amt, src uint64, scid, addr, msg, tx string) error {
+	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
+	defer cancel()
+
+	chopped_scid := scid[:6] + "..." + scid[58:]
+	chopped_txid := tx[:6] + "..." + tx[58:]
+	response := rpc.Arguments{
+		{Name: rpc.RPC_DESTINATION_PORT, DataType: rpc.DataUint64, Value: uint64(0)},
+		{Name: rpc.RPC_SOURCE_PORT, DataType: rpc.DataUint64, Value: src},
+		{Name: rpc.RPC_COMMENT, DataType: rpc.DataString, Value: msg + fmt.Sprintf(", refunded %s bet on %s at height %s,  %s", walletapi.FormatMoney(amt), chopped_scid, Display.Wallet_height, chopped_txid)},
+	}
+
+	t1 := rpc.Transfer{
+		Destination: addr,
+		Amount:      amt,
+		Burn:        0,
+		Payload_RPC: response,
+	}
+
+	txid := rpc.Transfer_Result{}
+	t := []rpc.Transfer{t1}
+	params := &rpc.Transfer_Params{
+		Transfers: t,
+		SC_RPC:    rpc.Arguments{},
+		Ringsize:  16,
+	}
+
+	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
+	if err != nil {
+		log.Println("[ServiceRefund]", err)
+		return nil
+	}
+
+	log.Println("[ServiceRefund] Refund TX:", txid)
+	addLog("Refund TX: " + txid.TXID)
+
+	return err
+}
+
+func AuotBook(amt, pre, src uint64, n, abv, scid, addr, tx string) error {
+	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
+	defer cancel()
+
+	chopped_scid := scid[:6] + "..." + scid[58:]
+	chopped_txid := tx[:6] + "..." + tx[58:]
+	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "Book"}
+	arg2 := rpc.Argument{Name: "pre", DataType: "U", Value: pre}
+	arg3 := rpc.Argument{Name: "n", DataType: "S", Value: n}
+	arg4 := rpc.Argument{Name: "addr", DataType: "S", Value: addr}
+	args := rpc.Arguments{arg1, arg2, arg3, arg4}
+	txid := rpc.Transfer_Result{}
+
+	response := rpc.Arguments{
+		{Name: rpc.RPC_DESTINATION_PORT, DataType: rpc.DataUint64, Value: uint64(0)},
+		{Name: rpc.RPC_SOURCE_PORT, DataType: rpc.DataUint64, Value: src},
+		{Name: rpc.RPC_COMMENT, DataType: rpc.DataString, Value: fmt.Sprintf("Placed a %s %s bet on %s at height %s,  %s", walletapi.FormatMoney(amt), abv, chopped_scid, Display.Wallet_height, chopped_txid)},
+	}
+
+	t1 := rpc.Transfer{
+		Destination: addr,
+		Amount:      1,
+		Burn:        amt,
+		Payload_RPC: response,
+	}
+
+	t := []rpc.Transfer{t1}
+	fee, _ := GasEstimate(scid, "[AuotBook]", args, t)
+	params := &rpc.Transfer_Params{
+		Transfers: t,
+		SC_ID:     scid,
+		SC_RPC:    args,
+		Ringsize:  2,
+		Fees:      fee,
+	}
+
+	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
+	if err != nil {
+		log.Println("[AuotBook]", err)
+		return nil
+	}
+
+	log.Println("[AuotBook] Book TX:", txid)
+	addLog("AuotBook TX: " + txid.TXID)
+
+	return err
+}
+
+func VarUpdate(scid string, ta, tb, tc, l, hl int) error { /// change leaderboard name
+	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
+	defer cancel()
+
+	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "VarUpdate"}
+	arg2 := rpc.Argument{Name: "ta", DataType: "U", Value: ta}
+	arg3 := rpc.Argument{Name: "tb", DataType: "U", Value: tb}
+	arg5 := rpc.Argument{Name: "l", DataType: "U", Value: l}
+
+	var args rpc.Arguments
+	var arg4, arg6 rpc.Argument
+	if hl > 0 {
+		arg4 = rpc.Argument{Name: "d", DataType: "U", Value: tc}
+		arg6 = rpc.Argument{Name: "hl", DataType: "U", Value: hl}
+		args = rpc.Arguments{arg1, arg2, arg3, arg4, arg5, arg6}
+	} else {
+		arg4 = rpc.Argument{Name: "tc", DataType: "U", Value: tc}
+		args = rpc.Arguments{arg1, arg2, arg3, arg4, arg5}
+	}
+
+	txid := rpc.Transfer_Result{}
+
+	t1 := rpc.Transfer{
+		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
+		Amount:      0,
+	}
+
+	t := []rpc.Transfer{t1}
+	fee, _ := GasEstimate(scid, "[VarUpdate]", args, t)
+	params := &rpc.Transfer_Params{
+		Transfers: t,
+		SC_ID:     scid,
+		SC_RPC:    args,
+		Ringsize:  2,
+		Fees:      fee,
+	}
+
+	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
+	if err != nil {
+		log.Println("[VarUpdate]", err)
+		return nil
+	}
+
+	log.Println("[VarUpdate] VarUpdate TX:", txid)
+	addLog("VarUpdate TX: " + txid.TXID)
+
+	return err
+}
+
+func AddOwner(scid, addr string) error { /// change leaderboard name
+	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
+	defer cancel()
+
+	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "AddSigner"}
+	arg2 := rpc.Argument{Name: "new", DataType: "S", Value: addr}
 	args := rpc.Arguments{arg1, arg2}
 	txid := rpc.Transfer_Result{}
 
 	t1 := rpc.Transfer{
 		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
 		Amount:      0,
-		Burn:        10000,
+		Burn:        0,
 	}
 
 	t := []rpc.Transfer{t1}
@@ -1275,12 +1571,86 @@ func RemoveAddress(scid, name string) error {
 
 	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
 	if err != nil {
-		log.Println("[RemoveAddress]", err)
+		log.Println("[AddSigner]", err)
 		return nil
 	}
 
-	log.Println("[Predictions] Remove TX:", txid)
-	addLog("Remove TX: " + txid.TXID)
+	log.Println("[Predictions] Add Signer TX:", txid)
+	addLog("Add Signer TX: " + txid.TXID)
+
+	return err
+}
+
+func RemoveOwner(scid string, num int) error {
+	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
+	defer cancel()
+
+	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "RemoveSigner"}
+	arg2 := rpc.Argument{Name: "remove", DataType: "U", Value: num}
+	args := rpc.Arguments{arg1, arg2}
+	txid := rpc.Transfer_Result{}
+
+	t1 := rpc.Transfer{
+		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
+		Amount:      0,
+		Burn:        0,
+	}
+
+	t := []rpc.Transfer{t1}
+	fee, _ := GasEstimate(scid, "[Predictions]", args, t)
+	params := &rpc.Transfer_Params{
+		Transfers: t,
+		SC_ID:     scid,
+		SC_RPC:    args,
+		Ringsize:  2,
+		Fees:      fee,
+	}
+
+	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
+	if err != nil {
+		log.Println("[RemoveSigner]", err)
+		return nil
+	}
+
+	log.Println("[Predictions] Remove Signer TX:", txid)
+	addLog("Remove Signer: " + txid.TXID)
+
+	return err
+}
+
+func PredictionRefund(scid, tic string) error { /// change leaderboard name
+	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
+	defer cancel()
+
+	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "Refund"}
+	arg2 := rpc.Argument{Name: "tic", DataType: "S", Value: "p-1-1"}
+	args := rpc.Arguments{arg1, arg2}
+	txid := rpc.Transfer_Result{}
+
+	t1 := rpc.Transfer{
+		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
+		Amount:      0,
+		Burn:        0,
+	}
+
+	t := []rpc.Transfer{t1}
+	fee, _ := GasEstimate(scid, "[Predictions]", args, t)
+	params := &rpc.Transfer_Params{
+		Transfers: t,
+		SC_ID:     scid,
+		SC_RPC:    args,
+		Ringsize:  2,
+		Fees:      fee,
+	}
+
+	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
+	if err != nil {
+		log.Println("[PredictionRefund]", err)
+		return nil
+	}
+
+	log.Println("[Predictions] Refund TX:", txid)
+	addLog("Refund TX: " + txid.TXID)
 
 	return err
 }
@@ -1305,7 +1675,8 @@ func PickTeam(scid, multi, n string, a uint64, pick int) error { /// pick sports
 	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "Book"}
 	arg2 := rpc.Argument{Name: "n", DataType: "S", Value: n}
 	arg3 := rpc.Argument{Name: "pre", DataType: "U", Value: pick}
-	args := rpc.Arguments{arg1, arg2, arg3}
+	arg4 := rpc.Argument{Name: "addr", DataType: "S", Value: Wallet.Address}
+	args := rpc.Arguments{arg1, arg2, arg3, arg4}
 	txid := rpc.Transfer_Result{}
 
 	t1 := rpc.Transfer{
@@ -1332,6 +1703,44 @@ func PickTeam(scid, multi, n string, a uint64, pick int) error { /// pick sports
 
 	log.Println("[Sports] Pick TX:", txid)
 	addLog("Pick TX: " + txid.TXID)
+
+	return err
+}
+
+func SportsRefund(scid, tic, n string) error { /// change leaderboard name
+	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
+	defer cancel()
+
+	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "Refund"}
+	arg2 := rpc.Argument{Name: "tic", DataType: "S", Value: tic}
+	arg3 := rpc.Argument{Name: "n", DataType: "S", Value: n}
+	args := rpc.Arguments{arg1, arg2, arg3}
+	txid := rpc.Transfer_Result{}
+
+	t1 := rpc.Transfer{
+		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
+		Amount:      0,
+		Burn:        0,
+	}
+
+	t := []rpc.Transfer{t1}
+	fee, _ := GasEstimate(scid, "[Sports]", args, t)
+	params := &rpc.Transfer_Params{
+		Transfers: t,
+		SC_ID:     scid,
+		SC_RPC:    args,
+		Ringsize:  2,
+		Fees:      fee,
+	}
+
+	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
+	if err != nil {
+		log.Println("[SportsRefund]", err)
+		return nil
+	}
+
+	log.Println("[Sports] Refund TX:", txid)
+	addLog("Refund TX: " + txid.TXID)
 
 	return err
 }
@@ -1572,16 +1981,19 @@ func UploadBetContract(d, w, c bool, pub int) error {
 		rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 		defer cancel()
 
+		var fee uint64
 		var code string
 		var code_err error
 
 		if c {
+			fee = 12500
 			code, code_err = GetPredictCode(d, pub)
 			if code_err != nil {
 				log.Println("[UploadBetContract]", code_err)
 				return nil
 			}
 		} else {
+			fee = 14500
 			code, code_err = GetSportsCode(d, pub)
 			if code_err != nil {
 				log.Println("[UploadBetContract]", code_err)
@@ -1598,7 +2010,7 @@ func UploadBetContract(d, w, c bool, pub int) error {
 			SC_Value:  0,
 			SC_RPC:    args,
 			Ringsize:  2,
-			Fees:      11000,
+			Fees:      fee,
 		}
 
 		err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
@@ -1873,7 +2285,59 @@ func TarotReading(num int) error {
 	log.Println("[Tarot] Reading TX:", txid)
 	addLog("Reading TX: " + txid.TXID)
 
-	Tarot.CHeight = StringToInt(Wallet.Height)
+	Tarot.CHeight = Wallet.Height
+
+	return err
+}
+
+func SendAsset(scid, dest string, payload bool) error {
+	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
+	defer cancel()
+
+	asset_scid := crypto.HashHexToHash(scid)
+	t1 := rpc.Transfer{
+		SCID:        asset_scid,
+		Destination: dest,
+		Amount:      1,
+	}
+
+	t := []rpc.Transfer{t1}
+
+	if payload {
+		var dstport [8]byte
+		rand.Read(dstport[:])
+
+		response := rpc.Arguments{
+			{Name: rpc.RPC_DESTINATION_PORT, DataType: rpc.DataUint64, Value: binary.BigEndian.Uint64(dstport[:])},
+			{Name: rpc.RPC_SOURCE_PORT, DataType: rpc.DataUint64, Value: uint64(0)},
+			{Name: rpc.RPC_COMMENT, DataType: rpc.DataString, Value: fmt.Sprintf("Sent you asset %s at height %d", scid, Wallet.Height)},
+		}
+
+		t2 := rpc.Transfer{
+			Destination: dest,
+			Amount:      1,
+			Burn:        0,
+			Payload_RPC: response,
+		}
+		t = append(t, t2)
+	}
+
+	txid := rpc.Transfer_Result{}
+
+	params := &rpc.Transfer_Params{
+		Transfers: t,
+		SC_RPC:    rpc.Arguments{},
+		Ringsize:  16,
+	}
+
+	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
+	if err != nil {
+		log.Println("[SendAsset]", err)
+		return nil
+	}
+
+	log.Println("[SendAsset] Send Asset TX:", txid)
+	addLog("Send Asset TX: " + txid.TXID)
 
 	return err
 }

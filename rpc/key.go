@@ -10,14 +10,30 @@ import (
 	"io"
 	"log"
 	"os"
+	"strconv"
 )
+
+func Card(hash string) int { /// Gets local cards with local key
+	for i := 1; i < 53; i++ {
+		finder := strconv.Itoa(i)
+		add := Wallet.ClientKey + finder + Round.SC_seed
+		card := sha256.Sum256([]byte(add))
+		str := hex.EncodeToString(card[:])
+
+		if str == hash {
+			return i
+		}
+
+	}
+	return 0
+}
 
 func GenerateKey() string {
 	random, _ := rand.Prime(rand.Reader, 128)
 	shasum := sha256.Sum256([]byte(random.String()))
 	str := hex.EncodeToString(shasum[:])
 	Wallet.KeyLock = true
-	EncryptFile([]byte(str), ".key", Wallet.UserPass, Wallet.Address)
+	EncryptFile([]byte(str), "config/.key", Wallet.UserPass, Wallet.Address)
 	log.Println("[Holdero] Round Key: ", str)
 	addLog("Round Key: " + str)
 
@@ -94,8 +110,8 @@ func DecryptFile(filename, pass, add string) []byte {
 }
 
 func CheckExisitingKey() {
-	if _, err := os.Stat(".key"); err == nil {
-		key := DecryptFile(".key", Wallet.UserPass, Wallet.Address)
+	if _, err := os.Stat("config/.key"); err == nil {
+		key := DecryptFile("config/.key", Wallet.UserPass, Wallet.Address)
 		if key != nil {
 			Wallet.ClientKey = string(key)
 			Wallet.KeyLock = true

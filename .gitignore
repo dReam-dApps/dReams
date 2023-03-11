@@ -1,3 +1,5 @@
 gnomondb\\*
+config*
+stats.json
 config.json
 .key

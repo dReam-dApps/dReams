@@ -13,24 +13,24 @@ import (
 	"github.com/SixofClubsss/dReams/table"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/data/binding"
-	"fyne.io/fyne/v2/data/validation"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 )
 
 type predictItems struct {
-	Contract        string
-	Leaders_map     map[string]uint64
-	Leaders_display []string
-	Info            *widget.Label
-	Prices          *widget.Label
-	Predict_list    *widget.List
-	Favorite_list   *widget.List
-	Owned_list      *widget.List
-	Leaders_list    *widget.List
-	Remove_button   *widget.Button
+	Contract    string
+	Leaders_map map[string]uint64
+	//Leaders_display []string
+	Info          *widget.Label
+	Prices        *widget.Label
+	Predict_list  *widget.List
+	Favorite_list *widget.List
+	Owned_list    *widget.List
+	Leaders_list  *widget.List
+	Remove_button *widget.Button
 }
 
 var PredictControl predictItems
@@ -38,11 +38,13 @@ var PredictControl predictItems
 func PredictConnectedBox() fyne.Widget {
 	menu.MenuControl.Predict_check = widget.NewCheck("", func(b bool) {
 		if !b {
-			table.Actions.NameEntry.Hide()
-			table.Actions.Change.Hide()
+			// prediction leaderboard
+			// table.Actions.NameEntry.Hide()
+			// table.Actions.Change.Hide()
+			//PredictControl.Leaders_display = []string{}
 			table.Actions.Higher.Hide()
 			table.Actions.Lower.Hide()
-			PredictControl.Leaders_display = []string{}
+
 		}
 	})
 	menu.MenuControl.Predict_check.Disable()
@@ -78,21 +80,22 @@ func PreictionContractEntry() fyne.Widget {
 }
 
 func PredictBox() fyne.CanvasObject {
-	table.Actions.NameEntry = widget.NewEntry()
-	table.Actions.NameEntry.SetPlaceHolder("Name")
-	table.Actions.NameEntry.OnChanged = func(input string) {
-		table.Actions.NameEntry.Validator = validation.NewRegexp(`\w{3,}`, "Three Letters Minimum")
-		table.Actions.NameEntry.Validate()
-		table.Actions.NameEntry.Refresh()
-	}
-
-	table.Actions.Change = widget.NewButton("Change Name", func() {
-		if table.Actions.NameEntry.Disabled() {
-			table.Actions.NameEntry.Enable()
-		} else {
-			namePopUp(1)
-		}
-	})
+	// prediction leaderboard
+	// table.Actions.NameEntry = widget.NewEntry()
+	// table.Actions.NameEntry.SetPlaceHolder("Name")
+	// table.Actions.NameEntry.OnChanged = func(input string) {
+	// 	table.Actions.NameEntry.Validator = validation.NewRegexp(`\w{3,}`, "Three Letters Minimum")
+	// 	table.Actions.NameEntry.Validate()
+	// 	table.Actions.NameEntry.Refresh()
+	// }
+	//
+	// table.Actions.Change = widget.NewButton("Change Name", func() {
+	// 	if table.Actions.NameEntry.Disabled() {
+	// 		table.Actions.NameEntry.Enable()
+	// 	} else {
+	// 		namePopUp(1)
+	// 	}
+	// })
 
 	table.Actions.Higher = widget.NewButton("Higher", func() {
 		if len(PredictControl.Contract) == 64 {
@@ -106,40 +109,42 @@ func PredictBox() fyne.CanvasObject {
 		}
 	})
 
-	table.Actions.NameEntry.Hide()
-	table.Actions.Change.Hide()
+	// table.Actions.NameEntry.Hide()
+	// table.Actions.Change.Hide()
 	table.Actions.Higher.Hide()
 	table.Actions.Lower.Hide()
 
-	table.Actions.Prediction_box = container.NewVBox(table.Actions.NameEntry, table.Actions.Change, table.Actions.Higher, table.Actions.Lower)
+	table.Actions.Prediction_box = container.NewVBox(table.Actions.Higher, table.Actions.Lower)
 	table.Actions.Prediction_box.Hide()
 
 	return table.Actions.Prediction_box
 }
 
-func LeadersDisplay() fyne.Widget {
-	PredictControl.Leaders_display = []string{}
-	PredictControl.Leaders_list = widget.NewList(
-		func() int {
-			return len(PredictControl.Leaders_display)
-		},
-		func() fyne.CanvasObject {
-			return widget.NewLabel("")
-		},
-		func(i widget.ListItemID, o fyne.CanvasObject) {
-			o.(*widget.Label).SetText(PredictControl.Leaders_display[i])
-		})
-
-	return PredictControl.Leaders_list
-}
+// prediction leaderboard
+// func LeadersDisplay() fyne.Widget {
+// 	PredictControl.Leaders_display = []string{}
+// 	PredictControl.Leaders_list = widget.NewList(
+// 		func() int {
+// 			return len(PredictControl.Leaders_display)
+// 		},
+// 		func() fyne.CanvasObject {
+// 			return widget.NewLabel("")
+// 		},
+// 		func(i widget.ListItemID, o fyne.CanvasObject) {
+// 			o.(*widget.Label).SetText(PredictControl.Leaders_display[i])
+// 		})
+//
+// 	return PredictControl.Leaders_list
+// }
 
 func ShowPredictionControls() {
 	menu.DisablePreditions(false)
 	table.Actions.Higher.Show()
 	table.Actions.Lower.Show()
-	table.Actions.NameEntry.Show()
-	table.Actions.NameEntry.Text = menu.CheckPredictionName(PredictControl.Contract)
-	table.Actions.NameEntry.Refresh()
+	// prediction leaderboard
+	// table.Actions.NameEntry.Show()
+	// table.Actions.NameEntry.Text = menu.CheckPredictionName(PredictControl.Contract)
+	// table.Actions.NameEntry.Refresh()
 }
 
 func setPredictionControls(str string) (item string) {
@@ -187,10 +192,24 @@ func PredictionListings() fyne.CanvasObject { /// prediction contract list
 			return len(menu.MenuControl.Predict_contracts)
 		},
 		func() fyne.CanvasObject {
-			return widget.NewLabel("")
+			return container.NewHBox(canvas.NewImageFromImage(nil), widget.NewLabel(""))
 		},
 		func(i widget.ListItemID, o fyne.CanvasObject) {
-			o.(*widget.Label).SetText(menu.MenuControl.Predict_contracts[i])
+			o.(*fyne.Container).Objects[1].(*widget.Label).SetText(menu.MenuControl.Predict_contracts[i])
+			if menu.MenuControl.Predict_contracts[i][0:2] != "  " {
+				var key string
+				split := strings.Split(menu.MenuControl.Predict_contracts[i], "   ")
+				if len(split) >= 3 {
+					trimmed := strings.Trim(split[2], " ")
+					if len(trimmed) == 64 {
+						key = trimmed
+					}
+				}
+
+				badge := canvas.NewImageFromResource(menu.DisplayRating(menu.MenuControl.Contract_rating[key]))
+				badge.SetMinSize(fyne.NewSize(35, 35))
+				o.(*fyne.Container).Objects[0] = badge
+			}
 		})
 
 	var item string
@@ -210,9 +229,19 @@ func PredictionListings() fyne.CanvasObject { /// prediction contract list
 		sort.Strings(menu.MenuControl.Predict_favorites)
 	})
 
+	rate := widget.NewButton("Rate", func() {
+		if len(PredictControl.Contract) == 64 {
+			if !menu.CheckOwner(PredictControl.Contract) {
+				menu.RateConfirm(PredictControl.Contract)
+			} else {
+				log.Println("[dReams] You own this contract")
+			}
+		}
+	})
+
 	cont := container.NewBorder(
 		nil,
-		container.NewBorder(nil, nil, nil, save, layout.NewSpacer()),
+		container.NewBorder(nil, nil, save, rate, layout.NewSpacer()),
 		nil,
 		nil,
 		PredictControl.Predict_list)
@@ -298,15 +327,16 @@ func PredictionOwned() fyne.CanvasObject {
 	return PredictControl.Owned_list
 }
 
-func Remove() fyne.Widget {
-	PredictControl.Remove_button = widget.NewButton("Remove", func() {
-		namePopUp(2)
-	})
-
-	PredictControl.Remove_button.Hide()
-
-	return PredictControl.Remove_button
-}
+// prediction leaderboard
+// func Remove() fyne.Widget {
+// 	PredictControl.Remove_button = widget.NewButton("Remove", func() {
+// 		namePopUp(2)
+// 	})
+//
+// 	PredictControl.Remove_button.Hide()
+//
+// 	return PredictControl.Remove_button
+// }
 
 func P_initResults(p, amt, eA, c, to, u, d, r, f, m string, ta, tb, tc int) (info string) { /// prediction info, initialized
 	end_time, _ := rpc.MsToTime(eA)

@@ -1,6 +1,7 @@
 package menu
 
 import (
+	"fmt"
 	"image/color"
 	"log"
 	"math"
@@ -30,6 +31,7 @@ const (
 
 type menuOptions struct {
 	list_open         bool
+	send_open         bool
 	Daemon_config     string
 	Viewing_asset     string
 	Holdero_tables    []string
@@ -41,9 +43,12 @@ type menuOptions struct {
 	Sports_contracts  []string
 	Sports_favorites  []string
 	Sports_owned      []string
+	Contract_rating   map[string]uint64
+	Names             *widget.Select
 	Bet_unlock        *widget.Button
 	Bet_new           *widget.Button
 	Bet_menu          *widget.Button
+	Send_asset        *widget.Button
 	Claim_button      *widget.Button
 	List_button       *widget.Button
 	Set_list          *widget.Button
@@ -53,6 +58,8 @@ type menuOptions struct {
 	Sports_check      *widget.Check
 	Wallet_ind        *fyne.Animation
 	Daemon_ind        *fyne.Animation
+	Poker_ind         *fyne.Animation
+	Service_ind       *fyne.Animation
 }
 
 type holderoOptions struct {
@@ -73,13 +80,21 @@ type resources struct {
 	Back3     fyne.Resource
 	Back4     fyne.Resource
 	Gnomon    fyne.Resource
+	BBadge    fyne.Resource
+	B2Badge   fyne.Resource
+	B3Badge   fyne.Resource
+	RBadge    fyne.Resource
+	PBot      fyne.Resource
+	dService  fyne.Resource
+	Tools     fyne.Resource
+	ToolsH    fyne.Resource
 }
 
 var Resource resources
 var HolderoControl holderoOptions
 var MenuControl menuOptions
 
-func GetMenuResources(r1, r2, r3, r4, r5, r6, r7 fyne.Resource) {
+func GetMenuResources(r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, r15 fyne.Resource) {
 	Resource.SmallIcon = r1
 	Resource.Frame = r2
 	Resource.Back1 = r3
@@ -87,13 +102,23 @@ func GetMenuResources(r1, r2, r3, r4, r5, r6, r7 fyne.Resource) {
 	Resource.Back3 = r5
 	Resource.Back4 = r6
 	Resource.Gnomon = r7
+	Resource.BBadge = r8
+	Resource.B2Badge = r9
+	Resource.B3Badge = r10
+	Resource.RBadge = r11
+	Resource.PBot = r12
+	Resource.dService = r13
+	Resource.Tools = r14
+	Resource.ToolsH = r15
 }
 
 func disconnected() {
+	rpc.Wallet.Service = false
 	rpc.Wallet.PokerOwner = false
 	rpc.Wallet.BetOwner = false
 	rpc.Round.ID = 0
 	rpc.Display.PlayerId = ""
+	rpc.Odds.Run = false
 	table.Settings.FaceSelect.Options = []string{"Light", "Dark"}
 	table.Settings.BackSelect.Options = []string{"Light", "Dark"}
 	table.Settings.ThemeSelect.Options = []string{"Main"}
@@ -114,14 +139,20 @@ func disconnected() {
 	table.Assets.Collection.Text = (" Collection:")
 	table.Assets.Collection.Refresh()
 	table.Assets.Icon = *canvas.NewImageFromImage(nil)
-	table.Actions.NameEntry.Text = ""
-	table.Actions.NameEntry.Enable()
-	table.Actions.NameEntry.Refresh()
+	// prediction leaderboard
+	// table.Actions.NameEntry.Text = ""
+	// table.Actions.NameEntry.Enable()
+	// table.Actions.NameEntry.Refresh()
+	table.DisableHolderoTools()
+	MenuControl.Names.ClearSelected()
+	MenuControl.Names.Options = []string{}
+	MenuControl.Names.Refresh()
 	Market.Auction_list.UnselectAll()
 	Market.Buy_list.UnselectAll()
 	Market.Icon = *canvas.NewImageFromImage(nil)
 	Market.Cover = *canvas.NewImageFromImage(nil)
 	Market.Viewing = ""
+	Market.Viewing_coll = ""
 	ResetAuctionInfo()
 	AuctionInfo()
 }
@@ -237,7 +268,8 @@ func WalletRpcEntry() fyne.Widget {
 	entry.OnCursorChanged = func() {
 		if rpc.Wallet.Connect {
 			rpc.Wallet.Address = ""
-			rpc.Wallet.Height = "0"
+			rpc.Display.Wallet_height = "0"
+			rpc.Wallet.Height = 0
 			rpc.Wallet.Connect = false
 			CheckConnection()
 		}
@@ -266,31 +298,33 @@ func UserPassEntry() fyne.Widget {
 }
 
 func HolderoContractEntry() fyne.Widget {
+	var wait bool
 	HolderoControl.contract_input = widget.NewSelectEntry(nil)
 	options := []string{""}
 	HolderoControl.contract_input.SetOptions(options)
 	HolderoControl.contract_input.PlaceHolder = "Holdero Contract Address: "
 	HolderoControl.contract_input.OnCursorChanged = func() {
-		HolderoControl.contract_input.Validate()
-		if rpc.Signal.Daemon {
+		if rpc.Signal.Daemon && !wait {
+			wait = true
 			text := HolderoControl.contract_input.Text
 			table.ClearShared()
 			if len(text) == 64 {
-				go rpc.CheckHolderoContract()
-				if checkTableOwner(text) {
+				if CheckTableOwner(text) {
 					disableOwnerControls(false)
 					if checkTableVersion(text) >= 110 {
 						ownerControl.chips.Show()
+						ownerControl.timeout.Show()
 						ownerControl.owners_mid.Show()
 					} else {
 						ownerControl.chips.Hide()
+						ownerControl.timeout.Hide()
 						ownerControl.owners_mid.Hide()
 					}
 				} else {
 					disableOwnerControls(true)
 				}
 
-				tourney, _ := rpc.CheckTournamentTable()
+				tourney := CheckHolderoContract(text)
 				if rpc.Wallet.Connect && tourney {
 					table.Actions.Tournament.Show()
 				} else {
@@ -301,6 +335,7 @@ func HolderoContractEntry() fyne.Widget {
 				MenuControl.holdero_check.SetChecked(false)
 				table.Actions.Tournament.Hide()
 			}
+			wait = false
 		}
 	}
 
@@ -323,6 +358,12 @@ func RpcConnectButton() fyne.Widget {
 			table.Actions.S_contract.CursorColumn = 1
 			table.Actions.S_contract.Refresh()
 			rpc.CheckExisitingKey()
+			if len(rpc.Wallet.Address) == 66 {
+				MenuControl.Names.ClearSelected()
+				MenuControl.Names.Options = []string{}
+				MenuControl.Names.Refresh()
+				MenuControl.Names.Options = append(MenuControl.Names.Options, rpc.Wallet.Address[0:12])
+			}
 		}()
 	})
 
@@ -377,11 +418,25 @@ func setHolderoControls(str string) (item string) {
 			item = str
 			HolderoControl.contract_input.SetText(trimmed)
 			go GetTableStats(trimmed, true)
-			rpc.Times.Kick_block = rpc.StringToInt(rpc.Wallet.Height)
+			rpc.Times.Kick_block = rpc.Wallet.Height
 		}
 	}
 
 	return
+}
+
+func DisplayRating(i uint64) fyne.Resource {
+	if i > 250000 {
+		return Resource.B3Badge
+	} else if i > 150000 {
+		return Resource.B2Badge
+	} else if i > 90000 {
+		return Resource.BBadge
+	} else if i > 50000 {
+		return Resource.RBadge
+	} else {
+		return nil
+	}
 }
 
 func TableListings() fyne.CanvasObject { /// tables contracts
@@ -390,19 +445,35 @@ func TableListings() fyne.CanvasObject { /// tables contracts
 			return len(MenuControl.Holdero_tables)
 		},
 		func() fyne.CanvasObject {
-			return widget.NewLabel("")
+			return container.NewHBox(canvas.NewImageFromImage(nil), widget.NewLabel(""))
 		},
 		func(i widget.ListItemID, o fyne.CanvasObject) {
-			o.(*widget.Label).SetText(MenuControl.Holdero_tables[i])
+			o.(*fyne.Container).Objects[1].(*widget.Label).SetText(MenuControl.Holdero_tables[i])
+			if MenuControl.Holdero_tables[i][0:2] != "  " {
+				var key string
+				split := strings.Split(MenuControl.Holdero_tables[i], "   ")
+				if len(split) >= 3 {
+					trimmed := strings.Trim(split[2], " ")
+					if len(trimmed) == 64 {
+						key = trimmed
+					}
+				}
+
+				badge := canvas.NewImageFromResource(DisplayRating(MenuControl.Contract_rating[key]))
+				badge.SetMinSize(fyne.NewSize(35, 35))
+				o.(*fyne.Container).Objects[0] = badge
+			}
 		})
 
 	var item string
 
 	HolderoControl.Table_list.OnSelected = func(id widget.ListItemID) {
 		if id != 0 && Connected() {
-			item = setHolderoControls(MenuControl.Holdero_tables[id])
-			HolderoControl.Favorite_list.UnselectAll()
-			HolderoControl.Owned_list.UnselectAll()
+			go func() {
+				item = setHolderoControls(MenuControl.Holdero_tables[id])
+				HolderoControl.Favorite_list.UnselectAll()
+				HolderoControl.Owned_list.UnselectAll()
+			}()
 		}
 	}
 
@@ -411,14 +482,93 @@ func TableListings() fyne.CanvasObject { /// tables contracts
 		sort.Strings(MenuControl.Holdero_favorites)
 	})
 
+	rate := widget.NewButton("Rate", func() {
+		if len(rpc.Round.Contract) == 64 {
+			if !CheckTableOwner(rpc.Round.Contract) {
+				RateConfirm(rpc.Round.Contract)
+			} else {
+				log.Println("[dReams] You own this contract")
+			}
+		}
+	})
+
 	cont := container.NewBorder(
 		nil,
-		container.NewBorder(nil, nil, nil, save, layout.NewSpacer()),
+		container.NewBorder(nil, nil, save, rate, layout.NewSpacer()),
 		nil,
 		nil,
 		HolderoControl.Table_list)
 
 	return cont
+}
+
+func RateConfirm(scid string) {
+	cw := fyne.CurrentApp().NewWindow("Rate SCID")
+	cw.Resize(fyne.NewSize(350, 350))
+	cw.SetFixedSize(true)
+	cw.SetIcon(Resource.SmallIcon)
+	cw.SetCloseIntercept(func() {
+		cw.Close()
+	})
+
+	label := widget.NewLabel(fmt.Sprintf("Rate your experience with this contract\n\n%s", scid))
+	label.Wrapping = fyne.TextWrapWord
+
+	rating_label := widget.NewLabel("")
+
+	fee_label := widget.NewLabel("")
+
+	var slider *widget.Slider
+	confirm := widget.NewButton("Confirm", func() {
+		var pos uint64
+		if slider.Value > 0 {
+			pos = 1
+		}
+
+		fee := uint64(math.Abs(slider.Value * 10000))
+		rpc.RateSCID(scid, fee, pos)
+		cw.Close()
+	})
+
+	confirm.Hide()
+
+	cancel := widget.NewButton("Cancel", func() {
+		cw.Close()
+	})
+
+	slider = widget.NewSlider(-5, 5)
+	slider.Step = 0.5
+	slider.OnChanged = func(f float64) {
+		if slider.Value != 0 {
+			rating_label.SetText(fmt.Sprintf("Rating: %.0f", f*10000))
+			fee_label.SetText(fmt.Sprintf("Fee: %.5f Dero", math.Abs(f)/10))
+			confirm.Show()
+		} else {
+			rating_label.SetText("Pick a rating")
+			fee_label.SetText("")
+			confirm.Hide()
+		}
+	}
+
+	good := canvas.NewImageFromResource(Resource.B3Badge)
+	good.SetMinSize(fyne.NewSize(30, 30))
+	bad := canvas.NewImageFromResource(Resource.RBadge)
+	bad.SetMinSize(fyne.NewSize(30, 30))
+
+	rate_cont := container.NewBorder(nil, nil, bad, good, slider)
+
+	left := container.NewVBox(confirm)
+	right := container.NewVBox(cancel)
+	buttons := container.NewAdaptiveGrid(2, left, right)
+
+	content := container.NewVBox(label, rating_label, fee_label, layout.NewSpacer(), rate_cont, layout.NewSpacer(), buttons)
+
+	img := *canvas.NewImageFromResource(Resource.Back2)
+	cw.SetContent(
+		container.New(layout.NewMaxLayout(),
+			&img,
+			content))
+	cw.Show()
 }
 
 func HolderoFavorites() fyne.CanvasObject {
@@ -493,13 +643,13 @@ func MyTables() fyne.CanvasObject {
 }
 
 func NameEntry() fyne.CanvasObject {
-	name := widget.NewEntry()
-	name.PlaceHolder = "Name:"
-	this := binding.BindString(&table.Poker_name)
-	name.Bind(this)
-	name.Validator = validation.NewRegexp(`^.{3,12}$`, "Format Not Valid")
+	MenuControl.Names = widget.NewSelect([]string{}, func(s string) {
+		table.Poker_name = s
+	})
 
-	return name
+	MenuControl.Names.PlaceHolder = "Name:"
+
+	return MenuControl.Names
 }
 
 // / Owner
@@ -507,6 +657,7 @@ type tableOwnerOptions struct {
 	blindAmount uint64
 	anteAmount  uint64
 	chips       *widget.RadioGroup
+	timeout     *widget.Button
 	owners_left *fyne.Container
 	owners_mid  *fyne.Container
 }
@@ -664,7 +815,7 @@ func OwnersBoxLeft() fyne.CanvasObject {
 		}
 	})
 
-	timeout := widget.NewButton("Timeout", func() {
+	ownerControl.timeout = widget.NewButton("Timeout", func() {
 		TimeOutConfirm()
 	})
 
@@ -676,7 +827,7 @@ func OwnersBoxLeft() fyne.CanvasObject {
 	blind_items := container.NewAdaptiveGrid(2, blinds_entry, ownerControl.chips)
 	ante_items := container.NewAdaptiveGrid(2, ante_entry, set_button)
 	clean_items := container.NewAdaptiveGrid(2, clean_entry, clean_button)
-	time_items := container.NewAdaptiveGrid(2, timeout, force)
+	time_items := container.NewAdaptiveGrid(2, ownerControl.timeout, force)
 
 	ownerControl.owners_left = container.NewVBox(players_items, blind_items, ante_items, clean_items, time_items)
 	ownerControl.owners_left.Hide()
@@ -686,15 +837,15 @@ func OwnersBoxLeft() fyne.CanvasObject {
 
 func OwnersBoxMid() fyne.CanvasObject {
 	kick_label := widget.NewLabel("      Auto Kick after")
-	k_times := []string{"Off", "2m", "1m"}
+	k_times := []string{"Off", "2m", "5m"}
 	auto_remove := widget.NewSelect(k_times, func(s string) {
 		switch s {
 		case "Off":
 			rpc.Times.Kick = 0
 		case "2m":
 			rpc.Times.Kick = 120
-		case "1m":
-			rpc.Times.Kick = 60
+		case "5m":
+			rpc.Times.Kick = 300
 		default:
 			rpc.Times.Kick = 0
 		}
@@ -774,9 +925,9 @@ func TimeOutConfirm() {
 		tocw.Close()
 	})
 
-	display := container.NewVBox(confirm_display, layout.NewSpacer())
+	display := container.NewVScroll(confirm_display)
 	options := container.NewAdaptiveGrid(2, confirm_button, cancel_button)
-	content := container.NewVBox(display, layout.NewSpacer(), options)
+	content := container.NewBorder(nil, options, nil, nil, display)
 
 	img := *canvas.NewImageFromResource(Resource.Back1)
 	tocw.SetContent(
@@ -847,6 +998,7 @@ func disableActions(d bool) {
 		table.Actions.Tournament.Hide()
 		table.Iluma.Draw1.Hide()
 		table.Iluma.Draw3.Hide()
+		table.Iluma.Search.Hide()
 	} else {
 		table.Actions.Dreams.Show()
 		table.Actions.Dero.Show()
@@ -864,6 +1016,7 @@ func disableActions(d bool) {
 	table.Actions.Tournament.Refresh()
 	table.Iluma.Draw1.Refresh()
 	table.Iluma.Draw3.Refresh()
+	table.Iluma.Search.Refresh()
 }
 
 func disableBaccActions(d bool) {
@@ -889,9 +1042,8 @@ func disableOwnerControls(d bool) {
 	ownerControl.owners_mid.Refresh()
 }
 
-func DisableBetOwner(o string) {
-
-	if o == rpc.Wallet.Address {
+func DisableBetOwner(owner string) {
+	if owner == rpc.Wallet.Address {
 		rpc.Wallet.BetOwner = true
 		MenuControl.Bet_new.Show()
 		MenuControl.Bet_unlock.Hide()
@@ -996,7 +1148,7 @@ To help support the project, there is a 3 DERO donation attached to preform this
 
 Once you've unlocked betting, you can upload as many new betting contracts free of donation
 
-Total transaction will be 3.1 DERO (0.1 gas fee for contract install)
+Total transaction will be 3.14 DERO (0.14 gas fee for contract install)
 
 Select a public or private contract.
 
@@ -1008,7 +1160,7 @@ Choose Predictions or Sports to proceed with unlock and installing chosen contra
 	case 2:
 		text = `You are about to install a new betting contract. 
 
-Gas fee to install new betting contract is 0.1 DERO.
+Gas fee to install new betting contract is 0.14 DERO.
 
 Select a public or private contract.
 
@@ -1090,6 +1242,10 @@ func IndexEntry() fyne.CanvasObject {
 		searchIndex(table.Assets.Index_entry.Text)
 	})
 
+	MenuControl.Send_asset = widget.NewButton("Send Asset", func() {
+		go sendAssetMenu(MenuControl.Viewing_asset)
+	})
+
 	MenuControl.List_button = widget.NewButton("List Asset", func() {
 		listMenu()
 	})
@@ -1106,12 +1262,13 @@ func IndexEntry() fyne.CanvasObject {
 	table.Assets.Index_search.Hide()
 	MenuControl.List_button.Hide()
 	MenuControl.Claim_button.Hide()
+	MenuControl.Send_asset.Hide()
 
 	table.Assets.Gnomes_index = canvas.NewText(" Indexed SCIDs: ", color.White)
 	table.Assets.Gnomes_index.TextSize = 18
 
 	bottom_grid := container.NewAdaptiveGrid(3, table.Assets.Gnomes_index, table.Assets.Index_button, table.Assets.Index_search)
-	top_grid := container.NewAdaptiveGrid(3, layout.NewSpacer(), MenuControl.Claim_button, MenuControl.List_button)
+	top_grid := container.NewAdaptiveGrid(3, container.NewMax(MenuControl.Send_asset), MenuControl.Claim_button, MenuControl.List_button)
 	box := container.NewVBox(top_grid, layout.NewSpacer(), bottom_grid)
 
 	cont := container.NewAdaptiveGrid(2, table.Assets.Index_entry, box)
@@ -1143,6 +1300,103 @@ func AssetList() fyne.CanvasObject {
 	box := container.NewMax(table.Assets.Asset_list)
 
 	return box
+}
+
+func sendAssetMenu(scid string) {
+	MenuControl.send_open = true
+	saw := fyne.CurrentApp().NewWindow("Send Asset")
+	saw.Resize(fyne.NewSize(330, 700))
+	saw.SetIcon(Resource.SmallIcon)
+	MenuControl.Send_asset.Hide()
+	saw.SetCloseIntercept(func() {
+		MenuControl.send_open = false
+		if rpc.Wallet.Connect {
+			MenuControl.Send_asset.Show()
+		}
+		saw.Close()
+	})
+	saw.SetFixedSize(true)
+
+	label := widget.NewLabel("You are about to send asset:\n\n" + scid + " \n\nEnter destination address below.\n\nSCID can be sent to reciever as payload.\n\n")
+	label.Wrapping = fyne.TextWrapWord
+
+	var check *widget.Check
+	payload := widget.NewCheck("Send SCID as payload.", func(b bool) {})
+
+	entry := widget.NewMultiLineEntry()
+	entry.SetPlaceHolder("Destination Address:")
+	entry.Wrapping = fyne.TextWrapWord
+	entry.Validator = validation.NewRegexp(`^(dero)\w{62}`, "Invalid Address")
+	entry.OnChanged = func(s string) {
+		if entry.Validate() == nil {
+			check.Text = "I have confirmed all info is correct."
+			check.Refresh()
+			check.Enable()
+		} else {
+			check.Text = "Enter all info before sending."
+			check.Refresh()
+			check.Disable()
+		}
+	}
+
+	var dest string
+	confirm := widget.NewButton("Confirm", func() {
+		dest = entry.Text
+		if entry.Validate() == nil {
+			var load bool
+			if payload.Checked {
+				load = true
+			}
+			go rpc.SendAsset(MenuControl.Viewing_asset, dest, load)
+			saw.Close()
+		}
+	})
+
+	cancel := widget.NewButton("Cancel", func() {
+		saw.Close()
+	})
+
+	check = widget.NewCheck("Enter all info before sending.", func(b bool) {
+		if b {
+			if entry.Validate() == nil {
+				entry.Disable()
+				confirm.Show()
+			}
+		} else {
+			entry.Enable()
+			confirm.Hide()
+		}
+	})
+
+	confirm.Hide()
+	check.Disable()
+
+	url := GetAssetUrl(1, scid)
+	icon, _ := table.DownloadFile(url, "sending")
+
+	grid := container.NewAdaptiveGrid(2, confirm, container.NewMax(cancel))
+	box := container.NewVBox(label, sendAssetImg(&icon, Resource.Frame), layout.NewSpacer(), entry, payload, check, layout.NewSpacer(), grid)
+
+	img := *canvas.NewImageFromResource(Resource.Back3)
+	saw.SetContent(
+		container.New(layout.NewMaxLayout(),
+			&img,
+			box))
+	saw.Show()
+}
+
+func sendAssetImg(img *canvas.Image, res fyne.Resource) fyne.CanvasObject {
+	img.SetMinSize(fyne.NewSize(100, 100))
+	img.Resize(fyne.NewSize(94, 94))
+	img.Move(fyne.NewPos(118, 3))
+
+	frame := canvas.NewImageFromResource(res)
+	frame.Resize(fyne.NewSize(100, 100))
+	frame.Move(fyne.NewPos(115, 0))
+
+	cont := container.NewWithoutLayout(img, frame)
+
+	return cont
 }
 
 func listMenu() { /// asset listing
@@ -1183,8 +1437,10 @@ func listMenu() { /// asset listing
 
 	MenuControl.Set_list = widget.NewButton("Set Listing", func() {
 		if duration.Validate() == nil && start.Validate() == nil && charAddr.Validate() == nil && charPerc.Validate() == nil {
-			MenuControl.Set_list.Hide()
-			confirmAssetList(list.Selected, duration.Text, start.Text, charAddr.Text, charPerc.Text)
+			if list.Selected != "" {
+				MenuControl.Set_list.Hide()
+				confirmAssetList(list.Selected, duration.Text, start.Text, charAddr.Text, charPerc.Text)
+			}
 		}
 	})
 
@@ -1259,9 +1515,10 @@ func IntroTree() fyne.CanvasObject {
 	list := map[string][]string{
 		"":                      {"Welcome to dReams"},
 		"Welcome to dReams":     {"Get Started", "Contracts", "Assets", "Market"},
-		"Get Started":           {"You will need a Dero wallet to play", "Can use local daemon, or remote daemon options are availible in drop down", "Enter daemon rpc address, wallet rpc address and user:pass", "Press connect, D & W indicators at top right of screen will light up on successful connection", "On first start start up of app, Gnomon will take ~10 seconds to create your local db", "Gnomon idicator will have a stripe when starting or syncing, indicator will turn solid when startup, sync and scan are completed"},
-		"Contracts":             {"Holdero", "Baccarat", "Predictions", "Sports", "Tarot"},
-		"Holdero":               {"Multiplayer Texas Hold'em style on chian poker", "No limit, single raise game. Table owners choose game params", "Six players max at a table", "No side pots, must call or fold", "Public and private tables can use Dero or dReam Tokens", "Tournament tables can be set up to use any Token", "View table listings or launch your own Holdero contract from the contracts tab"},
+		"Get Started":           {"You will need a Dero wallet to play, visit dero.io for more info", "Can use local daemon, or remote daemon options are availible in drop down", "Enter daemon rpc address, wallet rpc address and user:pass", "Press connect, D & W indicators at top right of screen will light up on successful connection", "On first start start up of app, Gnomon will take ~10 seconds to create your local db", "Gnomon idicator will have a stripe when starting or syncing, indicator will turn solid when startup, sync and scan are completed"},
+		"Contracts":             {"Holdero", "Baccarat", "Predictions", "Sports", "dReam Service", "Tarot", "Contract Ratings"},
+		"Holdero":               {"Multiplayer Texas Hold'em style on chian poker", "No limit, single raise game. Table owners choose game params", "Six players max at a table", "No side pots, must call or fold", "Public and private tables can use Dero or dReam Tokens", "dReam Tools", "Tournament tables can be set up to use any Token", "View table listings or launch your own Holdero contract from the contracts tab"},
+		"dReam Tools":           {"A suite of tools for Holdero, unlocked with ownership of AZY or SIX playing card assets (Requires one deck or two backs)", "Odds calculator", "Bot player with 12 customizable parameters", "Track playing stats for users and bot players"},
 		"Baccarat":              {"A popular table game, where closest to 9 wins", "Uses dReam Tokens for betting"},
 		"Predictions":           {"Prediction contracts are for binary based predictions, (higher/lower, yes/no)", "How predictions works", "Current Markets", "dReams Client aggregated price feed", "View active prediction contracts in predictions tab or launch your own prediction contract from the contracts tab"},
 		"How predictions works": {"P2P predictions", "Variable time limits allowing for different prediction set ups, each contract runs one prediction at a time", "Click a contract from the list to view it", "Closes at, is when the contract will stop accepting predictions", "Mark (price or value you are predicting on) can be set on prediction initialization or it can given live", "Posted with in, is the acceptable time frame to post the live Mark", "If Mark is not posted, prediction is voided and you will be refunded", "Payout after, is when the Final price is posted and compared to the mark to determine winners", "If the final price is not posted with in refund time frame, prediction is void and you will be refunded"},
@@ -1269,8 +1526,10 @@ func IntroTree() fyne.CanvasObject {
 		"Sports":                {"Sports contracts are for sports wagers", "How sports works", "Current Leagues", "Live game scores, and game schedules", "View active sports contracts in sports tab or launch your own sports contract from the contracts tab"},
 		"How sports works":      {"P2P betting", "Variable time limits, one contract can run miltiple games at the same time", "Click a contract from the list to view it", "Any active games on the contract will populate, you can pick which game you'd like to play from the drop down", "Closes at, is when the contrcts stops accepting picks", "Default payout time after close is 4hr, this is when winner will be posted from client feed", "Default refund time is 8hr after close, meaning if winner is not provided past that time you will be refunded", "A Tie refunds pot to all all participants"},
 		"Current Leagues":       {"EPL", "NBA", "NFL", "NHL", "Bellator", "UFC"},
+		"dReam Service":         {"dReam Service is unlocked for all betting contract owners", "Full automation of contract posts and payouts", "Integrated address service allows bets to be placed thorugh a Dero transaction to sent to service", "Multiple owners can be added to contracts and multiple service wallets can be ran on one contract"},
 		"Tarot":                 {"On chian Tarot readings", "Iluma cards and readings created by Kalina Lux"},
-		"Assets":                {"View any owned assets held in wallet", "Put owned assets up for auction or for sale", "Indexer, add custom contracts to your index and search current index db"},
+		"Contract Ratings":      {"Holdero and public betting contracts each have a rating stored on chain", "Players can rate other contracts positively or negatively", "Four rating tiers, tier two being the starting tier for all contracts", "Each rating transaction is weight based by its Dero value", "Contracts that fall below tier one will no longer populate in the public index"},
+		"Assets":                {"View any owned assets held in wallet", "Put owned assets up for auction or for sale", "Send assets privately to another wallet", "Indexer, add custom contracts to your index and search current index db"},
 		"Market":                {"View any in game assets up for auction or sale", "Bid on or buy assets", "Cancel or close out any existing listings"},
 	}
 

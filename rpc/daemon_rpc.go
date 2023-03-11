@@ -15,14 +15,14 @@ import (
 )
 
 const (
-	pre          = "http://"
-	suff         = "/json_rpc"
+	NameSCID     = "0000000000000000000000000000000000000000000000000000000000000001"
+	RatingSCID   = "c66a11ddb22912e92b0a7ab777ed0d343632d9e3c6e8a81452396ca84d2decb6"
 	dReamsSCID   = "ad2e7b37c380cc1aed3a6b27224ddfc92a2d15962ca1f4d35e530dba0f9575a9"
 	TourneySCID  = "c2e1ec16aed6f653aef99a06826b2b6f633349807d01fbb74cc0afb5ff99c3c7"
 	HolderoSCID  = "e3f37573de94560e126a9020c0a5b3dfc7a4f3a4fbbe369fba93fbd219dc5fe9"
 	pHolderoSCID = "896834d57628d3a65076d3f4d84ddc7c5daf3e86b66a47f018abda6068afe2e6"
 	BaccSCID     = "8289c6109f41cbe1f6d5f27a419db537bf3bf30a25eff285241a36e1ae3e48a4"
-	PredictSCID  = "c89c2f514300413fd6922c28591196a7c48b42b07e7f4d7d8d9f7643e253a6ff"
+	PredictSCID  = "eaa62b220fa1c411785f43c0c08ec59c761261cb58a0ccedc5b358e5ed2d2c95"
 	pPredictSCID = "e5e49c9a6dc1c0dc8a94429a01bf758e705de49487cbd0b3e3550648d2460cdf"
 	SportsSCID   = "ad11377c29a863523c1cc50a33ca13e861cc146a7c0496da58deaa1973e0a39f"
 	pSportsSCID  = "fffdc4ea6d157880841feab335ab4755edcde4e60fec2fff661009b16f44fa94"
@@ -51,7 +51,7 @@ func fromHextoString(h string) string {
 }
 
 func SetDaemonClient(addr string) (jsonrpc.RPCClient, context.Context, context.CancelFunc) {
-	client := jsonrpc.NewClient(pre + addr + suff)
+	client := jsonrpc.NewClient("http://" + addr + "/json_rpc")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 
 	return client, ctx, cancel
@@ -148,7 +148,53 @@ func CheckForIndex(scid string) (interface{}, error) {
 	return address, err
 }
 
-func GetGnomonCode(dc bool, pub int) (string, error) {
+func GetSCCode(dc bool, scid string) (string, error) {
+	if dc {
+		rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
+		defer cancel()
+
+		var result *rpc.GetSC_Result
+		params := rpc.GetSC_Params{
+			SCID:      scid,
+			Code:      true,
+			Variables: false,
+		}
+
+		err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params)
+		if err != nil {
+			log.Println("[GetSCCode]", err)
+			return "", nil
+		}
+
+		return result.Code, err
+	}
+	return "", nil
+}
+
+func GetNameServiceCode(dc bool) (string, error) {
+	if dc {
+		rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
+		defer cancel()
+
+		var result *rpc.GetSC_Result
+		params := rpc.GetSC_Params{
+			SCID:      NameSCID,
+			Code:      true,
+			Variables: false,
+		}
+
+		err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params)
+		if err != nil {
+			log.Println("[GetNameServiceCode]", err)
+			return "", nil
+		}
+
+		return result.Code, err
+	}
+	return "", nil
+}
+
+func GetGnomonCode(dc bool) (string, error) {
 	if dc {
 		rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
 		defer cancel()
@@ -216,62 +262,22 @@ func GetG45Collection(scid string) ([]string, error) {
 	return scids, err
 }
 
-func CheckHolderoContract() error {
+func VerifySigner(txid string) (bool, error) {
 	rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
 	defer cancel()
 
-	var result *rpc.GetSC_Result
-	params := rpc.GetSC_Params{
-		SCID:      Round.Contract,
-		Code:      false,
-		Variables: true,
+	var result *rpc.GetTransaction_Result
+	params := rpc.GetTransaction_Params{
+		Tx_Hashes: []string{txid},
 	}
 
-	err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params)
+	err := rpcClientD.CallFor(ctx, &result, "DERO.GetTransaction", params)
 	if err != nil {
-		log.Println("[CheckHolderoContract]", err)
-		return nil
-	}
-
-	cards := fmt.Sprint(result.VariableStringKeys["Deck Count:"])
-	version := fmt.Sprint(result.VariableStringKeys["V:"])
-
-	v, _ := strconv.Atoi(version)
-	c, _ := strconv.Atoi(cards)
-
-	if c > 0 && v >= 100 {
-		Signal.Contract = true
-	} else {
-		Signal.Contract = false
-	}
-
-	return err
-}
-
-func CheckTournamentTable() (bool, error) {
-	rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
-	defer cancel()
-
-	var result *rpc.GetSC_Result
-	params := rpc.GetSC_Params{
-		SCID:      Round.Contract,
-		Code:      false,
-		Variables: true,
-	}
-
-	err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params)
-	if err != nil {
-		log.Println("[CheckTournamentTable]", err)
+		log.Println("[VerifySigner]", err)
 		return false, nil
 	}
 
-	tourney := fmt.Sprint(result.VariableStringKeys["Tournament"])
-	version := fmt.Sprint(result.VariableStringKeys["V:"])
-
-	t, _ := strconv.Atoi(tourney)
-	v, _ := strconv.Atoi(version)
-
-	if t == 1 && v >= 110 {
+	if result.Txs[0].Signer == Wallet.Address {
 		return true, err
 	}
 
@@ -500,7 +506,7 @@ func FetchHolderoSC(dc, cc bool) error {
 			if RevealBool_jv != nil && !Signal.Reveal && !Round.LocalEnd {
 				if addOne(Turn_jv) == Display.PlayerId {
 					Signal.Clicked = true
-					Signal.CHeight = StringToInt(Wallet.Height)
+					Signal.CHeight = Wallet.Height
 					Signal.Reveal = true
 					go RevealKey(Wallet.ClientKey)
 				}
@@ -530,9 +536,9 @@ func FetchHolderoSC(dc, cc bool) error {
 				if Last_jv != nil {
 					now := time.Now().Unix()
 					if int(now) > int(Last_jv.(float64))+Times.Kick+12 {
-						if StringToInt(Wallet.Height) > Times.Kick_block+2 {
+						if Wallet.Height > Times.Kick_block+2 {
 							TimeOut()
-							Times.Kick_block = StringToInt(Wallet.Height)
+							Times.Kick_block = Wallet.Height
 						}
 					}
 				}
@@ -710,9 +716,9 @@ func FetchBaccHand(dc bool, tx string) error { /// find played hand
 		}
 		Total_jv := result.VariableStringKeys["TotalHandsPlayed:"]
 		if Total_jv != nil {
-			start := int(Total_jv.(float64))
-			i := int(Total_jv.(float64))
-			for i < start+24 {
+			start := int(Total_jv.(float64)) - 21
+			i := start
+			for i < start+45 {
 				h := "-Hand#TXID:"
 				w := strconv.Itoa(i)
 				TXID_jv := result.VariableStringKeys[w+h]
@@ -729,14 +735,15 @@ func FetchBaccHand(dc bool, tx string) error { /// find played hand
 						PTotal_jv := result.VariableStringKeys[w+"-Player total:"]
 						BTotal_jv := result.VariableStringKeys[w+"-Banker total:"]
 
+						prefix := "Hand# " + w + "\n"
 						p := int(PTotal_jv.(float64))
 						b := int(BTotal_jv.(float64))
 						if PTotal_jv.(float64) == BTotal_jv.(float64) {
-							Display.BaccRes = "Tie, " + strconv.Itoa(p) + " & " + strconv.Itoa(b)
+							Display.BaccRes = prefix + "Tie, " + strconv.Itoa(p) + " & " + strconv.Itoa(b)
 						} else if PTotal_jv.(float64) > BTotal_jv.(float64) {
-							Display.BaccRes = "Player Wins, " + strconv.Itoa(p) + " over " + strconv.Itoa(b)
+							Display.BaccRes = prefix + "Player Wins, " + strconv.Itoa(p) + " over " + strconv.Itoa(b)
 						} else {
-							Display.BaccRes = "Banker Wins, " + strconv.Itoa(b) + " over " + strconv.Itoa(p)
+							Display.BaccRes = prefix + "Banker Wins, " + strconv.Itoa(b) + " over " + strconv.Itoa(p)
 						}
 					}
 				}
@@ -966,9 +973,9 @@ func FetchTarotReading(dc bool, tx string) error {
 
 		Reading_jv := result.VariableStringKeys["readings:"]
 		if Reading_jv != nil {
-			start := int(Reading_jv.(float64))
-			i := int(Reading_jv.(float64))
-			for i < start+24 {
+			start := int(Reading_jv.(float64)) - 21
+			i := start
+			for i < start+45 {
 				h := "-readingTXID:"
 				w := strconv.Itoa(i)
 				TXID_jv := result.VariableStringKeys[w+h]

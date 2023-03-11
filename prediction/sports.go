@@ -16,6 +16,7 @@ import (
 	"github.com/SixofClubsss/dReams/table"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/layout"
@@ -215,10 +216,24 @@ func SportsListings() fyne.CanvasObject { /// sports contract list
 			return len(menu.MenuControl.Sports_contracts)
 		},
 		func() fyne.CanvasObject {
-			return widget.NewLabel("")
+			return container.NewHBox(canvas.NewImageFromImage(nil), widget.NewLabel(""))
 		},
 		func(i widget.ListItemID, o fyne.CanvasObject) {
-			o.(*widget.Label).SetText(menu.MenuControl.Sports_contracts[i])
+			o.(*fyne.Container).Objects[1].(*widget.Label).SetText(menu.MenuControl.Sports_contracts[i])
+			if menu.MenuControl.Sports_contracts[i][0:2] != "  " {
+				var key string
+				split := strings.Split(menu.MenuControl.Sports_contracts[i], "   ")
+				if len(split) >= 3 {
+					trimmed := strings.Trim(split[2], " ")
+					if len(trimmed) == 64 {
+						key = trimmed
+					}
+				}
+
+				badge := canvas.NewImageFromResource(menu.DisplayRating(menu.MenuControl.Contract_rating[key]))
+				badge.SetMinSize(fyne.NewSize(35, 35))
+				o.(*fyne.Container).Objects[0] = badge
+			}
 		})
 
 	var item string
@@ -238,9 +253,19 @@ func SportsListings() fyne.CanvasObject { /// sports contract list
 		sort.Strings(menu.MenuControl.Sports_favorites)
 	})
 
+	rate := widget.NewButton("Rate", func() {
+		if len(SportsControl.Contract) == 64 {
+			if !menu.CheckOwner(SportsControl.Contract) {
+				menu.RateConfirm(SportsControl.Contract)
+			} else {
+				log.Println("[dReams] You own this contract")
+			}
+		}
+	})
+
 	cont := container.NewBorder(
 		nil,
-		container.NewBorder(nil, nil, nil, save, layout.NewSpacer()),
+		container.NewBorder(nil, nil, save, rate, layout.NewSpacer()),
 		nil,
 		nil,
 		SportsControl.Sports_list)
@@ -502,7 +527,7 @@ func GetCurrentMonth(league string) {
 }
 
 func callSoccer(date, league string) (s *soccer) {
-	client := &http.Client{}
+	client := &http.Client{Timeout: 9 * time.Second}
 	req, err := http.NewRequest("GET", sports(league)+"?dates="+date, nil)
 	if err != nil {
 		log.Println("[callSoccer]", err)
@@ -532,7 +557,7 @@ func callSoccer(date, league string) (s *soccer) {
 }
 
 func callMma(date, league string) (m *mma) {
-	client := &http.Client{}
+	client := &http.Client{Timeout: 9 * time.Second}
 	req, err := http.NewRequest("GET", sports(league)+"?dates="+date, nil)
 	if err != nil {
 		log.Println("[callMma]", err)
@@ -562,7 +587,7 @@ func callMma(date, league string) (m *mma) {
 }
 
 func callBasketball(date, league string) (bb *basketball) {
-	client := &http.Client{}
+	client := &http.Client{Timeout: 9 * time.Second}
 	req, err := http.NewRequest("GET", sports(league)+"?dates="+date, nil)
 	if err != nil {
 		log.Println("[callBasketball]", err)
@@ -592,7 +617,7 @@ func callBasketball(date, league string) (bb *basketball) {
 }
 
 func callFootball(date, league string) (f *football) {
-	client := &http.Client{}
+	client := &http.Client{Timeout: 9 * time.Second}
 	req, err := http.NewRequest("GET", sports(league)+"?dates="+date, nil)
 	if err != nil {
 		log.Println("[callFootball]", err)
@@ -622,7 +647,7 @@ func callFootball(date, league string) (f *football) {
 }
 
 func callHockey(date, league string) (h *hockey) {
-	client := &http.Client{}
+	client := &http.Client{Timeout: 9 * time.Second}
 	req, err := http.NewRequest("GET", sports(league)+"?dates="+date, nil)
 	if err != nil {
 		log.Println("[callHockey]", err)
@@ -652,7 +677,7 @@ func callHockey(date, league string) (h *hockey) {
 }
 
 func GetGameEnd(date, game, league string) {
-	client := &http.Client{}
+	client := &http.Client{Timeout: 9 * time.Second}
 	req, err := http.NewRequest("GET", sports(league)+"?dates="+date, nil)
 
 	if err != nil {
@@ -719,7 +744,7 @@ func GetGameEnd(date, game, league string) {
 }
 
 func callScores(date, league string) (s *scores) {
-	client := &http.Client{}
+	client := &http.Client{Timeout: 9 * time.Second}
 	req, err := http.NewRequest("GET", sports(league)+"?dates="+date, nil)
 	if err != nil {
 		log.Println("[callScores]", err)

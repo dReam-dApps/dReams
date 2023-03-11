@@ -100,6 +100,14 @@ func FaceSelect() fyne.Widget {
 				log.Println("[dReams] Downloading " + Settings.FaceUrl)
 				go GetZipDeck(Settings.Faces, Settings.FaceUrl)
 			}
+		} else if check == "High-Strangeness" {
+			Settings.FaceUrl = "https://raw.githubusercontent.com/High-Strangeness/High-Strangeness/main/HS_Deck/HS_Deck.zip?raw=true"
+			dir := GetDir()
+			face := dir + "/cards/" + Settings.Faces + "/card1.png"
+			if !FileExists(face) {
+				log.Println("[dReams] Downloading " + Settings.FaceUrl)
+				go GetZipDeck(Settings.Faces, Settings.FaceUrl)
+			}
 		} else {
 			Settings.FaceUrl = ""
 		}
@@ -143,6 +151,14 @@ func BackSelect() fyne.Widget {
 					log.Println("[dReams] Downloading " + Settings.BackUrl)
 					downloadFileLocal("cards/backs/"+Settings.Backs+".png", Settings.BackUrl)
 				}
+			} else if check == "High-Strangeness" {
+				Settings.BackUrl = "https://raw.githubusercontent.com/High-Strangeness/" + s + "/main/HS_Back/HS_Back.png"
+				dir := GetDir()
+				back := dir + "/cards/backs/" + s + ".png"
+				if !FileExists(back) {
+					log.Println("[dReams] Downloading " + Settings.BackUrl)
+					downloadFileLocal("cards/backs/"+Settings.Backs+".png", Settings.BackUrl)
+				}
 			} else {
 				Settings.BackUrl = ""
 			}
@@ -177,7 +193,26 @@ func ThemeSelect() fyne.Widget {
 					Settings.ThemeUrl = "https://raw.githubusercontent.com/Azylem/" + s + "/main/" + s + ".png"
 					log.Println("[dReams] Downloading", Settings.ThemeUrl)
 					Settings.ThemeImg, _ = DownloadFile(Settings.ThemeUrl, s)
-
+				}
+			} else if check == "SIXART" {
+				dir := GetDir()
+				file := dir + "/cards/" + s + "/" + s + ".png"
+				if FileExists(file) {
+					Settings.ThemeImg = *canvas.NewImageFromFile(file)
+				} else {
+					Settings.ThemeUrl = "https://raw.githubusercontent.com/SixofClubsss/" + s + "/main/" + s + ".png"
+					log.Println("[dReams] Downloading", Settings.ThemeUrl)
+					Settings.ThemeImg, _ = DownloadFile(Settings.ThemeUrl, s)
+				}
+			} else if check == "HSTheme" {
+				dir := GetDir()
+				file := dir + "/cards/" + s + "/" + s + ".png"
+				if FileExists(file) {
+					Settings.ThemeImg = *canvas.NewImageFromFile(file)
+				} else {
+					Settings.ThemeUrl = "https://raw.githubusercontent.com/High-Strangeness/High-Strangeness/main/" + s + "/" + s + ".png"
+					log.Println("[dReams] Downloading", Settings.ThemeUrl)
+					Settings.ThemeImg, _ = DownloadFile(Settings.ThemeUrl, s)
 				}
 			}
 
@@ -205,6 +240,12 @@ func AvatarSelect() fyne.Widget {
 		check := strings.Trim(s, " #0123456789")
 		if check == "DBC" {
 			Settings.AvatarUrl = "https://raw.githubusercontent.com/Azylem/" + s + "/main/" + s + ".PNG"
+		} else if check == "HighStrangeness" {
+			Settings.AvatarUrl = "https://raw.githubusercontent.com/High-Strangeness/High-Strangeness/main/" + s + "/" + s + ".jpg"
+		} else if check == "AZYDS" {
+			Settings.AvatarUrl = "https://raw.githubusercontent.com/Azylem/" + s + "/main/" + s + "-IC.png"
+		} else if check == "SIXART" {
+			Settings.AvatarUrl = "https://raw.githubusercontent.com/SixofClubsss/" + s + "/main/" + s + "-IC.png"
 		} else if check == "Dero Seals" {
 			seal := strings.Trim(s, "Dero Sals#")
 			Settings.AvatarUrl = "https://ipfs.io/ipfs/QmP3HnzWpiaBA6ZE8c3dy5ExeG7hnYjSqkNfVbeVW5iEp6/low/" + seal + ".jpg"
