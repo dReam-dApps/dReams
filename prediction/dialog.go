@@ -668,10 +668,10 @@ func confirmPopUp(i int, teamA, teamB string) { /// bet action confirmation
 		confirm_display.SetText("Error")
 	}
 
-	cancel_button := widget.NewButton("No", func() {
+	cancel_button := widget.NewButton("Cancel", func() {
 		ocw.Close()
 	})
-	confirm_button := widget.NewButton("Yes", func() {
+	confirm_button := widget.NewButton("Confirm", func() {
 		switch i {
 		case 1:
 			rpc.PredictLower(p_scid, "")
