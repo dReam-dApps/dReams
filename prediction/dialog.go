@@ -342,11 +342,28 @@ func serviceOpts() fyne.CanvasObject {
 			if txid.Validate() == nil {
 				e, _ := rpc.GetTransaction(txid.Text)
 				if e != nil {
-					deleteTx("BET", e)
+					db := boltDB()
+					defer db.Close()
+					deleteTx("BET", db, *e)
 				}
 			}
 		} else {
 			log.Println("[dReams] Stop service to delete Tx")
+		}
+	})
+
+	store := widget.NewButton("Store Tx", func() {
+		if !Service.Processing && !rpc.Wallet.Service {
+			if txid.Validate() == nil {
+				e, _ := rpc.GetTransaction(txid.Text)
+				if e != nil {
+					db := boltDB()
+					defer db.Close()
+					storeTx("BET", "done", db, *e)
+				}
+			}
+		} else {
+			log.Println("[dReams] Stop service to store Tx")
 		}
 	})
 
@@ -455,9 +472,10 @@ func serviceOpts() fyne.CanvasObject {
 		view,
 		layout.NewSpacer(),
 		txid,
-		container.NewAdaptiveGrid(2,
+		container.NewAdaptiveGrid(3,
 			process,
-			delete),
+			delete,
+			store),
 		layout.NewSpacer(),
 		get_addr,
 		layout.NewSpacer(),

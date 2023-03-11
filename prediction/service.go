@@ -336,15 +336,10 @@ func makeIntegratedAddr(print bool) {
 
 func dReamService(start uint64, payouts, transfers bool) {
 	if rpc.Signal.Daemon && rpc.Wallet.Connect {
-		db_name := fmt.Sprintf("config/dReamService_%s.bbolt.db", rpc.Wallet.Address)
-		db, err := bbolt.Open(db_name, 0600, nil)
-		if err != nil {
-			log.Printf("[dReamService] could not open db err:%s\n", err)
-			return
-		}
+		db := boltDB()
 		defer db.Close()
 
-		err = db.Update(func(tx *bbolt.Tx) error {
+		err := db.Update(func(tx *bbolt.Tx) error {
 			_, err := tx.CreateBucketIfNotExists([]byte("BET"))
 			return err
 		})
@@ -905,15 +900,10 @@ func processBetTx(start uint64, db *bbolt.DB, print bool) {
 }
 
 func processSingleTx(txid string) {
-	db_name := fmt.Sprintf("config/dReamService_%s.bbolt.db", rpc.Wallet.Address)
-	db, err := bbolt.Open(db_name, 0600, nil)
-	if err != nil {
-		log.Printf("[dReamService] could not open db err:%s\n", err)
-		return
-	}
+	db := boltDB()
 	defer db.Close()
 
-	err = db.Update(func(tx *bbolt.Tx) error {
+	err := db.Update(func(tx *bbolt.Tx) error {
 		_, err := tx.CreateBucketIfNotExists([]byte("BET"))
 		return err
 	})
@@ -1153,16 +1143,10 @@ func processSingleTx(txid string) {
 }
 
 func viewProcessedTx(start uint64) {
-	db_name := fmt.Sprintf("config/%s_%s.bbolt.db", "dReamService", rpc.Wallet.Address)
-	db, err := bbolt.Open(db_name, 0600, nil)
-	if err != nil {
-		log.Printf("[dReamService] could not open db err:%s\n", err)
-		return
-	}
-
+	db := boltDB()
 	defer db.Close()
 
-	err = db.Update(func(tx *bbolt.Tx) error {
+	err := db.Update(func(tx *bbolt.Tx) error {
 		_, err := tx.CreateBucketIfNotExists([]byte("BET"))
 		return err
 	})
@@ -1245,6 +1229,17 @@ func viewProcessedTx(start uint64) {
 	log.Println("[ViewProcessedTx] Done")
 }
 
+func boltDB() *bbolt.DB {
+	db_name := fmt.Sprintf("config/dReamService_%s.bbolt.db", rpc.Wallet.Address)
+	db, err := bbolt.Open(db_name, 0600, nil)
+	if err != nil {
+		log.Printf("[dReamService] could not open db err:%s\n", err)
+		return nil
+	}
+
+	return db
+}
+
 func storeTx(bucket, value string, db *bbolt.DB, e dero.Entry) {
 	err := db.Update(func(tx *bbolt.Tx) error {
 		b := tx.Bucket([]byte(bucket))
@@ -1258,16 +1253,8 @@ func storeTx(bucket, value string, db *bbolt.DB, e dero.Entry) {
 	}
 }
 
-func deleteTx(bucket string, e *dero.Entry) {
-	db_name := fmt.Sprintf("config/dReamService_%s.bbolt.db", rpc.Wallet.Address)
-	db, err := bbolt.Open(db_name, 0600, nil)
-	if err != nil {
-		log.Printf("[dReamService] could not open db err:%s\n", err)
-		return
-	}
-	defer db.Close()
-
-	err = db.Update(func(tx *bbolt.Tx) error {
+func deleteTx(bucket string, db *bbolt.DB, e dero.Entry) {
+	err := db.Update(func(tx *bbolt.Tx) error {
 		b := tx.Bucket([]byte(bucket))
 		return b.Delete([]byte(e.TXID))
 	})
