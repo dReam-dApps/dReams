@@ -669,9 +669,9 @@ func confirmPopUp(i int, teamA, teamB string) { /// bet action confirmation
 		ocw.Close()
 	})
 
-	display := container.NewVBox(confirm_display, layout.NewSpacer())
+	display := container.NewVScroll(confirm_display)
 	options := container.NewAdaptiveGrid(2, confirm_button, cancel_button)
-	content := container.NewVBox(display, layout.NewSpacer(), options)
+	content := container.NewBorder(nil, options, nil, nil, display)
 
 	img := *canvas.NewImageFromResource(menu.Resource.Back2)
 	ocw.SetContent(
@@ -718,9 +718,9 @@ func confirmPopUp(i int, teamA, teamB string) { /// bet action confirmation
 // 		ncw.Close()
 // 	})
 //
-// 	display := container.NewVBox(confirm_display, layout.NewSpacer())
+// 	display := container.NewVScroll(confirm_display)
 // 	options := container.NewAdaptiveGrid(2, confirm_button, cancel_button)
-// 	content := container.NewVBox(display, layout.NewSpacer(), options)
+// 	content := container.NewBorder(nil, options, nil, nil, display)
 //
 // 	img := *canvas.NewImageFromResource(menu.Resource.Back1)
 // 	ncw.SetContent(
