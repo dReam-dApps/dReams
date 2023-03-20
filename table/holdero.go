@@ -763,8 +763,15 @@ func holderoTools(deal, check *widget.Check, button *widget.Button) {
 	entry.SetPlaceHolder("Default")
 	entry.SetText(rpc.Odds.Bot.Name)
 
-	mb_label := widget.NewLabel("Max Bet: " + fmt.Sprintf("%.0f", rpc.Odds.Bot.Max) + " Dero")
-	mb_slider := widget.NewSlider(1, 100)
+	curr := " Dero"
+	max_bet := float64(100)
+	if rpc.Round.Asset {
+		curr = " Tokens"
+		max_bet = 2000
+	}
+
+	mb_label := widget.NewLabel("Max Bet: " + fmt.Sprintf("%.0f", rpc.Odds.Bot.Max) + curr)
+	mb_slider := widget.NewSlider(1, max_bet)
 	mb_slider.SetValue(rpc.Odds.Bot.Max)
 	mb_slider.OnChanged = func(f float64) {
 		go func() {
@@ -776,10 +783,10 @@ func holderoTools(deal, check *widget.Check, button *widget.Button) {
 			if f < (min*rpc.Odds.Bot.Bet[2])*rpc.Odds.Bot.Aggr {
 				rpc.Odds.Bot.Max = (min*rpc.Odds.Bot.Bet[2])*rpc.Odds.Bot.Aggr + 3
 				mb_slider.SetValue(rpc.Odds.Bot.Max)
-				mb_label.SetText("Max Bet: " + fmt.Sprintf("%.0f", rpc.Odds.Bot.Max) + " Dero")
+				mb_label.SetText("Max Bet: " + fmt.Sprintf("%.0f", rpc.Odds.Bot.Max) + curr)
 			} else {
 				rpc.Odds.Bot.Max = f
-				mb_label.SetText("Max Bet: " + fmt.Sprintf("%.0f", f) + " Dero")
+				mb_label.SetText("Max Bet: " + fmt.Sprintf("%.0f", f) + curr)
 			}
 		}()
 	}
