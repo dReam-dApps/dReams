@@ -767,7 +767,7 @@ func holderoTools(deal, check *widget.Check, button *widget.Button) {
 	max_bet := float64(100)
 	if rpc.Round.Asset {
 		curr = " Tokens"
-		max_bet = 2000
+		max_bet = 2500
 	}
 
 	mb_label := widget.NewLabel("Max Bet: " + fmt.Sprintf("%.0f", rpc.Odds.Bot.Max) + curr)
