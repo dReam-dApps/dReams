@@ -365,6 +365,9 @@ func RpcConnectButton() fyne.Widget {
 				MenuControl.Names.Options = []string{}
 				MenuControl.Names.Refresh()
 				MenuControl.Names.Options = append(MenuControl.Names.Options, rpc.Wallet.Address[0:12])
+				if MenuControl.Names.Options != nil {
+					MenuControl.Names.SetSelectedIndex(0)
+				}
 			}
 		}()
 	})
