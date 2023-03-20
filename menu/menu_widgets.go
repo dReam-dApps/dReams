@@ -25,8 +25,10 @@ const (
 	DAEMON_RPC_DEFAULT = "127.0.0.1:10102"
 	DAEMON_RPC_REMOTE1 = "89.38.99.117:10102"
 	DAEMON_RPC_REMOTE2 = "publicrpc1.dero.io:10102"
-	// DAEMON_RPC_REMOTE2 = "dero-node.mysrv.cloud:10102"
-	// DAEMON_RPC_REMOTE3 = "derostats.io:10102"
+	// DAEMON_RPC_REMOTE3 = "dero-node.mysrv.cloud:10102"
+	// DAEMON_RPC_REMOTE4 = "derostats.io:10102"
+	DAEMON_RPC_REMOTE5 = "85.17.52.28:11012"
+	DAEMON_RPC_REMOTE6 = "node.derofoundation.org:11012"
 )
 
 type menuOptions struct {
@@ -248,7 +250,7 @@ func HolderoContractConnectedBox() fyne.Widget {
 }
 
 func DaemonRpcEntry() fyne.Widget {
-	var options = []string{"", DAEMON_RPC_DEFAULT, DAEMON_RPC_REMOTE1, DAEMON_RPC_REMOTE2}
+	var options = []string{"", DAEMON_RPC_DEFAULT, DAEMON_RPC_REMOTE1, DAEMON_RPC_REMOTE2, DAEMON_RPC_REMOTE5, DAEMON_RPC_REMOTE6}
 	if MenuControl.Daemon_config != "" {
 		options = append(options, MenuControl.Daemon_config)
 	}

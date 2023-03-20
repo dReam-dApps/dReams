@@ -54,7 +54,7 @@ Options:
 var offset int
 
 func flags() (version string) {
-	version = "v0.9.3"
+	version = "v0.9.3d"
 	arguments, err := docopt.ParseArgs(command_line, nil, version)
 
 	if err != nil {
@@ -187,11 +187,13 @@ func labelColorBlack(c *fyne.Container) *fyne.Container {
 
 func makeConfig(name, daemon string) (data save) {
 	switch daemon {
-	case "127.0.0.1:10102":
-	case "89.38.99.117:10102":
-	// case "dero-node.mysrv.cloud:10102":
-	// case "derostats.io:10102":
-	case "publicrpc1.dero.io:10102":
+	case menu.DAEMON_RPC_DEFAULT:
+	case menu.DAEMON_RPC_REMOTE1:
+	case menu.DAEMON_RPC_REMOTE2:
+	// case menu.DAEMON_RPC_REMOTE3:
+	// case menu.DAEMON_RPC_REMOTE4:
+	case menu.DAEMON_RPC_REMOTE5:
+	case menu.DAEMON_RPC_REMOTE6:
 	default:
 		data.Daemon = []string{daemon}
 	}
@@ -1026,6 +1028,10 @@ func RecheckAssets() {
 	table.Assets.Assets = []string{}
 	menu.CheckAssets(menu.Gnomes.Sync, false, nil)
 	menu.CheckG45Assets(menu.Gnomes.Sync, false, nil)
+	if rpc.Wallet.Connect {
+		menu.MenuControl.Names.Options = []string{rpc.Wallet.Address[0:12]}
+		menu.CheckWalletNames(rpc.Wallet.Address)
+	}
 	sort.Strings(table.Assets.Assets)
 	table.Assets.Asset_list.UnselectAll()
 	table.Assets.Asset_list.Refresh()

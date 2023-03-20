@@ -1199,7 +1199,7 @@ func holderoTools(deal, check *widget.Check, button *widget.Button) {
 func DisableHolderoTools() {
 	rpc.Odds.Enabled = false
 	Settings.Tools.Hide()
-	if len(Settings.BackSelect.Options) > 2 && len(Settings.FaceSelect.Options) > 2 {
+	if len(Settings.BackSelect.Options) > 2 || len(Settings.FaceSelect.Options) > 2 {
 		cards := false
 		for _, f := range Settings.FaceSelect.Options {
 			asset := strings.Trim(f, "0123456789")
@@ -1218,20 +1218,18 @@ func DisableHolderoTools() {
 		}
 
 		if !cards {
-			backs := 0
 			for _, b := range Settings.BackSelect.Options {
 				asset := strings.Trim(b, "0123456789")
 				switch asset {
 				case "AZYPCB":
-					backs++
+					cards = true
 				case "SIXPCB":
-					backs++
+					cards = true
 				default:
 
 				}
 
-				if backs > 1 {
-					cards = true
+				if cards {
 					break
 				}
 			}
