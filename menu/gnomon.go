@@ -61,6 +61,7 @@ type gnomon struct {
 	Init     bool
 	Sync     bool
 	Checked  bool
+	Wait     bool
 	SCIDS    uint64
 	Sync_ind *fyne.Animation
 	Full_ind *fyne.Animation
@@ -1249,7 +1250,6 @@ func CheckG45Assets(gs, gc bool, g45s map[string]string) {
 		sort.Strings(table.Settings.AvatarSelect.Options)
 		table.Settings.AvatarSelect.Options = append([]string{"None"}, table.Settings.AvatarSelect.Options...)
 		table.Assets.Asset_list.Refresh()
-
 	}
 }
 

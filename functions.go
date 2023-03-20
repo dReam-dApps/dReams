@@ -1017,14 +1017,17 @@ func MenuRefresh(tab, gi bool) {
 
 func RecheckButton() fyne.CanvasObject {
 	button := widget.NewButton("Check Assets", func() {
-		log.Println("[dReams] Rechecking Assets")
-		go RecheckAssets()
+		if !menu.Gnomes.Wait {
+			log.Println("[dReams] Rechecking Assets")
+			go RecheckAssets()
+		}
 	})
 
 	return button
 }
 
 func RecheckAssets() {
+	menu.Gnomes.Wait = true
 	table.Assets.Assets = []string{}
 	menu.CheckAssets(menu.Gnomes.Sync, false, nil)
 	menu.CheckG45Assets(menu.Gnomes.Sync, false, nil)
@@ -1035,7 +1038,7 @@ func RecheckAssets() {
 	sort.Strings(table.Assets.Assets)
 	table.Assets.Asset_list.UnselectAll()
 	table.Assets.Asset_list.Refresh()
-
+	menu.Gnomes.Wait = false
 }
 
 func MainTab(ti *container.TabItem) {
