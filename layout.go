@@ -239,8 +239,21 @@ func placeAssets() *container.Split {
 
 	}
 
+	scroll_top := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "arrowUp"), func() {
+		table.Assets.Asset_list.ScrollToTop()
+	})
+
+	scroll_bottom := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "arrowDown"), func() {
+		table.Assets.Asset_list.ScrollToBottom()
+	})
+
+	scroll_top.Importance = widget.LowImportance
+	scroll_bottom.Importance = widget.LowImportance
+
+	scroll_cont := container.NewVBox(container.NewHBox(layout.NewSpacer(), scroll_top, scroll_bottom))
+
 	alpha := container.NewMax(canvas.NewRectangle(color.RGBA{0, 0, 0, 120}))
-	max := container.NewMax(alpha, tabs)
+	max := container.NewMax(alpha, tabs, scroll_cont)
 
 	player_box := container.NewHBox(player_input)
 	menu_top := container.NewHSplit(player_box, max)
@@ -264,8 +277,38 @@ func placeMarket() *container.Split {
 	tabs.OnSelected = func(ti *container.TabItem) {
 		MarketTab(ti)
 	}
+
+	menu.Market.Tab = "Auction"
+
+	scroll_top := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "arrowUp"), func() {
+		switch menu.Market.Tab {
+		case "Buy":
+			menu.Market.Buy_list.ScrollToTop()
+		case "Auction":
+			menu.Market.Auction_list.ScrollToTop()
+		default:
+
+		}
+	})
+
+	scroll_bottom := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "arrowDown"), func() {
+		switch menu.Market.Tab {
+		case "Buy":
+			menu.Market.Buy_list.ScrollToBottom()
+		case "Auction":
+			menu.Market.Auction_list.ScrollToBottom()
+		default:
+
+		}
+	})
+
+	scroll_top.Importance = widget.LowImportance
+	scroll_bottom.Importance = widget.LowImportance
+
+	scroll_cont := container.NewVBox(container.NewHBox(layout.NewSpacer(), scroll_top, scroll_bottom))
+
 	alpha := container.NewMax(canvas.NewRectangle(color.RGBA{0, 0, 0, 120}))
-	max := container.NewMax(alpha, tabs)
+	max := container.NewMax(alpha, tabs, scroll_cont)
 
 	box := container.NewVBox(
 		layout.NewSpacer(),

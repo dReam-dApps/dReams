@@ -96,7 +96,7 @@ var Resource resources
 var HolderoControl holderoOptions
 var MenuControl menuOptions
 
-func GetMenuResources(r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, r15 fyne.Resource) {
+func GetMenuResources(r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14 fyne.Resource) {
 	Resource.SmallIcon = r1
 	Resource.Frame = r2
 	Resource.Back1 = r3
@@ -111,7 +111,6 @@ func GetMenuResources(r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r1
 	Resource.PBot = r12
 	Resource.dService = r13
 	Resource.Tools = r14
-	Resource.ToolsH = r15
 }
 
 func disconnected() {

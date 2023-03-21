@@ -70,7 +70,7 @@ func main() {
 		dReams.Window.Close()
 	})
 
-	menu.GetMenuResources(resourceDTGnomonIconPng, resourceAvatarFramePng, resourceCwBackgroundPng, resourceMwBackgroundPng, resourceOwBackgroundPng, resourceUwBackgroundPng, resourceGnomoniconPng, resourceBlueBadgePng, resourceBlueBadge2Png, resourceBlueBadge3Png, resourceRedBadgePng, resourcePokerBoticonPng, resourceDReamServiceiconPng, resourceDReamToolsPng, resourceDReamToolsHalfPng)
+	menu.GetMenuResources(resourceDTGnomonIconPng, resourceAvatarFramePng, resourceCwBackgroundPng, resourceMwBackgroundPng, resourceOwBackgroundPng, resourceUwBackgroundPng, resourceGnomoniconPng, resourceBlueBadgePng, resourceBlueBadge2Png, resourceBlueBadge3Png, resourceRedBadgePng, resourcePokerBoticonPng, resourceDReamServiceiconPng, resourceDReamToolsPng)
 	table.GetTableResources(resourceDTGnomonIconPng, resourceMwBackgroundPng, resourceOwBackgroundPng, resourceBackgroundPng, resourceUwBackgroundPng, resourceIlumabackground1Png, resourceIlumabackground2Png, resourceIluma81Png)
 
 	dReams.menu = true
