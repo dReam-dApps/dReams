@@ -1170,14 +1170,14 @@ func holderoTools(deal, check *widget.Check, button *widget.Button) {
 		case "Stats":
 			stats_label.SetText("Total Player Stats\n\nWins: " + strconv.Itoa(rpc.Stats.Player.Win) + "\n\nLost: " + strconv.Itoa(rpc.Stats.Player.Lost) +
 				"\n\nFolded: " + strconv.Itoa(rpc.Stats.Player.Fold) + "\n\nPush: " + strconv.Itoa(rpc.Stats.Player.Push) +
-				"\n\nWagered: " + fmt.Sprintf("%.5f", rpc.Stats.Player.Wagered) + " Dero" + "\n\nEarnings: " + fmt.Sprintf("%.5f", rpc.Stats.Player.Earnings) + " Dero")
+				"\n\nWagered: " + fmt.Sprintf("%.5f", rpc.Stats.Player.Wagered) + "\n\nEarnings: " + fmt.Sprintf("%.5f", rpc.Stats.Player.Earnings))
 
 			if rpc.Odds.Bot.Name != "" {
 				for i := range rpc.Stats.Bots {
 					if rpc.Odds.Bot.Name == rpc.Stats.Bots[i].Name {
 						stats_label.SetText(stats_label.Text + "\n\n\nBot Stats\n\nBot: " + rpc.Odds.Bot.Name + "\n\nWins: " + strconv.Itoa(rpc.Stats.Bots[i].Stats.Win) +
 							"\n\nLost: " + strconv.Itoa(rpc.Stats.Bots[i].Stats.Lost) + "\n\nFolded: " + strconv.Itoa(rpc.Stats.Bots[i].Stats.Fold) + "\n\nPush: " + strconv.Itoa(rpc.Stats.Bots[i].Stats.Push) +
-							"\n\nWagered: " + fmt.Sprintf("%.5f", rpc.Stats.Bots[i].Stats.Wagered) + " Dero" + "\n\nEarnings: " + fmt.Sprintf("%.5f", rpc.Stats.Bots[i].Stats.Earnings) + " Dero")
+							"\n\nWagered: " + fmt.Sprintf("%.5f", rpc.Stats.Bots[i].Stats.Wagered) + "\n\nEarnings: " + fmt.Sprintf("%.5f", rpc.Stats.Bots[i].Stats.Earnings))
 					}
 				}
 			}

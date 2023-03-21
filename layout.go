@@ -28,14 +28,14 @@ func setLabels() {
 	H.RightLabel.SetText(rpc.Display.Readout + "      Player ID: " + rpc.Display.PlayerId + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
 
 	B.LeftLabel.SetText("Total Hands Played: " + rpc.Display.Total_w + "      Player Wins: " + rpc.Display.Player_w + "      Ties: " + rpc.Display.Ties + "      Banker Wins: " + rpc.Display.Banker_w + "      Min Bet is " + rpc.Display.BaccMin + " dReams, Max Bet is " + rpc.Display.BaccMax)
-	B.RightLabel.SetText("dReams Balance: " + rpc.Wallet.TokenBal + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
+	B.RightLabel.SetText("dReams Balance: " + rpc.Display.Token_balance + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
 
-	P.RightLabel.SetText("dReams Balance: " + rpc.Wallet.TokenBal + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
+	P.RightLabel.SetText("dReams Balance: " + rpc.Display.Token_balance + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
 
-	S.RightLabel.SetText("dReams Balance: " + rpc.Wallet.TokenBal + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
+	S.RightLabel.SetText("dReams Balance: " + rpc.Display.Token_balance + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
 
 	T.LeftLabel.SetText("Total Readings: " + rpc.Display.Readings + "      Click your card for Iluma reading")
-	T.RightLabel.SetText("dReams Balance: " + rpc.Wallet.TokenBal + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
+	T.RightLabel.SetText("dReams Balance: " + rpc.Display.Token_balance + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
 }
 
 func place() *fyne.Container {

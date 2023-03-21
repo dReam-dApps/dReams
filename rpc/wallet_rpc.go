@@ -33,7 +33,7 @@ type wallet struct {
 	Address    string
 	ClientKey  string
 	Balance    uint64
-	TokenBal   string
+	TokenBal   uint64
 	TourneyBal string
 	Height     int
 	Connect    bool
@@ -243,7 +243,8 @@ func TokenBalance(scid string) (uint64, error) { /// get wallet token balance
 func DreamsBalance(wc bool) { /// get wallet dReam balance
 	if wc {
 		bal, _ := TokenBalance(dReamsSCID)
-		Wallet.TokenBal = fromAtomic(bal)
+		Display.Token_balance = fromAtomic(bal)
+		Wallet.TokenBal = bal
 	}
 }
 

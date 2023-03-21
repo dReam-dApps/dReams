@@ -115,6 +115,8 @@ func ClearShared() {
 	rpc.Signal.Reveal = false
 	rpc.Signal.Out1 = false
 	rpc.Signal.Odds = false
+	rpc.Odds.Bot.Name = ""
+	autoBetDefault()
 	Shared.GotP1 = false
 	Shared.GotP2 = false
 	Shared.GotP3 = false
@@ -127,7 +129,6 @@ func ClearShared() {
 	Shared.P4_avatar = *canvas.NewImageFromImage(nil)
 	Shared.P5_avatar = *canvas.NewImageFromImage(nil)
 	Shared.P6_avatar = *canvas.NewImageFromImage(nil)
-
 }
 
 var Shared sharedCards
