@@ -54,7 +54,7 @@ Options:
 var offset int
 
 func flags() (version string) {
-	version = "v0.9.3d"
+	version = "v0.9.4"
 	arguments, err := docopt.ParseArgs(command_line, nil, version)
 
 	if err != nil {

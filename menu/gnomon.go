@@ -394,7 +394,7 @@ func startGnomon(ep string) {
 				}
 				time.Sleep(1 * time.Second)
 				i++
-				if i == 30 {
+				if i == 60 {
 					Gnomes.Trim = false
 					log.Println("[dReams] Could not add G45 Collections")
 					break
