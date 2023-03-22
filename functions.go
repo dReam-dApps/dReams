@@ -1214,6 +1214,22 @@ func TarotTab(ti *container.TabItem) {
 	}
 }
 
+func FullScreenSet() fyne.CanvasObject {
+	button := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "viewFullScreen"), func() {
+		if dReams.Window.FullScreen() {
+			dReams.Window.SetFullScreen(false)
+		} else {
+			dReams.Window.SetFullScreen(true)
+		}
+	})
+
+	button.Importance = widget.LowImportance
+
+	cont := container.NewHBox(layout.NewSpacer(), layout.NewSpacer(), layout.NewSpacer(), container.NewVBox(button), layout.NewSpacer())
+
+	return cont
+}
+
 func DisplayCard(card int) *canvas.Image {
 	if !table.Settings.Shared || rpc.Round.ID == 1 {
 		if card == 99 {

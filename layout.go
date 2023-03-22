@@ -101,7 +101,7 @@ func place() *fyne.Container {
 	tarot_bottom_bar := container.NewVBox(layout.NewSpacer(), tarot_bottom_box)
 
 	alpha := canvas.NewRectangle(color.RGBA{0, 0, 0, 150})
-	alpha_box := container.NewMax(top_bar, menu_bottom_bar, tarot_bottom_bar, alpha, menu.StartIndicators())
+	alpha_box := container.NewMax(top_bar, menu_bottom_bar, tarot_bottom_bar, alpha, FullScreenSet(), menu.StartIndicators())
 
 	tabs := container.NewAppTabs(
 		container.NewTabItem("Menu", menu_tabs),
