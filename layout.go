@@ -101,7 +101,11 @@ func place() *fyne.Container {
 	tarot_bottom_bar := container.NewVBox(layout.NewSpacer(), tarot_bottom_box)
 
 	alpha := canvas.NewRectangle(color.RGBA{0, 0, 0, 150})
-	alpha_box := container.NewMax(top_bar, menu_bottom_bar, tarot_bottom_bar, alpha, FullScreenSet(), menu.StartIndicators())
+	alpha_box := container.NewMax(top_bar, menu_bottom_bar, tarot_bottom_bar, alpha)
+	if dReams.os != "darwin" {
+		alpha_box.Objects = append(alpha_box.Objects, FullScreenSet())
+	}
+	alpha_box.Objects = append(alpha_box.Objects, menu.StartIndicators())
 
 	tabs := container.NewAppTabs(
 		container.NewTabItem("Menu", menu_tabs),
