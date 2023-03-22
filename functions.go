@@ -54,7 +54,7 @@ Options:
 var offset int
 
 func flags() (version string) {
-	version = "v0.9.3"
+	version = "v0.9.4"
 	arguments, err := docopt.ParseArgs(command_line, nil, version)
 
 	if err != nil {
@@ -187,11 +187,13 @@ func labelColorBlack(c *fyne.Container) *fyne.Container {
 
 func makeConfig(name, daemon string) (data save) {
 	switch daemon {
-	case "127.0.0.1:10102":
-	case "89.38.99.117:10102":
-	// case "dero-node.mysrv.cloud:10102":
-	// case "derostats.io:10102":
-	case "publicrpc1.dero.io:10102":
+	case menu.DAEMON_RPC_DEFAULT:
+	case menu.DAEMON_RPC_REMOTE1:
+	case menu.DAEMON_RPC_REMOTE2:
+	// case menu.DAEMON_RPC_REMOTE3:
+	// case menu.DAEMON_RPC_REMOTE4:
+	case menu.DAEMON_RPC_REMOTE5:
+	case menu.DAEMON_RPC_REMOTE6:
 	default:
 		data.Daemon = []string{daemon}
 	}
@@ -473,7 +475,7 @@ func fetch(quit chan struct{}) { /// main loop
 
 				BaccRefresh()
 				PredictionRefresh(dReams.predict)
-				S.RightLabel.SetText("dReams Balance: " + rpc.Wallet.TokenBal + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
+				S.RightLabel.SetText("dReams Balance: " + rpc.Display.Token_balance + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
 				TarotRefresh()
 
 				go MenuRefresh(dReams.menu, menu.Gnomes.Init)
@@ -605,7 +607,7 @@ func setHolderoLabel() {
 		if rpc.Round.Tourney {
 			H.RightLabel.SetText(rpc.Display.Readout + "      Player ID: " + rpc.Display.PlayerId + "      Chip Balance: " + rpc.Wallet.TourneyBal + "      Height: " + rpc.Display.Wallet_height)
 		} else {
-			H.RightLabel.SetText(rpc.Display.Readout + "      Player ID: " + rpc.Display.PlayerId + "      dReams Balance: " + rpc.Wallet.TokenBal + "      Height: " + rpc.Display.Wallet_height)
+			H.RightLabel.SetText(rpc.Display.Readout + "      Player ID: " + rpc.Display.PlayerId + "      dReams Balance: " + rpc.Display.Token_balance + "      Height: " + rpc.Display.Wallet_height)
 		}
 	} else {
 		H.RightLabel.SetText(rpc.Display.Readout + "      Player ID: " + rpc.Display.PlayerId + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
@@ -628,7 +630,7 @@ func waitLabel() {
 		if rpc.Round.Tourney {
 			H.RightLabel.SetText("Wait for Block" + "      Player ID: " + rpc.Display.PlayerId + "      Chip Balance: " + rpc.Wallet.TourneyBal + "      Height: " + rpc.Display.Wallet_height)
 		} else {
-			H.RightLabel.SetText("Wait for Block" + "      Player ID: " + rpc.Display.PlayerId + "      dReams Balance: " + rpc.Wallet.TokenBal + "      Height: " + rpc.Display.Wallet_height)
+			H.RightLabel.SetText("Wait for Block" + "      Player ID: " + rpc.Display.PlayerId + "      dReams Balance: " + rpc.Display.Token_balance + "      Height: " + rpc.Display.Wallet_height)
 		}
 
 	} else {
@@ -754,7 +756,7 @@ func revealingKey() {
 
 func BaccRefresh() {
 	B.LeftLabel.SetText("Total Hands Played: " + rpc.Display.Total_w + "      Player Wins: " + rpc.Display.Player_w + "      Ties: " + rpc.Display.Ties + "      Banker Wins: " + rpc.Display.Banker_w + "      Min Bet is " + rpc.Display.BaccMin + " dReams, Max Bet is " + rpc.Display.BaccMax)
-	B.RightLabel.SetText("dReams Balance: " + rpc.Wallet.TokenBal + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
+	B.RightLabel.SetText("dReams Balance: " + rpc.Display.Token_balance + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
 
 	if !rpc.Bacc.Display {
 		B.CardsContent = *container.NewWithoutLayout(clearBaccCards())
@@ -793,7 +795,7 @@ func PredictionRefresh(tab bool) {
 			go prediction.SetPredictionPrices(rpc.Signal.Daemon)
 		}
 
-		P.RightLabel.SetText("dReams Balance: " + rpc.Wallet.TokenBal + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
+		P.RightLabel.SetText("dReams Balance: " + rpc.Display.Token_balance + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
 
 		if menu.CheckActivePrediction(prediction.PredictControl.Contract) {
 			go prediction.ShowPredictionControls()
@@ -811,7 +813,7 @@ func SportsRefresh(tab bool) {
 
 func TarotRefresh() {
 	T.LeftLabel.SetText("Total Readings: " + rpc.Display.Readings + "      Click your card for Iluma reading")
-	T.RightLabel.SetText("dReams Balance: " + rpc.Wallet.TokenBal + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
+	T.RightLabel.SetText("dReams Balance: " + rpc.Display.Token_balance + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
 
 	if !rpc.Tarot.Display {
 		rpc.FetchTarotReading(rpc.Signal.Daemon, rpc.Tarot.Last)
@@ -931,7 +933,7 @@ func refreshWalletDisplay(c bool) {
 	if c {
 		table.Assets.Wall_height.Text = (" Wallet Height: " + rpc.Display.Wallet_height)
 		table.Assets.Wall_height.Refresh()
-		table.Assets.Dreams_bal.Text = (" dReams Balance: " + rpc.Wallet.TokenBal)
+		table.Assets.Dreams_bal.Text = (" dReams Balance: " + rpc.Display.Token_balance)
 		table.Assets.Dreams_bal.Refresh()
 		table.Assets.Dero_bal.Text = (" Dero Balance: " + rpc.Display.Dero_balance)
 		table.Assets.Dero_bal.Refresh()
@@ -1015,21 +1017,28 @@ func MenuRefresh(tab, gi bool) {
 
 func RecheckButton() fyne.CanvasObject {
 	button := widget.NewButton("Check Assets", func() {
-		log.Println("[dReams] Rechecking Assets")
-		go RecheckAssets()
+		if !menu.Gnomes.Wait {
+			log.Println("[dReams] Rechecking Assets")
+			go RecheckAssets()
+		}
 	})
 
 	return button
 }
 
 func RecheckAssets() {
+	menu.Gnomes.Wait = true
 	table.Assets.Assets = []string{}
 	menu.CheckAssets(menu.Gnomes.Sync, false, nil)
 	menu.CheckG45Assets(menu.Gnomes.Sync, false, nil)
+	if rpc.Wallet.Connect {
+		menu.MenuControl.Names.Options = []string{rpc.Wallet.Address[0:12]}
+		menu.CheckWalletNames(rpc.Wallet.Address)
+	}
 	sort.Strings(table.Assets.Assets)
 	table.Assets.Asset_list.UnselectAll()
 	table.Assets.Asset_list.Refresh()
-
+	menu.Gnomes.Wait = false
 }
 
 func MainTab(ti *container.TabItem) {
@@ -1203,6 +1212,22 @@ func TarotTab(ti *container.TabItem) {
 
 	default:
 	}
+}
+
+func FullScreenSet() fyne.CanvasObject {
+	button := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "viewFullScreen"), func() {
+		if dReams.Window.FullScreen() {
+			dReams.Window.SetFullScreen(false)
+		} else {
+			dReams.Window.SetFullScreen(true)
+		}
+	})
+
+	button.Importance = widget.LowImportance
+
+	cont := container.NewHBox(layout.NewSpacer(), layout.NewSpacer(), layout.NewSpacer(), container.NewVBox(button), layout.NewSpacer())
+
+	return cont
 }
 
 func DisplayCard(card int) *canvas.Image {

@@ -296,17 +296,10 @@ func NfaIcon(res fyne.Resource) fyne.CanvasObject {
 	return &cont
 }
 
-func ToolsBadge(half bool, res fyne.Resource) fyne.CanvasObject {
-	var badge canvas.Image
-	if !half {
-		badge = *canvas.NewImageFromResource(Resource.Tools)
-		badge.Resize(fyne.NewSize(94, 94))
-		badge.Move(fyne.NewPos(8, 3))
-	} else {
-		badge = *canvas.NewImageFromResource(Resource.ToolsH)
-		badge.Resize(fyne.NewSize(94, 94))
-		badge.Move(fyne.NewPos(8, 3))
-	}
+func ToolsBadge(res fyne.Resource) fyne.CanvasObject {
+	badge := *canvas.NewImageFromResource(Resource.Tools)
+	badge.Resize(fyne.NewSize(94, 94))
+	badge.Move(fyne.NewPos(8, 3))
 
 	frame := canvas.NewImageFromResource(res)
 	frame.SetMinSize(fyne.NewSize(100, 100))
@@ -349,6 +342,7 @@ func loadingTextLoop() {
 }
 
 func clearNfaImages() {
+	Market.Details_box.Objects[1].(*fyne.Container).Objects[1] = layout.NewSpacer()
 	Market.Icon = *canvas.NewImageFromImage(nil)
 	Market.Details_box.Objects[1].Refresh()
 
@@ -429,10 +423,8 @@ func RefreshNfaImages() {
 		Market.Details_box.Objects[1].Refresh()
 	}
 	view := Market.Viewing_coll
-	if view == "AZYPC" || view == "SIXPC" {
-		Market.Details_box.Objects[1].(*fyne.Container).Objects[1] = ToolsBadge(false, Resource.Frame)
-	} else if view == "AZYPCB" || view == "SIXPCB" {
-		Market.Details_box.Objects[1].(*fyne.Container).Objects[1] = ToolsBadge(true, Resource.Frame)
+	if view == "AZYPC" || view == "SIXPC" || view == "AZYPCB" || view == "SIXPCB" {
+		Market.Details_box.Objects[1].(*fyne.Container).Objects[1] = ToolsBadge(Resource.Frame)
 	} else {
 		Market.Details_box.Objects[1].(*fyne.Container).Objects[1] = layout.NewSpacer()
 	}

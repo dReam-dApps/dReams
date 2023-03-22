@@ -76,7 +76,7 @@ func preditctionOpts() fyne.CanvasObject { /// set prediction options
 	PS_Control.P_Name.SetPlaceHolder("Name:")
 	PS_Control.P_Name.OnChanged = func(s string) {
 		if isOnChainPrediction(s) {
-			opts := []string{menu.DAEMON_RPC_REMOTE1, menu.DAEMON_RPC_REMOTE2}
+			opts := []string{menu.DAEMON_RPC_REMOTE1, menu.DAEMON_RPC_REMOTE2, menu.DAEMON_RPC_REMOTE5, menu.DAEMON_RPC_REMOTE6}
 			PS_Control.P_feed.SetOptions(opts)
 			if PS_Control.P_feed.Text != opts[1] {
 				PS_Control.P_feed.SetText(opts[0])

@@ -763,8 +763,15 @@ func holderoTools(deal, check *widget.Check, button *widget.Button) {
 	entry.SetPlaceHolder("Default")
 	entry.SetText(rpc.Odds.Bot.Name)
 
-	mb_label := widget.NewLabel("Max Bet: " + fmt.Sprintf("%.0f", rpc.Odds.Bot.Max) + " Dero")
-	mb_slider := widget.NewSlider(1, 100)
+	curr := " Dero"
+	max_bet := float64(100)
+	if rpc.Round.Asset {
+		curr = " Tokens"
+		max_bet = 2500
+	}
+
+	mb_label := widget.NewLabel("Max Bet: " + fmt.Sprintf("%.0f", rpc.Odds.Bot.Max) + curr)
+	mb_slider := widget.NewSlider(1, max_bet)
 	mb_slider.SetValue(rpc.Odds.Bot.Max)
 	mb_slider.OnChanged = func(f float64) {
 		go func() {
@@ -776,10 +783,10 @@ func holderoTools(deal, check *widget.Check, button *widget.Button) {
 			if f < (min*rpc.Odds.Bot.Bet[2])*rpc.Odds.Bot.Aggr {
 				rpc.Odds.Bot.Max = (min*rpc.Odds.Bot.Bet[2])*rpc.Odds.Bot.Aggr + 3
 				mb_slider.SetValue(rpc.Odds.Bot.Max)
-				mb_label.SetText("Max Bet: " + fmt.Sprintf("%.0f", rpc.Odds.Bot.Max) + " Dero")
+				mb_label.SetText("Max Bet: " + fmt.Sprintf("%.0f", rpc.Odds.Bot.Max) + curr)
 			} else {
 				rpc.Odds.Bot.Max = f
-				mb_label.SetText("Max Bet: " + fmt.Sprintf("%.0f", f) + " Dero")
+				mb_label.SetText("Max Bet: " + fmt.Sprintf("%.0f", f) + curr)
 			}
 		}()
 	}
@@ -1163,14 +1170,14 @@ func holderoTools(deal, check *widget.Check, button *widget.Button) {
 		case "Stats":
 			stats_label.SetText("Total Player Stats\n\nWins: " + strconv.Itoa(rpc.Stats.Player.Win) + "\n\nLost: " + strconv.Itoa(rpc.Stats.Player.Lost) +
 				"\n\nFolded: " + strconv.Itoa(rpc.Stats.Player.Fold) + "\n\nPush: " + strconv.Itoa(rpc.Stats.Player.Push) +
-				"\n\nWagered: " + fmt.Sprintf("%.5f", rpc.Stats.Player.Wagered) + " Dero" + "\n\nEarnings: " + fmt.Sprintf("%.5f", rpc.Stats.Player.Earnings) + " Dero")
+				"\n\nWagered: " + fmt.Sprintf("%.5f", rpc.Stats.Player.Wagered) + "\n\nEarnings: " + fmt.Sprintf("%.5f", rpc.Stats.Player.Earnings))
 
 			if rpc.Odds.Bot.Name != "" {
 				for i := range rpc.Stats.Bots {
 					if rpc.Odds.Bot.Name == rpc.Stats.Bots[i].Name {
 						stats_label.SetText(stats_label.Text + "\n\n\nBot Stats\n\nBot: " + rpc.Odds.Bot.Name + "\n\nWins: " + strconv.Itoa(rpc.Stats.Bots[i].Stats.Win) +
 							"\n\nLost: " + strconv.Itoa(rpc.Stats.Bots[i].Stats.Lost) + "\n\nFolded: " + strconv.Itoa(rpc.Stats.Bots[i].Stats.Fold) + "\n\nPush: " + strconv.Itoa(rpc.Stats.Bots[i].Stats.Push) +
-							"\n\nWagered: " + fmt.Sprintf("%.5f", rpc.Stats.Bots[i].Stats.Wagered) + " Dero" + "\n\nEarnings: " + fmt.Sprintf("%.5f", rpc.Stats.Bots[i].Stats.Earnings) + " Dero")
+							"\n\nWagered: " + fmt.Sprintf("%.5f", rpc.Stats.Bots[i].Stats.Wagered) + "\n\nEarnings: " + fmt.Sprintf("%.5f", rpc.Stats.Bots[i].Stats.Earnings))
 					}
 				}
 			}
@@ -1199,7 +1206,7 @@ func holderoTools(deal, check *widget.Check, button *widget.Button) {
 func DisableHolderoTools() {
 	rpc.Odds.Enabled = false
 	Settings.Tools.Hide()
-	if len(Settings.BackSelect.Options) > 2 && len(Settings.FaceSelect.Options) > 2 {
+	if len(Settings.BackSelect.Options) > 2 || len(Settings.FaceSelect.Options) > 2 {
 		cards := false
 		for _, f := range Settings.FaceSelect.Options {
 			asset := strings.Trim(f, "0123456789")
@@ -1218,20 +1225,18 @@ func DisableHolderoTools() {
 		}
 
 		if !cards {
-			backs := 0
 			for _, b := range Settings.BackSelect.Options {
 				asset := strings.Trim(b, "0123456789")
 				switch asset {
 				case "AZYPCB":
-					backs++
+					cards = true
 				case "SIXPCB":
-					backs++
+					cards = true
 				default:
 
 				}
 
-				if backs > 1 {
-					cards = true
+				if cards {
 					break
 				}
 			}

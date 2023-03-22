@@ -25,8 +25,10 @@ const (
 	DAEMON_RPC_DEFAULT = "127.0.0.1:10102"
 	DAEMON_RPC_REMOTE1 = "89.38.99.117:10102"
 	DAEMON_RPC_REMOTE2 = "publicrpc1.dero.io:10102"
-	// DAEMON_RPC_REMOTE2 = "dero-node.mysrv.cloud:10102"
-	// DAEMON_RPC_REMOTE3 = "derostats.io:10102"
+	// DAEMON_RPC_REMOTE3 = "dero-node.mysrv.cloud:10102"
+	// DAEMON_RPC_REMOTE4 = "derostats.io:10102"
+	DAEMON_RPC_REMOTE5 = "85.17.52.28:11012"
+	DAEMON_RPC_REMOTE6 = "node.derofoundation.org:11012"
 )
 
 type menuOptions struct {
@@ -94,7 +96,7 @@ var Resource resources
 var HolderoControl holderoOptions
 var MenuControl menuOptions
 
-func GetMenuResources(r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, r15 fyne.Resource) {
+func GetMenuResources(r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14 fyne.Resource) {
 	Resource.SmallIcon = r1
 	Resource.Frame = r2
 	Resource.Back1 = r3
@@ -109,7 +111,6 @@ func GetMenuResources(r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r1
 	Resource.PBot = r12
 	Resource.dService = r13
 	Resource.Tools = r14
-	Resource.ToolsH = r15
 }
 
 func disconnected() {
@@ -248,7 +249,7 @@ func HolderoContractConnectedBox() fyne.Widget {
 }
 
 func DaemonRpcEntry() fyne.Widget {
-	var options = []string{"", DAEMON_RPC_DEFAULT, DAEMON_RPC_REMOTE1, DAEMON_RPC_REMOTE2}
+	var options = []string{"", DAEMON_RPC_DEFAULT, DAEMON_RPC_REMOTE1, DAEMON_RPC_REMOTE2, DAEMON_RPC_REMOTE5, DAEMON_RPC_REMOTE6}
 	if MenuControl.Daemon_config != "" {
 		options = append(options, MenuControl.Daemon_config)
 	}
@@ -363,6 +364,9 @@ func RpcConnectButton() fyne.Widget {
 				MenuControl.Names.Options = []string{}
 				MenuControl.Names.Refresh()
 				MenuControl.Names.Options = append(MenuControl.Names.Options, rpc.Wallet.Address[0:12])
+				if MenuControl.Names.Options != nil {
+					MenuControl.Names.SetSelectedIndex(0)
+				}
 			}
 		}()
 	})

@@ -61,6 +61,7 @@ type gnomon struct {
 	Init     bool
 	Sync     bool
 	Checked  bool
+	Wait     bool
 	SCIDS    uint64
 	Sync_ind *fyne.Animation
 	Full_ind *fyne.Animation
@@ -335,9 +336,10 @@ func manualIndex(scid []string) {
 
 	for i := range scid {
 		owner, _ := rpc.CheckForIndex(scid[i])
-
-		scidstoadd[scid[i]] = &structures.FastSyncImport{}
-		scidstoadd[scid[i]].Owner = owner.(string)
+		if owner != nil {
+			scidstoadd[scid[i]] = &structures.FastSyncImport{}
+			scidstoadd[scid[i]].Owner = owner.(string)
+		}
 	}
 
 	err := Gnomes.Indexer.AddSCIDToIndex(scidstoadd)
@@ -392,7 +394,7 @@ func startGnomon(ep string) {
 				}
 				time.Sleep(1 * time.Second)
 				i++
-				if i == 30 {
+				if i == 60 {
 					Gnomes.Trim = false
 					log.Println("[dReams] Could not add G45 Collections")
 					break
@@ -750,9 +752,11 @@ func PopulateSports(dc, gs bool, contracts map[string]string) {
 }
 
 func isNfa(scid string) bool {
-	artAddr, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "artificerAddr", Gnomes.Indexer.ChainHeight, true)
-	if artAddr != nil {
-		return artAddr[0] == rpc.ArtAddress
+	if Gnomes.Init && Gnomes.Sync && !GnomonClosing() {
+		artAddr, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "artificerAddr", Gnomes.Indexer.ChainHeight, true)
+		if artAddr != nil {
+			return artAddr[0] == rpc.ArtAddress
+		}
 	}
 	return false
 }
@@ -805,15 +809,24 @@ func checkNFAOwner(scid string) {
 					table.Settings.AvatarSelect.Refresh()
 					table.Assets.Assets = append(table.Assets.Assets, header[0]+"   "+scid)
 
-					current_d := table.Settings.FaceSelect.Options
-					new_d := append(current_d, "High-Strangeness")
-					table.Settings.FaceSelect.Options = new_d
-					table.Settings.FaceSelect.Refresh()
+					var have_cards bool
+					for _, face := range table.Settings.FaceSelect.Options {
+						if face == "High-Strangeness" {
+							have_cards = true
+						}
+					}
 
-					current_b := table.Settings.BackSelect.Options
-					new_b := append(current_b, "High-Strangeness")
-					table.Settings.BackSelect.Options = new_b
-					table.Settings.BackSelect.Refresh()
+					if !have_cards {
+						current_d := table.Settings.FaceSelect.Options
+						new_d := append(current_d, "High-Strangeness")
+						table.Settings.FaceSelect.Options = new_d
+						table.Settings.FaceSelect.Refresh()
+
+						current_b := table.Settings.BackSelect.Options
+						new_b := append(current_b, "High-Strangeness")
+						table.Settings.BackSelect.Options = new_b
+						table.Settings.BackSelect.Refresh()
+					}
 
 					tower := 0
 					switch header[0] {
@@ -826,16 +839,16 @@ func checkNFAOwner(scid string) {
 					default:
 					}
 
-					var have bool
+					var have_theme bool
 					for i := tower; i > 0; i-- {
 						themes := table.Settings.ThemeSelect.Options
 						for _, th := range themes {
 							if th == "HSTheme"+strconv.Itoa(i) {
-								have = true
+								have_theme = true
 							}
 						}
 
-						if !have {
+						if !have_theme {
 							new_themes := append(themes, "HSTheme"+strconv.Itoa(i))
 							table.Settings.ThemeSelect.Options = new_themes
 							table.Settings.ThemeSelect.Refresh()
@@ -1185,13 +1198,13 @@ func GetTableStats(scid string, single bool) {
 	}
 }
 
-func CheckWalletNames(value string) []string {
-	names, _ := Gnomes.Indexer.Backend.GetSCIDKeysByValue(rpc.NameSCID, value, Gnomes.Indexer.LastIndexedHeight, true)
+func CheckWalletNames(value string) {
+	if Gnomes.Init && Gnomes.Sync && !GnomonClosing() {
+		names, _ := Gnomes.Indexer.Backend.GetSCIDKeysByValue(rpc.NameSCID, value, Gnomes.Indexer.LastIndexedHeight, true)
 
-	sort.Strings(names)
-	MenuControl.Names.Options = append(MenuControl.Names.Options, names...)
-
-	return names
+		sort.Strings(names)
+		MenuControl.Names.Options = append(MenuControl.Names.Options, names...)
+	}
 }
 
 func CheckG45Assets(gs, gc bool, g45s map[string]string) {
@@ -1237,7 +1250,6 @@ func CheckG45Assets(gs, gc bool, g45s map[string]string) {
 		sort.Strings(table.Settings.AvatarSelect.Options)
 		table.Settings.AvatarSelect.Options = append([]string{"None"}, table.Settings.AvatarSelect.Options...)
 		table.Assets.Asset_list.Refresh()
-
 	}
 }
 

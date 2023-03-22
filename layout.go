@@ -28,14 +28,14 @@ func setLabels() {
 	H.RightLabel.SetText(rpc.Display.Readout + "      Player ID: " + rpc.Display.PlayerId + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
 
 	B.LeftLabel.SetText("Total Hands Played: " + rpc.Display.Total_w + "      Player Wins: " + rpc.Display.Player_w + "      Ties: " + rpc.Display.Ties + "      Banker Wins: " + rpc.Display.Banker_w + "      Min Bet is " + rpc.Display.BaccMin + " dReams, Max Bet is " + rpc.Display.BaccMax)
-	B.RightLabel.SetText("dReams Balance: " + rpc.Wallet.TokenBal + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
+	B.RightLabel.SetText("dReams Balance: " + rpc.Display.Token_balance + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
 
-	P.RightLabel.SetText("dReams Balance: " + rpc.Wallet.TokenBal + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
+	P.RightLabel.SetText("dReams Balance: " + rpc.Display.Token_balance + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
 
-	S.RightLabel.SetText("dReams Balance: " + rpc.Wallet.TokenBal + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
+	S.RightLabel.SetText("dReams Balance: " + rpc.Display.Token_balance + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
 
 	T.LeftLabel.SetText("Total Readings: " + rpc.Display.Readings + "      Click your card for Iluma reading")
-	T.RightLabel.SetText("dReams Balance: " + rpc.Wallet.TokenBal + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
+	T.RightLabel.SetText("dReams Balance: " + rpc.Display.Token_balance + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
 }
 
 func place() *fyne.Container {
@@ -101,7 +101,11 @@ func place() *fyne.Container {
 	tarot_bottom_bar := container.NewVBox(layout.NewSpacer(), tarot_bottom_box)
 
 	alpha := canvas.NewRectangle(color.RGBA{0, 0, 0, 150})
-	alpha_box := container.NewMax(top_bar, menu_bottom_bar, tarot_bottom_bar, alpha, menu.StartIndicators())
+	alpha_box := container.NewMax(top_bar, menu_bottom_bar, tarot_bottom_bar, alpha)
+	if dReams.os != "darwin" {
+		alpha_box.Objects = append(alpha_box.Objects, FullScreenSet())
+	}
+	alpha_box.Objects = append(alpha_box.Objects, menu.StartIndicators())
 
 	tabs := container.NewAppTabs(
 		container.NewTabItem("Menu", menu_tabs),
@@ -239,8 +243,21 @@ func placeAssets() *container.Split {
 
 	}
 
+	scroll_top := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "arrowUp"), func() {
+		table.Assets.Asset_list.ScrollToTop()
+	})
+
+	scroll_bottom := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "arrowDown"), func() {
+		table.Assets.Asset_list.ScrollToBottom()
+	})
+
+	scroll_top.Importance = widget.LowImportance
+	scroll_bottom.Importance = widget.LowImportance
+
+	scroll_cont := container.NewVBox(container.NewHBox(layout.NewSpacer(), scroll_top, scroll_bottom))
+
 	alpha := container.NewMax(canvas.NewRectangle(color.RGBA{0, 0, 0, 120}))
-	max := container.NewMax(alpha, tabs)
+	max := container.NewMax(alpha, tabs, scroll_cont)
 
 	player_box := container.NewHBox(player_input)
 	menu_top := container.NewHSplit(player_box, max)
@@ -264,8 +281,38 @@ func placeMarket() *container.Split {
 	tabs.OnSelected = func(ti *container.TabItem) {
 		MarketTab(ti)
 	}
+
+	menu.Market.Tab = "Auction"
+
+	scroll_top := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "arrowUp"), func() {
+		switch menu.Market.Tab {
+		case "Buy":
+			menu.Market.Buy_list.ScrollToTop()
+		case "Auction":
+			menu.Market.Auction_list.ScrollToTop()
+		default:
+
+		}
+	})
+
+	scroll_bottom := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "arrowDown"), func() {
+		switch menu.Market.Tab {
+		case "Buy":
+			menu.Market.Buy_list.ScrollToBottom()
+		case "Auction":
+			menu.Market.Auction_list.ScrollToBottom()
+		default:
+
+		}
+	})
+
+	scroll_top.Importance = widget.LowImportance
+	scroll_bottom.Importance = widget.LowImportance
+
+	scroll_cont := container.NewVBox(container.NewHBox(layout.NewSpacer(), scroll_top, scroll_bottom))
+
 	alpha := container.NewMax(canvas.NewRectangle(color.RGBA{0, 0, 0, 120}))
-	max := container.NewMax(alpha, tabs)
+	max := container.NewMax(alpha, tabs, scroll_cont)
 
 	box := container.NewVBox(
 		layout.NewSpacer(),

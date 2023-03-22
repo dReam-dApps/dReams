@@ -1020,8 +1020,12 @@ func callBet(m float64, live bool) bool {
 		oddsLog("[callBet]", fmt.Sprintln("Low Balance", amt))
 		return false
 	}
+	curr := "Dero"
+	if Round.Asset {
+		curr = "Tokens"
+	}
 
-	oddsLog("[callBet]", fmt.Sprintln("Call", fmt.Sprintf("%.2f", m)+"x", fmt.Sprintf("%.1f", amt), "Dero"))
+	oddsLog("[callBet]", fmt.Sprintln("Call", fmt.Sprintf("%.2f", m)+"x", fmt.Sprintf("%.1f", amt), curr))
 	if live {
 		Bet(fmt.Sprintf("%.1f", amt))
 	}
@@ -1059,7 +1063,11 @@ func canRaise() bool {
 }
 
 func lowBalance(amt float64) bool {
-	return amt > float64(Wallet.Balance)/100000
+	if Round.Asset {
+		return amt > float64(Wallet.TokenBal)/100000
+	} else {
+		return amt > float64(Wallet.Balance)/100000
+	}
 }
 
 func lastPosition(id int) bool {
@@ -1236,6 +1244,12 @@ func BetLogic(odds, future float64, live bool) {
 		b = 0
 	}
 
+	curr := "Dero"
+	if Round.Asset {
+		curr = "Tokens"
+	}
+
+	oddsLog("[BetLogic]", fmt.Sprintln("Wager is", fmt.Sprintf("%.2f", float64(Round.Wager)/100000), curr))
 	oddsLog("[BetLogic]", fmt.Sprintln("Odds Calc", fmt.Sprintf("%.2f", odds)+"%"))
 	oddsLog("[BetLogic]", fmt.Sprintln("Luck", fmt.Sprintf("%.2f", Odds.Bot.Luck)+"%", fmt.Sprintf("%.2f", c)+"%"))
 
@@ -1266,15 +1280,15 @@ func BetLogic(odds, future float64, live bool) {
 		if !slow || sure {
 			if odds < (Odds.Bot.Risk[0]+a) && Round.Flop && aggressive(false) && !min {
 				amt = (float64(MinBet()) / 100000) * (Odds.Bot.Bet[2] + b)
-				oddsLog("[BetLogic]", fmt.Sprintln("Bet High", fmt.Sprintf("%.1f", amt), "Dero"))
+				oddsLog("[BetLogic]", fmt.Sprintln("Bet High", fmt.Sprintf("%.1f", amt), curr))
 				bet = true
 			} else if odds < (Odds.Bot.Risk[1]+a) && !min {
 				amt = (float64(MinBet()) / 100000) * (Odds.Bot.Bet[1] + b)
-				oddsLog("[BetLogic]", fmt.Sprintln("Bet Med", fmt.Sprintf("%.1f", amt), "Dero"))
+				oddsLog("[BetLogic]", fmt.Sprintln("Bet Med", fmt.Sprintf("%.1f", amt), curr))
 				bet = true
 			} else if odds < (Odds.Bot.Risk[2]+a) || bluff() {
 				amt = (float64(MinBet()) / 100000) * (Odds.Bot.Bet[0] + b)
-				oddsLog("[BetLogic]", fmt.Sprintln("Bet Low", fmt.Sprintf("%.1f", amt), "Dero"))
+				oddsLog("[BetLogic]", fmt.Sprintln("Bet Low", fmt.Sprintf("%.1f", amt), curr))
 				bet = true
 			}
 		}
