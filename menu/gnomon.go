@@ -871,8 +871,10 @@ func GetOwnedAssetStats(scid string) {
 			if n != nil {
 				table.Assets.Name.Text = (" Name: " + n[0])
 				table.Assets.Name.Refresh()
-				MenuControl.List_button.Show()
-				MenuControl.Send_asset.Show()
+				if !MenuControl.list_open && !MenuControl.send_open {
+					MenuControl.List_button.Show()
+					MenuControl.Send_asset.Show()
+				}
 
 			} else {
 				table.Assets.Name.Text = (" Name: ?")
@@ -903,7 +905,6 @@ func GetOwnedAssetStats(scid string) {
 
 		} else {
 			MenuControl.List_button.Hide()
-			MenuControl.Send_asset.Hide()
 			data, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "metadata", Gnomes.Indexer.LastIndexedHeight, true)
 			minter, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "minter", Gnomes.Indexer.LastIndexedHeight, true)
 			coll, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "collection", Gnomes.Indexer.LastIndexedHeight, true)
@@ -1483,8 +1484,9 @@ func GetAuctionDetails(scid string) {
 		_, bids := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "bidCount", Gnomes.Indexer.ChainHeight, true)
 		_, endTime := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "endBlockTime", Gnomes.Indexer.ChainHeight, true)
 		_, startTime := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "startBlockTime", Gnomes.Indexer.ChainHeight, true)
+		_, artFee := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "artificerFee", Gnomes.Indexer.ChainHeight, true)
 
-		if name != nil && collection != nil && start != nil && royalty != nil && endTime != nil {
+		if name != nil && collection != nil && start != nil && royalty != nil && endTime != nil && artFee != nil {
 			go func() {
 				var ty string
 				check := strings.Trim(name[0], "0123456789")
@@ -1520,6 +1522,9 @@ func GetAuctionDetails(scid string) {
 					Market.Owner_update.Text = (" Owner can update: No")
 				}
 				Market.Owner_update.Refresh()
+
+				Market.Art_fee.Text = (" Artificer Fee: " + strconv.Itoa(int(artFee[0])) + "%")
+				Market.Art_fee.Refresh()
 
 				Market.Royalty.Text = (" Royalty: " + strconv.Itoa(int(royalty[0])) + "%")
 				Market.Royalty.Refresh()
@@ -1607,8 +1612,9 @@ func GetBuyNowDetails(scid string) {
 		_, royalty := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "royalty", Gnomes.Indexer.ChainHeight, true)
 		_, endTime := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "endBlockTime", Gnomes.Indexer.ChainHeight, true)
 		_, startTime := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "startBlockTime", Gnomes.Indexer.ChainHeight, true)
+		_, artFee := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "artificerFee", Gnomes.Indexer.ChainHeight, true)
 
-		if name != nil && collection != nil && start != nil && royalty != nil && endTime != nil {
+		if name != nil && collection != nil && start != nil && royalty != nil && endTime != nil && artFee != nil {
 			go func() {
 				var ty string
 				check := strings.Trim(name[0], "0123456789")
@@ -1644,6 +1650,9 @@ func GetBuyNowDetails(scid string) {
 					Market.Owner_update.Text = (" Owner can update: No")
 				}
 				Market.Owner_update.Refresh()
+
+				Market.Art_fee.Text = (" Artificer Fee: " + strconv.Itoa(int(artFee[0])) + "%")
+				Market.Art_fee.Refresh()
 
 				Market.Royalty.Text = (" Royalty: " + strconv.Itoa(int(royalty[0])) + "%")
 				Market.Royalty.Refresh()
@@ -1684,4 +1693,20 @@ func GetBuyNowDetails(scid string) {
 			}()
 		}
 	}
+}
+
+func GetListingPercents(scid string) (artP float64, royaltyP float64) {
+	if Gnomes.Init && Gnomes.Sync && !GnomonClosing() {
+		_, artFee := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "artificerFee", Gnomes.Indexer.ChainHeight, true)
+		_, royalty := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "royalty", Gnomes.Indexer.ChainHeight, true)
+
+		if artFee != nil && royalty != nil {
+			artP = float64(artFee[0]) / 100
+			royaltyP = float64(royalty[0]) / 100
+
+			return
+		}
+	}
+
+	return
 }

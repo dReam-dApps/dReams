@@ -29,6 +29,7 @@ type marketItems struct {
 	Owner         *canvas.Text
 	Owner_update  *canvas.Text
 	Start_price   *canvas.Text
+	Art_fee       *canvas.Text
 	Royalty       *canvas.Text
 	Bid_count     *canvas.Text
 	Buy_price     *canvas.Text
@@ -313,7 +314,7 @@ func ToolsBadge(res fyne.Resource) fyne.CanvasObject {
 
 func NfaImg(img canvas.Image) *fyne.Container {
 	Market.Cover.Resize(fyne.NewSize(266, 400))
-	Market.Cover.Move(fyne.NewPos(400, -230))
+	Market.Cover.Move(fyne.NewPos(425, -213))
 
 	cont := container.NewWithoutLayout(&img)
 
@@ -350,15 +351,16 @@ func clearNfaImages() {
 	Market.Details_box.Objects[0] = loadingText()
 	Market.Details_box.Objects[0].Refresh()
 	Market.Details_box.Refresh()
-
 }
 
+// Set up market info objects
 func NfaMarketInfo() fyne.CanvasObject {
 	Market.Name = canvas.NewText(" Name: ", color.White)
 	Market.Type = canvas.NewText(" Asset Type: ", color.White)
 	Market.Collection = canvas.NewText(" Collection: ", color.White)
 	Market.Description = canvas.NewText(" Description: ", color.White)
 	Market.Creator = canvas.NewText(" Creator: ", color.White)
+	Market.Art_fee = canvas.NewText(" Artificer Fee: ", color.White)
 	Market.Royalty = canvas.NewText(" Royalty: ", color.White)
 	Market.Start_price = canvas.NewText(" Start Price: ", color.White)
 	Market.Owner = canvas.NewText(" Owner: ", color.White)
@@ -373,6 +375,7 @@ func NfaMarketInfo() fyne.CanvasObject {
 	Market.Collection.TextSize = 18
 	Market.Description.TextSize = 18
 	Market.Creator.TextSize = 18
+	Market.Art_fee.TextSize = 18
 	Market.Royalty.TextSize = 18
 	Market.Start_price.TextSize = 18
 	Market.Owner.TextSize = 18
@@ -388,6 +391,7 @@ func NfaMarketInfo() fyne.CanvasObject {
 	return AuctionInfo()
 }
 
+// Container for auction info objects
 func AuctionInfo() fyne.CanvasObject {
 	Market.Details_box = *container.NewVBox(
 		NfaImg(Market.Cover),
@@ -398,6 +402,7 @@ func AuctionInfo() fyne.CanvasObject {
 		Market.Description,
 		Market.Creator,
 		Market.Owner,
+		Market.Art_fee,
 		Market.Royalty,
 		Market.Start_price,
 		Market.Current_bid,
@@ -445,6 +450,8 @@ func ResetAuctionInfo() {
 	Market.Description.Refresh()
 	Market.Creator.Text = (" Creator: ")
 	Market.Creator.Refresh()
+	Market.Art_fee.Text = (" Artificer Fee: ")
+	Market.Art_fee.Refresh()
 	Market.Royalty.Text = (" Royalty: ")
 	Market.Royalty.Refresh()
 	Market.Start_price.Text = (" Start Price: ")
@@ -464,6 +471,7 @@ func ResetAuctionInfo() {
 	Market.Details_box.Refresh()
 }
 
+// Container for buy now info objects
 func BuyNowInfo() fyne.CanvasObject {
 	Market.Details_box = *container.NewVBox(
 		NfaImg(Market.Cover),
@@ -474,6 +482,7 @@ func BuyNowInfo() fyne.CanvasObject {
 		Market.Description,
 		Market.Creator,
 		Market.Owner,
+		Market.Art_fee,
 		Market.Royalty,
 		Market.Start_price,
 		Market.End_time)
@@ -496,6 +505,8 @@ func ResetBuyInfo() {
 	Market.Description.Refresh()
 	Market.Creator.Text = (" Creator: ")
 	Market.Creator.Refresh()
+	Market.Art_fee.Text = (" Artificer Fee: ")
+	Market.Art_fee.Refresh()
 	Market.Royalty.Text = (" Royalty: ")
 	Market.Royalty.Refresh()
 	Market.Start_price.Text = (" Buy now for: ")

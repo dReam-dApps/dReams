@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/SixofClubsss/dReams/rpc"
 	"github.com/SixofClubsss/dReams/table"
@@ -53,7 +54,6 @@ type menuOptions struct {
 	Send_asset        *widget.Button
 	Claim_button      *widget.Button
 	List_button       *widget.Button
-	Set_list          *widget.Button
 	daemon_check      *widget.Check
 	holdero_check     *widget.Check
 	Predict_check     *widget.Check
@@ -959,6 +959,7 @@ func disableIndex(d bool) {
 				MenuControl.List_button.Hide()
 			}
 		} else {
+			MenuControl.Send_asset.Hide()
 			MenuControl.List_button.Hide()
 			MenuControl.Claim_button.Hide()
 			table.Assets.Header_box.Hide()
@@ -1247,7 +1248,7 @@ func IndexEntry() fyne.CanvasObject {
 	})
 
 	MenuControl.Send_asset = widget.NewButton("Send Asset", func() {
-		go sendAssetMenu(MenuControl.Viewing_asset)
+		go sendAssetMenu()
 	})
 
 	MenuControl.List_button = widget.NewButton("List Asset", func() {
@@ -1297,6 +1298,7 @@ func AssetList() fyne.CanvasObject {
 		if len(split) >= 2 {
 			trimmed := strings.Trim(split[1], " ")
 			MenuControl.Viewing_asset = trimmed
+			table.Assets.Icon = *canvas.NewImageFromImage(nil)
 			go GetOwnedAssetStats(trimmed)
 		}
 	}
@@ -1306,90 +1308,135 @@ func AssetList() fyne.CanvasObject {
 	return box
 }
 
-func sendAssetMenu(scid string) {
+func sendAssetMenu() {
 	MenuControl.send_open = true
 	saw := fyne.CurrentApp().NewWindow("Send Asset")
 	saw.Resize(fyne.NewSize(330, 700))
 	saw.SetIcon(Resource.SmallIcon)
 	MenuControl.Send_asset.Hide()
+	MenuControl.List_button.Hide()
 	saw.SetCloseIntercept(func() {
 		MenuControl.send_open = false
 		if rpc.Wallet.Connect {
 			MenuControl.Send_asset.Show()
+			if isNfa(MenuControl.Viewing_asset) {
+				MenuControl.List_button.Show()
+			}
 		}
 		saw.Close()
 	})
 	saw.SetFixedSize(true)
 
-	label := widget.NewLabel("You are about to send asset:\n\n" + scid + " \n\nEnter destination address below.\n\nSCID can be sent to reciever as payload.\n\n")
-	label.Wrapping = fyne.TextWrapWord
+	var saw_content *fyne.Container
+	var send_button *widget.Button
+	img := *canvas.NewImageFromResource(Resource.Back3)
 
-	var check *widget.Check
+	viewing_asset := MenuControl.Viewing_asset
+
+	viewing_label := widget.NewLabel(fmt.Sprintf("Sending SCID:\n%s\n\nEnter destination address below.\n\nSCID can be sent to reciever as payload.\n\n", viewing_asset))
+	viewing_label.Wrapping = fyne.TextWrapWord
+	viewing_label.Alignment = fyne.TextAlignCenter
+
+	info_label := widget.NewLabel("Enter all info before sending.")
 	payload := widget.NewCheck("Send SCID as payload.", func(b bool) {})
 
-	entry := widget.NewMultiLineEntry()
-	entry.SetPlaceHolder("Destination Address:")
-	entry.Wrapping = fyne.TextWrapWord
-	entry.Validator = validation.NewRegexp(`^(dero)\w{62}`, "Invalid Address")
-	entry.OnChanged = func(s string) {
-		if entry.Validate() == nil {
-			check.Text = "I have confirmed all info is correct."
-			check.Refresh()
-			check.Enable()
+	dest_entry := widget.NewMultiLineEntry()
+	dest_entry.SetPlaceHolder("Destination Address:")
+	dest_entry.Wrapping = fyne.TextWrapWord
+	dest_entry.Validator = validation.NewRegexp(`^(dero)\w{62}`, "Invalid Address")
+	dest_entry.OnChanged = func(s string) {
+		if dest_entry.Validate() == nil {
+			info_label.SetText("")
+			send_button.Show()
 		} else {
-			check.Text = "Enter all info before sending."
-			check.Refresh()
-			check.Disable()
+			info_label.SetText("Enter destination address.")
+			send_button.Hide()
 		}
 	}
 
 	var dest string
-	confirm := widget.NewButton("Confirm", func() {
-		dest = entry.Text
-		if entry.Validate() == nil {
+	var confirm_open bool
+	send_button = widget.NewButton("Send Asset", func() {
+		if dest_entry.Validate() == nil {
+			confirm_open = true
+			send_asset := viewing_asset
 			var load bool
 			if payload.Checked {
 				load = true
 			}
-			go rpc.SendAsset(MenuControl.Viewing_asset, dest, load)
-			saw.Close()
+
+			confirm_button := widget.NewButton("Confirm", func() {
+				if dest_entry.Validate() == nil {
+					var load bool
+					if payload.Checked {
+						load = true
+					}
+					go rpc.SendAsset(send_asset, dest, load)
+					saw.Close()
+				}
+			})
+
+			cancel_button := widget.NewButton("Cancel", func() {
+				confirm_open = false
+				saw.SetContent(
+					container.New(layout.NewMaxLayout(),
+						&img,
+						saw_content))
+			})
+
+			dest = dest_entry.Text
+			confirm_label := widget.NewLabel(fmt.Sprintf("Sending SCID:\n%s\n\nDestination: %s\n\nSending SCID as payload: %t", send_asset, dest, load))
+			confirm_label.Wrapping = fyne.TextWrapWord
+			confirm_label.Alignment = fyne.TextAlignCenter
+
+			confirm_display := container.NewVBox(confirm_label, layout.NewSpacer())
+			confirm_options := container.NewAdaptiveGrid(2, confirm_button, cancel_button)
+			confirm_content := container.NewBorder(nil, confirm_options, nil, nil, confirm_display)
+			saw.SetContent(
+				container.New(layout.NewMaxLayout(),
+					&img,
+					confirm_content))
 		}
 	})
+	send_button.Hide()
 
-	cancel := widget.NewButton("Cancel", func() {
-		saw.Close()
-	})
+	icon := table.Assets.Icon
 
-	check = widget.NewCheck("Enter all info before sending.", func(b bool) {
-		if b {
-			if entry.Validate() == nil {
-				entry.Disable()
-				confirm.Show()
+	saw_content = container.NewVBox(
+		viewing_label,
+		menuAssetImg(&icon, Resource.Frame),
+		layout.NewSpacer(),
+		dest_entry,
+		container.NewCenter(payload),
+		layout.NewSpacer(),
+		container.NewAdaptiveGrid(2, layout.NewSpacer(), send_button))
+
+	go func() {
+		for rpc.Wallet.Connect && rpc.Signal.Daemon {
+			time.Sleep(3 * time.Second)
+			if !confirm_open {
+				icon = table.Assets.Icon
+				saw_content.Objects[1] = menuAssetImg(&icon, Resource.Frame)
+				if viewing_asset != MenuControl.Viewing_asset {
+					viewing_asset = MenuControl.Viewing_asset
+					viewing_label.SetText("Sending SCID:\n" + viewing_asset + " \n\nEnter destination address below.\n\nSCID can be sent to reciever as payload.\n\n")
+				}
+				saw_content.Refresh()
 			}
-		} else {
-			entry.Enable()
-			confirm.Hide()
 		}
-	})
+		MenuControl.send_open = false
+		saw.Close()
+	}()
 
-	confirm.Hide()
-	check.Disable()
-
-	url := GetAssetUrl(1, scid)
-	icon, _ := table.DownloadFile(url, "sending")
-
-	grid := container.NewAdaptiveGrid(2, confirm, container.NewMax(cancel))
-	box := container.NewVBox(label, sendAssetImg(&icon, Resource.Frame), layout.NewSpacer(), entry, payload, check, layout.NewSpacer(), grid)
-
-	img := *canvas.NewImageFromResource(Resource.Back3)
 	saw.SetContent(
 		container.New(layout.NewMaxLayout(),
 			&img,
-			box))
+			saw_content))
 	saw.Show()
 }
 
-func sendAssetImg(img *canvas.Image, res fyne.Resource) fyne.CanvasObject {
+// Image for send asset and list menus
+func menuAssetImg(img *canvas.Image, res fyne.Resource) fyne.CanvasObject {
 	img.SetMinSize(fyne.NewSize(100, 100))
 	img.Resize(fyne.NewSize(94, 94))
 	img.Move(fyne.NewPos(118, 3))
@@ -1403,102 +1450,179 @@ func sendAssetImg(img *canvas.Image, res fyne.Resource) fyne.CanvasObject {
 	return cont
 }
 
-func listMenu() { /// asset listing
+// Nfa listing menu
+func listMenu() {
 	MenuControl.list_open = true
 	aw := fyne.CurrentApp().NewWindow("List NFA")
 	aw.Resize(fyne.NewSize(330, 700))
 	aw.SetIcon(Resource.SmallIcon)
 	MenuControl.List_button.Hide()
+	MenuControl.Send_asset.Hide()
 	aw.SetCloseIntercept(func() {
 		MenuControl.list_open = false
 		if rpc.Wallet.Connect {
-			MenuControl.List_button.Show()
+			MenuControl.Send_asset.Show()
+			if isNfa(MenuControl.Viewing_asset) {
+				MenuControl.List_button.Show()
+			}
 		}
 		aw.Close()
 	})
 	aw.SetFixedSize(true)
 
-	label := widget.NewLabel("                       Listing fee 0.1 Dero")
-	options := []string{"Auction", "Sale"}
-	list := widget.NewSelect(options, func(s string) {})
-	list.PlaceHolder = "Type:"
+	var aw_content *fyne.Container
+	var set_list *widget.Button
+	aw_img := *canvas.NewImageFromResource(Resource.Back3)
+
+	viewing_asset := MenuControl.Viewing_asset
+	viewing_label := widget.NewLabel(fmt.Sprintf("Listing SCID: %s", viewing_asset))
+	viewing_label.Wrapping = fyne.TextWrapWord
+	viewing_label.Alignment = fyne.TextAlignCenter
+
+	fee_label := widget.NewLabel("Listing fee 0.1 Dero")
+
+	listing_options := []string{"Auction", "Sale"}
+	listing := widget.NewSelect(listing_options, func(s string) {})
+	listing.PlaceHolder = "Type:"
 
 	duration := table.NilNumericalEntry()
 	duration.SetPlaceHolder("Duration in Hours:")
-	duration.Validator = validation.NewRegexp(`^\d{1,}$`, "Format Not Valid")
+	duration.Validator = validation.NewRegexp(`^[^0]\d{0,2}$`, "Int required")
 
 	start := table.NilNumericalEntry()
 	start.SetPlaceHolder("Start Price:")
-	start.Validator = validation.NewRegexp(`\d{1,}\.\d{1,5}$`, "Format Not Valid")
+	start.Validator = validation.NewRegexp(`\d{1,}\.\d{1,5}$`, "Float required")
 
 	charAddr := widget.NewEntry()
 	charAddr.SetPlaceHolder("Charity Donation Address:")
-	charAddr.Validator = validation.NewRegexp(`^\w{66,66}$`, "Format Not Valid")
+	charAddr.Validator = validation.NewRegexp(`^\w{66,66}$`, "Int required")
 
 	charPerc := table.NilNumericalEntry()
 	charPerc.SetPlaceHolder("Charity Donation %:")
-	charPerc.Validator = validation.NewRegexp(`^\d{1,2}$`, "Format Not Valid")
+	charPerc.Validator = validation.NewRegexp(`^\d{1,2}$`, "Int required")
+	charPerc.OnChanged = func(s string) {
+		if listing.Selected != "" && duration.Validate() == nil && start.Validate() == nil && charAddr.Validate() == nil && charPerc.Validate() == nil {
+			set_list.Show()
+		} else {
+			set_list.Hide()
+		}
+	}
 
-	MenuControl.Set_list = widget.NewButton("Set Listing", func() {
+	duration.OnChanged = func(s string) {
+		if listing.Selected != "" && duration.Validate() == nil && start.Validate() == nil && charAddr.Validate() == nil && charPerc.Validate() == nil {
+			set_list.Show()
+		} else {
+			set_list.Hide()
+		}
+	}
+
+	start.OnChanged = func(s string) {
+		if listing.Selected != "" && duration.Validate() == nil && start.Validate() == nil && charAddr.Validate() == nil && charPerc.Validate() == nil {
+			set_list.Show()
+		} else {
+			set_list.Hide()
+		}
+	}
+
+	charAddr.OnChanged = func(s string) {
+		if listing.Selected != "" && duration.Validate() == nil && start.Validate() == nil && charAddr.Validate() == nil && charPerc.Validate() == nil {
+			set_list.Show()
+		} else {
+			set_list.Hide()
+		}
+	}
+
+	var confirm_open bool
+	set_list = widget.NewButton("Set Listing", func() {
 		if duration.Validate() == nil && start.Validate() == nil && charAddr.Validate() == nil && charPerc.Validate() == nil {
-			if list.Selected != "" {
-				MenuControl.Set_list.Hide()
-				confirmAssetList(list.Selected, duration.Text, start.Text, charAddr.Text, charPerc.Text)
+			if listing.Selected != "" {
+				confirm_open = true
+				listing_asset := viewing_asset
+				artP, royaltyP := GetListingPercents(listing_asset)
+
+				d := uint64(stringToInt64(duration.Text))
+				s := ToAtomicFive(start.Text)
+				sp := float64(s) / 100000
+				cp := uint64(stringToInt64(charPerc.Text))
+
+				art_gets := (float64(s) * artP) / 100000
+				royalty_gets := (float64(s) * royaltyP) / 100000
+				char_gets := float64(s) * (float64(cp) / 100) / 100000
+
+				total := sp - art_gets - royalty_gets - char_gets
+
+				first_line := fmt.Sprintf("Listing SCID:\n%s\n\nList Type: %s\n\nDuration: %s Hours\n\nStart Price: %0.5f Dero\n\n", listing_asset, listing.Selected, duration.Text, sp)
+				second_line := fmt.Sprintf("Artficer Fee: %.0f%s - %0.5f Dero\n\nRoyalties: %.0f%s - %0.5f Dero\n\n", artP*100, "%", art_gets, royaltyP*100, "%", royalty_gets)
+				third_line := fmt.Sprintf("Chairity Address: %s\n\nCharity Percent: %s%s - %0.5f Dero\n\nYou will receive %.5f Dero if asset sells at start price", charAddr.Text, charPerc.Text, "%", char_gets, total)
+
+				confirm_label := widget.NewLabel(first_line + second_line + third_line)
+				confirm_label.Wrapping = fyne.TextWrapWord
+				confirm_label.Alignment = fyne.TextAlignCenter
+
+				cancel_button := widget.NewButton("Cancel", func() {
+					confirm_open = false
+					aw.SetContent(
+						container.New(layout.NewMaxLayout(),
+							&aw_img,
+							aw_content))
+				})
+
+				confirm_button := widget.NewButton("Confirm", func() {
+					rpc.NfaSetListing(listing_asset, listing.Selected, charAddr.Text, d, s, cp)
+					aw.Close()
+				})
+
+				confirm_display := container.NewVBox(confirm_label, layout.NewSpacer())
+				confirm_options := container.NewAdaptiveGrid(2, confirm_button, cancel_button)
+				confirm_content := container.NewBorder(nil, confirm_options, nil, nil, confirm_display)
+
+				aw.SetContent(
+					container.New(layout.NewMaxLayout(),
+						&aw_img,
+						confirm_content))
 			}
 		}
 	})
+	set_list.Hide()
 
-	items := container.NewVBox(
+	icon := table.Assets.Icon
+
+	go func() {
+		for rpc.Wallet.Connect && rpc.Signal.Daemon {
+			time.Sleep(3 * time.Second)
+			if !confirm_open {
+				icon = table.Assets.Icon
+				aw_content.Objects[2] = menuAssetImg(&icon, Resource.Frame)
+				if viewing_asset != MenuControl.Viewing_asset {
+					viewing_asset = MenuControl.Viewing_asset
+					viewing_label.SetText(fmt.Sprintf("Listing SCID: %s\n", viewing_asset))
+				}
+				aw_content.Refresh()
+			}
+		}
+		MenuControl.list_open = false
+		aw.Close()
+	}()
+
+	aw_content = container.NewVBox(
+		viewing_label,
 		layout.NewSpacer(),
-		label,
-		list,
+		menuAssetImg(&icon, Resource.Frame),
+		layout.NewSpacer(),
+		layout.NewSpacer(),
+		listing,
 		duration,
 		start,
 		charAddr,
 		charPerc,
-		MenuControl.Set_list)
+		container.NewAdaptiveGrid(2, layout.NewSpacer(), container.NewCenter(fee_label)),
+		container.NewAdaptiveGrid(2, layout.NewSpacer(), set_list))
 
-	img := *canvas.NewImageFromResource(Resource.Back3)
 	aw.SetContent(
 		container.New(layout.NewMaxLayout(),
-			&img,
-			items))
+			&aw_img,
+			aw_content))
 	aw.Show()
-}
-
-func confirmAssetList(list, dur, start, charAddr, charPerc string) { /// listing confirmation
-	ocw := fyne.CurrentApp().NewWindow("Confirm")
-	ocw.SetIcon(Resource.SmallIcon)
-	ocw.Resize(fyne.NewSize(450, 450))
-	ocw.SetFixedSize(true)
-	label := widget.NewLabel("SCID: " + MenuControl.Viewing_asset + "\n\nList Type: " + list + "\n\nDuration: " + dur + " Hours\n\nStart Price: " + start + " Dero\n\nDonation Address: " + charAddr + "\n\nDonate Percent: " + charPerc + "\n\nConfirm Asset Listing")
-	label.Wrapping = fyne.TextWrapWord
-	cancel_button := widget.NewButton("Cancel", func() {
-		MenuControl.Set_list.Show()
-		ocw.Close()
-	})
-
-	confirm_button := widget.NewButton("Confirm", func() {
-		d := uint64(stringToInt64(dur))
-		s := ToAtomicFive(start)
-		cp := uint64(stringToInt64(charPerc))
-		rpc.NfaSetListing(MenuControl.Viewing_asset, list, charAddr, d, s, cp)
-		MenuControl.Set_list.Show()
-		ocw.Close()
-	})
-
-	display := container.NewVBox(label, layout.NewSpacer())
-	options := container.NewAdaptiveGrid(2, confirm_button, cancel_button)
-	content := container.NewBorder(nil, options, nil, nil, display)
-
-	img := *canvas.NewImageFromResource(Resource.Back4)
-	alpha := container.NewMax(canvas.NewRectangle(color.RGBA{0, 0, 0, 120}))
-	ocw.SetContent(
-		container.New(layout.NewMaxLayout(),
-			&img,
-			alpha,
-			content))
-	ocw.Show()
 }
 
 func ToAtomicFive(v string) uint64 {
