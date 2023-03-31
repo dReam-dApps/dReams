@@ -1569,6 +1569,13 @@ func listMenu() {
 
 				confirm_button := widget.NewButton("Confirm", func() {
 					rpc.NfaSetListing(listing_asset, listing.Selected, charAddr.Text, d, s, cp)
+					MenuControl.list_open = false
+					if rpc.Wallet.Connect {
+						MenuControl.Send_asset.Show()
+						if isNfa(MenuControl.Viewing_asset) {
+							MenuControl.List_button.Show()
+						}
+					}
 					aw.Close()
 				})
 
