@@ -183,7 +183,7 @@ func GetAddress() error {
 	return err
 }
 
-func GetTransaction(txid string) (*rpc.Entry, error) {
+func GetWalletTx(txid string) (*rpc.Entry, error) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
@@ -194,7 +194,7 @@ func GetTransaction(txid string) (*rpc.Entry, error) {
 	err := rpcClientW.CallFor(ctx, &result, "GetTransferbyTXID", params)
 
 	if err != nil {
-		log.Println("[dReams]", err)
+		log.Println("[GetWalletTx]", err)
 		return nil, nil
 	}
 

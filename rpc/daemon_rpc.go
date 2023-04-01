@@ -262,6 +262,28 @@ func GetG45Collection(scid string) ([]string, error) {
 	return scids, err
 }
 
+func GetDaemonTx(txid string) (*rpc.Tx_Related_Info, error) {
+	rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
+	defer cancel()
+
+	var result *rpc.GetTransaction_Result
+	params := rpc.GetTransaction_Params{
+		Tx_Hashes: []string{txid},
+	}
+
+	err := rpcClientD.CallFor(ctx, &result, "DERO.GetTransaction", params)
+	if err != nil {
+		log.Println("[GetDaemonTx]", err)
+		return nil, nil
+	}
+
+	if result.Txs != nil {
+		return &result.Txs[0], err
+	}
+
+	return nil, err
+}
+
 func VerifySigner(txid string) (bool, error) {
 	rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
 	defer cancel()
