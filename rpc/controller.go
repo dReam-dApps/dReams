@@ -254,6 +254,7 @@ func addOne(v interface{}) string {
 func closedTable() {
 	Round.Winner = ""
 	Round.Players = 0
+	Round.Pot = 0
 	Round.ID = 0
 	Round.Tourney = false
 	Round.P1_url = ""
