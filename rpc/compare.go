@@ -716,7 +716,7 @@ func payWinningHand(w int) {
 
 	updateStatsWins(Round.Pot, winner, false)
 
-	if Display.PlayerId == "1" {
+	if Round.ID == 1 {
 		if !Signal.Paid {
 			Signal.Paid = true
 			go func() {
@@ -1056,7 +1056,7 @@ func compareAll(r *ranker) (end_res string) { /// Main compare to determine winn
 		} else {
 			end_res = "Push"
 			updateStatsPush(*r, Round.Pot, Round.F1, Round.F2, Round.F3, Round.F4, Round.F5, Round.F6)
-			if Display.PlayerId == "1" {
+			if Round.ID == 1 {
 				if !Signal.Paid {
 					Signal.Paid = true
 					go func() {
