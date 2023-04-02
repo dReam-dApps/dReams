@@ -41,10 +41,10 @@ type wallet struct {
 	BetOwner   bool
 	KeyLock    bool
 	Service    bool
+	LogEntry   *widget.Entry
 }
 
 var Wallet wallet
-var logEntry = widget.NewMultiLineEntry()
 
 func StringToInt(s string) int {
 	if s != "" {
@@ -59,24 +59,24 @@ func StringToInt(s string) int {
 	return 0
 }
 
-func addLog(t string) {
-	logEntry.SetText(logEntry.Text + "\n\n" + t)
-	logEntry.Refresh()
+func AddLog(t string) {
+	Wallet.LogEntry.SetText(Wallet.LogEntry.Text + "\n\n" + t)
+	Wallet.LogEntry.Refresh()
 }
 
 func SessionLog() *fyne.Container {
-	logEntry.Disable()
+	Wallet.LogEntry = widget.NewMultiLineEntry()
+	Wallet.LogEntry.Disable()
 	button := widget.NewButton("Save", func() {
-		saveLog(logEntry.Text)
+		saveLog(Wallet.LogEntry.Text)
 	})
+	button.Importance = widget.LowImportance
 
-	cont := container.NewMax(logEntry)
+	cont := container.NewMax(Wallet.LogEntry)
 
 	vbox := container.NewVBox(
 		layout.NewSpacer(),
-		container.NewAdaptiveGrid(2,
-			layout.NewSpacer(),
-			button))
+		container.NewBorder(nil, layout.NewSpacer(), nil, button, layout.NewSpacer()))
 
 	max := container.NewMax(cont, vbox)
 
@@ -291,7 +291,7 @@ func TourneyDeposit(bal uint64, name string) error {
 		}
 
 		log.Println("[Holdero] Tournament Deposit TX:", txid)
-		addLog("Tournament Deposit TX: " + txid.TXID)
+		AddLog("Tournament Deposit TX: " + txid.TXID)
 
 		return err
 	}
@@ -359,7 +359,7 @@ func SitDown(name, av string) error { /// sit at holdero table
 	}
 
 	log.Println("[Holdero] Sit Down TX:", txid)
-	addLog("Sit Down TX: " + txid.TXID)
+	AddLog("Sit Down TX: " + txid.TXID)
 
 	return err
 }
@@ -398,7 +398,7 @@ func Leave() error { /// leave holdero table
 	}
 
 	log.Println("[Holdero] Leave TX:", txid)
-	addLog("Leave Down TX: " + txid.TXID)
+	AddLog("Leave Down TX: " + txid.TXID)
 
 	return err
 }
@@ -454,7 +454,7 @@ func SetTable(seats int, bb, sb, ante uint64, chips, name, av string) error { //
 	}
 
 	log.Println("[Holdero] Set Table TX:", txid)
-	addLog("Set Table TX: " + txid.TXID)
+	AddLog("Set Table TX: " + txid.TXID)
 
 	return err
 }
@@ -534,7 +534,7 @@ func DealHand() error { /// holdero hand
 	Display.Res = ""
 	log.Println("[Holdero] Deal TX:", txid)
 	updateStatsWager(float64(amount) / 100000)
-	addLog("Deal TX: " + txid.TXID)
+	AddLog("Deal TX: " + txid.TXID)
 
 	return err
 }
@@ -593,7 +593,7 @@ func Bet(amt string) error { /// holdero bet
 	Display.Res = ""
 	Signal.PlacedBet = true
 	log.Println("[Holdero] Bet TX:", txid)
-	addLog("Bet TX: " + txid.TXID)
+	AddLog("Bet TX: " + txid.TXID)
 
 	return err
 }
@@ -647,7 +647,7 @@ func Check() error { /// holdero check and fold
 
 	Display.Res = ""
 	log.Println("[Holdero] Check/Fold TX:", txid)
-	addLog("Check/Fold TX: " + txid.TXID)
+	AddLog("Check/Fold TX: " + txid.TXID)
 
 	return err
 }
@@ -685,7 +685,7 @@ func PayOut(w string) string {
 	}
 
 	log.Println("[Holdero] Payout TX:", txid)
-	addLog("Holdero Payout TX: " + txid.TXID)
+	AddLog("Holdero Payout TX: " + txid.TXID)
 
 	return txid.TXID
 }
@@ -765,7 +765,7 @@ func PayoutSplit(r ranker, f1, f2, f3, f4, f5, f6 bool) string {
 	}
 
 	log.Println("[Holdero] Split Winner TX:", txid)
-	addLog("Split Winner TX: " + txid.TXID)
+	AddLog("Split Winner TX: " + txid.TXID)
 
 	return txid.TXID
 }
@@ -804,7 +804,7 @@ func RevealKey(key string) error { /// holdero reveal
 
 	Display.Res = ""
 	log.Println("[Holdero] Reveal TX:", txid)
-	addLog("Reveal TX: " + txid.TXID)
+	AddLog("Reveal TX: " + txid.TXID)
 
 	return err
 }
@@ -841,7 +841,7 @@ func CleanTable(amt uint64) error { /// shuffle and clean holdero
 	}
 
 	log.Println("[Holdero] Clean Table TX:", txid)
-	addLog("Clean Table TX: " + txid.TXID)
+	AddLog("Clean Table TX: " + txid.TXID)
 
 	return err
 }
@@ -877,7 +877,7 @@ func TimeOut() error {
 	}
 
 	log.Println("[Holdero] Timeout TX:", txid)
-	addLog("Timeout TX: " + txid.TXID)
+	AddLog("Timeout TX: " + txid.TXID)
 
 	return err
 }
@@ -913,7 +913,7 @@ func ForceStat() error {
 	}
 
 	log.Println("[Holdero] Force Start TX:", txid)
-	addLog("Force Start TX: " + txid.TXID)
+	AddLog("Force Start TX: " + txid.TXID)
 
 	return err
 }
@@ -979,7 +979,7 @@ func SharedDeckUrl(face, faceUrl, back, backUrl string) error {
 	}
 
 	log.Println("[Holdero] Shared TX:", txid)
-	addLog("Shared TX: " + txid.TXID)
+	AddLog("Shared TX: " + txid.TXID)
 
 	return err
 }
@@ -1015,7 +1015,7 @@ func GetdReams(amt uint64) error {
 	}
 
 	log.Println("[dReams] Get dReams", txid)
-	addLog("Get dReams " + txid.TXID)
+	AddLog("Get dReams " + txid.TXID)
 
 	return err
 }
@@ -1053,7 +1053,7 @@ func TradedReams(amt uint64) error {
 	}
 
 	log.Println("[dReams] Trade dReams TX:", txid)
-	addLog("Trade dReams TX: " + txid.TXID)
+	AddLog("Trade dReams TX: " + txid.TXID)
 
 	return err
 }
@@ -1104,7 +1104,7 @@ func UploadHolderoContract(d, w bool, pub int) error {
 		}
 
 		log.Println("[Holdero] Upload TX:", txid)
-		addLog("Holdero Upload TX:" + txid.TXID)
+		AddLog("Holdero Upload TX:" + txid.TXID)
 
 		return err
 	}
@@ -1149,13 +1149,13 @@ func BaccBet(amt, w string) error {
 	Bacc.Notified = false
 	if w == "player" {
 		log.Println("[Baccarat] Player TX:", txid)
-		addLog("Baccarat Player TX: " + txid.TXID)
+		AddLog("Baccarat Player TX: " + txid.TXID)
 	} else if w == "banker" {
 		log.Println("[Baccarat] Banker TX:", txid)
-		addLog("Baccarat Banker TX: " + txid.TXID)
+		AddLog("Baccarat Banker TX: " + txid.TXID)
 	} else {
 		log.Println("[Baccarat] Tie TX:", txid)
-		addLog("Baccarat Tie TX: " + txid.TXID)
+		AddLog("Baccarat Tie TX: " + txid.TXID)
 	}
 
 	Bacc.CHeight = Wallet.Height
@@ -1198,7 +1198,7 @@ func PredictHigher(scid, addr string) error {
 	}
 
 	log.Println("[Predictions] Prediction TX:", txid)
-	addLog("Prediction TX: " + txid.TXID)
+	AddLog("Prediction TX: " + txid.TXID)
 
 	return err
 }
@@ -1238,7 +1238,7 @@ func PredictLower(scid, addr string) error {
 	}
 
 	log.Println("[Predictions] Prediction TX:", txid)
-	addLog("Prediction TX: " + txid.TXID)
+	AddLog("Prediction TX: " + txid.TXID)
 
 	return err
 }
@@ -1276,7 +1276,7 @@ func RateSCID(scid string, amt, pos uint64) error {
 	}
 
 	log.Println("[RateSCID] Rate TX:", txid)
-	addLog("Rate TX: " + txid.TXID)
+	AddLog("Rate TX: " + txid.TXID)
 
 	return err
 }
@@ -1314,7 +1314,7 @@ func RateSCID(scid string, amt, pos uint64) error {
 // 	}
 //
 // 	log.Println("[Predictions] Name Change TX:", txid)
-// 	addLog("Name Change TX: " + txid.TXID)
+// 	AddLog("Name Change TX: " + txid.TXID)
 //
 // 	return err
 // }
@@ -1351,7 +1351,7 @@ func RateSCID(scid string, amt, pos uint64) error {
 // 	}
 //
 // 	log.Println("[Predictions] Remove TX:", txid)
-// 	addLog("Remove TX: " + txid.TXID)
+// 	AddLog("Remove TX: " + txid.TXID)
 //
 // 	return err
 // }
@@ -1406,7 +1406,7 @@ func AuotPredict(p int, amt, src uint64, scid, addr, tx string) error {
 	}
 
 	log.Println("[AuotPredict] Prediction TX:", txid)
-	addLog("AuotPredict TX: " + txid.TXID)
+	AddLog("AuotPredict TX: " + txid.TXID)
 
 	return err
 }
@@ -1445,7 +1445,7 @@ func ServiceRefund(amt, src uint64, scid, addr, msg, tx string) error {
 	}
 
 	log.Println("[ServiceRefund] Refund TX:", txid)
-	addLog("Refund TX: " + txid.TXID)
+	AddLog("Refund TX: " + txid.TXID)
 
 	return err
 }
@@ -1493,7 +1493,7 @@ func AuotBook(amt, pre, src uint64, n, abv, scid, addr, tx string) error {
 	}
 
 	log.Println("[AuotBook] Book TX:", txid)
-	addLog("AuotBook TX: " + txid.TXID)
+	AddLog("AuotBook TX: " + txid.TXID)
 
 	return err
 }
@@ -1542,7 +1542,7 @@ func VarUpdate(scid string, ta, tb, tc, l, hl int) error { /// change leaderboar
 	}
 
 	log.Println("[VarUpdate] VarUpdate TX:", txid)
-	addLog("VarUpdate TX: " + txid.TXID)
+	AddLog("VarUpdate TX: " + txid.TXID)
 
 	return err
 }
@@ -1579,7 +1579,7 @@ func AddOwner(scid, addr string) error { /// change leaderboard name
 	}
 
 	log.Println("[Predictions] Add Signer TX:", txid)
-	addLog("Add Signer TX: " + txid.TXID)
+	AddLog("Add Signer TX: " + txid.TXID)
 
 	return err
 }
@@ -1616,7 +1616,7 @@ func RemoveOwner(scid string, num int) error {
 	}
 
 	log.Println("[Predictions] Remove Signer TX:", txid)
-	addLog("Remove Signer: " + txid.TXID)
+	AddLog("Remove Signer: " + txid.TXID)
 
 	return err
 }
@@ -1653,7 +1653,7 @@ func PredictionRefund(scid, tic string) error { /// change leaderboard name
 	}
 
 	log.Println("[Predictions] Refund TX:", txid)
-	addLog("Refund TX: " + txid.TXID)
+	AddLog("Refund TX: " + txid.TXID)
 
 	return err
 }
@@ -1705,7 +1705,7 @@ func PickTeam(scid, multi, n string, a uint64, pick int) error { /// pick sports
 	}
 
 	log.Println("[Sports] Pick TX:", txid)
-	addLog("Pick TX: " + txid.TXID)
+	AddLog("Pick TX: " + txid.TXID)
 
 	return err
 }
@@ -1743,7 +1743,7 @@ func SportsRefund(scid, tic, n string) error { /// change leaderboard name
 	}
 
 	log.Println("[Sports] Refund TX:", txid)
-	addLog("Refund TX: " + txid.TXID)
+	AddLog("Refund TX: " + txid.TXID)
 
 	return err
 }
@@ -1784,7 +1784,7 @@ func SetSports(end int, amt, dep uint64, scid, league, game, feed string) error 
 	}
 
 	log.Println("[Sports] Set TX:", txid)
-	addLog("Set Sports TX: " + txid.TXID)
+	AddLog("Set Sports TX: " + txid.TXID)
 
 	return err
 }
@@ -1825,7 +1825,7 @@ func SetPrediction(end, mark int, amt, dep uint64, scid, predict, feed string) e
 	}
 
 	log.Println("[Predictions] Set TX:", txid)
-	addLog("Set Prediction TX: " + txid.TXID)
+	AddLog("Set Prediction TX: " + txid.TXID)
 
 	return err
 }
@@ -1869,10 +1869,10 @@ func CancelInitiatedBet(scid string, b int) error {
 
 	if b == 0 {
 		log.Println("[Predictions] Cancel TX:", txid)
-		addLog("Cancel Prediction TX: " + txid.TXID)
+		AddLog("Cancel Prediction TX: " + txid.TXID)
 	} else {
 		log.Println("[Sports] Cancel TX:", txid)
-		addLog("Cancel Sports TX: " + txid.TXID)
+		AddLog("Cancel Sports TX: " + txid.TXID)
 	}
 
 	return err
@@ -1910,7 +1910,7 @@ func PostPrediction(scid string, price int) error {
 	}
 
 	log.Println("[Predictions] Post TX:", txid)
-	addLog("Post TX: " + txid.TXID)
+	AddLog("Post TX: " + txid.TXID)
 
 	return err
 }
@@ -1942,7 +1942,7 @@ func EndSports(scid, num, team string) error {
 	}
 
 	log.Println("[Sports] Payout TX:", txid)
-	addLog("Sports Payout TX: " + txid.TXID)
+	AddLog("Sports Payout TX: " + txid.TXID)
 
 	return err
 }
@@ -1974,7 +1974,7 @@ func EndPrediction(scid string, price int) error {
 	}
 
 	log.Println("[Predictions] Payout TX:", txid)
-	addLog("Prediction Payout TX: " + txid.TXID)
+	AddLog("Prediction Payout TX: " + txid.TXID)
 
 	return err
 }
@@ -2024,10 +2024,10 @@ func UploadBetContract(d, w, c bool, pub int) error {
 
 		if c {
 			log.Println("[Predictions] Upload TX:", txid)
-			addLog("Prediction Upload TX:" + txid.TXID)
+			AddLog("Prediction Upload TX:" + txid.TXID)
 		} else {
 			log.Println("[Sports] Upload TX:", txid)
-			addLog("Sports Upload TX:" + txid.TXID)
+			AddLog("Sports Upload TX:" + txid.TXID)
 		}
 
 		return err
@@ -2070,7 +2070,7 @@ func SetHeaders(name, desc, icon, scid string) error {
 		return nil
 	}
 	log.Println("[dReams] Set Headers TX:", txid)
-	addLog("Set Headers TX: " + txid.TXID)
+	AddLog("Set Headers TX: " + txid.TXID)
 
 	return err
 }
@@ -2108,7 +2108,7 @@ func ClaimNfa(scid string) error {
 	}
 
 	log.Println("[dReams] Claim TX:", txid)
-	addLog("Claim TX: " + txid.TXID)
+	AddLog("Claim TX: " + txid.TXID)
 
 	return err
 }
@@ -2145,10 +2145,10 @@ func NfaBidBuy(scid, bidor string, amt uint64) error {
 
 	if bidor == "Bid" {
 		log.Println("[dReams] NFA Bid TX:", txid)
-		addLog("Bid TX: " + txid.TXID)
+		AddLog("Bid TX: " + txid.TXID)
 	} else {
 		log.Println("[dReams] NFA Buy TX:", txid)
-		addLog("Buy TX: " + txid.TXID)
+		AddLog("Buy TX: " + txid.TXID)
 	}
 
 	return err
@@ -2204,7 +2204,7 @@ func NfaSetListing(scid, list, char string, dur, amt, perc uint64) error {
 		return nil
 	}
 	log.Println("[dReams] NFA List TX:", txid)
-	addLog("NFA List TX: " + txid.TXID)
+	AddLog("NFA List TX: " + txid.TXID)
 
 	return err
 }
@@ -2241,10 +2241,10 @@ func NfaCancelClose(scid, c string) error {
 
 	if c == "CloseListing" {
 		log.Println("[dReams] Close NFA Listing TX:", txid)
-		addLog("Close Listing TX: " + txid.TXID)
+		AddLog("Close Listing TX: " + txid.TXID)
 	} else {
 		log.Println("[dReams] Cancel NFA Listing TX:", txid)
-		addLog("Cancel Listing TX: " + txid.TXID)
+		AddLog("Cancel Listing TX: " + txid.TXID)
 	}
 
 	return err
@@ -2286,7 +2286,7 @@ func TarotReading(num int) error {
 	Tarot.Notified = false
 
 	log.Println("[Tarot] Reading TX:", txid)
-	addLog("Reading TX: " + txid.TXID)
+	AddLog("Reading TX: " + txid.TXID)
 
 	Tarot.CHeight = Wallet.Height
 
@@ -2340,7 +2340,7 @@ func SendAsset(scid, dest string, payload bool) error {
 	}
 
 	log.Println("[SendAsset] Send Asset TX:", txid)
-	addLog("Send Asset TX: " + txid.TXID)
+	AddLog("Send Asset TX: " + txid.TXID)
 
 	return err
 }

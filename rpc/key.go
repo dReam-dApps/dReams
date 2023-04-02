@@ -35,7 +35,7 @@ func GenerateKey() string {
 	Wallet.KeyLock = true
 	EncryptFile([]byte(str), "config/.key", Wallet.UserPass, Wallet.Address)
 	log.Println("[Holdero] Round Key: ", str)
-	addLog("Round Key: " + str)
+	AddLog("Round Key: " + str)
 
 	return str
 }

@@ -1080,7 +1080,7 @@ func compareAll(r *ranker) (end_res string) { /// Main compare to determine winn
 
 	if !Round.Printed {
 		Round.Printed = true
-		addLog(end_res)
+		AddLog(end_res)
 	}
 
 	return end_res
