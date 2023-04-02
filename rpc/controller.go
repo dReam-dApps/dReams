@@ -1021,7 +1021,12 @@ func allFoldedWinner() {
 				Signal.Paid = true
 				go func() {
 					time.Sleep(time.Duration(Times.Delay) * time.Second)
-					PayOut(Round.Winner)
+					retry := 0
+					for retry < 4 {
+						tx := PayOut(Round.Winner)
+						time.Sleep(time.Second)
+						retry += ConfirmTx(tx, "Holdero", retry)
+					}
 				}()
 			}
 		}

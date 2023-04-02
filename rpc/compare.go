@@ -721,7 +721,12 @@ func payWinningHand(w int) {
 			Signal.Paid = true
 			go func() {
 				time.Sleep(time.Duration(Times.Delay) * time.Second)
-				PayOut(winner)
+				retry := 0
+				for retry < 4 {
+					tx := PayOut(winner)
+					time.Sleep(time.Second)
+					retry += ConfirmTx(tx, "Holdero", retry)
+				}
 			}()
 		}
 	}
@@ -1061,7 +1066,12 @@ func compareAll(r *ranker) (end_res string) { /// Main compare to determine winn
 					Signal.Paid = true
 					go func() {
 						time.Sleep(time.Duration(Times.Delay) * time.Second)
-						PayoutSplit(*r, Round.F1, Round.F2, Round.F3, Round.F4, Round.F5, Round.F6)
+						retry := 0
+						for retry < 4 {
+							tx := PayoutSplit(*r, Round.F1, Round.F2, Round.F3, Round.F4, Round.F5, Round.F6)
+							time.Sleep(time.Second)
+							retry += ConfirmTx(tx, "Holdero", retry)
+						}
 					}()
 				}
 			}

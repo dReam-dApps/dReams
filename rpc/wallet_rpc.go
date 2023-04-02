@@ -652,7 +652,8 @@ func Check() error { /// holdero check and fold
 	return err
 }
 
-func PayOut(w string) error { /// holdero single winner
+// Holdero single winner payout
+func PayOut(w string) string {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
@@ -680,16 +681,17 @@ func PayOut(w string) error { /// holdero single winner
 	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
 	if err != nil {
 		log.Println("[PayOut]", err)
-		return nil
+		return ""
 	}
 
 	log.Println("[Holdero] Payout TX:", txid)
 	addLog("Holdero Payout TX: " + txid.TXID)
 
-	return err
+	return txid.TXID
 }
 
-func PayoutSplit(r ranker, f1, f2, f3, f4, f5, f6 bool) error { /// holdero split winners
+// Holdero split winners payout
+func PayoutSplit(r ranker, f1, f2, f3, f4, f5, f6 bool) string {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
@@ -759,13 +761,13 @@ func PayoutSplit(r ranker, f1, f2, f3, f4, f5, f6 bool) error { /// holdero spli
 	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
 	if err != nil {
 		log.Println("[PayoutSplit]", err)
-		return nil
+		return ""
 	}
 
 	log.Println("[Holdero] Split Winner TX:", txid)
 	addLog("Split Winner TX: " + txid.TXID)
 
-	return err
+	return txid.TXID
 }
 
 func RevealKey(key string) error { /// holdero reveal
@@ -2341,4 +2343,32 @@ func SendAsset(scid, dest string, payload bool) error {
 	addLog("Send Asset TX: " + txid.TXID)
 
 	return err
+}
+
+func ConfirmTx(txid string, tag string, tries int) (retry int) {
+	count := 0
+	for (tries < 3) && Wallet.Connect && Signal.Daemon {
+		count++
+		time.Sleep(2 * time.Second)
+		if tx, _ := GetDaemonTx(txid); tx != nil {
+			if count > 36 {
+				break
+			}
+
+			if tx.In_pool {
+				continue
+			} else if !tx.In_pool && tx.Block_Height > 1 && tx.ValidBlock != "" {
+				log.Printf("[%s] TX Confirmed\n", tag)
+				return 100
+			} else if !tx.In_pool && tx.Block_Height == 0 && tx.ValidBlock == "" {
+				log.Printf("[%s] TX Failed, Retrying\n", tag)
+				time.Sleep(6 * time.Second)
+				return 1
+			}
+		}
+	}
+
+	log.Printf("[%s] Could Not Confirm TX\n", tag)
+
+	return 100
 }
