@@ -2372,3 +2372,43 @@ func ConfirmTx(txid string, tag string, tries int) (retry int) {
 
 	return 100
 }
+
+// Send a message through Dero transaction
+func SendMessage(dest, msg string, rings uint64) error {
+	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
+	defer cancel()
+
+	var dstport [8]byte
+	rand.Read(dstport[:])
+
+	response := rpc.Arguments{
+		{Name: rpc.RPC_DESTINATION_PORT, DataType: rpc.DataUint64, Value: binary.BigEndian.Uint64(dstport[:])},
+		{Name: rpc.RPC_SOURCE_PORT, DataType: rpc.DataUint64, Value: uint64(0)},
+		{Name: rpc.RPC_COMMENT, DataType: rpc.DataString, Value: msg},
+	}
+
+	t1 := rpc.Transfer{
+		Destination: dest,
+		Amount:      1,
+		Burn:        0,
+		Payload_RPC: response,
+	}
+
+	t := []rpc.Transfer{t1}
+	txid := rpc.Transfer_Result{}
+	params := &rpc.Transfer_Params{
+		Transfers: t,
+		SC_RPC:    rpc.Arguments{},
+		Ringsize:  rings,
+	}
+
+	err := rpcClientW.CallFor(ctx, &txid, "transfer", params)
+	if err != nil {
+		log.Println("[SendMessage]", err)
+		return nil
+	}
+
+	log.Println("[SendMessage] Send Message TX:", txid)
+
+	return err
+}
