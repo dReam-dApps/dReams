@@ -138,7 +138,7 @@ func BaccaratButtons() fyne.CanvasObject {
 			rpc.Display.BaccRes = "Searching..."
 			rpc.Bacc.Found = false
 			rpc.Bacc.Display = false
-			rpc.FetchBaccHand(rpc.Signal.Daemon, txid)
+			rpc.FetchBaccHand(txid)
 			if !rpc.Bacc.Found {
 				rpc.Display.BaccRes = "Hand Not Found"
 				BaccBuffer(false)

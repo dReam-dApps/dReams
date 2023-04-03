@@ -135,13 +135,13 @@ func preditctionOpts() fyne.CanvasObject { /// set prediction options
 		if isOnChainPrediction(prediction) {
 			switch onChainPrediction(prediction) {
 			case 1:
-				a, _ = rpc.GetDifficulty(rpc.Display.P_feed)
+				a = rpc.GetDifficulty(rpc.Display.P_feed)
 				ownerConfirmPopUp(6, a)
 			case 2:
-				a, _ = rpc.GetBlockTime(rpc.Display.P_feed)
+				a = rpc.GetBlockTime(rpc.Display.P_feed)
 				ownerConfirmPopUp(6, a)
 			case 3:
-				d, _ := rpc.DaemonHeight(rpc.Display.P_feed)
+				d := rpc.DaemonHeight(rpc.Display.P_feed)
 				a = float64(d)
 				ownerConfirmPopUp(6, a)
 			default:
@@ -164,13 +164,13 @@ func preditctionOpts() fyne.CanvasObject { /// set prediction options
 		if isOnChainPrediction(prediction) {
 			switch onChainPrediction(prediction) {
 			case 1:
-				a, _ = rpc.GetDifficulty(rpc.Display.P_feed)
+				a = rpc.GetDifficulty(rpc.Display.P_feed)
 				ownerConfirmPopUp(7, a)
 			case 2:
-				a, _ = rpc.GetBlockTime(rpc.Display.P_feed)
+				a = rpc.GetBlockTime(rpc.Display.P_feed)
 				ownerConfirmPopUp(7, a)
 			case 3:
-				d, _ := rpc.DaemonHeight(rpc.Display.P_feed)
+				d := rpc.DaemonHeight(rpc.Display.P_feed)
 				a = float64(d)
 				ownerConfirmPopUp(7, a)
 			default:
@@ -376,7 +376,7 @@ func serviceOpts() fyne.CanvasObject {
 	var start uint64
 	height := widget.NewCheck("Start from current height", func(b bool) {
 		if b {
-			start, _ = rpc.DaemonHeight(rpc.Round.Daemon)
+			start = rpc.DaemonHeight(rpc.Round.Daemon)
 			entry.SetText(strconv.Itoa(int(start)))
 			entry.Disable()
 		} else {

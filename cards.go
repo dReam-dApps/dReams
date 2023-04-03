@@ -771,11 +771,11 @@ func TarotItems(tabs *container.AppTabs) fyne.CanvasObject {
 	search_button := widget.NewButton("    Search   ", func() {
 		txid := search_entry.Text
 		if len(txid) == 64 {
-			signer, _ := rpc.VerifySigner(search_entry.Text)
+			signer := rpc.VerifySigner(search_entry.Text)
 			if signer {
 				rpc.Tarot.Display = true
 				table.Iluma.Label.SetText("")
-				rpc.FetchTarotReading(rpc.Signal.Daemon, txid)
+				rpc.FetchTarotReading(txid)
 				if rpc.Tarot.T_card2 != 0 && rpc.Tarot.T_card3 != 0 {
 					table.Iluma.Card1.Objects[1] = TarotCard(rpc.Tarot.T_card1)
 					table.Iluma.Card2.Objects[1] = TarotCard(rpc.Tarot.T_card2)

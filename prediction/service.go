@@ -350,7 +350,7 @@ func dReamService(start uint64, payouts, transfers bool) {
 		}
 
 		if start == 0 {
-			start, _ = rpc.DaemonHeight(rpc.Round.Daemon)
+			start = rpc.DaemonHeight(rpc.Round.Daemon)
 		}
 
 		if start > 0 {
@@ -440,11 +440,11 @@ func runPredictionPayouts(print bool) {
 		if isOnChainPrediction(pre) {
 			switch onChainPrediction(pre) {
 			case 1:
-				value, _ = rpc.GetDifficulty(rpc.Display.P_feed)
+				value = rpc.GetDifficulty(rpc.Display.P_feed)
 			case 2:
-				value, _ = rpc.GetBlockTime(rpc.Display.P_feed)
+				value = rpc.GetBlockTime(rpc.Display.P_feed)
 			case 3:
-				d, _ := rpc.DaemonHeight(rpc.Display.P_feed)
+				d := rpc.DaemonHeight(rpc.Display.P_feed)
 				value = float64(d)
 			default:
 
@@ -502,11 +502,11 @@ func runPredictionPayouts(print bool) {
 			sent = true
 			switch onChainPrediction(rpc.Display.Prediction) {
 			case 1:
-				amt, _ = rpc.GetDifficulty(rpc.Display.P_feed)
+				amt = rpc.GetDifficulty(rpc.Display.P_feed)
 			case 2:
-				amt, _ = rpc.GetBlockTime(rpc.Display.P_feed)
+				amt = rpc.GetBlockTime(rpc.Display.P_feed)
 			case 3:
-				d, _ := rpc.DaemonHeight(rpc.Display.P_feed)
+				d := rpc.DaemonHeight(rpc.Display.P_feed)
 				amt = float64(d)
 			default:
 				sent = false

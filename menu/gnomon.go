@@ -281,42 +281,42 @@ func StopIndicators() {
 }
 
 func searchFilters() (filter []string) {
-	holdero110, _ := rpc.GetHoldero110Code(rpc.Signal.Daemon, 0)
+	holdero110 := rpc.GetHoldero110Code(0)
 	if holdero110 != "" {
 		filter = append(filter, holdero110)
 	}
 
-	holdero100, _ := rpc.GetHoldero100Code(rpc.Signal.Daemon)
+	holdero100 := rpc.GetHoldero100Code()
 	if holdero100 != "" {
 		filter = append(filter, holdero100)
 	}
 
-	bacc, _ := rpc.GetBaccCode(rpc.Signal.Daemon)
+	bacc := rpc.GetBaccCode()
 	if bacc != "" {
 		filter = append(filter, bacc)
 	}
 
-	predict, _ := rpc.GetPredictCode(rpc.Signal.Daemon, 0)
+	predict := rpc.GetPredictCode(0)
 	if predict != "" {
 		filter = append(filter, predict)
 	}
 
-	sports, _ := rpc.GetSportsCode(rpc.Signal.Daemon, 0)
+	sports := rpc.GetSportsCode(0)
 	if sports != "" {
 		filter = append(filter, sports)
 	}
 
-	gnomon, _ := rpc.GetGnomonCode(rpc.Signal.Daemon)
+	gnomon := rpc.GetGnomonCode()
 	if sports != "" {
 		filter = append(filter, gnomon)
 	}
 
-	names, _ := rpc.GetNameServiceCode(rpc.Signal.Daemon)
+	names := rpc.GetNameServiceCode()
 	if names != "" {
 		filter = append(filter, names)
 	}
 
-	ratings, _ := rpc.GetSCCode(rpc.Signal.Daemon, rpc.RatingSCID)
+	ratings := rpc.GetSCCode(rpc.RatingSCID)
 	if ratings != "" {
 		filter = append(filter, ratings)
 	}
@@ -335,7 +335,7 @@ func manualIndex(scid []string) {
 	scidstoadd := make(map[string]*structures.FastSyncImport)
 
 	for i := range scid {
-		owner, _ := rpc.CheckForIndex(scid[i])
+		owner := rpc.CheckForIndex(scid[i])
 		if owner != nil {
 			scidstoadd[scid[i]] = &structures.FastSyncImport{}
 			scidstoadd[scid[i]].Owner = owner.(string)
@@ -412,12 +412,12 @@ func g45Index() {
 	Gnomes.Indexer.SearchFilter = []string{}
 	scidstoadd := make(map[string]*structures.FastSyncImport)
 
-	a, _ := rpc.GetG45Collection(table.ATeam_coll)
+	a := rpc.GetG45Collection(table.ATeam_coll)
 	for i := range a {
 		scidstoadd[a[i]] = &structures.FastSyncImport{}
 	}
 
-	s, _ := rpc.GetG45Collection(table.Seals_coll)
+	s := rpc.GetG45Collection(table.Seals_coll)
 	for i := range s {
 		scidstoadd[s[i]] = &structures.FastSyncImport{}
 	}

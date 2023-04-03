@@ -57,7 +57,7 @@ func SportsContractEntry() fyne.Widget {
 		if rpc.Signal.Daemon {
 			go func() {
 				if len(SportsControl.Contract) == 64 {
-					yes, _ := rpc.ValidBetContract(SportsControl.Contract)
+					yes := rpc.ValidBetContract(SportsControl.Contract)
 					if yes {
 						menu.MenuControl.Sports_check.SetChecked(true)
 						if !menu.CheckActiveGames(SportsControl.Contract) {
@@ -149,7 +149,7 @@ func setSportsControls(str string) (item string) {
 			go SetSportsInfo(trimmed)
 			item = str
 			table.Actions.S_contract.SetText(trimmed)
-			finals, _ := rpc.FetchSportsFinal(rpc.Signal.Daemon, trimmed)
+			finals := rpc.FetchSportsFinal(trimmed)
 			SportsControl.Payout_log.SetText(formatFinals(trimmed, finals))
 
 		}

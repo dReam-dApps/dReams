@@ -275,7 +275,7 @@ func TourneyDeposit(bal uint64, name string) error {
 		}
 
 		t := []rpc.Transfer{t1}
-		fee, _ := GasEstimate(TourneySCID, "[Holdero]", args, t)
+		fee := GasEstimate(TourneySCID, "[Holdero]", args, t)
 		params := &rpc.Transfer_Params{
 			Transfers: t,
 			SC_ID:     TourneySCID,
@@ -343,7 +343,7 @@ func SitDown(name, av string) error { /// sit at holdero table
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(Round.Contract, "[Holdero]", args, t)
+	fee := GasEstimate(Round.Contract, "[Holdero]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     Round.Contract,
@@ -382,7 +382,7 @@ func Leave() error { /// leave holdero table
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(Round.Contract, "[Holdero]", args, t)
+	fee := GasEstimate(Round.Contract, "[Holdero]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     Round.Contract,
@@ -438,7 +438,7 @@ func SetTable(seats int, bb, sb, ante uint64, chips, name, av string) error { //
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(Round.Contract, "[Holdero]", args, t)
+	fee := GasEstimate(Round.Contract, "[Holdero]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     Round.Contract,
@@ -516,7 +516,7 @@ func DealHand() error { /// holdero hand
 		t = append(t, t1)
 	}
 
-	fee, _ := GasEstimate(Round.Contract, "[Holdero]", args, t)
+	fee := GasEstimate(Round.Contract, "[Holdero]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     Round.Contract,
@@ -571,7 +571,7 @@ func Bet(amt string) error { /// holdero bet
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(Round.Contract, "[Holdero]", args, t)
+	fee := GasEstimate(Round.Contract, "[Holdero]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     Round.Contract,
@@ -630,7 +630,7 @@ func Check() error { /// holdero check and fold
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(Round.Contract, "[Holdero]", args, t)
+	fee := GasEstimate(Round.Contract, "[Holdero]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     Round.Contract,
@@ -669,7 +669,7 @@ func PayOut(w string) string {
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(Round.Contract, "[Holdero]", args, t)
+	fee := GasEstimate(Round.Contract, "[Holdero]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     Round.Contract,
@@ -749,7 +749,7 @@ func PayoutSplit(r ranker, f1, f2, f3, f4, f5, f6 bool) string {
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(Round.Contract, "[Holdero]", args, t)
+	fee := GasEstimate(Round.Contract, "[Holdero]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     Round.Contract,
@@ -787,7 +787,7 @@ func RevealKey(key string) error { /// holdero reveal
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(Round.Contract, "[Holdero]", args, t)
+	fee := GasEstimate(Round.Contract, "[Holdero]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     Round.Contract,
@@ -825,7 +825,7 @@ func CleanTable(amt uint64) error { /// shuffle and clean holdero
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(Round.Contract, "[Holdero]", args, t)
+	fee := GasEstimate(Round.Contract, "[Holdero]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     Round.Contract,
@@ -861,7 +861,7 @@ func TimeOut() error {
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(Round.Contract, "[Holdero]", args, t)
+	fee := GasEstimate(Round.Contract, "[Holdero]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     Round.Contract,
@@ -897,7 +897,7 @@ func ForceStat() error {
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(Round.Contract, "[Holdero]", args, t)
+	fee := GasEstimate(Round.Contract, "[Holdero]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     Round.Contract,
@@ -963,7 +963,7 @@ func SharedDeckUrl(face, faceUrl, back, backUrl string) error {
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(Round.Contract, "[Holdero]", args, t)
+	fee := GasEstimate(Round.Contract, "[Holdero]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     Round.Contract,
@@ -999,7 +999,7 @@ func GetdReams(amt uint64) error {
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(BaccSCID, "[dReams]", args, t)
+	fee := GasEstimate(BaccSCID, "[dReams]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     BaccSCID,
@@ -1037,7 +1037,7 @@ func TradedReams(amt uint64) error {
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(BaccSCID, "[dReams]", args, t)
+	fee := GasEstimate(BaccSCID, "[dReams]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     BaccSCID,
@@ -1079,9 +1079,9 @@ func UploadHolderoContract(d, w bool, pub int) error {
 		rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 		defer cancel()
 
-		code, code_err := GetHoldero110Code(d, pub)
-		if code_err != nil {
-			log.Println("[UploadHolderoContract]", code_err)
+		code := GetHoldero110Code(pub)
+		if code == "" {
+			log.Println("[UploadHolderoContract] Could not get SC code")
 			return nil
 		}
 
@@ -1130,7 +1130,7 @@ func BaccBet(amt, w string) error {
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(BaccSCID, "[Baccarat]", args, t)
+	fee := GasEstimate(BaccSCID, "[Baccarat]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     BaccSCID,
@@ -1182,7 +1182,7 @@ func PredictHigher(scid, addr string) error {
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(scid, "[Predictions]", args, t)
+	fee := GasEstimate(scid, "[Predictions]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     scid,
@@ -1222,7 +1222,7 @@ func PredictLower(scid, addr string) error {
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(scid, "[Predictions]", args, t)
+	fee := GasEstimate(scid, "[Predictions]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     scid,
@@ -1260,7 +1260,7 @@ func RateSCID(scid string, amt, pos uint64) error {
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(RatingSCID, "[RateSCID]", args, t)
+	fee := GasEstimate(RatingSCID, "[RateSCID]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     RatingSCID,
@@ -1298,7 +1298,7 @@ func RateSCID(scid string, amt, pos uint64) error {
 // 	}
 //
 // 	t := []rpc.Transfer{t1}
-// 	fee, _ := GasEstimate(scid, "[Predictions]", args, t)
+// 	fee := GasEstimate(scid, "[Predictions]", args, t)
 // 	params := &rpc.Transfer_Params{
 // 		Transfers: t,
 // 		SC_ID:     scid,
@@ -1335,7 +1335,7 @@ func RateSCID(scid string, amt, pos uint64) error {
 // 	}
 //
 // 	t := []rpc.Transfer{t1}
-// 	fee, _ := GasEstimate(scid, "[Predictions]", args, t)
+// 	fee := GasEstimate(scid, "[Predictions]", args, t)
 // 	params := &rpc.Transfer_Params{
 // 		Transfers: t,
 // 		SC_ID:     scid,
@@ -1390,7 +1390,7 @@ func AuotPredict(p int, amt, src uint64, scid, addr, tx string) error {
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(scid, "[AuotPredict]", args, t)
+	fee := GasEstimate(scid, "[AuotPredict]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     scid,
@@ -1477,7 +1477,7 @@ func AuotBook(amt, pre, src uint64, n, abv, scid, addr, tx string) error {
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(scid, "[AuotBook]", args, t)
+	fee := GasEstimate(scid, "[AuotBook]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     scid,
@@ -1526,7 +1526,7 @@ func VarUpdate(scid string, ta, tb, tc, l, hl int) error { /// change leaderboar
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(scid, "[VarUpdate]", args, t)
+	fee := GasEstimate(scid, "[VarUpdate]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     scid,
@@ -1563,7 +1563,7 @@ func AddOwner(scid, addr string) error { /// change leaderboard name
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(scid, "[Predictions]", args, t)
+	fee := GasEstimate(scid, "[Predictions]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     scid,
@@ -1600,7 +1600,7 @@ func RemoveOwner(scid string, num int) error {
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(scid, "[Predictions]", args, t)
+	fee := GasEstimate(scid, "[Predictions]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     scid,
@@ -1637,7 +1637,7 @@ func PredictionRefund(scid, tic string) error { /// change leaderboard name
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(scid, "[Predictions]", args, t)
+	fee := GasEstimate(scid, "[Predictions]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     scid,
@@ -1689,7 +1689,7 @@ func PickTeam(scid, multi, n string, a uint64, pick int) error { /// pick sports
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(scid, "[Sports]", args, t)
+	fee := GasEstimate(scid, "[Sports]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     scid,
@@ -1727,7 +1727,7 @@ func SportsRefund(scid, tic, n string) error { /// change leaderboard name
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(scid, "[Sports]", args, t)
+	fee := GasEstimate(scid, "[Sports]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     scid,
@@ -1768,7 +1768,7 @@ func SetSports(end int, amt, dep uint64, scid, league, game, feed string) error 
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(scid, "[Sports]", args, t)
+	fee := GasEstimate(scid, "[Sports]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     scid,
@@ -1809,7 +1809,7 @@ func SetPrediction(end, mark int, amt, dep uint64, scid, predict, feed string) e
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(scid, "[Predictions]", args, t)
+	fee := GasEstimate(scid, "[Predictions]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     scid,
@@ -1852,7 +1852,7 @@ func CancelInitiatedBet(scid string, b int) error {
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(scid, tag, args, t)
+	fee := GasEstimate(scid, tag, args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     scid,
@@ -1894,7 +1894,7 @@ func PostPrediction(scid string, price int) error {
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(scid, "[Predictions]", args, t)
+	fee := GasEstimate(scid, "[Predictions]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     scid,
@@ -1926,7 +1926,7 @@ func EndSports(scid, num, team string) error {
 	txid := rpc.Transfer_Result{}
 
 	t := []rpc.Transfer{}
-	fee, _ := GasEstimate(scid, "[Sports]", args, t)
+	fee := GasEstimate(scid, "[Sports]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     scid,
@@ -1957,7 +1957,7 @@ func EndPrediction(scid string, price int) error {
 	txid := rpc.Transfer_Result{}
 
 	t := []rpc.Transfer{}
-	fee, _ := GasEstimate(scid, "[Predictions]", args, t)
+	fee := GasEstimate(scid, "[Predictions]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_Value:  0,
@@ -1986,20 +1986,19 @@ func UploadBetContract(d, w, c bool, pub int) error {
 
 		var fee uint64
 		var code string
-		var code_err error
 
 		if c {
 			fee = 12500
-			code, code_err = GetPredictCode(d, pub)
-			if code_err != nil {
-				log.Println("[UploadBetContract]", code_err)
+			code = GetPredictCode(pub)
+			if code == "" {
+				log.Println("[UploadBetContract] Could not get SC code")
 				return nil
 			}
 		} else {
 			fee = 14500
-			code, code_err = GetSportsCode(d, pub)
-			if code_err != nil {
-				log.Println("[UploadBetContract]", code_err)
+			code = GetSportsCode(pub)
+			if code == "" {
+				log.Println("[UploadBetContract] Could not get SC code")
 				return nil
 			}
 		}
@@ -2055,7 +2054,7 @@ func SetHeaders(name, desc, icon, scid string) error {
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(GnomonSCID, "[dReams]", args, t)
+	fee := GasEstimate(GnomonSCID, "[dReams]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_Value:  0,
@@ -2092,7 +2091,7 @@ func ClaimNfa(scid string) error {
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(scid, "[dReams]", args, t)
+	fee := GasEstimate(scid, "[dReams]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     scid,
@@ -2128,7 +2127,7 @@ func NfaBidBuy(scid, bidor string, amt uint64) error {
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(scid, "[dReams]", args, t)
+	fee := GasEstimate(scid, "[dReams]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     scid,
@@ -2190,7 +2189,7 @@ func NfaSetListing(scid, list, char string, dur, amt, perc uint64) error {
 	}
 
 	t := []rpc.Transfer{t1, t2, t3}
-	fee, _ := GasEstimate(scid, "[dReams]", args, t)
+	fee := GasEstimate(scid, "[dReams]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     scid,
@@ -2224,7 +2223,7 @@ func NfaCancelClose(scid, c string) error {
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(scid, "[dReams]", args, t)
+	fee := GasEstimate(scid, "[dReams]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     scid,
@@ -2266,7 +2265,7 @@ func TarotReading(num int) error {
 	}
 
 	t := []rpc.Transfer{t1}
-	fee, _ := GasEstimate(TarotSCID, "[Tarot]", args, t)
+	fee := GasEstimate(TarotSCID, "[Tarot]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     TarotSCID,
@@ -2350,7 +2349,7 @@ func ConfirmTx(txid string, tag string, tries int) (retry int) {
 	for (tries < 3) && Wallet.Connect && Signal.Daemon {
 		count++
 		time.Sleep(2 * time.Second)
-		if tx, _ := GetDaemonTx(txid); tx != nil {
+		if tx := GetDaemonTx(txid); tx != nil {
 			if count > 36 {
 				break
 			}

@@ -60,7 +60,7 @@ func PreictionContractEntry() fyne.Widget {
 		if rpc.Signal.Daemon {
 			go func() {
 				if len(PredictControl.Contract) == 64 {
-					yes, _ := rpc.ValidBetContract(PredictControl.Contract)
+					yes := rpc.ValidBetContract(PredictControl.Contract)
 					if yes {
 						menu.MenuControl.Predict_check.SetChecked(true)
 					} else {
@@ -573,7 +573,7 @@ func GetPrediction(d bool, scid string) (info string) {
 				}
 
 				rpc.Predict.Init = false
-				txid, _ := rpc.FetchPredictionFinal(rpc.Signal.Daemon, scid)
+				txid := rpc.FetchPredictionFinal(scid)
 
 				if mark != nil {
 					split := strings.Split(p_final, "_")

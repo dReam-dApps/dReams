@@ -448,9 +448,9 @@ func fetch(quit chan struct{}) { /// main loop
 			if !rpc.Signal.Startup {
 				menu.CheckConnection()
 				menu.GnomonEndPoint(rpc.Signal.Daemon, menu.Gnomes.Init, menu.Gnomes.Sync)
-				rpc.FetchHolderoSC(rpc.Signal.Daemon, rpc.Signal.Contract)
-				rpc.FetchBaccSC(rpc.Signal.Daemon)
-				rpc.FetchTarotSC(rpc.Signal.Daemon)
+				rpc.FetchHolderoSC()
+				rpc.FetchBaccSC()
+				rpc.FetchTarotSC()
 				menu.GnomonState(rpc.Signal.Daemon, menu.Gnomes.Init, isWindows())
 				background.Refresh()
 
@@ -760,7 +760,7 @@ func BaccRefresh() {
 
 	if !rpc.Bacc.Display {
 		B.CardsContent = *container.NewWithoutLayout(clearBaccCards())
-		rpc.FetchBaccHand(rpc.Signal.Daemon, rpc.Bacc.Last)
+		rpc.FetchBaccHand(rpc.Bacc.Last)
 		if rpc.Bacc.Found {
 			B.CardsContent = *container.NewWithoutLayout(showBaccCards())
 		}
@@ -816,7 +816,7 @@ func TarotRefresh() {
 	T.RightLabel.SetText("dReams Balance: " + rpc.Display.Token_balance + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
 
 	if !rpc.Tarot.Display {
-		rpc.FetchTarotReading(rpc.Signal.Daemon, rpc.Tarot.Last)
+		rpc.FetchTarotReading(rpc.Tarot.Last)
 		table.Iluma.Box.Refresh()
 		if rpc.Tarot.Found {
 			rpc.Tarot.Display = true
@@ -919,7 +919,7 @@ func refreshIndexDisplay(c bool) {
 
 func refreshDaemonDisplay(c bool) {
 	if c && rpc.Signal.Daemon {
-		dHeight, _ := rpc.DaemonHeight(rpc.Round.Daemon)
+		dHeight := rpc.DaemonHeight(rpc.Round.Daemon)
 		d := strconv.Itoa(int(dHeight))
 		table.Assets.Daem_height.Text = (" Daemon Height: " + d)
 		table.Assets.Daem_height.Refresh()
@@ -1064,7 +1064,7 @@ func MainTab(ti *container.TabItem) {
 		dReams.tarot = false
 		go func() {
 			now := time.Now().Unix()
-			rpc.FetchHolderoSC(rpc.Signal.Daemon, rpc.Signal.Contract)
+			rpc.FetchHolderoSC()
 			if now > rpc.Round.Last+33 {
 				HolderoRefresh()
 			}
