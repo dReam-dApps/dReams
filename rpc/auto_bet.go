@@ -1005,7 +1005,7 @@ func maxBet(amt float64) bool {
 
 func callBet(m float64, live bool) bool {
 	var amt float64
-	if Signal.PlacedBet {
+	if Signal.PlacedBet && Round.Raised > 0 {
 		amt = float64(Round.Raised) / 100000
 	} else {
 		amt = float64(Round.Wager) / 100000
