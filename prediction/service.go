@@ -1284,7 +1284,7 @@ func sendToPrediction(pre int, scid, destination_expected string, e dero.Entry) 
 	} else if played[0] >= limit[0] {
 		rpc.ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "Bet Limit Reached", e.TXID)
 	} else {
-		rpc.AuotPredict(pre, e.Amount, e.SourcePort, scid, destination_expected, e.TXID)
+		rpc.AutoPredict(pre, e.Amount, e.SourcePort, scid, destination_expected, e.TXID)
 	}
 
 	Service.Last_block = rpc.Wallet.Height
@@ -1331,7 +1331,7 @@ func sendToSports(n, abv, team, scid, destination_expected string, e dero.Entry)
 	} else if played[0] >= limit[0] {
 		rpc.ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "Bet Limit Reached", e.TXID)
 	} else {
-		rpc.AuotBook(e.Amount, pre, e.SourcePort, n, abv, scid, destination_expected, e.TXID)
+		rpc.AutoBook(e.Amount, pre, e.SourcePort, n, abv, scid, destination_expected, e.TXID)
 	}
 
 	Service.Last_block = rpc.Wallet.Height

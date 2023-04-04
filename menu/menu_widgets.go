@@ -1105,7 +1105,7 @@ Confirm to proceed with install.`
 
 	confirm_button := widget.NewButton("Confirm", func() {
 		if choice.SelectedIndex() < 2 && choice.SelectedIndex() >= 0 {
-			rpc.UploadHolderoContract(rpc.Signal.Daemon, rpc.Wallet.Connect, choice.SelectedIndex())
+			rpc.UploadHolderoContract(choice.SelectedIndex())
 			cw.Close()
 		}
 	})
@@ -1186,14 +1186,14 @@ Choose Predictions or Sports to proceed with install.`
 
 	pre_button := widget.NewButton("Predictions", func() {
 		if choice.SelectedIndex() < 2 && choice.SelectedIndex() >= 0 {
-			rpc.UploadBetContract(rpc.Signal.Daemon, rpc.Wallet.Connect, true, choice.SelectedIndex())
+			rpc.UploadBetContract(true, choice.SelectedIndex())
 			cw.Close()
 		}
 	})
 
 	sports_button := widget.NewButton("Sports", func() {
 		if choice.SelectedIndex() < 2 && choice.SelectedIndex() >= 0 {
-			rpc.UploadBetContract(rpc.Signal.Daemon, rpc.Wallet.Connect, false, choice.SelectedIndex())
+			rpc.UploadBetContract(false, choice.SelectedIndex())
 			cw.Close()
 		}
 	})

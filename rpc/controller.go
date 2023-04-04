@@ -22,6 +22,23 @@ type playerId struct {
 	Name   string `json:"name"`
 	Avatar string `json:"avatar"`
 }
+type CardSpecs struct {
+	Faces struct {
+		Name string `json:"Name"`
+		Url  string `json:"Url"`
+	} `json:"Faces"`
+	Backs struct {
+		Name string `json:"Name"`
+		Url  string `json:"Url"`
+	} `json:"Backs"`
+}
+
+type TableSpecs struct {
+	MaxBet float64 `json:"Maxbet"`
+	MinBuy float64 `json:"Minbuy"`
+	MaxBuy float64 `json:"Maxbuy"`
+	Time   int     `json:"Time"`
+}
 
 type displayStrings struct {
 	Seats    string

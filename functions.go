@@ -440,11 +440,11 @@ func fetch(quit chan struct{}) { /// main loop
 		select {
 		case <-ticker.C: /// do on interval
 			rpc.Ping()
-			rpc.EchoWallet(rpc.Wallet.Connect)
-			rpc.GetBalance(rpc.Wallet.Connect)
-			go rpc.DreamsBalance(rpc.Wallet.Connect)
-			rpc.TourneyBalance(rpc.Wallet.Connect, rpc.Round.Tourney, rpc.TourneySCID)
-			rpc.GetHeight(rpc.Wallet.Connect)
+			rpc.EchoWallet()
+			rpc.GetBalance()
+			go rpc.DreamsBalance()
+			rpc.TourneyBalance()
+			rpc.GetHeight()
 			if !rpc.Signal.Startup {
 				menu.CheckConnection()
 				menu.GnomonEndPoint(rpc.Signal.Daemon, menu.Gnomes.Init, menu.Gnomes.Sync)

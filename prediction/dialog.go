@@ -340,7 +340,7 @@ func serviceOpts() fyne.CanvasObject {
 	delete := widget.NewButton("Delete Tx", func() {
 		if !Service.Processing && !rpc.Wallet.Service {
 			if txid.Validate() == nil {
-				e, _ := rpc.GetWalletTx(txid.Text)
+				e := rpc.GetWalletTx(txid.Text)
 				if e != nil {
 					db := boltDB()
 					defer db.Close()
@@ -355,7 +355,7 @@ func serviceOpts() fyne.CanvasObject {
 	store := widget.NewButton("Store Tx", func() {
 		if !Service.Processing && !rpc.Wallet.Service {
 			if txid.Validate() == nil {
-				e, _ := rpc.GetWalletTx(txid.Text)
+				e := rpc.GetWalletTx(txid.Text)
 				if e != nil {
 					db := boltDB()
 					defer db.Close()
