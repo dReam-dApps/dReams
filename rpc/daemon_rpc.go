@@ -550,7 +550,7 @@ func FetchHolderoSC() {
 
 			}
 
-			if Round.Version >= 110 && Round.ID == 1 && Times.Kick > 0 && !Signal.My_turn && Round.Pot > 0 {
+			if Round.Version >= 110 && Round.ID == 1 && Times.Kick > 0 && !Signal.My_turn && Round.Pot > 0 && !Round.LocalEnd && !Signal.End {
 				Last_jv := result.VariableStringKeys["Last"]
 				if Last_jv != nil {
 					now := time.Now().Unix()
