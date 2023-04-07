@@ -46,6 +46,7 @@ type marketItems struct {
 	Cover         canvas.Image
 	Details_box   fyne.Container
 	Market_box    fyne.Container
+	Confirming    bool
 	Buy_amt       uint64
 	Bid_amt       uint64
 	Viewing       string
@@ -76,7 +77,8 @@ func (e *marketAmt) TypedKey(k *fyne.KeyEvent) {
 	e.Entry.TypedKey(k)
 }
 
-func MarketItems() fyne.CanvasObject {
+// NFA market amount entry
+func MarketEntry() fyne.CanvasObject {
 	Market.Entry = &marketAmt{}
 	Market.Entry.ExtendBaseWidget(Market.Entry)
 	Market.Entry.SetText("0.0")
@@ -88,59 +90,40 @@ func MarketItems() fyne.CanvasObject {
 		}
 	}
 
-	Market.Market_button = widget.NewButton("Bid", func() {
-		scid := Market.Viewing
-		if len(scid) == 64 {
-			text := Market.Market_button.Text
-			Market.Market_button.Hide()
-			if text == "Bid" {
-				amt := ToAtomicFive(Market.Entry.Text)
-				bidBuyConfirm(scid, amt, 0)
-			} else if text == "Buy" {
-				bidBuyConfirm(scid, Market.Buy_amt, 1)
-			}
-		}
-	})
-
-	Market.Market_button.Hide()
-
-	Market.Cancel_button = widget.NewButton("Cancel", func() {
-		confirmCancelClose(Market.Viewing, 1)
-	})
-
-	Market.Close_button = widget.NewButton("Close", func() {
-		confirmCancelClose(Market.Viewing, 0)
-	})
-
-	Market.Market_box = *container.NewAdaptiveGrid(6, Market.Entry, Market.Market_button, layout.NewSpacer(), layout.NewSpacer(), Market.Close_button, Market.Cancel_button)
-	Market.Market_box.Hide()
-
-	return &Market.Market_box
+	return Market.Entry
 }
 
-func bidBuyConfirm(scid string, amt uint64, b int) {
-	var text string
+// Confirm a bid or buy action of listed NFA
+func BidBuyConfirm(scid string, amt uint64, b int, obj *container.Split, reset fyne.CanvasObject) fyne.CanvasObject {
+	var text, coll, name string
 	f := float64(amt)
-	str := fmt.Sprintf("%.5f", f/100000)
+	amt_str := fmt.Sprintf("%.5f", f/100000)
 	switch b {
 	case 0:
-		text = "Bidding on SCID:\n\n" + scid + "\n\nBid amount: " + str + " Dero\n\nConfirm bid"
+		listing := checkNfaAuctionListing(scid)
+		split := strings.Split(listing, "   ")
+		if len(split) == 4 {
+			coll = split[0]
+			name = split[1]
+		}
+		text = fmt.Sprintf("Bidding on SCID:\n\n%s\n\nAsset: %s\n\nCollection: %s\n\nBid amount: %s Dero\n\nConfirm bid", scid, name, coll, amt_str)
 	case 1:
-		text = "Buying SCID:\n\n" + scid + "\n\nBuy amount: " + str + " Dero\n\nConfirm buy"
+		listing := checkNfaBuyListing(scid)
+		split := strings.Split(listing, "   ")
+		if len(split) == 4 {
+			coll = split[0]
+			name = split[1]
+		}
+		text = fmt.Sprintf("Buying SCID:\n\n%s\n\nAsset: %s\n\nCollection: %s\n\nAmount: %s Dero\n\nConfirm buy", scid, name, coll, amt_str)
 	default:
+
 	}
 
-	cw := fyne.CurrentApp().NewWindow("Confirm")
-	cw.Resize(fyne.NewSize(350, 350))
-	cw.SetFixedSize(true)
-	cw.SetIcon(Resource.SmallIcon)
-	cw.SetCloseIntercept(func() {
-		Market.Market_button.Show()
-		cw.Close()
-	})
+	Market.Confirming = true
 
 	label := widget.NewLabel(text)
 	label.Wrapping = fyne.TextWrapWord
+	label.Alignment = fyne.TextAlignCenter
 
 	confirm := widget.NewButton("Confirm", func() {
 		switch b {
@@ -148,86 +131,100 @@ func bidBuyConfirm(scid string, amt uint64, b int) {
 			rpc.NfaBidBuy(scid, "Bid", amt)
 		case 1:
 			rpc.NfaBidBuy(scid, "BuyItNow", amt)
-
 		default:
 
 		}
-		Market.Market_button.Show()
-		cw.Close()
+
+		obj.Trailing.(*fyne.Container).Objects[1] = reset
+		obj.Trailing.(*fyne.Container).Objects[1].Refresh()
+		Market.Confirming = false
 	})
 
 	cancel := widget.NewButton("Cancel", func() {
-		Market.Market_button.Show()
-		cw.Close()
+		obj.Trailing.(*fyne.Container).Objects[1] = reset
+		obj.Trailing.(*fyne.Container).Objects[1].Refresh()
+		Market.Confirming = false
 	})
 
 	left := container.NewVBox(confirm)
 	right := container.NewVBox(cancel)
 	buttons := container.NewAdaptiveGrid(2, left, right)
 
-	content := container.NewVBox(label, layout.NewSpacer(), buttons)
+	alpha := container.NewMax(canvas.NewRectangle(color.RGBA{0, 0, 0, 120}))
+	content := container.NewVBox(layout.NewSpacer(), label, layout.NewSpacer(), buttons)
 
-	img := *canvas.NewImageFromResource(Resource.Back2)
-	cw.SetContent(
-		container.New(layout.NewMaxLayout(),
-			&img,
-			content))
-	cw.Show()
+	return container.NewMax(alpha, content)
 }
 
-func confirmCancelClose(scid string, c int) {
-	if len(scid) == 64 {
-		var text string
+// Confirm a cancel or close action of listed NFA
+func ConfirmCancelClose(scid string, c int, obj *container.Split, reset fyne.CanvasObject) fyne.CanvasObject {
+	var text, coll, name string
+
+	if Market.Tab == "Buy" {
+		listing := checkNfaBuyListing(scid)
+		split := strings.Split(listing, "   ")
+		if len(split) == 4 {
+			coll = split[0]
+			name = split[1]
+		}
+	} else if Market.Tab == "Auction" {
+		listing := checkNfaAuctionListing(scid)
+		split := strings.Split(listing, "   ")
+		if len(split) == 4 {
+			coll = split[0]
+			name = split[1]
+		}
+	}
+	switch c {
+	case 0:
+		text = fmt.Sprintf("Close listing for SCID:\n\n%s\n\nAsset: %s\n\nCollection: %s", scid, name, coll)
+	case 1:
+		text = fmt.Sprintf("Cancel listing for SCID:\n\n%s\n\nAsset: %s\n\nCollection: %s", scid, name, coll)
+	default:
+
+	}
+
+	Market.Confirming = true
+
+	label := widget.NewLabel(text)
+	label.Wrapping = fyne.TextWrapWord
+	label.Alignment = fyne.TextAlignCenter
+
+	confirm := widget.NewButton("Confirm", func() {
 		switch c {
 		case 0:
-			text = "Close listing for SCID:\n" + scid
+			rpc.NfaCancelClose(scid, "CloseListing")
 		case 1:
-			text = "Cancel listing for SCID:\n" + scid
+			rpc.NfaCancelClose(scid, "CancelListing")
+
 		default:
+
 		}
+		Market.Cancel_button.Hide()
+		Market.Viewing = ""
+		Market.Viewing_coll = ""
+		obj.Trailing.(*fyne.Container).Objects[1] = reset
+		obj.Trailing.(*fyne.Container).Objects[1].Refresh()
+		Market.Confirming = false
+	})
 
-		cw := fyne.CurrentApp().NewWindow("Confirm")
-		cw.Resize(fyne.NewSize(350, 350))
-		cw.SetFixedSize(true)
-		cw.SetIcon(Resource.SmallIcon)
-		label := widget.NewLabel(text)
-		label.Wrapping = fyne.TextWrapWord
+	cancel := widget.NewButton("Cancel", func() {
+		obj.Trailing.(*fyne.Container).Objects[1] = reset
+		obj.Trailing.(*fyne.Container).Objects[1].Refresh()
+		Market.Confirming = false
+	})
 
-		confirm := widget.NewButton("Confirm", func() {
-			switch c {
-			case 0:
-				rpc.NfaCancelClose(scid, "CloseListing")
-			case 1:
-				rpc.NfaCancelClose(scid, "CancelListing")
+	left := container.NewVBox(confirm)
+	right := container.NewVBox(cancel)
+	buttons := container.NewAdaptiveGrid(2, left, right)
 
-			default:
+	alpha := container.NewMax(canvas.NewRectangle(color.RGBA{0, 0, 0, 120}))
+	content := container.NewVBox(layout.NewSpacer(), label, layout.NewSpacer(), buttons)
 
-			}
-			Market.Cancel_button.Hide()
-			Market.Viewing = ""
-			Market.Viewing_coll = ""
-			cw.Close()
-		})
-
-		cancel := widget.NewButton("Cancel", func() {
-			cw.Close()
-		})
-
-		left := container.NewVBox(confirm)
-		right := container.NewVBox(cancel)
-		buttons := container.NewAdaptiveGrid(2, left, right)
-
-		content := container.NewVBox(label, layout.NewSpacer(), buttons)
-
-		img := *canvas.NewImageFromResource(Resource.Back2)
-		cw.SetContent(
-			container.New(layout.NewMaxLayout(),
-				&img,
-				content))
-		cw.Show()
-	}
+	return container.NewMax(alpha, content)
 }
 
+// NFA auction listings object
 func AuctionListings() fyne.Widget {
 	Market.Auction_list = widget.NewList(
 		func() int {
@@ -256,6 +253,7 @@ func AuctionListings() fyne.Widget {
 	return Market.Auction_list
 }
 
+// NFA buy now listings object
 func BuyNowListings() fyne.Widget {
 	Market.Buy_list = widget.NewList(
 		func() int {
@@ -283,6 +281,7 @@ func BuyNowListings() fyne.Widget {
 	return Market.Buy_list
 }
 
+// NFA market icon image with frame
 func NfaIcon(res fyne.Resource) fyne.CanvasObject {
 	Market.Icon.Resize(fyne.NewSize(94, 94))
 	Market.Icon.Move(fyne.NewPos(8, 3))
@@ -297,6 +296,7 @@ func NfaIcon(res fyne.Resource) fyne.CanvasObject {
 	return &cont
 }
 
+// Badge for dReam Tools enabled assets
 func ToolsBadge(res fyne.Resource) fyne.CanvasObject {
 	badge := *canvas.NewImageFromResource(Resource.Tools)
 	badge.Resize(fyne.NewSize(94, 94))
@@ -312,6 +312,7 @@ func ToolsBadge(res fyne.Resource) fyne.CanvasObject {
 	return &cont
 }
 
+// NFA cover image for market display
 func NfaImg(img canvas.Image) *fyne.Container {
 	Market.Cover.Resize(fyne.NewSize(266, 400))
 	Market.Cover.Move(fyne.NewPos(425, -213))
@@ -321,6 +322,7 @@ func NfaImg(img canvas.Image) *fyne.Container {
 	return cont
 }
 
+// Show text while loading market image
 func loadingText() *fyne.Container {
 	Market.Loading = canvas.NewText("Loading", color.White)
 	Market.Loading.TextSize = 18
@@ -331,6 +333,7 @@ func loadingText() *fyne.Container {
 	return cont
 }
 
+// Do while market loading text is showing
 func loadingTextLoop() {
 	if len(Market.Loading.Text) < 21 {
 		for i := 0; i < 3; i++ {
@@ -342,6 +345,7 @@ func loadingTextLoop() {
 	}
 }
 
+// Clears all market NFA images
 func clearNfaImages() {
 	Market.Details_box.Objects[1].(*fyne.Container).Objects[1] = layout.NewSpacer()
 	Market.Icon = *canvas.NewImageFromImage(nil)

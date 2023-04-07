@@ -794,15 +794,21 @@ func TarotItems(tabs *container.AppTabs) fyne.CanvasObject {
 		}
 	})
 
+	reset := table.Iluma.Card2
+
 	table.Iluma.Draw1 = widget.NewButton("Draw One", func() {
 		if !table.Iluma.Open {
-			table.TarotConfirm(1)
+			table.Iluma.Draw1.Hide()
+			table.Iluma.Draw3.Hide()
+			table.Iluma.Card2 = table.TarotConfirm(1, reset)
 		}
 	})
 
 	table.Iluma.Draw3 = widget.NewButton("Draw Three", func() {
 		if !table.Iluma.Open {
-			table.TarotConfirm(3)
+			table.Iluma.Draw1.Hide()
+			table.Iluma.Draw3.Hide()
+			table.Iluma.Card2 = table.TarotConfirm(3, reset)
 		}
 	})
 

@@ -27,6 +27,7 @@ type dReamTables struct {
 	App       fyne.App
 	Window    fyne.Window
 	os        string
+	configure bool
 	menu      bool
 	holdero   bool
 	bacc      bool
@@ -78,14 +79,23 @@ func main() {
 	table.Settings.ThemeImg = *canvas.NewImageFromResource(resourceBackgroundPng)
 	background = container.NewMax(&table.Settings.ThemeImg)
 
-	go func() {
-		dReams.Window.SetContent(
-			container.New(layout.NewMaxLayout(),
-				background,
-				place()))
-	}()
+	if len(menu.MenuControl.Dapp_list) == 0 {
+		go func() {
+			dReams.Window.SetContent(
+				container.New(layout.NewMaxLayout(),
+					background,
+					introScreen()))
+		}()
+	} else {
+		go func() {
+			dReams.Window.SetContent(
+				container.New(layout.NewMaxLayout(),
+					background,
+					place()))
+		}()
+	}
 
-	time.Sleep(500 * time.Millisecond)
+	time.Sleep(600 * time.Millisecond)
 	if systemTray(dReams.App) {
 		dReams.App.(desktop.App).SetSystemTrayIcon(resourceCardSharkTrayPng)
 	}

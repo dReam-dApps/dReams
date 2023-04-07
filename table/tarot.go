@@ -31,6 +31,7 @@ type tarot struct {
 
 var Iluma tarot
 
+// Tarot object buffer when action triggered
 func TarotBuffer(d bool) {
 	if d {
 		Iluma.Card1.Objects[1] = canvas.NewImageFromResource(Iluma.Back)
@@ -48,8 +49,10 @@ func TarotBuffer(d bool) {
 		Iluma.Search.Hide()
 	} else {
 		if rpc.Signal.Daemon && rpc.Wallet.Connect {
-			Iluma.Draw1.Show()
-			Iluma.Draw3.Show()
+			if !Iluma.Open {
+				Iluma.Draw1.Show()
+				Iluma.Draw3.Show()
+			}
 			Iluma.Search.Show()
 		}
 	}
@@ -58,41 +61,53 @@ func TarotBuffer(d bool) {
 	Iluma.Draw3.Refresh()
 }
 
+// Clickable Tarot card objects
 func TarotCardBox() fyne.CanvasObject {
 	Iluma.Label = widget.NewLabel("")
-	one := widget.NewButton("One", func() {
+	one := widget.NewButton("", func() {
 		if rpc.Tarot.Num == 3 && !Iluma.Open && rpc.Tarot.T_card1 > 0 {
 			c := rpc.Tarot.T_card1
-			Dialog(c, TarotDescription(c))
+			reset := Iluma.Card1
+			Iluma.Card1 = *IlumaDialog(1, TarotDescription(c), reset)
 		}
 	})
 
-	Iluma.Card1 = *container.NewMax(one, TarotBack())
+	card_back := canvas.NewImageFromResource(Iluma.Back)
+
+	Iluma.Card1 = *container.NewMax(one, card_back)
 	pad1 := container.NewBorder(nil, nil, TarotPadding(), TarotPadding(), &Iluma.Card1)
 
-	two := widget.NewButton("Two", func() {
-		if rpc.Tarot.Num == 3 && !Iluma.Open && rpc.Tarot.T_card2 > 0 {
-			c := rpc.Tarot.T_card2
-			Dialog(c, TarotDescription(c))
-		}
+	two := widget.NewButton("", func() {
+		if !Iluma.Open {
+			reset := Iluma.Card2
+			if rpc.Tarot.Num == 3 && rpc.Tarot.T_card2 > 0 {
+				c := rpc.Tarot.T_card2
+				Iluma.Card2 = *IlumaDialog(2, TarotDescription(c), reset)
+			}
 
-		if rpc.Tarot.Num == 1 && !Iluma.Open && rpc.Tarot.T_card1 > 0 {
-			c := rpc.Tarot.T_card1
-			Dialog(c, TarotDescription(c))
+			if rpc.Tarot.Num == 1 && rpc.Tarot.T_card1 > 0 {
+				c := rpc.Tarot.T_card1
+				Iluma.Card2 = *IlumaDialog(2, TarotDescription(c), reset)
+			}
 		}
 	})
 
-	Iluma.Card2 = *container.NewMax(two, TarotBack())
+	Iluma.Card2 = *container.NewMax(two, card_back)
 	pad2 := container.NewBorder(nil, nil, TarotPadding(), TarotPadding(), &Iluma.Card2)
 
-	three := widget.NewButton("Three", func() {
+	three := widget.NewButton("", func() {
 		if rpc.Tarot.Num == 3 && !Iluma.Open && rpc.Tarot.T_card3 > 0 {
 			c := rpc.Tarot.T_card3
-			go Dialog(c, TarotDescription(c))
+			reset := Iluma.Card3
+			Iluma.Card3 = *IlumaDialog(3, TarotDescription(c), reset)
 		}
 	})
 
-	Iluma.Card3 = *container.NewMax(three, TarotBack())
+	one.Importance = widget.LowImportance
+	two.Importance = widget.LowImportance
+	three.Importance = widget.LowImportance
+
+	Iluma.Card3 = *container.NewMax(three, card_back)
 	pad3 := container.NewBorder(nil, nil, TarotPadding(), TarotPadding(), &Iluma.Card3)
 
 	actions := container.NewAdaptiveGrid(3,
@@ -125,12 +140,7 @@ func TarotCardBox() fyne.CanvasObject {
 	return max
 }
 
-func TarotBack() fyne.CanvasObject {
-	card := canvas.NewImageFromResource(Iluma.Back)
-
-	return card
-}
-
+// Padding sections for Tarot cards
 func TarotPadding() fyne.CanvasObject {
 	pad := container.NewHScroll(layout.NewSpacer())
 	pad.SetMinSize(fyne.NewSize(40, 0))
@@ -138,6 +148,7 @@ func TarotPadding() fyne.CanvasObject {
 	return pad
 }
 
+// Dispplay text when cards are drawn
 func TarotDrawText() (text string) {
 	i := rand.Intn(6-1) + 1
 
@@ -161,16 +172,8 @@ func TarotDrawText() (text string) {
 	return text
 }
 
-func TarotConfirm(i int) {
-	c := fyne.CurrentApp().NewWindow("Confirm")
-	c.Resize(fyne.NewSize(405, 150))
-	c.SetFixedSize(true)
-	c.SetIcon(Resource.SmallIcon)
-	c.SetCloseIntercept(func() {
-		Iluma.Open = false
-		c.Close()
-	})
-
+// Confirm Tarot draw of one or three cards
+func TarotConfirm(i int, reset fyne.Container) fyne.Container {
 	label := widget.NewLabel("")
 	if i == 3 {
 		label.SetText("You are about to draw three cards\n\nReading fee is 0.1 Dero\n\nConfirm")
@@ -178,7 +181,13 @@ func TarotConfirm(i int) {
 		label.SetText("You are about to draw one card\n\nReading fee is 0.1 Dero\n\nConfirm")
 	}
 
+	label.Wrapping = fyne.TextWrapWord
+	label.Alignment = fyne.TextAlignCenter
+
 	confirm := widget.NewButton("Confirm", func() {
+		Iluma.Card2 = reset
+		Iluma.Card2.Refresh()
+
 		if i == 3 {
 			TarotBuffer(true)
 			rpc.Tarot.Found = false
@@ -194,12 +203,14 @@ func TarotConfirm(i int) {
 		}
 
 		Iluma.Open = false
-		c.Close()
 	})
 
 	cancel := widget.NewButton("Cancel", func() {
 		Iluma.Open = false
-		c.Close()
+		Iluma.Draw1.Show()
+		Iluma.Draw3.Show()
+		Iluma.Card2 = reset
+		Iluma.Card2.Refresh()
 	})
 
 	box := container.NewAdaptiveGrid(2, confirm, cancel)
@@ -208,55 +219,43 @@ func TarotConfirm(i int) {
 		box,
 		nil,
 		nil,
-		label)
+		container.NewVBox(layout.NewSpacer(), label, layout.NewSpacer()))
 
 	Iluma.Open = true
 
-	img := *canvas.NewImageFromResource(Iluma.Background2)
-	alpha := container.NewMax(canvas.NewRectangle(color.RGBA{0, 0, 0, 195}))
-	c.SetContent(
-		container.New(layout.NewMaxLayout(),
-			&img,
-			alpha,
-			cont))
-	c.Show()
-
+	return *container.NewMax(cont)
 }
 
-func Dialog(c int, text string) {
-	var img canvas.Image
-	d := fyne.CurrentApp().NewWindow("Iluma")
-	if c < 23 {
-		d.Resize(fyne.NewSize(540, 400))
-		img = *canvas.NewImageFromResource(Iluma.Background1)
-	} else {
-		d.Resize(fyne.NewSize(540, 200))
-		img = *canvas.NewImageFromResource(Iluma.Background2)
-	}
-
-	d.SetFixedSize(true)
-	d.SetIcon(Resource.SmallIcon)
-	d.SetCloseIntercept(func() {
-		Iluma.Open = false
-		Iluma.Actions.Show()
-		Iluma.Search.Show()
-		d.Close()
-	})
-
+// Display Iluma description for Tarot card
+func IlumaDialog(card int, text string, reset fyne.Container) *fyne.Container {
 	label := widget.NewLabel(text)
+	label.Wrapping = fyne.TextWrapWord
+
 	scroll := container.NewVScroll(label)
 
 	Iluma.Open = true
 	Iluma.Actions.Hide()
 	Iluma.Search.Hide()
 
-	alpha := container.NewMax(canvas.NewRectangle(color.RGBA{0, 0, 0, 195}))
-	d.SetContent(
-		container.New(layout.NewMaxLayout(),
-			&img,
-			alpha,
-			scroll))
-	d.Show()
+	reset_button := widget.NewButton("", func() {
+		switch card {
+		case 1:
+			Iluma.Card1 = reset
+		case 2:
+			Iluma.Card2 = reset
+		case 3:
+			Iluma.Card3 = reset
+		default:
+
+		}
+
+		Iluma.Open = false
+		Iluma.Actions.Show()
+		Iluma.Search.Show()
+	})
+	reset_button.Importance = widget.LowImportance
+
+	return container.NewMax(reset_button, scroll)
 }
 
 //go:embed iluma/1.txt
@@ -493,6 +492,7 @@ var tarot_txt77 string
 //go:embed iluma/78.txt
 var tarot_txt78 string
 
+// Iluma description text switch
 func TarotDescription(c int) string {
 	switch c {
 	case 1:

@@ -742,6 +742,7 @@ func setRandomOpts(opts *widget.RadioGroup) {
 	}
 }
 
+// dReam Tools menu for Holdero
 func holderoTools(deal, check *widget.Check, button *widget.Button) {
 	button.Hide()
 	bm := fyne.CurrentApp().NewWindow("Holdero Tools")
@@ -1194,7 +1195,7 @@ func holderoTools(deal, check *widget.Check, button *widget.Button) {
 	}()
 
 	img := *canvas.NewImageFromResource(Resource.Back3)
-	alpha := *container.NewMax(canvas.NewRectangle(color.RGBA{0, 0, 0, 120}))
+	alpha := *container.NewMax(canvas.NewRectangle(color.RGBA{0, 0, 0, 180}))
 	bm.SetContent(
 		container.New(layout.NewMaxLayout(),
 			&img,

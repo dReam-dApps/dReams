@@ -79,47 +79,6 @@ func PreictionContractEntry() fyne.Widget {
 	return table.Actions.P_contract
 }
 
-func PredictBox() fyne.CanvasObject {
-	// prediction leaderboard
-	// table.Actions.NameEntry = widget.NewEntry()
-	// table.Actions.NameEntry.SetPlaceHolder("Name")
-	// table.Actions.NameEntry.OnChanged = func(input string) {
-	// 	table.Actions.NameEntry.Validator = validation.NewRegexp(`\w{3,}`, "Three Letters Minimum")
-	// 	table.Actions.NameEntry.Validate()
-	// 	table.Actions.NameEntry.Refresh()
-	// }
-	//
-	// table.Actions.Change = widget.NewButton("Change Name", func() {
-	// 	if table.Actions.NameEntry.Disabled() {
-	// 		table.Actions.NameEntry.Enable()
-	// 	} else {
-	// 		namePopUp(1)
-	// 	}
-	// })
-
-	table.Actions.Higher = widget.NewButton("Higher", func() {
-		if len(PredictControl.Contract) == 64 {
-			confirmPopUp(2, "", "")
-		}
-	})
-
-	table.Actions.Lower = widget.NewButton("Lower", func() {
-		if len(PredictControl.Contract) == 64 {
-			confirmPopUp(1, "", "")
-		}
-	})
-
-	// table.Actions.NameEntry.Hide()
-	// table.Actions.Change.Hide()
-	table.Actions.Higher.Hide()
-	table.Actions.Lower.Hide()
-
-	table.Actions.Prediction_box = container.NewVBox(table.Actions.Higher, table.Actions.Lower)
-	table.Actions.Prediction_box.Hide()
-
-	return table.Actions.Prediction_box
-}
-
 // prediction leaderboard
 // func LeadersDisplay() fyne.Widget {
 // 	PredictControl.Leaders_display = []string{}
@@ -186,7 +145,8 @@ func SetPredictionPrices(d bool) {
 	}
 }
 
-func PredictionListings() fyne.CanvasObject { /// prediction contract list
+// List object for populating public dPrediction contracts
+func PredictionListings(tab *container.AppTabs) fyne.CanvasObject {
 	PredictControl.Predict_list = widget.NewList(
 		func() int {
 			return len(menu.MenuControl.Predict_contracts)
@@ -232,7 +192,9 @@ func PredictionListings() fyne.CanvasObject { /// prediction contract list
 	rate := widget.NewButton("Rate", func() {
 		if len(PredictControl.Contract) == 64 {
 			if !menu.CheckOwner(PredictControl.Contract) {
-				menu.RateConfirm(PredictControl.Contract)
+				reset := tab.Selected().Content
+				tab.Selected().Content = menu.RateConfirm(PredictControl.Contract, tab, reset)
+				tab.Selected().Content.Refresh()
 			} else {
 				log.Println("[dReams] You own this contract")
 			}
@@ -249,6 +211,7 @@ func PredictionListings() fyne.CanvasObject { /// prediction contract list
 	return cont
 }
 
+// List object for populating favorite dPrediction contracts
 func PredicitionFavorites() fyne.CanvasObject {
 	PredictControl.Favorite_list = widget.NewList(
 		func() int {
@@ -301,6 +264,7 @@ func PredicitionFavorites() fyne.CanvasObject {
 	return cont
 }
 
+// List object for populating owned dPrediction contracts
 func PredictionOwned() fyne.CanvasObject {
 	PredictControl.Owned_list = widget.NewList(
 		func() int {

@@ -367,35 +367,6 @@ func SharedDecks() fyne.Widget {
 	return Settings.SharedOn
 }
 
-func DreamsOpts() fyne.CanvasObject {
-	Actions.Dreams = widget.NewButton("Get dReams", func() {
-		s := strings.Trim(Actions.DEntry.Text, "dReams: ")
-		amt, err := strconv.Atoi(s)
-		if err == nil && Actions.DEntry.Validate() == nil {
-			if amt > 0 {
-				dReamsConfirmPopUp(1, amt)
-			}
-		}
-	})
-
-	Actions.Dero = widget.NewButton("Get Dero", func() {
-		s := strings.Trim(Actions.DEntry.Text, "dReams: ")
-		amt, err := strconv.Atoi(s)
-		if err == nil && Actions.DEntry.Validate() == nil {
-			if amt > 0 {
-				dReamsConfirmPopUp(2, amt)
-			}
-		}
-	})
-
-	Actions.Dreams.Hide()
-	Actions.Dero.Hide()
-
-	cont := container.NewAdaptiveGrid(2, Actions.Dreams, Actions.Dero)
-
-	return cont
-}
-
 type dReamsAmt struct {
 	NumericalEntry
 }
@@ -464,9 +435,11 @@ func DreamsEntry() fyne.CanvasObject {
 	return &box
 }
 
-func TournamentButton() fyne.CanvasObject {
+// Tournament deposit button
+func TournamentButton(obj []fyne.CanvasObject, tabs *container.AppTabs) fyne.CanvasObject {
 	Actions.Tournament = widget.NewButton("Tournament", func() {
-		tourneyConfirmPopUp()
+		obj[1] = tourneyConfirm(obj, tabs)
+		obj[1].Refresh()
 	})
 
 	Actions.Tournament.Hide()
@@ -474,29 +447,23 @@ func TournamentButton() fyne.CanvasObject {
 	return Actions.Tournament
 }
 
-func dReamsConfirmPopUp(c int, amt int) {
+// Confirmation for Dero dReams swap
+func DreamsConfirm(c, amt int, obj *container.Split, reset fyne.CanvasObject) fyne.CanvasObject {
 	var text string
-
 	dero := float64(amt) / 333
 	ratio := math.Pow(10, float64(5))
 	x := math.Round(dero*ratio) / ratio
 	a := fmt.Sprint(strconv.FormatFloat(dero, 'f', 5, 64))
 	switch c {
 	case 1:
-		text = `You are about to trade ` + a + ` DERO for ` + strconv.Itoa(amt) + ` dReams.
-
-Confirm.`
+		text = fmt.Sprintf("You are about to swap %s DERO for %d dReams\n\nConfirm", a, amt)
 	case 2:
-		text = `You are about to trade ` + strconv.Itoa(amt) + ` dReams for ` + a + ` DERO.
-
-Confirm.`
+		text = fmt.Sprintf("You are about to swap %d dReams for %s dReams\n\nConfirm", amt, a)
 	}
-	confirm := fyne.CurrentApp().NewWindow("Confirm")
-	confirm.Resize(fyne.NewSize(300, 300))
-	confirm.SetFixedSize(true)
-	confirm.SetIcon(Resource.SmallIcon)
+
 	label := widget.NewLabel(text)
 	label.Wrapping = fyne.TextWrapWord
+	label.Alignment = fyne.TextAlignCenter
 
 	confirm_button := widget.NewButton("Confirm", func() {
 		switch c {
@@ -504,64 +471,58 @@ Confirm.`
 			rpc.GetdReams(uint64(x * 100000))
 		case 2:
 			rpc.TradedReams(uint64(amt * 100000))
-		}
-		confirm.Close()
+		default:
 
+		}
+
+		obj.Trailing.(*fyne.Container).Objects[1] = reset
+		obj.Trailing.(*fyne.Container).Objects[1].Refresh()
 	})
 
 	cancel_button := widget.NewButton("Cancel", func() {
-		confirm.Close()
-
+		obj.Trailing.(*fyne.Container).Objects[1] = reset
+		obj.Trailing.(*fyne.Container).Objects[1].Refresh()
 	})
 
+	alpha := container.NewMax(canvas.NewRectangle(color.RGBA{0, 0, 0, 120}))
 	buttons := container.NewAdaptiveGrid(2, confirm_button, cancel_button)
-	content := container.NewVBox(label, layout.NewSpacer(), buttons)
+	content := container.NewVBox(layout.NewSpacer(), label, layout.NewSpacer(), buttons)
 
-	img := *canvas.NewImageFromResource(Resource.Back2)
-	confirm.SetContent(
-		container.New(layout.NewMaxLayout(),
-			&img,
-			content))
-	confirm.Show()
+	return container.NewMax(alpha, content)
 }
 
-func tourneyConfirmPopUp() {
+// Holdero tournament chip deposit confirmation
+func tourneyConfirm(obj []fyne.CanvasObject, tabs *container.AppTabs) fyne.CanvasObject {
 	bal := rpc.TokenBalance(rpc.TourneySCID)
 	balance := float64(bal) / 100000
 	a := fmt.Sprint(strconv.FormatFloat(balance, 'f', 2, 64))
-	text := `You are about to deposit ` + a + ` Tournament Chips into leaderboard contract
+	text := fmt.Sprintf("You are about to deposit %s Tournament Chips into leaderboard contract\n\nConfirm", a)
 
-Confirm.`
-
-	confirm := fyne.CurrentApp().NewWindow("Confirm")
-	confirm.Resize(fyne.NewSize(300, 300))
-	confirm.SetFixedSize(true)
-	confirm.SetIcon(Resource.SmallIcon)
 	label := widget.NewLabel(text)
 	label.Wrapping = fyne.TextWrapWord
+	label.Alignment = fyne.TextAlignCenter
 
 	confirm_button := widget.NewButton("Confirm", func() {
 		rpc.TourneyDeposit(bal, Poker_name)
-		confirm.Close()
+		obj[1] = tabs
+		obj[1].Refresh()
 
 	})
 
 	cancel_button := widget.NewButton("Cancel", func() {
-		confirm.Close()
+		obj[1] = tabs
+		obj[1].Refresh()
 
 	})
 
+	alpha := container.NewMax(canvas.NewRectangle(color.RGBA{0, 0, 0, 120}))
 	buttons := container.NewAdaptiveGrid(2, confirm_button, cancel_button)
-	content := container.NewVBox(label, layout.NewSpacer(), buttons)
+	content := container.NewVBox(layout.NewSpacer(), label, layout.NewSpacer(), buttons)
 
-	img := *canvas.NewImageFromResource(Resource.Back2)
-	confirm.SetContent(
-		container.New(layout.NewMaxLayout(),
-			&img,
-			content))
-	confirm.Show()
+	return container.NewMax(alpha, content)
 }
 
+// Icon image for Holdero tables and asset viewing
 func IconImg(res fyne.Resource) *fyne.Container {
 	Assets.Icon.SetMinSize(fyne.NewSize(100, 100))
 	Assets.Icon.Resize(fyne.NewSize(94, 94))
@@ -576,6 +537,7 @@ func IconImg(res fyne.Resource) *fyne.Container {
 	return cont
 }
 
+// Display for owned asset info
 func AssetStats() fyne.CanvasObject {
 	Assets.Collection = canvas.NewText(" Collection: ", color.White)
 	Assets.Name = canvas.NewText(" Name: ", color.White)
@@ -588,7 +550,8 @@ func AssetStats() fyne.CanvasObject {
 	return &Assets.Stats_box
 }
 
-func SetHeaderItems() fyne.CanvasObject {
+// Set SCID header objects
+func SetHeaderItems(obj []fyne.CanvasObject, tabs *container.AppTabs) fyne.CanvasObject {
 	name_entry := widget.NewEntry()
 	name_entry.PlaceHolder = "Name:"
 	descr_entry := widget.NewEntry()
@@ -599,7 +562,8 @@ func SetHeaderItems() fyne.CanvasObject {
 	button := widget.NewButton("Set Headers", func() {
 		scid := Assets.Index_entry.Text
 		if len(scid) == 64 && name_entry.Text != "dReam Tables" {
-			headerPopUp(name_entry.Text, descr_entry.Text, icon_entry.Text, scid)
+			obj[1] = setHeaderConfirm(name_entry.Text, descr_entry.Text, icon_entry.Text, scid, obj, tabs)
+			obj[1].Refresh()
 		}
 	})
 
@@ -610,31 +574,27 @@ func SetHeaderItems() fyne.CanvasObject {
 	return &Assets.Header_box
 }
 
-func headerPopUp(name, desc, icon, scid string) {
-	confirm := fyne.CurrentApp().NewWindow("Confirm")
-	confirm.Resize(fyne.NewSize(550, 550))
-	confirm.SetFixedSize(true)
-	confirm.SetIcon(Resource.SmallIcon)
-	label := widget.NewLabel("Headers for SCID: " + scid + "\n\nName: " + name + "\n\nDescription: " + desc + "\n\nIcon: " + icon)
+// Confirmation for setting SCID headers
+func setHeaderConfirm(name, desc, icon, scid string, obj []fyne.CanvasObject, reset *container.AppTabs) fyne.CanvasObject {
+	label := widget.NewLabel("Headers for SCID:\n\n" + scid + "\n\nName: " + name + "\n\nDescription: " + desc + "\n\nIcon: " + icon)
 	label.Wrapping = fyne.TextWrapWord
+	label.Alignment = fyne.TextAlignCenter
 
 	confirm_button := widget.NewButton("Confirm", func() {
 		rpc.SetHeaders(name, desc, icon, scid)
-		confirm.Close()
+		obj[1] = reset
+		obj[1].Refresh()
 	})
 
 	cancel_button := widget.NewButton("Cancel", func() {
-		confirm.Close()
+		obj[1] = reset
+		obj[1].Refresh()
 
 	})
 
+	alpha := container.NewMax(canvas.NewRectangle(color.RGBA{0, 0, 0, 120}))
 	buttons := container.NewAdaptiveGrid(2, confirm_button, cancel_button)
-	content := container.NewVBox(label, layout.NewSpacer(), buttons)
+	content := container.NewVBox(layout.NewSpacer(), label, layout.NewSpacer(), buttons)
 
-	img := *canvas.NewImageFromResource(Resource.Back4)
-	confirm.SetContent(
-		container.New(layout.NewMaxLayout(),
-			&img,
-			content))
-	confirm.Show()
+	return container.NewMax(alpha, content)
 }

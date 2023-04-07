@@ -81,62 +81,6 @@ func SportsContractEntry() fyne.Widget {
 	return table.Actions.S_contract
 }
 
-func SportsBox() fyne.CanvasObject {
-	table.Actions.Game_select = widget.NewSelect(table.Actions.Game_options, func(s string) {
-		split := strings.Split(s, "   ")
-		a, b := menu.GetSportsTeams(SportsControl.Contract, split[0])
-		if table.Actions.Game_select.SelectedIndex() >= 0 {
-			table.Actions.Multi.Show()
-			table.Actions.ButtonA.Show()
-			table.Actions.ButtonB.Show()
-			table.Actions.ButtonA.Text = a
-			table.Actions.ButtonA.Refresh()
-			table.Actions.ButtonB.Text = b
-			table.Actions.ButtonB.Refresh()
-		} else {
-			table.Actions.Multi.Hide()
-			table.Actions.ButtonA.Hide()
-			table.Actions.ButtonB.Hide()
-		}
-	})
-
-	table.Actions.Game_select.PlaceHolder = "Select Game #"
-	table.Actions.Game_select.Hide()
-
-	var Multi_options = []string{"1x", "3x", "5x"}
-	table.Actions.Multi = widget.NewRadioGroup(Multi_options, func(s string) {
-
-	})
-	table.Actions.Multi.Horizontal = true
-	table.Actions.Multi.Hide()
-
-	table.Actions.ButtonA = widget.NewButton("TEAM A", func() {
-		if len(SportsControl.Contract) == 64 {
-			confirmPopUp(3, table.Actions.ButtonA.Text, table.Actions.ButtonB.Text)
-		}
-	})
-	table.Actions.ButtonA.Hide()
-
-	table.Actions.ButtonB = widget.NewButton("TEAM B", func() {
-		if len(SportsControl.Contract) == 64 {
-			confirmPopUp(4, table.Actions.ButtonA.Text, table.Actions.ButtonB.Text)
-		}
-	})
-	table.Actions.ButtonB.Hide()
-
-	sports_muli := container.NewCenter(table.Actions.Multi)
-	sports_actions := container.NewVBox(
-		sports_muli,
-		table.Actions.Game_select,
-		table.Actions.ButtonA,
-		table.Actions.ButtonB)
-
-	table.Actions.Sports_box = sports_actions
-	table.Actions.Sports_box.Hide()
-
-	return table.Actions.Sports_box
-}
-
 func setSportsControls(str string) (item string) {
 	table.Actions.Game_select.ClearSelected()
 	table.Actions.Game_select.Options = []string{}
@@ -210,7 +154,8 @@ func SetSportsInfo(scid string) {
 	table.Actions.Game_select.Refresh()
 }
 
-func SportsListings() fyne.CanvasObject { /// sports contract list
+// List object for populating public dSports contracts
+func SportsListings(tab *container.AppTabs) fyne.CanvasObject { /// sports contract list
 	SportsControl.Sports_list = widget.NewList(
 		func() int {
 			return len(menu.MenuControl.Sports_contracts)
@@ -256,7 +201,9 @@ func SportsListings() fyne.CanvasObject { /// sports contract list
 	rate := widget.NewButton("Rate", func() {
 		if len(SportsControl.Contract) == 64 {
 			if !menu.CheckOwner(SportsControl.Contract) {
-				menu.RateConfirm(SportsControl.Contract)
+				reset := tab.Selected().Content
+				tab.Selected().Content = menu.RateConfirm(SportsControl.Contract, tab, reset)
+				tab.Selected().Content.Refresh()
 			} else {
 				log.Println("[dReams] You own this contract")
 			}
@@ -273,6 +220,7 @@ func SportsListings() fyne.CanvasObject { /// sports contract list
 	return cont
 }
 
+// List object for populating favorite dSports contracts
 func SportsFavorites() fyne.CanvasObject {
 	SportsControl.Favorite_list = widget.NewList(
 		func() int {
@@ -325,6 +273,7 @@ func SportsFavorites() fyne.CanvasObject {
 	return cont
 }
 
+// List object for populating owned dSports contracts
 func SportsOwned() fyne.CanvasObject {
 	SportsControl.Owned_list = widget.NewList(
 		func() int {

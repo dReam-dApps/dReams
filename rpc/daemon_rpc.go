@@ -785,7 +785,7 @@ func ValidBetContract(scid string) bool {
 
 	d := fmt.Sprint(result.VariableStringKeys["dev"])
 
-	return DeroAddress(d) != DevAddress
+	return DeroAddress(d) == DevAddress
 }
 
 // Get dPrediction final TXID
