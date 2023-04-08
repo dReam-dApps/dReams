@@ -94,6 +94,7 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 
 	var dapp_checks *widget.CheckGroup
 	back_button := widget.NewButton("Back", func() {
+		dReams.configure = false
 		menu.MenuControl.Dapp_list["dReams"] = true
 		go func() {
 			dReams.Window.Content().(*fyne.Container).Objects[1] = reset
