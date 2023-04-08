@@ -909,6 +909,7 @@ func TableStats() fyne.CanvasObject {
 func TimeOutConfirm(obj []fyne.CanvasObject, reset *container.AppTabs) fyne.CanvasObject {
 	var confirm_display = widget.NewLabel("")
 	confirm_display.Wrapping = fyne.TextWrapWord
+	confirm_display.Alignment = fyne.TextAlignCenter
 
 	confirm_display.SetText("Confirm Time Out on Current Player")
 
@@ -923,7 +924,7 @@ func TimeOutConfirm(obj []fyne.CanvasObject, reset *container.AppTabs) fyne.Canv
 	})
 
 	alpha := container.NewMax(canvas.NewRectangle(color.RGBA{0, 0, 0, 120}))
-	display := container.NewVScroll(confirm_display)
+	display := container.NewVBox(layout.NewSpacer(), confirm_display, layout.NewSpacer())
 	options := container.NewAdaptiveGrid(2, confirm_button, cancel_button)
 	content := container.NewBorder(nil, options, nil, nil, display)
 
