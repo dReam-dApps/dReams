@@ -698,7 +698,7 @@ func HolderoRefresh() {
 			table.Actions.Check.Hide()
 			table.Actions.Bet.Hide()
 			table.Actions.BetEntry.Hide()
-		} else if !rpc.Signal.End && !rpc.Signal.Reveal && rpc.Signal.My_turn {
+		} else if !rpc.Signal.End && !rpc.Signal.Reveal && rpc.Signal.My_turn && rpc.Wallet.Connect {
 			if rpc.Signal.Sit {
 				table.Actions.Sit.Hide()
 			} else {
@@ -1174,11 +1174,6 @@ func MenuTab(ti *container.TabItem) {
 		dReams.menu_tabs.wallet = true
 		dReams.menu_tabs.assets = false
 		dReams.menu_tabs.market = false
-	case "dApps":
-		go func() {
-			dReams.Window.Content().(*fyne.Container).Objects[1] = dAppScreen()
-			dReams.Window.Content().(*fyne.Container).Objects[1].Refresh()
-		}()
 	case "Assets":
 		dReams.menu_tabs.wallet = false
 		dReams.menu_tabs.contracts = false

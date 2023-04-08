@@ -507,14 +507,14 @@ func Connected() bool {
 
 // Gnomon will scan connected wallet on start up, then ensure sync
 func GnomonState(windows bool) {
-	if rpc.Signal.Daemon && Gnomes.Init && !GnomonWriting() && !GnomonClosing() {
+	if rpc.Signal.Daemon && Gnomes.Init && !GnomonClosing() {
 		contracts := Gnomes.Indexer.Backend.GetAllOwnersAndSCIDs()
 		Gnomes.SCIDS = uint64(len(contracts))
-		if FastSynced() && !Gnomes.Trim && !Gnomes.Checked {
+		if FastSynced() && !Gnomes.Trim {
 			height := int64(rpc.Wallet.Height)
 			if Gnomes.Indexer.ChainHeight >= height-1 && height != 0 && !GnomonClosing() {
 				Gnomes.Sync = true
-				if rpc.Wallet.Connect {
+				if rpc.Wallet.Connect && !Gnomes.Checked {
 					go CheckBetContractOwners(Gnomes.Sync, Gnomes.Checked, contracts)
 					CreateTableList(Gnomes.Checked, contracts)
 					go CheckG45Assets(Gnomes.Sync, Gnomes.Checked, contracts)

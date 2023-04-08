@@ -60,12 +60,15 @@ func InitTableSettings() {
 	rpc.Tarot.Display = true
 	rpc.Times.Delay = 30
 	rpc.Times.Kick = 0
+	rpc.Odds.Run = false
 	Settings.Faces = "light/"
 	Settings.Backs = "back1.png"
 	Settings.Avatar = "None"
 	Settings.FaceUrl = ""
 	Settings.BackUrl = ""
 	Settings.AvatarUrl = ""
+	Settings.Auto_deal = false
+	Settings.Auto_check = false
 	autoBetDefault()
 }
 

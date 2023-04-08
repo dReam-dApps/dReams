@@ -3,8 +3,11 @@ package main
 import (
 	_ "embed"
 	"image/color"
+	"log"
+	"reflect"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/SixofClubsss/dReams/menu"
 	"github.com/SixofClubsss/dReams/prediction"
@@ -34,7 +37,7 @@ func introScreen() *fyne.Container {
 	title := canvas.NewText("Welcome to dReams", color.White)
 	title.TextSize = 18
 
-	intro_label := widget.NewLabel("dReams base app has Holdero, Baccarat and NFA Marketplace\n\nSelect further dApps to add to your dReams")
+	intro_label := widget.NewLabel("dReams base app has:\n\nHoldero\n\nBaccarat\n\nNFA Marketplace\n\n\nSelect further dApps to add to your dReams")
 	intro_label.Wrapping = fyne.TextWrapWord
 	intro_label.Alignment = fyne.TextAlignCenter
 
@@ -47,6 +50,7 @@ func introScreen() *fyne.Container {
 			menu.MenuControl.Dapp_list[name] = true
 		}
 
+		log.Println("[dReams] Loading dApps")
 		go func() {
 			menu.MenuControl.Dapp_list["dReams"] = true
 			dReams.Window.SetContent(
@@ -59,50 +63,100 @@ func introScreen() *fyne.Container {
 	start_button.Importance = widget.LowImportance
 
 	alpha := canvas.NewRectangle(color.RGBA{0, 0, 0, 180})
-	intro := container.NewVBox(layout.NewSpacer(), container.NewCenter(title), layout.NewSpacer(), intro_label, container.NewCenter(dapp_checks), layout.NewSpacer(), start_button)
+	intro := container.NewVBox(
+		layout.NewSpacer(),
+		container.NewCenter(title),
+		layout.NewSpacer(),
+		intro_label,
+		layout.NewSpacer(),
+		container.NewCenter(dapp_checks),
+		layout.NewSpacer(),
+		layout.NewSpacer(),
+		start_button)
+
 	max := container.NewMax(alpha, intro)
 
 	return max
 }
 
 // Select dApps to add or remove from dReams
-func dAppScreen() *fyne.Container {
+func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 	dReams.configure = true
 	title := canvas.NewText("dReams dApps", color.White)
 	title.TextSize = 18
 
-	intro_label := widget.NewLabel("Select dApps to add or remove from your dReams")
-	intro_label.Wrapping = fyne.TextWrapWord
-	intro_label.Alignment = fyne.TextAlignCenter
+	changes_label := widget.NewLabel("Select dApps to add or remove from your dReams\n\nLoading dApp changes will disconnect your wallet")
+	changes_label.Wrapping = fyne.TextWrapWord
+	changes_label.Alignment = fyne.TextAlignCenter
 
-	enabled_dapps := []string{}
-	dapp_list := []string{"dSports and dPredictions", "Iluma"}
-	dapp_checks := widget.NewCheckGroup(dapp_list, func(s []string) {})
+	is_enabled := []string{}
+	enabled_dapps := make(map[string]bool)
+
+	var dapp_checks *widget.CheckGroup
+	back_button := widget.NewButton("Back", func() {
+		menu.MenuControl.Dapp_list["dReams"] = true
+		go func() {
+			dReams.Window.Content().(*fyne.Container).Objects[1] = reset
+			dReams.Window.Content().(*fyne.Container).Objects[1].Refresh()
+		}()
+	})
 
 	for name, enabled := range menu.MenuControl.Dapp_list {
+		enabled_dapps[name] = enabled
 		if enabled {
-			enabled_dapps = append(enabled_dapps, name)
-			menu.MenuControl.Dapp_list[name] = false
+			is_enabled = append(is_enabled, name)
 		}
 	}
 
-	dapp_checks.SetSelected(enabled_dapps)
-
 	load_button := widget.NewButton("Load Changes", func() {
-		for _, name := range dapp_checks.Selected {
-			menu.MenuControl.Dapp_list[name] = true
-		}
-
+		rpc.Wallet.Connect = false
+		rpc.Wallet.Height = 0
+		table.InitTableSettings()
+		menu.MenuControl.Dapp_list = enabled_dapps
+		log.Println("[dReams] Loading dApps")
 		go func() {
 			dReams.Window.Content().(*fyne.Container).Objects[1] = place()
 			dReams.Window.Content().(*fyne.Container).Objects[1].Refresh()
 		}()
 	})
 
+	load_button.Hide()
 	load_button.Importance = widget.LowImportance
+	back_button.Importance = widget.LowImportance
+
+	dapp_list := []string{"dSports and dPredictions", "Iluma"}
+	dapp_checks = widget.NewCheckGroup(dapp_list, func(s []string) {
+		for reset := range enabled_dapps {
+			enabled_dapps[reset] = false
+		}
+
+		for _, name := range s {
+			enabled_dapps[name] = true
+		}
+
+		if reflect.DeepEqual(enabled_dapps, menu.MenuControl.Dapp_list) {
+			load_button.Hide()
+			back_button.Show()
+		} else {
+			load_button.Show()
+			back_button.Hide()
+		}
+	})
+
+	dapp_checks.SetSelected(is_enabled)
 
 	alpha := canvas.NewRectangle(color.RGBA{0, 0, 0, 180})
-	intro := container.NewVBox(layout.NewSpacer(), container.NewCenter(title), layout.NewSpacer(), intro_label, container.NewCenter(dapp_checks), layout.NewSpacer(), load_button)
+	intro := container.NewVBox(
+		layout.NewSpacer(),
+		container.NewCenter(title),
+		layout.NewSpacer(),
+		changes_label,
+		layout.NewSpacer(),
+		container.NewCenter(dapp_checks),
+		layout.NewSpacer(),
+		layout.NewSpacer(),
+		container.NewAdaptiveGrid(2, container.NewMax(load_button), back_button))
+
 	max := container.NewMax(alpha, intro)
 
 	return max
@@ -151,6 +205,14 @@ func place() *fyne.Container {
 
 	menu_tabs.OnSelected = func(ti *container.TabItem) {
 		MenuTab(ti)
+		if ti.Text == "dApps" {
+			go func() {
+				reset := dReams.Window.Content().(*fyne.Container).Objects[1]
+				dReams.Window.Content().(*fyne.Container).Objects[1] = dAppScreen(reset)
+				dReams.Window.Content().(*fyne.Container).Objects[1].Refresh()
+				menu_tabs.SelectIndex(0)
+			}()
+		}
 	}
 
 	menu_tabs.SetTabLocation(container.TabLocationBottom)
@@ -343,6 +405,10 @@ func placeContract(change_screen *fyne.Container) *container.Split {
 					dReams.Window.Content().(*fyne.Container).Objects[1].(*fyne.Container).Objects[1].(*container.AppTabs).Selected().Content = change_screen
 					dReams.Window.Content().(*fyne.Container).Objects[1].(*fyne.Container).Objects[1].(*container.AppTabs).Selected().Content.Refresh()
 					tabs.SelectTabIndex(0)
+					now := time.Now().Unix()
+					if now > rpc.Round.Last+33 {
+						HolderoRefresh()
+					}
 				} else {
 					tabs.SelectTabIndex(0)
 				}
