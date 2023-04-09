@@ -91,6 +91,7 @@ func DaemonHeight(ep string) uint64 {
 }
 
 // SC call gas estimate, 1320 Deri max
+//   - tag for log print
 func GasEstimate(scid, tag string, args rpc.Arguments, t []rpc.Transfer) uint64 {
 	rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
 	defer cancel()

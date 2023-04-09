@@ -142,7 +142,8 @@ func SetWalletClient(addr, pass string) (jsonrpc.RPCClient, context.Context, con
 }
 
 // Echo Dero wallet for connection
-func EchoWallet() {
+//   - tag for log print
+func EchoWallet(tag string) {
 	if Wallet.Connect {
 		rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 		defer cancel()
@@ -151,7 +152,7 @@ func EchoWallet() {
 		params := []string{"Hello", "World", "!"}
 		if err := rpcClientW.CallFor(ctx, &result, "Echo", params); err != nil {
 			Wallet.Connect = false
-			log.Println("[dReams]", err)
+			log.Printf("[%s] %s\n", tag, err)
 			return
 		}
 
@@ -162,21 +163,22 @@ func EchoWallet() {
 }
 
 // Get a wallets Dero address
-func GetAddress() {
+//   - tag for log print
+func GetAddress(tag string) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
 	var result *rpc.GetAddress_Result
 	if err := rpcClientW.CallFor(ctx, &result, "GetAddress"); err != nil {
 		Wallet.Connect = false
-		log.Println("[dReams]", err)
+		log.Printf("[%s] %s\n", tag, err)
 		return
 	}
 
 	if result.Address[0:4] == "dero" && len(result.Address) == 66 {
 		Wallet.Connect = true
-		log.Println("[dReams] Wallet Connected")
-		log.Println("[dReams] Dero Address: " + result.Address)
+		log.Printf("[%s] Wallet Connected\n", tag)
+		log.Printf("[%s] Dero Address: %s\n", tag, result.Address)
 		Wallet.Address = result.Address
 		id := []byte(result.Address)
 		hash := sha256.Sum256(id)
@@ -2238,6 +2240,7 @@ func SendAsset(scid, dest string, payload bool) {
 }
 
 // Watch a sent tx and retry 3 times if failed
+//   - tag for log print
 func ConfirmTx(txid string, tag string, tries int) (retry int) {
 	count := 0
 	for (tries < 3) && Wallet.Connect && Signal.Daemon {

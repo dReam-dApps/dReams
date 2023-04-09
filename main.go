@@ -64,7 +64,8 @@ func main() {
 	dReams.Window.SetCloseIntercept(func() {
 		writeConfig(makeConfig(table.Poker_name, rpc.Round.Daemon))
 		serviceRunning()
-		menu.StopGnomon(menu.Gnomes.Init)
+		go menu.StopLabel()
+		menu.StopGnomon("dReams")
 		quit <- struct{}{}
 		menu.StopIndicators()
 		time.Sleep(1 * time.Second)

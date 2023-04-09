@@ -241,7 +241,9 @@ func CheckConnection() {
 func DaemonConnectedBox() fyne.Widget {
 	MenuControl.daemon_check = widget.NewCheck("", func(b bool) {
 		if !Gnomes.Init && !Gnomes.Start {
-			startGnomon(rpc.Round.Daemon)
+			go startLabel()
+			filters := searchFilters()
+			StartGnomon(rpc.Round.Daemon, "dReams", filters)
 			HolderoControl.contract_input.CursorColumn = 1
 			HolderoControl.contract_input.Refresh()
 			if MenuControl.Dapp_list["dSports and dPredictions"] {
@@ -253,7 +255,9 @@ func DaemonConnectedBox() fyne.Widget {
 		}
 
 		if !b {
-			StopGnomon(Gnomes.Init)
+			go StopLabel()
+			StopGnomon("dReams")
+			go SleepLabel()
 		}
 	})
 	MenuControl.daemon_check.Disable()
@@ -274,9 +278,10 @@ func HolderoContractConnectedBox() fyne.Widget {
 	return MenuControl.holdero_check
 }
 
-// Daemon rpc entry object
+// Daemon rpc entry object with default options
+//   - Bound to rpc.Round.Daemon
 func DaemonRpcEntry() fyne.Widget {
-	var options = []string{"", DAEMON_RPC_DEFAULT, DAEMON_RPC_REMOTE1, DAEMON_RPC_REMOTE2, DAEMON_RPC_REMOTE5, DAEMON_RPC_REMOTE6}
+	options := []string{"", DAEMON_RPC_DEFAULT, DAEMON_RPC_REMOTE1, DAEMON_RPC_REMOTE2, DAEMON_RPC_REMOTE5, DAEMON_RPC_REMOTE6}
 	if MenuControl.Daemon_config != "" {
 		options = append(options, MenuControl.Daemon_config)
 	}
@@ -290,6 +295,8 @@ func DaemonRpcEntry() fyne.Widget {
 }
 
 // Wallet rpc entry object
+//   - Bound to rpc.Wallet.Rpc
+//   - Changes reset wallet connection and call CheckConnection()
 func WalletRpcEntry() fyne.Widget {
 	options := []string{"", "127.0.0.1:10103"}
 	entry := widget.NewSelectEntry(options)
@@ -311,12 +318,14 @@ func WalletRpcEntry() fyne.Widget {
 }
 
 // Authentication entry object
+//   - Bound to rpc.Wallet.UserPass
+//   - Changes call rpc.GetAddress() and CheckConnection()
 func UserPassEntry() fyne.Widget {
 	entry := widget.NewPasswordEntry()
 	entry.PlaceHolder = "user:pass"
 	entry.OnCursorChanged = func() {
 		if rpc.Wallet.Connect {
-			rpc.GetAddress()
+			rpc.GetAddress("dReams")
 			CheckConnection()
 		}
 	}
@@ -328,6 +337,9 @@ func UserPassEntry() fyne.Widget {
 }
 
 // Holdero SCID entry
+//   - Bound to rpc.Round.Contract
+//   - Entry text set on list selection
+//   - Changes clear table and check if current entry is valid table
 func HolderoContractEntry() fyne.Widget {
 	var wait bool
 	HolderoControl.contract_input = widget.NewSelectEntry(nil)
@@ -376,12 +388,14 @@ func HolderoContractEntry() fyne.Widget {
 	return HolderoControl.contract_input
 }
 
-// Connect to entered rpc addresses
+// Connect button object for rpc
+//   - Pressed calls rpc.Ping(), rpc.GetAddress(), CheckConnection(),
+//     checks for Holdero key and clears names for population
 func RpcConnectButton() fyne.Widget {
 	button := widget.NewButton("Connect", func() {
 		go func() {
 			rpc.Ping()
-			rpc.GetAddress()
+			rpc.GetAddress("dReams")
 			CheckConnection()
 			HolderoControl.contract_input.CursorColumn = 1
 			HolderoControl.contract_input.Refresh()

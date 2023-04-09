@@ -798,7 +798,7 @@ func serviceRunConfirm(start uint64, payout, tranfsers bool, window fyne.Window,
 	})
 
 	confirm_button := widget.NewButton("Confirm", func() {
-		go dReamService(start, payout, tranfsers)
+		go DreamService(start, payout, tranfsers)
 		window.Content().(*fyne.Container).Objects[1] = reset
 		window.Content().(*fyne.Container).Objects[1].Refresh()
 	})

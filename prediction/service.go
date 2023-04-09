@@ -334,7 +334,7 @@ func makeIntegratedAddr(print bool) {
 	}
 }
 
-func dReamService(start uint64, payouts, transfers bool) {
+func DreamService(start uint64, payouts, transfers bool) {
 	if rpc.Signal.Daemon && rpc.Wallet.Connect {
 		db := boltDB()
 		defer db.Close()
@@ -399,6 +399,9 @@ func runPredictionPayouts(print bool) {
 	contracts := menu.MenuControl.Predict_owned
 	var pay_queue, post_queue []string
 	for i := range contracts {
+		if !menu.Gnomes.Init || menu.GnomonClosing() {
+			return
+		}
 		split := strings.Split(contracts[i], "   ")
 		if len(split) > 2 {
 			_, u := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(split[2], "p_init", menu.Gnomes.Indexer.ChainHeight, true)
@@ -559,6 +562,9 @@ func runPredictionPayouts(print bool) {
 func runSportsPayouts(print bool) {
 	contracts := menu.MenuControl.Sports_owned
 	for i := range contracts {
+		if !menu.Gnomes.Init || menu.GnomonClosing() {
+			return
+		}
 		split := strings.Split(contracts[i], "   ")
 		if len(split) > 2 {
 			_, init := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(split[2], "s_init", menu.Gnomes.Indexer.ChainHeight, true)

@@ -131,7 +131,8 @@ func init() {
 		writeConfig(makeConfig(table.Poker_name, rpc.Round.Daemon))
 		fmt.Println()
 		serviceRunning()
-		menu.StopGnomon(menu.Gnomes.Init)
+		go menu.StopLabel()
+		menu.StopGnomon("dReams")
 		menu.StopIndicators()
 		log.Println("[dReams] Closing")
 		dReams.Window.Close()
@@ -468,14 +469,14 @@ func fetch(quit chan struct{}) {
 		case <-ticker.C: // do on interval
 			if !dReams.configure {
 				rpc.Ping()
-				rpc.EchoWallet()
+				rpc.EchoWallet("dReams")
 				rpc.GetBalance()
 				go rpc.DreamsBalance()
 				rpc.TourneyBalance()
 				rpc.GetHeight()
 				if !rpc.Signal.Startup {
 					menu.CheckConnection()
-					menu.GnomonEndPoint(rpc.Signal.Daemon, menu.Gnomes.Init, menu.Gnomes.Sync)
+					menu.GnomonEndPoint()
 					menu.GnomonState(isWindows())
 					background.Refresh()
 
@@ -1047,7 +1048,7 @@ func MenuRefresh(tab, gi bool) {
 		}
 
 		if dReams.menu_tabs.market && !isWindows() {
-			menu.FindNfaListings(menu.Gnomes.Sync, nil)
+			menu.FindNfaListings(nil)
 		}
 	}
 
@@ -1086,8 +1087,8 @@ func RecheckButton() fyne.CanvasObject {
 func RecheckAssets() {
 	menu.Gnomes.Wait = true
 	table.Assets.Assets = []string{}
-	menu.CheckAssets(menu.Gnomes.Sync, false, nil)
-	menu.CheckG45Assets(menu.Gnomes.Sync, false, nil)
+	menu.CheckAssets(false, nil)
+	menu.CheckG45Assets(false, nil)
 	if rpc.Wallet.Connect {
 		menu.MenuControl.Names.Options = []string{rpc.Wallet.Address[0:12]}
 		menu.CheckWalletNames(rpc.Wallet.Address)
@@ -1142,7 +1143,7 @@ func MainTab(ti *container.TabItem) {
 			// prediction leaderboard
 			// table.Actions.NameEntry.Text = menu.CheckPredictionName(prediction.PredictControl.Contract)
 			// table.Actions.NameEntry.Refresh()
-			menu.PopulatePredictions(rpc.Signal.Daemon, menu.Gnomes.Sync, nil)
+			menu.PopulatePredictions(nil)
 		}()
 		PredictionRefresh(dReams.predict)
 	case "Sports":
@@ -1152,7 +1153,7 @@ func MainTab(ti *container.TabItem) {
 		dReams.predict = false
 		dReams.sports = true
 		dReams.tarot = false
-		go menu.PopulateSports(rpc.Signal.Daemon, menu.Gnomes.Sync, nil)
+		go menu.PopulateSports(nil)
 	case "Tarot":
 		dReams.menu = false
 		dReams.holdero = false
@@ -1186,7 +1187,7 @@ func MenuTab(ti *container.TabItem) {
 		dReams.menu_tabs.contracts = false
 		dReams.menu_tabs.assets = false
 		dReams.menu_tabs.market = true
-		go menu.FindNfaListings(menu.Gnomes.Sync, nil)
+		go menu.FindNfaListings(nil)
 		menu.Market.Cancel_button.Hide()
 		menu.Market.Close_button.Hide()
 		menu.Market.Auction_list.Refresh()
@@ -1210,7 +1211,7 @@ func MenuContractTab(ti *container.TabItem) {
 func MarketTab(ti *container.TabItem) {
 	switch ti.Text {
 	case "Auctions":
-		go menu.FindNfaListings(menu.Gnomes.Sync, nil)
+		go menu.FindNfaListings(nil)
 		menu.Market.Tab = "Auction"
 		menu.Market.Auction_list.UnselectAll()
 		menu.Market.Viewing = ""
@@ -1222,7 +1223,7 @@ func MarketTab(ti *container.TabItem) {
 		menu.ResetAuctionInfo()
 		menu.AuctionInfo()
 	case "Buy Now":
-		go menu.FindNfaListings(menu.Gnomes.Sync, nil)
+		go menu.FindNfaListings(nil)
 		menu.Market.Tab = "Buy"
 		menu.Market.Buy_list.UnselectAll()
 		menu.Market.Viewing = ""
@@ -1240,7 +1241,7 @@ func MarketTab(ti *container.TabItem) {
 func PredictTab(ti *container.TabItem) {
 	switch ti.Text {
 	case "Contracts":
-		go menu.PopulatePredictions(rpc.Signal.Daemon, menu.Gnomes.Sync, nil)
+		go menu.PopulatePredictions(nil)
 	// case "Leaderboard":
 	// 	go MakeLeaderBoard(rpc.Signal.Daemon, menu.Gnomes.Sync, prediction.PredictControl.Contract)
 
