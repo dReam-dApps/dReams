@@ -9,10 +9,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/SixofClubsss/dReams/baccarat"
+	"github.com/SixofClubsss/dReams/holdero"
 	"github.com/SixofClubsss/dReams/menu"
 	"github.com/SixofClubsss/dReams/prediction"
 	"github.com/SixofClubsss/dReams/rpc"
-	"github.com/SixofClubsss/dReams/table"
+	"github.com/SixofClubsss/dReams/tarot"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -21,15 +23,29 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-var H table.Items
-var B table.Items
-var P table.Items
-var S table.Items
-var A table.Items
-var T table.Items
+type Items struct {
+	LeftLabel   *widget.Label
+	RightLabel  *widget.Label
+	TopLabel    *widget.Label
+	BottomLabel *widget.Label
 
-//go:embed table/iluma/iluma.txt
+	TableContent  fyne.Container
+	CardsContent  fyne.Container
+	ActionButtons fyne.Container
+	TableItems    *fyne.Container
+}
+
+var H Items
+var B Items
+var P Items
+var S Items
+var A Items
+var T Items
+
+//go:embed tarot/iluma/iluma.txt
 var iluma_intro string
+
+var dapp_list = []string{"dSports and dPredictions", "Iluma"}
 
 // If dReams has not been intialized, show this screen
 func introScreen() *fyne.Container {
@@ -41,18 +57,17 @@ func introScreen() *fyne.Container {
 	intro_label.Wrapping = fyne.TextWrapWord
 	intro_label.Alignment = fyne.TextAlignCenter
 
-	dapp_list := []string{"dSports and dPredictions", "Iluma"}
 	dapp_checks := widget.NewCheckGroup(dapp_list, func(s []string) {})
 
 	start_button := widget.NewButton("Start dReams", func() {
-		menu.MenuControl.Dapp_list = make(map[string]bool)
+		menu.Control.Dapp_list = make(map[string]bool)
 		for _, name := range dapp_checks.Selected {
-			menu.MenuControl.Dapp_list[name] = true
+			menu.Control.Dapp_list[name] = true
 		}
 
 		log.Println("[dReams] Loading dApps")
 		go func() {
-			menu.MenuControl.Dapp_list["dReams"] = true
+			menu.Control.Dapp_list["dReams"] = true
 			dReams.Window.SetContent(
 				container.New(layout.NewMaxLayout(),
 					background,
@@ -95,14 +110,14 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 	var dapp_checks *widget.CheckGroup
 	back_button := widget.NewButton("Back", func() {
 		dReams.configure = false
-		menu.MenuControl.Dapp_list["dReams"] = true
+		menu.Control.Dapp_list["dReams"] = true
 		go func() {
 			dReams.Window.Content().(*fyne.Container).Objects[1] = reset
 			dReams.Window.Content().(*fyne.Container).Objects[1].Refresh()
 		}()
 	})
 
-	for name, enabled := range menu.MenuControl.Dapp_list {
+	for name, enabled := range menu.Control.Dapp_list {
 		enabled_dapps[name] = enabled
 		if enabled {
 			is_enabled = append(is_enabled, name)
@@ -112,10 +127,14 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 	load_button := widget.NewButton("Load Changes", func() {
 		rpc.Wallet.Connect = false
 		rpc.Wallet.Height = 0
-		table.InitTableSettings()
-		menu.MenuControl.Dapp_list = enabled_dapps
+		holdero.InitTableSettings()
+		menu.Control.Dapp_list = enabled_dapps
 		log.Println("[dReams] Loading dApps")
+		dReams.closing = true
+		menu.Disconnected()
 		go func() {
+			time.Sleep(1500 * time.Millisecond)
+			dReams.closing = false
 			dReams.Window.Content().(*fyne.Container).Objects[1] = place()
 			dReams.Window.Content().(*fyne.Container).Objects[1].Refresh()
 		}()
@@ -125,7 +144,6 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 	load_button.Importance = widget.LowImportance
 	back_button.Importance = widget.LowImportance
 
-	dapp_list := []string{"dSports and dPredictions", "Iluma"}
 	dapp_checks = widget.NewCheckGroup(dapp_list, func(s []string) {
 		for reset := range enabled_dapps {
 			enabled_dapps[reset] = false
@@ -135,7 +153,7 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 			enabled_dapps[name] = true
 		}
 
-		if reflect.DeepEqual(enabled_dapps, menu.MenuControl.Dapp_list) {
+		if reflect.DeepEqual(enabled_dapps, menu.Control.Dapp_list) {
 			load_button.Hide()
 			back_button.Show()
 		} else {
@@ -181,9 +199,9 @@ func place() *fyne.Container {
 	P.RightLabel = widget.NewLabel("")
 	P.RightLabel.SetText("dReams Balance: " + rpc.Display.Token_balance + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
 
-	prediction.PredictControl.Info = widget.NewLabel("SCID: \n" + prediction.PredictControl.Contract + "\n")
-	prediction.PredictControl.Info.Wrapping = fyne.TextWrapWord
-	prediction.PredictControl.Prices = widget.NewLabel("")
+	prediction.Predict.Info = widget.NewLabel("SCID: \n" + prediction.Predict.Contract + "\n")
+	prediction.Predict.Info.Wrapping = fyne.TextWrapWord
+	prediction.Predict.Prices = widget.NewLabel("")
 
 	S.LeftLabel = widget.NewLabel("")
 	S.RightLabel = widget.NewLabel("")
@@ -194,8 +212,8 @@ func place() *fyne.Container {
 	T.LeftLabel.SetText("Total Readings: " + rpc.Display.Readings + "      Click your card for Iluma reading")
 	T.RightLabel.SetText("dReams Balance: " + rpc.Display.Token_balance + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
 
-	prediction.SportsControl.Info = widget.NewLabel("SCID: \n" + prediction.SportsControl.Contract + "\n")
-	prediction.SportsControl.Info.Wrapping = fyne.TextWrapWord
+	prediction.Sports.Info = widget.NewLabel("SCID: \n" + prediction.Sports.Contract + "\n")
+	prediction.Sports.Info.Wrapping = fyne.TextWrapWord
 
 	// dReams menu tabs
 	menu_tabs := container.NewAppTabs(
@@ -207,12 +225,16 @@ func place() *fyne.Container {
 	menu_tabs.OnSelected = func(ti *container.TabItem) {
 		MenuTab(ti)
 		if ti.Text == "dApps" {
-			go func() {
-				reset := dReams.Window.Content().(*fyne.Container).Objects[1]
-				dReams.Window.Content().(*fyne.Container).Objects[1] = dAppScreen(reset)
-				dReams.Window.Content().(*fyne.Container).Objects[1].Refresh()
+			if menu.Gnomes.Syncing {
 				menu_tabs.SelectIndex(0)
-			}()
+			} else {
+				go func() {
+					reset := dReams.Window.Content().(*fyne.Container).Objects[1]
+					dReams.Window.Content().(*fyne.Container).Objects[1] = dAppScreen(reset)
+					dReams.Window.Content().(*fyne.Container).Objects[1].Refresh()
+					menu_tabs.SelectIndex(0)
+				}()
+			}
 		}
 	}
 
@@ -268,12 +290,12 @@ func place() *fyne.Container {
 		container.NewTabItem("Holdero", contract_objs),
 		container.NewTabItem("Baccarat", placeBacc()))
 
-	if menu.MenuControl.Dapp_list["dSports and dPredictions"] {
+	if menu.Control.Dapp_list["dSports and dPredictions"] {
 		tabs.Append(container.NewTabItem("Predict", placePredict()))
 		tabs.Append(container.NewTabItem("Sports", placeSports()))
 	}
 
-	if menu.MenuControl.Dapp_list["Iluma"] {
+	if menu.Control.Dapp_list["Iluma"] {
 		tabs.Append(container.NewTabItem("Tarot", TarotItems(tarot_tabs)))
 	}
 
@@ -305,15 +327,15 @@ func placeWall() *container.Split {
 	daemon_cont := container.NewHScroll(menu.DaemonRpcEntry())
 	daemon_cont.SetMinSize(fyne.NewSize(340, 35.1875))
 
-	table.Actions.Dreams = widget.NewButton("Get dReams", nil)
-	table.Actions.Dreams.Hide()
+	holdero.Swap.Dreams = widget.NewButton("Get dReams", nil)
+	holdero.Swap.Dreams.Hide()
 
-	table.Actions.Dero = widget.NewButton("Get Dero", nil)
-	table.Actions.Dero.Hide()
+	holdero.Swap.Dero = widget.NewButton("Get Dero", nil)
+	holdero.Swap.Dero.Hide()
 
 	dReams_items := container.NewVBox(
-		table.DreamsEntry(),
-		container.NewAdaptiveGrid(2, table.Actions.Dreams, table.Actions.Dero))
+		holdero.DreamsEntry(),
+		container.NewAdaptiveGrid(2, holdero.Swap.Dreams, holdero.Swap.Dero))
 
 	user_input_cont := container.NewVBox(
 		daemon_cont,
@@ -329,23 +351,23 @@ func placeWall() *container.Split {
 	user_input_box := container.NewHBox(user_input_cont, daemon_check_cont)
 	menu_top := container.NewHSplit(user_input_box, menu.IntroTree())
 
-	table.Actions.Dreams.OnTapped = func() {
-		s := strings.Trim(table.Actions.DEntry.Text, "dReams: ")
+	holdero.Swap.Dreams.OnTapped = func() {
+		s := strings.Trim(holdero.Swap.DEntry.Text, "dReams: ")
 		amt, err := strconv.Atoi(s)
-		if err == nil && table.Actions.DEntry.Validate() == nil {
+		if err == nil && holdero.Swap.DEntry.Validate() == nil {
 			if amt > 0 {
-				menu_top.Trailing.(*fyne.Container).Objects[1] = table.DreamsConfirm(1, amt, menu_top, menu.IntroTree())
+				menu_top.Trailing.(*fyne.Container).Objects[1] = holdero.DreamsConfirm(1, amt, menu_top, menu.IntroTree())
 				menu_top.Trailing.Refresh()
 			}
 		}
 	}
 
-	table.Actions.Dero.OnTapped = func() {
-		s := strings.Trim(table.Actions.DEntry.Text, "dReams: ")
+	holdero.Swap.Dero.OnTapped = func() {
+		s := strings.Trim(holdero.Swap.DEntry.Text, "dReams: ")
 		amt, err := strconv.Atoi(s)
-		if err == nil && table.Actions.DEntry.Validate() == nil {
+		if err == nil && holdero.Swap.DEntry.Validate() == nil {
 			if amt > 0 {
-				menu_top.Trailing.(*fyne.Container).Objects[1] = table.DreamsConfirm(2, amt, menu_top, menu.IntroTree())
+				menu_top.Trailing.(*fyne.Container).Objects[1] = holdero.DreamsConfirm(2, amt, menu_top, menu.IntroTree())
 				menu_top.Trailing.Refresh()
 			}
 		}
@@ -373,16 +395,16 @@ func placeContract(change_screen *fyne.Container) *container.Split {
 	check_box := container.NewVBox(menu.HolderoContractConnectedBox())
 
 	var tabs *container.AppTabs
-	menu.HolderoControl.Holdero_unlock = widget.NewButton("Unlock Holdero Contract", nil)
-	menu.HolderoControl.Holdero_unlock.Hide()
+	menu.Poker.Holdero_unlock = widget.NewButton("Unlock Holdero Contract", nil)
+	menu.Poker.Holdero_unlock.Hide()
 
-	menu.HolderoControl.Holdero_new = widget.NewButton("New Holdero Table", nil)
-	menu.HolderoControl.Holdero_new.Hide()
+	menu.Poker.Holdero_new = widget.NewButton("New Holdero Table", nil)
+	menu.Poker.Holdero_new.Hide()
 
 	unlock_cont := container.NewVBox(
 		layout.NewSpacer(),
-		menu.HolderoControl.Holdero_unlock,
-		menu.HolderoControl.Holdero_new)
+		menu.Poker.Holdero_unlock,
+		menu.Poker.Holdero_new)
 
 	owner_buttons := container.NewAdaptiveGrid(2, container.NewMax(layout.NewSpacer()), unlock_cont)
 	owned_tab := container.NewBorder(nil, owner_buttons, nil, nil, menu.MyTables())
@@ -393,7 +415,7 @@ func placeContract(change_screen *fyne.Container) *container.Split {
 		container.NewTabItem("Owned", owned_tab),
 		container.NewTabItem("View", layout.NewSpacer()))
 
-	tabs.SelectTabIndex(0)
+	tabs.SelectIndex(0)
 	tabs.Selected().Content = menu.TableListings(tabs)
 
 	tabs.OnSelected = func(ti *container.TabItem) {
@@ -405,13 +427,13 @@ func placeContract(change_screen *fyne.Container) *container.Split {
 					dReams.menu_tabs.contracts = false
 					dReams.Window.Content().(*fyne.Container).Objects[1].(*fyne.Container).Objects[1].(*container.AppTabs).Selected().Content = change_screen
 					dReams.Window.Content().(*fyne.Container).Objects[1].(*fyne.Container).Objects[1].(*container.AppTabs).Selected().Content.Refresh()
-					tabs.SelectTabIndex(0)
+					tabs.SelectIndex(0)
 					now := time.Now().Unix()
 					if now > rpc.Round.Last+33 {
 						HolderoRefresh()
 					}
 				} else {
-					tabs.SelectTabIndex(0)
+					tabs.SelectIndex(0)
 				}
 			}()
 		}
@@ -420,12 +442,12 @@ func placeContract(change_screen *fyne.Container) *container.Split {
 	alpha := container.NewMax(canvas.NewRectangle(color.RGBA{0, 0, 0, 120}))
 	max := container.NewMax(alpha, tabs)
 
-	menu.HolderoControl.Holdero_unlock.OnTapped = func() {
+	menu.Poker.Holdero_unlock.OnTapped = func() {
 		max.Objects[1] = menu.HolderoMenuConfirm(1, max.Objects, tabs)
 		max.Objects[1].Refresh()
 	}
 
-	menu.HolderoControl.Holdero_new.OnTapped = func() {
+	menu.Poker.Holdero_new.OnTapped = func() {
 		max.Objects[1] = menu.HolderoMenuConfirm(2, max.Objects, tabs)
 		max.Objects[1].Refresh()
 	}
@@ -433,7 +455,7 @@ func placeContract(change_screen *fyne.Container) *container.Split {
 	player_box := container.NewHBox(player_input, check_box)
 	menu_top := container.NewHSplit(player_box, max)
 
-	mid := container.NewVBox(layout.NewSpacer(), container.NewAdaptiveGrid(2, menu.NameEntry(), table.TournamentButton(max.Objects, tabs)), menu.OwnersBoxMid())
+	mid := container.NewVBox(layout.NewSpacer(), container.NewAdaptiveGrid(2, menu.NameEntry(), holdero.TournamentButton(max.Objects, tabs)), menu.OwnersBoxMid())
 
 	menu_bottom := container.NewGridWithColumns(3, menu.OwnersBoxLeft(max.Objects, tabs), mid, layout.NewSpacer())
 
@@ -446,18 +468,18 @@ func placeContract(change_screen *fyne.Container) *container.Split {
 // dReams asset tab layout
 func placeAssets() *container.Split {
 	asset_items := container.NewVBox(
-		table.FaceSelect(),
-		table.BackSelect(),
-		table.ThemeSelect(),
-		table.AvatarSelect(),
-		table.SharedDecks(),
+		holdero.FaceSelect(),
+		holdero.BackSelect(),
+		holdero.ThemeSelect(),
+		holdero.AvatarSelect(),
+		holdero.SharedDecks(),
 		RecheckButton(),
 		layout.NewSpacer())
 
 	cont := container.NewHScroll(asset_items)
 	cont.SetMinSize(fyne.NewSize(290, 35.1875))
 
-	items_box := container.NewAdaptiveGrid(2, cont, container.NewAdaptiveGrid(1, table.AssetStats()))
+	items_box := container.NewAdaptiveGrid(2, cont, container.NewAdaptiveGrid(1, holdero.AssetStats()))
 
 	player_input := container.NewVBox(items_box, layout.NewSpacer())
 
@@ -469,11 +491,11 @@ func placeAssets() *container.Split {
 	}
 
 	scroll_top := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "arrowUp"), func() {
-		table.Assets.Asset_list.ScrollToTop()
+		holdero.Assets.Asset_list.ScrollToTop()
 	})
 
 	scroll_bottom := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "arrowDown"), func() {
-		table.Assets.Asset_list.ScrollToBottom()
+		holdero.Assets.Asset_list.ScrollToBottom()
 	})
 
 	scroll_top.Importance = widget.LowImportance
@@ -484,7 +506,7 @@ func placeAssets() *container.Split {
 	alpha := container.NewMax(canvas.NewRectangle(color.RGBA{0, 0, 0, 120}))
 	max := container.NewMax(alpha, tabs, scroll_cont)
 
-	player_input.AddObject(table.SetHeaderItems(max.Objects, tabs))
+	player_input.AddObject(holdero.SetHeaderItems(max.Objects, tabs))
 	player_box := container.NewHBox(player_input)
 
 	menu_top := container.NewHSplit(player_box, max)
@@ -594,13 +616,13 @@ func placeMarket() *container.Split {
 // dReams Holdero tab layout
 func placeHoldero(change_screen *widget.Button) *fyne.Container {
 	H.TableContent = *container.NewWithoutLayout(
-		table.HolderoTable(resourceTablePng),
-		table.Player1_label(nil, nil, nil),
-		table.Player2_label(nil, nil, nil),
-		table.Player3_label(nil, nil, nil),
-		table.Player4_label(nil, nil, nil),
-		table.Player5_label(nil, nil, nil),
-		table.Player6_label(nil, nil, nil),
+		holdero.HolderoTable(resourceTablePng),
+		holdero.Player1_label(nil, nil, nil),
+		holdero.Player2_label(nil, nil, nil),
+		holdero.Player3_label(nil, nil, nil),
+		holdero.Player4_label(nil, nil, nil),
+		holdero.Player5_label(nil, nil, nil),
+		holdero.Player6_label(nil, nil, nil),
 		H.TopLabel,
 	)
 
@@ -610,16 +632,16 @@ func placeHoldero(change_screen *widget.Button) *fyne.Container {
 
 	H.ActionButtons = *container.NewVBox(
 		layout.NewSpacer(),
-		table.SitButton(),
-		table.LeaveButton(),
-		table.DealHandButton(),
-		table.CheckButton(),
-		table.BetButton(),
-		table.BetAmount())
+		holdero.SitButton(),
+		holdero.LeaveButton(),
+		holdero.DealHandButton(),
+		holdero.CheckButton(),
+		holdero.BetButton(),
+		holdero.BetAmount())
 
-	options := container.NewVBox(layout.NewSpacer(), table.AutoOptions(), change_screen)
+	options := container.NewVBox(layout.NewSpacer(), holdero.AutoOptions(), change_screen)
 
-	holdero_actions := container.NewHBox(options, layout.NewSpacer(), table.TimeOutWarning(), layout.NewSpacer(), layout.NewSpacer(), &H.ActionButtons)
+	holdero_actions := container.NewHBox(options, layout.NewSpacer(), holdero.TimeOutWarning(), layout.NewSpacer(), layout.NewSpacer(), &H.ActionButtons)
 
 	H.TableItems = container.NewVBox(
 		labelColorBlack(holdero_label),
@@ -634,8 +656,8 @@ func placeHoldero(change_screen *widget.Button) *fyne.Container {
 // dReams Baccarat tab layout
 func placeBacc() *fyne.Container {
 	B.TableContent = *container.NewWithoutLayout(
-		table.BaccTable(resourceBaccTablePng),
-		table.BaccResult(rpc.Display.BaccRes),
+		baccarat.BaccTable(resourceBaccTablePng),
+		baccarat.BaccResult(rpc.Display.BaccRes),
 	)
 
 	bacc_label := container.NewHBox(B.LeftLabel, layout.NewSpacer(), B.RightLabel)
@@ -645,7 +667,7 @@ func placeBacc() *fyne.Container {
 		&B.TableContent,
 		&B.CardsContent,
 		layout.NewSpacer(),
-		table.BaccaratButtons(),
+		baccarat.BaccaratButtons(),
 	)
 
 	return B.TableItems
@@ -655,7 +677,7 @@ func placeBacc() *fyne.Container {
 func placePredict() *fyne.Container {
 	contract_cont := container.NewHScroll(prediction.PreictionContractEntry())
 	contract_cont.SetMinSize(fyne.NewSize(600, 35.1875))
-	predict_info := container.NewVBox(prediction.PredictControl.Info, prediction.PredictControl.Prices)
+	predict_info := container.NewVBox(prediction.Predict.Info, prediction.Predict.Prices)
 	predict_scroll := container.NewScroll(predict_info)
 	predict_scroll.SetMinSize(fyne.NewSize(540, 500))
 
@@ -663,32 +685,32 @@ func placePredict() *fyne.Container {
 
 	hbox := container.NewHBox(contract_cont, check_box)
 
-	table.Actions.Higher = widget.NewButton("Higher", nil)
-	table.Actions.Higher.Hide()
+	prediction.Predict.Higher = widget.NewButton("Higher", nil)
+	prediction.Predict.Higher.Hide()
 
-	table.Actions.Lower = widget.NewButton("Lower", nil)
-	table.Actions.Lower.Hide()
+	prediction.Predict.Lower = widget.NewButton("Lower", nil)
+	prediction.Predict.Lower.Hide()
 
-	table.Actions.Prediction_box = container.NewVBox(table.Actions.Higher, table.Actions.Lower)
-	table.Actions.Prediction_box.Hide()
+	prediction.Predict.Prediction_box = container.NewVBox(prediction.Predict.Higher, prediction.Predict.Lower)
+	prediction.Predict.Prediction_box.Hide()
 
 	predict_content := container.NewVBox(
 		hbox,
 		predict_scroll,
 		layout.NewSpacer(),
-		table.Actions.Prediction_box)
+		prediction.Predict.Prediction_box)
 
 	// leaders_scroll := container.NewScroll(prediction.LeadersDisplay())
 	// leaders_scroll.SetMinSize(fyne.NewSize(180, 500))
 	// leaders_contnet := container.NewVBox(leaders_scroll)
 
-	menu.MenuControl.Bet_unlock_p = widget.NewButton("Unlock dPrediction Contract", nil)
-	menu.MenuControl.Bet_unlock_p.Hide()
+	menu.Control.Bet_unlock_p = widget.NewButton("Unlock dPrediction Contract", nil)
+	menu.Control.Bet_unlock_p.Hide()
 
-	menu.MenuControl.Bet_new_p = widget.NewButton("New dPrediction Contract", nil)
-	menu.MenuControl.Bet_new_p.Hide()
+	menu.Control.Bet_new_p = widget.NewButton("New dPrediction Contract", nil)
+	menu.Control.Bet_new_p.Hide()
 
-	unlock_cont := container.NewVBox(menu.MenuControl.Bet_unlock_p, menu.MenuControl.Bet_new_p)
+	unlock_cont := container.NewVBox(menu.Control.Bet_unlock_p, menu.Control.Bet_new_p)
 
 	owner_buttons := container.NewAdaptiveGrid(2, container.NewMax(prediction.OwnerButtonP()), unlock_cont)
 	owned_tab := container.NewBorder(nil, owner_buttons, nil, nil, prediction.PredictionOwned())
@@ -699,7 +721,7 @@ func placePredict() *fyne.Container {
 		container.NewTabItem("Owned", owned_tab))
 	// container.NewTabItem("Leaderboard", leaders_contnet))
 
-	tabs.SelectTabIndex(0)
+	tabs.SelectIndex(0)
 	tabs.Selected().Content = prediction.PredictionListings(tabs)
 
 	tabs.OnSelected = func(ti *container.TabItem) {
@@ -709,26 +731,26 @@ func placePredict() *fyne.Container {
 	alpha := container.NewMax(canvas.NewRectangle(color.RGBA{0, 0, 0, 120}))
 	max := container.NewMax(alpha, tabs)
 
-	table.Actions.Higher.OnTapped = func() {
-		if len(prediction.PredictControl.Contract) == 64 {
+	prediction.Predict.Higher.OnTapped = func() {
+		if len(prediction.Predict.Contract) == 64 {
 			max.Objects[1] = prediction.ConfirmAction(2, "", "", max.Objects, tabs)
 			max.Objects[1].Refresh()
 		}
 	}
 
-	table.Actions.Lower.OnTapped = func() {
-		if len(prediction.PredictControl.Contract) == 64 {
+	prediction.Predict.Lower.OnTapped = func() {
+		if len(prediction.Predict.Contract) == 64 {
 			max.Objects[1] = prediction.ConfirmAction(1, "", "", max.Objects, tabs)
 			max.Objects[1].Refresh()
 		}
 	}
 
-	menu.MenuControl.Bet_unlock_p.OnTapped = func() {
+	menu.Control.Bet_unlock_p.OnTapped = func() {
 		max.Objects[1] = menu.BettingMenuConfirmP(1, max.Objects, tabs)
 		max.Objects[1].Refresh()
 	}
 
-	menu.MenuControl.Bet_new_p.OnTapped = func() {
+	menu.Control.Bet_new_p.OnTapped = func() {
 		max.Objects[1] = menu.BettingMenuConfirmP(2, max.Objects, tabs)
 		max.Objects[1].Refresh()
 	}
@@ -740,6 +762,21 @@ func placePredict() *fyne.Container {
 		labelColorBlack(predict_label),
 		predict_box)
 
+	go func() {
+		time.Sleep(time.Second)
+		for !dReams.closing && menu.Control.Dapp_list["dSports and dPredictions"] {
+			if !rpc.Wallet.Connect {
+				if menu.Control.Dapp_list["dSports and dPredictions"] {
+					menu.Control.Predict_check.SetChecked(false)
+					menu.Control.Sports_check.SetChecked(false)
+					prediction.DisablePreditions(true)
+					prediction.DisableSports(true)
+				}
+			}
+			time.Sleep(time.Second)
+		}
+	}()
+
 	return P.TableItems
 }
 
@@ -747,59 +784,59 @@ func placePredict() *fyne.Container {
 func placeSports() *fyne.Container {
 	cont := container.NewHScroll(prediction.SportsContractEntry())
 	cont.SetMinSize(fyne.NewSize(600, 35.1875))
-	sports_content := container.NewVBox(prediction.SportsControl.Info)
+	sports_content := container.NewVBox(prediction.Sports.Info)
 	sports_scroll := container.NewVScroll(sports_content)
 	sports_scroll.SetMinSize(fyne.NewSize(180, 500))
 
 	check_box := container.NewVBox(prediction.SportsConnectedBox())
 	hbox := container.NewHBox(cont, check_box)
 
-	table.Actions.Game_select = widget.NewSelect(table.Actions.Game_options, func(s string) {
+	prediction.Sports.Game_select = widget.NewSelect(prediction.Sports.Game_options, func(s string) {
 		split := strings.Split(s, "   ")
-		a, b := menu.GetSportsTeams(prediction.SportsControl.Contract, split[0])
-		if table.Actions.Game_select.SelectedIndex() >= 0 {
-			table.Actions.Multi.Show()
-			table.Actions.ButtonA.Show()
-			table.Actions.ButtonB.Show()
-			table.Actions.ButtonA.Text = a
-			table.Actions.ButtonA.Refresh()
-			table.Actions.ButtonB.Text = b
-			table.Actions.ButtonB.Refresh()
+		a, b := menu.GetSportsTeams(prediction.Sports.Contract, split[0])
+		if prediction.Sports.Game_select.SelectedIndex() >= 0 {
+			prediction.Sports.Multi.Show()
+			prediction.Sports.ButtonA.Show()
+			prediction.Sports.ButtonB.Show()
+			prediction.Sports.ButtonA.Text = a
+			prediction.Sports.ButtonA.Refresh()
+			prediction.Sports.ButtonB.Text = b
+			prediction.Sports.ButtonB.Refresh()
 		} else {
-			table.Actions.Multi.Hide()
-			table.Actions.ButtonA.Hide()
-			table.Actions.ButtonB.Hide()
+			prediction.Sports.Multi.Hide()
+			prediction.Sports.ButtonA.Hide()
+			prediction.Sports.ButtonB.Hide()
 		}
 	})
 
-	table.Actions.Game_select.PlaceHolder = "Select Game #"
-	table.Actions.Game_select.Hide()
+	prediction.Sports.Game_select.PlaceHolder = "Select Game #"
+	prediction.Sports.Game_select.Hide()
 
 	var Multi_options = []string{"1x", "3x", "5x"}
-	table.Actions.Multi = widget.NewRadioGroup(Multi_options, func(s string) {})
-	table.Actions.Multi.Horizontal = true
-	table.Actions.Multi.Hide()
+	prediction.Sports.Multi = widget.NewRadioGroup(Multi_options, func(s string) {})
+	prediction.Sports.Multi.Horizontal = true
+	prediction.Sports.Multi.Hide()
 
-	table.Actions.ButtonA = widget.NewButton("TEAM A", nil)
-	table.Actions.ButtonA.Hide()
+	prediction.Sports.ButtonA = widget.NewButton("TEAM A", nil)
+	prediction.Sports.ButtonA.Hide()
 
-	table.Actions.ButtonB = widget.NewButton("TEAM B", nil)
-	table.Actions.ButtonB.Hide()
+	prediction.Sports.ButtonB = widget.NewButton("TEAM B", nil)
+	prediction.Sports.ButtonB.Hide()
 
-	sports_muli := container.NewCenter(table.Actions.Multi)
-	table.Actions.Sports_box = container.NewVBox(
+	sports_muli := container.NewCenter(prediction.Sports.Multi)
+	prediction.Sports.Sports_box = container.NewVBox(
 		sports_muli,
-		table.Actions.Game_select,
-		table.Actions.ButtonA,
-		table.Actions.ButtonB)
+		prediction.Sports.Game_select,
+		prediction.Sports.ButtonA,
+		prediction.Sports.ButtonB)
 
-	table.Actions.Sports_box.Hide()
+	prediction.Sports.Sports_box.Hide()
 
 	sports_left := container.NewVBox(
 		hbox,
 		sports_scroll,
 		layout.NewSpacer(),
-		table.Actions.Sports_box)
+		prediction.Sports.Sports_box)
 
 	epl := widget.NewLabel("")
 	epl.Wrapping = fyne.TextWrapWord
@@ -845,15 +882,15 @@ func placeSports() *fyne.Container {
 		}
 	}
 
-	menu.MenuControl.Bet_unlock_s = widget.NewButton("Unlock dSports Contracts", nil)
-	menu.MenuControl.Bet_unlock_s.Hide()
+	menu.Control.Bet_unlock_s = widget.NewButton("Unlock dSports Contracts", nil)
+	menu.Control.Bet_unlock_s.Hide()
 
-	menu.MenuControl.Bet_new_s = widget.NewButton("New dSports Contract", nil)
-	menu.MenuControl.Bet_new_s.Hide()
+	menu.Control.Bet_new_s = widget.NewButton("New dSports Contract", nil)
+	menu.Control.Bet_new_s.Hide()
 
 	unlock_cont := container.NewVBox(
-		menu.MenuControl.Bet_unlock_s,
-		menu.MenuControl.Bet_new_s)
+		menu.Control.Bet_unlock_s,
+		menu.Control.Bet_new_s)
 
 	owner_buttons := container.NewAdaptiveGrid(2, container.NewMax(prediction.OwnerButtonS()), unlock_cont)
 	owned_tab := container.NewBorder(nil, owner_buttons, nil, nil, prediction.SportsOwned())
@@ -865,7 +902,7 @@ func placeSports() *fyne.Container {
 		container.NewTabItem("Scores", score_tabs),
 		container.NewTabItem("Payouts", prediction.SportsPayouts()))
 
-	tabs.SelectTabIndex(0)
+	tabs.SelectIndex(0)
 	tabs.Selected().Content = prediction.SportsListings(tabs)
 
 	tabs.OnSelected = func(ti *container.TabItem) {
@@ -875,27 +912,27 @@ func placeSports() *fyne.Container {
 	alpha := container.NewMax(canvas.NewRectangle(color.RGBA{0, 0, 0, 120}))
 	max := container.NewMax(alpha, tabs)
 
-	table.Actions.ButtonA.OnTapped = func() {
-		if len(prediction.SportsControl.Contract) == 64 {
-			max.Objects[1] = prediction.ConfirmAction(3, table.Actions.ButtonA.Text, table.Actions.ButtonB.Text, max.Objects, tabs)
+	prediction.Sports.ButtonA.OnTapped = func() {
+		if len(prediction.Sports.Contract) == 64 {
+			max.Objects[1] = prediction.ConfirmAction(3, prediction.Sports.ButtonA.Text, prediction.Sports.ButtonB.Text, max.Objects, tabs)
 			max.Objects[1].Refresh()
 		}
 	}
-	table.Actions.ButtonA.Hide()
+	prediction.Sports.ButtonA.Hide()
 
-	table.Actions.ButtonB.OnTapped = func() {
-		if len(prediction.SportsControl.Contract) == 64 {
-			max.Objects[1] = prediction.ConfirmAction(4, table.Actions.ButtonA.Text, table.Actions.ButtonB.Text, max.Objects, tabs)
+	prediction.Sports.ButtonB.OnTapped = func() {
+		if len(prediction.Sports.Contract) == 64 {
+			max.Objects[1] = prediction.ConfirmAction(4, prediction.Sports.ButtonA.Text, prediction.Sports.ButtonB.Text, max.Objects, tabs)
 			max.Objects[1].Refresh()
 		}
 	}
 
-	menu.MenuControl.Bet_unlock_s.OnTapped = func() {
+	menu.Control.Bet_unlock_s.OnTapped = func() {
 		max.Objects[1] = menu.BettingMenuConfirmS(1, max.Objects, tabs)
 		max.Objects[1].Refresh()
 	}
 
-	menu.MenuControl.Bet_new_s.OnTapped = func() {
+	menu.Control.Bet_new_s.OnTapped = func() {
 		max.Objects[1] = menu.BettingMenuConfirmS(2, max.Objects, tabs)
 		max.Objects[1].Refresh()
 	}
@@ -973,7 +1010,7 @@ func placeTarot() *fyne.Container {
 		nil,
 		nil,
 		nil,
-		table.TarotCardBox(),
+		tarot.TarotCardBox(),
 	)
 
 	return T.TableItems

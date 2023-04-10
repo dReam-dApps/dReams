@@ -1,4 +1,4 @@
-package table
+package holdero
 
 const (
 	Seals_mint = "dero1qyfq8m3rju62tshju60zuc0ymrajwxqajkdh6pw888ejuv94jlfgjqq58px98"
@@ -7,7 +7,7 @@ const (
 	ATeam_coll = "bbc357bdfe9fc41128fc11ce555eaadbd9b411eca903008396e0de4cc31821c7"
 )
 
-// / Dero Seals
+// Dero Seals metadata struct
 type Seal struct {
 	Attributes struct {
 		Eyes        string `json:"Eyes"`
@@ -21,7 +21,7 @@ type Seal struct {
 	Score float64 `json:"score"`
 }
 
-// / Dero A-Team
+// Dero A-Team metadata struct
 type Agent struct {
 	Attributes struct {
 		Color  string `json:"Color"`

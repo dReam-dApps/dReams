@@ -5,8 +5,9 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/SixofClubsss/dReams/holdero"
 	"github.com/SixofClubsss/dReams/rpc"
-	"github.com/SixofClubsss/dReams/table"
+	"github.com/SixofClubsss/dReams/tarot"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -214,11 +215,11 @@ func Is_In(hash string, who int, end bool) int {
 }
 
 func CustomCard(c int, face string) *canvas.Image {
-	dir := table.GetDir()
+	dir := holdero.GetDir()
 	mid := "/cards/" + face + "/"
 	path := dir + mid + cardEnd(c)
 
-	if table.FileExists(path) {
+	if holdero.FileExists(path, "dReams") {
 		return canvas.NewImageFromFile(path)
 	}
 
@@ -226,11 +227,11 @@ func CustomCard(c int, face string) *canvas.Image {
 }
 
 func CustomBack(back string) *canvas.Image {
-	dir := table.GetDir()
+	dir := holdero.GetDir()
 	post := "/cards/backs/" + back + ".png"
 	path := dir + post
 
-	if table.FileExists(path) {
+	if holdero.FileExists(path, "dReams") {
 		return canvas.NewImageFromFile(path)
 	}
 
@@ -774,60 +775,61 @@ func TarotItems(tabs *container.AppTabs) fyne.CanvasObject {
 			signer := rpc.VerifySigner(search_entry.Text)
 			if signer {
 				rpc.Tarot.Display = true
-				table.Iluma.Label.SetText("")
+				tarot.Iluma.Label.SetText("")
 				rpc.FetchTarotReading(txid)
-				if rpc.Tarot.T_card2 != 0 && rpc.Tarot.T_card3 != 0 {
-					table.Iluma.Card1.Objects[1] = TarotCard(rpc.Tarot.T_card1)
-					table.Iluma.Card2.Objects[1] = TarotCard(rpc.Tarot.T_card2)
-					table.Iluma.Card3.Objects[1] = TarotCard(rpc.Tarot.T_card3)
+				if rpc.Tarot.Card2 != 0 && rpc.Tarot.Card3 != 0 {
+					tarot.Iluma.Card1.Objects[1] = TarotCard(rpc.Tarot.Card1)
+					tarot.Iluma.Card2.Objects[1] = TarotCard(rpc.Tarot.Card2)
+					tarot.Iluma.Card3.Objects[1] = TarotCard(rpc.Tarot.Card3)
 					rpc.Tarot.Num = 3
 				} else {
-					table.Iluma.Card1.Objects[1] = TarotCard(0)
-					table.Iluma.Card2.Objects[1] = TarotCard(rpc.Tarot.T_card1)
-					table.Iluma.Card3.Objects[1] = TarotCard(0)
+					tarot.Iluma.Card1.Objects[1] = TarotCard(0)
+					tarot.Iluma.Card2.Objects[1] = TarotCard(rpc.Tarot.Card1)
+					tarot.Iluma.Card3.Objects[1] = TarotCard(0)
 					rpc.Tarot.Num = 1
 				}
-				table.Iluma.Box.Refresh()
+				tarot.Iluma.Box.Refresh()
 			} else {
 				log.Println("[Tarot] This is not your reading")
 			}
 		}
 	})
 
-	reset := table.Iluma.Card2
+	reset := tarot.Iluma.Card2
 
-	table.Iluma.Draw1 = widget.NewButton("Draw One", func() {
-		if !table.Iluma.Open {
-			table.Iluma.Draw1.Hide()
-			table.Iluma.Draw3.Hide()
-			table.Iluma.Card2 = table.TarotConfirm(1, reset)
+	tarot.Iluma.Draw1 = widget.NewButton("Draw One", func() {
+		if !tarot.Iluma.Open {
+			tarot.Iluma.Draw1.Hide()
+			tarot.Iluma.Draw3.Hide()
+			tarot.Iluma.Card2 = tarot.TarotConfirm(1, reset)
 		}
 	})
 
-	table.Iluma.Draw3 = widget.NewButton("Draw Three", func() {
-		if !table.Iluma.Open {
-			table.Iluma.Draw1.Hide()
-			table.Iluma.Draw3.Hide()
-			table.Iluma.Card2 = table.TarotConfirm(3, reset)
+	tarot.Iluma.Draw3 = widget.NewButton("Draw Three", func() {
+		if !tarot.Iluma.Open {
+			tarot.Iluma.Draw1.Hide()
+			tarot.Iluma.Draw3.Hide()
+			tarot.Iluma.Card2 = tarot.TarotConfirm(3, reset)
 		}
 	})
 
 	draw_cont := container.NewAdaptiveGrid(5,
 		layout.NewSpacer(),
 		layout.NewSpacer(),
-		table.Iluma.Draw1,
-		table.Iluma.Draw3,
+		tarot.Iluma.Draw1,
+		tarot.Iluma.Draw3,
 		layout.NewSpacer())
 
-	table.Iluma.Search = container.NewBorder(nil, nil, nil, search_button, search_entry)
+	tarot.Iluma.Search = container.NewBorder(nil, nil, nil, search_button, search_entry)
 
-	table.Iluma.Actions = container.NewVBox(
+	tarot.Iluma.Actions = container.NewVBox(
 		layout.NewSpacer(),
-		container.NewAdaptiveGrid(2, draw_cont, table.Iluma.Search))
+		container.NewAdaptiveGrid(2, draw_cont, tarot.Iluma.Search))
 
-	table.Iluma.Search.Hide()
-	table.Iluma.Actions.Hide()
-	max := container.NewMax(tabs, table.Iluma.Actions)
+	tarot.Iluma.Search.Hide()
+	tarot.Iluma.Actions.Hide()
+
+	max := container.NewMax(tabs, tarot.Iluma.Actions)
 
 	return max
 }

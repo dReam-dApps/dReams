@@ -3,12 +3,11 @@ package menu
 import (
 	"fmt"
 	"image/color"
-	"strconv"
 	"strings"
 	"time"
 
+	"github.com/SixofClubsss/dReams/dwidget"
 	"github.com/SixofClubsss/dReams/rpc"
-	"github.com/SixofClubsss/dReams/table"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -20,7 +19,7 @@ import (
 
 type marketItems struct {
 	Tab           string
-	Entry         *marketAmt
+	Entry         *dwidget.TenthAmt
 	Name          *canvas.Text
 	Type          *canvas.Text
 	Collection    *canvas.Text
@@ -57,29 +56,9 @@ type marketItems struct {
 
 var Market marketItems
 
-type marketAmt struct {
-	table.NumericalEntry
-}
-
-func (e *marketAmt) TypedKey(k *fyne.KeyEvent) {
-	switch k.Name {
-	case fyne.KeyUp:
-		if f, err := strconv.ParseFloat(e.Entry.Text, 64); err == nil {
-			e.Entry.SetText(strconv.FormatFloat(float64(f+0.1), 'f', 1, 64))
-		}
-	case fyne.KeyDown:
-		if f, err := strconv.ParseFloat(e.Entry.Text, 64); err == nil {
-			if f >= 0.1 {
-				e.Entry.SetText(strconv.FormatFloat(float64(f-0.1), 'f', 1, 64))
-			}
-		}
-	}
-	e.Entry.TypedKey(k)
-}
-
 // NFA market amount entry
 func MarketEntry() fyne.CanvasObject {
-	Market.Entry = &marketAmt{}
+	Market.Entry = &dwidget.TenthAmt{}
 	Market.Entry.ExtendBaseWidget(Market.Entry)
 	Market.Entry.SetText("0.0")
 	Market.Entry.PlaceHolder = "Dero:"

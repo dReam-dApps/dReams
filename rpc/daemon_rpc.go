@@ -32,9 +32,17 @@ const (
 	ArtAddress   = "dero1qy0khp9s9yw2h0eu20xmy9lth3zp5cacmx3rwt6k45l568d2mmcf6qgcsevzx"
 )
 
+type daemon struct {
+	Rpc     string
+	Connect bool
+	Height  uint64
+}
+
+var Daemon daemon
 var Times times
 var Display displayStrings
-var CardHash hashValue
+
+// var CardHash hashValue
 var Round holderoValues
 var Bacc baccValues
 var Signal signals
@@ -60,19 +68,19 @@ func SetDaemonClient(addr string) (jsonrpc.RPCClient, context.Context, context.C
 
 // Ping Dero blockchain for connection
 func Ping() {
-	rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
+	rpcClientD, ctx, cancel := SetDaemonClient(Daemon.Rpc)
 	defer cancel()
 
 	var result string
 	if err := rpcClientD.CallFor(ctx, &result, "DERO.Ping"); err != nil {
-		Signal.Daemon = false
+		Daemon.Connect = false
 		return
 	}
 
 	if result == "Pong " {
-		Signal.Daemon = true
+		Daemon.Connect = true
 	} else {
-		Signal.Daemon = false
+		Daemon.Connect = false
 	}
 }
 
@@ -93,7 +101,7 @@ func DaemonHeight(ep string) uint64 {
 // SC call gas estimate, 1320 Deri max
 //   - tag for log print
 func GasEstimate(scid, tag string, args rpc.Arguments, t []rpc.Transfer) uint64 {
-	rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
+	rpcClientD, ctx, cancel := SetDaemonClient(Daemon.Rpc)
 	defer cancel()
 
 	var result *rpc.GasEstimate_Result
@@ -127,7 +135,7 @@ func GasEstimate(scid, tag string, args rpc.Arguments, t []rpc.Transfer) uint64 
 
 // Check Gnomon SC for stored contract owner
 func CheckForIndex(scid string) interface{} {
-	rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
+	rpcClientD, ctx, cancel := SetDaemonClient(Daemon.Rpc)
 	defer cancel()
 
 	var result *rpc.GetSC_Result
@@ -150,8 +158,8 @@ func CheckForIndex(scid string) interface{} {
 
 // Get code of a SC
 func GetSCCode(scid string) string {
-	if Signal.Daemon {
-		rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
+	if Daemon.Connect {
+		rpcClientD, ctx, cancel := SetDaemonClient(Daemon.Rpc)
 		defer cancel()
 
 		var result *rpc.GetSC_Result
@@ -173,8 +181,8 @@ func GetSCCode(scid string) string {
 
 // Get name service SC code
 func GetNameServiceCode() string {
-	if Signal.Daemon {
-		rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
+	if Daemon.Connect {
+		rpcClientD, ctx, cancel := SetDaemonClient(Daemon.Rpc)
 		defer cancel()
 
 		var result *rpc.GetSC_Result
@@ -196,8 +204,8 @@ func GetNameServiceCode() string {
 
 // Get Gnomon SC code
 func GetGnomonCode() string {
-	if Signal.Daemon {
-		rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
+	if Daemon.Connect {
+		rpcClientD, ctx, cancel := SetDaemonClient(Daemon.Rpc)
 		defer cancel()
 
 		var result *rpc.GetSC_Result
@@ -219,7 +227,7 @@ func GetGnomonCode() string {
 
 // Get all asset SCIDs from collection
 func GetG45Collection(scid string) (scids []string) {
-	rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
+	rpcClientD, ctx, cancel := SetDaemonClient(Daemon.Rpc)
 	defer cancel()
 
 	var result *rpc.GetSC_Result
@@ -262,7 +270,7 @@ func GetG45Collection(scid string) (scids []string) {
 
 // Get single TX data with GetTransaction
 func GetDaemonTx(txid string) *rpc.Tx_Related_Info {
-	rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
+	rpcClientD, ctx, cancel := SetDaemonClient(Daemon.Rpc)
 	defer cancel()
 
 	var result *rpc.GetTransaction_Result
@@ -284,7 +292,7 @@ func GetDaemonTx(txid string) *rpc.Tx_Related_Info {
 
 // Verify TX signer with GetTransaction
 func VerifySigner(txid string) bool {
-	rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
+	rpcClientD, ctx, cancel := SetDaemonClient(Daemon.Rpc)
 	defer cancel()
 
 	var result *rpc.GetTransaction_Result
@@ -306,8 +314,8 @@ func VerifySigner(txid string) bool {
 
 // Get Holdero SC data
 func FetchHolderoSC() {
-	if Signal.Daemon && Signal.Contract {
-		rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
+	if Daemon.Connect && Signal.Contract {
+		rpcClientD, ctx, cancel := SetDaemonClient(Daemon.Rpc)
 		defer cancel()
 
 		var result *rpc.GetSC_Result
@@ -541,12 +549,12 @@ func FetchHolderoSC() {
 			}
 
 			if End_jv != nil {
-				CardHash.Key1 = fmt.Sprint(Key1_jv)
-				CardHash.Key2 = fmt.Sprint(Key2_jv)
-				CardHash.Key3 = fmt.Sprint(Key3_jv)
-				CardHash.Key4 = fmt.Sprint(Key4_jv)
-				CardHash.Key5 = fmt.Sprint(Key5_jv)
-				CardHash.Key6 = fmt.Sprint(Key6_jv)
+				Round.Cards.Key1 = fmt.Sprint(Key1_jv)
+				Round.Cards.Key2 = fmt.Sprint(Key2_jv)
+				Round.Cards.Key3 = fmt.Sprint(Key3_jv)
+				Round.Cards.Key4 = fmt.Sprint(Key4_jv)
+				Round.Cards.Key5 = fmt.Sprint(Key5_jv)
+				Round.Cards.Key6 = fmt.Sprint(Key6_jv)
 				Signal.End = true
 
 			}
@@ -576,8 +584,8 @@ func FetchHolderoSC() {
 
 // Code for v1.0.0 Holdero SC
 func GetHoldero100Code() string {
-	if Signal.Daemon {
-		rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
+	if Daemon.Connect {
+		rpcClientD, ctx, cancel := SetDaemonClient(Daemon.Rpc)
 		defer cancel()
 
 		var result *rpc.GetSC_Result
@@ -601,8 +609,8 @@ func GetHoldero100Code() string {
 
 // Code for v1.1.0 Holdero public or private SC
 func GetHoldero110Code(pub int) string {
-	if Signal.Daemon {
-		rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
+	if Daemon.Connect {
+		rpcClientD, ctx, cancel := SetDaemonClient(Daemon.Rpc)
 		defer cancel()
 
 		var result *rpc.GetSC_Result
@@ -635,8 +643,8 @@ func GetHoldero110Code(pub int) string {
 
 // Get Baccarat SC data
 func FetchBaccSC() {
-	if Signal.Daemon {
-		rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
+	if Daemon.Connect {
+		rpcClientD, ctx, cancel := SetDaemonClient(Daemon.Rpc)
 		defer cancel()
 
 		var result *rpc.GetSC_Result
@@ -687,8 +695,8 @@ func FetchBaccSC() {
 
 // Get Baccarat SC code
 func GetBaccCode() string {
-	if Signal.Daemon {
-		rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
+	if Daemon.Connect {
+		rpcClientD, ctx, cancel := SetDaemonClient(Daemon.Rpc)
 		defer cancel()
 
 		var result *rpc.GetSC_Result
@@ -712,8 +720,8 @@ func GetBaccCode() string {
 
 // Find played Baccarat hand
 func FetchBaccHand(tx string) {
-	if Signal.Daemon && tx != "" {
-		rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
+	if Daemon.Connect && tx != "" {
+		rpcClientD, ctx, cancel := SetDaemonClient(Daemon.Rpc)
 		defer cancel()
 
 		var result *rpc.GetSC_Result
@@ -769,7 +777,7 @@ func FetchBaccHand(tx string) {
 
 // Check dSports/dPrediction SC for dev address
 func ValidBetContract(scid string) bool {
-	rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
+	rpcClientD, ctx, cancel := SetDaemonClient(Daemon.Rpc)
 	defer cancel()
 
 	var result *rpc.GetSC_Result
@@ -791,8 +799,8 @@ func ValidBetContract(scid string) bool {
 
 // Get dPrediction final TXID
 func FetchPredictionFinal(scid string) (txid string) {
-	if Signal.Daemon {
-		rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
+	if Daemon.Connect {
+		rpcClientD, ctx, cancel := SetDaemonClient(Daemon.Rpc)
 		defer cancel()
 
 		params := &rpc.GetSC_Params{
@@ -821,8 +829,8 @@ func FetchPredictionFinal(scid string) (txid string) {
 
 // Get dPrediction SC code for public and private SC
 func GetPredictCode(pub int) string {
-	if Signal.Daemon {
-		rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
+	if Daemon.Connect {
+		rpcClientD, ctx, cancel := SetDaemonClient(Daemon.Rpc)
 		defer cancel()
 
 		var result *rpc.GetSC_Result
@@ -853,8 +861,8 @@ func GetPredictCode(pub int) string {
 
 // Get dSports SC code for public and private SC
 func GetSportsCode(pub int) string {
-	if Signal.Daemon {
-		rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
+	if Daemon.Connect {
+		rpcClientD, ctx, cancel := SetDaemonClient(Daemon.Rpc)
 		defer cancel()
 
 		var result *rpc.GetSC_Result
@@ -885,8 +893,8 @@ func GetSportsCode(pub int) string {
 
 // Get recent dSports final results and TXIDs
 func FetchSportsFinal(scid string) (finals []string) {
-	if Signal.Daemon {
-		rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
+	if Daemon.Connect {
+		rpcClientD, ctx, cancel := SetDaemonClient(Daemon.Rpc)
 		defer cancel()
 
 		params := &rpc.GetSC_Params{
@@ -929,8 +937,8 @@ func FetchSportsFinal(scid string) (finals []string) {
 
 // Get Tarot SC data
 func FetchTarotSC() {
-	if Signal.Daemon {
-		rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
+	if Daemon.Connect {
+		rpcClientD, ctx, cancel := SetDaemonClient(Daemon.Rpc)
 		defer cancel()
 
 		var result *rpc.GetSC_Result
@@ -954,8 +962,8 @@ func FetchTarotSC() {
 
 // Find Tarot reading on SC
 func FetchTarotReading(tx string) {
-	if Signal.Daemon && len(tx) == 64 {
-		rpcClientD, ctx, cancel := SetDaemonClient(Round.Daemon)
+	if Daemon.Connect && len(tx) == 64 {
+		rpcClientD, ctx, cancel := SetDaemonClient(Daemon.Rpc)
 		defer cancel()
 
 		var result *rpc.GetSC_Result
@@ -983,9 +991,9 @@ func FetchTarotReading(tx string) {
 				if TXID_jv != nil {
 					if TXID_jv.(string) == tx {
 						Tarot.Found = true
-						Tarot.T_card1 = findTarotCard(result.VariableStringKeys[w+"-card1:"])
-						Tarot.T_card2 = findTarotCard(result.VariableStringKeys[w+"-card2:"])
-						Tarot.T_card3 = findTarotCard(result.VariableStringKeys[w+"-card3:"])
+						Tarot.Card1 = findTarotCard(result.VariableStringKeys[w+"-card1:"])
+						Tarot.Card2 = findTarotCard(result.VariableStringKeys[w+"-card2:"])
+						Tarot.Card3 = findTarotCard(result.VariableStringKeys[w+"-card3:"])
 					}
 				}
 				i++

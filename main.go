@@ -4,9 +4,9 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/SixofClubsss/dReams/holdero"
 	"github.com/SixofClubsss/dReams/menu"
 	"github.com/SixofClubsss/dReams/rpc"
-	"github.com/SixofClubsss/dReams/table"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -28,6 +28,7 @@ type dReamTables struct {
 	Window    fyne.Window
 	os        string
 	configure bool
+	closing   bool
 	menu      bool
 	holdero   bool
 	bacc      bool
@@ -62,25 +63,26 @@ func main() {
 	quit := make(chan struct{})
 
 	dReams.Window.SetCloseIntercept(func() {
-		writeConfig(makeConfig(table.Poker_name, rpc.Round.Daemon))
+		dReams.closing = true
+		writeConfig(makeConfig(holdero.Poker_name, rpc.Daemon.Rpc))
 		serviceRunning()
 		go menu.StopLabel()
 		menu.StopGnomon("dReams")
 		quit <- struct{}{}
 		menu.StopIndicators()
-		time.Sleep(1 * time.Second)
+		time.Sleep(time.Second)
 		dReams.Window.Close()
 	})
 
 	menu.GetMenuResources(resourceDTGnomonIconPng, resourceAvatarFramePng, resourceCwBackgroundPng, resourceMwBackgroundPng, resourceOwBackgroundPng, resourceUwBackgroundPng, resourceGnomoniconPng, resourceBlueBadgePng, resourceBlueBadge2Png, resourceBlueBadge3Png, resourceRedBadgePng, resourcePokerBoticonPng, resourceDReamServiceiconPng, resourceDReamToolsPng)
-	table.GetTableResources(resourceDTGnomonIconPng, resourceMwBackgroundPng, resourceOwBackgroundPng, resourceBackgroundPng, resourceUwBackgroundPng, resourceIlumabackground1Png, resourceIlumabackground2Png, resourceIluma81Png)
+	holdero.GetTableResources(resourceDTGnomonIconPng, resourceMwBackgroundPng, resourceOwBackgroundPng, resourceBackgroundPng, resourceUwBackgroundPng, resourceIlumabackground1Png, resourceIlumabackground2Png, resourceIluma81Png)
 
 	dReams.menu = true
 
-	table.Settings.ThemeImg = *canvas.NewImageFromResource(resourceBackgroundPng)
-	background = container.NewMax(&table.Settings.ThemeImg)
+	holdero.Settings.ThemeImg = *canvas.NewImageFromResource(resourceBackgroundPng)
+	background = container.NewMax(&holdero.Settings.ThemeImg)
 
-	if len(menu.MenuControl.Dapp_list) == 0 {
+	if len(menu.Control.Dapp_list) == 0 {
 		go func() {
 			dReams.Window.SetContent(
 				container.New(layout.NewMaxLayout(),

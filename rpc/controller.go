@@ -103,8 +103,9 @@ type hashValue struct {
 }
 
 type holderoValues struct {
-	Version   int
-	Daemon    string
+	Version int
+	Cards   hashValue
+	//Daemon    string
 	Contract  string
 	ID        int
 	Players   int
@@ -176,9 +177,9 @@ type baccValues struct {
 }
 
 type tarotValues struct {
-	T_card1  int
-	T_card2  int
-	T_card3  int
+	Card1    int
+	Card2    int
+	Card3    int
 	CHeight  int
 	Num      int
 	Last     string
@@ -194,8 +195,8 @@ type predictionValues struct {
 }
 
 type signals struct {
-	Startup   bool
-	Daemon    bool
+	Startup bool
+	//Daemon    bool
 	Contract  bool
 	Deal      bool
 	Bet       bool
@@ -545,26 +546,26 @@ func potIsEmpty(pot uint64) {
 		Round.Raised = 0
 		Round.Winner = ""
 		Round.Printed = false
-		CardHash.Local1 = ""
-		CardHash.Local2 = ""
-		CardHash.P1C1 = ""
-		CardHash.P1C2 = ""
-		CardHash.P2C1 = ""
-		CardHash.P2C2 = ""
-		CardHash.P3C1 = ""
-		CardHash.P3C2 = ""
-		CardHash.P4C1 = ""
-		CardHash.P4C2 = ""
-		CardHash.P5C1 = ""
-		CardHash.P5C2 = ""
-		CardHash.P6C1 = ""
-		CardHash.P6C2 = ""
-		CardHash.Key1 = ""
-		CardHash.Key2 = ""
-		CardHash.Key3 = ""
-		CardHash.Key4 = ""
-		CardHash.Key5 = ""
-		CardHash.Key6 = ""
+		Round.Cards.Local1 = ""
+		Round.Cards.Local2 = ""
+		Round.Cards.P1C1 = ""
+		Round.Cards.P1C2 = ""
+		Round.Cards.P2C1 = ""
+		Round.Cards.P2C2 = ""
+		Round.Cards.P3C1 = ""
+		Round.Cards.P3C2 = ""
+		Round.Cards.P4C1 = ""
+		Round.Cards.P4C2 = ""
+		Round.Cards.P5C1 = ""
+		Round.Cards.P5C2 = ""
+		Round.Cards.P6C1 = ""
+		Round.Cards.P6C2 = ""
+		Round.Cards.Key1 = ""
+		Round.Cards.Key2 = ""
+		Round.Cards.Key3 = ""
+		Round.Cards.Key4 = ""
+		Round.Cards.Key5 = ""
+		Round.Cards.Key6 = ""
 		Signal.Called = false
 		Signal.PlacedBet = false
 		Signal.Reveal = false
@@ -690,145 +691,145 @@ func getCommCardValues(f1, f2, f3, t, r interface{}) {
 func getPlayerCardValues(a1, a2, b1, b2, c1, c2, d1, d2, e1, e2, f1, f2 interface{}) {
 	if Round.ID == 1 {
 		if a1 != nil {
-			CardHash.Local1 = a1.(string)
-			CardHash.Local2 = a2.(string)
+			Round.Cards.Local1 = a1.(string)
+			Round.Cards.Local2 = a2.(string)
 			if !Round.Local_trigger {
 				Round.Card_delay = true
 			}
 			Round.Local_trigger = true
 		} else {
-			CardHash.Local1 = ""
-			CardHash.Local2 = ""
+			Round.Cards.Local1 = ""
+			Round.Cards.Local2 = ""
 			Round.Local_trigger = false
 		}
 	}
 
 	if a1 != nil {
-		CardHash.P1C1 = a1.(string)
-		CardHash.P1C2 = a2.(string)
+		Round.Cards.P1C1 = a1.(string)
+		Round.Cards.P1C2 = a2.(string)
 	} else {
-		CardHash.P1C1 = ""
-		CardHash.P1C2 = ""
+		Round.Cards.P1C1 = ""
+		Round.Cards.P1C2 = ""
 	}
 
 	if Round.ID == 2 {
 		if b1 != nil {
-			CardHash.Local1 = b1.(string)
-			CardHash.Local2 = b2.(string)
+			Round.Cards.Local1 = b1.(string)
+			Round.Cards.Local2 = b2.(string)
 			if !Round.Local_trigger {
 				Round.Card_delay = true
 			}
 			Round.Local_trigger = true
 		} else {
-			CardHash.Local1 = ""
-			CardHash.Local2 = ""
+			Round.Cards.Local1 = ""
+			Round.Cards.Local2 = ""
 			Round.Local_trigger = false
 		}
 	}
 
 	if b1 != nil {
-		CardHash.P2C1 = b1.(string)
-		CardHash.P2C2 = b2.(string)
+		Round.Cards.P2C1 = b1.(string)
+		Round.Cards.P2C2 = b2.(string)
 	} else {
-		CardHash.P2C1 = ""
-		CardHash.P2C2 = ""
+		Round.Cards.P2C1 = ""
+		Round.Cards.P2C2 = ""
 	}
 
 	if Round.ID == 3 {
 		if c1 != nil {
-			CardHash.Local1 = c1.(string)
-			CardHash.Local2 = c2.(string)
+			Round.Cards.Local1 = c1.(string)
+			Round.Cards.Local2 = c2.(string)
 			if !Round.Local_trigger {
 				Round.Card_delay = true
 			}
 			Round.Local_trigger = true
 		} else {
-			CardHash.Local1 = ""
-			CardHash.Local2 = ""
+			Round.Cards.Local1 = ""
+			Round.Cards.Local2 = ""
 			Round.Local_trigger = false
 		}
 	}
 
 	if c1 != nil {
-		CardHash.P3C1 = c1.(string)
-		CardHash.P3C2 = c2.(string)
+		Round.Cards.P3C1 = c1.(string)
+		Round.Cards.P3C2 = c2.(string)
 	} else {
-		CardHash.P3C1 = ""
-		CardHash.P3C2 = ""
+		Round.Cards.P3C1 = ""
+		Round.Cards.P3C2 = ""
 	}
 
 	if Round.ID == 4 {
 		if d1 != nil {
-			CardHash.Local1 = d1.(string)
-			CardHash.Local2 = d2.(string)
+			Round.Cards.Local1 = d1.(string)
+			Round.Cards.Local2 = d2.(string)
 			if !Round.Local_trigger {
 				Round.Card_delay = true
 			}
 			Round.Local_trigger = true
 		} else {
-			CardHash.Local1 = ""
-			CardHash.Local2 = ""
+			Round.Cards.Local1 = ""
+			Round.Cards.Local2 = ""
 			Round.Local_trigger = false
 		}
 	}
 
 	if d1 != nil {
-		CardHash.P4C1 = d1.(string)
-		CardHash.P4C2 = d2.(string)
+		Round.Cards.P4C1 = d1.(string)
+		Round.Cards.P4C2 = d2.(string)
 	} else {
-		CardHash.P4C1 = ""
-		CardHash.P4C2 = ""
+		Round.Cards.P4C1 = ""
+		Round.Cards.P4C2 = ""
 	}
 
 	if Round.ID == 5 {
 		if e1 != nil {
-			CardHash.Local1 = e1.(string)
-			CardHash.Local2 = e2.(string)
+			Round.Cards.Local1 = e1.(string)
+			Round.Cards.Local2 = e2.(string)
 			if !Round.Local_trigger {
 				Round.Card_delay = true
 			}
 			Round.Local_trigger = true
 		} else {
-			CardHash.Local1 = ""
-			CardHash.Local2 = ""
+			Round.Cards.Local1 = ""
+			Round.Cards.Local2 = ""
 			Round.Local_trigger = false
 		}
 	}
 
 	if e1 != nil {
-		CardHash.P5C1 = e1.(string)
-		CardHash.P5C2 = e2.(string)
+		Round.Cards.P5C1 = e1.(string)
+		Round.Cards.P5C2 = e2.(string)
 	} else {
-		CardHash.P5C1 = ""
-		CardHash.P5C2 = ""
+		Round.Cards.P5C1 = ""
+		Round.Cards.P5C2 = ""
 	}
 
 	if Round.ID == 6 {
 		if f1 != nil {
-			CardHash.Local1 = f1.(string)
-			CardHash.Local2 = f2.(string)
+			Round.Cards.Local1 = f1.(string)
+			Round.Cards.Local2 = f2.(string)
 			if !Round.Local_trigger {
 				Round.Card_delay = true
 			}
 			Round.Local_trigger = true
 		} else {
-			CardHash.Local1 = ""
-			CardHash.Local2 = ""
+			Round.Cards.Local1 = ""
+			Round.Cards.Local2 = ""
 			Round.Local_trigger = false
 		}
 	}
 
 	if f1 != nil {
-		CardHash.P6C1 = f1.(string)
-		CardHash.P6C2 = f2.(string)
+		Round.Cards.P6C1 = f1.(string)
+		Round.Cards.P6C2 = f2.(string)
 	} else {
-		CardHash.P6C1 = ""
-		CardHash.P6C2 = ""
+		Round.Cards.P6C1 = ""
+		Round.Cards.P6C2 = ""
 	}
 
 	if Round.ID == 0 {
-		CardHash.Local1 = ""
-		CardHash.Local2 = ""
+		Round.Cards.Local1 = ""
+		Round.Cards.Local2 = ""
 	}
 }
 
@@ -878,7 +879,7 @@ func turnReadout(t interface{}) string {
 
 func setSignals(pot uint64, one interface{}) {
 	if !Round.LocalEnd {
-		if len(CardHash.Local1) != 64 {
+		if len(Round.Cards.Local1) != 64 {
 			Signal.Deal = false
 			Signal.Leave = false
 			Signal.Bet = true
@@ -913,48 +914,48 @@ func setSignals(pot uint64, one interface{}) {
 func hasFolded(one, two, three, four, five, six interface{}) {
 	if one != nil {
 		Round.F1 = true
-		CardHash.P1C1 = ""
-		CardHash.P1C2 = ""
+		Round.Cards.P1C1 = ""
+		Round.Cards.P1C2 = ""
 	} else {
 		Round.F1 = false
 	}
 
 	if two != nil {
 		Round.F2 = true
-		CardHash.P2C1 = ""
-		CardHash.P2C2 = ""
+		Round.Cards.P2C1 = ""
+		Round.Cards.P2C2 = ""
 	} else {
 		Round.F2 = false
 	}
 
 	if three != nil {
 		Round.F3 = true
-		CardHash.P3C1 = ""
-		CardHash.P3C2 = ""
+		Round.Cards.P3C1 = ""
+		Round.Cards.P3C2 = ""
 	} else {
 		Round.F3 = false
 	}
 
 	if four != nil {
 		Round.F4 = true
-		CardHash.P4C1 = ""
-		CardHash.P4C2 = ""
+		Round.Cards.P4C1 = ""
+		Round.Cards.P4C2 = ""
 	} else {
 		Round.F4 = false
 	}
 
 	if five != nil {
 		Round.F5 = true
-		CardHash.P5C1 = ""
-		CardHash.P5C2 = ""
+		Round.Cards.P5C1 = ""
+		Round.Cards.P5C2 = ""
 	} else {
 		Round.F5 = false
 	}
 
 	if six != nil {
 		Round.F6 = true
-		CardHash.P6C1 = ""
-		CardHash.P6C2 = ""
+		Round.Cards.P6C1 = ""
+		Round.Cards.P6C2 = ""
 	} else {
 		Round.F6 = false
 	}

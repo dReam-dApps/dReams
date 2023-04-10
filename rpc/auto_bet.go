@@ -856,7 +856,7 @@ func MakeOdds() (odds float64, future float64) {
 		Odds.community = append(Odds.community, Round.RiverCard)
 	}
 
-	Odds.hole = [2]int{Card(CardHash.Local1), Card(CardHash.Local2)}
+	Odds.hole = [2]int{Card(Round.Cards.Local1), Card(Round.Cards.Local2)}
 
 	if Odds.hole[:] == nil || Odds.hole[0] == 0 || Odds.hole[1] == 0 {
 		oddsLog("[makeOdds]", fmt.Sprintln("No Cards"))

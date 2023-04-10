@@ -1,8 +1,7 @@
-package table
+package holdero
 
 import (
 	"archive/zip"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -10,11 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
-	"time"
-
-	coingecko "github.com/superoo7/go-gecko/v3"
 
 	"github.com/SixofClubsss/dReams/rpc"
 
@@ -22,63 +17,6 @@ import (
 )
 
 type sharedCards struct {
-	//window   fyne.Window
-	//progress *widget.ProgressBar
-	//Back canvas.Image
-	// Card1  canvas.Image
-	// Card2  canvas.Image
-	// Card3  canvas.Image
-	// Card4  canvas.Image
-	// Card5  canvas.Image
-	// Card6  canvas.Image
-	// Card7  canvas.Image
-	// Card8  canvas.Image
-	// Card9  canvas.Image
-	// Card10 canvas.Image
-	// Card11 canvas.Image
-	// Card12 canvas.Image
-	// Card13 canvas.Image
-	// Card14 canvas.Image
-	// Card15 canvas.Image
-	// Card16 canvas.Image
-	// Card17 canvas.Image
-	// Card18 canvas.Image
-	// Card19 canvas.Image
-	// Card20 canvas.Image
-	// Card21 canvas.Image
-	// Card22 canvas.Image
-	// Card23 canvas.Image
-	// Card24 canvas.Image
-	// Card25 canvas.Image
-	// Card26 canvas.Image
-	// Card27 canvas.Image
-	// Card28 canvas.Image
-	// Card29 canvas.Image
-	// Card30 canvas.Image
-	// Card31 canvas.Image
-	// Card32 canvas.Image
-	// Card33 canvas.Image
-	// Card34 canvas.Image
-	// Card35 canvas.Image
-	// Card36 canvas.Image
-	// Card37 canvas.Image
-	// Card38 canvas.Image
-	// Card39 canvas.Image
-	// Card40 canvas.Image
-	// Card41 canvas.Image
-	// Card42 canvas.Image
-	// Card43 canvas.Image
-	// Card44 canvas.Image
-	// Card45 canvas.Image
-	// Card46 canvas.Image
-	// Card47 canvas.Image
-	// Card48 canvas.Image
-	// Card49 canvas.Image
-	// Card50 canvas.Image
-	// Card51 canvas.Image
-	// Card52 canvas.Image
-	//Empty canvas.Image
-
 	P1_avatar canvas.Image
 	P2_avatar canvas.Image
 	P3_avatar canvas.Image
@@ -94,6 +32,9 @@ type sharedCards struct {
 	GotP6 bool
 }
 
+var Shared sharedCards
+
+// Clear Holdero card values when player changes table
 func ClearShared() {
 	rpc.Display.Res = ""
 	rpc.Round.First_try = true
@@ -131,8 +72,7 @@ func ClearShared() {
 	Shared.P6_avatar = *canvas.NewImageFromImage(nil)
 }
 
-var Shared sharedCards
-
+// Gets shared card urls from connected table
 func GetUrls(face, back string) {
 	if rpc.Round.ID != 1 {
 		Settings.FaceUrl = face
@@ -140,6 +80,7 @@ func GetUrls(face, back string) {
 	}
 }
 
+// Download image file from url and return as canvas image
 func DownloadFile(Url, fileName string) (canvas.Image, error) {
 	response, err := http.Get(Url)
 	if err != nil {
@@ -156,6 +97,8 @@ func DownloadFile(Url, fileName string) (canvas.Image, error) {
 	return img, nil
 }
 
+// Single shot control for displaying shared player avatars
+//   - If tab is not selected, we don't check
 func ShowAvatar(tab bool) {
 	if tab {
 		if rpc.Round.P1_url != "" {
@@ -220,6 +163,7 @@ func ShowAvatar(tab bool) {
 	}
 }
 
+// Code for storing card deck in memory
 /*
 func downloadMemoryDeck(url string) {
 	var prog float64
@@ -613,257 +557,7 @@ func SharedImage(c string) *canvas.Image {
 }
 */
 
-type ogreFeed struct {
-	Success      bool   `json:"success"`
-	Initialprice string `json:"initialprice"`
-	Price        string `json:"price"`
-	High         string `json:"high"`
-	Low          string `json:"low"`
-	Volume       string `json:"volume"`
-	Bid          string `json:"bid"`
-	Ask          string `json:"ask"`
-}
-
-type kuFeed struct {
-	Code string `json:"code"`
-	Data struct {
-		Time        int64  `json:"time"`
-		Sequence    string `json:"sequence"`
-		Price       string `json:"price"`
-		Size        string `json:"size"`
-		BestBid     string `json:"bestBid"`
-		BestBidSize string `json:"bestBidSize"`
-		BestAsk     string `json:"bestAsk"`
-		BestAskSize string `json:"bestAskSize"`
-	} `json:"data"`
-}
-
-func CoinDecimal(ticker string) int {
-	split := strings.Split(ticker, "-")
-
-	if len(split) == 2 {
-		switch split[1] {
-		case "BTC":
-			return 8
-		default:
-			return 2
-		}
-	}
-	return 2
-}
-
-func GetPrice(coin string) (price float64, display string) {
-	var t float64
-	var k float64
-	var g float64
-	priceT := getOgre(coin)
-	priceK := getKucoin(coin)
-	priceG := getGeko(coin)
-
-	if CoinDecimal(coin) == 8 {
-		if tf, err := strconv.ParseFloat(priceT, 64); err == nil {
-			t = tf * 100000000
-		}
-
-		if kf, err := strconv.ParseFloat(priceK, 64); err == nil {
-			k = kf * 100000000
-		}
-
-		if gf, err := strconv.ParseFloat(priceG, 64); err == nil {
-			g = gf * 100000000
-		}
-	} else {
-		if tf, err := strconv.ParseFloat(priceT, 64); err == nil {
-			t = tf * 100
-		}
-
-		if kf, err := strconv.ParseFloat(priceK, 64); err == nil {
-			k = kf * 100
-		}
-
-		if gf, err := strconv.ParseFloat(priceG, 64); err == nil {
-			g = gf * 100
-		}
-	}
-
-	if t > 0 && k > 0 && g > 0 {
-		price = (t + k + g) / 3
-	} else if t > 0 && k > 0 {
-		price = (t + k) / 2
-	} else if k > 0 && g > 0 {
-		price = (k + g) / 2
-	} else if t > 0 && g > 0 {
-		price = (t + g) / 2
-	} else if t > 0 {
-		price = t
-	} else if k > 0 {
-		price = k
-	} else if g > 0 {
-		price = g
-	} else {
-		price = 0
-		log.Println("[dReams] Error getting price feed")
-	}
-
-	if CoinDecimal(coin) == 8 {
-		display = fmt.Sprintf("%.8f", price/100000000)
-	} else {
-		display = fmt.Sprintf("%.2f", price/100)
-	}
-
-	return
-}
-
-func getOgre(coin string) string {
-	decimal := 2
-	var url string
-	var found ogreFeed
-	switch coin {
-	case "BTC-USDT":
-		url = "https://tradeogre.com/api/v1/ticker/usdt-btc"
-	case "DERO-USDT":
-		url = "https://tradeogre.com/api/v1/ticker/usdt-dero"
-	case "XMR-USDT":
-		url = "https://tradeogre.com/api/v1/ticker/usdt-xmr"
-	case "DERO-BTC":
-		url = "https://tradeogre.com/api/v1/ticker/btc-dero"
-		decimal = 8
-	case "XMR-BTC":
-		url = "https://tradeogre.com/api/v1/ticker/btc-xmr"
-		decimal = 8
-	default:
-		return ""
-	}
-
-	client := &http.Client{Timeout: 10 * time.Second}
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		log.Println("[getOgre]", err)
-		return ""
-	}
-
-	req.Header.Add("Accept", "application/json")
-	req.Header.Add("Content-Type", "application/json")
-	resp, err := client.Do(req)
-
-	if err != nil {
-		log.Println("[getOgre]", err)
-		return ""
-	}
-
-	defer resp.Body.Close()
-	b, err := io.ReadAll(resp.Body)
-
-	if err != nil {
-		log.Println("[getOgre]", err)
-		return ""
-	}
-
-	json.Unmarshal(b, &found)
-
-	if s, err := strconv.ParseFloat(found.Price, 64); err == nil {
-		if decimal == 8 {
-			return fmt.Sprintf("%.8f", s)
-		}
-		return fmt.Sprintf("%.2f", s)
-	}
-
-	return found.Price
-}
-
-func getKucoin(coin string) string {
-	decimal := 2
-	var url string
-	var found kuFeed
-	switch coin {
-	case "BTC-USDT":
-		url = "https://api.kucoin.com/api/v1/market/orderbook/level1?symbol=BTC-USDT"
-	case "DERO-USDT":
-		url = "https://api.kucoin.com/api/v1/market/orderbook/level1?symbol=DERO-USDT"
-	case "XMR-USDT":
-		url = "https://api.kucoin.com/api/v1/market/orderbook/level1?symbol=XMR-USDT"
-	case "DERO-BTC":
-		url = "https://api.kucoin.com/api/v1/market/orderbook/level1?symbol=DERO-BTC"
-		decimal = 8
-	case "XMR-BTC":
-		url = "https://api.kucoin.com/api/v1/market/orderbook/level1?symbol=XMR-BTC"
-		decimal = 8
-	default:
-		return ""
-	}
-
-	client := &http.Client{Timeout: 10 * time.Second}
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		log.Println("[getKucoin]", err)
-		return ""
-	}
-
-	req.Header.Add("Accept", "application/json")
-	req.Header.Add("Content-Type", "application/json")
-	resp, err := client.Do(req)
-
-	if err != nil {
-		log.Println("[getKucoin]", err)
-		return ""
-	}
-
-	defer resp.Body.Close()
-	b, err := io.ReadAll(resp.Body)
-
-	if err != nil {
-		log.Println("[getKucoin]", err)
-		return ""
-	}
-
-	json.Unmarshal(b, &found)
-
-	if s, err := strconv.ParseFloat(found.Data.Price, 64); err == nil {
-		if decimal == 8 {
-			return fmt.Sprintf("%.8f", s)
-		}
-		return fmt.Sprintf("%.2f", s)
-	}
-
-	return found.Data.Price
-}
-
-func getGeko(coin string) string {
-	client := &http.Client{Timeout: time.Second * 10}
-	CG := coingecko.NewClient(client)
-
-	pair := "usd"
-	var url string
-	switch coin {
-	case "BTC-USDT":
-		url = "bitcoin"
-	case "DERO-USDT":
-		url = "dero"
-	case "XMR-USDT":
-		url = "monero"
-	case "DERO-BTC":
-		url = "dero"
-		pair = "btc"
-	case "XMR-BTC":
-		url = "monero"
-		pair = "btc"
-	default:
-		return ""
-	}
-
-	price, err := CG.SimpleSinglePrice(url, pair)
-	if err != nil {
-		log.Println("[getGeko]", err)
-		return ""
-	}
-
-	if pair == "btc" {
-		return fmt.Sprintf("%.8f", price.MarketPrice)
-	}
-
-	return fmt.Sprintf("%.2f", price.MarketPrice)
-}
-
+// Download a single uncompressed image image file to filepath
 func downloadFileLocal(filepath string, url string) (err error) {
 	_, dir := os.Stat("cards")
 	if os.IsNotExist(dir) {
@@ -912,6 +606,8 @@ func downloadFileLocal(filepath string, url string) (err error) {
 	return nil
 }
 
+// Function to get and prepare deck assets for use in dReams
+//   - face will be download path
 func GetZipDeck(face, url string) {
 	downloadFileLocal("cards/"+face+".zip", url)
 	files, err := Unzip("cards/"+face+".zip", "cards/"+face)
@@ -923,6 +619,7 @@ func GetZipDeck(face, url string) {
 	log.Println("[dReams] Unzipped files:\n" + strings.Join(files, "\n"))
 }
 
+// Unzip a src file into destination
 func Unzip(src string, destination string) ([]string, error) {
 	var filenames []string
 

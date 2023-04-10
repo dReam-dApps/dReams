@@ -57,17 +57,17 @@ func KeyCard(hash string, who int) int { /// Gets other player cards and decrypt
 	var keyCheck string
 	switch who {
 	case 1:
-		keyCheck = CardHash.Key1
+		keyCheck = Round.Cards.Key1
 	case 2:
-		keyCheck = CardHash.Key2
+		keyCheck = Round.Cards.Key2
 	case 3:
-		keyCheck = CardHash.Key3
+		keyCheck = Round.Cards.Key3
 	case 4:
-		keyCheck = CardHash.Key4
+		keyCheck = Round.Cards.Key4
 	case 5:
-		keyCheck = CardHash.Key5
+		keyCheck = Round.Cards.Key5
 	case 6:
-		keyCheck = CardHash.Key6
+		keyCheck = Round.Cards.Key6
 	}
 
 	for i := 1; i < 53; i++ {
@@ -107,12 +107,12 @@ func getHands(totalHands int) { /// start hand ranking
 	r.p6Rank = 100
 	r.p6HighPair = 0
 
-	r.p1HandRaw = [2]int{KeyCard(CardHash.P1C1, 1), KeyCard(CardHash.P1C2, 1)}
-	r.p2HandRaw = [2]int{KeyCard(CardHash.P2C1, 2), KeyCard(CardHash.P2C2, 2)}
-	r.p3HandRaw = [2]int{KeyCard(CardHash.P3C1, 3), KeyCard(CardHash.P3C2, 3)}
-	r.p4HandRaw = [2]int{KeyCard(CardHash.P4C1, 4), KeyCard(CardHash.P4C2, 4)}
-	r.p5HandRaw = [2]int{KeyCard(CardHash.P5C1, 5), KeyCard(CardHash.P5C2, 5)}
-	r.p6HandRaw = [2]int{KeyCard(CardHash.P6C1, 6), KeyCard(CardHash.P6C2, 6)}
+	r.p1HandRaw = [2]int{KeyCard(Round.Cards.P1C1, 1), KeyCard(Round.Cards.P1C2, 1)}
+	r.p2HandRaw = [2]int{KeyCard(Round.Cards.P2C1, 2), KeyCard(Round.Cards.P2C2, 2)}
+	r.p3HandRaw = [2]int{KeyCard(Round.Cards.P3C1, 3), KeyCard(Round.Cards.P3C2, 3)}
+	r.p4HandRaw = [2]int{KeyCard(Round.Cards.P4C1, 4), KeyCard(Round.Cards.P4C2, 4)}
+	r.p5HandRaw = [2]int{KeyCard(Round.Cards.P5C1, 5), KeyCard(Round.Cards.P5C2, 5)}
+	r.p6HandRaw = [2]int{KeyCard(Round.Cards.P6C1, 6), KeyCard(Round.Cards.P6C2, 6)}
 
 	switch totalHands {
 	case 2:

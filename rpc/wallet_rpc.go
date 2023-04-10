@@ -1029,7 +1029,7 @@ func ownerT3(o bool) (t *rpc.Transfer) {
 
 // Install new Holdero SC
 func UploadHolderoContract(pub int) {
-	if Signal.Daemon && Wallet.Connect {
+	if Daemon.Connect && Wallet.Connect {
 		rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 		defer cancel()
 
@@ -1891,7 +1891,7 @@ func EndPrediction(scid string, price int) {
 
 // Install new bet contract
 func UploadBetContract(c bool, pub int) {
-	if Signal.Daemon && Wallet.Connect {
+	if Daemon.Connect && Wallet.Connect {
 		rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 		defer cancel()
 
@@ -2243,7 +2243,7 @@ func SendAsset(scid, dest string, payload bool) {
 //   - tag for log print
 func ConfirmTx(txid string, tag string, tries int) (retry int) {
 	count := 0
-	for (tries < 3) && Wallet.Connect && Signal.Daemon {
+	for (tries < 3) && Wallet.Connect && Daemon.Connect {
 		count++
 		time.Sleep(2 * time.Second)
 		if tx := GetDaemonTx(txid); tx != nil {

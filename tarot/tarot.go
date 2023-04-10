@@ -1,4 +1,4 @@
-package table
+package tarot
 
 import (
 	_ "embed"
@@ -42,13 +42,13 @@ func TarotBuffer(d bool) {
 		Iluma.Card3.Refresh()
 		Iluma.Draw1.Hide()
 		Iluma.Draw3.Hide()
-		rpc.Tarot.T_card1 = 0
-		rpc.Tarot.T_card2 = 0
-		rpc.Tarot.T_card3 = 0
+		rpc.Tarot.Card1 = 0
+		rpc.Tarot.Card2 = 0
+		rpc.Tarot.Card3 = 0
 		rpc.Tarot.Last = ""
 		Iluma.Search.Hide()
 	} else {
-		if rpc.Signal.Daemon && rpc.Wallet.Connect {
+		if rpc.Daemon.Connect && rpc.Wallet.Connect {
 			if !Iluma.Open {
 				Iluma.Draw1.Show()
 				Iluma.Draw3.Show()
@@ -65,8 +65,8 @@ func TarotBuffer(d bool) {
 func TarotCardBox() fyne.CanvasObject {
 	Iluma.Label = widget.NewLabel("")
 	one := widget.NewButton("", func() {
-		if rpc.Tarot.Num == 3 && !Iluma.Open && rpc.Tarot.T_card1 > 0 {
-			c := rpc.Tarot.T_card1
+		if rpc.Tarot.Num == 3 && !Iluma.Open && rpc.Tarot.Card1 > 0 {
+			c := rpc.Tarot.Card1
 			reset := Iluma.Card1
 			Iluma.Card1 = *IlumaDialog(1, TarotDescription(c), reset)
 		}
@@ -80,13 +80,13 @@ func TarotCardBox() fyne.CanvasObject {
 	two := widget.NewButton("", func() {
 		if !Iluma.Open {
 			reset := Iluma.Card2
-			if rpc.Tarot.Num == 3 && rpc.Tarot.T_card2 > 0 {
-				c := rpc.Tarot.T_card2
+			if rpc.Tarot.Num == 3 && rpc.Tarot.Card2 > 0 {
+				c := rpc.Tarot.Card2
 				Iluma.Card2 = *IlumaDialog(2, TarotDescription(c), reset)
 			}
 
-			if rpc.Tarot.Num == 1 && rpc.Tarot.T_card1 > 0 {
-				c := rpc.Tarot.T_card1
+			if rpc.Tarot.Num == 1 && rpc.Tarot.Card1 > 0 {
+				c := rpc.Tarot.Card1
 				Iluma.Card2 = *IlumaDialog(2, TarotDescription(c), reset)
 			}
 		}
@@ -96,8 +96,8 @@ func TarotCardBox() fyne.CanvasObject {
 	pad2 := container.NewBorder(nil, nil, TarotPadding(), TarotPadding(), &Iluma.Card2)
 
 	three := widget.NewButton("", func() {
-		if rpc.Tarot.Num == 3 && !Iluma.Open && rpc.Tarot.T_card3 > 0 {
-			c := rpc.Tarot.T_card3
+		if rpc.Tarot.Num == 3 && !Iluma.Open && rpc.Tarot.Card3 > 0 {
+			c := rpc.Tarot.Card3
 			reset := Iluma.Card3
 			Iluma.Card3 = *IlumaDialog(3, TarotDescription(c), reset)
 		}

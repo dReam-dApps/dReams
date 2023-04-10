@@ -1,4 +1,4 @@
-package table
+package holdero
 
 import (
 	"encoding/hex"
@@ -12,7 +12,9 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/SixofClubsss/dReams/dwidget"
 	"github.com/SixofClubsss/dReams/rpc"
+	"github.com/SixofClubsss/dReams/tarot"
 	dero "github.com/deroproject/derohe/rpc"
 
 	"fyne.io/fyne/v2"
@@ -31,7 +33,7 @@ type resources struct {
 	Background fyne.Resource
 }
 
-type assetWidgets struct {
+type assetObject struct {
 	Dreams_bal    *canvas.Text
 	Dero_bal      *canvas.Text
 	Dero_price    *canvas.Text
@@ -54,21 +56,25 @@ type assetWidgets struct {
 	Header_box    fyne.Container
 }
 
-var Assets assetWidgets
+var Assets assetObject
 var Resource resources
 
+// Get resources from main bundled
 func GetTableResources(r1, r2, r3, r4, r5, r6, r7, r8 fyne.Resource) {
 	Resource.SmallIcon = r1
 	Resource.Back2 = r2
 	Resource.Back3 = r3
 	Resource.Background = r4
 	Resource.Back4 = r5
-	Iluma.Background1 = r6
-	Iluma.Background2 = r7
-	Iluma.Back = r8
+	tarot.Iluma.Background1 = r6
+	tarot.Iluma.Background2 = r7
+	tarot.Iluma.Back = r8
 
 }
 
+// dReams card face selection object for all games
+//   - Sets shared face url on selected
+//   - If deck is not present locally, it is downloaded
 func FaceSelect() fyne.Widget {
 	options := []string{"Light", "Dark"}
 	Settings.FaceSelect = widget.NewSelect(options, func(s string) {
@@ -88,7 +94,7 @@ func FaceSelect() fyne.Widget {
 			Settings.FaceUrl = "https://raw.githubusercontent.com/Azylem/" + s + "/main/" + s + ".zip?raw=true"
 			dir := GetDir()
 			face := dir + "/cards/" + Settings.Faces + "/card1.png"
-			if !FileExists(face) {
+			if !FileExists(face, "dReams") {
 				log.Println("[dReams] Downloading " + Settings.FaceUrl)
 				go GetZipDeck(Settings.Faces, Settings.FaceUrl)
 			}
@@ -96,7 +102,7 @@ func FaceSelect() fyne.Widget {
 			Settings.FaceUrl = "https://raw.githubusercontent.com/SixofClubsss/" + s + "/main/" + s + ".zip?raw=true"
 			dir := GetDir()
 			face := dir + "/cards/" + Settings.Faces + "/card1.png"
-			if !FileExists(face) {
+			if !FileExists(face, "dReams") {
 				log.Println("[dReams] Downloading " + Settings.FaceUrl)
 				go GetZipDeck(Settings.Faces, Settings.FaceUrl)
 			}
@@ -104,7 +110,7 @@ func FaceSelect() fyne.Widget {
 			Settings.FaceUrl = "https://raw.githubusercontent.com/High-Strangeness/High-Strangeness/main/HS_Deck/HS_Deck.zip?raw=true"
 			dir := GetDir()
 			face := dir + "/cards/" + Settings.Faces + "/card1.png"
-			if !FileExists(face) {
+			if !FileExists(face, "dReams") {
 				log.Println("[dReams] Downloading " + Settings.FaceUrl)
 				go GetZipDeck(Settings.Faces, Settings.FaceUrl)
 			}
@@ -119,6 +125,9 @@ func FaceSelect() fyne.Widget {
 	return Settings.FaceSelect
 }
 
+// dReams card back selection object for all games
+//   - Sets shared back url on selected
+//   - If back is not present locally, it is downloaded
 func BackSelect() fyne.Widget {
 	options := []string{"Light", "Dark"}
 	Settings.BackSelect = widget.NewSelect(options, func(s string) {
@@ -139,7 +148,7 @@ func BackSelect() fyne.Widget {
 				Settings.BackUrl = "https://raw.githubusercontent.com/Azylem/" + s + "/main/" + s + ".png"
 				dir := GetDir()
 				file := dir + "/cards/backs/" + s + ".png"
-				if !FileExists(file) {
+				if !FileExists(file, "dReams") {
 					log.Println("[dReams] Downloading " + Settings.BackUrl)
 					downloadFileLocal("cards/backs/"+Settings.Backs+".png", Settings.BackUrl)
 				}
@@ -147,7 +156,7 @@ func BackSelect() fyne.Widget {
 				Settings.BackUrl = "https://raw.githubusercontent.com/SixofClubsss/" + s + "/main/" + s + ".png"
 				dir := GetDir()
 				back := dir + "/cards/backs/" + s + ".png"
-				if !FileExists(back) {
+				if !FileExists(back, "dReams") {
 					log.Println("[dReams] Downloading " + Settings.BackUrl)
 					downloadFileLocal("cards/backs/"+Settings.Backs+".png", Settings.BackUrl)
 				}
@@ -155,7 +164,7 @@ func BackSelect() fyne.Widget {
 				Settings.BackUrl = "https://raw.githubusercontent.com/High-Strangeness/" + s + "/main/HS_Back/HS_Back.png"
 				dir := GetDir()
 				back := dir + "/cards/backs/" + s + ".png"
-				if !FileExists(back) {
+				if !FileExists(back, "dReams") {
 					log.Println("[dReams] Downloading " + Settings.BackUrl)
 					downloadFileLocal("cards/backs/"+Settings.Backs+".png", Settings.BackUrl)
 				}
@@ -171,6 +180,8 @@ func BackSelect() fyne.Widget {
 	return Settings.BackSelect
 }
 
+// dReams app theme selection object
+//   - If image is not present locally, it is downloaded
 func ThemeSelect() fyne.Widget {
 	options := []string{"Main"}
 	Settings.ThemeSelect = widget.NewSelect(options, func(s string) {
@@ -187,7 +198,7 @@ func ThemeSelect() fyne.Widget {
 			if check == "AZYDS" {
 				dir := GetDir()
 				file := dir + "/cards/" + s + "/" + s + ".png"
-				if FileExists(file) {
+				if FileExists(file, "dReams") {
 					Settings.ThemeImg = *canvas.NewImageFromFile(file)
 				} else {
 					Settings.ThemeUrl = "https://raw.githubusercontent.com/Azylem/" + s + "/main/" + s + ".png"
@@ -197,7 +208,7 @@ func ThemeSelect() fyne.Widget {
 			} else if check == "SIXART" {
 				dir := GetDir()
 				file := dir + "/cards/" + s + "/" + s + ".png"
-				if FileExists(file) {
+				if FileExists(file, "dReams") {
 					Settings.ThemeImg = *canvas.NewImageFromFile(file)
 				} else {
 					Settings.ThemeUrl = "https://raw.githubusercontent.com/SixofClubsss/" + s + "/main/" + s + ".png"
@@ -207,7 +218,7 @@ func ThemeSelect() fyne.Widget {
 			} else if check == "HSTheme" {
 				dir := GetDir()
 				file := dir + "/cards/" + s + "/" + s + ".png"
-				if FileExists(file) {
+				if FileExists(file, "dReams") {
 					Settings.ThemeImg = *canvas.NewImageFromFile(file)
 				} else {
 					Settings.ThemeUrl = "https://raw.githubusercontent.com/High-Strangeness/High-Strangeness/main/" + s + "/" + s + ".png"
@@ -226,6 +237,8 @@ func ThemeSelect() fyne.Widget {
 	return Settings.ThemeSelect
 }
 
+// dReams app avatar selection object
+//   - Sets shared avatar url on selected
 func AvatarSelect() fyne.Widget {
 	options := []string{"None"}
 	Settings.AvatarSelect = widget.NewSelect(options, func(s string) {
@@ -250,7 +263,7 @@ func AvatarSelect() fyne.Widget {
 			seal := strings.Trim(s, "Dero Sals#")
 			Settings.AvatarUrl = "https://ipfs.io/ipfs/QmP3HnzWpiaBA6ZE8c3dy5ExeG7hnYjSqkNfVbeVW5iEp6/low/" + seal + ".jpg"
 		} else if ValidAgent(s) {
-			agent, _ := getAgentNumber(rpc.Signal.Daemon, Assets.Asset_map[s])
+			agent := getAgentNumber(Assets.Asset_map[s])
 			if agent >= 0 && agent < 172 {
 				Settings.AvatarUrl = "https://ipfs.io/ipfs/QmaRHXcQwbFdUAvwbjgpDtr5kwGiNpkCM2eDBzAbvhD7wh/low/" + strconv.Itoa(agent) + ".jpg"
 			} else if agent < 1200 {
@@ -267,6 +280,7 @@ func AvatarSelect() fyne.Widget {
 	return Settings.AvatarSelect
 }
 
+// Confirm valid A-Team agent number
 func ValidAgent(s string) bool {
 	if Assets.Asset_map[s] != "" && len(Assets.Asset_map[s]) == 64 {
 		return true
@@ -275,9 +289,10 @@ func ValidAgent(s string) bool {
 	return false
 }
 
-func getAgentNumber(dc bool, scid string) (int, error) {
-	if dc {
-		rpcClientD, ctx, cancel := rpc.SetDaemonClient(rpc.Round.Daemon)
+// Rpc call to get A-Team agent number
+func getAgentNumber(scid string) int {
+	if rpc.Daemon.Connect {
+		rpcClientD, ctx, cancel := rpc.SetDaemonClient(rpc.Daemon.Rpc)
 		defer cancel()
 
 		var result *dero.GetSC_Result
@@ -290,7 +305,7 @@ func getAgentNumber(dc bool, scid string) (int, error) {
 		err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params)
 		if err != nil {
 			log.Println("[getAgentNumber]", err)
-			return 1200, nil
+			return 1200
 		}
 
 		data := result.VariableStringKeys["metadata"]
@@ -298,19 +313,21 @@ func getAgentNumber(dc bool, scid string) (int, error) {
 
 		hx, _ := hex.DecodeString(data.(string))
 		if err := json.Unmarshal(hx, &agent); err == nil {
-			return agent.ID, err
+			return agent.ID
 		}
 
 	}
-	return 1200, nil
+	return 1200
 }
 
-func FileExists(path string) bool {
+// Check if path to file exists
+//   - tag for log print
+func FileExists(path, tag string) bool {
 	if _, err := os.Stat(path); err == nil {
 		return true
 
 	} else if errors.Is(err, os.ErrNotExist) {
-		log.Println("[dReams]", path, "Not Found")
+		log.Printf("[%s] %s Not Found\n", tag, path)
 
 		return false
 	}
@@ -318,6 +335,9 @@ func FileExists(path string) bool {
 	return false
 }
 
+// Holdero shared cards toggle object
+//   - Do not send a blank url
+//   - If cards are not present locally, it is downloaded
 func SharedDecks() fyne.Widget {
 	options := []string{"Shared Decks"}
 	Settings.SharedOn = widget.NewRadioGroup(options, func(string) {
@@ -336,11 +356,11 @@ func SharedDecks() fyne.Widget {
 					back := "/cards/backs/" + Settings.Backs + ".png"
 					face := "/cards/" + Settings.Faces + "/card1.png"
 
-					if !FileExists(dir + face) {
+					if !FileExists(dir+face, "dReams") {
 						go GetZipDeck(Settings.Faces, Settings.FaceUrl)
 					}
 
-					if !FileExists(dir + back) {
+					if !FileExists(dir+back, "dReams") {
 						downloadFileLocal("cards/backs/"+Settings.Backs+".png", Settings.BackUrl)
 					}
 				}
@@ -351,11 +371,11 @@ func SharedDecks() fyne.Widget {
 				back := "/cards/backs/" + rpc.Round.Back + ".png"
 				face := "/cards/" + rpc.Round.Face + "/card1.png"
 
-				if !FileExists(dir + face) {
+				if !FileExists(dir+face, "dReams") {
 					go GetZipDeck(rpc.Round.Face, rpc.Round.F_url)
 				}
 
-				if !FileExists(dir + back) {
+				if !FileExists(dir+back, "dReams") {
 					downloadFileLocal("cards/backs/"+rpc.Round.Back+".png", rpc.Round.B_url)
 				}
 			}
@@ -367,36 +387,14 @@ func SharedDecks() fyne.Widget {
 	return Settings.SharedOn
 }
 
-type dReamsAmt struct {
-	NumericalEntry
-}
-
-func (e *dReamsAmt) TypedKey(k *fyne.KeyEvent) {
-	value := strings.Trim(e.Entry.Text, "dReams: ")
-	switch k.Name {
-	case fyne.KeyUp:
-		if f, err := strconv.ParseFloat(value, 64); err == nil {
-			e.Entry.SetText("dReams: " + strconv.FormatFloat(float64(f+1), 'f', 0, 64))
-		}
-
-	case fyne.KeyDown:
-		if f, err := strconv.ParseFloat(value, 64); err == nil {
-			if f >= 1 {
-				e.Entry.SetText("dReams: " + strconv.FormatFloat(float64(f-1), 'f', 0, 64))
-			}
-		}
-	}
-	e.Entry.TypedKey(k)
-}
-
+// dReams-Dero swap objects and menu chain display content
 func DreamsEntry() fyne.CanvasObject {
-	Actions.DEntry = &dReamsAmt{}
-	Actions.DEntry.ExtendBaseWidget(Actions.DEntry)
-	Actions.DEntry.PlaceHolder = "dReams:"
-	Actions.DEntry.Validator = validation.NewRegexp(`^(dReams: )\d{1,}$`, "Format Not Valid")
-	Actions.DEntry.OnChanged = func(s string) {
-		if Actions.DEntry.Validate() != nil {
-			Actions.DEntry.SetText("dReams: 0")
+	Swap.DEntry = dwidget.WholeAmtEntry("dReams: ")
+	Swap.DEntry.PlaceHolder = "dReams:"
+	Swap.DEntry.Validator = validation.NewRegexp(`^(dReams: )[^0]\d{0,}$`, "Format Not Valid")
+	Swap.DEntry.OnChanged = func(s string) {
+		if Swap.DEntry.Validate() != nil {
+			Swap.DEntry.SetText("dReams: 1")
 		}
 	}
 
@@ -419,8 +417,8 @@ func DreamsEntry() fyne.CanvasObject {
 	exLabel := canvas.NewText(" 1 Dero = 333 dReams", color.White)
 	exLabel.TextSize = 18
 
-	Actions.DEntry.SetText("dReams: 0")
-	Actions.DEntry.Hide()
+	Swap.DEntry.SetText("dReams: 0")
+	Swap.DEntry.Hide()
 
 	box := *container.NewVBox(
 		Assets.Gnomes_sync,
@@ -430,24 +428,24 @@ func DreamsEntry() fyne.CanvasObject {
 		Assets.Dreams_bal,
 		Assets.Dero_bal,
 		Assets.Dero_price, exLabel,
-		Actions.DEntry)
+		Swap.DEntry)
 
 	return &box
 }
 
 // Tournament deposit button
 func TournamentButton(obj []fyne.CanvasObject, tabs *container.AppTabs) fyne.CanvasObject {
-	Actions.Tournament = widget.NewButton("Tournament", func() {
+	Table.Tournament = widget.NewButton("Tournament", func() {
 		obj[1] = tourneyConfirm(obj, tabs)
 		obj[1].Refresh()
 	})
 
-	Actions.Tournament.Hide()
+	Table.Tournament.Hide()
 
-	return Actions.Tournament
+	return Table.Tournament
 }
 
-// Confirmation for Dero dReams swap
+// Confirmation for dReams-Dero swap
 func DreamsConfirm(c, amt int, obj *container.Split, reset fyne.CanvasObject) fyne.CanvasObject {
 	var text string
 	dero := float64(amt) / 333
@@ -458,7 +456,7 @@ func DreamsConfirm(c, amt int, obj *container.Split, reset fyne.CanvasObject) fy
 	case 1:
 		text = fmt.Sprintf("You are about to swap %s DERO for %d dReams\n\nConfirm", a, amt)
 	case 2:
-		text = fmt.Sprintf("You are about to swap %d dReams for %s dReams\n\nConfirm", amt, a)
+		text = fmt.Sprintf("You are about to swap %d dReams for %s Dero\n\nConfirm", amt, a)
 	}
 
 	label := widget.NewLabel(text)

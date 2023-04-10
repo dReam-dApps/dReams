@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/SixofClubsss/dReams/holdero"
 	"github.com/SixofClubsss/dReams/menu"
 	"github.com/SixofClubsss/dReams/rpc"
-	"github.com/SixofClubsss/dReams/table"
 	dero "github.com/deroproject/derohe/rpc"
 	"github.com/deroproject/derohe/walletapi"
 	"go.etcd.io/bbolt"
@@ -268,14 +268,14 @@ func makeIntegratedAddr(print bool) {
 	service_address := addr.Clone()
 
 	var p_contracts, s_contracts []string
-	for _, sc := range menu.MenuControl.Predict_owned {
+	for _, sc := range menu.Control.Predict_owned {
 		split := strings.Split(sc, "   ")
 		if len(split) > 2 {
 			p_contracts = append(p_contracts, split[2])
 		}
 	}
 
-	for _, sc := range menu.MenuControl.Sports_owned {
+	for _, sc := range menu.Control.Sports_owned {
 		split := strings.Split(sc, "   ")
 		if len(split) > 2 {
 			s_contracts = append(s_contracts, split[2])
@@ -335,7 +335,7 @@ func makeIntegratedAddr(print bool) {
 }
 
 func DreamService(start uint64, payouts, transfers bool) {
-	if rpc.Signal.Daemon && rpc.Wallet.Connect {
+	if rpc.Daemon.Connect && rpc.Wallet.Connect {
 		db := boltDB()
 		defer db.Close()
 
@@ -350,7 +350,7 @@ func DreamService(start uint64, payouts, transfers bool) {
 		}
 
 		if start == 0 {
-			start = rpc.DaemonHeight(rpc.Round.Daemon)
+			start = rpc.DaemonHeight(rpc.Daemon.Rpc)
 		}
 
 		if start > 0 {
@@ -367,7 +367,7 @@ func DreamService(start uint64, payouts, transfers bool) {
 				log.Println("[dReamService] Starting")
 			}
 
-			for rpc.Wallet.Service && rpc.Wallet.Connect && rpc.Signal.Daemon {
+			for rpc.Wallet.Service && rpc.Wallet.Connect && rpc.Daemon.Connect {
 				Service.Processing = true
 				if transfers {
 					processBetTx(start, db, Service.Debug)
@@ -380,7 +380,7 @@ func DreamService(start uint64, payouts, transfers bool) {
 
 				for i := 0; i < 10; i++ {
 					time.Sleep(1 * time.Second)
-					if !rpc.Wallet.Service || !rpc.Wallet.Connect || !rpc.Signal.Daemon {
+					if !rpc.Wallet.Service || !rpc.Wallet.Connect || !rpc.Daemon.Connect {
 						break
 					}
 				}
@@ -396,7 +396,7 @@ func DreamService(start uint64, payouts, transfers bool) {
 }
 
 func runPredictionPayouts(print bool) {
-	contracts := menu.MenuControl.Predict_owned
+	contracts := menu.Control.Predict_owned
 	var pay_queue, post_queue []string
 	for i := range contracts {
 		if !menu.Gnomes.Init || menu.GnomonClosing() {
@@ -438,7 +438,7 @@ func runPredictionPayouts(print bool) {
 	for _, sc := range post_queue {
 		var sent bool
 		var value float64
-		GetPrediction(rpc.Signal.Daemon, sc)
+		GetPrediction(rpc.Daemon.Connect, sc)
 		pre := rpc.Display.Prediction
 		if isOnChainPrediction(pre) {
 			switch onChainPrediction(pre) {
@@ -471,7 +471,7 @@ func runPredictionPayouts(print bool) {
 			}
 
 		} else {
-			value, _ = table.GetPrice(pre)
+			value, _ = holdero.GetPrice(pre)
 			if value > 0 {
 				sent = true
 				rpc.PostPrediction(sc, int(value))
@@ -485,7 +485,7 @@ func runPredictionPayouts(print bool) {
 			Service.Last_block = rpc.Wallet.Height
 			serviceDebug(print, "[runPredictionPayouts]", "Tx Delay")
 			for rpc.Wallet.Height < Service.Last_block+3 {
-				if !rpc.Wallet.Service || !rpc.Wallet.Connect || !rpc.Signal.Daemon || t > 36 {
+				if !rpc.Wallet.Service || !rpc.Wallet.Connect || !rpc.Daemon.Connect || t > 36 {
 					break
 				}
 
@@ -499,7 +499,7 @@ func runPredictionPayouts(print bool) {
 		serviceDebug(print, "[runPredictionPayouts]", fmt.Sprintf("%s Paying out", sc))
 		var sent bool
 		var amt float64
-		GetPrediction(rpc.Signal.Daemon, sc)
+		GetPrediction(rpc.Daemon.Connect, sc)
 		pre := rpc.Display.Prediction
 		if isOnChainPrediction(pre) {
 			sent = true
@@ -534,7 +534,7 @@ func runPredictionPayouts(print bool) {
 			}
 
 		} else {
-			amt, _ = table.GetPrice(pre)
+			amt, _ = holdero.GetPrice(pre)
 			if amt > 0 {
 				rpc.EndPrediction(sc, int(amt))
 				sent = true
@@ -548,7 +548,7 @@ func runPredictionPayouts(print bool) {
 			Service.Last_block = rpc.Wallet.Height
 			serviceDebug(print, "[runPredictionPayouts]", "Tx Delay")
 			for rpc.Wallet.Height < Service.Last_block+3 {
-				if !rpc.Wallet.Service || !rpc.Wallet.Connect || !rpc.Signal.Daemon || t > 36 {
+				if !rpc.Wallet.Service || !rpc.Wallet.Connect || !rpc.Daemon.Connect || t > 36 {
 					break
 				}
 
@@ -560,7 +560,7 @@ func runPredictionPayouts(print bool) {
 }
 
 func runSportsPayouts(print bool) {
-	contracts := menu.MenuControl.Sports_owned
+	contracts := menu.Control.Sports_owned
 	for i := range contracts {
 		if !menu.Gnomes.Init || menu.GnomonClosing() {
 			return
@@ -601,7 +601,7 @@ func runSportsPayouts(print bool) {
 									Service.Last_block = rpc.Wallet.Height
 									serviceDebug(print, "[runSportsPayouts]", "Tx Delay")
 									for rpc.Wallet.Height < Service.Last_block+3 {
-										if !rpc.Wallet.Service || !rpc.Wallet.Connect || !rpc.Signal.Daemon || t > 36 {
+										if !rpc.Wallet.Service || !rpc.Wallet.Connect || !rpc.Daemon.Connect || t > 36 {
 											break
 										}
 
@@ -626,14 +626,14 @@ func processBetTx(start uint64, db *bbolt.DB, print bool) {
 	rpcClient, _, _ := rpc.SetWalletClient(rpc.Wallet.Rpc, rpc.Wallet.UserPass)
 
 	var p_contracts, s_contracts []string
-	for _, sc := range menu.MenuControl.Predict_owned {
+	for _, sc := range menu.Control.Predict_owned {
 		split := strings.Split(sc, "   ")
 		if len(split) > 2 {
 			p_contracts = append(p_contracts, split[2])
 		}
 	}
 
-	for _, sc := range menu.MenuControl.Sports_owned {
+	for _, sc := range menu.Control.Sports_owned {
 		split := strings.Split(sc, "   ")
 		if len(split) > 2 {
 			s_contracts = append(s_contracts, split[2])
@@ -922,14 +922,14 @@ func processSingleTx(txid string) {
 	rpcClient, _, _ := rpc.SetWalletClient(rpc.Wallet.Rpc, rpc.Wallet.UserPass)
 
 	var p_contracts, s_contracts []string
-	for _, sc := range menu.MenuControl.Predict_owned {
+	for _, sc := range menu.Control.Predict_owned {
 		split := strings.Split(sc, "   ")
 		if len(split) > 2 {
 			p_contracts = append(p_contracts, split[2])
 		}
 	}
 
-	for _, sc := range menu.MenuControl.Sports_owned {
+	for _, sc := range menu.Control.Sports_owned {
 		split := strings.Split(sc, "   ")
 		if len(split) > 2 {
 			s_contracts = append(s_contracts, split[2])
@@ -1301,7 +1301,7 @@ func sendToPrediction(pre int, scid, destination_expected string, e dero.Entry) 
 	}
 
 	for rpc.Wallet.Height < Service.Last_block+3 {
-		if !rpc.Wallet.Service || !rpc.Wallet.Connect || !rpc.Signal.Daemon || t > 36 {
+		if !rpc.Wallet.Service || !rpc.Wallet.Connect || !rpc.Daemon.Connect || t > 36 {
 			break
 		}
 
@@ -1348,7 +1348,7 @@ func sendToSports(n, abv, team, scid, destination_expected string, e dero.Entry)
 	}
 
 	for rpc.Wallet.Height < Service.Last_block+3 {
-		if !rpc.Wallet.Service || !rpc.Wallet.Connect || !rpc.Signal.Daemon || t > 36 {
+		if !rpc.Wallet.Service || !rpc.Wallet.Connect || !rpc.Daemon.Connect || t > 36 {
 			break
 		}
 
@@ -1369,7 +1369,7 @@ func sendRefund(scid, addr, msg string, e dero.Entry) {
 		log.Println("[sendRefund] Tx delay")
 	}
 	for rpc.Wallet.Height < Service.Last_block+3 {
-		if !rpc.Wallet.Service || !rpc.Wallet.Connect || !rpc.Signal.Daemon || t > 36 {
+		if !rpc.Wallet.Service || !rpc.Wallet.Connect || !rpc.Daemon.Connect || t > 36 {
 			break
 		}
 

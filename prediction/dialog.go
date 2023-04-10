@@ -8,9 +8,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/SixofClubsss/dReams/dwidget"
+	"github.com/SixofClubsss/dReams/holdero"
 	"github.com/SixofClubsss/dReams/menu"
 	"github.com/SixofClubsss/dReams/rpc"
-	"github.com/SixofClubsss/dReams/table"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -21,20 +22,20 @@ import (
 )
 
 type psOwnerWidgets struct {
-	S_end        *widget.Entry
-	S_amt        *table.NumericalEntry
+	S_end        *dwidget.WholeAmt
+	S_amt        *dwidget.TenthAmt
 	S_game       *widget.Select
 	S_league     *widget.SelectEntry
 	S_feed       *widget.SelectEntry
-	S_deposit    *table.NumericalEntry
+	S_deposit    *dwidget.TenthAmt
 	S_set        *widget.Button
 	S_cancel     *widget.Button
-	P_end        *widget.Entry
+	P_end        *dwidget.WholeAmt
 	P_mark       *widget.Entry
-	P_amt        *table.NumericalEntry
+	P_amt        *dwidget.TenthAmt
 	P_Name       *widget.SelectEntry
 	P_feed       *widget.SelectEntry
-	P_deposit    *table.NumericalEntry
+	P_deposit    *dwidget.TenthAmt
 	P_set        *widget.Button
 	P_post       *widget.Button
 	P_pay        *widget.Button
@@ -96,7 +97,7 @@ func preditctionOpts(window fyne.Window) fyne.CanvasObject {
 		}
 	}
 
-	PS_Control.P_end = widget.NewEntry()
+	PS_Control.P_end = dwidget.WholeAmtEntry("")
 	PS_Control.P_end.SetPlaceHolder("Closes At:")
 	PS_Control.P_end.Validator = validation.NewRegexp(`^\d{10,}$`, "Format Not Valid")
 
@@ -104,7 +105,7 @@ func preditctionOpts(window fyne.Window) fyne.CanvasObject {
 	PS_Control.P_mark.SetPlaceHolder("Mark:")
 	PS_Control.P_mark.Validator = validation.NewRegexp(`^\d{1,}$`, "Format Not Valid")
 
-	PS_Control.P_amt = table.NilNumericalEntry()
+	PS_Control.P_amt = dwidget.TenthAmtEntry("")
 	PS_Control.P_amt.SetPlaceHolder("Minimum Amount:")
 	PS_Control.P_amt.Wrapping = fyne.TextTruncate
 	PS_Control.P_amt.Validator = validation.NewRegexp(`^\d{1,}\.\d{1,5}$`, "Format Not Valid")
@@ -113,7 +114,7 @@ func preditctionOpts(window fyne.Window) fyne.CanvasObject {
 	PS_Control.P_feed = widget.NewSelectEntry(feeds)
 	PS_Control.P_feed.SetPlaceHolder("Feed:")
 
-	PS_Control.P_deposit = table.NilNumericalEntry()
+	PS_Control.P_deposit = dwidget.TenthAmtEntry("")
 	PS_Control.P_deposit.SetPlaceHolder("Deposit Amount:")
 	PS_Control.P_deposit.Wrapping = fyne.TextTruncate
 	PS_Control.P_deposit.Validator = validation.NewRegexp(`^\d{1,}\.\d{1,5}$`, "Format Not Valid")
@@ -122,7 +123,7 @@ func preditctionOpts(window fyne.Window) fyne.CanvasObject {
 
 	PS_Control.P_set = widget.NewButton("Set Prediction", func() {
 		if PS_Control.P_deposit.Validate() == nil && PS_Control.P_amt.Validate() == nil && PS_Control.P_end.Validate() == nil && PS_Control.P_mark.Validate() == nil {
-			if len(PredictControl.Contract) == 64 {
+			if len(Predict.Contract) == 64 {
 				window.Content().(*fyne.Container).Objects[1] = ownerConfirmAction(2, 100, window, reset)
 				window.Content().(*fyne.Container).Objects[1].Refresh()
 			}
@@ -137,7 +138,7 @@ func preditctionOpts(window fyne.Window) fyne.CanvasObject {
 	PS_Control.P_cancel.Hide()
 
 	PS_Control.P_post = widget.NewButton("Post", func() {
-		go SetPredictionPrices(rpc.Signal.Daemon)
+		go SetPredictionPrices(rpc.Daemon.Connect)
 		var a float64
 		prediction := rpc.Display.Prediction
 		if isOnChainPrediction(prediction) {
@@ -157,7 +158,7 @@ func preditctionOpts(window fyne.Window) fyne.CanvasObject {
 			}
 
 		} else {
-			a, _ = table.GetPrice(prediction)
+			a, _ = holdero.GetPrice(prediction)
 			window.Content().(*fyne.Container).Objects[1] = ownerConfirmAction(4, a, window, reset)
 		}
 
@@ -168,7 +169,7 @@ func preditctionOpts(window fyne.Window) fyne.CanvasObject {
 	PS_Control.P_post.Hide()
 
 	PS_Control.P_pay = widget.NewButton("Prediction Payout", func() {
-		go SetPredictionPrices(rpc.Signal.Daemon)
+		go SetPredictionPrices(rpc.Daemon.Connect)
 		var a float64
 		prediction := rpc.Display.Prediction
 		if isOnChainPrediction(prediction) {
@@ -188,7 +189,7 @@ func preditctionOpts(window fyne.Window) fyne.CanvasObject {
 			}
 
 		} else {
-			a, _ = table.GetPrice(prediction)
+			a, _ = holdero.GetPrice(prediction)
 			window.Content().(*fyne.Container).Objects[1] = ownerConfirmAction(5, a, window, reset)
 		}
 
@@ -268,11 +269,11 @@ func sportsOpts(window fyne.Window) fyne.CanvasObject {
 	}
 	PS_Control.S_league.SetPlaceHolder("League:")
 
-	PS_Control.S_end = widget.NewEntry()
+	PS_Control.S_end = dwidget.WholeAmtEntry("")
 	PS_Control.S_end.SetPlaceHolder("Closes At:")
 	PS_Control.S_end.Validator = validation.NewRegexp(`^\d{10,}$`, "Format Not Valid")
 
-	PS_Control.S_amt = table.NilNumericalEntry()
+	PS_Control.S_amt = dwidget.TenthAmtEntry("")
 	PS_Control.S_amt.SetPlaceHolder("Minimum Amount:")
 	PS_Control.S_amt.Wrapping = fyne.TextTruncate
 	PS_Control.S_amt.Validator = validation.NewRegexp(`^\d{1,}\.\d{1,5}$`, "Format Not Valid")
@@ -281,7 +282,7 @@ func sportsOpts(window fyne.Window) fyne.CanvasObject {
 	PS_Control.S_feed = widget.NewSelectEntry(feeds)
 	PS_Control.S_feed.SetPlaceHolder("Feed:")
 
-	PS_Control.S_deposit = table.NilNumericalEntry()
+	PS_Control.S_deposit = dwidget.TenthAmtEntry("")
 	PS_Control.S_deposit.SetPlaceHolder("Deposit Amount:")
 	PS_Control.S_deposit.Wrapping = fyne.TextTruncate
 	PS_Control.S_deposit.Validator = validation.NewRegexp(`^\d{1,}\.\d{1,5}$`, "Format Not Valid")
@@ -290,7 +291,7 @@ func sportsOpts(window fyne.Window) fyne.CanvasObject {
 
 	PS_Control.S_set = widget.NewButton("Set Game", func() {
 		if PS_Control.S_deposit.Validate() == nil && PS_Control.S_amt.Validate() == nil && PS_Control.S_end.Validate() == nil {
-			if len(SportsControl.Contract) == 64 {
+			if len(Sports.Contract) == 64 {
 				window.Content().(*fyne.Container).Objects[1] = ownerConfirmAction(1, 100, window, reset)
 				window.Content().(*fyne.Container).Objects[1].Refresh()
 			}
@@ -308,7 +309,7 @@ func sportsOpts(window fyne.Window) fyne.CanvasObject {
 	PS_Control.Payout_n.SetPlaceHolder("Game #")
 
 	sports_confirm := widget.NewButton("Sports Payout", func() {
-		if len(SportsControl.Contract) == 64 {
+		if len(Sports.Contract) == 64 {
 			window.Content().(*fyne.Container).Objects[1] = ownerConfirmAction(3, 100, window, reset)
 			window.Content().(*fyne.Container).Objects[1].Refresh()
 		}
@@ -385,8 +386,7 @@ func serviceOpts(window fyne.Window) fyne.CanvasObject {
 		}
 	})
 
-	entry := &table.NumericalEntry{}
-	entry.ExtendBaseWidget(entry)
+	entry := dwidget.WholeAmtEntry("")
 	entry.SetPlaceHolder("Block #:")
 	entry.Wrapping = fyne.TextTruncate
 	entry.Validator = validation.NewRegexp(`^[^0]\d{0,}$`, "Format Not Valid")
@@ -394,7 +394,7 @@ func serviceOpts(window fyne.Window) fyne.CanvasObject {
 	var start uint64
 	height := widget.NewCheck("Start from current height", func(b bool) {
 		if b {
-			start = rpc.DaemonHeight(rpc.Round.Daemon)
+			start = rpc.DaemonHeight(rpc.Daemon.Rpc)
 			entry.SetText(strconv.Itoa(int(start)))
 			entry.Disable()
 		} else {
@@ -519,29 +519,25 @@ func serviceOpts(window fyne.Window) fyne.CanvasObject {
 // SCID update objects
 func updateOpts() fyne.CanvasObject {
 	a_label := widget.NewLabel("Time A         ")
-	a := &table.NumericalEntry{}
-	a.ExtendBaseWidget(a)
+	a := dwidget.WholeAmtEntry("")
 	a.PlaceHolder = "Time A:"
 	a.Wrapping = fyne.TextTruncate
 	a.Validator = validation.NewRegexp(`[^0]\d{1,}$`, "Format Not Valid")
 
 	b_label := widget.NewLabel("Time B         ")
-	b := &table.NumericalEntry{}
-	b.ExtendBaseWidget(b)
+	b := dwidget.WholeAmtEntry("")
 	b.PlaceHolder = "Time B:"
 	b.Wrapping = fyne.TextTruncate
 	b.Validator = validation.NewRegexp(`[^0]\d{1,}$`, "Format Not Valid")
 
 	c_label := widget.NewLabel("Time C         ")
-	c := &table.NumericalEntry{}
-	c.ExtendBaseWidget(c)
+	c := dwidget.WholeAmtEntry("")
 	c.PlaceHolder = "Time C:"
 	c.Wrapping = fyne.TextTruncate
 	c.Validator = validation.NewRegexp(`[^0]\d{1,}$`, "Format Not Valid")
 
 	hl_label := widget.NewLabel("Max Games")
-	hl := &table.NumericalEntry{}
-	hl.ExtendBaseWidget(hl)
+	hl := dwidget.WholeAmtEntry("")
 	hl.PlaceHolder = "Max Games:"
 	hl.Wrapping = fyne.TextTruncate
 	hl.Validator = validation.NewRegexp(`^[^0]\d{0,}$`, "Format Not Valid")
@@ -549,8 +545,7 @@ func updateOpts() fyne.CanvasObject {
 	hl_box := container.NewBorder(nil, nil, hl_label, nil, hl)
 	hl_box.Hide()
 
-	// l := &table.NumericalEntry{}
-	// l.ExtendBaseWidget(l)
+	// l := dwidget.WholeAmtEntry()
 	// l.PlaceHolder = "L:"
 	// l.Validator = validation.NewRegexp(`^\d{2,}$`, "Format Not Valid")
 
@@ -574,17 +569,16 @@ func updateOpts() fyne.CanvasObject {
 		if len(new_owner.Text) == 66 {
 			switch sc.Selected {
 			case "Prediction":
-				rpc.AddOwner(PredictControl.Contract, new_owner.Text)
+				rpc.AddOwner(Predict.Contract, new_owner.Text)
 			case "Sports":
-				rpc.AddOwner(SportsControl.Contract, new_owner.Text)
+				rpc.AddOwner(Sports.Contract, new_owner.Text)
 			default:
 				log.Println("[dReams] Select contract")
 			}
 		}
 	})
 
-	owner_num := &table.NumericalEntry{}
-	owner_num.ExtendBaseWidget(owner_num)
+	owner_num := dwidget.WholeAmtEntry("")
 	owner_num.PlaceHolder = "Owner #:"
 	owner_num.Validator = validation.NewRegexp(`^[^0]\d{0,0}$`, "Format Not Valid")
 	owner_num.Wrapping = fyne.TextTruncate
@@ -592,9 +586,9 @@ func updateOpts() fyne.CanvasObject {
 	remove_owner := widget.NewButton("Remove Owner", func() {
 		switch sc.Selected {
 		case "Prediction":
-			rpc.RemoveOwner(PredictControl.Contract, rpc.StringToInt(owner_num.Text))
+			rpc.RemoveOwner(Predict.Contract, rpc.StringToInt(owner_num.Text))
 		case "Sports":
-			rpc.RemoveOwner(SportsControl.Contract, rpc.StringToInt(owner_num.Text))
+			rpc.RemoveOwner(Sports.Contract, rpc.StringToInt(owner_num.Text))
 		default:
 			log.Println("[dReams] Select contract")
 		}
@@ -604,10 +598,10 @@ func updateOpts() fyne.CanvasObject {
 		if a.Validate() == nil && b.Validate() == nil && c.Validate() == nil {
 			switch sc.Selected {
 			case "Prediction":
-				rpc.VarUpdate(PredictControl.Contract, rpc.StringToInt(a.Text), rpc.StringToInt(b.Text), rpc.StringToInt(c.Text), 30, 0)
+				rpc.VarUpdate(Predict.Contract, rpc.StringToInt(a.Text), rpc.StringToInt(b.Text), rpc.StringToInt(c.Text), 30, 0)
 			case "Sports":
 				if hl.Validate() == nil {
-					rpc.VarUpdate(SportsControl.Contract, rpc.StringToInt(a.Text), rpc.StringToInt(b.Text), rpc.StringToInt(c.Text), 30, rpc.StringToInt(hl.Text))
+					rpc.VarUpdate(Sports.Contract, rpc.StringToInt(a.Text), rpc.StringToInt(b.Text), rpc.StringToInt(c.Text), 30, rpc.StringToInt(hl.Text))
 				}
 			default:
 				log.Println("[dReams] Select contract")
@@ -637,13 +631,13 @@ func ConfirmAction(i int, teamA, teamB string, obj []fyne.CanvasObject, tabs *co
 	confirm_display.Wrapping = fyne.TextWrapWord
 	confirm_display.Alignment = fyne.TextAlignCenter
 
-	p_scid := PredictControl.Contract
+	p_scid := Predict.Contract
 	// prediction leaderboard
-	//name := table.Actions.NameEntry.Text
+	//name := holdero.Actions.NameEntry.Text
 
-	s_scid := SportsControl.Contract
-	split := strings.Split(table.Actions.Game_select.Selected, "   ")
-	multi := table.Actions.Multi.Selected
+	s_scid := Sports.Contract
+	split := strings.Split(Sports.Game_select.Selected, "   ")
+	multi := Sports.Multi.Selected
 
 	switch i {
 	case 1:
@@ -655,7 +649,7 @@ func ConfirmAction(i int, teamA, teamB string, obj []fyne.CanvasObject, tabs *co
 		amt := float / 100000
 		confirm_display.SetText(fmt.Sprintf("SCID:\n\n%s\n\nHigher prediction for %.5f Dero\n\nConfirm", p_scid, amt))
 	case 3:
-		game := table.Actions.Game_select.Selected
+		game := Sports.Game_select.Selected
 		val := float64(menu.GetSportsAmt(s_scid, split[0]))
 		var x string
 
@@ -670,7 +664,7 @@ func ConfirmAction(i int, teamA, teamB string, obj []fyne.CanvasObject, tabs *co
 
 		confirm_display.SetText(fmt.Sprintf("SCID:\n\n%s\n\nBetting on Game # %s\n\n%s for %s Dero\n\nConfirm", s_scid, game, teamA, x))
 	case 4:
-		game := table.Actions.Game_select.Selected
+		game := Sports.Game_select.Selected
 		val := float64(menu.GetSportsAmt(s_scid, split[0]))
 		var x string
 
@@ -729,7 +723,7 @@ func ConfirmAction(i int, teamA, teamB string, obj []fyne.CanvasObject, tabs *co
 // 	var confirm_display = widget.NewLabel("")
 // 	confirm_display.Wrapping = fyne.TextWrapWord
 //
-// 	name := table.Actions.NameEntry.Text
+// 	name := holdero.Actions.NameEntry.Text
 //
 // 	switch i {
 // 	case 1:
@@ -747,9 +741,9 @@ func ConfirmAction(i int, teamA, teamB string, obj []fyne.CanvasObject, tabs *co
 // 	confirm_button := widget.NewButton("Confirm", func() {
 // 		switch i {
 // 		case 1:
-// 			rpc.NameChange(PredictControl.Contract, name)
+// 			rpc.NameChange(Control.Contract, name)
 // 		case 2:
-// 			rpc.RemoveAddress(PredictControl.Contract, name)
+// 			rpc.RemoveAddress(Control.Contract, name)
 // 		default:
 //
 // 		}
@@ -828,31 +822,31 @@ func humanTimeConvert() fyne.CanvasObject {
 
 // Owner menu open button for prediction tab
 func OwnerButtonP() fyne.CanvasObject {
-	menu.MenuControl.Bet_menu_p = widget.NewButton("Owner Options", func() {
+	menu.Control.Bet_menu_p = widget.NewButton("Owner Options", func() {
 		ownersMenu()
 	})
-	menu.MenuControl.Bet_menu_p.Hide()
+	menu.Control.Bet_menu_p.Hide()
 
-	return menu.MenuControl.Bet_menu_p
+	return menu.Control.Bet_menu_p
 }
 
 // Owner menu open button for sports tab
 func OwnerButtonS() fyne.CanvasObject {
-	menu.MenuControl.Bet_menu_s = widget.NewButton("Owner Options", func() {
+	menu.Control.Bet_menu_s = widget.NewButton("Owner Options", func() {
 		ownersMenu()
 	})
-	menu.MenuControl.Bet_menu_s.Hide()
+	menu.Control.Bet_menu_s.Hide()
 
-	return menu.MenuControl.Bet_menu_s
+	return menu.Control.Bet_menu_s
 }
 
 // Check dPrediction SCID for live status
 func CheckPredictionStatus() {
-	if rpc.Signal.Daemon && menu.Gnomes.Init && !menu.GnomonClosing() {
-		_, ends := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(PredictControl.Contract, "p_end_at", menu.Gnomes.Indexer.ChainHeight, true)
-		_, time_a := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(PredictControl.Contract, "time_a", menu.Gnomes.Indexer.ChainHeight, true)
-		_, time_c := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(PredictControl.Contract, "time_c", menu.Gnomes.Indexer.ChainHeight, true)
-		_, mark := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(PredictControl.Contract, "mark", menu.Gnomes.Indexer.ChainHeight, true)
+	if rpc.Daemon.Connect && menu.Gnomes.Init && !menu.GnomonClosing() {
+		_, ends := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(Predict.Contract, "p_end_at", menu.Gnomes.Indexer.ChainHeight, true)
+		_, time_a := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(Predict.Contract, "time_a", menu.Gnomes.Indexer.ChainHeight, true)
+		_, time_c := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(Predict.Contract, "time_c", menu.Gnomes.Indexer.ChainHeight, true)
+		_, mark := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(Predict.Contract, "mark", menu.Gnomes.Indexer.ChainHeight, true)
 		if ends != nil && time_a != nil && time_c != nil {
 			now := uint64(time.Now().Unix())
 			if now >= ends[0] && now <= ends[0]+time_a[0] && mark == nil {
@@ -916,12 +910,12 @@ func ownersMenu() {
 	ow := fyne.CurrentApp().NewWindow("Bet Contracts")
 	ow.Resize(fyne.NewSize(330, 700))
 	ow.SetIcon(menu.Resource.SmallIcon)
-	menu.MenuControl.Bet_menu_p.Hide()
-	menu.MenuControl.Bet_menu_s.Hide()
+	menu.Control.Bet_menu_p.Hide()
+	menu.Control.Bet_menu_s.Hide()
 	quit := make(chan struct{})
 	ow.SetCloseIntercept(func() {
-		menu.MenuControl.Bet_menu_p.Show()
-		menu.MenuControl.Bet_menu_s.Show()
+		menu.Control.Bet_menu_p.Show()
+		menu.Control.Bet_menu_s.Show()
 		quit <- struct{}{}
 		ow.Close()
 	})
@@ -937,7 +931,7 @@ func ownersMenu() {
 	owner_tabs.OnSelected = func(ti *container.TabItem) {
 		switch ti.Text {
 		case "Sports":
-			go GetActiveGames(rpc.Signal.Daemon)
+			go GetActiveGames(rpc.Daemon.Connect)
 		case "Service":
 			go makeIntegratedAddr(false)
 		}
@@ -1007,7 +1001,7 @@ func ownersMenu() {
 					}
 				}
 
-				if SportsControl.Buffer {
+				if Sports.Buffer {
 					PS_Control.S_cancel.Show()
 					PS_Control.S_set.Hide()
 				} else {
@@ -1052,7 +1046,7 @@ func ownerConfirmAction(i int, p float64, window fyne.Window, reset fyne.CanvasO
 	confirm_display.Alignment = fyne.TextAlignCenter
 
 	pre := rpc.Display.Prediction
-	p_scid := PredictControl.Contract
+	p_scid := Predict.Contract
 	p_pre := PS_Control.P_Name.Text
 	p_amt := PS_Control.P_amt.Text
 	p_mark := PS_Control.P_mark.Text
@@ -1061,14 +1055,14 @@ func ownerConfirmAction(i int, p float64, window fyne.Window, reset fyne.CanvasO
 	p_feed := PS_Control.P_feed.Text
 	p_dep := PS_Control.P_deposit.Text
 	var price string
-	if table.CoinDecimal(pre) == 8 {
+	if holdero.CoinDecimal(pre) == 8 {
 		price = fmt.Sprintf("%.8f", p/100000000)
 	} else {
 		price = fmt.Sprintf("%.2f", p/100)
 	}
 
 	var s_game string
-	s_scid := SportsControl.Contract
+	s_scid := Sports.Contract
 	game_split := strings.Split(PS_Control.S_game.Selected, "   ")
 	if len(game_split) > 1 {
 		s_game = game_split[1]
@@ -1100,7 +1094,7 @@ func ownerConfirmAction(i int, p float64, window fyne.Window, reset fyne.CanvasO
 
 	switch i {
 	case 1:
-		confirm_display.SetText("SCID:\n\n" + s_scid + "\n\nGame: " + s_game + "\n\nMinimum: " + s_amt + "\n\nCloses At: " + s_end_time.String() + "\n\nFeed: " + s_feed + "\n\nInitial Deposit: " + s_dep + " Dero")
+		confirm_display.SetText("SCID:\n\n" + s_scid + "\n\nGame: " + s_game + "\n\nMinimum: " + s_amt + " Dero\n\nCloses At: " + s_end_time.String() + "\n\nFeed: " + s_feed + "\n\nInitial Deposit: " + s_dep + " Dero")
 	case 2:
 		fn := "Feed: "
 		var mark string
@@ -1117,7 +1111,7 @@ func ownerConfirmAction(i int, p float64, window fyne.Window, reset fyne.CanvasO
 					fn = "Node: "
 					mark = p_mark
 				} else {
-					if table.CoinDecimal(pre) == 8 || table.CoinDecimal(p_pre) == 8 {
+					if holdero.CoinDecimal(pre) == 8 || holdero.CoinDecimal(p_pre) == 8 {
 						if f, err := strconv.ParseFloat(p_mark, 32); err == nil { /// eight decimal place for btc
 							x := f / 100000000
 							mark = fmt.Sprintf("%.8f", x)
@@ -1212,9 +1206,9 @@ func ownerConfirmAction(i int, p float64, window fyne.Window, reset fyne.CanvasO
 			default:
 			}
 		case 8:
-			rpc.CancelInitiatedBet(PredictControl.Contract, 0)
+			rpc.CancelInitiatedBet(Predict.Contract, 0)
 		case 9:
-			rpc.CancelInitiatedBet(SportsControl.Contract, 1)
+			rpc.CancelInitiatedBet(Sports.Contract, 1)
 		default:
 
 		}
