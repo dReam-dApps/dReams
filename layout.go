@@ -345,6 +345,9 @@ func placeWall() *container.Split {
 		layout.NewSpacer(),
 		dReams_items)
 
+	menu.Control.Contract_rating = make(map[string]uint64)
+	holdero.Assets.Asset_map = make(map[string]string)
+
 	daemon_check_cont := container.NewVBox(
 		menu.DaemonConnectedBox())
 

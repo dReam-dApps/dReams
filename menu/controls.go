@@ -13,6 +13,7 @@ func Disconnected() {
 	rpc.Wallet.Service = false
 	rpc.Wallet.PokerOwner = false
 	rpc.Wallet.BetOwner = false
+	rpc.Wallet.Address = ""
 	rpc.Round.ID = 0
 	rpc.Display.PlayerId = ""
 	rpc.Odds.Run = false

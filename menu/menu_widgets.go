@@ -181,7 +181,7 @@ func DaemonConnectedBox() fyne.Widget {
 		if !Gnomes.Init && !Gnomes.Start {
 			go startLabel()
 			filters := searchFilters()
-			StartGnomon(rpc.Daemon.Rpc, "dReams", filters)
+			StartGnomon("dReams", filters, 3960, 520, g45Index)
 			Poker.contract_input.CursorColumn = 1
 			Poker.contract_input.Refresh()
 			if Control.Dapp_list["dSports and dPredictions"] {

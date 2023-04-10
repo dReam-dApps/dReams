@@ -389,25 +389,25 @@ func GnomonDB() *storage.GravitonStore {
 	return db
 }
 
-// Start Gnomon indexer with search filters
-//   - ep for daemon end point
+// Start Gnomon indexer with or without search filters
+//   - End point from rpc.Daemon.Rpc
 //   - tag for log print
 //   - Passing nil filters with Gnomes.Trim false will run a full Gnomon index
-func StartGnomon(ep, tag string, filters []string) {
+//   - custom func() is for adding specific SCID to index on Gnomon start, Gnomes.Trim false will bypass
+//   - lower defines the lower limit of indexed SCIDs from Gnomon search filters before custom adds
+//   - upper defines the higher limit when custom indexed SCIDs exist already
+func StartGnomon(tag string, filters []string, upper, lower int, custom func()) {
 	Gnomes.Start = true
 	log.Printf("[%s] Starting Gnomon\n", tag)
 	backend := GnomonDB()
 
 	last_height := backend.GetLastIndexHeight()
-	daemon_endpoint := ep
 	runmode := "daemon"
 	mbl := false
 	closeondisconnect := false
 
 	if filters != nil || !Gnomes.Trim {
-		Control.Contract_rating = make(map[string]uint64)
-		holdero.Assets.Asset_map = make(map[string]string)
-		Gnomes.Indexer = indexer.NewIndexer(backend, filters, last_height, daemon_endpoint, runmode, mbl, closeondisconnect, Gnomes.Fast)
+		Gnomes.Indexer = indexer.NewIndexer(backend, filters, last_height, rpc.Daemon.Rpc, runmode, mbl, closeondisconnect, Gnomes.Fast)
 		go Gnomes.Indexer.StartDaemonMode(Gnomes.Para)
 		time.Sleep(3 * time.Second)
 		Gnomes.Init = true
@@ -416,20 +416,20 @@ func StartGnomon(ep, tag string, filters []string) {
 			i := 0
 			for {
 				contracts := len(Gnomes.Indexer.Backend.GetAllOwnersAndSCIDs())
-				if contracts >= 3960 {
+				if contracts >= upper {
 					Gnomes.Trim = false
 					break
 				}
 
-				if contracts >= 520 {
-					go g45Index()
+				if contracts >= lower {
+					go custom()
 					break
 				}
 				time.Sleep(1 * time.Second)
 				i++
 				if i == 60 {
 					Gnomes.Trim = false
-					log.Printf("[%s] Could not add G45 Collections\n", tag)
+					log.Printf("[%s] Could not add all custom SCID for index\n", tag)
 					break
 				}
 			}
@@ -466,7 +466,7 @@ func g45Index() {
 
 // Update Gnomon endpoint to current rpc.Daemon.Rpc value
 func GnomonEndPoint() {
-	if rpc.Daemon.Connect && Gnomes.Init && Gnomes.Sync {
+	if rpc.Daemon.Connect && Gnomes.Init && !Gnomes.Syncing {
 		Gnomes.Indexer.Endpoint = rpc.Daemon.Rpc
 	}
 }

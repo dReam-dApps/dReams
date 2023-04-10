@@ -61,8 +61,10 @@ func StringToInt(s string) int {
 
 // Add entry to gui log
 func AddLog(t string) {
-	Wallet.LogEntry.SetText(Wallet.LogEntry.Text + "\n\n" + t)
-	Wallet.LogEntry.Refresh()
+	if Wallet.LogEntry != nil {
+		Wallet.LogEntry.SetText(Wallet.LogEntry.Text + "\n\n" + t)
+		Wallet.LogEntry.Refresh()
+	}
 }
 
 // Make gui log for txs with save function
