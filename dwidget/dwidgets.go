@@ -103,8 +103,11 @@ func (e *WholeAmt) TypedKey(k *fyne.KeyEvent) {
 	e.Entry.TypedKey(k)
 }
 
-type HorizontalDeroEntry struct {
+type DeroRpcEntries struct {
 	Container  *fyne.Container
+	Daemon     *widget.SelectEntry
+	Wallet     *widget.SelectEntry
+	Auth       *widget.Entry
 	Balance    *canvas.Text
 	Button     *widget.Button
 	Disconnect *widget.Check
@@ -116,7 +119,7 @@ type HorizontalDeroEntry struct {
 //   - Balance canvas to display wallet balance
 //   - Button for OnTapped func()
 //   - Offset of 1 puts entries on trailing edge
-func HorizontalEntries(tag string, offset int) *HorizontalDeroEntry {
+func HorizontalEntries(tag string, offset int) *DeroRpcEntries {
 	default_daemon := []string{"", rpc.DAEMON_RPC_DEFAULT, rpc.DAEMON_RPC_REMOTE5, rpc.DAEMON_RPC_REMOTE6}
 	daemon_entry := widget.NewSelectEntry(default_daemon)
 	daemon_entry.SetPlaceHolder("Daemon RPC:")
@@ -150,7 +153,7 @@ func HorizontalEntries(tag string, offset int) *HorizontalDeroEntry {
 		}
 	}
 
-	button := *widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "confirm"), nil)
+	button := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "confirm"), nil)
 	balance := *canvas.NewText(fmt.Sprintf("Balance: %.5f Dero", 0.0), color.White)
 
 	control_check := *widget.NewCheck("", nil)
@@ -158,12 +161,15 @@ func HorizontalEntries(tag string, offset int) *HorizontalDeroEntry {
 	control_check.Hide()
 
 	rpc_entry_box := container.NewAdaptiveGrid(3, daemon_entry, wallet_entry, pass_entry)
-	rpc_cont := container.NewBorder(nil, nil, &control_check, &button, rpc_entry_box)
+	rpc_cont := container.NewBorder(nil, nil, &control_check, button, rpc_entry_box)
 
-	d := &HorizontalDeroEntry{
+	d := &DeroRpcEntries{
 		Container:  &fyne.Container{},
+		Daemon:     daemon_entry,
+		Wallet:     wallet_entry,
+		Auth:       pass_entry,
 		Balance:    &balance,
-		Button:     &button,
+		Button:     button,
 		Disconnect: &control_check,
 		Offset:     offset,
 	}
@@ -177,9 +183,87 @@ func HorizontalEntries(tag string, offset int) *HorizontalDeroEntry {
 	return d
 }
 
-// Refresh Balance of HorizontalDeroEntry
+// Verticle layout with daemon, wallet and user:pass entries
+//   - Objects bound to dReams rpc Deamon and Wallet vars with disconnect control
+//   - Balance canvas to display wallet balance
+//   - Button for OnTapped func()
+//   - Offset of 1 puts entries on top edge
+func VerticleEntries(tag string, offset int) *DeroRpcEntries {
+	default_daemon := []string{"", rpc.DAEMON_RPC_DEFAULT, rpc.DAEMON_RPC_REMOTE5, rpc.DAEMON_RPC_REMOTE6}
+	daemon_entry := widget.NewSelectEntry(default_daemon)
+	daemon_entry.SetPlaceHolder("Daemon RPC:")
+	this_daemon := binding.BindString(&rpc.Daemon.Rpc)
+	daemon_entry.Bind(this_daemon)
+
+	default_wallet := []string{"127.0.0.1:10103"}
+	wallet_entry := widget.NewSelectEntry(default_wallet)
+	wallet_entry.SetPlaceHolder("Wallet RPC:")
+	this_wallet := binding.BindString(&rpc.Wallet.Rpc)
+	wallet_entry.Bind(this_wallet)
+	wallet_entry.OnCursorChanged = func() {
+		if rpc.Wallet.Connect {
+			rpc.Wallet.Address = ""
+			rpc.Wallet.Height = 0
+			rpc.Wallet.Connect = false
+		}
+	}
+
+	pass_entry := widget.NewPasswordEntry()
+	pass_entry.SetPlaceHolder("RPC user:pass")
+	this_auth := binding.BindString(&rpc.Wallet.UserPass)
+	pass_entry.Bind(this_auth)
+	pass_entry.OnCursorChanged = func() {
+		if rpc.Wallet.Connect {
+			rpc.GetAddress(tag)
+			if !rpc.Wallet.Connect {
+				rpc.Wallet.Address = ""
+				rpc.Wallet.Height = 0
+			}
+		}
+	}
+
+	button := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "confirm"), nil)
+	balance := *canvas.NewText(fmt.Sprintf("Balance: %.5f Dero", 0.0), color.White)
+
+	control_check := *widget.NewCheck("", nil)
+	control_check.Disable()
+	control_check.Hide()
+
+	d := &DeroRpcEntries{
+		Container:  &fyne.Container{},
+		Daemon:     daemon_entry,
+		Wallet:     wallet_entry,
+		Auth:       pass_entry,
+		Balance:    &balance,
+		Button:     button,
+		Disconnect: &control_check,
+		Offset:     offset,
+	}
+
+	if offset == 1 {
+		d.Container = container.NewVBox(
+			daemon_entry,
+			wallet_entry,
+			pass_entry,
+			&balance,
+			button,
+			&control_check)
+	} else {
+		d.Container = container.NewVBox(
+			&control_check,
+			daemon_entry,
+			wallet_entry,
+			pass_entry,
+			&balance,
+			button)
+	}
+
+	return d
+}
+
+// Refresh Balance of DeroRpcEntries
 //   - Gets balance from rpc.Wallet.Balance
-func (d *HorizontalDeroEntry) RefreshBalance() {
+func (d *DeroRpcEntries) RefreshBalance() {
 	d.Balance.Text = (fmt.Sprintf("Balance: %.5f Dero", float64(rpc.Wallet.Balance)/100000))
 	d.Balance.Refresh()
 }
