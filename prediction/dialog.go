@@ -81,7 +81,7 @@ func preditctionOpts(window fyne.Window) fyne.CanvasObject {
 	PS_Control.P_Name.SetPlaceHolder("Name:")
 	PS_Control.P_Name.OnChanged = func(s string) {
 		if isOnChainPrediction(s) {
-			opts := []string{menu.DAEMON_RPC_REMOTE1, menu.DAEMON_RPC_REMOTE2, menu.DAEMON_RPC_REMOTE5, menu.DAEMON_RPC_REMOTE6}
+			opts := []string{rpc.DAEMON_RPC_REMOTE1, rpc.DAEMON_RPC_REMOTE2, rpc.DAEMON_RPC_REMOTE5, rpc.DAEMON_RPC_REMOTE6}
 			PS_Control.P_feed.SetOptions(opts)
 			if PS_Control.P_feed.Text != opts[1] {
 				PS_Control.P_feed.SetText(opts[0])
@@ -1126,7 +1126,7 @@ func ownerConfirmAction(i int, p float64, window fyne.Window, reset fyne.CanvasO
 			}
 		}
 
-		confirm_display.SetText("SCID:\n\n" + p_scid + "\n\nPredicting: " + p_pre + "\n\nMinimum: " + p_amt + "\n\nCloses At: " + p_end_time.String() + "\n\nMark: " + mark + "\n\n" + fn + p_feed + "\n\nInitial Deposit: " + p_dep + " Dero")
+		confirm_display.SetText("SCID:\n\n" + p_scid + "\n\nPredicting: " + p_pre + "\n\nMinimum: " + p_amt + " Dero\n\nCloses At: " + p_end_time.String() + "\n\nMark: " + mark + "\n\n" + fn + p_feed + "\n\nInitial Deposit: " + p_dep + " Dero")
 
 	case 3:
 		confirm_display.SetText("SCID:\n\n" + s_scid + "\n\nGame: " + PS_Control.Payout_n.Text + "\n\nTeam: " + team + "\n\nConfirm")

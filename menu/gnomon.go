@@ -83,6 +83,7 @@ type gnomon struct {
 
 var Gnomes gnomon
 var Stats tableStats
+var Exit_signal bool
 
 // Convert string to int64
 func stringToInt64(s string) int64 {
@@ -112,8 +113,10 @@ func checkLabel() {
 
 // Menu label when Gnomon is closing
 func StopLabel() {
-	holdero.Assets.Gnomes_sync.Text = (" Putting Gnomon to Sleep")
-	holdero.Assets.Gnomes_sync.Refresh()
+	if holdero.Assets.Gnomes_sync != nil {
+		holdero.Assets.Gnomes_sync.Text = (" Putting Gnomon to Sleep")
+		holdero.Assets.Gnomes_sync.Refresh()
+	}
 }
 
 // Menu label when Gnomon is not running
@@ -345,7 +348,7 @@ func searchFilters() (filter []string) {
 	}
 
 	if Control.Dapp_list["DerBnb"] {
-		bnb := rpc.GetSCCode("cfbd566d3678dec6e6dfa3a919feae5306ab12af1485e8bcf9320bd5a122b1d3")
+		bnb := rpc.GetSCCode(rpc.DerBnbSCID)
 		if bnb != "" {
 			filter = append(filter, bnb)
 		}

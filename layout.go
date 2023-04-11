@@ -45,8 +45,6 @@ var T Items
 //go:embed tarot/iluma/iluma.txt
 var iluma_intro string
 
-var dapp_list = []string{"dSports and dPredictions", "Iluma"}
-
 // If dReams has not been intialized, show this screen
 func introScreen() *fyne.Container {
 	dReams.configure = true
@@ -57,7 +55,8 @@ func introScreen() *fyne.Container {
 	intro_label.Wrapping = fyne.TextWrapWord
 	intro_label.Alignment = fyne.TextAlignCenter
 
-	dapp_checks := widget.NewCheckGroup(dapp_list, func(s []string) {})
+	dApps := rpc.FetchDapps()
+	dapp_checks := widget.NewCheckGroup(dApps, func(s []string) {})
 
 	start_button := widget.NewButton("Start dReams", func() {
 		menu.Control.Dapp_list = make(map[string]bool)
@@ -130,11 +129,12 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 		holdero.InitTableSettings()
 		menu.Control.Dapp_list = enabled_dapps
 		log.Println("[dReams] Loading dApps")
-		dReams.closing = true
+		menu.Exit_signal = true
+		menu.Gnomes.Checked = false
 		menu.Disconnected()
 		go func() {
 			time.Sleep(1500 * time.Millisecond)
-			dReams.closing = false
+			menu.Exit_signal = false
 			dReams.Window.Content().(*fyne.Container).Objects[1] = place()
 			dReams.Window.Content().(*fyne.Container).Objects[1].Refresh()
 		}()
@@ -144,7 +144,8 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 	load_button.Importance = widget.LowImportance
 	back_button.Importance = widget.LowImportance
 
-	dapp_checks = widget.NewCheckGroup(dapp_list, func(s []string) {
+	dApps := rpc.FetchDapps()
+	dapp_checks = widget.NewCheckGroup(dApps, func(s []string) {
 		for reset := range enabled_dapps {
 			enabled_dapps[reset] = false
 		}
@@ -199,7 +200,7 @@ func place() *fyne.Container {
 	P.RightLabel = widget.NewLabel("")
 	P.RightLabel.SetText("dReams Balance: " + rpc.Display.Token_balance + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
 
-	prediction.Predict.Info = widget.NewLabel("SCID: \n" + prediction.Predict.Contract + "\n")
+	prediction.Predict.Info = widget.NewLabel("SCID:\n\n" + prediction.Predict.Contract + "\n")
 	prediction.Predict.Info.Wrapping = fyne.TextWrapWord
 	prediction.Predict.Prices = widget.NewLabel("")
 
@@ -212,7 +213,7 @@ func place() *fyne.Container {
 	T.LeftLabel.SetText("Total Readings: " + rpc.Display.Readings + "      Click your card for Iluma reading")
 	T.RightLabel.SetText("dReams Balance: " + rpc.Display.Token_balance + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
 
-	prediction.Sports.Info = widget.NewLabel("SCID: \n" + prediction.Sports.Contract + "\n")
+	prediction.Sports.Info = widget.NewLabel("SCID:\n\n" + prediction.Sports.Contract + "\n")
 	prediction.Sports.Info.Wrapping = fyne.TextWrapWord
 
 	// dReams menu tabs
@@ -298,6 +299,10 @@ func place() *fyne.Container {
 	if menu.Control.Dapp_list["Iluma"] {
 		tabs.Append(container.NewTabItem("Tarot", TarotItems(tarot_tabs)))
 	}
+
+	// if menu.Control.Dapp_list["DerBnb"] {
+	// 	tabs.Append(container.NewTabItem("DerBnb", derbnb.LayoutAllItems(true, dReams.Window, background)))
+	// }
 
 	tabs.Append(container.NewTabItem("Log", rpc.SessionLog()))
 
@@ -767,7 +772,7 @@ func placePredict() *fyne.Container {
 
 	go func() {
 		time.Sleep(time.Second)
-		for !dReams.closing && menu.Control.Dapp_list["dSports and dPredictions"] {
+		for !menu.Exit_signal && menu.Control.Dapp_list["dSports and dPredictions"] {
 			if !rpc.Wallet.Connect {
 				if menu.Control.Dapp_list["dSports and dPredictions"] {
 					menu.Control.Predict_check.SetChecked(false)

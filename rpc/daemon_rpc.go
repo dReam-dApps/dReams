@@ -27,9 +27,18 @@ const (
 	SportsSCID   = "ad11377c29a863523c1cc50a33ca13e861cc146a7c0496da58deaa1973e0a39f"
 	pSportsSCID  = "fffdc4ea6d157880841feab335ab4755edcde4e60fec2fff661009b16f44fa94"
 	TarotSCID    = "a6fc0033327073dd54e448192af929466596fce4d689302e558bc85ea8734a82"
+	DerBnbSCID   = "cfbd566d3678dec6e6dfa3a919feae5306ab12af1485e8bcf9320bd5a122b1d3"
 	GnomonSCID   = "a05395bb0cf77adc850928b0db00eb5ca7a9ccbafd9a38d021c8d299ad5ce1a4"
 	DevAddress   = "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn"
 	ArtAddress   = "dero1qy0khp9s9yw2h0eu20xmy9lth3zp5cacmx3rwt6k45l568d2mmcf6qgcsevzx"
+
+	DAEMON_RPC_DEFAULT = "127.0.0.1:10102"
+	DAEMON_RPC_REMOTE1 = "89.38.99.117:10102"
+	DAEMON_RPC_REMOTE2 = "publicrpc1.dero.io:10102"
+	// DAEMON_RPC_REMOTE3 = "dero-node.mysrv.cloud:10102"
+	// DAEMON_RPC_REMOTE4 = "derostats.io:10102"
+	DAEMON_RPC_REMOTE5 = "85.17.52.28:11012"
+	DAEMON_RPC_REMOTE6 = "node.derofoundation.org:11012"
 )
 
 type daemon struct {
@@ -41,8 +50,6 @@ type daemon struct {
 var Daemon daemon
 var Times times
 var Display displayStrings
-
-// var CardHash hashValue
 var Round holderoValues
 var Bacc baccValues
 var Signal signals
@@ -131,6 +138,48 @@ func GasEstimate(scid, tag string, args rpc.Arguments, t []rpc.Transfer) uint64 
 	}
 
 	return 1320
+}
+
+// Get single string key result from SCID with daemon input
+func FindStringKey(scid, key, daemon string) interface{} {
+	rpcClientD, ctx, cancel := SetDaemonClient(daemon)
+	defer cancel()
+
+	var result *rpc.GetSC_Result
+	params := rpc.GetSC_Params{
+		SCID:      scid,
+		Code:      false,
+		Variables: true,
+	}
+
+	if err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params); err != nil {
+		log.Println("[FindStringKey]", err)
+		return nil
+	}
+
+	value := result.VariableStringKeys[key]
+
+	return value
+}
+
+// Get list of dReams dApps from contract store
+//   - Uses remote daemon if no Daemon.Connect
+func FetchDapps() (dApps []string) {
+	dApps = []string{"dSports and dPredictions", "Iluma", "DerBnb"}
+	var daemon string
+	if !Daemon.Connect {
+		daemon = DAEMON_RPC_REMOTE5
+	} else {
+		daemon = Daemon.Rpc
+	}
+
+	if stored, ok := FindStringKey(RatingSCID, "dApps", daemon).(string); ok {
+		if h, err := hex.DecodeString(stored); err == nil {
+			json.Unmarshal(h, &dApps)
+		}
+	}
+
+	return
 }
 
 // Check Gnomon SC for stored contract owner

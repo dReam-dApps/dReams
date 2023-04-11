@@ -117,12 +117,14 @@ type HorizontalDeroEntry struct {
 //   - Button for OnTapped func()
 //   - Offset of 1 puts entries on trailing edge
 func HorizontalEntries(tag string, offset int) *HorizontalDeroEntry {
-	daemon_entry := widget.NewEntry()
+	default_daemon := []string{"", rpc.DAEMON_RPC_DEFAULT, rpc.DAEMON_RPC_REMOTE5, rpc.DAEMON_RPC_REMOTE6}
+	daemon_entry := widget.NewSelectEntry(default_daemon)
 	daemon_entry.SetPlaceHolder("Daemon RPC:")
 	this_daemon := binding.BindString(&rpc.Daemon.Rpc)
 	daemon_entry.Bind(this_daemon)
 
-	wallet_entry := widget.NewEntry()
+	default_wallet := []string{"127.0.0.1:10103"}
+	wallet_entry := widget.NewSelectEntry(default_wallet)
 	wallet_entry.SetPlaceHolder("Wallet RPC:")
 	this_wallet := binding.BindString(&rpc.Wallet.Rpc)
 	wallet_entry.Bind(this_wallet)

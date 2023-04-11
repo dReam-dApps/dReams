@@ -23,16 +23,6 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-const (
-	DAEMON_RPC_DEFAULT = "127.0.0.1:10102"
-	DAEMON_RPC_REMOTE1 = "89.38.99.117:10102"
-	DAEMON_RPC_REMOTE2 = "publicrpc1.dero.io:10102"
-	// DAEMON_RPC_REMOTE3 = "dero-node.mysrv.cloud:10102"
-	// DAEMON_RPC_REMOTE4 = "derostats.io:10102"
-	DAEMON_RPC_REMOTE5 = "85.17.52.28:11012"
-	DAEMON_RPC_REMOTE6 = "node.derofoundation.org:11012"
-)
-
 type menuObjects struct {
 	list_open         bool
 	send_open         bool
@@ -219,7 +209,7 @@ func HolderoContractConnectedBox() fyne.Widget {
 // Daemon rpc entry object with default options
 //   - Bound to rpc.Daemon.Rpc
 func DaemonRpcEntry() fyne.Widget {
-	options := []string{"", DAEMON_RPC_DEFAULT, DAEMON_RPC_REMOTE1, DAEMON_RPC_REMOTE2, DAEMON_RPC_REMOTE5, DAEMON_RPC_REMOTE6}
+	options := []string{"", rpc.DAEMON_RPC_DEFAULT, rpc.DAEMON_RPC_REMOTE1, rpc.DAEMON_RPC_REMOTE2, rpc.DAEMON_RPC_REMOTE5, rpc.DAEMON_RPC_REMOTE6}
 	if Control.Daemon_config != "" {
 		options = append(options, Control.Daemon_config)
 	}
@@ -1308,7 +1298,7 @@ func listMenu() {
 	alpha := canvas.NewRectangle(color.RGBA{0, 0, 0, 180})
 
 	viewing_asset := Control.Viewing_asset
-	viewing_label := widget.NewLabel(fmt.Sprintf("Listing SCID: %s", viewing_asset))
+	viewing_label := widget.NewLabel(fmt.Sprintf("Listing SCID:\n\n%s", viewing_asset))
 	viewing_label.Wrapping = fyne.TextWrapWord
 	viewing_label.Alignment = fyne.TextAlignCenter
 
@@ -1437,7 +1427,7 @@ func listMenu() {
 				aw_content.Objects[2] = menuAssetImg(&icon, Resource.Frame)
 				if viewing_asset != Control.Viewing_asset {
 					viewing_asset = Control.Viewing_asset
-					viewing_label.SetText(fmt.Sprintf("Listing SCID: %s\n", viewing_asset))
+					viewing_label.SetText(fmt.Sprintf("Listing SCID:\n\n%s", viewing_asset))
 				}
 				aw_content.Refresh()
 			}

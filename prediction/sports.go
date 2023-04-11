@@ -109,7 +109,7 @@ func setSportsControls(str string) (item string) {
 }
 
 func formatFinals(scid string, finals []string) (text string) {
-	text = "Last Payouts from SCID: \n" + scid
+	text = "Last Payouts from SCID:\n\n" + scid
 	for i := range finals {
 		split := strings.Split(finals[i], "   ")
 		game := strings.Split(split[1], "_")
@@ -325,7 +325,7 @@ func GetBook(gi bool, scid string) (info string) {
 			Sports.Game_select.Options = Sports.Game_options
 			played_str := strconv.Itoa(int(played))
 			if init == played {
-				info = "SCID: \n" + scid + "\n\nGames Completed: " + played_str + "\n\nNo current Games\n"
+				info = "SCID:\n\n" + scid + "\n\nGames Completed: " + played_str + "\n\nNo current Games\n"
 				Sports.Buffer = false
 				return
 			}
@@ -372,7 +372,7 @@ func GetBook(gi bool, scid string) (info string) {
 					t := strconv.Itoa(int(s_total[0]))
 					if !single {
 						single = true
-						info = "SCID: \n" + scid + "\n\nGames Completed: " + played_str + "\nCurrent Games:\n"
+						info = "SCID:\n\n" + scid + "\n\nGames Completed: " + played_str + "\nCurrent Games:\n"
 					}
 					info = info + S_Results(game[0], strconv.Itoa(iv), league[0], min, eA, n, team_a, team_b, aV, bV, t, time_a[0], time_b[0])
 

@@ -28,7 +28,6 @@ type dReamTables struct {
 	Window    fyne.Window
 	os        string
 	configure bool
-	closing   bool
 	menu      bool
 	holdero   bool
 	bacc      bool
@@ -63,7 +62,7 @@ func main() {
 	quit := make(chan struct{})
 
 	dReams.Window.SetCloseIntercept(func() {
-		dReams.closing = true
+		menu.Exit_signal = true
 		writeConfig(makeConfig(holdero.Poker_name, rpc.Daemon.Rpc))
 		serviceRunning()
 		go menu.StopLabel()

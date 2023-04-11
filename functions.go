@@ -130,7 +130,7 @@ func init() {
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-c
-		dReams.closing = true
+		menu.Exit_signal = true
 		writeConfig(makeConfig(holdero.Poker_name, rpc.Daemon.Rpc))
 		fmt.Println()
 		serviceRunning()
@@ -214,13 +214,13 @@ func labelColorBlack(c *fyne.Container) *fyne.Container {
 // Make config with save struct
 func makeConfig(name, daemon string) (data save) {
 	switch daemon {
-	case menu.DAEMON_RPC_DEFAULT:
-	case menu.DAEMON_RPC_REMOTE1:
-	case menu.DAEMON_RPC_REMOTE2:
+	case rpc.DAEMON_RPC_DEFAULT:
+	case rpc.DAEMON_RPC_REMOTE1:
+	case rpc.DAEMON_RPC_REMOTE2:
 	// case menu.DAEMON_RPC_REMOTE3:
 	// case menu.DAEMON_RPC_REMOTE4:
-	case menu.DAEMON_RPC_REMOTE5:
-	case menu.DAEMON_RPC_REMOTE6:
+	case rpc.DAEMON_RPC_REMOTE5:
+	case rpc.DAEMON_RPC_REMOTE6:
 	default:
 		data.Daemon = []string{daemon}
 	}
