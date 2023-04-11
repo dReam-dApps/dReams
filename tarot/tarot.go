@@ -185,8 +185,10 @@ func TarotConfirm(i int, reset fyne.Container) fyne.Container {
 	label.Alignment = fyne.TextAlignCenter
 
 	confirm := widget.NewButton("Confirm", func() {
-		Iluma.Card2 = reset
-		Iluma.Card2.Refresh()
+		go func() {
+			Iluma.Card2 = reset
+			Iluma.Card2.Refresh()
+		}()
 
 		if i == 3 {
 			TarotBuffer(true)
@@ -209,8 +211,10 @@ func TarotConfirm(i int, reset fyne.Container) fyne.Container {
 		Iluma.Open = false
 		Iluma.Draw1.Show()
 		Iluma.Draw3.Show()
-		Iluma.Card2 = reset
-		Iluma.Card2.Refresh()
+		go func() {
+			Iluma.Card2 = reset
+			Iluma.Card2.Refresh()
+		}()
 	})
 
 	box := container.NewAdaptiveGrid(2, confirm, cancel)

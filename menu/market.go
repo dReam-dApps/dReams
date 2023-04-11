@@ -129,10 +129,9 @@ func BidBuyConfirm(scid string, amt uint64, b int, obj *container.Split, reset f
 	right := container.NewVBox(cancel)
 	buttons := container.NewAdaptiveGrid(2, left, right)
 
-	alpha := container.NewMax(canvas.NewRectangle(color.RGBA{0, 0, 0, 120}))
 	content := container.NewVBox(layout.NewSpacer(), label, layout.NewSpacer(), buttons)
 
-	return container.NewMax(alpha, content)
+	return container.NewMax(Alpha120, content)
 }
 
 // Confirm a cancel or close action of listed NFA
@@ -197,10 +196,9 @@ func ConfirmCancelClose(scid string, c int, obj *container.Split, reset fyne.Can
 	right := container.NewVBox(cancel)
 	buttons := container.NewAdaptiveGrid(2, left, right)
 
-	alpha := container.NewMax(canvas.NewRectangle(color.RGBA{0, 0, 0, 120}))
 	content := container.NewVBox(layout.NewSpacer(), label, layout.NewSpacer(), buttons)
 
-	return container.NewMax(alpha, content)
+	return container.NewMax(Alpha120, content)
 }
 
 // NFA auction listings object

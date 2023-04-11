@@ -507,10 +507,9 @@ func RateConfirm(scid string, tab *container.AppTabs, reset fyne.CanvasObject) f
 	right := container.NewVBox(cancel)
 	buttons := container.NewAdaptiveGrid(2, left, right)
 
-	alpha := container.NewMax(canvas.NewRectangle(color.RGBA{0, 0, 0, 120}))
 	content := container.NewVBox(layout.NewSpacer(), label, rating_label, fee_label, layout.NewSpacer(), rate_cont, layout.NewSpacer(), buttons)
 
-	return container.NewMax(alpha, content)
+	return container.NewMax(Alpha120, content)
 
 }
 
@@ -800,12 +799,11 @@ func TimeOutConfirm(obj []fyne.CanvasObject, reset *container.AppTabs) fyne.Canv
 		obj[1].Refresh()
 	})
 
-	alpha := container.NewMax(canvas.NewRectangle(color.RGBA{0, 0, 0, 120}))
 	display := container.NewVBox(layout.NewSpacer(), confirm_display, layout.NewSpacer())
 	options := container.NewAdaptiveGrid(2, confirm_button, cancel_button)
 	content := container.NewBorder(nil, options, nil, nil, display)
 
-	return container.NewMax(alpha, content)
+	return container.NewMax(Alpha120, content)
 }
 
 // Confirmation for Holdero contract installs
@@ -894,10 +892,9 @@ Confirm`
 	actions := container.NewVBox(choice, buttons)
 	info_box := container.NewVBox(layout.NewSpacer(), label, layout.NewSpacer())
 
-	alpha := container.NewMax(canvas.NewRectangle(color.RGBA{0, 0, 0, 120}))
 	content := container.NewBorder(nil, actions, nil, nil, info_box)
 
-	return container.NewMax(alpha, content)
+	return container.NewMax(Alpha120, content)
 }
 
 // Confirmation for dPrediction contract installs
@@ -971,10 +968,9 @@ Confirm`
 	actions := container.NewVBox(choice, buttons)
 	info_box := container.NewVBox(layout.NewSpacer(), label, layout.NewSpacer())
 
-	alpha := container.NewMax(canvas.NewRectangle(color.RGBA{0, 0, 0, 120}))
 	content := container.NewBorder(nil, actions, nil, nil, info_box)
 
-	return container.NewMax(alpha, content)
+	return container.NewMax(Alpha120, content)
 }
 
 // Confirmation for dSports contract installs
@@ -1048,10 +1044,9 @@ Confirm`
 	actions := container.NewVBox(choice, buttons)
 	info_box := container.NewVBox(layout.NewSpacer(), label, layout.NewSpacer())
 
-	alpha := container.NewMax(canvas.NewRectangle(color.RGBA{0, 0, 0, 120}))
 	content := container.NewBorder(nil, actions, nil, nil, info_box)
 
-	return container.NewMax(alpha, content)
+	return container.NewMax(Alpha120, content)
 }
 
 // Index entry objects
@@ -1148,7 +1143,6 @@ func sendAssetMenu() {
 	var saw_content *fyne.Container
 	var send_button *widget.Button
 	img := *canvas.NewImageFromResource(Resource.Back3)
-	alpha := canvas.NewRectangle(color.RGBA{0, 0, 0, 180})
 
 	viewing_asset := Control.Viewing_asset
 
@@ -1200,7 +1194,7 @@ func sendAssetMenu() {
 				saw.SetContent(
 					container.New(layout.NewMaxLayout(),
 						&img,
-						alpha,
+						Alpha180,
 						saw_content))
 			})
 
@@ -1215,7 +1209,7 @@ func sendAssetMenu() {
 			saw.SetContent(
 				container.New(layout.NewMaxLayout(),
 					&img,
-					alpha,
+					Alpha180,
 					confirm_content))
 		}
 	})
@@ -1252,7 +1246,7 @@ func sendAssetMenu() {
 	saw.SetContent(
 		container.New(layout.NewMaxLayout(),
 			&img,
-			alpha,
+			Alpha180,
 			saw_content))
 	saw.Show()
 }
@@ -1295,7 +1289,6 @@ func listMenu() {
 	var aw_content *fyne.Container
 	var set_list *widget.Button
 	aw_img := *canvas.NewImageFromResource(Resource.Back3)
-	alpha := canvas.NewRectangle(color.RGBA{0, 0, 0, 180})
 
 	viewing_asset := Control.Viewing_asset
 	viewing_label := widget.NewLabel(fmt.Sprintf("Listing SCID:\n\n%s", viewing_asset))
@@ -1387,7 +1380,7 @@ func listMenu() {
 					aw.SetContent(
 						container.New(layout.NewMaxLayout(),
 							&aw_img,
-							alpha,
+							Alpha180,
 							aw_content))
 				})
 
@@ -1410,7 +1403,7 @@ func listMenu() {
 				aw.SetContent(
 					container.New(layout.NewMaxLayout(),
 						&aw_img,
-						alpha,
+						Alpha180,
 						confirm_content))
 			}
 		}
@@ -1453,7 +1446,7 @@ func listMenu() {
 	aw.SetContent(
 		container.New(layout.NewMaxLayout(),
 			&aw_img,
-			alpha,
+			Alpha180,
 			aw_content))
 	aw.Show()
 }
@@ -1508,8 +1501,7 @@ func IntroTree() fyne.CanvasObject {
 
 	tree.OpenBranch("Welcome to dReams")
 
-	alpha := container.NewMax(canvas.NewRectangle(color.RGBA{0, 0, 0, 120}))
-	max := container.NewMax(alpha, tree)
+	max := container.NewMax(Alpha120, tree)
 
 	return max
 }
@@ -1529,7 +1521,6 @@ func SendMessageMenu() {
 
 		var send_button *widget.Button
 		img := *canvas.NewImageFromResource(Resource.Back3)
-		alpha := canvas.NewRectangle(color.RGBA{0, 0, 0, 180})
 
 		label := widget.NewLabel("Sending Message:\n\nEnter ringsize and destination address below")
 		label.Wrapping = fyne.TextWrapWord
@@ -1589,7 +1580,7 @@ func SendMessageMenu() {
 		smw.SetContent(
 			container.New(layout.NewMaxLayout(),
 				&img,
-				alpha,
+				Alpha180,
 				content))
 		smw.Show()
 	}

@@ -76,7 +76,6 @@ func introScreen() *fyne.Container {
 
 	start_button.Importance = widget.LowImportance
 
-	alpha := canvas.NewRectangle(color.RGBA{0, 0, 0, 180})
 	intro := container.NewVBox(
 		layout.NewSpacer(),
 		container.NewCenter(title),
@@ -88,7 +87,7 @@ func introScreen() *fyne.Container {
 		layout.NewSpacer(),
 		start_button)
 
-	max := container.NewMax(alpha, intro)
+	max := container.NewMax(menu.Alpha180, intro)
 
 	return max
 }
@@ -165,7 +164,6 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 
 	dapp_checks.SetSelected(is_enabled)
 
-	alpha := canvas.NewRectangle(color.RGBA{0, 0, 0, 180})
 	intro := container.NewVBox(
 		layout.NewSpacer(),
 		container.NewCenter(title),
@@ -177,7 +175,7 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 		layout.NewSpacer(),
 		container.NewAdaptiveGrid(2, container.NewMax(load_button), back_button))
 
-	max := container.NewMax(alpha, intro)
+	max := container.NewMax(menu.Alpha180, intro)
 
 	return max
 }
@@ -266,8 +264,7 @@ func place() *fyne.Container {
 	tarot_bottom_bar := container.NewVBox(layout.NewSpacer(), tarot_bottom_box)
 	tarot_bottom.Hide()
 
-	alpha := canvas.NewRectangle(color.RGBA{0, 0, 0, 150})
-	alpha_box := container.NewMax(top_bar, menu_bottom_bar, tarot_bottom_bar, alpha)
+	alpha_box := container.NewMax(top_bar, menu_bottom_bar, tarot_bottom_bar, menu.Alpha150)
 	if dReams.os != "darwin" {
 		alpha_box.Objects = append(alpha_box.Objects, FullScreenSet())
 	}
@@ -447,8 +444,7 @@ func placeContract(change_screen *fyne.Container) *container.Split {
 		}
 	}
 
-	alpha := container.NewMax(canvas.NewRectangle(color.RGBA{0, 0, 0, 120}))
-	max := container.NewMax(alpha, tabs)
+	max := container.NewMax(menu.Alpha120, tabs)
 
 	menu.Poker.Holdero_unlock.OnTapped = func() {
 		max.Objects[1] = menu.HolderoMenuConfirm(1, max.Objects, tabs)
@@ -511,8 +507,7 @@ func placeAssets() *container.Split {
 
 	scroll_cont := container.NewVBox(container.NewHBox(layout.NewSpacer(), scroll_top, scroll_bottom))
 
-	alpha := container.NewMax(canvas.NewRectangle(color.RGBA{0, 0, 0, 120}))
-	max := container.NewMax(alpha, tabs, scroll_cont)
+	max := container.NewMax(menu.Alpha120, tabs, scroll_cont)
 
 	player_input.AddObject(holdero.SetHeaderItems(max.Objects, tabs))
 	player_box := container.NewHBox(player_input)
@@ -568,8 +563,7 @@ func placeMarket() *container.Split {
 
 	scroll_cont := container.NewVBox(container.NewHBox(layout.NewSpacer(), scroll_top, scroll_bottom))
 
-	alpha := container.NewMax(canvas.NewRectangle(color.RGBA{0, 0, 0, 120}))
-	max := container.NewMax(alpha, tabs, scroll_cont)
+	max := container.NewMax(menu.Alpha120, tabs, scroll_cont)
 
 	details_box := container.NewVBox(layout.NewSpacer(), details)
 
@@ -583,10 +577,10 @@ func placeMarket() *container.Split {
 			menu.Market.Market_button.Hide()
 			if text == "Bid" {
 				amt := menu.ToAtomicFive(menu.Market.Entry.Text)
-				menu_top.Trailing.(*fyne.Container).Objects[1] = menu.BidBuyConfirm(scid, amt, 0, menu_top, container.NewMax(alpha, tabs, scroll_cont))
+				menu_top.Trailing.(*fyne.Container).Objects[1] = menu.BidBuyConfirm(scid, amt, 0, menu_top, container.NewMax(menu.Alpha120, tabs, scroll_cont))
 				menu_top.Trailing.(*fyne.Container).Objects[1].Refresh()
 			} else if text == "Buy" {
-				menu_top.Trailing.(*fyne.Container).Objects[1] = menu.BidBuyConfirm(scid, menu.Market.Buy_amt, 1, menu_top, container.NewMax(alpha, tabs, scroll_cont))
+				menu_top.Trailing.(*fyne.Container).Objects[1] = menu.BidBuyConfirm(scid, menu.Market.Buy_amt, 1, menu_top, container.NewMax(menu.Alpha120, tabs, scroll_cont))
 				menu_top.Trailing.(*fyne.Container).Objects[1].Refresh()
 			}
 		}
@@ -597,7 +591,7 @@ func placeMarket() *container.Split {
 	menu.Market.Cancel_button = widget.NewButton("Cancel", func() {
 		if len(menu.Market.Viewing) == 64 {
 			menu.Market.Cancel_button.Hide()
-			menu_top.Trailing.(*fyne.Container).Objects[1] = menu.ConfirmCancelClose(menu.Market.Viewing, 1, menu_top, container.NewMax(alpha, tabs, scroll_cont))
+			menu_top.Trailing.(*fyne.Container).Objects[1] = menu.ConfirmCancelClose(menu.Market.Viewing, 1, menu_top, container.NewMax(menu.Alpha120, tabs, scroll_cont))
 			menu_top.Trailing.(*fyne.Container).Objects[1].Refresh()
 		}
 	})
@@ -605,7 +599,7 @@ func placeMarket() *container.Split {
 	menu.Market.Close_button = widget.NewButton("Close", func() {
 		if len(menu.Market.Viewing) == 64 {
 			menu.Market.Close_button.Hide()
-			menu_top.Trailing.(*fyne.Container).Objects[1] = menu.ConfirmCancelClose(menu.Market.Viewing, 0, menu_top, container.NewMax(alpha, tabs, scroll_cont))
+			menu_top.Trailing.(*fyne.Container).Objects[1] = menu.ConfirmCancelClose(menu.Market.Viewing, 0, menu_top, container.NewMax(menu.Alpha120, tabs, scroll_cont))
 			menu_top.Trailing.(*fyne.Container).Objects[1].Refresh()
 		}
 	})
@@ -736,8 +730,7 @@ func placePredict() *fyne.Container {
 		PredictTab(ti)
 	}
 
-	alpha := container.NewMax(canvas.NewRectangle(color.RGBA{0, 0, 0, 120}))
-	max := container.NewMax(alpha, tabs)
+	max := container.NewMax(menu.Alpha120, tabs)
 
 	prediction.Predict.Higher.OnTapped = func() {
 		if len(prediction.Predict.Contract) == 64 {
@@ -917,8 +910,7 @@ func placeSports() *fyne.Container {
 
 	}
 
-	alpha := container.NewMax(canvas.NewRectangle(color.RGBA{0, 0, 0, 120}))
-	max := container.NewMax(alpha, tabs)
+	max := container.NewMax(menu.Alpha120, tabs)
 
 	prediction.Sports.ButtonA.OnTapped = func() {
 		if len(prediction.Sports.Contract) == 64 {
@@ -964,8 +956,7 @@ func placeIluma() *fyne.Container {
 	scroll := container.NewScroll(intro)
 
 	cont := container.NewGridWithColumns(2, scroll, img)
-	alpha := canvas.NewRectangle(color.RGBA{0, 0, 0, 150})
-	max := container.NewMax(alpha, cont)
+	max := container.NewMax(menu.Alpha150, cont)
 
 	scroll.OnScrolled = func(p fyne.Position) {
 		if p.Y <= 400 {

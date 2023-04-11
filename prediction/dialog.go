@@ -2,7 +2,6 @@ package prediction
 
 import (
 	"fmt"
-	"image/color"
 	"log"
 	"strconv"
 	"strings"
@@ -706,12 +705,11 @@ func ConfirmAction(i int, teamA, teamB string, obj []fyne.CanvasObject, tabs *co
 		obj[1].Refresh()
 	})
 
-	alpha := container.NewMax(canvas.NewRectangle(color.RGBA{0, 0, 0, 120}))
 	display := container.NewVBox(layout.NewSpacer(), confirm_display, layout.NewSpacer())
 	options := container.NewAdaptiveGrid(2, confirm_button, cancel_button)
 	content := container.NewBorder(nil, options, nil, nil, display)
 
-	return container.NewMax(alpha, content)
+	return container.NewMax(menu.Alpha120, content)
 }
 
 // prediction leaderboard
@@ -1021,12 +1019,12 @@ func ownersMenu() {
 	border := container.NewBorder(nil, bottom_box, nil, nil, owner_tabs)
 
 	img := *canvas.NewImageFromResource(menu.Resource.Back3)
-	alpha := container.NewMax(&img, canvas.NewRectangle(color.RGBA{0, 0, 0, 180}))
 
 	ow.SetContent(
 		container.New(
 			layout.NewMaxLayout(),
-			alpha,
+			&img,
+			menu.Alpha180,
 			border))
 
 	owner_tabs.SelectIndex(2)

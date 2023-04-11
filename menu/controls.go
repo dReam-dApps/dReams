@@ -1,11 +1,19 @@
 package menu
 
 import (
+	"image/color"
+
 	"fyne.io/fyne/v2/canvas"
 	"github.com/SixofClubsss/dReams/baccarat"
 	"github.com/SixofClubsss/dReams/holdero"
 	"github.com/SixofClubsss/dReams/rpc"
 	"github.com/SixofClubsss/dReams/tarot"
+)
+
+var (
+	Alpha120 = canvas.NewRectangle(color.RGBA{0, 0, 0, 120})
+	Alpha150 = canvas.NewRectangle(color.RGBA{0, 0, 0, 150})
+	Alpha180 = canvas.NewRectangle(color.RGBA{0, 0, 0, 180})
 )
 
 // Do when disconnected
