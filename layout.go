@@ -11,6 +11,7 @@ import (
 
 	"github.com/SixofClubsss/dReams/baccarat"
 	"github.com/SixofClubsss/dReams/bundle"
+	"github.com/SixofClubsss/dReams/derbnb"
 	"github.com/SixofClubsss/dReams/dwidget"
 	"github.com/SixofClubsss/dReams/holdero"
 	"github.com/SixofClubsss/dReams/menu"
@@ -29,8 +30,6 @@ var H dwidget.DreamsItems
 var B dwidget.DreamsItems
 var P dwidget.DreamsItems
 var S dwidget.DreamsItems
-
-// /var A dwidget.DreamsItems
 var T dwidget.DreamsItems
 
 // If dReams has not been intialized, show this screen
@@ -285,9 +284,9 @@ func place() *fyne.Container {
 		tabs.Append(container.NewTabItem("Tarot", TarotItems(tarot_tabs)))
 	}
 
-	// if menu.Control.Dapp_list["DerBnb"] {
-	// 	tabs.Append(container.NewTabItem("DerBnb", derbnb.LayoutAllItems(true, dReams.Window, background)))
-	// }
+	if menu.Control.Dapp_list["DerBnb"] {
+		tabs.Append(container.NewTabItem("DerBnb", derbnb.LayoutAllItems(true, dReams.Window, background)))
+	}
 
 	tabs.Append(container.NewTabItem("Log", rpc.SessionLog()))
 

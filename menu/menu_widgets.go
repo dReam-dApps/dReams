@@ -1257,7 +1257,7 @@ func listMenu() {
 	aw_img := *canvas.NewImageFromResource(bundle.ResourceOwBackgroundPng)
 
 	viewing_asset := Control.Viewing_asset
-	viewing_label := widget.NewLabel(fmt.Sprintf("Listing SCID:\n\n%s", viewing_asset))
+	viewing_label := widget.NewLabel(fmt.Sprintf("Listing SCID:\n\n\n%s", viewing_asset))
 	viewing_label.Wrapping = fyne.TextWrapWord
 	viewing_label.Alignment = fyne.TextAlignCenter
 
@@ -1333,7 +1333,7 @@ func listMenu() {
 
 				total := sp - art_gets - royalty_gets - char_gets
 
-				first_line := fmt.Sprintf("Listing SCID:\n%s\n\nList Type: %s\n\nDuration: %s Hours\n\nStart Price: %0.5f Dero\n\n", listing_asset, listing.Selected, duration.Text, sp)
+				first_line := fmt.Sprintf("Listing SCID:\n\n%s\n\nList Type: %s\n\nDuration: %s Hours\n\nStart Price: %0.5f Dero\n\n", listing_asset, listing.Selected, duration.Text, sp)
 				second_line := fmt.Sprintf("Artificer Fee: %.0f%s - %0.5f Dero\n\nRoyalties: %.0f%s - %0.5f Dero\n\n", artP*100, "%", art_gets, royaltyP*100, "%", royalty_gets)
 				third_line := fmt.Sprintf("Chairity Address: %s\n\nCharity Percent: %s%s - %0.5f Dero\n\nYou will receive %.5f Dero if asset sells at start price", charAddr.Text, charPerc.Text, "%", char_gets, total)
 

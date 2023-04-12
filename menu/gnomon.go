@@ -26,7 +26,7 @@ import (
 )
 
 const (
-	nfa_search_filter = `Function init() Uint64
+	NFA_SEARCH_FILTER = `Function init() Uint64
     10  IF EXISTS("owner") == 0 THEN GOTO 20 ELSE GOTO 999
     20  STORE("owner", SIGNER())
     30  STORE("creatorAddr", SIGNER())
@@ -355,7 +355,7 @@ func searchFilters() (filter []string) {
 		}
 	}
 
-	filter = append(filter, nfa_search_filter)
+	filter = append(filter, NFA_SEARCH_FILTER)
 	if !Gnomes.Trim {
 		filter = append(filter, g45_search_filter)
 	}
@@ -831,7 +831,7 @@ func isNfa(scid string) bool {
 
 // Check if SCID is a valid NFA
 //   - file != "-"
-func validNfa(file string) bool {
+func ValidNfa(file string) bool {
 	return file != "-"
 }
 
@@ -842,7 +842,7 @@ func checkNFAOwner(scid string) {
 		header, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "nameHdr", Gnomes.Indexer.ChainHeight, true)
 		file, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "fileURL", Gnomes.Indexer.ChainHeight, true)
 		if owner != nil && header != nil && file != nil {
-			if owner[0] == rpc.Wallet.Address && validNfa(file[0]) {
+			if owner[0] == rpc.Wallet.Address && ValidNfa(file[0]) {
 				check := strings.Trim(header[0], "0123456789")
 				if check == "AZYDS" || check == "SIXART" {
 					themes := holdero.Settings.ThemeSelect.Options
@@ -1488,7 +1488,7 @@ func FindNfaListings(assets map[string]string) {
 }
 
 // dReams NFA collections
-func isNfaCollection(check string) bool {
+func isDreamsNfaCollection(check string) bool {
 	if check == "AZYDS" || check == "DBC" || check == "AZYPC" || check == "SIXPC" || check == "AZYPCB" || check == "SIXPCB" || check == "SIXART" || check == "HighStrangeness" {
 		return true
 	}
@@ -1505,7 +1505,7 @@ func checkNfaAuctionListing(scid string) string {
 		desc, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "descrHdr", Gnomes.Indexer.ChainHeight, true)
 		if listType != nil && header != nil {
 			check := strings.Trim(header[0], "0123456789")
-			if isNfaCollection(check) {
+			if isDreamsNfaCollection(check) {
 				switch listType[0] {
 				case "auction":
 					return coll[0] + "   " + header[0] + "   " + desc[0] + "   " + scid
@@ -1528,7 +1528,7 @@ func checkNfaBuyListing(scid string) string {
 		desc, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "descrHdr", Gnomes.Indexer.ChainHeight, true)
 		if listType != nil && header != nil {
 			check := strings.Trim(header[0], "0123456789")
-			if isNfaCollection(check) {
+			if isDreamsNfaCollection(check) {
 				switch listType[0] {
 				case "sale":
 					return coll[0] + "   " + header[0] + "   " + desc[0] + "   " + scid
