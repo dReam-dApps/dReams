@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/SixofClubsss/dReams/bundle"
 	"github.com/SixofClubsss/dReams/dwidget"
 	"github.com/SixofClubsss/dReams/holdero"
 	"github.com/SixofClubsss/dReams/rpc"
@@ -82,44 +83,8 @@ type holderoObjects struct {
 	owner          ownerObjects
 }
 
-type resources struct {
-	SmallIcon fyne.Resource
-	Frame     fyne.Resource
-	Back1     fyne.Resource
-	Back2     fyne.Resource
-	Back3     fyne.Resource
-	Back4     fyne.Resource
-	Gnomon    fyne.Resource
-	BBadge    fyne.Resource
-	B2Badge   fyne.Resource
-	B3Badge   fyne.Resource
-	RBadge    fyne.Resource
-	PBot      fyne.Resource
-	dService  fyne.Resource
-	Tools     fyne.Resource
-}
-
-var Resource resources
 var Poker holderoObjects
 var Control menuObjects
-
-// Get menu resources from main bundled
-func GetMenuResources(r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14 fyne.Resource) {
-	Resource.SmallIcon = r1
-	Resource.Frame = r2
-	Resource.Back1 = r3
-	Resource.Back2 = r4
-	Resource.Back3 = r5
-	Resource.Back4 = r6
-	Resource.Gnomon = r7
-	Resource.BBadge = r8
-	Resource.B2Badge = r9
-	Resource.B3Badge = r10
-	Resource.RBadge = r11
-	Resource.PBot = r12
-	Resource.dService = r13
-	Resource.Tools = r14
-}
 
 // Connection check for main process
 func CheckConnection() {
@@ -369,13 +334,13 @@ func setHolderoControls(str string) (item string) {
 // Display SCID rating from dReams SCID rating system
 func DisplayRating(i uint64) fyne.Resource {
 	if i > 250000 {
-		return Resource.B3Badge
+		return bundle.ResourceBlueBadge3Png
 	} else if i > 150000 {
-		return Resource.B2Badge
+		return bundle.ResourceBlueBadge2Png
 	} else if i > 90000 {
-		return Resource.BBadge
+		return bundle.ResourceBlueBadgePng
 	} else if i > 50000 {
-		return Resource.RBadge
+		return bundle.ResourceRedBadgePng
 	} else {
 		return nil
 	}
@@ -496,9 +461,9 @@ func RateConfirm(scid string, tab *container.AppTabs, reset fyne.CanvasObject) f
 		}
 	}
 
-	good := canvas.NewImageFromResource(Resource.B3Badge)
+	good := canvas.NewImageFromResource(bundle.ResourceBlueBadge3Png)
 	good.SetMinSize(fyne.NewSize(30, 30))
-	bad := canvas.NewImageFromResource(Resource.RBadge)
+	bad := canvas.NewImageFromResource(bundle.ResourceRedBadgePng)
 	bad.SetMinSize(fyne.NewSize(30, 30))
 
 	rate_cont := container.NewBorder(nil, nil, bad, good, slider)
@@ -1125,7 +1090,7 @@ func sendAssetMenu() {
 	Control.send_open = true
 	saw := fyne.CurrentApp().NewWindow("Send Asset")
 	saw.Resize(fyne.NewSize(330, 700))
-	saw.SetIcon(Resource.SmallIcon)
+	saw.SetIcon(bundle.ResourceDTGnomonIconPng)
 	Control.Send_asset.Hide()
 	Control.List_button.Hide()
 	saw.SetCloseIntercept(func() {
@@ -1142,7 +1107,7 @@ func sendAssetMenu() {
 
 	var saw_content *fyne.Container
 	var send_button *widget.Button
-	img := *canvas.NewImageFromResource(Resource.Back3)
+	img := *canvas.NewImageFromResource(bundle.ResourceOwBackgroundPng)
 
 	viewing_asset := Control.Viewing_asset
 
@@ -1219,7 +1184,7 @@ func sendAssetMenu() {
 
 	saw_content = container.NewVBox(
 		viewing_label,
-		menuAssetImg(&icon, Resource.Frame),
+		menuAssetImg(&icon, bundle.ResourceAvatarFramePng),
 		layout.NewSpacer(),
 		dest_entry,
 		container.NewCenter(payload),
@@ -1231,7 +1196,7 @@ func sendAssetMenu() {
 			time.Sleep(3 * time.Second)
 			if !confirm_open {
 				icon = holdero.Assets.Icon
-				saw_content.Objects[1] = menuAssetImg(&icon, Resource.Frame)
+				saw_content.Objects[1] = menuAssetImg(&icon, bundle.ResourceAvatarFramePng)
 				if viewing_asset != Control.Viewing_asset {
 					viewing_asset = Control.Viewing_asset
 					viewing_label.SetText("Sending SCID:\n" + viewing_asset + " \n\nEnter destination address below.\n\nSCID can be sent to reciever as payload.\n\n")
@@ -1271,7 +1236,7 @@ func listMenu() {
 	Control.list_open = true
 	aw := fyne.CurrentApp().NewWindow("List NFA")
 	aw.Resize(fyne.NewSize(330, 700))
-	aw.SetIcon(Resource.SmallIcon)
+	aw.SetIcon(bundle.ResourceDTGnomonIconPng)
 	Control.List_button.Hide()
 	Control.Send_asset.Hide()
 	aw.SetCloseIntercept(func() {
@@ -1288,7 +1253,7 @@ func listMenu() {
 
 	var aw_content *fyne.Container
 	var set_list *widget.Button
-	aw_img := *canvas.NewImageFromResource(Resource.Back3)
+	aw_img := *canvas.NewImageFromResource(bundle.ResourceOwBackgroundPng)
 
 	viewing_asset := Control.Viewing_asset
 	viewing_label := widget.NewLabel(fmt.Sprintf("Listing SCID:\n\n%s", viewing_asset))
@@ -1417,7 +1382,7 @@ func listMenu() {
 			time.Sleep(3 * time.Second)
 			if !confirm_open {
 				icon = holdero.Assets.Icon
-				aw_content.Objects[2] = menuAssetImg(&icon, Resource.Frame)
+				aw_content.Objects[2] = menuAssetImg(&icon, bundle.ResourceAvatarFramePng)
 				if viewing_asset != Control.Viewing_asset {
 					viewing_asset = Control.Viewing_asset
 					viewing_label.SetText(fmt.Sprintf("Listing SCID:\n\n%s", viewing_asset))
@@ -1432,7 +1397,7 @@ func listMenu() {
 	aw_content = container.NewVBox(
 		viewing_label,
 		layout.NewSpacer(),
-		menuAssetImg(&icon, Resource.Frame),
+		menuAssetImg(&icon, bundle.ResourceAvatarFramePng),
 		layout.NewSpacer(),
 		layout.NewSpacer(),
 		listing,
@@ -1512,7 +1477,7 @@ func SendMessageMenu() {
 		Control.msg_open = true
 		smw := fyne.CurrentApp().NewWindow("Send Asset")
 		smw.Resize(fyne.NewSize(330, 700))
-		smw.SetIcon(Resource.SmallIcon)
+		smw.SetIcon(bundle.ResourceDTGnomonIconPng)
 		smw.SetCloseIntercept(func() {
 			Control.msg_open = false
 			smw.Close()
@@ -1520,7 +1485,7 @@ func SendMessageMenu() {
 		smw.SetFixedSize(true)
 
 		var send_button *widget.Button
-		img := *canvas.NewImageFromResource(Resource.Back3)
+		img := *canvas.NewImageFromResource(bundle.ResourceOwBackgroundPng)
 
 		label := widget.NewLabel("Sending Message:\n\nEnter ringsize and destination address below")
 		label.Wrapping = fyne.TextWrapWord

@@ -12,9 +12,9 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/SixofClubsss/dReams/bundle"
 	"github.com/SixofClubsss/dReams/dwidget"
 	"github.com/SixofClubsss/dReams/rpc"
-	"github.com/SixofClubsss/dReams/tarot"
 	dero "github.com/deroproject/derohe/rpc"
 
 	"fyne.io/fyne/v2"
@@ -24,14 +24,6 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 )
-
-type resources struct {
-	SmallIcon  fyne.Resource
-	Back2      fyne.Resource
-	Back3      fyne.Resource
-	Back4      fyne.Resource
-	Background fyne.Resource
-}
 
 type assetObject struct {
 	Dreams_bal    *canvas.Text
@@ -57,20 +49,6 @@ type assetObject struct {
 }
 
 var Assets assetObject
-var Resource resources
-
-// Get resources from main bundled
-func GetTableResources(r1, r2, r3, r4, r5, r6, r7, r8 fyne.Resource) {
-	Resource.SmallIcon = r1
-	Resource.Back2 = r2
-	Resource.Back3 = r3
-	Resource.Background = r4
-	Resource.Back4 = r5
-	tarot.Iluma.Background1 = r6
-	tarot.Iluma.Background2 = r7
-	tarot.Iluma.Back = r8
-
-}
 
 // dReams card face selection object for all games
 //   - Sets shared face url on selected
@@ -228,7 +206,7 @@ func ThemeSelect() fyne.Widget {
 			}
 
 			if s == "Main" {
-				Settings.ThemeImg = *canvas.NewImageFromResource(Resource.Background)
+				Settings.ThemeImg = *canvas.NewImageFromResource(bundle.ResourceBackgroundPng)
 			}
 		}()
 	})

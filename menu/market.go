@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/SixofClubsss/dReams/bundle"
 	"github.com/SixofClubsss/dReams/dwidget"
 	"github.com/SixofClubsss/dReams/rpc"
 
@@ -275,7 +276,7 @@ func NfaIcon(res fyne.Resource) fyne.CanvasObject {
 
 // Badge for dReam Tools enabled assets
 func ToolsBadge(res fyne.Resource) fyne.CanvasObject {
-	badge := *canvas.NewImageFromResource(Resource.Tools)
+	badge := *canvas.NewImageFromResource(bundle.ResourceDReamToolsPng)
 	badge.Resize(fyne.NewSize(94, 94))
 	badge.Move(fyne.NewPos(8, 3))
 
@@ -376,7 +377,7 @@ func NfaMarketInfo() fyne.CanvasObject {
 func AuctionInfo() fyne.CanvasObject {
 	Market.Details_box = *container.NewVBox(
 		NfaImg(Market.Cover),
-		container.NewHBox(NfaIcon(Resource.Frame), layout.NewSpacer()),
+		container.NewHBox(NfaIcon(bundle.ResourceAvatarFramePng), layout.NewSpacer()),
 		Market.Name,
 		Market.Type,
 		Market.Collection,
@@ -405,12 +406,12 @@ func RefreshNfaImages() {
 	}
 
 	if Market.Icon.Resource != nil {
-		Market.Details_box.Objects[1].(*fyne.Container).Objects[0] = NfaIcon(Resource.Frame)
+		Market.Details_box.Objects[1].(*fyne.Container).Objects[0] = NfaIcon(bundle.ResourceAvatarFramePng)
 		Market.Details_box.Objects[1].Refresh()
 	}
 	view := Market.Viewing_coll
 	if view == "AZYPC" || view == "SIXPC" || view == "AZYPCB" || view == "SIXPCB" {
-		Market.Details_box.Objects[1].(*fyne.Container).Objects[1] = ToolsBadge(Resource.Frame)
+		Market.Details_box.Objects[1].(*fyne.Container).Objects[1] = ToolsBadge(bundle.ResourceAvatarFramePng)
 	} else {
 		Market.Details_box.Objects[1].(*fyne.Container).Objects[1] = layout.NewSpacer()
 	}
@@ -456,7 +457,7 @@ func ResetAuctionInfo() {
 func BuyNowInfo() fyne.CanvasObject {
 	Market.Details_box = *container.NewVBox(
 		NfaImg(Market.Cover),
-		container.NewHBox(NfaIcon(Resource.Frame), layout.NewSpacer()),
+		container.NewHBox(NfaIcon(bundle.ResourceAvatarFramePng), layout.NewSpacer()),
 		Market.Name,
 		Market.Type,
 		Market.Collection,

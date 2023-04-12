@@ -4,6 +4,7 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/SixofClubsss/dReams/bundle"
 	"github.com/SixofClubsss/dReams/holdero"
 	"github.com/SixofClubsss/dReams/menu"
 	"github.com/SixofClubsss/dReams/rpc"
@@ -57,7 +58,7 @@ func main() {
 	dReams.Window.SetMaster()
 	dReams.Window.Resize(fyne.NewSize(MIN_WIDTH, MIN_HEIGHT))
 	dReams.Window.SetFixedSize(false)
-	dReams.Window.SetIcon(resourceCardSharkTrayPng)
+	dReams.Window.SetIcon(bundle.ResourceCardSharkTrayPng)
 	dReams.Window.SetMaster()
 	quit := make(chan struct{})
 
@@ -73,12 +74,9 @@ func main() {
 		dReams.Window.Close()
 	})
 
-	menu.GetMenuResources(resourceDTGnomonIconPng, resourceAvatarFramePng, resourceCwBackgroundPng, resourceMwBackgroundPng, resourceOwBackgroundPng, resourceUwBackgroundPng, resourceGnomoniconPng, resourceBlueBadgePng, resourceBlueBadge2Png, resourceBlueBadge3Png, resourceRedBadgePng, resourcePokerBoticonPng, resourceDReamServiceiconPng, resourceDReamToolsPng)
-	holdero.GetTableResources(resourceDTGnomonIconPng, resourceMwBackgroundPng, resourceOwBackgroundPng, resourceBackgroundPng, resourceUwBackgroundPng, resourceIlumabackground1Png, resourceIlumabackground2Png, resourceIluma81Png)
-
 	dReams.menu = true
 
-	holdero.Settings.ThemeImg = *canvas.NewImageFromResource(resourceBackgroundPng)
+	holdero.Settings.ThemeImg = *canvas.NewImageFromResource(bundle.ResourceBackgroundPng)
 	background = container.NewMax(&holdero.Settings.ThemeImg)
 
 	if len(menu.Control.Dapp_list) == 0 {
@@ -99,7 +97,7 @@ func main() {
 
 	time.Sleep(600 * time.Millisecond)
 	if systemTray(dReams.App) {
-		dReams.App.(desktop.App).SetSystemTrayIcon(resourceCardSharkTrayPng)
+		dReams.App.(desktop.App).SetSystemTrayIcon(bundle.ResourceCardSharkTrayPng)
 	}
 
 	go fetch(quit)

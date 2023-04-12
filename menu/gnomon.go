@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/SixofClubsss/dReams/bundle"
 	"github.com/SixofClubsss/dReams/holdero"
 	"github.com/SixofClubsss/dReams/rpc"
 
@@ -181,7 +182,7 @@ func StartIndicators() fyne.CanvasObject {
 	Gnomes.Full_ind.AutoReverse = true
 	Gnomes.Full_ind.Start()
 
-	icon := widget.NewIcon(Resource.Gnomon)
+	icon := widget.NewIcon(bundle.ResourceGnomoniconPng)
 	Gnomes.Icon_ind = canvas.NewPositionAnimation(fyne.NewPos(3, 4), fyne.NewPos(112, 1), time.Second*3, func(p fyne.Position) {
 		icon.Move(p)
 		width := 30 + (p.X / 30)
@@ -238,12 +239,12 @@ func StartIndicators() fyne.CanvasObject {
 		container.NewMax(d_rect, container.NewCenter(d)),
 		container.NewMax(w_rect, container.NewCenter(w)))
 
-	pbot := canvas.NewImageFromResource(Resource.PBot)
+	pbot := canvas.NewImageFromResource(bundle.ResourcePokerBotIconPng)
 	pbot.SetMinSize(fyne.NewSize(30, 30))
 	p_rect := canvas.NewRectangle(alpha)
 	p_rect.SetMinSize(fyne.NewSize(36, 36))
 
-	dService := canvas.NewImageFromResource(Resource.dService)
+	dService := canvas.NewImageFromResource(bundle.ResourceDReamServiceIconPng)
 	dService.SetMinSize(fyne.NewSize(30, 30))
 	s_rect := canvas.NewRectangle(alpha)
 	s_rect.SetMinSize(fyne.NewSize(36, 36))
@@ -549,9 +550,9 @@ func GnomonState(windows, config bool) {
 			}
 		}
 
-		holdero.Assets.Stats_box = *container.NewVBox(holdero.Assets.Collection, holdero.Assets.Name, holdero.IconImg(Resource.Frame))
+		holdero.Assets.Stats_box = *container.NewVBox(holdero.Assets.Collection, holdero.Assets.Name, holdero.IconImg(bundle.ResourceAvatarFramePng))
 		holdero.Assets.Stats_box.Refresh()
-		Poker.Stats_box = *container.NewVBox(Stats.Name, Stats.Desc, Stats.Version, Stats.Last, Stats.Seats, TableIcon(Resource.Frame))
+		Poker.Stats_box = *container.NewVBox(Stats.Name, Stats.Desc, Stats.Version, Stats.Last, Stats.Seats, TableIcon(bundle.ResourceAvatarFramePng))
 		Poker.Stats_box.Refresh()
 
 		// Update live market info

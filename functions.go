@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/SixofClubsss/dReams/baccarat"
+	"github.com/SixofClubsss/dReams/bundle"
 	"github.com/SixofClubsss/dReams/holdero"
 	"github.com/SixofClubsss/dReams/menu"
 	"github.com/SixofClubsss/dReams/prediction"
@@ -155,7 +156,7 @@ func serviceRunning() {
 // Terminal start info, ascii art for linux
 func stamp(v string) {
 	if dReams.os == "linux" {
-		fmt.Println(string(resourceStampTxt.StaticContent))
+		fmt.Println(string(bundle.ResourceStampTxt.StaticContent))
 	}
 	log.Println("[dReams]", v, runtime.GOOS, runtime.GOARCH)
 }
@@ -766,25 +767,25 @@ func HolderoRefresh() {
 
 // Refresh Holdero player names and avatars
 func refreshHolderoPlayers() {
-	H.TableContent.Objects[0] = holdero.HolderoTable(resourceTablePng)
+	H.TableContent.Objects[0] = holdero.HolderoTable(bundle.ResourcePokerTablePng)
 	H.TableContent.Objects[0].Refresh()
 
-	H.TableContent.Objects[1] = holdero.Player1_label(resourceUnknownAvatarPng, resourceAvatarFramePng, resourceTurnFramePng)
+	H.TableContent.Objects[1] = holdero.Player1_label(bundle.ResourceUnknownAvatarPng, bundle.ResourceAvatarFramePng, bundle.ResourceTurnFramePng)
 	H.TableContent.Objects[1].Refresh()
 
-	H.TableContent.Objects[2] = holdero.Player2_label(resourceUnknownAvatarPng, resourceAvatarFramePng, resourceTurnFramePng)
+	H.TableContent.Objects[2] = holdero.Player2_label(bundle.ResourceUnknownAvatarPng, bundle.ResourceAvatarFramePng, bundle.ResourceTurnFramePng)
 	H.TableContent.Objects[2].Refresh()
 
-	H.TableContent.Objects[3] = holdero.Player3_label(resourceUnknownAvatarPng, resourceAvatarFramePng, resourceTurnFramePng)
+	H.TableContent.Objects[3] = holdero.Player3_label(bundle.ResourceUnknownAvatarPng, bundle.ResourceAvatarFramePng, bundle.ResourceTurnFramePng)
 	H.TableContent.Objects[3].Refresh()
 
-	H.TableContent.Objects[4] = holdero.Player4_label(resourceUnknownAvatarPng, resourceAvatarFramePng, resourceTurnFramePng)
+	H.TableContent.Objects[4] = holdero.Player4_label(bundle.ResourceUnknownAvatarPng, bundle.ResourceAvatarFramePng, bundle.ResourceTurnFramePng)
 	H.TableContent.Objects[4].Refresh()
 
-	H.TableContent.Objects[5] = holdero.Player5_label(resourceUnknownAvatarPng, resourceAvatarFramePng, resourceTurnFramePng)
+	H.TableContent.Objects[5] = holdero.Player5_label(bundle.ResourceUnknownAvatarPng, bundle.ResourceAvatarFramePng, bundle.ResourceTurnFramePng)
 	H.TableContent.Objects[5].Refresh()
 
-	H.TableContent.Objects[6] = holdero.Player6_label(resourceUnknownAvatarPng, resourceAvatarFramePng, resourceTurnFramePng)
+	H.TableContent.Objects[6] = holdero.Player6_label(bundle.ResourceUnknownAvatarPng, bundle.ResourceAvatarFramePng, bundle.ResourceTurnFramePng)
 	H.TableContent.Objects[6].Refresh()
 
 	H.TableContent.Refresh()
@@ -822,7 +823,7 @@ func BaccRefresh() {
 	}
 
 	B.TableContent = *container.NewWithoutLayout(
-		baccarat.BaccTable(resourceBaccTablePng),
+		baccarat.BaccTable(bundle.ResourceBaccTablePng),
 		baccarat.BaccResult(rpc.Display.BaccRes),
 	)
 
@@ -1306,11 +1307,11 @@ func DisplayCard(card int) *canvas.Image {
 		i := holdero.Settings.BackSelect.SelectedIndex()
 		switch i {
 		case -1:
-			return canvas.NewImageFromResource(resourceBack1Png)
+			return canvas.NewImageFromResource(bundle.ResourceBack1Png)
 		case 0:
-			return canvas.NewImageFromResource(resourceBack1Png)
+			return canvas.NewImageFromResource(bundle.ResourceBack1Png)
 		case 1:
-			return canvas.NewImageFromResource(resourceBack2Png)
+			return canvas.NewImageFromResource(bundle.ResourceBack2Png)
 		default:
 			return CustomBack(holdero.Settings.Backs)
 		}
@@ -1331,109 +1332,109 @@ func DisplayLightCard(card int) fyne.Resource {
 	if card > 0 && card < 53 {
 		switch card {
 		case 1:
-			return resourceLightcard1Png
+			return bundle.ResourceLightcard1Png
 		case 2:
-			return resourceLightcard2Png
+			return bundle.ResourceLightcard2Png
 		case 3:
-			return resourceLightcard3Png
+			return bundle.ResourceLightcard3Png
 		case 4:
-			return resourceLightcard4Png
+			return bundle.ResourceLightcard4Png
 		case 5:
-			return resourceLightcard5Png
+			return bundle.ResourceLightcard5Png
 		case 6:
-			return resourceLightcard6Png
+			return bundle.ResourceLightcard6Png
 		case 7:
-			return resourceLightcard7Png
+			return bundle.ResourceLightcard7Png
 		case 8:
-			return resourceLightcard8Png
+			return bundle.ResourceLightcard8Png
 		case 9:
-			return resourceLightcard9Png
+			return bundle.ResourceLightcard9Png
 		case 10:
-			return resourceLightcard10Png
+			return bundle.ResourceLightcard10Png
 		case 11:
-			return resourceLightcard11Png
+			return bundle.ResourceLightcard11Png
 		case 12:
-			return resourceLightcard12Png
+			return bundle.ResourceLightcard12Png
 		case 13:
-			return resourceLightcard13Png
+			return bundle.ResourceLightcard13Png
 		case 14:
-			return resourceLightcard14Png
+			return bundle.ResourceLightcard14Png
 		case 15:
-			return resourceLightcard15Png
+			return bundle.ResourceLightcard15Png
 		case 16:
-			return resourceLightcard16Png
+			return bundle.ResourceLightcard16Png
 		case 17:
-			return resourceLightcard17Png
+			return bundle.ResourceLightcard17Png
 		case 18:
-			return resourceLightcard18Png
+			return bundle.ResourceLightcard18Png
 		case 19:
-			return resourceLightcard19Png
+			return bundle.ResourceLightcard19Png
 		case 20:
-			return resourceLightcard20Png
+			return bundle.ResourceLightcard20Png
 		case 21:
-			return resourceLightcard21Png
+			return bundle.ResourceLightcard21Png
 		case 22:
-			return resourceLightcard22Png
+			return bundle.ResourceLightcard22Png
 		case 23:
-			return resourceLightcard23Png
+			return bundle.ResourceLightcard23Png
 		case 24:
-			return resourceLightcard24Png
+			return bundle.ResourceLightcard24Png
 		case 25:
-			return resourceLightcard25Png
+			return bundle.ResourceLightcard25Png
 		case 26:
-			return resourceLightcard26Png
+			return bundle.ResourceLightcard26Png
 		case 27:
-			return resourceLightcard27Png
+			return bundle.ResourceLightcard27Png
 		case 28:
-			return resourceLightcard28Png
+			return bundle.ResourceLightcard28Png
 		case 29:
-			return resourceLightcard29Png
+			return bundle.ResourceLightcard29Png
 		case 30:
-			return resourceLightcard30Png
+			return bundle.ResourceLightcard30Png
 		case 31:
-			return resourceLightcard31Png
+			return bundle.ResourceLightcard31Png
 		case 32:
-			return resourceLightcard32Png
+			return bundle.ResourceLightcard32Png
 		case 33:
-			return resourceLightcard33Png
+			return bundle.ResourceLightcard33Png
 		case 34:
-			return resourceLightcard34Png
+			return bundle.ResourceLightcard34Png
 		case 35:
-			return resourceLightcard35Png
+			return bundle.ResourceLightcard35Png
 		case 36:
-			return resourceLightcard36Png
+			return bundle.ResourceLightcard36Png
 		case 37:
-			return resourceLightcard37Png
+			return bundle.ResourceLightcard37Png
 		case 38:
-			return resourceLightcard38Png
+			return bundle.ResourceLightcard38Png
 		case 39:
-			return resourceLightcard39Png
+			return bundle.ResourceLightcard39Png
 		case 40:
-			return resourceLightcard40Png
+			return bundle.ResourceLightcard40Png
 		case 41:
-			return resourceLightcard41Png
+			return bundle.ResourceLightcard41Png
 		case 42:
-			return resourceLightcard42Png
+			return bundle.ResourceLightcard42Png
 		case 43:
-			return resourceLightcard43Png
+			return bundle.ResourceLightcard43Png
 		case 44:
-			return resourceLightcard44Png
+			return bundle.ResourceLightcard44Png
 		case 45:
-			return resourceLightcard45Png
+			return bundle.ResourceLightcard45Png
 		case 46:
-			return resourceLightcard46Png
+			return bundle.ResourceLightcard46Png
 		case 47:
-			return resourceLightcard47Png
+			return bundle.ResourceLightcard47Png
 		case 48:
-			return resourceLightcard48Png
+			return bundle.ResourceLightcard48Png
 		case 49:
-			return resourceLightcard49Png
+			return bundle.ResourceLightcard49Png
 		case 50:
-			return resourceLightcard50Png
+			return bundle.ResourceLightcard50Png
 		case 51:
-			return resourceLightcard51Png
+			return bundle.ResourceLightcard51Png
 		case 52:
-			return resourceLightcard52Png
+			return bundle.ResourceLightcard52Png
 		}
 	}
 	return nil
@@ -1444,109 +1445,109 @@ func DisplayDarkCard(card int) fyne.Resource {
 	if card > 0 && card < 53 {
 		switch card {
 		case 1:
-			return resourceDarkcard1Png
+			return bundle.ResourceDarkcard1Png
 		case 2:
-			return resourceDarkcard2Png
+			return bundle.ResourceDarkcard2Png
 		case 3:
-			return resourceDarkcard3Png
+			return bundle.ResourceDarkcard3Png
 		case 4:
-			return resourceDarkcard4Png
+			return bundle.ResourceDarkcard4Png
 		case 5:
-			return resourceDarkcard5Png
+			return bundle.ResourceDarkcard5Png
 		case 6:
-			return resourceDarkcard6Png
+			return bundle.ResourceDarkcard6Png
 		case 7:
-			return resourceDarkcard7Png
+			return bundle.ResourceDarkcard7Png
 		case 8:
-			return resourceDarkcard8Png
+			return bundle.ResourceDarkcard8Png
 		case 9:
-			return resourceDarkcard9Png
+			return bundle.ResourceDarkcard9Png
 		case 10:
-			return resourceDarkcard10Png
+			return bundle.ResourceDarkcard10Png
 		case 11:
-			return resourceDarkcard11Png
+			return bundle.ResourceDarkcard11Png
 		case 12:
-			return resourceDarkcard12Png
+			return bundle.ResourceDarkcard12Png
 		case 13:
-			return resourceDarkcard13Png
+			return bundle.ResourceDarkcard13Png
 		case 14:
-			return resourceDarkcard14Png
+			return bundle.ResourceDarkcard14Png
 		case 15:
-			return resourceDarkcard15Png
+			return bundle.ResourceDarkcard15Png
 		case 16:
-			return resourceDarkcard16Png
+			return bundle.ResourceDarkcard16Png
 		case 17:
-			return resourceDarkcard17Png
+			return bundle.ResourceDarkcard17Png
 		case 18:
-			return resourceDarkcard18Png
+			return bundle.ResourceDarkcard18Png
 		case 19:
-			return resourceDarkcard19Png
+			return bundle.ResourceDarkcard19Png
 		case 20:
-			return resourceDarkcard20Png
+			return bundle.ResourceDarkcard20Png
 		case 21:
-			return resourceDarkcard21Png
+			return bundle.ResourceDarkcard21Png
 		case 22:
-			return resourceDarkcard22Png
+			return bundle.ResourceDarkcard22Png
 		case 23:
-			return resourceDarkcard23Png
+			return bundle.ResourceDarkcard23Png
 		case 24:
-			return resourceDarkcard24Png
+			return bundle.ResourceDarkcard24Png
 		case 25:
-			return resourceDarkcard25Png
+			return bundle.ResourceDarkcard25Png
 		case 26:
-			return resourceDarkcard26Png
+			return bundle.ResourceDarkcard26Png
 		case 27:
-			return resourceDarkcard27Png
+			return bundle.ResourceDarkcard27Png
 		case 28:
-			return resourceDarkcard28Png
+			return bundle.ResourceDarkcard28Png
 		case 29:
-			return resourceDarkcard29Png
+			return bundle.ResourceDarkcard29Png
 		case 30:
-			return resourceDarkcard30Png
+			return bundle.ResourceDarkcard30Png
 		case 31:
-			return resourceDarkcard31Png
+			return bundle.ResourceDarkcard31Png
 		case 32:
-			return resourceDarkcard32Png
+			return bundle.ResourceDarkcard32Png
 		case 33:
-			return resourceDarkcard33Png
+			return bundle.ResourceDarkcard33Png
 		case 34:
-			return resourceDarkcard34Png
+			return bundle.ResourceDarkcard34Png
 		case 35:
-			return resourceDarkcard35Png
+			return bundle.ResourceDarkcard35Png
 		case 36:
-			return resourceDarkcard36Png
+			return bundle.ResourceDarkcard36Png
 		case 37:
-			return resourceDarkcard37Png
+			return bundle.ResourceDarkcard37Png
 		case 38:
-			return resourceDarkcard38Png
+			return bundle.ResourceDarkcard38Png
 		case 39:
-			return resourceDarkcard39Png
+			return bundle.ResourceDarkcard39Png
 		case 40:
-			return resourceDarkcard40Png
+			return bundle.ResourceDarkcard40Png
 		case 41:
-			return resourceDarkcard41Png
+			return bundle.ResourceDarkcard41Png
 		case 42:
-			return resourceDarkcard42Png
+			return bundle.ResourceDarkcard42Png
 		case 43:
-			return resourceDarkcard43Png
+			return bundle.ResourceDarkcard43Png
 		case 44:
-			return resourceDarkcard44Png
+			return bundle.ResourceDarkcard44Png
 		case 45:
-			return resourceDarkcard45Png
+			return bundle.ResourceDarkcard45Png
 		case 46:
-			return resourceDarkcard46Png
+			return bundle.ResourceDarkcard46Png
 		case 47:
-			return resourceDarkcard47Png
+			return bundle.ResourceDarkcard47Png
 		case 48:
-			return resourceDarkcard48Png
+			return bundle.ResourceDarkcard48Png
 		case 49:
-			return resourceDarkcard49Png
+			return bundle.ResourceDarkcard49Png
 		case 50:
-			return resourceDarkcard50Png
+			return bundle.ResourceDarkcard50Png
 		case 51:
-			return resourceDarkcard51Png
+			return bundle.ResourceDarkcard51Png
 		case 52:
-			return resourceDarkcard52Png
+			return bundle.ResourceDarkcard52Png
 		}
 	}
 	return nil

@@ -5,6 +5,7 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/theme"
+	"github.com/SixofClubsss/dReams/bundle"
 )
 
 var defaultTheme fyne.Theme
@@ -38,11 +39,11 @@ func Theme() fyne.Theme {
 				theme.ColorNameShadow:          color.NRGBA{A: 0x88},
 			},
 			fonts: map[fyne.TextStyle]fyne.Resource{
-				{}:                         resourceUbuntuRTtf,
-				{Bold: true}:               resourceVarelaRoundRegularTtf,
-				{Bold: true, Italic: true}: resourceUbuntuRTtf,
-				{Italic: true}:             resourceUbuntuRTtf,
-				{Monospace: true}:          resourceUbuntuRTtf,
+				{}:                         bundle.ResourceUbuntuRTtf,
+				{Bold: true}:               bundle.ResourceVarelaRoundRegularTtf,
+				{Bold: true, Italic: true}: bundle.ResourceUbuntuRTtf,
+				{Italic: true}:             bundle.ResourceUbuntuRTtf,
+				{Monospace: true}:          bundle.ResourceUbuntuRTtf,
 			},
 			sizes: map[fyne.ThemeSizeName]float32{
 				theme.SizeNameInlineIcon:         float32(20),

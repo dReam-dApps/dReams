@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/SixofClubsss/dReams/bundle"
 	"github.com/SixofClubsss/dReams/dwidget"
 	"github.com/SixofClubsss/dReams/rpc"
 
@@ -740,7 +741,7 @@ func holderoTools(deal, check *widget.Check, button *widget.Button) {
 	bm := fyne.CurrentApp().NewWindow("Holdero Tools")
 	bm.Resize(fyne.NewSize(330, 700))
 	bm.SetFixedSize(true)
-	bm.SetIcon(Resource.SmallIcon)
+	bm.SetIcon(bundle.ResourceDTGnomonIconPng)
 	bm.SetCloseIntercept(func() {
 		button.Show()
 		bm.Close()
@@ -1186,7 +1187,7 @@ func holderoTools(deal, check *widget.Check, button *widget.Button) {
 		bm.Close()
 	}()
 
-	img := *canvas.NewImageFromResource(Resource.Back3)
+	img := *canvas.NewImageFromResource(bundle.ResourceOwBackgroundPng)
 	alpha := *container.NewMax(canvas.NewRectangle(color.RGBA{0, 0, 0, 180}))
 	bm.SetContent(
 		container.New(layout.NewMaxLayout(),

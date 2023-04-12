@@ -10,23 +10,22 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
+	"github.com/SixofClubsss/dReams/bundle"
 	"github.com/SixofClubsss/dReams/rpc"
 )
 
 type tarot struct {
-	Card1       fyne.Container
-	Card2       fyne.Container
-	Card3       fyne.Container
-	Back        fyne.Resource
-	Background1 fyne.Resource
-	Background2 fyne.Resource
-	Draw1       *widget.Button
-	Draw3       *widget.Button
-	Search      *fyne.Container
-	Actions     *fyne.Container
-	Label       *widget.Label
-	Box         *fyne.Container
-	Open        bool
+	Card1   fyne.Container
+	Card2   fyne.Container
+	Card3   fyne.Container
+	Back    fyne.Resource
+	Draw1   *widget.Button
+	Draw3   *widget.Button
+	Search  *fyne.Container
+	Actions *fyne.Container
+	Label   *widget.Label
+	Box     *fyne.Container
+	Open    bool
 }
 
 var Iluma tarot
@@ -34,11 +33,11 @@ var Iluma tarot
 // Tarot object buffer when action triggered
 func TarotBuffer(d bool) {
 	if d {
-		Iluma.Card1.Objects[1] = canvas.NewImageFromResource(Iluma.Back)
+		Iluma.Card1.Objects[1] = canvas.NewImageFromResource(bundle.ResourceIluma81Png)
 		Iluma.Card1.Refresh()
-		Iluma.Card2.Objects[1] = canvas.NewImageFromResource(Iluma.Back)
+		Iluma.Card2.Objects[1] = canvas.NewImageFromResource(bundle.ResourceIluma81Png)
 		Iluma.Card2.Refresh()
-		Iluma.Card3.Objects[1] = canvas.NewImageFromResource(Iluma.Back)
+		Iluma.Card3.Objects[1] = canvas.NewImageFromResource(bundle.ResourceIluma81Png)
 		Iluma.Card3.Refresh()
 		Iluma.Draw1.Hide()
 		Iluma.Draw3.Hide()
@@ -72,7 +71,7 @@ func TarotCardBox() fyne.CanvasObject {
 		}
 	})
 
-	card_back := canvas.NewImageFromResource(Iluma.Back)
+	card_back := canvas.NewImageFromResource(bundle.ResourceIluma81Png)
 
 	Iluma.Card1 = *container.NewMax(one, card_back)
 	pad1 := container.NewBorder(nil, nil, TarotPadding(), TarotPadding(), &Iluma.Card1)
@@ -185,10 +184,8 @@ func TarotConfirm(i int, reset fyne.Container) fyne.Container {
 	label.Alignment = fyne.TextAlignCenter
 
 	confirm := widget.NewButton("Confirm", func() {
-		go func() {
-			Iluma.Card2 = reset
-			Iluma.Card2.Refresh()
-		}()
+		Iluma.Card2 = reset
+		Iluma.Card2.Refresh()
 
 		if i == 3 {
 			TarotBuffer(true)

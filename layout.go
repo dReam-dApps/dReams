@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/SixofClubsss/dReams/baccarat"
+	"github.com/SixofClubsss/dReams/bundle"
 	"github.com/SixofClubsss/dReams/holdero"
 	"github.com/SixofClubsss/dReams/menu"
 	"github.com/SixofClubsss/dReams/prediction"
@@ -618,7 +619,7 @@ func placeMarket() *container.Split {
 // dReams Holdero tab layout
 func placeHoldero(change_screen *widget.Button) *fyne.Container {
 	H.TableContent = *container.NewWithoutLayout(
-		holdero.HolderoTable(resourceTablePng),
+		holdero.HolderoTable(bundle.ResourcePokerTablePng),
 		holdero.Player1_label(nil, nil, nil),
 		holdero.Player2_label(nil, nil, nil),
 		holdero.Player3_label(nil, nil, nil),
@@ -658,9 +659,8 @@ func placeHoldero(change_screen *widget.Button) *fyne.Container {
 // dReams Baccarat tab layout
 func placeBacc() *fyne.Container {
 	B.TableContent = *container.NewWithoutLayout(
-		baccarat.BaccTable(resourceBaccTablePng),
-		baccarat.BaccResult(rpc.Display.BaccRes),
-	)
+		baccarat.BaccTable(bundle.ResourceBaccTablePng),
+		baccarat.BaccResult(rpc.Display.BaccRes))
 
 	bacc_label := container.NewHBox(B.LeftLabel, layout.NewSpacer(), B.RightLabel)
 
@@ -669,8 +669,7 @@ func placeBacc() *fyne.Container {
 		&B.TableContent,
 		&B.CardsContent,
 		layout.NewSpacer(),
-		baccarat.BaccaratButtons(),
-	)
+		baccarat.BaccaratButtons())
 
 	return B.TableItems
 }
@@ -951,12 +950,12 @@ func placeSports() *fyne.Container {
 func placeIluma() *fyne.Container {
 	var first, second, third bool
 	var display int
-	img := canvas.NewImageFromResource(resourceIluma82Png)
+	img := canvas.NewImageFromResource(bundle.ResourceIluma82Png)
 	intro := widget.NewLabel(iluma_intro)
 	scroll := container.NewScroll(intro)
 
 	cont := container.NewGridWithColumns(2, scroll, img)
-	max := container.NewMax(menu.Alpha150, cont)
+	max := container.NewMax(menu.Alpha120, cont)
 
 	scroll.OnScrolled = func(p fyne.Position) {
 		if p.Y <= 400 {
@@ -976,19 +975,19 @@ func placeIluma() *fyne.Container {
 		switch display {
 		case 1:
 			if !first {
-				cont.Objects[1] = canvas.NewImageFromResource(resourceIluma82Png)
+				cont.Objects[1] = canvas.NewImageFromResource(bundle.ResourceIluma82Png)
 				cont.Refresh()
 				first = true
 			}
 		case 2:
 			if !second {
-				cont.Objects[1] = canvas.NewImageFromResource(resourceIluma80Png)
+				cont.Objects[1] = canvas.NewImageFromResource(bundle.ResourceIluma80Png)
 				cont.Refresh()
 				second = true
 			}
 		case 3:
 			if !third {
-				cont.Objects[1] = canvas.NewImageFromResource(resourceIluma83Png)
+				cont.Objects[1] = canvas.NewImageFromResource(bundle.ResourceIluma83Png)
 				cont.Refresh()
 				third = true
 			}
@@ -1009,8 +1008,7 @@ func placeTarot() *fyne.Container {
 		nil,
 		nil,
 		nil,
-		tarot.TarotCardBox(),
-	)
+		tarot.TarotCardBox())
 
 	return T.TableItems
 }

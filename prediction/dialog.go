@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/SixofClubsss/dReams/bundle"
 	"github.com/SixofClubsss/dReams/dwidget"
 	"github.com/SixofClubsss/dReams/holdero"
 	"github.com/SixofClubsss/dReams/menu"
@@ -715,7 +716,7 @@ func ConfirmAction(i int, teamA, teamB string, obj []fyne.CanvasObject, tabs *co
 // prediction leaderboard
 // func namePopUp(i int) { /// name change confirmation
 // 	ncw := fyne.CurrentApp().NewWindow("Confirm")
-// 	ncw.SetIcon(menu.Resource.SmallIcon)
+// 	ncw.SetIcon(bundle.ResourceDTGnomonIconPng)
 // 	ncw.Resize(fyne.NewSize(330, 150))
 // 	ncw.SetFixedSize(true)
 // 	var confirm_display = widget.NewLabel("")
@@ -753,7 +754,7 @@ func ConfirmAction(i int, teamA, teamB string, obj []fyne.CanvasObject, tabs *co
 // 	options := container.NewAdaptiveGrid(2, confirm_button, cancel_button)
 // 	content := container.NewBorder(nil, options, nil, nil, display)
 //
-// 	img := *canvas.NewImageFromResource(menu.Resource.Back1)
+// 	// img := *canvas.NewImageFromResource()
 // 	ncw.SetContent(
 // 		container.New(layout.NewMaxLayout(),
 // 			&img,
@@ -907,7 +908,7 @@ func GetActiveGames(dc bool) {
 func ownersMenu() {
 	ow := fyne.CurrentApp().NewWindow("Bet Contracts")
 	ow.Resize(fyne.NewSize(330, 700))
-	ow.SetIcon(menu.Resource.SmallIcon)
+	ow.SetIcon(bundle.ResourceDTGnomonIconPng)
 	menu.Control.Bet_menu_p.Hide()
 	menu.Control.Bet_menu_s.Hide()
 	quit := make(chan struct{})
@@ -1018,7 +1019,7 @@ func ownersMenu() {
 
 	border := container.NewBorder(nil, bottom_box, nil, nil, owner_tabs)
 
-	img := *canvas.NewImageFromResource(menu.Resource.Back3)
+	img := *canvas.NewImageFromResource(bundle.ResourceOwBackgroundPng)
 
 	ow.SetContent(
 		container.New(
