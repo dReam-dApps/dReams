@@ -11,6 +11,7 @@ import (
 
 	"github.com/SixofClubsss/dReams/baccarat"
 	"github.com/SixofClubsss/dReams/bundle"
+	"github.com/SixofClubsss/dReams/dwidget"
 	"github.com/SixofClubsss/dReams/holdero"
 	"github.com/SixofClubsss/dReams/menu"
 	"github.com/SixofClubsss/dReams/prediction"
@@ -24,27 +25,13 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-type Items struct {
-	LeftLabel   *widget.Label
-	RightLabel  *widget.Label
-	TopLabel    *widget.Label
-	BottomLabel *widget.Label
+var H dwidget.DreamsItems
+var B dwidget.DreamsItems
+var P dwidget.DreamsItems
+var S dwidget.DreamsItems
 
-	TableContent  fyne.Container
-	CardsContent  fyne.Container
-	ActionButtons fyne.Container
-	TableItems    *fyne.Container
-}
-
-var H Items
-var B Items
-var P Items
-var S Items
-var A Items
-var T Items
-
-//go:embed tarot/iluma/iluma.txt
-var iluma_intro string
+// /var A dwidget.DreamsItems
+var T dwidget.DreamsItems
 
 // If dReams has not been intialized, show this screen
 func introScreen() *fyne.Container {
@@ -241,7 +228,7 @@ func place() *fyne.Container {
 	menu_tabs.SetTabLocation(container.TabLocationBottom)
 
 	tarot_tabs := container.NewAppTabs(
-		container.NewTabItem("Iluma", placeIluma()),
+		container.NewTabItem("Iluma", tarot.PlaceIluma()),
 		container.NewTabItem("Reading", placeTarot()))
 
 	tarot_tabs.OnSelected = func(ti *container.TabItem) {
@@ -351,8 +338,7 @@ func placeWall() *container.Split {
 	menu.Control.Contract_rating = make(map[string]uint64)
 	holdero.Assets.Asset_map = make(map[string]string)
 
-	daemon_check_cont := container.NewVBox(
-		menu.DaemonConnectedBox())
+	daemon_check_cont := container.NewVBox(menu.DaemonConnectedBox())
 
 	user_input_box := container.NewHBox(user_input_cont, daemon_check_cont)
 	menu_top := container.NewHSplit(user_input_box, menu.IntroTree())
@@ -510,7 +496,7 @@ func placeAssets() *container.Split {
 
 	max := container.NewMax(menu.Alpha120, tabs, scroll_cont)
 
-	player_input.AddObject(holdero.SetHeaderItems(max.Objects, tabs))
+	player_input.Add(holdero.SetHeaderItems(max.Objects, tabs))
 	player_box := container.NewHBox(player_input)
 
 	menu_top := container.NewHSplit(player_box, max)
@@ -618,7 +604,7 @@ func placeMarket() *container.Split {
 
 // dReams Holdero tab layout
 func placeHoldero(change_screen *widget.Button) *fyne.Container {
-	H.TableContent = *container.NewWithoutLayout(
+	H.Back = *container.NewWithoutLayout(
 		holdero.HolderoTable(bundle.ResourcePokerTablePng),
 		holdero.Player1_label(nil, nil, nil),
 		holdero.Player2_label(nil, nil, nil),
@@ -626,14 +612,13 @@ func placeHoldero(change_screen *widget.Button) *fyne.Container {
 		holdero.Player4_label(nil, nil, nil),
 		holdero.Player5_label(nil, nil, nil),
 		holdero.Player6_label(nil, nil, nil),
-		H.TopLabel,
-	)
+		H.TopLabel)
 
 	holdero_label := container.NewHBox(H.LeftLabel, layout.NewSpacer(), H.RightLabel)
 
-	H.CardsContent = *placeHolderoCards()
+	H.Front = *placeHolderoCards()
 
-	H.ActionButtons = *container.NewVBox(
+	H.Actions = *container.NewVBox(
 		layout.NewSpacer(),
 		holdero.SitButton(),
 		holdero.LeaveButton(),
@@ -644,34 +629,36 @@ func placeHoldero(change_screen *widget.Button) *fyne.Container {
 
 	options := container.NewVBox(layout.NewSpacer(), holdero.AutoOptions(), change_screen)
 
-	holdero_actions := container.NewHBox(options, layout.NewSpacer(), holdero.TimeOutWarning(), layout.NewSpacer(), layout.NewSpacer(), &H.ActionButtons)
+	holdero_actions := container.NewHBox(options, layout.NewSpacer(), holdero.TimeOutWarning(), layout.NewSpacer(), layout.NewSpacer(), &H.Actions)
 
-	H.TableItems = container.NewVBox(
+	H.DApp = container.NewVBox(
 		labelColorBlack(holdero_label),
-		&H.TableContent,
-		&H.CardsContent,
+		&H.Back,
+		&H.Front,
 		layout.NewSpacer(),
 		holdero_actions)
 
-	return H.TableItems
+	return H.DApp
 }
 
 // dReams Baccarat tab layout
 func placeBacc() *fyne.Container {
-	B.TableContent = *container.NewWithoutLayout(
+	B.Back = *container.NewWithoutLayout(
 		baccarat.BaccTable(bundle.ResourceBaccTablePng),
 		baccarat.BaccResult(rpc.Display.BaccRes))
 
+	B.Front = *clearBaccCards()
+
 	bacc_label := container.NewHBox(B.LeftLabel, layout.NewSpacer(), B.RightLabel)
 
-	B.TableItems = container.NewVBox(
+	B.DApp = container.NewVBox(
 		labelColorBlack(bacc_label),
-		&B.TableContent,
-		&B.CardsContent,
+		&B.Back,
+		&B.Front,
 		layout.NewSpacer(),
 		baccarat.BaccaratButtons())
 
-	return B.TableItems
+	return B.DApp
 }
 
 // dReams dPrediction tab layout
@@ -758,7 +745,7 @@ func placePredict() *fyne.Container {
 	predict_label := container.NewHBox(P.LeftLabel, layout.NewSpacer(), P.RightLabel)
 	predict_box := container.NewHSplit(predict_content, max)
 
-	P.TableItems = container.NewVBox(
+	P.DApp = container.NewVBox(
 		labelColorBlack(predict_label),
 		predict_box)
 
@@ -777,7 +764,7 @@ func placePredict() *fyne.Container {
 		}
 	}()
 
-	return P.TableItems
+	return P.DApp
 }
 
 // dReams dSports tab layout
@@ -939,76 +926,23 @@ func placeSports() *fyne.Container {
 	sports_label := container.NewHBox(S.LeftLabel, layout.NewSpacer(), S.RightLabel)
 	sports_box := container.NewHSplit(sports_left, max)
 
-	S.TableItems = container.NewVBox(
+	S.DApp = container.NewVBox(
 		labelColorBlack(sports_label),
 		sports_box)
 
-	return S.TableItems
-}
-
-// Iluma tab objects
-func placeIluma() *fyne.Container {
-	var first, second, third bool
-	var display int
-	img := canvas.NewImageFromResource(bundle.ResourceIluma82Png)
-	intro := widget.NewLabel(iluma_intro)
-	scroll := container.NewScroll(intro)
-
-	cont := container.NewGridWithColumns(2, scroll, img)
-	max := container.NewMax(menu.Alpha120, cont)
-
-	scroll.OnScrolled = func(p fyne.Position) {
-		if p.Y <= 400 {
-			second = false
-			third = false
-			display = 1
-		} else if p.Y >= 400 && p.Y <= 800 {
-			first = false
-			third = false
-			display = 2
-		} else if p.Y >= 800 {
-			first = false
-			second = false
-			display = 3
-		}
-
-		switch display {
-		case 1:
-			if !first {
-				cont.Objects[1] = canvas.NewImageFromResource(bundle.ResourceIluma82Png)
-				cont.Refresh()
-				first = true
-			}
-		case 2:
-			if !second {
-				cont.Objects[1] = canvas.NewImageFromResource(bundle.ResourceIluma80Png)
-				cont.Refresh()
-				second = true
-			}
-		case 3:
-			if !third {
-				cont.Objects[1] = canvas.NewImageFromResource(bundle.ResourceIluma83Png)
-				cont.Refresh()
-				third = true
-			}
-		default:
-
-		}
-	}
-
-	return max
+	return S.DApp
 }
 
 // dReams Tarot tab layout
 func placeTarot() *fyne.Container {
 	tarot_label := container.NewHBox(T.LeftLabel, layout.NewSpacer(), T.RightLabel)
 
-	T.TableItems = container.NewBorder(
+	T.DApp = container.NewBorder(
 		labelColorBlack(tarot_label),
 		nil,
 		nil,
 		nil,
 		tarot.TarotCardBox())
 
-	return T.TableItems
+	return T.DApp
 }

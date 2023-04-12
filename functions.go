@@ -127,7 +127,7 @@ func init() {
 	dReams.os = runtime.GOOS
 	prediction.SetPrintColors(dReams.os)
 
-	c := make(chan os.Signal)
+	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-c
@@ -305,8 +305,7 @@ func showBaccCards() *fyne.Container {
 
 	content := *container.NewWithoutLayout(
 		PlayerCards(w, BaccSuit(rpc.Bacc.P_card1), BaccSuit(rpc.Bacc.P_card2), BaccSuit(drawP)),
-		BankerCards(w, BaccSuit(rpc.Bacc.B_card1), BaccSuit(rpc.Bacc.B_card2), BaccSuit(drawB)),
-	)
+		BankerCards(w, BaccSuit(rpc.Bacc.B_card1), BaccSuit(rpc.Bacc.B_card2), BaccSuit(drawB)))
 
 	rpc.Bacc.Display = true
 	baccarat.BaccBuffer(false)
@@ -761,34 +760,34 @@ func HolderoRefresh() {
 
 	go func() {
 		refreshHolderoPlayers()
-		H.TableItems.Refresh()
+		H.DApp.Refresh()
 	}()
 }
 
 // Refresh Holdero player names and avatars
 func refreshHolderoPlayers() {
-	H.TableContent.Objects[0] = holdero.HolderoTable(bundle.ResourcePokerTablePng)
-	H.TableContent.Objects[0].Refresh()
+	H.Back.Objects[0] = holdero.HolderoTable(bundle.ResourcePokerTablePng)
+	H.Back.Objects[0].Refresh()
 
-	H.TableContent.Objects[1] = holdero.Player1_label(bundle.ResourceUnknownAvatarPng, bundle.ResourceAvatarFramePng, bundle.ResourceTurnFramePng)
-	H.TableContent.Objects[1].Refresh()
+	H.Back.Objects[1] = holdero.Player1_label(bundle.ResourceUnknownAvatarPng, bundle.ResourceAvatarFramePng, bundle.ResourceTurnFramePng)
+	H.Back.Objects[1].Refresh()
 
-	H.TableContent.Objects[2] = holdero.Player2_label(bundle.ResourceUnknownAvatarPng, bundle.ResourceAvatarFramePng, bundle.ResourceTurnFramePng)
-	H.TableContent.Objects[2].Refresh()
+	H.Back.Objects[2] = holdero.Player2_label(bundle.ResourceUnknownAvatarPng, bundle.ResourceAvatarFramePng, bundle.ResourceTurnFramePng)
+	H.Back.Objects[2].Refresh()
 
-	H.TableContent.Objects[3] = holdero.Player3_label(bundle.ResourceUnknownAvatarPng, bundle.ResourceAvatarFramePng, bundle.ResourceTurnFramePng)
-	H.TableContent.Objects[3].Refresh()
+	H.Back.Objects[3] = holdero.Player3_label(bundle.ResourceUnknownAvatarPng, bundle.ResourceAvatarFramePng, bundle.ResourceTurnFramePng)
+	H.Back.Objects[3].Refresh()
 
-	H.TableContent.Objects[4] = holdero.Player4_label(bundle.ResourceUnknownAvatarPng, bundle.ResourceAvatarFramePng, bundle.ResourceTurnFramePng)
-	H.TableContent.Objects[4].Refresh()
+	H.Back.Objects[4] = holdero.Player4_label(bundle.ResourceUnknownAvatarPng, bundle.ResourceAvatarFramePng, bundle.ResourceTurnFramePng)
+	H.Back.Objects[4].Refresh()
 
-	H.TableContent.Objects[5] = holdero.Player5_label(bundle.ResourceUnknownAvatarPng, bundle.ResourceAvatarFramePng, bundle.ResourceTurnFramePng)
-	H.TableContent.Objects[5].Refresh()
+	H.Back.Objects[5] = holdero.Player5_label(bundle.ResourceUnknownAvatarPng, bundle.ResourceAvatarFramePng, bundle.ResourceTurnFramePng)
+	H.Back.Objects[5].Refresh()
 
-	H.TableContent.Objects[6] = holdero.Player6_label(bundle.ResourceUnknownAvatarPng, bundle.ResourceAvatarFramePng, bundle.ResourceTurnFramePng)
-	H.TableContent.Objects[6].Refresh()
+	H.Back.Objects[6] = holdero.Player6_label(bundle.ResourceUnknownAvatarPng, bundle.ResourceAvatarFramePng, bundle.ResourceTurnFramePng)
+	H.Back.Objects[6].Refresh()
 
-	H.TableContent.Refresh()
+	H.Back.Refresh()
 }
 
 // Reveal key notification and display
@@ -811,24 +810,22 @@ func BaccRefresh() {
 	B.RightLabel.SetText("dReams Balance: " + rpc.Display.Token_balance + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
 
 	if !rpc.Bacc.Display {
-		B.CardsContent = *container.NewWithoutLayout(clearBaccCards())
+		B.Front.Objects[0] = clearBaccCards()
 		rpc.FetchBaccHand(rpc.Bacc.Last)
 		if rpc.Bacc.Found {
-			B.CardsContent = *container.NewWithoutLayout(showBaccCards())
+			B.Front.Objects[0] = showBaccCards()
 		}
+		B.Front.Objects[0].Refresh()
 	}
 
 	if rpc.Wallet.Height > rpc.Bacc.CHeight+3 {
 		baccarat.BaccBuffer(false)
 	}
 
-	B.TableContent = *container.NewWithoutLayout(
-		baccarat.BaccTable(bundle.ResourceBaccTablePng),
-		baccarat.BaccResult(rpc.Display.BaccRes),
-	)
+	B.Back.Objects[1] = baccarat.BaccResult(rpc.Display.BaccRes)
+	B.Back.Objects[1].Refresh()
 
-	B.TableContent.Refresh()
-	B.TableItems.Refresh()
+	B.DApp.Refresh()
 
 	if rpc.Bacc.Found && !rpc.Bacc.Notified {
 		if !isWindows() {
@@ -894,7 +891,7 @@ func TarotRefresh() {
 		tarot.TarotBuffer(false)
 	}
 
-	T.TableItems.Refresh()
+	T.DApp.Refresh()
 
 	if rpc.Tarot.Found && !rpc.Tarot.Notified {
 		if !isWindows() {

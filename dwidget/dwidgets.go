@@ -16,6 +16,18 @@ import (
 	"github.com/SixofClubsss/dReams/rpc"
 )
 
+// Main dReams dApp content struct
+type DreamsItems struct {
+	LeftLabel  *widget.Label
+	RightLabel *widget.Label
+	TopLabel   *widget.Label
+
+	Back    fyne.Container
+	Front   fyne.Container
+	Actions fyne.Container
+	DApp    *fyne.Container
+}
+
 type TenthAmt struct {
 	xwidget.NumericalEntry
 	Prefix string

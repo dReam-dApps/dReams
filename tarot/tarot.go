@@ -28,6 +28,9 @@ type tarot struct {
 	Open    bool
 }
 
+//go:embed iluma/iluma.txt
+var iluma_intro string
+
 var Iluma tarot
 
 // Tarot object buffer when action triggered
@@ -257,6 +260,60 @@ func IlumaDialog(card int, text string, reset fyne.Container) *fyne.Container {
 	reset_button.Importance = widget.LowImportance
 
 	return container.NewMax(reset_button, scroll)
+}
+
+// Iluma tab objects
+func PlaceIluma() *fyne.Container {
+	var first, second, third bool
+	var display int
+	img := canvas.NewImageFromResource(bundle.ResourceIluma82Png)
+	intro := widget.NewLabel(iluma_intro)
+	scroll := container.NewScroll(intro)
+
+	alpha := canvas.NewRectangle(color.RGBA{0, 0, 0, 120})
+	cont := container.NewGridWithColumns(2, scroll, img)
+
+	scroll.OnScrolled = func(p fyne.Position) {
+		if p.Y <= 400 {
+			second = false
+			third = false
+			display = 1
+		} else if p.Y >= 400 && p.Y <= 800 {
+			first = false
+			third = false
+			display = 2
+		} else if p.Y >= 800 {
+			first = false
+			second = false
+			display = 3
+		}
+
+		switch display {
+		case 1:
+			if !first {
+				cont.Objects[1] = canvas.NewImageFromResource(bundle.ResourceIluma82Png)
+				cont.Refresh()
+				first = true
+			}
+		case 2:
+			if !second {
+				cont.Objects[1] = canvas.NewImageFromResource(bundle.ResourceIluma80Png)
+				cont.Refresh()
+				second = true
+			}
+		case 3:
+			if !third {
+				cont.Objects[1] = canvas.NewImageFromResource(bundle.ResourceIluma83Png)
+				cont.Refresh()
+				third = true
+			}
+		default:
+
+		}
+	}
+
+	return container.NewMax(alpha, cont)
+
 }
 
 //go:embed iluma/1.txt
