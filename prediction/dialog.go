@@ -361,9 +361,10 @@ func serviceOpts(window fyne.Window) fyne.CanvasObject {
 			if txid.Validate() == nil {
 				e := rpc.GetWalletTx(txid.Text)
 				if e != nil {
-					db := boltDB()
-					defer db.Close()
-					deleteTx("BET", db, *e)
+					if db := boltDB(); db != nil {
+						defer db.Close()
+						deleteTx("BET", db, *e)
+					}
 				}
 			}
 		} else {
@@ -376,9 +377,10 @@ func serviceOpts(window fyne.Window) fyne.CanvasObject {
 			if txid.Validate() == nil {
 				e := rpc.GetWalletTx(txid.Text)
 				if e != nil {
-					db := boltDB()
-					defer db.Close()
-					storeTx("BET", "done", db, *e)
+					if db := boltDB(); db != nil {
+						defer db.Close()
+						storeTx("BET", "done", db, *e)
+					}
 				}
 			}
 		} else {
