@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"image/color"
 	"log"
 	"math"
 	"os"
@@ -13,42 +12,15 @@ import (
 	"strings"
 
 	"github.com/SixofClubsss/dReams/bundle"
-	"github.com/SixofClubsss/dReams/dwidget"
 	"github.com/SixofClubsss/dReams/rpc"
 	dero "github.com/deroproject/derohe/rpc"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/data/validation"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 )
-
-type assetObject struct {
-	Dreams_bal    *canvas.Text
-	Dero_bal      *canvas.Text
-	Dero_price    *canvas.Text
-	Wall_height   *canvas.Text
-	Daem_height   *canvas.Text
-	Gnomes_height *canvas.Text
-	Gnomes_sync   *canvas.Text
-	Gnomes_index  *canvas.Text
-	Index_entry   *widget.Entry
-	Index_button  *widget.Button
-	Index_search  *widget.Button
-	Asset_list    *widget.List
-	Assets        []string
-	Asset_map     map[string]string
-	Name          *canvas.Text
-	Collection    *canvas.Text
-	Descrption    *canvas.Text
-	Icon          canvas.Image
-	Stats_box     fyne.Container
-	Header_box    fyne.Container
-}
-
-var Assets assetObject
 
 // dReams card face selection object for all games
 //   - Sets shared face url on selected
@@ -217,7 +189,7 @@ func ThemeSelect() fyne.Widget {
 
 // dReams app avatar selection object
 //   - Sets shared avatar url on selected
-func AvatarSelect() fyne.Widget {
+func AvatarSelect(asset_map map[string]string) fyne.Widget {
 	options := []string{"None"}
 	Settings.AvatarSelect = widget.NewSelect(options, func(s string) {
 		switch Settings.AvatarSelect.SelectedIndex() {
@@ -228,6 +200,8 @@ func AvatarSelect() fyne.Widget {
 		default:
 			Settings.Avatar = s
 		}
+
+		asset_info := ValidAsset(asset_map[s])
 		check := strings.Trim(s, " #0123456789")
 		if check == "DBC" {
 			Settings.AvatarUrl = "https://raw.githubusercontent.com/Azylem/" + s + "/main/" + s + ".PNG"
@@ -240,13 +214,12 @@ func AvatarSelect() fyne.Widget {
 		} else if check == "Dero Seals" {
 			seal := strings.Trim(s, "Dero Sals#")
 			Settings.AvatarUrl = "https://ipfs.io/ipfs/QmP3HnzWpiaBA6ZE8c3dy5ExeG7hnYjSqkNfVbeVW5iEp6/low/" + seal + ".jpg"
-		} else if ValidAgent(s) {
-			agent := getAgentNumber(Assets.Asset_map[s])
+		} else if asset_info {
+			agent := getAgentNumber(asset_map[s])
 			if agent >= 0 && agent < 172 {
 				Settings.AvatarUrl = "https://ipfs.io/ipfs/QmaRHXcQwbFdUAvwbjgpDtr5kwGiNpkCM2eDBzAbvhD7wh/low/" + strconv.Itoa(agent) + ".jpg"
 			} else if agent < 1200 {
 				Settings.AvatarUrl = "https://ipfs.io/ipfs/QmQQyKoE9qDnzybeDCXhyMhwQcPmLaVy3AyYAzzC2zMauW/low/" + strconv.Itoa(agent) + ".jpg"
-
 			}
 		} else if s == "None" {
 			Settings.AvatarUrl = ""
@@ -258,12 +231,11 @@ func AvatarSelect() fyne.Widget {
 	return Settings.AvatarSelect
 }
 
-// Confirm valid A-Team agent number
-func ValidAgent(s string) bool {
-	if Assets.Asset_map[s] != "" && len(Assets.Asset_map[s]) == 64 {
+// Confirm if asset map is valid
+func ValidAsset(s string) bool {
+	if s != "" && len(s) == 64 {
 		return true
 	}
-
 	return false
 }
 
@@ -365,53 +337,8 @@ func SharedDecks() fyne.Widget {
 	return Settings.SharedOn
 }
 
-// dReams-Dero swap objects and menu chain display content
-func DreamsEntry() fyne.CanvasObject {
-	Swap.DEntry = dwidget.WholeAmtEntry("dReams: ")
-	Swap.DEntry.PlaceHolder = "dReams:"
-	Swap.DEntry.Validator = validation.NewRegexp(`^(dReams: )[^0]\d{0,}$`, "Format Not Valid")
-	Swap.DEntry.OnChanged = func(s string) {
-		if Swap.DEntry.Validate() != nil {
-			Swap.DEntry.SetText("dReams: 1")
-		}
-	}
-
-	Assets.Gnomes_sync = canvas.NewText("", color.RGBA{31, 150, 200, 210})
-	Assets.Gnomes_height = canvas.NewText(" Gnomon Height: ", color.White)
-	Assets.Daem_height = canvas.NewText(" Daemon Height: ", color.White)
-	Assets.Wall_height = canvas.NewText(" Wallet Height: ", color.White)
-	Assets.Dreams_bal = canvas.NewText(" dReams Balance: ", color.White)
-	Assets.Dero_bal = canvas.NewText(" Dero Balance: ", color.White)
-	price := getOgre("DERO-USDT")
-	Assets.Dero_price = canvas.NewText(" Dero Price: $"+price, color.White)
-
-	Assets.Gnomes_sync.TextSize = 18
-	Assets.Gnomes_height.TextSize = 18
-	Assets.Daem_height.TextSize = 18
-	Assets.Wall_height.TextSize = 18
-	Assets.Dreams_bal.TextSize = 18
-	Assets.Dero_bal.TextSize = 18
-	Assets.Dero_price.TextSize = 18
-	exLabel := canvas.NewText(" 1 Dero = 333 dReams", color.White)
-	exLabel.TextSize = 18
-
-	Swap.DEntry.SetText("dReams: 0")
-	Swap.DEntry.Hide()
-
-	box := *container.NewVBox(
-		Assets.Gnomes_sync,
-		Assets.Gnomes_height,
-		Assets.Daem_height,
-		Assets.Wall_height,
-		Assets.Dreams_bal,
-		Assets.Dero_bal,
-		Assets.Dero_price, exLabel,
-		Swap.DEntry)
-
-	return &box
-}
-
 // Tournament deposit button
+//   - Pass main window obj and tabs to reset to
 func TournamentButton(obj []fyne.CanvasObject, tabs *container.AppTabs) fyne.CanvasObject {
 	Table.Tournament = widget.NewButton("Tournament", func() {
 		obj[1] = tourneyConfirm(obj, tabs)
@@ -424,6 +351,9 @@ func TournamentButton(obj []fyne.CanvasObject, tabs *container.AppTabs) fyne.Can
 }
 
 // Confirmation for dReams-Dero swap
+//   - c defines swap for Dero or dReams
+//   - amt of Dero in atomic units
+//   - Pass main window obj to reset to
 func DreamsConfirm(c, amt int, obj *container.Split, reset fyne.CanvasObject) fyne.CanvasObject {
 	var text string
 	dero := float64(amt) / 333
@@ -460,14 +390,14 @@ func DreamsConfirm(c, amt int, obj *container.Split, reset fyne.CanvasObject) fy
 		obj.Trailing.(*fyne.Container).Objects[1].Refresh()
 	})
 
-	alpha := container.NewMax(canvas.NewRectangle(color.RGBA{0, 0, 0, 120}))
 	buttons := container.NewAdaptiveGrid(2, confirm_button, cancel_button)
 	content := container.NewVBox(layout.NewSpacer(), label, layout.NewSpacer(), buttons)
 
-	return container.NewMax(alpha, content)
+	return container.NewMax(content)
 }
 
 // Holdero tournament chip deposit confirmation
+//   - Pass main window obj and tabs to reset to
 func tourneyConfirm(obj []fyne.CanvasObject, tabs *container.AppTabs) fyne.CanvasObject {
 	bal := rpc.TokenBalance(rpc.TourneySCID)
 	balance := float64(bal) / 100000
@@ -491,86 +421,8 @@ func tourneyConfirm(obj []fyne.CanvasObject, tabs *container.AppTabs) fyne.Canva
 
 	})
 
-	alpha := container.NewMax(canvas.NewRectangle(color.RGBA{0, 0, 0, 120}))
 	buttons := container.NewAdaptiveGrid(2, confirm_button, cancel_button)
 	content := container.NewVBox(layout.NewSpacer(), label, layout.NewSpacer(), buttons)
 
-	return container.NewMax(alpha, content)
-}
-
-// Icon image for Holdero tables and asset viewing
-func IconImg(res fyne.Resource) *fyne.Container {
-	Assets.Icon.SetMinSize(fyne.NewSize(100, 100))
-	Assets.Icon.Resize(fyne.NewSize(94, 94))
-	Assets.Icon.Move(fyne.NewPos(8, 3))
-
-	frame := canvas.NewImageFromResource(res)
-	frame.Resize(fyne.NewSize(100, 100))
-	frame.Move(fyne.NewPos(5, 0))
-
-	cont := container.NewWithoutLayout(&Assets.Icon, frame)
-
-	return cont
-}
-
-// Display for owned asset info
-func AssetStats() fyne.CanvasObject {
-	Assets.Collection = canvas.NewText(" Collection: ", color.White)
-	Assets.Name = canvas.NewText(" Name: ", color.White)
-
-	Assets.Name.TextSize = 18
-	Assets.Collection.TextSize = 18
-
-	Assets.Stats_box = *container.NewVBox(Assets.Collection, Assets.Name, IconImg(nil))
-
-	return &Assets.Stats_box
-}
-
-// Set SCID header objects
-func SetHeaderItems(obj []fyne.CanvasObject, tabs *container.AppTabs) fyne.CanvasObject {
-	name_entry := widget.NewEntry()
-	name_entry.PlaceHolder = "Name:"
-	descr_entry := widget.NewEntry()
-	descr_entry.PlaceHolder = "Description"
-	icon_entry := widget.NewEntry()
-	icon_entry.PlaceHolder = "Icon:"
-
-	button := widget.NewButton("Set Headers", func() {
-		scid := Assets.Index_entry.Text
-		if len(scid) == 64 && name_entry.Text != "dReam Tables" {
-			obj[1] = setHeaderConfirm(name_entry.Text, descr_entry.Text, icon_entry.Text, scid, obj, tabs)
-			obj[1].Refresh()
-		}
-	})
-
-	contr := container.NewVBox(name_entry, descr_entry, icon_entry, button)
-	Assets.Header_box = *container.NewAdaptiveGrid(2, contr)
-	Assets.Header_box.Hide()
-
-	return &Assets.Header_box
-}
-
-// Confirmation for setting SCID headers
-func setHeaderConfirm(name, desc, icon, scid string, obj []fyne.CanvasObject, reset *container.AppTabs) fyne.CanvasObject {
-	label := widget.NewLabel("Headers for SCID:\n\n" + scid + "\n\nName: " + name + "\n\nDescription: " + desc + "\n\nIcon: " + icon)
-	label.Wrapping = fyne.TextWrapWord
-	label.Alignment = fyne.TextAlignCenter
-
-	confirm_button := widget.NewButton("Confirm", func() {
-		rpc.SetHeaders(name, desc, icon, scid)
-		obj[1] = reset
-		obj[1].Refresh()
-	})
-
-	cancel_button := widget.NewButton("Cancel", func() {
-		obj[1] = reset
-		obj[1].Refresh()
-
-	})
-
-	alpha := container.NewMax(canvas.NewRectangle(color.RGBA{0, 0, 0, 120}))
-	buttons := container.NewAdaptiveGrid(2, confirm_button, cancel_button)
-	content := container.NewVBox(layout.NewSpacer(), label, layout.NewSpacer(), buttons)
-
-	return container.NewMax(alpha, content)
+	return container.NewMax(content)
 }

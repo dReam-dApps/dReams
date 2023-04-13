@@ -2,7 +2,6 @@ package dwidget
 
 import (
 	"fmt"
-	"image/color"
 	"strconv"
 	"strings"
 
@@ -13,6 +12,7 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 	xwidget "fyne.io/x/fyne/widget"
+	"github.com/SixofClubsss/dReams/bundle"
 	"github.com/SixofClubsss/dReams/rpc"
 )
 
@@ -166,7 +166,7 @@ func HorizontalEntries(tag string, offset int) *DeroRpcEntries {
 	}
 
 	button := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "confirm"), nil)
-	balance := *canvas.NewText(fmt.Sprintf("Balance: %.5f Dero", 0.0), color.White)
+	balance := *canvas.NewText(fmt.Sprintf("Balance: %.5f Dero", 0.0), bundle.TextColor)
 
 	control_check := *widget.NewCheck("", nil)
 	control_check.Disable()
@@ -235,7 +235,7 @@ func VerticleEntries(tag string, offset int) *DeroRpcEntries {
 	}
 
 	button := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "confirm"), nil)
-	balance := *canvas.NewText(fmt.Sprintf("Balance: %.5f Dero", 0.0), color.White)
+	balance := *canvas.NewText(fmt.Sprintf("Balance: %.5f Dero", 0.0), bundle.TextColor)
 
 	control_check := *widget.NewCheck("", nil)
 	control_check.Disable()

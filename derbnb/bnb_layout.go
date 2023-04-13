@@ -17,6 +17,7 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 	xwidget "fyne.io/x/fyne/widget"
+	"github.com/SixofClubsss/dReams/bundle"
 	"github.com/SixofClubsss/dReams/dwidget"
 	"github.com/SixofClubsss/dReams/holdero"
 	"github.com/SixofClubsss/dReams/menu"
@@ -115,8 +116,8 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 	image_cont := container.NewBorder(nil, nil, container.NewCenter(img_back), container.NewCenter(img_forward), image_box)
 
 	// request booking arrive and depart dates
-	arrive_canvas := canvas.NewText("Arriving:", color.White)
-	depart_canvas := canvas.NewText("Departing:", color.White)
+	arrive_canvas := canvas.NewText("Arriving:", bundle.TextColor)
+	depart_canvas := canvas.NewText("Departing:", bundle.TextColor)
 
 	arrive_reset := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "viewRefresh"), func() {
 		start_date = time.Time{}
@@ -159,8 +160,8 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 		layout1_top_split.SetOffset(0.76)
 		layout1_bottom_split.SetOffset(0.76)
 	} else {
-		layout1_top_split.SetOffset(0.66)
-		layout1_bottom_split.SetOffset(0.66)
+		layout1_top_split.SetOffset(0.70)
+		layout1_bottom_split.SetOffset(0.70)
 	}
 
 	layout1_split := container.NewVSplit(layout1_top_split, layout1_bottom_split)
@@ -510,7 +511,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 
 	confirm_action_cont := container.NewAdaptiveGrid(2, container.NewMax(confirm_action), cancel_action)
 	confirm_border = container.NewBorder(
-		container.NewCenter(canvas.NewText("Confirm", color.White)),
+		container.NewCenter(canvas.NewText("Confirm", bundle.TextColor)),
 		confirm_action_cont,
 		layout.NewSpacer(),
 		layout.NewSpacer(),
@@ -1226,7 +1227,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 		tab_bottom.SetMinSize(fyne.NewSize(157, 40))
 		tab_bottom_box := container.NewHBox(tab_bottom, layout.NewSpacer())
 		tab_bottom_bar := container.NewVBox(layout.NewSpacer(), tab_bottom_box)
-		max = container.NewMax(menu.Alpha150, tab_bottom_bar, tabs)
+		max = container.NewMax(bundle.Alpha150, tab_bottom_bar, tabs)
 	} else {
 		tag := "DerBnb"
 		connect_box = dwidget.HorizontalEntries(tag, 1)
@@ -1245,7 +1246,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 			}
 		}
 
-		max = container.NewMax(menu.Alpha150, tabs, container.NewVBox(layout.NewSpacer(), connect_box.Container))
+		max = container.NewMax(bundle.Alpha150, tabs, container.NewVBox(layout.NewSpacer(), connect_box.Container))
 	}
 
 	property_photos = make(map[string][]string)

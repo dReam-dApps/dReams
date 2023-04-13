@@ -102,28 +102,28 @@ func stringToInt64(s string) int64 {
 
 // Menu label when Gnomon starting
 func startLabel() {
-	holdero.Assets.Gnomes_sync.Text = (" Starting Gnomon")
-	holdero.Assets.Gnomes_sync.Refresh()
+	Assets.Gnomes_sync.Text = (" Starting Gnomon")
+	Assets.Gnomes_sync.Refresh()
 }
 
 // Menu label when Gomon scans wallet
 func checkLabel() {
-	holdero.Assets.Gnomes_sync.Text = (" Checking for Assets")
-	holdero.Assets.Gnomes_sync.Refresh()
+	Assets.Gnomes_sync.Text = (" Checking for Assets")
+	Assets.Gnomes_sync.Refresh()
 }
 
 // Menu label when Gnomon is closing
 func StopLabel() {
-	if holdero.Assets.Gnomes_sync != nil {
-		holdero.Assets.Gnomes_sync.Text = (" Putting Gnomon to Sleep")
-		holdero.Assets.Gnomes_sync.Refresh()
+	if Assets.Gnomes_sync != nil {
+		Assets.Gnomes_sync.Text = (" Putting Gnomon to Sleep")
+		Assets.Gnomes_sync.Refresh()
 	}
 }
 
 // Menu label when Gnomon is not running
 func SleepLabel() {
-	holdero.Assets.Gnomes_sync.Text = (" Gnomon is Sleeping")
-	holdero.Assets.Gnomes_sync.Refresh()
+	Assets.Gnomes_sync.Text = (" Gnomon is Sleeping")
+	Assets.Gnomes_sync.Refresh()
 }
 
 // dReams app status indicators for wallet, daemon and Gnomon
@@ -230,9 +230,9 @@ func StartIndicators() fyne.CanvasObject {
 	Control.Wallet_ind.AutoReverse = true
 	Control.Wallet_ind.Start()
 
-	d := canvas.NewText("D", color.White)
+	d := canvas.NewText("D", bundle.TextColor)
 	d.TextStyle.Bold = true
-	w := canvas.NewText("W", color.White)
+	w := canvas.NewText("W", bundle.TextColor)
 	w.TextStyle.Bold = true
 
 	hbox := container.NewHBox(
@@ -534,8 +534,8 @@ func GnomonState(windows, config bool) {
 					Gnomes.Syncing = true
 					go CheckBetContractOwners(contracts)
 					CreateTableList(Gnomes.Checked, contracts)
-					go CheckG45Assets(Gnomes.Checked, contracts)
-					go CheckAssets(Gnomes.Checked, contracts)
+					go CheckDreamsG45s(Gnomes.Checked, contracts)
+					go CheckDreamsNFAs(Gnomes.Checked, contracts)
 					CheckWalletNames(rpc.Wallet.Address)
 					if !windows {
 						go PopulateSports(contracts)
@@ -550,8 +550,8 @@ func GnomonState(windows, config bool) {
 			}
 		}
 
-		holdero.Assets.Stats_box = *container.NewVBox(holdero.Assets.Collection, holdero.Assets.Name, holdero.IconImg(bundle.ResourceAvatarFramePng))
-		holdero.Assets.Stats_box.Refresh()
+		Assets.Stats_box = *container.NewVBox(Assets.Collection, Assets.Name, IconImg(bundle.ResourceAvatarFramePng))
+		Assets.Stats_box.Refresh()
 		Poker.Stats_box = *container.NewVBox(Stats.Name, Stats.Desc, Stats.Version, Stats.Last, Stats.Seats, TableIcon(bundle.ResourceAvatarFramePng))
 		Poker.Stats_box.Refresh()
 
@@ -585,10 +585,10 @@ func searchIndex(scid string) {
 	}
 }
 
-// Check wallet for dReams NFA assets
+// Check wallet for dReams NFAs
 //   - Pass scids from db store, can be nil arg
 //   - Pass false gc for rechecks
-func CheckAssets(gc bool, scids map[string]string) {
+func CheckDreamsNFAs(gc bool, scids map[string]string) {
 	if Gnomes.Sync && !gc && !GnomonClosing() {
 		go checkLabel()
 		if scids == nil {
@@ -619,10 +619,45 @@ func CheckAssets(gc bool, scids map[string]string) {
 		holdero.Settings.BackSelect.Options = append(ld, holdero.Settings.BackSelect.Options...)
 		holdero.Settings.ThemeSelect.Options = append([]string{"Main"}, holdero.Settings.ThemeSelect.Options...)
 
-		holdero.Assets.Asset_list.Refresh()
+		sort.Strings(Assets.Assets)
+		Assets.Asset_list.Refresh()
 		holdero.DisableHolderoTools()
 	}
-	sort.Strings(holdero.Assets.Assets)
+}
+
+// Check wallet for all indexed NFAs
+//   - Pass scids from db store, can be nil arg
+//   - Pass false gc for rechecks
+func CheckAllNFAs(gc bool, scids map[string]string) {
+	if Gnomes.Sync && !gc && !GnomonClosing() {
+		if scids == nil {
+			scids = Gnomes.Indexer.Backend.GetAllOwnersAndSCIDs()
+		}
+		keys := make([]string, len(scids))
+
+		i := 0
+		assets := []string{}
+		for k := range scids {
+			if !rpc.Wallet.Connect || GnomonClosing() {
+				break
+			}
+
+			keys[i] = k
+			owner, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(keys[i], "owner", Gnomes.Indexer.ChainHeight, true)
+			header, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(keys[i], "nameHdr", Gnomes.Indexer.ChainHeight, true)
+			file, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(keys[i], "fileURL", Gnomes.Indexer.ChainHeight, true)
+			if owner != nil && header != nil && file != nil {
+				if owner[0] == rpc.Wallet.Address && ValidNfa(file[0]) {
+					assets = append(assets, header[0]+"   "+keys[i])
+				}
+			}
+			i++
+		}
+
+		sort.Strings(assets)
+		Assets.Assets = assets
+		Assets.Asset_list.Refresh()
+	}
 }
 
 // Scan all bet contracts to verify if owner
@@ -836,6 +871,7 @@ func ValidNfa(file string) bool {
 }
 
 // If wallet owns dReams NFA, populate for use in dReams
+//   - See games container in menu.PlaceAssets()
 func checkNFAOwner(scid string) {
 	if !GnomonClosing() {
 		owner, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "owner", Gnomes.Indexer.ChainHeight, true)
@@ -854,31 +890,31 @@ func checkNFAOwner(scid string) {
 					new_avatar := append(avatars, header[0])
 					holdero.Settings.AvatarSelect.Options = new_avatar
 					holdero.Settings.AvatarSelect.Refresh()
-					holdero.Assets.Assets = append(holdero.Assets.Assets, header[0]+"   "+scid)
+					Assets.Assets = append(Assets.Assets, header[0]+"   "+scid)
 				} else if check == "AZYPCB" || check == "SIXPCB" {
 					current := holdero.Settings.BackSelect.Options
 					new := append(current, header[0])
 					holdero.Settings.BackSelect.Options = new
 					holdero.Settings.BackSelect.Refresh()
-					holdero.Assets.Assets = append(holdero.Assets.Assets, header[0]+"   "+scid)
+					Assets.Assets = append(Assets.Assets, header[0]+"   "+scid)
 				} else if check == "AZYPC" || check == "SIXPC" {
 					current := holdero.Settings.FaceSelect.Options
 					new := append(current, header[0])
 					holdero.Settings.FaceSelect.Options = new
 					holdero.Settings.FaceSelect.Refresh()
-					holdero.Assets.Assets = append(holdero.Assets.Assets, header[0]+"   "+scid)
+					Assets.Assets = append(Assets.Assets, header[0]+"   "+scid)
 				} else if check == "DBC" {
 					current := holdero.Settings.AvatarSelect.Options
 					new := append(current, header[0])
 					holdero.Settings.AvatarSelect.Options = new
 					holdero.Settings.AvatarSelect.Refresh()
-					holdero.Assets.Assets = append(holdero.Assets.Assets, header[0]+"   "+scid)
+					Assets.Assets = append(Assets.Assets, header[0]+"   "+scid)
 				} else if check == "HighStrangeness" {
 					current_av := holdero.Settings.AvatarSelect.Options
 					new_av := append(current_av, header[0])
 					holdero.Settings.AvatarSelect.Options = new_av
 					holdero.Settings.AvatarSelect.Refresh()
-					holdero.Assets.Assets = append(holdero.Assets.Assets, header[0]+"   "+scid)
+					Assets.Assets = append(Assets.Assets, header[0]+"   "+scid)
 
 					var have_cards bool
 					for _, face := range holdero.Settings.FaceSelect.Options {
@@ -931,7 +967,7 @@ func checkNFAOwner(scid string) {
 	}
 }
 
-// Get owned asset info for display in asset tab
+// Get SCID info and update Asset content
 func GetOwnedAssetStats(scid string) {
 	if Gnomes.Init && !GnomonClosing() {
 		n, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "nameHdr", Gnomes.Indexer.LastIndexedHeight, true)
@@ -941,38 +977,38 @@ func GetOwnedAssetStats(scid string) {
 			i, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "iconURLHdr", Gnomes.Indexer.LastIndexedHeight, true)
 
 			if n != nil {
-				holdero.Assets.Name.Text = (" Name: " + n[0])
-				holdero.Assets.Name.Refresh()
+				Assets.Name.Text = (" Name: " + n[0])
+				Assets.Name.Refresh()
 				if !Control.list_open && !Control.send_open {
 					Control.List_button.Show()
 					Control.Send_asset.Show()
 				}
 
 			} else {
-				holdero.Assets.Name.Text = (" Name: ?")
-				holdero.Assets.Name.Refresh()
+				Assets.Name.Text = (" Name: ?")
+				Assets.Name.Refresh()
 			}
 
 			var a []string
 			if c != nil {
-				holdero.Assets.Collection.Text = (" Collection: " + c[0])
-				holdero.Assets.Collection.Refresh()
+				Assets.Collection.Text = (" Collection: " + c[0])
+				Assets.Collection.Refresh()
 				if c[0] == "High Strangeness" {
 					a, _ = Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "fileURL", Gnomes.Indexer.ChainHeight, true)
 				}
 			} else {
-				holdero.Assets.Collection.Text = (" Collection: ?")
-				holdero.Assets.Collection.Refresh()
+				Assets.Collection.Text = (" Collection: ?")
+				Assets.Collection.Refresh()
 			}
 
 			if i != nil {
 				if a != nil {
-					holdero.Assets.Icon, _ = holdero.DownloadFile(a[0], n[0])
+					Assets.Icon, _ = holdero.DownloadFile(a[0], n[0])
 				} else {
-					holdero.Assets.Icon, _ = holdero.DownloadFile(i[0], n[0])
+					Assets.Icon, _ = holdero.DownloadFile(i[0], n[0])
 				}
 			} else {
-				holdero.Assets.Icon = *canvas.NewImageFromImage(nil)
+				Assets.Icon = *canvas.NewImageFromImage(nil)
 			}
 
 		} else {
@@ -986,30 +1022,30 @@ func GetOwnedAssetStats(scid string) {
 					if err := json.Unmarshal([]byte(data[0]), &seal); err == nil {
 						check := strings.Trim(seal.Name, " #0123456789")
 						if check == "Dero Seals" {
-							holdero.Assets.Name.Text = (" Name: " + seal.Name)
-							holdero.Assets.Name.Refresh()
+							Assets.Name.Text = (" Name: " + seal.Name)
+							Assets.Name.Refresh()
 
-							holdero.Assets.Collection.Text = (" Collection: " + check)
-							holdero.Assets.Collection.Refresh()
+							Assets.Collection.Text = (" Collection: " + check)
+							Assets.Collection.Refresh()
 
 							number := strings.Trim(seal.Name, "DeroSals# ")
-							holdero.Assets.Icon, _ = holdero.DownloadFile("https://ipfs.io/ipfs/QmP3HnzWpiaBA6ZE8c3dy5ExeG7hnYjSqkNfVbeVW5iEp6/low/"+number+".jpg", seal.Name)
+							Assets.Icon, _ = holdero.DownloadFile("https://ipfs.io/ipfs/QmP3HnzWpiaBA6ZE8c3dy5ExeG7hnYjSqkNfVbeVW5iEp6/low/"+number+".jpg", seal.Name)
 						}
 					}
 				} else if minter[0] == holdero.ATeam_mint && coll[0] == holdero.ATeam_coll {
 					var agent holdero.Agent
 					if err := json.Unmarshal([]byte(data[0]), &agent); err == nil {
-						holdero.Assets.Name.Text = (" Name: " + agent.Name)
-						holdero.Assets.Name.Refresh()
+						Assets.Name.Text = (" Name: " + agent.Name)
+						Assets.Name.Refresh()
 
-						holdero.Assets.Collection.Text = (" Collection: Dero A-Team")
-						holdero.Assets.Collection.Refresh()
+						Assets.Collection.Text = (" Collection: Dero A-Team")
+						Assets.Collection.Refresh()
 
 						number := strconv.Itoa(agent.ID)
 						if agent.ID < 172 {
-							holdero.Assets.Icon, _ = holdero.DownloadFile("https://ipfs.io/ipfs/QmaRHXcQwbFdUAvwbjgpDtr5kwGiNpkCM2eDBzAbvhD7wh/low/"+number+".jpg", agent.Name)
+							Assets.Icon, _ = holdero.DownloadFile("https://ipfs.io/ipfs/QmaRHXcQwbFdUAvwbjgpDtr5kwGiNpkCM2eDBzAbvhD7wh/low/"+number+".jpg", agent.Name)
 						} else {
-							holdero.Assets.Icon, _ = holdero.DownloadFile("https://ipfs.io/ipfs/QmQQyKoE9qDnzybeDCXhyMhwQcPmLaVy3AyYAzzC2zMauW/low/"+number+".jpg", agent.Name)
+							Assets.Icon, _ = holdero.DownloadFile("https://ipfs.io/ipfs/QmQQyKoE9qDnzybeDCXhyMhwQcPmLaVy3AyYAzzC2zMauW/low/"+number+".jpg", agent.Name)
 						}
 					}
 				}
@@ -1286,7 +1322,7 @@ func CheckWalletNames(value string) {
 // Check if wallet owns in game G45 asset
 //   - Pass g45s from db store, can be nil arg
 //   - Pass false gc for rechecks
-func CheckG45Assets(gc bool, g45s map[string]string) {
+func CheckDreamsG45s(gc bool, g45s map[string]string) {
 	if Gnomes.Init && Gnomes.Sync && !gc && !GnomonClosing() {
 		if g45s == nil {
 			g45s = Gnomes.Indexer.Backend.GetAllOwnersAndSCIDs()
@@ -1306,7 +1342,7 @@ func CheckG45Assets(gc bool, g45s map[string]string) {
 					if minter[0] == holdero.Seals_mint && coll[0] == holdero.Seals_coll {
 						var seal holdero.Seal
 						if err := json.Unmarshal([]byte(data[0]), &seal); err == nil {
-							holdero.Assets.Assets = append(holdero.Assets.Assets, seal.Name+"   "+scid)
+							Assets.Assets = append(Assets.Assets, seal.Name+"   "+scid)
 							current := holdero.Settings.AvatarSelect.Options
 							new := append(current, seal.Name)
 							holdero.Settings.AvatarSelect.Options = new
@@ -1315,8 +1351,8 @@ func CheckG45Assets(gc bool, g45s map[string]string) {
 					} else if minter[0] == holdero.ATeam_mint && coll[0] == holdero.ATeam_coll {
 						var agent holdero.Agent
 						if err := json.Unmarshal([]byte(data[0]), &agent); err == nil {
-							holdero.Assets.Asset_map[agent.Name] = scid
-							holdero.Assets.Assets = append(holdero.Assets.Assets, agent.Name+"   "+scid)
+							Assets.Asset_map[agent.Name] = scid
+							Assets.Assets = append(Assets.Assets, agent.Name+"   "+scid)
 							current := holdero.Settings.AvatarSelect.Options
 							new := append(current, agent.Name)
 							holdero.Settings.AvatarSelect.Options = new
@@ -1328,7 +1364,7 @@ func CheckG45Assets(gc bool, g45s map[string]string) {
 		}
 		sort.Strings(holdero.Settings.AvatarSelect.Options)
 		holdero.Settings.AvatarSelect.Options = append([]string{"None"}, holdero.Settings.AvatarSelect.Options...)
-		holdero.Assets.Asset_list.Refresh()
+		Assets.Asset_list.Refresh()
 	}
 }
 
@@ -1497,54 +1533,62 @@ func isDreamsNfaCollection(check string) bool {
 }
 
 // Check if NFA SCID is listed for auction
-func checkNfaAuctionListing(scid string) string {
+//   - Market.Filter false for all NFA listings
+func checkNfaAuctionListing(scid string) (asset string) {
 	if !GnomonClosing() {
 		listType, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "listType", Gnomes.Indexer.ChainHeight, true)
 		header, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "nameHdr", Gnomes.Indexer.ChainHeight, true)
 		coll, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "collection", Gnomes.Indexer.ChainHeight, true)
 		desc, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "descrHdr", Gnomes.Indexer.ChainHeight, true)
 		if listType != nil && header != nil {
-			check := strings.Trim(header[0], "0123456789")
-			if isDreamsNfaCollection(check) {
-				switch listType[0] {
-				case "auction":
-					return coll[0] + "   " + header[0] + "   " + desc[0] + "   " + scid
-				default:
-					return ""
+			if Market.Filter {
+				check := strings.Trim(header[0], "0123456789")
+				if isDreamsNfaCollection(check) {
+					if listType[0] == "auction" {
+						asset = coll[0] + "   " + header[0] + "   " + desc[0] + "   " + scid
+					}
+				}
+			} else {
+				if listType[0] == "auction" {
+					asset = coll[0] + "   " + header[0] + "   " + desc[0] + "   " + scid
 				}
 			}
 		}
 	}
 
-	return ""
+	return
 }
 
 // Check if NFA SCID is listed as buy now
-func checkNfaBuyListing(scid string) string {
+//   - Market.Filter false for all NFA listings
+func checkNfaBuyListing(scid string) (asset string) {
 	if !GnomonClosing() {
 		listType, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "listType", Gnomes.Indexer.ChainHeight, true)
 		header, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "nameHdr", Gnomes.Indexer.ChainHeight, true)
 		coll, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "collection", Gnomes.Indexer.ChainHeight, true)
 		desc, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "descrHdr", Gnomes.Indexer.ChainHeight, true)
 		if listType != nil && header != nil {
-			check := strings.Trim(header[0], "0123456789")
-			if isDreamsNfaCollection(check) {
-				switch listType[0] {
-				case "sale":
-					return coll[0] + "   " + header[0] + "   " + desc[0] + "   " + scid
-				default:
-					return ""
+			if Market.Filter {
+				check := strings.Trim(header[0], "0123456789")
+				if isDreamsNfaCollection(check) {
+					if listType[0] == "sale" {
+						asset = coll[0] + "   " + header[0] + "   " + desc[0] + "   " + scid
+					}
+				}
+			} else {
+				if listType[0] == "sale" {
+					asset = coll[0] + "   " + header[0] + "   " + desc[0] + "   " + scid
 				}
 			}
 		}
 	}
 
-	return ""
+	return
 }
 
 // Get NFA image files
 func GetNfaImages(scid string) {
-	if len(scid) == 64 {
+	if !GnomonClosing() && len(scid) == 64 {
 		name, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "nameHdr", Gnomes.Indexer.ChainHeight, true)
 		icon, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "iconURLHdr", Gnomes.Indexer.LastIndexedHeight, true)
 		cover, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "coverURL", Gnomes.Indexer.LastIndexedHeight, true)
@@ -1560,7 +1604,7 @@ func GetNfaImages(scid string) {
 
 // Create auction tab info for current asset
 func GetAuctionDetails(scid string) {
-	if len(scid) == 64 {
+	if !GnomonClosing() && len(scid) == 64 {
 		name, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "nameHdr", Gnomes.Indexer.ChainHeight, true)
 		collection, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "collection", Gnomes.Indexer.ChainHeight, true)
 		description, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "descrHdr", Gnomes.Indexer.ChainHeight, true)
@@ -1692,7 +1736,7 @@ func GetAuctionDetails(scid string) {
 
 // Create buy now tab info for current asset
 func GetBuyNowDetails(scid string) {
-	if len(scid) == 64 {
+	if !GnomonClosing() && len(scid) == 64 {
 		name, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "nameHdr", Gnomes.Indexer.ChainHeight, true)
 		collection, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "collection", Gnomes.Indexer.ChainHeight, true)
 		description, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "descrHdr", Gnomes.Indexer.ChainHeight, true)

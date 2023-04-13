@@ -2,7 +2,6 @@ package menu
 
 import (
 	"fmt"
-	"image/color"
 	"log"
 	"math"
 	"sort"
@@ -90,7 +89,7 @@ var Control menuObjects
 func CheckConnection() {
 	if rpc.Daemon.Connect {
 		Control.daemon_check.SetChecked(true)
-		disableIndex(false)
+		DisableIndexControls(false)
 	} else {
 		Control.daemon_check.SetChecked(false)
 		Control.holdero_check.SetChecked(false)
@@ -103,7 +102,7 @@ func CheckConnection() {
 		disableOwnerControls(true)
 		disableBaccActions(true)
 		disableActions(true)
-		disableIndex(true)
+		DisableIndexControls(true)
 		Gnomes.Init = false
 		Gnomes.Checked = false
 	}
@@ -472,10 +471,9 @@ func RateConfirm(scid string, tab *container.AppTabs, reset fyne.CanvasObject) f
 	right := container.NewVBox(cancel)
 	buttons := container.NewAdaptiveGrid(2, left, right)
 
-	alpha := canvas.NewRectangle(color.RGBA{0, 0, 0, 120})
 	content := container.NewVBox(layout.NewSpacer(), label, rating_label, fee_label, layout.NewSpacer(), rate_cont, layout.NewSpacer(), buttons)
 
-	return container.NewMax(alpha, content)
+	return container.NewMax(content)
 
 }
 
@@ -730,11 +728,11 @@ func TableIcon(r fyne.Resource) *fyne.Container {
 
 // Holdero table stats display objects
 func TableStats() fyne.CanvasObject {
-	Stats.Name = canvas.NewText(" Name: ", color.White)
-	Stats.Desc = canvas.NewText(" Description: ", color.White)
-	Stats.Version = canvas.NewText(" Table Version: ", color.White)
-	Stats.Last = canvas.NewText(" Last Move: ", color.White)
-	Stats.Seats = canvas.NewText(" Table Closed ", color.White)
+	Stats.Name = canvas.NewText(" Name: ", bundle.TextColor)
+	Stats.Desc = canvas.NewText(" Description: ", bundle.TextColor)
+	Stats.Version = canvas.NewText(" Table Version: ", bundle.TextColor)
+	Stats.Last = canvas.NewText(" Last Move: ", bundle.TextColor)
+	Stats.Seats = canvas.NewText(" Table Closed ", bundle.TextColor)
 
 	Stats.Name.TextSize = 18
 	Stats.Desc.TextSize = 18
@@ -769,7 +767,7 @@ func TimeOutConfirm(obj []fyne.CanvasObject, reset *container.AppTabs) fyne.Canv
 	options := container.NewAdaptiveGrid(2, confirm_button, cancel_button)
 	content := container.NewBorder(nil, options, nil, nil, display)
 
-	return container.NewMax(Alpha120, content)
+	return container.NewMax(bundle.Alpha120, content)
 }
 
 // Confirmation for Holdero contract installs
@@ -860,7 +858,7 @@ Confirm`
 
 	content := container.NewBorder(nil, actions, nil, nil, info_box)
 
-	return container.NewMax(Alpha120, content)
+	return container.NewMax(content)
 }
 
 // Confirmation for dPrediction contract installs
@@ -936,7 +934,7 @@ Confirm`
 
 	content := container.NewBorder(nil, actions, nil, nil, info_box)
 
-	return container.NewMax(Alpha120, content)
+	return container.NewMax(content)
 }
 
 // Confirmation for dSports contract installs
@@ -1012,86 +1010,90 @@ Confirm`
 
 	content := container.NewBorder(nil, actions, nil, nil, info_box)
 
-	return container.NewMax(Alpha120, content)
+	return container.NewMax(content)
 }
 
-// Index entry objects
-func IndexEntry() fyne.CanvasObject {
-	holdero.Assets.Index_entry = widget.NewMultiLineEntry()
-	holdero.Assets.Index_entry.PlaceHolder = "SCID:"
-	holdero.Assets.Index_button = widget.NewButton("Add to Index", func() {
-		s := strings.Split(holdero.Assets.Index_entry.Text, "\n")
+// Index entry and NFA control objects
+//   - Pass window resources for side menu windows
+func IndexEntry(window_icon, window_background fyne.Resource) fyne.CanvasObject {
+	Assets.Index_entry = widget.NewMultiLineEntry()
+	Assets.Index_entry.PlaceHolder = "SCID:"
+	Assets.Index_button = widget.NewButton("Add to Index", func() {
+		s := strings.Split(Assets.Index_entry.Text, "\n")
 		manualIndex(s)
 	})
 
-	holdero.Assets.Index_search = widget.NewButton("Search Index", func() {
-		searchIndex(holdero.Assets.Index_entry.Text)
+	Assets.Index_search = widget.NewButton("Search Index", func() {
+		searchIndex(Assets.Index_entry.Text)
 	})
 
 	Control.Send_asset = widget.NewButton("Send Asset", func() {
-		go sendAssetMenu()
+		go sendAssetMenu(window_icon, window_background)
 	})
 
 	Control.List_button = widget.NewButton("List Asset", func() {
-		listMenu()
+		go listMenu(window_icon, window_background)
 	})
 
 	Control.Claim_button = widget.NewButton("Claim NFA", func() {
-		if len(holdero.Assets.Index_entry.Text) == 64 {
-			if isNfa(holdero.Assets.Index_entry.Text) {
-				rpc.ClaimNfa(holdero.Assets.Index_entry.Text)
+		if len(Assets.Index_entry.Text) == 64 {
+			if isNfa(Assets.Index_entry.Text) {
+				rpc.ClaimNfa(Assets.Index_entry.Text)
 			}
 		}
 	})
 
-	holdero.Assets.Index_button.Hide()
-	holdero.Assets.Index_search.Hide()
+	Assets.Index_button.Hide()
+	Assets.Index_search.Hide()
 	Control.List_button.Hide()
 	Control.Claim_button.Hide()
 	Control.Send_asset.Hide()
 
-	holdero.Assets.Gnomes_index = canvas.NewText(" Indexed SCIDs: ", color.White)
-	holdero.Assets.Gnomes_index.TextSize = 18
+	Assets.Gnomes_index = canvas.NewText(" Indexed SCIDs: ", bundle.TextColor)
+	Assets.Gnomes_index.TextSize = 18
 
-	bottom_grid := container.NewAdaptiveGrid(3, holdero.Assets.Gnomes_index, holdero.Assets.Index_button, holdero.Assets.Index_search)
+	bottom_grid := container.NewAdaptiveGrid(3, Assets.Gnomes_index, Assets.Index_button, Assets.Index_search)
 	top_grid := container.NewAdaptiveGrid(3, container.NewMax(Control.Send_asset), Control.Claim_button, Control.List_button)
 	box := container.NewVBox(top_grid, layout.NewSpacer(), bottom_grid)
 
-	return container.NewAdaptiveGrid(2, holdero.Assets.Index_entry, box)
+	return container.NewAdaptiveGrid(2, Assets.Index_entry, box)
 }
 
 // Owned asset list object
+//   - Sets Control.Viewing_asset and asset stats on selected
 func AssetList() fyne.CanvasObject {
-	holdero.Assets.Asset_list = widget.NewList(
+	Assets.Asset_list = widget.NewList(
 		func() int {
-			return len(holdero.Assets.Assets)
+			return len(Assets.Assets)
 		},
 		func() fyne.CanvasObject {
 			return widget.NewLabel("")
 		},
 		func(i widget.ListItemID, o fyne.CanvasObject) {
-			o.(*widget.Label).SetText(holdero.Assets.Assets[i])
+			o.(*widget.Label).SetText(Assets.Assets[i])
 		})
 
-	holdero.Assets.Asset_list.OnSelected = func(id widget.ListItemID) {
-		split := strings.Split(holdero.Assets.Assets[id], "   ")
+	Assets.Asset_list.OnSelected = func(id widget.ListItemID) {
+		split := strings.Split(Assets.Assets[id], "   ")
 		if len(split) >= 2 {
 			trimmed := strings.Trim(split[1], " ")
 			Control.Viewing_asset = trimmed
-			holdero.Assets.Icon = *canvas.NewImageFromImage(nil)
+			Assets.Icon = *canvas.NewImageFromImage(nil)
 			go GetOwnedAssetStats(trimmed)
 		}
 	}
 
-	return container.NewMax(holdero.Assets.Asset_list)
+	return container.NewMax(Assets.Asset_list)
 }
 
 // Send Dero asset menu
-func sendAssetMenu() {
+//   - Asset SCID can be sent as payload to receiver when sending asset
+//   - Pass resources for window
+func sendAssetMenu(window_icon, background fyne.Resource) {
 	Control.send_open = true
 	saw := fyne.CurrentApp().NewWindow("Send Asset")
 	saw.Resize(fyne.NewSize(330, 700))
-	saw.SetIcon(bundle.ResourceDTGnomonIconPng)
+	saw.SetIcon(window_icon)
 	Control.Send_asset.Hide()
 	Control.List_button.Hide()
 	saw.SetCloseIntercept(func() {
@@ -1108,11 +1110,11 @@ func sendAssetMenu() {
 
 	var saw_content *fyne.Container
 	var send_button *widget.Button
-	img := *canvas.NewImageFromResource(bundle.ResourceOwBackgroundPng)
+	background_img := *canvas.NewImageFromResource(background)
 
 	viewing_asset := Control.Viewing_asset
 
-	viewing_label := widget.NewLabel(fmt.Sprintf("Sending SCID:\n%s\n\nEnter destination address below.\n\nSCID can be sent to reciever as payload.\n\n", viewing_asset))
+	viewing_label := widget.NewLabel(fmt.Sprintf("Sending SCID:\n\n%s\n\nEnter destination address below\n\nSCID can be sent to reciever as payload\n\n", viewing_asset))
 	viewing_label.Wrapping = fyne.TextWrapWord
 	viewing_label.Alignment = fyne.TextAlignCenter
 
@@ -1159,13 +1161,13 @@ func sendAssetMenu() {
 				confirm_open = false
 				saw.SetContent(
 					container.New(layout.NewMaxLayout(),
-						&img,
-						Alpha180,
+						&background_img,
+						bundle.Alpha180,
 						saw_content))
 			})
 
 			dest = dest_entry.Text
-			confirm_label := widget.NewLabel(fmt.Sprintf("Sending SCID:\n%s\n\nDestination: %s\n\nSending SCID as payload: %t", send_asset, dest, load))
+			confirm_label := widget.NewLabel(fmt.Sprintf("Sending SCID:\n\n%s\n\nDestination: %s\n\nSending SCID as payload: %t", send_asset, dest, load))
 			confirm_label.Wrapping = fyne.TextWrapWord
 			confirm_label.Alignment = fyne.TextAlignCenter
 
@@ -1174,14 +1176,14 @@ func sendAssetMenu() {
 			confirm_content := container.NewBorder(nil, confirm_options, nil, nil, confirm_display)
 			saw.SetContent(
 				container.New(layout.NewMaxLayout(),
-					&img,
-					Alpha180,
+					&background_img,
+					bundle.Alpha180,
 					confirm_content))
 		}
 	})
 	send_button.Hide()
 
-	icon := holdero.Assets.Icon
+	icon := Assets.Icon
 
 	saw_content = container.NewVBox(
 		viewing_label,
@@ -1196,11 +1198,11 @@ func sendAssetMenu() {
 		for rpc.Wallet.Connect && rpc.Daemon.Connect {
 			time.Sleep(3 * time.Second)
 			if !confirm_open {
-				icon = holdero.Assets.Icon
+				icon = Assets.Icon
 				saw_content.Objects[1] = menuAssetImg(&icon, bundle.ResourceAvatarFramePng)
 				if viewing_asset != Control.Viewing_asset {
 					viewing_asset = Control.Viewing_asset
-					viewing_label.SetText("Sending SCID:\n" + viewing_asset + " \n\nEnter destination address below.\n\nSCID can be sent to reciever as payload.\n\n")
+					viewing_label.SetText("Sending SCID:\n\n" + viewing_asset + " \n\nEnter destination address below\n\nSCID can be sent to reciever as payload\n\n")
 				}
 				saw_content.Refresh()
 			}
@@ -1211,13 +1213,14 @@ func sendAssetMenu() {
 
 	saw.SetContent(
 		container.New(layout.NewMaxLayout(),
-			&img,
-			Alpha180,
+			&background_img,
+			bundle.Alpha180,
 			saw_content))
 	saw.Show()
 }
 
 // Image for send asset and list menus
+//   - Pass res for frame resource
 func menuAssetImg(img *canvas.Image, res fyne.Resource) fyne.CanvasObject {
 	img.SetMinSize(fyne.NewSize(100, 100))
 	img.Resize(fyne.NewSize(94, 94))
@@ -1233,11 +1236,12 @@ func menuAssetImg(img *canvas.Image, res fyne.Resource) fyne.CanvasObject {
 }
 
 // NFA listing menu
-func listMenu() {
+//   - Pass resources for window
+func listMenu(window_icon, background fyne.Resource) {
 	Control.list_open = true
 	aw := fyne.CurrentApp().NewWindow("List NFA")
 	aw.Resize(fyne.NewSize(330, 700))
-	aw.SetIcon(bundle.ResourceDTGnomonIconPng)
+	aw.SetIcon(window_icon)
 	Control.List_button.Hide()
 	Control.Send_asset.Hide()
 	aw.SetCloseIntercept(func() {
@@ -1254,10 +1258,10 @@ func listMenu() {
 
 	var aw_content *fyne.Container
 	var set_list *widget.Button
-	aw_img := *canvas.NewImageFromResource(bundle.ResourceOwBackgroundPng)
+	background_img := *canvas.NewImageFromResource(background)
 
 	viewing_asset := Control.Viewing_asset
-	viewing_label := widget.NewLabel(fmt.Sprintf("Listing SCID:\n\n\n%s", viewing_asset))
+	viewing_label := widget.NewLabel(fmt.Sprintf("Listing SCID:\n\n%s", viewing_asset))
 	viewing_label.Wrapping = fyne.TextWrapWord
 	viewing_label.Alignment = fyne.TextAlignCenter
 
@@ -1345,8 +1349,8 @@ func listMenu() {
 					confirm_open = false
 					aw.SetContent(
 						container.New(layout.NewMaxLayout(),
-							&aw_img,
-							Alpha180,
+							&background_img,
+							bundle.Alpha180,
 							aw_content))
 				})
 
@@ -1362,27 +1366,26 @@ func listMenu() {
 					aw.Close()
 				})
 
-				confirm_display := container.NewVBox(confirm_label, layout.NewSpacer())
 				confirm_options := container.NewAdaptiveGrid(2, confirm_button, cancel_button)
-				confirm_content := container.NewBorder(nil, confirm_options, nil, nil, confirm_display)
+				confirm_content := container.NewBorder(nil, confirm_options, nil, nil, confirm_label)
 
 				aw.SetContent(
 					container.New(layout.NewMaxLayout(),
-						&aw_img,
-						Alpha180,
+						&background_img,
+						bundle.Alpha180,
 						confirm_content))
 			}
 		}
 	})
 	set_list.Hide()
 
-	icon := holdero.Assets.Icon
+	icon := Assets.Icon
 
 	go func() {
 		for rpc.Wallet.Connect && rpc.Daemon.Connect {
 			time.Sleep(3 * time.Second)
 			if !confirm_open {
-				icon = holdero.Assets.Icon
+				icon = Assets.Icon
 				aw_content.Objects[2] = menuAssetImg(&icon, bundle.ResourceAvatarFramePng)
 				if viewing_asset != Control.Viewing_asset {
 					viewing_asset = Control.Viewing_asset
@@ -1411,8 +1414,8 @@ func listMenu() {
 
 	aw.SetContent(
 		container.New(layout.NewMaxLayout(),
-			&aw_img,
-			Alpha180,
+			&background_img,
+			bundle.Alpha180,
 			aw_content))
 	aw.Show()
 }
@@ -1476,18 +1479,18 @@ func IntroTree() fyne.CanvasObject {
 
 	tree.OpenBranch("Welcome to dReams")
 
-	max := container.NewMax(Alpha120, tree)
+	max := container.NewMax(tree)
 
 	return max
 }
 
 // Send Dero message menu
-func SendMessageMenu() {
+func SendMessageMenu(window_icon, background fyne.Resource) {
 	if !Control.msg_open {
 		Control.msg_open = true
 		smw := fyne.CurrentApp().NewWindow("Send Asset")
 		smw.Resize(fyne.NewSize(330, 700))
-		smw.SetIcon(bundle.ResourceDTGnomonIconPng)
+		smw.SetIcon(window_icon)
 		smw.SetCloseIntercept(func() {
 			Control.msg_open = false
 			smw.Close()
@@ -1495,7 +1498,7 @@ func SendMessageMenu() {
 		smw.SetFixedSize(true)
 
 		var send_button *widget.Button
-		img := *canvas.NewImageFromResource(bundle.ResourceOwBackgroundPng)
+		img := *canvas.NewImageFromResource(background)
 
 		label := widget.NewLabel("Sending Message:\n\nEnter ringsize and destination address below")
 		label.Wrapping = fyne.TextWrapWord
@@ -1555,7 +1558,7 @@ func SendMessageMenu() {
 		smw.SetContent(
 			container.New(layout.NewMaxLayout(),
 				&img,
-				Alpha180,
+				bundle.Alpha180,
 				content))
 		smw.Show()
 	}

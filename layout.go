@@ -22,6 +22,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/data/validation"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 )
@@ -74,7 +75,7 @@ func introScreen() *fyne.Container {
 		layout.NewSpacer(),
 		start_button)
 
-	max := container.NewMax(menu.Alpha180, intro)
+	max := container.NewMax(bundle.Alpha180, intro)
 
 	return max
 }
@@ -82,7 +83,8 @@ func introScreen() *fyne.Container {
 // Select dApps to add or remove from dReams
 func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 	dReams.configure = true
-	title := canvas.NewText("dReams dApps", color.White)
+	title := canvas.NewText("dReams dApps", bundle.TextColor)
+	title.Alignment = fyne.TextAlignCenter
 	title.TextSize = 18
 
 	changes_label := widget.NewLabel("Select dApps to add or remove from your dReams\n\nLoading dApp changes will disconnect your wallet")
@@ -151,18 +153,51 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 
 	dapp_checks.SetSelected(is_enabled)
 
+	skin_title := canvas.NewText("Choose dReams Skin", bundle.TextColor)
+	skin_title.Alignment = fyne.TextAlignCenter
+	skin_title.TextSize = 18
+
+	skin_label := widget.NewLabel("You will need to close dReams and restart for skin changes to take effect")
+	skin_label.Alignment = fyne.TextAlignCenter
+
+	skins := widget.NewRadioGroup([]string{"Dark", "Light"}, func(s string) {
+		if s == "Light" {
+			dReams.skin = color.White
+		} else {
+			dReams.skin = color.Black
+		}
+	})
+
+	skins.Horizontal = true
+	switch bundle.AppColor {
+	case color.White:
+		skins.SetSelected("Light")
+	case color.Black:
+		skins.SetSelected("Dark")
+	default:
+
+	}
+
 	intro := container.NewVBox(
 		layout.NewSpacer(),
-		container.NewCenter(title),
-		layout.NewSpacer(),
+		title,
 		changes_label,
-		layout.NewSpacer(),
 		container.NewCenter(dapp_checks),
+		layout.NewSpacer(),
+		layout.NewSpacer(),
+		skin_title,
+		skin_label,
+		container.NewCenter(skins),
 		layout.NewSpacer(),
 		layout.NewSpacer(),
 		container.NewAdaptiveGrid(2, container.NewMax(load_button), back_button))
 
-	max := container.NewMax(menu.Alpha180, intro)
+	alpha := canvas.NewRectangle(color.RGBA{0, 0, 0, 180})
+	if dReams.skin == color.White {
+		alpha = canvas.NewRectangle(color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0x99})
+	}
+
+	max := container.NewMax(alpha, intro)
 
 	return max
 }
@@ -205,8 +240,8 @@ func place() *fyne.Container {
 	menu_tabs := container.NewAppTabs(
 		container.NewTabItem("Wallet", placeWall()),
 		container.NewTabItem("dApps", layout.NewSpacer()),
-		container.NewTabItem("Assets", placeAssets()),
-		container.NewTabItem("Market", placeMarket()))
+		container.NewTabItem("Assets", menu.PlaceAssets("dReams", true, menu.RecheckDreamsAssets, bundle.ResourceDTGnomonIconPng, bundle.ResourceOwBackgroundPng)),
+		container.NewTabItem("Market", menu.PlaceMarket()))
 
 	menu_tabs.OnSelected = func(ti *container.TabItem) {
 		MenuTab(ti)
@@ -216,7 +251,8 @@ func place() *fyne.Container {
 			} else {
 				go func() {
 					reset := dReams.Window.Content().(*fyne.Container).Objects[1]
-					dReams.Window.Content().(*fyne.Container).Objects[1] = dAppScreen(reset)
+					dapp_screen := dAppScreen(reset)
+					dReams.Window.Content().(*fyne.Container).Objects[1] = dapp_screen
 					dReams.Window.Content().(*fyne.Container).Objects[1].Refresh()
 					menu_tabs.SelectIndex(0)
 				}()
@@ -251,7 +287,7 @@ func place() *fyne.Container {
 	tarot_bottom_bar := container.NewVBox(layout.NewSpacer(), tarot_bottom_box)
 	tarot_bottom.Hide()
 
-	alpha_box := container.NewMax(top_bar, menu_bottom_bar, tarot_bottom_bar, menu.Alpha150)
+	alpha_box := container.NewMax(top_bar, menu_bottom_bar, tarot_bottom_bar, bundle.Alpha150)
 	if dReams.os != "darwin" {
 		alpha_box.Objects = append(alpha_box.Objects, FullScreenSet())
 	}
@@ -316,6 +352,18 @@ func placeWall() *container.Split {
 	daemon_cont := container.NewHScroll(menu.DaemonRpcEntry())
 	daemon_cont.SetMinSize(fyne.NewSize(340, 35.1875))
 
+	holdero.Swap.DEntry = dwidget.WholeAmtEntry("dReams: ")
+	holdero.Swap.DEntry.PlaceHolder = "dReams:"
+	holdero.Swap.DEntry.Validator = validation.NewRegexp(`^(dReams: )[^0]\d{0,}$`, "Format Not Valid")
+	holdero.Swap.DEntry.OnChanged = func(s string) {
+		if holdero.Swap.DEntry.Validate() != nil {
+			holdero.Swap.DEntry.SetText("dReams: 1")
+		}
+	}
+
+	holdero.Swap.DEntry.SetText("dReams: 0")
+	holdero.Swap.DEntry.Hide()
+
 	holdero.Swap.Dreams = widget.NewButton("Get dReams", nil)
 	holdero.Swap.Dreams.Hide()
 
@@ -323,7 +371,8 @@ func placeWall() *container.Split {
 	holdero.Swap.Dero.Hide()
 
 	dReams_items := container.NewVBox(
-		holdero.DreamsEntry(),
+		menu.MenuDisplay(),
+		holdero.Swap.DEntry,
 		container.NewAdaptiveGrid(2, holdero.Swap.Dreams, holdero.Swap.Dero))
 
 	user_input_cont := container.NewVBox(
@@ -335,12 +384,12 @@ func placeWall() *container.Split {
 		dReams_items)
 
 	menu.Control.Contract_rating = make(map[string]uint64)
-	holdero.Assets.Asset_map = make(map[string]string)
+	menu.Assets.Asset_map = make(map[string]string)
 
 	daemon_check_cont := container.NewVBox(menu.DaemonConnectedBox())
 
 	user_input_box := container.NewHBox(user_input_cont, daemon_check_cont)
-	menu_top := container.NewHSplit(user_input_box, menu.IntroTree())
+	menu_top := container.NewHSplit(user_input_box, container.NewMax(bundle.Alpha120, menu.IntroTree()))
 
 	holdero.Swap.Dreams.OnTapped = func() {
 		s := strings.Trim(holdero.Swap.DEntry.Text, "dReams: ")
@@ -430,7 +479,7 @@ func placeContract(change_screen *fyne.Container) *container.Split {
 		}
 	}
 
-	max := container.NewMax(menu.Alpha120, tabs)
+	max := container.NewMax(bundle.Alpha120, tabs)
 
 	menu.Poker.Holdero_unlock.OnTapped = func() {
 		max.Objects[1] = menu.HolderoMenuConfirm(1, max.Objects, tabs)
@@ -453,152 +502,6 @@ func placeContract(change_screen *fyne.Container) *container.Split {
 	menuBox.SetOffset(1)
 
 	return menuBox
-}
-
-// dReams asset tab layout
-func placeAssets() *container.Split {
-	asset_items := container.NewVBox(
-		holdero.FaceSelect(),
-		holdero.BackSelect(),
-		holdero.ThemeSelect(),
-		holdero.AvatarSelect(),
-		holdero.SharedDecks(),
-		RecheckButton(),
-		layout.NewSpacer())
-
-	cont := container.NewHScroll(asset_items)
-	cont.SetMinSize(fyne.NewSize(290, 35.1875))
-
-	items_box := container.NewAdaptiveGrid(2, cont, container.NewAdaptiveGrid(1, holdero.AssetStats()))
-
-	player_input := container.NewVBox(items_box, layout.NewSpacer())
-
-	tabs := container.NewAppTabs(
-		container.NewTabItem("Owned", menu.AssetList()))
-
-	tabs.OnSelected = func(ti *container.TabItem) {
-
-	}
-
-	scroll_top := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "arrowUp"), func() {
-		holdero.Assets.Asset_list.ScrollToTop()
-	})
-
-	scroll_bottom := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "arrowDown"), func() {
-		holdero.Assets.Asset_list.ScrollToBottom()
-	})
-
-	scroll_top.Importance = widget.LowImportance
-	scroll_bottom.Importance = widget.LowImportance
-
-	scroll_cont := container.NewVBox(container.NewHBox(layout.NewSpacer(), scroll_top, scroll_bottom))
-
-	max := container.NewMax(menu.Alpha120, tabs, scroll_cont)
-
-	player_input.Add(holdero.SetHeaderItems(max.Objects, tabs))
-	player_box := container.NewHBox(player_input)
-
-	menu_top := container.NewHSplit(player_box, max)
-	menu_bottom := container.NewAdaptiveGrid(1, menu.IndexEntry())
-
-	menu_box := container.NewVSplit(menu_top, menu_bottom)
-	menu_box.SetOffset(1)
-
-	return menu_box
-}
-
-// dReams market tabs layout
-func placeMarket() *container.Split {
-	details := container.NewMax(menu.NfaMarketInfo())
-
-	tabs := container.NewAppTabs(
-		container.NewTabItem("Auctions", menu.AuctionListings()),
-		container.NewTabItem("Buy Now", menu.BuyNowListings()))
-
-	tabs.SetTabLocation(container.TabLocationTop)
-	tabs.OnSelected = func(ti *container.TabItem) {
-		MarketTab(ti)
-	}
-
-	menu.Market.Tab = "Auction"
-
-	scroll_top := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "arrowUp"), func() {
-		switch menu.Market.Tab {
-		case "Buy":
-			menu.Market.Buy_list.ScrollToTop()
-		case "Auction":
-			menu.Market.Auction_list.ScrollToTop()
-		default:
-
-		}
-	})
-
-	scroll_bottom := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "arrowDown"), func() {
-		switch menu.Market.Tab {
-		case "Buy":
-			menu.Market.Buy_list.ScrollToBottom()
-		case "Auction":
-			menu.Market.Auction_list.ScrollToBottom()
-		default:
-
-		}
-	})
-
-	scroll_top.Importance = widget.LowImportance
-	scroll_bottom.Importance = widget.LowImportance
-
-	scroll_cont := container.NewVBox(container.NewHBox(layout.NewSpacer(), scroll_top, scroll_bottom))
-
-	max := container.NewMax(menu.Alpha120, tabs, scroll_cont)
-
-	details_box := container.NewVBox(layout.NewSpacer(), details)
-
-	menu_top := container.NewHSplit(details_box, max)
-	menu_top.SetOffset(0)
-
-	menu.Market.Market_button = widget.NewButton("Bid", func() {
-		scid := menu.Market.Viewing
-		if len(scid) == 64 {
-			text := menu.Market.Market_button.Text
-			menu.Market.Market_button.Hide()
-			if text == "Bid" {
-				amt := menu.ToAtomicFive(menu.Market.Entry.Text)
-				menu_top.Trailing.(*fyne.Container).Objects[1] = menu.BidBuyConfirm(scid, amt, 0, menu_top, container.NewMax(menu.Alpha120, tabs, scroll_cont))
-				menu_top.Trailing.(*fyne.Container).Objects[1].Refresh()
-			} else if text == "Buy" {
-				menu_top.Trailing.(*fyne.Container).Objects[1] = menu.BidBuyConfirm(scid, menu.Market.Buy_amt, 1, menu_top, container.NewMax(menu.Alpha120, tabs, scroll_cont))
-				menu_top.Trailing.(*fyne.Container).Objects[1].Refresh()
-			}
-		}
-	})
-
-	menu.Market.Market_button.Hide()
-
-	menu.Market.Cancel_button = widget.NewButton("Cancel", func() {
-		if len(menu.Market.Viewing) == 64 {
-			menu.Market.Cancel_button.Hide()
-			menu_top.Trailing.(*fyne.Container).Objects[1] = menu.ConfirmCancelClose(menu.Market.Viewing, 1, menu_top, container.NewMax(menu.Alpha120, tabs, scroll_cont))
-			menu_top.Trailing.(*fyne.Container).Objects[1].Refresh()
-		}
-	})
-
-	menu.Market.Close_button = widget.NewButton("Close", func() {
-		if len(menu.Market.Viewing) == 64 {
-			menu.Market.Close_button.Hide()
-			menu_top.Trailing.(*fyne.Container).Objects[1] = menu.ConfirmCancelClose(menu.Market.Viewing, 0, menu_top, container.NewMax(menu.Alpha120, tabs, scroll_cont))
-			menu_top.Trailing.(*fyne.Container).Objects[1].Refresh()
-		}
-	})
-
-	menu.Market.Market_box = *container.NewAdaptiveGrid(6, menu.MarketEntry(), menu.Market.Market_button, layout.NewSpacer(), layout.NewSpacer(), menu.Market.Close_button, menu.Market.Cancel_button)
-	menu.Market.Market_box.Hide()
-
-	menu_bottom := container.NewAdaptiveGrid(1, &menu.Market.Market_box)
-
-	menu_box := container.NewVSplit(menu_top, menu_bottom)
-	menu_box.SetOffset(1)
-
-	return menu_box
 }
 
 // dReams Holdero tab layout
@@ -715,7 +618,7 @@ func placePredict() *fyne.Container {
 		PredictTab(ti)
 	}
 
-	max := container.NewMax(menu.Alpha120, tabs)
+	max := container.NewMax(bundle.Alpha120, tabs)
 
 	prediction.Predict.Higher.OnTapped = func() {
 		if len(prediction.Predict.Contract) == 64 {
@@ -895,7 +798,7 @@ func placeSports() *fyne.Container {
 
 	}
 
-	max := container.NewMax(menu.Alpha120, tabs)
+	max := container.NewMax(bundle.Alpha120, tabs)
 
 	prediction.Sports.ButtonA.OnTapped = func() {
 		if len(prediction.Sports.Contract) == 64 {

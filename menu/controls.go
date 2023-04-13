@@ -1,19 +1,11 @@
 package menu
 
 import (
-	"image/color"
-
 	"fyne.io/fyne/v2/canvas"
 	"github.com/SixofClubsss/dReams/baccarat"
 	"github.com/SixofClubsss/dReams/holdero"
 	"github.com/SixofClubsss/dReams/rpc"
 	"github.com/SixofClubsss/dReams/tarot"
-)
-
-var (
-	Alpha120 = canvas.NewRectangle(color.RGBA{0, 0, 0, 120})
-	Alpha150 = canvas.NewRectangle(color.RGBA{0, 0, 0, 150})
-	Alpha180 = canvas.NewRectangle(color.RGBA{0, 0, 0, 180})
 )
 
 // Do when disconnected
@@ -39,12 +31,12 @@ func Disconnected() {
 	holdero.Settings.BackSelect.Refresh()
 	holdero.Settings.ThemeSelect.Refresh()
 	holdero.Settings.AvatarSelect.Refresh()
-	holdero.Assets.Assets = []string{}
-	holdero.Assets.Name.Text = (" Name:")
-	holdero.Assets.Name.Refresh()
-	holdero.Assets.Collection.Text = (" Collection:")
-	holdero.Assets.Collection.Refresh()
-	holdero.Assets.Icon = *canvas.NewImageFromImage(nil)
+	Assets.Assets = []string{}
+	Assets.Name.Text = (" Name:")
+	Assets.Name.Refresh()
+	Assets.Collection.Text = (" Collection:")
+	Assets.Collection.Refresh()
+	Assets.Icon = *canvas.NewImageFromImage(nil)
 	// prediction leaderboard
 	// holdero.Table.NameEntry.Text = ""
 	// holdero.Table.NameEntry.Enable()
@@ -73,23 +65,23 @@ func clearContractLists() {
 	Control.Sports_owned = []string{}
 	Market.Auctions = []string{}
 	Market.Buy_now = []string{}
-	holdero.Assets.Assets = []string{}
+	Assets.Assets = []string{}
 }
 
 // Disable index objects
-func disableIndex(d bool) {
+func DisableIndexControls(d bool) {
 	if d {
-		holdero.Assets.Index_button.Hide()
-		holdero.Assets.Index_search.Hide()
-		holdero.Assets.Header_box.Hide()
+		Assets.Index_button.Hide()
+		Assets.Index_search.Hide()
+		Assets.Header_box.Hide()
 		Market.Market_box.Hide()
 		Gnomes.SCIDS = 0
 	} else {
-		holdero.Assets.Index_button.Show()
-		holdero.Assets.Index_search.Show()
+		Assets.Index_button.Show()
+		Assets.Index_search.Show()
 		if rpc.Wallet.Connect {
 			Control.Claim_button.Show()
-			holdero.Assets.Header_box.Show()
+			Assets.Header_box.Show()
 			Market.Market_box.Show()
 			if Control.list_open {
 				Control.List_button.Hide()
@@ -98,13 +90,13 @@ func disableIndex(d bool) {
 			Control.Send_asset.Hide()
 			Control.List_button.Hide()
 			Control.Claim_button.Hide()
-			holdero.Assets.Header_box.Hide()
+			Assets.Header_box.Hide()
 			Market.Market_box.Hide()
 		}
 	}
-	holdero.Assets.Index_button.Refresh()
-	holdero.Assets.Index_search.Refresh()
-	holdero.Assets.Header_box.Refresh()
+	Assets.Index_button.Refresh()
+	Assets.Index_search.Refresh()
+	Assets.Header_box.Refresh()
 	Market.Market_box.Refresh()
 }
 

@@ -1188,11 +1188,10 @@ func holderoTools(deal, check *widget.Check, button *widget.Button) {
 	}()
 
 	img := *canvas.NewImageFromResource(bundle.ResourceOwBackgroundPng)
-	alpha := *container.NewMax(canvas.NewRectangle(color.RGBA{0, 0, 0, 180}))
 	bm.SetContent(
 		container.New(layout.NewMaxLayout(),
 			&img,
-			&alpha,
+			bundle.Alpha180,
 			tabs))
 	bm.Show()
 }

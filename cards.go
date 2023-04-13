@@ -814,6 +814,9 @@ func TarotItems(tabs *container.AppTabs) fyne.CanvasObject {
 		}
 	})
 
+	tarot.Iluma.Draw1.Hide()
+	tarot.Iluma.Draw3.Hide()
+
 	draw_cont := container.NewAdaptiveGrid(5,
 		layout.NewSpacer(),
 		layout.NewSpacer(),

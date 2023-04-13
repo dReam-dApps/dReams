@@ -1,6 +1,7 @@
 package main
 
 import (
+	"image/color"
 	"runtime"
 	"time"
 
@@ -27,6 +28,7 @@ const (
 type dReamTables struct {
 	App       fyne.App
 	Window    fyne.Window
+	skin      color.Gray16
 	os        string
 	configure bool
 	menu      bool
@@ -53,7 +55,7 @@ func main() {
 	v := flags()
 	stamp(v)
 	dReams.App = app.NewWithID(App_ID)
-	dReams.App.Settings().SetTheme(Theme())
+	dReams.App.Settings().SetTheme(bundle.DeroTheme(bundle.AppColor))
 	dReams.Window = dReams.App.NewWindow(App_Name)
 	dReams.Window.SetMaster()
 	dReams.Window.Resize(fyne.NewSize(MIN_WIDTH, MIN_HEIGHT))
@@ -81,6 +83,7 @@ func main() {
 
 	if len(menu.Control.Dapp_list) == 0 {
 		go func() {
+			time.Sleep(300 * time.Millisecond)
 			dReams.Window.SetContent(
 				container.New(layout.NewMaxLayout(),
 					background,
@@ -88,14 +91,15 @@ func main() {
 		}()
 	} else {
 		go func() {
+			time.Sleep(600 * time.Millisecond)
 			dReams.Window.SetContent(
 				container.New(layout.NewMaxLayout(),
 					background,
 					place()))
+
 		}()
 	}
 
-	time.Sleep(600 * time.Millisecond)
 	if systemTray(dReams.App) {
 		dReams.App.(desktop.App).SetSystemTrayIcon(bundle.ResourceCardSharkTrayPng)
 	}

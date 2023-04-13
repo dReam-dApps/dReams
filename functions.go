@@ -9,7 +9,6 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
-	"sort"
 	"strconv"
 	"syscall"
 	"time"
@@ -35,11 +34,12 @@ type Notification struct {
 	Title, Content string
 }
 
-type save struct {
-	Daemon  []string `json:"daemon"`
-	Tables  []string `json:"tables"`
-	Predict []string `json:"predict"`
-	Sports  []string `json:"sports"`
+type dReamSave struct {
+	Skin    color.Gray16 `json:"skin"`
+	Daemon  []string     `json:"daemon"`
+	Tables  []string     `json:"tables"`
+	Predict []string     `json:"predict"`
+	Sports  []string     `json:"sports"`
 
 	Dapps map[string]bool `json:"dapps"`
 }
@@ -125,6 +125,7 @@ func init() {
 	holdero.InitTableSettings()
 
 	dReams.os = runtime.GOOS
+	bundle.AppColor = saved.Skin
 	prediction.SetPrintColors(dReams.os)
 
 	c := make(chan os.Signal, 1)
@@ -186,7 +187,9 @@ func systemTray(w fyne.App) bool {
 	if desk, ok := w.(desktop.App); ok {
 		m := fyne.NewMenu("MyApp",
 			fyne.NewMenuItem("Send Message", func() {
-				menu.SendMessageMenu()
+				if !dReams.configure && rpc.Wallet.Connect {
+					menu.SendMessageMenu(bundle.ResourceDTGnomonIconPng, bundle.ResourceOwBackgroundPng)
+				}
 			}),
 			fyne.NewMenuItemSeparator(),
 			fyne.NewMenuItem("Explorer", func() {
@@ -206,14 +209,20 @@ func systemTray(w fyne.App) bool {
 
 // Top label background used on dApp tabs
 func labelColorBlack(c *fyne.Container) *fyne.Container {
-	back := canvas.NewRectangle(color.RGBA{0, 0, 0, 150})
-	cont := container.New(layout.NewMaxLayout(), back, c)
+	var alpha *canvas.Rectangle
+	if bundle.AppColor == color.White {
+		alpha = canvas.NewRectangle(color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0x33})
+	} else {
+		alpha = canvas.NewRectangle(color.RGBA{0, 0, 0, 150})
+	}
+
+	cont := container.New(layout.NewMaxLayout(), alpha, c)
 
 	return cont
 }
 
 // Make config with save struct
-func makeConfig(name, daemon string) (data save) {
+func makeConfig(name, daemon string) (data dReamSave) {
 	switch daemon {
 	case rpc.DAEMON_RPC_DEFAULT:
 	case rpc.DAEMON_RPC_REMOTE1:
@@ -226,6 +235,7 @@ func makeConfig(name, daemon string) (data save) {
 		data.Daemon = []string{daemon}
 	}
 
+	data.Skin = dReams.skin
 	data.Tables = menu.Control.Holdero_favorites
 	data.Predict = menu.Control.Predict_favorites
 	data.Sports = menu.Control.Sports_favorites
@@ -235,7 +245,7 @@ func makeConfig(name, daemon string) (data save) {
 }
 
 // Save config data to file
-func writeConfig(u save) {
+func writeConfig(u dReamSave) {
 	if u.Daemon != nil {
 		if u.Daemon[0] == "" {
 			if menu.Control.Daemon_config != "" {
@@ -261,7 +271,7 @@ func writeConfig(u save) {
 }
 
 // Read saved config file
-func readConfig() (saved save) {
+func readConfig() (saved dReamSave) {
 	if !holdero.FileExists("config/config.json", "dReams") {
 		log.Println("[dReams] Creating Config Dir")
 		mkdir := os.Mkdir("config", 0755)
@@ -278,13 +288,12 @@ func readConfig() (saved save) {
 		return
 	}
 
-	var config save
-	if err = json.Unmarshal(file, &config); err != nil {
+	if err = json.Unmarshal(file, &saved); err != nil {
 		log.Println("[readConfig]", err)
 		return
 	}
 
-	return config
+	return
 }
 
 // Place and refresh Baccarat card images
@@ -947,15 +956,15 @@ func TarotRefresh() {
 // 	prediction.PredictControl.Leaders_list.Refresh()
 // }
 
-// Refresh Gnomon menu display
-func refreshGnomonDisplay(index, c int) {
+// Refresh Gnomon height display
+func refreshGnomonDisplay(index_height, c int) {
 	if c == 1 {
-		height := " Gnomon Height: " + strconv.Itoa(index)
-		holdero.Assets.Gnomes_height.Text = (height)
-		holdero.Assets.Gnomes_height.Refresh()
+		height := " Gnomon Height: " + strconv.Itoa(index_height)
+		menu.Assets.Gnomes_height.Text = (height)
+		menu.Assets.Gnomes_height.Refresh()
 	} else {
-		holdero.Assets.Gnomes_height.Text = (" Gnomon Height: 0")
-		holdero.Assets.Gnomes_height.Refresh()
+		menu.Assets.Gnomes_height.Text = (" Gnomon Height: 0")
+		menu.Assets.Gnomes_height.Refresh()
 	}
 }
 
@@ -963,43 +972,43 @@ func refreshGnomonDisplay(index, c int) {
 func refreshIndexDisplay(c bool) {
 	if c {
 		scids := " Indexed SCIDs: " + strconv.Itoa(int(menu.Gnomes.SCIDS))
-		holdero.Assets.Gnomes_index.Text = (scids)
-		holdero.Assets.Gnomes_index.Refresh()
+		menu.Assets.Gnomes_index.Text = (scids)
+		menu.Assets.Gnomes_index.Refresh()
 	} else {
-		holdero.Assets.Gnomes_index.Text = (" Indexed SCIDs: 0")
-		holdero.Assets.Gnomes_index.Refresh()
+		menu.Assets.Gnomes_index.Text = (" Indexed SCIDs: 0")
+		menu.Assets.Gnomes_index.Refresh()
 	}
 }
 
-// Refresh menu daemon display
+// Refresh daemon height display
 func refreshDaemonDisplay(c bool) {
 	if c && rpc.Daemon.Connect {
 		dHeight := rpc.DaemonHeight(rpc.Daemon.Rpc)
 		d := strconv.Itoa(int(dHeight))
-		holdero.Assets.Daem_height.Text = (" Daemon Height: " + d)
-		holdero.Assets.Daem_height.Refresh()
+		menu.Assets.Daem_height.Text = (" Daemon Height: " + d)
+		menu.Assets.Daem_height.Refresh()
 	} else {
-		holdero.Assets.Daem_height.Text = (" Daemon Height: 0")
-		holdero.Assets.Daem_height.Refresh()
+		menu.Assets.Daem_height.Text = (" Daemon Height: 0")
+		menu.Assets.Daem_height.Refresh()
 	}
 }
 
 // Refresh menu wallet display
 func refreshWalletDisplay(c bool) {
 	if c {
-		holdero.Assets.Wall_height.Text = (" Wallet Height: " + rpc.Display.Wallet_height)
-		holdero.Assets.Wall_height.Refresh()
-		holdero.Assets.Dreams_bal.Text = (" dReams Balance: " + rpc.Display.Token_balance)
-		holdero.Assets.Dreams_bal.Refresh()
-		holdero.Assets.Dero_bal.Text = (" Dero Balance: " + rpc.Display.Dero_balance)
-		holdero.Assets.Dero_bal.Refresh()
+		menu.Assets.Wall_height.Text = (" Wallet Height: " + rpc.Display.Wallet_height)
+		menu.Assets.Wall_height.Refresh()
+		menu.Assets.Dreams_bal.Text = (" dReams Balance: " + rpc.Display.Token_balance)
+		menu.Assets.Dreams_bal.Refresh()
+		menu.Assets.Dero_bal.Text = (" Dero Balance: " + rpc.Display.Dero_balance)
+		menu.Assets.Dero_bal.Refresh()
 	} else {
-		holdero.Assets.Wall_height.Text = (" Wallet Height: 0")
-		holdero.Assets.Wall_height.Refresh()
-		holdero.Assets.Dreams_bal.Text = (" dReams Balance: 0")
-		holdero.Assets.Dreams_bal.Refresh()
-		holdero.Assets.Dero_bal.Text = (" Dero Balance: 0")
-		holdero.Assets.Dero_bal.Refresh()
+		menu.Assets.Wall_height.Text = (" Wallet Height: 0")
+		menu.Assets.Wall_height.Refresh()
+		menu.Assets.Dreams_bal.Text = (" dReams Balance: 0")
+		menu.Assets.Dreams_bal.Refresh()
+		menu.Assets.Dero_bal.Text = (" Dero Balance: 0")
+		menu.Assets.Dero_bal.Refresh()
 	}
 }
 
@@ -1007,11 +1016,11 @@ func refreshWalletDisplay(c bool) {
 func refreshPriceDisplay(c bool) {
 	if c && rpc.Daemon.Connect {
 		_, price := holdero.GetPrice("DERO-USDT")
-		holdero.Assets.Dero_price.Text = (" Dero Price: $" + price)
-		holdero.Assets.Dero_price.Refresh()
+		menu.Assets.Dero_price.Text = (" Dero Price: $" + price)
+		menu.Assets.Dero_price.Refresh()
 	} else {
-		holdero.Assets.Dero_price.Text = (" Dero Price: $")
-		holdero.Assets.Dero_price.Refresh()
+		menu.Assets.Dero_price.Text = (" Dero Price: $")
+		menu.Assets.Dero_price.Refresh()
 	}
 }
 
@@ -1024,12 +1033,12 @@ func MenuRefresh(tab, gi bool) {
 		}
 
 		if !menu.FastSynced() {
-			holdero.Assets.Gnomes_sync.Text = (" Gnomon Syncing... ")
-			holdero.Assets.Gnomes_sync.Refresh()
+			menu.Assets.Gnomes_sync.Text = (" Gnomon Syncing... ")
+			menu.Assets.Gnomes_sync.Refresh()
 		} else {
 			if !menu.GnomonClosing() {
-				holdero.Assets.Gnomes_sync.Text = ("")
-				holdero.Assets.Gnomes_sync.Refresh()
+				menu.Assets.Gnomes_sync.Text = ("")
+				menu.Assets.Gnomes_sync.Refresh()
 			}
 		}
 		go refreshGnomonDisplay(index, 1)
@@ -1071,34 +1080,6 @@ func MenuRefresh(tab, gi bool) {
 		menu.Market.Viewing = ""
 		menu.Market.Viewing_coll = ""
 	}
-}
-
-// Recheck owned assets button
-func RecheckButton() fyne.CanvasObject {
-	button := widget.NewButton("Check Assets", func() {
-		if !menu.Gnomes.Wait {
-			log.Println("[dReams] Rechecking Assets")
-			go RecheckAssets()
-		}
-	})
-
-	return button
-}
-
-// Recheck owned assets routine
-func RecheckAssets() {
-	menu.Gnomes.Wait = true
-	holdero.Assets.Assets = []string{}
-	menu.CheckAssets(false, nil)
-	menu.CheckG45Assets(false, nil)
-	if rpc.Wallet.Connect {
-		menu.Control.Names.Options = []string{rpc.Wallet.Address[0:12]}
-		menu.CheckWalletNames(rpc.Wallet.Address)
-	}
-	sort.Strings(holdero.Assets.Assets)
-	holdero.Assets.Asset_list.UnselectAll()
-	holdero.Assets.Asset_list.Refresh()
-	menu.Gnomes.Wait = false
 }
 
 // Switch triggered when main tab changes
@@ -1183,7 +1164,7 @@ func MenuTab(ti *container.TabItem) {
 		dReams.menu_tabs.assets = true
 		dReams.menu_tabs.market = false
 		menu.Control.Viewing_asset = ""
-		holdero.Assets.Asset_list.UnselectAll()
+		menu.Assets.Asset_list.UnselectAll()
 	case "Market":
 		dReams.menu_tabs.wallet = false
 		dReams.menu_tabs.contracts = false
@@ -1265,10 +1246,13 @@ func TarotTab(ti *container.TabItem) {
 
 // Set and revert main window fullscreen mode
 func FullScreenSet() fyne.CanvasObject {
-	button := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "viewFullScreen"), func() {
+	var button *widget.Button
+	button = widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "viewFullScreen"), func() {
 		if dReams.Window.FullScreen() {
+			button.Icon = fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "viewFullScreen")
 			dReams.Window.SetFullScreen(false)
 		} else {
+			button.Icon = fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "viewRestore")
 			dReams.Window.SetFullScreen(true)
 		}
 	})

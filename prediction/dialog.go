@@ -712,7 +712,7 @@ func ConfirmAction(i int, teamA, teamB string, obj []fyne.CanvasObject, tabs *co
 	options := container.NewAdaptiveGrid(2, confirm_button, cancel_button)
 	content := container.NewBorder(nil, options, nil, nil, display)
 
-	return container.NewMax(menu.Alpha120, content)
+	return container.NewMax(bundle.Alpha120, content)
 }
 
 // prediction leaderboard
@@ -1027,7 +1027,7 @@ func ownersMenu() {
 		container.New(
 			layout.NewMaxLayout(),
 			&img,
-			menu.Alpha180,
+			bundle.Alpha180,
 			border))
 
 	owner_tabs.SelectIndex(2)
