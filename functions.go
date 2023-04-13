@@ -643,6 +643,10 @@ func fetch(quit chan struct{}) {
 				}
 
 				if rpc.Daemon.Connect {
+					if rpc.Signal.Startup {
+						go refreshPriceDisplay(true)
+					}
+
 					rpc.Signal.Startup = false
 				}
 			}
