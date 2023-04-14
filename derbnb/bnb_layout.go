@@ -511,7 +511,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 
 	confirm_action_cont := container.NewAdaptiveGrid(2, container.NewMax(confirm_action), cancel_action)
 	confirm_border = container.NewBorder(
-		container.NewCenter(canvas.NewText("Confirm", bundle.TextColor)),
+		layout.NewSpacer(),
 		confirm_action_cont,
 		layout.NewSpacer(),
 		layout.NewSpacer(),
@@ -519,6 +519,10 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 	)
 
 	confirm_alpha := canvas.NewRectangle(color.RGBA{0, 0, 0, 150})
+	if bundle.AppColor == color.White {
+		confirm_alpha = canvas.NewRectangle(color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0x99})
+	}
+
 	confirm_max = container.NewMax(background, confirm_alpha, confirm_border)
 	if imported {
 		confirm_alpha2 := canvas.NewRectangle(color.RGBA{0, 0, 0, 150})
