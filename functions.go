@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"image/color"
 	"log"
@@ -34,15 +33,15 @@ type Notification struct {
 	Title, Content string
 }
 
-type dReamSave struct {
-	Skin    color.Gray16 `json:"skin"`
-	Daemon  []string     `json:"daemon"`
-	Tables  []string     `json:"tables"`
-	Predict []string     `json:"predict"`
-	Sports  []string     `json:"sports"`
+// type dReamSave struct {
+// 	Skin    color.Gray16 `json:"skin"`
+// 	Daemon  []string     `json:"daemon"`
+// 	Tables  []string     `json:"tables"`
+// 	Predict []string     `json:"predict"`
+// 	Sports  []string     `json:"sports"`
 
-	Dapps map[string]bool `json:"dapps"`
-}
+// 	Dapps map[string]bool `json:"dapps"`
+// }
 
 var command_line string = `dReams
 dReam Tables all in one dApp, powered by Gnomon.
@@ -107,7 +106,7 @@ func flags() (version string) {
 }
 
 func init() {
-	saved := ReadDreamsConfig("dReams")
+	saved := menu.ReadDreamsConfig("dReams")
 	if saved.Daemon != nil {
 		menu.Control.Daemon_config = saved.Daemon[0]
 	}
@@ -133,7 +132,7 @@ func init() {
 	go func() {
 		<-c
 		menu.Exit_signal = true
-		WriteDreamsConfig(rpc.Daemon.Rpc)
+		menu.WriteDreamsConfig(rpc.Daemon.Rpc, dReams.skin)
 		fmt.Println()
 		serviceRunning()
 		go menu.StopLabel()
@@ -224,78 +223,78 @@ func labelColorBlack(c *fyne.Container) *fyne.Container {
 	return cont
 }
 
-// Save dReams config.json file for platform wide dApp use
-func WriteDreamsConfig(daemon string) {
-	var u dReamSave
-	switch daemon {
-	case rpc.DAEMON_RPC_DEFAULT:
-	case rpc.DAEMON_RPC_REMOTE1:
-	case rpc.DAEMON_RPC_REMOTE2:
-	// case menu.DAEMON_RPC_REMOTE3:
-	// case menu.DAEMON_RPC_REMOTE4:
-	case rpc.DAEMON_RPC_REMOTE5:
-	case rpc.DAEMON_RPC_REMOTE6:
-	default:
-		u.Daemon = []string{daemon}
-	}
+// // Save dReams config.json file for platform wide dApp use
+// func WriteDreamsConfig(daemon string) {
+// 	var u dReamSave
+// 	switch daemon {
+// 	case rpc.DAEMON_RPC_DEFAULT:
+// 	case rpc.DAEMON_RPC_REMOTE1:
+// 	case rpc.DAEMON_RPC_REMOTE2:
+// 	// case menu.DAEMON_RPC_REMOTE3:
+// 	// case menu.DAEMON_RPC_REMOTE4:
+// 	case rpc.DAEMON_RPC_REMOTE5:
+// 	case rpc.DAEMON_RPC_REMOTE6:
+// 	default:
+// 		u.Daemon = []string{daemon}
+// 	}
 
-	u.Skin = dReams.skin
-	u.Tables = menu.Control.Holdero_favorites
-	u.Predict = menu.Control.Predict_favorites
-	u.Sports = menu.Control.Sports_favorites
-	u.Dapps = menu.Control.Dapp_list
+// 	u.Skin = dReams.skin
+// 	u.Tables = menu.Control.Holdero_favorites
+// 	u.Predict = menu.Control.Predict_favorites
+// 	u.Sports = menu.Control.Sports_favorites
+// 	u.Dapps = menu.Control.Dapp_list
 
-	if u.Daemon != nil {
-		if u.Daemon[0] == "" {
-			if menu.Control.Daemon_config != "" {
-				u.Daemon[0] = menu.Control.Daemon_config
-			} else {
-				u.Daemon[0] = "127.0.0.1:10102"
-			}
-		}
+// 	if u.Daemon != nil {
+// 		if u.Daemon[0] == "" {
+// 			if menu.Control.Daemon_config != "" {
+// 				u.Daemon[0] = menu.Control.Daemon_config
+// 			} else {
+// 				u.Daemon[0] = "127.0.0.1:10102"
+// 			}
+// 		}
 
-		file, err := os.Create("config/config.json")
-		if err != nil {
-			log.Println("[WriteDreamsConfig]", err)
-			return
-		}
+// 		file, err := os.Create("config/config.json")
+// 		if err != nil {
+// 			log.Println("[WriteDreamsConfig]", err)
+// 			return
+// 		}
 
-		defer file.Close()
-		json, _ := json.MarshalIndent(u, "", " ")
+// 		defer file.Close()
+// 		json, _ := json.MarshalIndent(u, "", " ")
 
-		if _, err = file.Write(json); err != nil {
-			log.Println("[WriteDreamsConfig]", err)
-		}
-	}
-}
+// 		if _, err = file.Write(json); err != nil {
+// 			log.Println("[WriteDreamsConfig]", err)
+// 		}
+// 	}
+// }
 
-// Read dReams platform config.json file
-//   - tag for log print
-//   - Sets up directory if none exists
-func ReadDreamsConfig(tag string) (saved dReamSave) {
-	if !holdero.FileExists("config/config.json", tag) {
-		log.Printf("[%s] Creating config directory\n", tag)
-		mkdir := os.Mkdir("config", 0755)
-		if mkdir != nil {
-			log.Printf("[%s] %s\n", tag, mkdir)
-		}
+// // Read dReams platform config.json file
+// //   - tag for log print
+// //   - Sets up directory if none exists
+// func ReadDreamsConfig(tag string) (saved dReamSave) {
+// 	if !holdero.FileExists("config/config.json", tag) {
+// 		log.Printf("[%s] Creating config directory\n", tag)
+// 		mkdir := os.Mkdir("config", 0755)
+// 		if mkdir != nil {
+// 			log.Printf("[%s] %s\n", tag, mkdir)
+// 		}
 
-		return
-	}
+// 		return
+// 	}
 
-	file, err := os.ReadFile("config/config.json")
-	if err != nil {
-		log.Println("[ReadDreamsConfig]", err)
-		return
-	}
+// 	file, err := os.ReadFile("config/config.json")
+// 	if err != nil {
+// 		log.Println("[ReadDreamsConfig]", err)
+// 		return
+// 	}
 
-	if err = json.Unmarshal(file, &saved); err != nil {
-		log.Println("[ReadDreamsConfig]", err)
-		return
-	}
+// 	if err = json.Unmarshal(file, &saved); err != nil {
+// 		log.Println("[ReadDreamsConfig]", err)
+// 		return
+// 	}
 
-	return
-}
+// 	return
+// }
 
 // Place and refresh Baccarat card images
 func showBaccCards() *fyne.Container {

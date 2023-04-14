@@ -66,7 +66,7 @@ func main() {
 
 	dReams.Window.SetCloseIntercept(func() {
 		menu.Exit_signal = true
-		WriteDreamsConfig(rpc.Daemon.Rpc)
+		menu.WriteDreamsConfig(rpc.Daemon.Rpc, dReams.skin)
 		serviceRunning()
 		go menu.StopLabel()
 		menu.StopGnomon("dReams")
