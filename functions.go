@@ -107,8 +107,7 @@ func flags() (version string) {
 }
 
 func init() {
-	saved := readConfig()
-
+	saved := ReadDreamsConfig("dReams")
 	if saved.Daemon != nil {
 		menu.Control.Daemon_config = saved.Daemon[0]
 	}
@@ -125,6 +124,7 @@ func init() {
 	holdero.InitTableSettings()
 
 	dReams.os = runtime.GOOS
+	dReams.skin = saved.Skin
 	bundle.AppColor = saved.Skin
 	prediction.SetPrintColors(dReams.os)
 
@@ -133,7 +133,7 @@ func init() {
 	go func() {
 		<-c
 		menu.Exit_signal = true
-		writeConfig(makeConfig(holdero.Poker_name, rpc.Daemon.Rpc))
+		WriteDreamsConfig(rpc.Daemon.Rpc)
 		fmt.Println()
 		serviceRunning()
 		go menu.StopLabel()
@@ -183,6 +183,9 @@ func isWindows() bool {
 }
 
 // Make system tray with opts
+//   - Send Dero message menu
+//   - Explorer link
+//   - Manual reveal key for Holdero
 func systemTray(w fyne.App) bool {
 	if desk, ok := w.(desktop.App); ok {
 		m := fyne.NewMenu("MyApp",
@@ -221,8 +224,9 @@ func labelColorBlack(c *fyne.Container) *fyne.Container {
 	return cont
 }
 
-// Make config with save struct
-func makeConfig(name, daemon string) (data dReamSave) {
+// Save dReams config.json file for platform wide dApp use
+func WriteDreamsConfig(daemon string) {
+	var u dReamSave
 	switch daemon {
 	case rpc.DAEMON_RPC_DEFAULT:
 	case rpc.DAEMON_RPC_REMOTE1:
@@ -232,20 +236,15 @@ func makeConfig(name, daemon string) (data dReamSave) {
 	case rpc.DAEMON_RPC_REMOTE5:
 	case rpc.DAEMON_RPC_REMOTE6:
 	default:
-		data.Daemon = []string{daemon}
+		u.Daemon = []string{daemon}
 	}
 
-	data.Skin = dReams.skin
-	data.Tables = menu.Control.Holdero_favorites
-	data.Predict = menu.Control.Predict_favorites
-	data.Sports = menu.Control.Sports_favorites
-	data.Dapps = menu.Control.Dapp_list
+	u.Skin = dReams.skin
+	u.Tables = menu.Control.Holdero_favorites
+	u.Predict = menu.Control.Predict_favorites
+	u.Sports = menu.Control.Sports_favorites
+	u.Dapps = menu.Control.Dapp_list
 
-	return
-}
-
-// Save config data to file
-func writeConfig(u dReamSave) {
 	if u.Daemon != nil {
 		if u.Daemon[0] == "" {
 			if menu.Control.Daemon_config != "" {
@@ -257,7 +256,7 @@ func writeConfig(u dReamSave) {
 
 		file, err := os.Create("config/config.json")
 		if err != nil {
-			log.Println("[writeConfig]", err)
+			log.Println("[WriteDreamsConfig]", err)
 			return
 		}
 
@@ -265,18 +264,20 @@ func writeConfig(u dReamSave) {
 		json, _ := json.MarshalIndent(u, "", " ")
 
 		if _, err = file.Write(json); err != nil {
-			log.Println("[writeConfig]", err)
+			log.Println("[WriteDreamsConfig]", err)
 		}
 	}
 }
 
-// Read saved config file
-func readConfig() (saved dReamSave) {
-	if !holdero.FileExists("config/config.json", "dReams") {
-		log.Println("[dReams] Creating Config Dir")
+// Read dReams platform config.json file
+//   - tag for log print
+//   - Sets up directory if none exists
+func ReadDreamsConfig(tag string) (saved dReamSave) {
+	if !holdero.FileExists("config/config.json", tag) {
+		log.Printf("[%s] Creating config directory\n", tag)
 		mkdir := os.Mkdir("config", 0755)
 		if mkdir != nil {
-			log.Println("[dReams]", mkdir)
+			log.Printf("[%s] %s\n", tag, mkdir)
 		}
 
 		return
@@ -284,12 +285,12 @@ func readConfig() (saved dReamSave) {
 
 	file, err := os.ReadFile("config/config.json")
 	if err != nil {
-		log.Println("[readConfig]", err)
+		log.Println("[ReadDreamsConfig]", err)
 		return
 	}
 
 	if err = json.Unmarshal(file, &saved); err != nil {
-		log.Println("[readConfig]", err)
+		log.Println("[ReadDreamsConfig]", err)
 		return
 	}
 

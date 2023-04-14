@@ -172,8 +172,10 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 	switch bundle.AppColor {
 	case color.White:
 		skins.SetSelected("Light")
+		dReams.skin = color.White
 	case color.Black:
 		skins.SetSelected("Dark")
+		dReams.skin = color.Black
 	default:
 
 	}

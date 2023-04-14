@@ -66,7 +66,7 @@ func main() {
 
 	dReams.Window.SetCloseIntercept(func() {
 		menu.Exit_signal = true
-		writeConfig(makeConfig(holdero.Poker_name, rpc.Daemon.Rpc))
+		WriteDreamsConfig(rpc.Daemon.Rpc)
 		serviceRunning()
 		go menu.StopLabel()
 		menu.StopGnomon("dReams")
