@@ -2,7 +2,6 @@ package derbnb
 
 import (
 	"fmt"
-	"image/color"
 	"log"
 	"sort"
 	"strconv"
@@ -70,13 +69,15 @@ var background *fyne.Container
 
 // Run DerBnb as a single dApp
 func StartApp() {
+	skin := menu.ReadDreamsConfig("DerBnb").Skin
 	a := app.New()
-	a.Settings().SetTheme(bundle.DeroTheme(color.Black))
+	a.Settings().SetTheme(bundle.DeroTheme(skin))
 	w := a.NewWindow("DerBNB Desktop")
 	w.Resize(fyne.NewSize(1200, 800))
 	w.SetMaster()
 	quit := make(chan struct{})
 	w.SetCloseIntercept(func() {
+		menu.WriteDreamsConfig(rpc.Daemon.Rpc, skin)
 		quit <- struct{}{}
 		w.Close()
 	})

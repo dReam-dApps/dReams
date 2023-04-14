@@ -1203,8 +1203,8 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 	layout2 := container.NewBorder(nil, control_box, nil, nil, user_info)
 
 	tabs = container.NewAppTabs(
-		container.NewTabItem("Properties", layout1),
-		container.NewTabItem("Profile", layout2))
+		container.NewTabItem("Properties", container.NewMax(canvas.NewRectangle(color.RGBA{0, 0, 0, 120}), layout1)),
+		container.NewTabItem("Profile", container.NewMax(canvas.NewRectangle(color.RGBA{0, 0, 0, 120}), layout2)))
 
 	if !imported {
 		tabs.Append(container.NewTabItem("Log", rpc.SessionLog()))
@@ -1224,10 +1224,16 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 
 	if imported {
 		tab_bottom := canvas.NewRectangle(color.RGBA{0, 0, 0, 180})
+		alpha := canvas.NewRectangle(color.RGBA{0, 0, 0, 150})
+		if bundle.AppColor == color.White {
+			alpha = canvas.NewRectangle(color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0xaa})
+		}
+
 		tab_bottom.SetMinSize(fyne.NewSize(157, 40))
-		tab_bottom_box := container.NewHBox(tab_bottom, layout.NewSpacer())
+		tab_bottom_box := container.NewHBox(container.NewMax(tab_bottom, alpha), layout.NewSpacer())
 		tab_bottom_bar := container.NewVBox(layout.NewSpacer(), tab_bottom_box)
-		max = container.NewMax(tab_bottom_bar, bundle.Alpha150, tabs)
+
+		max = container.NewMax(tab_bottom_bar, tabs)
 	} else {
 		tag := "DerBnb"
 		connect_box = dwidget.HorizontalEntries(tag, 1)
@@ -1246,7 +1252,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 			}
 		}
 
-		max = container.NewMax(bundle.Alpha150, tabs, container.NewVBox(layout.NewSpacer(), connect_box.Container))
+		max = container.NewMax(tabs, container.NewVBox(layout.NewSpacer(), connect_box.Container))
 	}
 
 	property_photos = make(map[string][]string)
