@@ -1227,7 +1227,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 		tab_bottom.SetMinSize(fyne.NewSize(157, 40))
 		tab_bottom_box := container.NewHBox(tab_bottom, layout.NewSpacer())
 		tab_bottom_bar := container.NewVBox(layout.NewSpacer(), tab_bottom_box)
-		max = container.NewMax(bundle.Alpha150, tab_bottom_bar, tabs)
+		max = container.NewMax(tab_bottom_bar, bundle.Alpha150, tabs)
 	} else {
 		tag := "DerBnb"
 		connect_box = dwidget.HorizontalEntries(tag, 1)
