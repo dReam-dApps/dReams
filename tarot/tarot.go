@@ -130,6 +130,10 @@ func TarotCardBox() fyne.CanvasObject {
 		Iluma.Box)
 
 	alpha := canvas.NewRectangle(color.RGBA{0, 0, 0, 150})
+	if bundle.AppColor == color.White {
+		alpha = canvas.NewRectangle(color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0x55})
+	}
+
 	box := *container.NewBorder(
 		nil,
 		actions,
@@ -271,6 +275,10 @@ func PlaceIluma() *fyne.Container {
 	scroll := container.NewScroll(intro)
 
 	alpha := canvas.NewRectangle(color.RGBA{0, 0, 0, 120})
+	if bundle.AppColor == color.White {
+		alpha = canvas.NewRectangle(color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0x55})
+	}
+
 	cont := container.NewGridWithColumns(2, scroll, img)
 
 	scroll.OnScrolled = func(p fyne.Position) {

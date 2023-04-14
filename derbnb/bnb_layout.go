@@ -1206,9 +1206,14 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 	layout1 := container.NewBorder(dates_box, container.NewAdaptiveGrid(3, layout.NewSpacer(), request_button, layout.NewSpacer()), nil, nil, layout1_split)
 	layout2 := container.NewBorder(nil, control_box, nil, nil, user_info)
 
+	tab_alpha := canvas.NewRectangle(color.RGBA{0, 0, 0, 120})
+	if bundle.AppColor == color.White {
+		tab_alpha = canvas.NewRectangle(color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0x55})
+	}
+
 	tabs = container.NewAppTabs(
-		container.NewTabItem("Properties", container.NewMax(canvas.NewRectangle(color.RGBA{0, 0, 0, 120}), layout1)),
-		container.NewTabItem("Profile", container.NewMax(canvas.NewRectangle(color.RGBA{0, 0, 0, 120}), layout2)))
+		container.NewTabItem("Properties", container.NewMax(tab_alpha, layout1)),
+		container.NewTabItem("Profile", container.NewMax(tab_alpha, layout2)))
 
 	if !imported {
 		tabs.Append(container.NewTabItem("Log", rpc.SessionLog()))

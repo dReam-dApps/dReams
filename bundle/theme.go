@@ -67,14 +67,14 @@ var DeroDarkTheme = &configurableTheme{
 var DeroLightTheme = &configurableTheme{
 	colors: map[fyne.ThemeColorName]color.Color{
 		theme.ColorNameBackground:      color.White,
-		theme.ColorNameButton:          color.RGBA{45, 45, 45, 187},
-		theme.ColorNameDisabled:        color.White,
+		theme.ColorNameButton:          color.NRGBA{R: 0x0e, G: 0x0c, B: 0x0b, A: 0x55},
+		theme.ColorNameDisabled:        color.RGBA{105, 90, 205, 240},
 		theme.ColorNameDisabledButton:  color.Transparent,
 		theme.ColorNameError:           color.NRGBA{R: 0xf4, G: 0x33, B: 0x25, A: 0xff},
 		theme.ColorNameFocus:           purple,                                          // entry highlight
 		theme.ColorNameForeground:      color.Black,                                     // text color
 		theme.ColorNameHover:           color.NRGBA{R: 0x96, G: 0x5a, B: 0xcd, A: 0x45}, //button hightlight
-		theme.ColorNameInputBackground: color.RGBA{75, 75, 75, 192},                     // entry background
+		theme.ColorNameInputBackground: color.NRGBA{R: 0xf0, G: 0xf0, B: 0xf0, A: 0xa5}, // entry background
 		theme.ColorNamePlaceHolder:     color.RGBA{31, 150, 200, 180},
 		theme.ColorNamePressed:         color.White,
 		theme.ColorNamePrimary:         blue, // tab select color, progress bar
@@ -106,11 +106,13 @@ var DeroLightTheme = &configurableTheme{
 func DeroTheme(skin color.Gray16) fyne.Theme {
 	if defaultTheme == nil {
 		if skin == color.White {
+			Alpha120 = canvas.NewRectangle(color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0x55})
 			Alpha150 = canvas.NewRectangle(color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0xaa})
 			Alpha180 = canvas.NewRectangle(color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0x99})
 			defaultTheme = DeroLightTheme
 			TextColor = color.Black
 		} else {
+			Alpha150 = canvas.NewRectangle(color.RGBA{0, 0, 0, 120})
 			Alpha150 = canvas.NewRectangle(color.RGBA{0, 0, 0, 150})
 			Alpha180 = canvas.NewRectangle(color.RGBA{0, 0, 0, 180})
 			defaultTheme = DeroDarkTheme

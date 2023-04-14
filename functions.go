@@ -114,7 +114,6 @@ func init() {
 
 	dReams.os = runtime.GOOS
 	dReams.skin = saved.Skin
-	bundle.AppColor = saved.Skin
 	prediction.SetPrintColors(dReams.os)
 
 	c := make(chan os.Signal, 1)

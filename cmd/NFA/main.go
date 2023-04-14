@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"image/color"
 	"log"
 	"os"
 	"os/signal"
@@ -23,13 +22,15 @@ import (
 const app_tag = "NFA Market"
 
 func main() {
+	config := menu.ReadDreamsConfig(app_tag)
 	a := app.New()
-	a.Settings().SetTheme(bundle.DeroTheme(color.Black))
+	a.Settings().SetTheme(bundle.DeroTheme(config.Skin))
 	w := a.NewWindow(app_tag)
 	w.Resize(fyne.NewSize(1200, 800))
 	w.SetMaster()
 	quit := make(chan struct{})
 	w.SetCloseIntercept(func() {
+		menu.WriteDreamsConfig(rpc.Daemon.Rpc, config.Skin)
 		quit <- struct{}{}
 		w.Close()
 	})
@@ -57,6 +58,7 @@ func main() {
 	go func() {
 		<-c
 		fmt.Println()
+		menu.WriteDreamsConfig(rpc.Daemon.Rpc, config.Skin)
 		menu.StopGnomon(app_tag)
 		rpc.Wallet.Connect = false
 		log.Printf("[%s] Closing", app_tag)

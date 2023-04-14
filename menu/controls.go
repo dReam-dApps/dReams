@@ -8,6 +8,7 @@ import (
 
 	"fyne.io/fyne/v2/canvas"
 	"github.com/SixofClubsss/dReams/baccarat"
+	"github.com/SixofClubsss/dReams/bundle"
 	"github.com/SixofClubsss/dReams/holdero"
 	"github.com/SixofClubsss/dReams/rpc"
 	"github.com/SixofClubsss/dReams/tarot"
@@ -92,6 +93,8 @@ func ReadDreamsConfig(tag string) (saved dReamSave) {
 		log.Println("[ReadDreamsConfig]", err)
 		return
 	}
+
+	bundle.AppColor = saved.Skin
 
 	return
 }

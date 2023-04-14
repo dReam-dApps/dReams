@@ -69,15 +69,15 @@ var background *fyne.Container
 
 // Run DerBnb as a single dApp
 func StartApp() {
-	skin := menu.ReadDreamsConfig("DerBnb").Skin
+	config := menu.ReadDreamsConfig("DerBnb")
 	a := app.New()
-	a.Settings().SetTheme(bundle.DeroTheme(skin))
+	a.Settings().SetTheme(bundle.DeroTheme(config.Skin))
 	w := a.NewWindow("DerBNB Desktop")
 	w.Resize(fyne.NewSize(1200, 800))
 	w.SetMaster()
 	quit := make(chan struct{})
 	w.SetCloseIntercept(func() {
-		menu.WriteDreamsConfig(rpc.Daemon.Rpc, skin)
+		menu.WriteDreamsConfig(rpc.Daemon.Rpc, config.Skin)
 		quit <- struct{}{}
 		w.Close()
 	})
