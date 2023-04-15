@@ -120,20 +120,20 @@ func preditctionOpts(window fyne.Window) fyne.CanvasObject {
 	PS_Control.P_deposit.Wrapping = fyne.TextTruncate
 	PS_Control.P_deposit.Validator = validation.NewRegexp(`^\d{1,}\.\d{1,5}$`, "Format Not Valid")
 
-	reset := window.Content().(*fyne.Container).Objects[1]
+	reset := window.Content().(*fyne.Container).Objects[2]
 
 	PS_Control.P_set = widget.NewButton("Set Prediction", func() {
 		if PS_Control.P_deposit.Validate() == nil && PS_Control.P_amt.Validate() == nil && PS_Control.P_end.Validate() == nil && PS_Control.P_mark.Validate() == nil {
 			if len(Predict.Contract) == 64 {
-				window.Content().(*fyne.Container).Objects[1] = ownerConfirmAction(2, 100, window, reset)
-				window.Content().(*fyne.Container).Objects[1].Refresh()
+				window.Content().(*fyne.Container).Objects[2] = ownerConfirmAction(2, 100, window, reset)
+				window.Content().(*fyne.Container).Objects[2].Refresh()
 			}
 		}
 	})
 
 	PS_Control.P_cancel = widget.NewButton("Cancel", func() {
-		window.Content().(*fyne.Container).Objects[1] = ownerConfirmAction(8, 0, window, reset)
-		window.Content().(*fyne.Container).Objects[1].Refresh()
+		window.Content().(*fyne.Container).Objects[2] = ownerConfirmAction(8, 0, window, reset)
+		window.Content().(*fyne.Container).Objects[2].Refresh()
 	})
 
 	PS_Control.P_cancel.Hide()
@@ -146,24 +146,24 @@ func preditctionOpts(window fyne.Window) fyne.CanvasObject {
 			switch onChainPrediction(prediction) {
 			case 1:
 				a = rpc.GetDifficulty(rpc.Display.P_feed)
-				window.Content().(*fyne.Container).Objects[1] = ownerConfirmAction(6, a, window, reset)
+				window.Content().(*fyne.Container).Objects[2] = ownerConfirmAction(6, a, window, reset)
 			case 2:
 				a = rpc.GetBlockTime(rpc.Display.P_feed)
-				window.Content().(*fyne.Container).Objects[1] = ownerConfirmAction(6, a, window, reset)
+				window.Content().(*fyne.Container).Objects[2] = ownerConfirmAction(6, a, window, reset)
 			case 3:
 				d := rpc.DaemonHeight(rpc.Display.P_feed)
 				a = float64(d)
-				window.Content().(*fyne.Container).Objects[1] = ownerConfirmAction(6, a, window, reset)
+				window.Content().(*fyne.Container).Objects[2] = ownerConfirmAction(6, a, window, reset)
 			default:
 
 			}
 
 		} else {
 			a, _ = holdero.GetPrice(prediction)
-			window.Content().(*fyne.Container).Objects[1] = ownerConfirmAction(4, a, window, reset)
+			window.Content().(*fyne.Container).Objects[2] = ownerConfirmAction(4, a, window, reset)
 		}
 
-		window.Content().(*fyne.Container).Objects[1].Refresh()
+		window.Content().(*fyne.Container).Objects[2].Refresh()
 
 	})
 
@@ -177,24 +177,24 @@ func preditctionOpts(window fyne.Window) fyne.CanvasObject {
 			switch onChainPrediction(prediction) {
 			case 1:
 				a = rpc.GetDifficulty(rpc.Display.P_feed)
-				window.Content().(*fyne.Container).Objects[1] = ownerConfirmAction(7, a, window, reset)
+				window.Content().(*fyne.Container).Objects[2] = ownerConfirmAction(7, a, window, reset)
 			case 2:
 				a = rpc.GetBlockTime(rpc.Display.P_feed)
-				window.Content().(*fyne.Container).Objects[1] = ownerConfirmAction(7, a, window, reset)
+				window.Content().(*fyne.Container).Objects[2] = ownerConfirmAction(7, a, window, reset)
 			case 3:
 				d := rpc.DaemonHeight(rpc.Display.P_feed)
 				a = float64(d)
-				window.Content().(*fyne.Container).Objects[1] = ownerConfirmAction(7, a, window, reset)
+				window.Content().(*fyne.Container).Objects[2] = ownerConfirmAction(7, a, window, reset)
 			default:
 
 			}
 
 		} else {
 			a, _ = holdero.GetPrice(prediction)
-			window.Content().(*fyne.Container).Objects[1] = ownerConfirmAction(5, a, window, reset)
+			window.Content().(*fyne.Container).Objects[2] = ownerConfirmAction(5, a, window, reset)
 		}
 
-		window.Content().(*fyne.Container).Objects[1].Refresh()
+		window.Content().(*fyne.Container).Objects[2].Refresh()
 	})
 
 	PS_Control.P_pay.Hide()
@@ -289,20 +289,20 @@ func sportsOpts(window fyne.Window) fyne.CanvasObject {
 	PS_Control.S_deposit.Wrapping = fyne.TextTruncate
 	PS_Control.S_deposit.Validator = validation.NewRegexp(`^\d{1,}\.\d{1,5}$`, "Format Not Valid")
 
-	reset := window.Content().(*fyne.Container).Objects[1]
+	reset := window.Content().(*fyne.Container).Objects[2]
 
 	PS_Control.S_set = widget.NewButton("Set Game", func() {
 		if PS_Control.S_deposit.Validate() == nil && PS_Control.S_amt.Validate() == nil && PS_Control.S_end.Validate() == nil {
 			if len(Sports.Contract) == 64 {
-				window.Content().(*fyne.Container).Objects[1] = ownerConfirmAction(1, 100, window, reset)
-				window.Content().(*fyne.Container).Objects[1].Refresh()
+				window.Content().(*fyne.Container).Objects[2] = ownerConfirmAction(1, 100, window, reset)
+				window.Content().(*fyne.Container).Objects[2].Refresh()
 			}
 		}
 	})
 
 	PS_Control.S_cancel = widget.NewButton("Cancel", func() {
-		window.Content().(*fyne.Container).Objects[1] = ownerConfirmAction(9, 0, window, reset)
-		window.Content().(*fyne.Container).Objects[1].Refresh()
+		window.Content().(*fyne.Container).Objects[2] = ownerConfirmAction(9, 0, window, reset)
+		window.Content().(*fyne.Container).Objects[2].Refresh()
 	})
 
 	PS_Control.S_cancel.Hide()
@@ -312,8 +312,8 @@ func sportsOpts(window fyne.Window) fyne.CanvasObject {
 
 	sports_confirm := widget.NewButton("Sports Payout", func() {
 		if len(Sports.Contract) == 64 {
-			window.Content().(*fyne.Container).Objects[1] = ownerConfirmAction(3, 100, window, reset)
-			window.Content().(*fyne.Container).Objects[1].Refresh()
+			window.Content().(*fyne.Container).Objects[2] = ownerConfirmAction(3, 100, window, reset)
+			window.Content().(*fyne.Container).Objects[2].Refresh()
 		}
 	})
 
@@ -1177,8 +1177,8 @@ func ownerConfirmAction(i int, p float64, window fyne.Window, reset fyne.CanvasO
 	}
 
 	cancel_button := widget.NewButton("Cancel", func() {
-		window.Content().(*fyne.Container).Objects[1] = reset
-		window.Content().(*fyne.Container).Objects[1].Refresh()
+		window.Content().(*fyne.Container).Objects[2] = reset
+		window.Content().(*fyne.Container).Objects[2].Refresh()
 	})
 
 	confirm_button := widget.NewButton("Confirm", func() {
@@ -1226,8 +1226,8 @@ func ownerConfirmAction(i int, p float64, window fyne.Window, reset fyne.CanvasO
 
 		}
 
-		window.Content().(*fyne.Container).Objects[1] = reset
-		window.Content().(*fyne.Container).Objects[1].Refresh()
+		window.Content().(*fyne.Container).Objects[2] = reset
+		window.Content().(*fyne.Container).Objects[2].Refresh()
 	})
 
 	display := container.NewVBox(layout.NewSpacer(), confirm_display, layout.NewSpacer())
