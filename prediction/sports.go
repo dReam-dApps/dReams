@@ -41,6 +41,18 @@ type sportsItems struct {
 
 var Sports sportsItems
 
+// Disable dSports objects
+func DisableSports(d bool) {
+	if d {
+		Sports.Sports_box.Hide()
+		menu.Control.Sports_check.SetChecked(false)
+	}
+
+	Sports.Sports_box.Refresh()
+}
+
+// Check box for dSports SCID
+//   - Hides sports controls on disconnect
 func SportsConnectedBox() fyne.Widget {
 	menu.Control.Sports_check = widget.NewCheck("", func(b bool) {
 		if !b {
@@ -55,6 +67,9 @@ func SportsConnectedBox() fyne.Widget {
 	return menu.Control.Sports_check
 }
 
+// Entry for dPrediction SCID
+//   - Bound to Sports.Contractt
+//   - Checks for valid SCID on changed
 func SportsContractEntry() fyne.Widget {
 	options := []string{""}
 	menu.Control.S_contract = widget.NewSelectEntry(options)
@@ -87,6 +102,9 @@ func SportsContractEntry() fyne.Widget {
 	return menu.Control.S_contract
 }
 
+// Routine when dSports SCID is clicked
+//   - Sets label info, controls and payout log
+//   - item returned for adding and removing favorite
 func setSportsControls(str string) (item string) {
 	Sports.Game_select.ClearSelected()
 	Sports.Game_select.Options = []string{}
@@ -101,13 +119,14 @@ func setSportsControls(str string) (item string) {
 			menu.Control.S_contract.SetText(trimmed)
 			finals := rpc.FetchSportsFinal(trimmed)
 			Sports.Payout_log.SetText(formatFinals(trimmed, finals))
-
 		}
 	}
 
 	return
 }
 
+// Format all dSports final results from SCID
+//   - Pass all final strings and splitting for formatting
 func formatFinals(scid string, finals []string) (text string) {
 	text = "Last Payouts from SCID:\n\n" + scid
 	for i := range finals {
@@ -128,6 +147,7 @@ func formatFinals(scid string, finals []string) (text string) {
 	return
 }
 
+// Format winning team name from dSports final result string
 func WinningTeam(teams, winner string) string {
 	split := strings.Split(teams, "--")
 	if len(split) >= 2 {
@@ -153,15 +173,17 @@ func WinningTeam(teams, winner string) string {
 	}
 }
 
+// Set dSports info label
 func SetSportsInfo(scid string) {
-	info := GetBook(menu.Gnomes.Init, scid)
+	info := GetBook(scid)
 	Sports.Info.SetText(info)
 	Sports.Info.Refresh()
 	Sports.Game_select.Refresh()
 }
 
-// List object for populating public dSports contracts
-func SportsListings(tab *container.AppTabs) fyne.CanvasObject { /// sports contract list
+// List object for populating public dSports contracts, with rating and add favorite controls
+//   - Pass tab for action confirmation reset
+func SportsListings(tab *container.AppTabs) fyne.CanvasObject {
 	Sports.Sports_list = widget.NewList(
 		func() int {
 			return len(menu.Control.Sports_contracts)
@@ -226,7 +248,7 @@ func SportsListings(tab *container.AppTabs) fyne.CanvasObject { /// sports contr
 	return cont
 }
 
-// List object for populating favorite dSports contracts
+// List object for populating favorite dSports contracts, with remove favorite control
 func SportsFavorites() fyne.CanvasObject {
 	Sports.Favorite_list = widget.NewList(
 		func() int {
@@ -305,6 +327,7 @@ func SportsOwned() fyne.CanvasObject {
 	return Sports.Owned_list
 }
 
+// Log entry for dSports payout results
 func SportsPayouts() fyne.CanvasObject {
 	Sports.Payout_log = widget.NewMultiLineEntry()
 	Sports.Payout_log.Disable()
@@ -312,8 +335,9 @@ func SportsPayouts() fyne.CanvasObject {
 	return Sports.Payout_log
 }
 
-func GetBook(gi bool, scid string) (info string) {
-	if gi && !menu.GnomonClosing() && menu.Gnomes.Sync {
+// Gets dSports data from SCID and return formatted info string
+func GetBook(scid string) (info string) {
+	if menu.Gnomes.Init && !menu.GnomonClosing() && menu.Gnomes.Sync {
 		_, initValue := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "s_init", menu.Gnomes.Indexer.ChainHeight, true)
 		if initValue != nil {
 			_, playedValue := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "s_played", menu.Gnomes.Indexer.ChainHeight, true)
@@ -390,6 +414,17 @@ func GetBook(gi bool, scid string) (info string) {
 	return
 }
 
+// Formats dSports info string
+//   - g is game name
+//   - gN is game number
+//   - l is league
+//   - min is minimum Dero wager
+//   - eA is game end time
+//   - c is current number of picks
+//   - tA, tB are team names of A and B
+//   - tAV, tBV is total picks for A or B
+//   - total is curent game Dero pot total
+//   - a, b are current contrct time frames
 func S_Results(g, gN, l, min, eA, c, tA, tB, tAV, tBV, total string, a, b uint64) (info string) { /// sports info label
 	result, err := strconv.ParseFloat(total, 32)
 
@@ -420,6 +455,7 @@ func S_Results(g, gN, l, min, eA, c, tA, tB, tAV, tBV, total string, a, b uint64
 	return
 }
 
+// Switch for sports api prefix
 func sports(league string) (api string) {
 	switch league {
 	case "NHL":
@@ -443,6 +479,7 @@ func sports(league string) (api string) {
 	return api
 }
 
+// Gets the games of league for following week
 func GetCurrentWeek(league string) {
 	for i := 0; i < 8; i++ {
 		now := time.Now().AddDate(0, 0, i)
@@ -464,6 +501,7 @@ func GetCurrentWeek(league string) {
 	}
 }
 
+// Gets the games of league for following month
 func GetCurrentMonth(league string) {
 	for i := 0; i < 45; i++ {
 		now := time.Now().AddDate(0, 0, i)
@@ -481,6 +519,7 @@ func GetCurrentMonth(league string) {
 	}
 }
 
+// Call soccer api with chosen date and league
 func callSoccer(date, league string) (s *soccer) {
 	client := &http.Client{Timeout: 9 * time.Second}
 	req, err := http.NewRequest("GET", sports(league)+"?dates="+date, nil)
@@ -511,6 +550,7 @@ func callSoccer(date, league string) (s *soccer) {
 	return s
 }
 
+// Call mma api with chosen date and league
 func callMma(date, league string) (m *mma) {
 	client := &http.Client{Timeout: 9 * time.Second}
 	req, err := http.NewRequest("GET", sports(league)+"?dates="+date, nil)
@@ -541,6 +581,7 @@ func callMma(date, league string) (m *mma) {
 	return m
 }
 
+// Call basketball api with chosen date and league
 func callBasketball(date, league string) (bb *basketball) {
 	client := &http.Client{Timeout: 9 * time.Second}
 	req, err := http.NewRequest("GET", sports(league)+"?dates="+date, nil)
@@ -571,6 +612,7 @@ func callBasketball(date, league string) (bb *basketball) {
 	return bb
 }
 
+// Call football api with chosen date and league
 func callFootball(date, league string) (f *football) {
 	client := &http.Client{Timeout: 9 * time.Second}
 	req, err := http.NewRequest("GET", sports(league)+"?dates="+date, nil)
@@ -601,6 +643,7 @@ func callFootball(date, league string) (f *football) {
 	return f
 }
 
+// Call hockey api with chosen date and league
 func callHockey(date, league string) (h *hockey) {
 	client := &http.Client{Timeout: 9 * time.Second}
 	req, err := http.NewRequest("GET", sports(league)+"?dates="+date, nil)
@@ -631,6 +674,7 @@ func callHockey(date, league string) (h *hockey) {
 	return h
 }
 
+// Find and display the end time of selected game
 func GetGameEnd(date, game, league string) {
 	client := &http.Client{Timeout: 9 * time.Second}
 	req, err := http.NewRequest("GET", sports(league)+"?dates="+date, nil)
@@ -698,6 +742,7 @@ func GetGameEnd(date, game, league string) {
 	}
 }
 
+// Call api for scores with chosen date and league
 func callScores(date, league string) (s *scores) {
 	client := &http.Client{Timeout: 9 * time.Second}
 	req, err := http.NewRequest("GET", sports(league)+"?dates="+date, nil)
@@ -728,6 +773,8 @@ func callScores(date, league string) (s *scores) {
 	return s
 }
 
+// Gets past game scores for league and display info
+//   - Pass label for display info
 func GetScores(label *widget.Label, league string) {
 	var single bool
 	for i := -1; i < 1; i++ {
@@ -801,6 +848,8 @@ func GetScores(label *widget.Label, league string) {
 	label.Refresh()
 }
 
+// Get final result of mma league and display info
+//   - Pass label for display info
 func GetMmaResults(label *widget.Label, league string) {
 	var single bool
 	for i := -15; i < 1; i++ {
@@ -872,6 +921,7 @@ func GetMmaResults(label *widget.Label, league string) {
 	label.Refresh()
 }
 
+// Gets hockey games for selected league and date
 func GetHockey(date, league string) {
 	found := callHockey(date, league)
 	if found != nil {
@@ -897,6 +947,8 @@ func GetHockey(date, league string) {
 	}
 }
 
+// Gets hockey games for selected league and adds to options selection
+//   - date GetCurrentWeek()
 func GetSoccer(date, league string) {
 	found := callSoccer(date, league)
 	if found != nil {
@@ -923,6 +975,8 @@ func GetSoccer(date, league string) {
 	}
 }
 
+// Gets and returns the winner of game
+//   - league defines api prefix
 func GetWinner(game, league string) (string, string) {
 	for i := -2; i < 1; i++ {
 		day := time.Now().AddDate(0, 0, i)
@@ -960,6 +1014,8 @@ func GetWinner(game, league string) (string, string) {
 	return "", ""
 }
 
+// Gets and returns the winner of mma match
+//   - league defines api prefix
 func GetMmaWinner(game, league string) (string, string) {
 	for i := -2; i < 1; i++ {
 		day := time.Now().AddDate(0, 0, i)
@@ -999,6 +1055,8 @@ func GetMmaWinner(game, league string) (string, string) {
 	return "", ""
 }
 
+// Gets football games for selected league and adds to options selection
+//   - date GetCurrentWeek()
 func GetFootball(date, league string) {
 	found := callFootball(date, league)
 	if found != nil {
@@ -1024,6 +1082,8 @@ func GetFootball(date, league string) {
 	}
 }
 
+// Gets basketabll games for selected league and adds to options selection
+//   - date GetCurrentWeek()
 func GetBasketball(date, league string) {
 	found := callBasketball(date, league)
 	if found != nil {
@@ -1049,6 +1109,8 @@ func GetBasketball(date, league string) {
 	}
 }
 
+// Gets mma matches for selected league and adds to options selection
+//   - date GetCurrentMonth()
 func GetMma(date, league string) {
 	found := callMma(date, league)
 	if found != nil {

@@ -54,16 +54,8 @@ func DisablePreditions(d bool) {
 	Predict.Prediction_box.Refresh()
 }
 
-// Disable dSports objects
-func DisableSports(d bool) {
-	if d {
-		Sports.Sports_box.Hide()
-		menu.Control.Sports_check.SetChecked(false)
-	}
-
-	Sports.Sports_box.Refresh()
-}
-
+// Check box for dPrediction SCID
+//   - Hides prediction controls on disconnect
 func PredictConnectedBox() fyne.Widget {
 	menu.Control.Predict_check = widget.NewCheck("", func(b bool) {
 		if !b {
@@ -81,6 +73,9 @@ func PredictConnectedBox() fyne.Widget {
 	return menu.Control.Predict_check
 }
 
+// Entry for dPrediction SCID
+//   - Bound to Predict.Contract
+//   - Checks for valid SCID on changed
 func PreictionContractEntry() fyne.Widget {
 	options := []string{}
 	menu.Control.P_contract = widget.NewSelectEntry(options)
@@ -125,6 +120,7 @@ func PreictionContractEntry() fyne.Widget {
 // 	return Predict.Leaders_list
 // }
 
+// When called, enable and show dPrediction controls
 func ShowPredictionControls() {
 	DisablePreditions(false)
 	Predict.Higher.Show()
@@ -135,6 +131,9 @@ func ShowPredictionControls() {
 	// holdero.Actions.NameEntry.Refresh()
 }
 
+// Routine when dPrediction SCID is clicked
+//   - Sets label info and controls
+//   - item returned for adding and removing favorites
 func setPredictionControls(str string) (item string) {
 	split := strings.Split(str, "   ")
 	if len(split) >= 3 {
@@ -154,14 +153,16 @@ func setPredictionControls(str string) (item string) {
 	return
 }
 
+// Sets dPrediction info label
 func SetPredictionInfo(scid string) {
-	info := GetPrediction(rpc.Daemon.Connect, scid)
+	info := GetPrediction(scid)
 	if info != "" {
 		Predict.Info.SetText(info)
 		Predict.Info.Refresh()
 	}
 }
 
+// Update price feed for dPrediction display
 func SetPredictionPrices(d bool) {
 	if d {
 		_, btc := holdero.GetPrice("BTC-USDT")
@@ -174,7 +175,8 @@ func SetPredictionPrices(d bool) {
 	}
 }
 
-// List object for populating public dPrediction contracts
+// List object for populating public dPrediction contracts, with rating and add favorite controls
+//   - Pass tab for action confirmation reset
 func PredictionListings(tab *container.AppTabs) fyne.CanvasObject {
 	Predict.Predict_list = widget.NewList(
 		func() int {
@@ -240,7 +242,7 @@ func PredictionListings(tab *container.AppTabs) fyne.CanvasObject {
 	return cont
 }
 
-// List object for populating favorite dPrediction contracts
+// List object for populating favorite dPrediction contracts, with remove favorite control
 func PredicitionFavorites() fyne.CanvasObject {
 	Predict.Favorite_list = widget.NewList(
 		func() int {
@@ -331,7 +333,19 @@ func PredictionOwned() fyne.CanvasObject {
 // 	return Predict.Remove_button
 // }
 
-func P_initResults(p, amt, eA, c, to, u, d, r, f, m string, ta, tb, tc int) (info string) { /// prediction info, initialized
+// Formats intialized dPrediction info string
+//   - p defines prediction
+//   - amt is Dero value
+//   - eA is prediction end time
+//   - c is number of current predictions
+//   - to is current total prediction Dero pot value
+//   - u is higher predictions
+//   - d is lower predictions
+//   - r is total completed prediction rounds
+//   - f is prediction feed
+//   - m is prediction mark
+//   - ta, tb, tc are current contrct time frames
+func P_initResults(p, amt, eA, c, to, u, d, r, f, m string, ta, tb, tc int) (info string) {
 	end_time, _ := rpc.MsToTime(eA)
 	utc := end_time.String()
 	add := rpc.StringToInt(eA)
@@ -402,7 +416,10 @@ func P_initResults(p, amt, eA, c, to, u, d, r, f, m string, ta, tb, tc int) (inf
 	return
 }
 
-func roundResults(fr, m string) string { /// prediction results text
+// Format dPrediction end result text
+//   - fr is the unsplit result string
+//   - m is prediction mark
+func roundResults(fr, m string) string {
 	if len(Predict.Contract) == 64 && fr != "" {
 		split := strings.Split(fr, "_")
 		var res string
@@ -469,7 +486,12 @@ func roundResults(fr, m string) string { /// prediction results text
 	return ""
 }
 
-func P_no_initResults(fr, tx, r, m string) (info string) { /// prediction info, not initialized
+// Formats non-intialized dPrediction info string
+//   - fr is the unsplit result string
+//   - tx is the previous payout TXID
+//   - r is total completed prediction rounds
+//   - m is prediction mark
+func P_no_initResults(fr, tx, r, m string) (info string) {
 	info = "SCID:\n\n" + Predict.Contract + "\n" + "\nRound Completed\n\nRound Mark: " + m +
 		"\nRound Results: " + roundResults(fr, m) + "\n\nPayout TXID: " + tx + "\n\nRounds Completed: " + r
 
@@ -478,8 +500,9 @@ func P_no_initResults(fr, tx, r, m string) (info string) { /// prediction info, 
 	return
 }
 
-func GetPrediction(d bool, scid string) (info string) {
-	if d && menu.Gnomes.Init && !menu.GnomonClosing() && menu.Gnomes.Sync {
+// Gets dPrecition data from SCID and return formatted info string
+func GetPrediction(scid string) (info string) {
+	if rpc.Daemon.Connect && menu.Gnomes.Init && !menu.GnomonClosing() && menu.Gnomes.Sync {
 		predicting, _ := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "predicting", menu.Gnomes.Indexer.ChainHeight, true)
 		url, _ := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "p_url", menu.Gnomes.Indexer.ChainHeight, true)
 		final, _ := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "p_final", menu.Gnomes.Indexer.ChainHeight, true)

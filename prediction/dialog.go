@@ -74,7 +74,8 @@ func onChainPrediction(s string) int {
 	}
 }
 
-// dPrediction owner contol objects
+// dPrediction owner contol objects for side menu
+//   - Pass side menu window to reset to
 func preditctionOpts(window fyne.Window) fyne.CanvasObject {
 	pred := []string{"DERO-BTC", "XMR-BTC", "BTC-USDT", "DERO-USDT", "XMR-USDT", "DERO-Difficulty", "DERO-Block Time", "DERO-Block Number"}
 	PS_Control.P_Name = widget.NewSelectEntry(pred)
@@ -220,7 +221,8 @@ func preditctionOpts(window fyne.Window) fyne.CanvasObject {
 	return owner_p
 }
 
-// dSports owner control objects
+// dSports owner control objects for side menu
+//   - Pass side menu window to reset to
 func sportsOpts(window fyne.Window) fyne.CanvasObject {
 	options := []string{}
 	PS_Control.S_game = widget.NewSelect(options, func(s string) {
@@ -335,7 +337,8 @@ func sportsOpts(window fyne.Window) fyne.CanvasObject {
 	return sports
 }
 
-// dReam Service control objects
+// dReamService control objects for side menu
+//   - Pass side menu window to reset to
 func serviceOpts(window fyne.Window) fyne.CanvasObject {
 	get_addr := widget.NewButton("Integrated Address", func() {
 		go makeIntegratedAddr(true)
@@ -518,7 +521,7 @@ func serviceOpts(window fyne.Window) fyne.CanvasObject {
 	return box
 }
 
-// SCID update objects
+// SCID update objects for side menu
 func updateOpts() fyne.CanvasObject {
 	a_label := widget.NewLabel("Time A         ")
 	a := dwidget.WholeAmtEntry("")
@@ -628,6 +631,9 @@ func updateOpts() fyne.CanvasObject {
 }
 
 // dSports and dPrediction action confirmation
+//   - i defines the action to be confirmed
+//   - teamA, teamB needed only for dSports confirmations
+//   - Pass main window obj and tabs to reset to
 func ConfirmAction(i int, teamA, teamB string, obj []fyne.CanvasObject, tabs *container.AppTabs) fyne.CanvasObject {
 	var confirm_display = widget.NewLabel("")
 	confirm_display.Wrapping = fyne.TextWrapWord
@@ -765,6 +771,9 @@ func ConfirmAction(i int, teamA, teamB string, obj []fyne.CanvasObject, tabs *co
 // }
 
 // dReam Service start confirmation
+//   - start is starting height to run service
+//   - payout and transfers, params for service
+//   - Pass side window to reset to
 func serviceRunConfirm(start uint64, payout, tranfsers bool, window fyne.Window, reset fyne.CanvasObject) fyne.CanvasObject {
 	var pay, transac string
 	if tranfsers {
@@ -1041,6 +1050,9 @@ func ownersMenu() {
 }
 
 // Bet contract owner action confirmation
+//   - i defines action to be confirmed
+//   - p for prediction price
+//   - Pass side window to reset to
 func ownerConfirmAction(i int, p float64, window fyne.Window, reset fyne.CanvasObject) fyne.CanvasObject {
 	var confirm_display = widget.NewLabel("")
 	confirm_display.Wrapping = fyne.TextWrapWord

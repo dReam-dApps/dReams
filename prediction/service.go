@@ -18,7 +18,7 @@ import (
 	"go.etcd.io/bbolt"
 )
 
-// block height of last payload format chance
+// block height of last payload format change
 const PAYLOAD_FORMAT = uint64(1728000)
 
 type service struct {
@@ -38,6 +38,7 @@ type printColors struct {
 var Service service
 var PrintColor printColors
 
+// Set up terminal log print colors
 func SetPrintColors(os string) {
 	if os != "windows" {
 		PrintColor.Reset = "\033[0m"
@@ -47,6 +48,7 @@ func SetPrintColors(os string) {
 	}
 }
 
+// Set up a integrated Dero address using rpc.Wallet.Address
 func integratedAddress() (uint64, *dero.Address) {
 	var err error
 	var addr *dero.Address
@@ -61,12 +63,18 @@ func integratedAddress() (uint64, *dero.Address) {
 	return binary.BigEndian.Uint64(b), addr
 }
 
+// Handle service debug print
+//   - print for debug
+//   - tag for log print
+//   - str to be printed
 func serviceDebug(print bool, tag, str string) {
 	if print && Service.Debug {
 		log.Println(tag, str)
 	}
 }
 
+// Create higher and lower integrated addresses dPrediction SCID
+//   - print for debug
 func intgPredictionArgs(scid string, print bool) (higher_arg dero.Arguments, lower_arg dero.Arguments) {
 	higher_string := "Higher  "
 	lower_string := "Lower  "
@@ -156,6 +164,8 @@ func intgPredictionArgs(scid string, print bool) (higher_arg dero.Arguments, low
 	return
 }
 
+// Create integrated addresses for dSports SCID
+//   - print for debug
 func intgSportsArgs(scid string, print bool) (args [][]dero.Arguments) {
 	var end uint64
 	var league, game, a_string, b_string string
@@ -257,6 +267,8 @@ func intgSportsArgs(scid string, print bool) (args [][]dero.Arguments) {
 	return
 }
 
+// Prepare and display all integrated addresses for live dSports or dPrediction contract owned by wallet
+//   - print for debug
 func makeIntegratedAddr(print bool) {
 	var addr *dero.Address
 	Service.Dest_port, addr = integratedAddress()
@@ -334,6 +346,9 @@ func makeIntegratedAddr(print bool) {
 	}
 }
 
+// Main dReamService routine
+//   - start defines service starting height
+//   - payouts, transfers for service params
 func DreamService(start uint64, payouts, transfers bool) {
 	if rpc.Daemon.Connect && rpc.Wallet.Connect {
 		db := boltDB()
@@ -399,6 +414,8 @@ func DreamService(start uint64, payouts, transfers bool) {
 	rpc.Wallet.Service = false
 }
 
+// Process and queue dPrediction contracts actions for service to complete
+//   - print for debug
 func runPredictionPayouts(print bool) {
 	contracts := menu.Control.Predict_owned
 	var pay_queue, post_queue []string
@@ -442,7 +459,7 @@ func runPredictionPayouts(print bool) {
 	for _, sc := range post_queue {
 		var sent bool
 		var value float64
-		GetPrediction(rpc.Daemon.Connect, sc)
+		GetPrediction(sc)
 		pre := rpc.Display.Prediction
 		if isOnChainPrediction(pre) {
 			switch onChainPrediction(pre) {
@@ -503,7 +520,7 @@ func runPredictionPayouts(print bool) {
 		serviceDebug(print, "[runPredictionPayouts]", fmt.Sprintf("%s Paying out", sc))
 		var sent bool
 		var amt float64
-		GetPrediction(rpc.Daemon.Connect, sc)
+		GetPrediction(sc)
 		pre := rpc.Display.Prediction
 		if isOnChainPrediction(pre) {
 			sent = true
@@ -563,6 +580,8 @@ func runPredictionPayouts(print bool) {
 	}
 }
 
+// Process dSpots contracts payouts for service to complete
+//   - print for debug
 func runSportsPayouts(print bool) {
 	contracts := menu.Control.Sports_owned
 	for i := range contracts {
@@ -626,6 +645,10 @@ func runSportsPayouts(print bool) {
 	}
 }
 
+// Process all transactions sent to integrated address for service to complete
+//   - start defines height to look from
+//   - db is local db storage
+//   - print for debug
 func processBetTx(start uint64, db *bbolt.DB, print bool) {
 	rpcClient, _, _ := rpc.SetWalletClient(rpc.Wallet.Rpc, rpc.Wallet.UserPass)
 
@@ -909,6 +932,7 @@ func processBetTx(start uint64, db *bbolt.DB, print bool) {
 	serviceDebug(print, "[processBetTx]", "Done\n")
 }
 
+// Process a single transaction by TXID, sent to integrated address
 func processSingleTx(txid string) {
 	if db := boltDB(); db != nil {
 		defer db.Close()
@@ -1153,6 +1177,7 @@ func processSingleTx(txid string) {
 	}
 }
 
+// View history of all processed transactions stored in local db by TXID
 func viewProcessedTx(start uint64) {
 	if db := boltDB(); db != nil {
 		defer db.Close()
@@ -1241,6 +1266,7 @@ func viewProcessedTx(start uint64) {
 	}
 }
 
+// Create a new bbolt.DB for dReamService
 func boltDB() *bbolt.DB {
 	db_name := fmt.Sprintf("config/dReamService_%s.bbolt.db", rpc.Wallet.Address)
 	db, err := bbolt.Open(db_name, 0600, nil)
@@ -1252,6 +1278,7 @@ func boltDB() *bbolt.DB {
 	return db
 }
 
+// Store Dero transaction in local dReamService db by TXID
 func storeTx(bucket, value string, db *bbolt.DB, e dero.Entry) {
 	err := db.Update(func(tx *bbolt.Tx) error {
 		b := tx.Bucket([]byte(bucket))
@@ -1265,6 +1292,7 @@ func storeTx(bucket, value string, db *bbolt.DB, e dero.Entry) {
 	}
 }
 
+// Delete Dero transaction in local dReamService db by TXID
 func deleteTx(bucket string, db *bbolt.DB, e dero.Entry) {
 	err := db.Update(func(tx *bbolt.Tx) error {
 		b := tx.Bucket([]byte(bucket))
@@ -1278,6 +1306,9 @@ func deleteTx(bucket string, db *bbolt.DB, e dero.Entry) {
 	}
 }
 
+// Have service relay a transaction to dPrediction SCID
+//   - pre is binary selection
+//   - destination_expected for reply message and refunds
 func sendToPrediction(pre int, scid, destination_expected string, e dero.Entry) bool {
 	waitForBlock()
 	_, end := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "p_end_at", menu.Gnomes.Indexer.ChainHeight, true)
@@ -1318,6 +1349,11 @@ func sendToPrediction(pre int, scid, destination_expected string, e dero.Entry) 
 	return true
 }
 
+// Have service relay a transaction to dSports SCID
+//   - n is game number
+//   - destination_expected for reply message and refunds
+//   - team for which team
+//   - destination_expected and abv for reply message and refunds
 func sendToSports(n, abv, team, scid, destination_expected string, e dero.Entry) bool {
 	waitForBlock()
 	_, end := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "s_end_at_"+n, menu.Gnomes.Indexer.ChainHeight, true)
@@ -1365,6 +1401,9 @@ func sendToSports(n, abv, team, scid, destination_expected string, e dero.Entry)
 	return true
 }
 
+// Have service refund a void bet
+//   - msg to display when refunding
+//   - scid, addr for reply message
 func sendRefund(scid, addr, msg string, e dero.Entry) {
 	waitForBlock()
 	rpc.ServiceRefund(e.Amount, e.SourcePort, scid, addr, msg, e.TXID)
@@ -1384,6 +1423,7 @@ func sendRefund(scid, addr, msg string, e dero.Entry) {
 	}
 }
 
+// Pause dReamService if last tx was within 3 blocks
 func waitForBlock() {
 	i := 0
 	if Service.Debug && rpc.Wallet.Height < Service.Last_block+3 {
@@ -1396,6 +1436,8 @@ func waitForBlock() {
 	}
 }
 
+// Check wallet entries for cross referencing processed transactions with replies
+//   - only need to look for outgoing entries here
 func checkReplies(outgoing dero.Get_Transfers_Result) (reply_id map[string]string) {
 	reply_id = make(map[string]string)
 	for _, out := range outgoing.Entries {
