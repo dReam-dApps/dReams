@@ -146,7 +146,7 @@ func TarotCardBox() fyne.CanvasObject {
 	return max
 }
 
-// Padding sections for Tarot cards
+// Padding section for Tarot card layouts
 func TarotPadding() fyne.CanvasObject {
 	pad := container.NewHScroll(layout.NewSpacer())
 	pad.SetMinSize(fyne.NewSize(40, 0))
@@ -154,7 +154,7 @@ func TarotPadding() fyne.CanvasObject {
 	return pad
 }
 
-// Dispplay text when cards are drawn
+// Display random text when Tarot cards are drawn
 func TarotDrawText() (text string) {
 	i := rand.Intn(6-1) + 1
 
@@ -179,6 +179,7 @@ func TarotDrawText() (text string) {
 }
 
 // Confirm Tarot draw of one or three cards
+//   - i defines 1 or 3 card draw
 func TarotConfirm(i int, reset fyne.Container) fyne.Container {
 	label := widget.NewLabel("")
 	if i == 3 {
@@ -235,6 +236,9 @@ func TarotConfirm(i int, reset fyne.Container) fyne.Container {
 }
 
 // Display Iluma description for Tarot card
+//   - card is which card button pressed
+//   - text is Iluma reading description
+//   - Pass container to reset to
 func IlumaDialog(card int, text string, reset fyne.Container) *fyne.Container {
 	label := widget.NewLabel(text)
 	label.Wrapping = fyne.TextWrapWord
@@ -266,7 +270,7 @@ func IlumaDialog(card int, text string, reset fyne.Container) *fyne.Container {
 	return container.NewMax(reset_button, scroll)
 }
 
-// Iluma tab objects
+// Iluma tab objects, intro description and image scroll
 func PlaceIluma() *fyne.Container {
 	var first, second, third bool
 	var display int
