@@ -104,20 +104,18 @@ var DeroLightTheme = &configurableTheme{
 }
 
 func DeroTheme(skin color.Gray16) fyne.Theme {
-	if defaultTheme == nil {
-		if skin == color.White {
-			Alpha120 = canvas.NewRectangle(color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0x55})
-			Alpha150 = canvas.NewRectangle(color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0xaa})
-			Alpha180 = canvas.NewRectangle(color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0x99})
-			defaultTheme = DeroLightTheme
-			TextColor = color.Black
-		} else {
-			Alpha150 = canvas.NewRectangle(color.RGBA{0, 0, 0, 120})
-			Alpha150 = canvas.NewRectangle(color.RGBA{0, 0, 0, 150})
-			Alpha180 = canvas.NewRectangle(color.RGBA{0, 0, 0, 180})
-			defaultTheme = DeroDarkTheme
-			TextColor = color.White
-		}
+	if skin == color.White {
+		Alpha120 = canvas.NewRectangle(color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0x55})
+		Alpha150 = canvas.NewRectangle(color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0xaa})
+		Alpha180 = canvas.NewRectangle(color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0x99})
+		defaultTheme = DeroLightTheme
+		TextColor = color.Black
+	} else {
+		Alpha120 = canvas.NewRectangle(color.RGBA{0, 0, 0, 120})
+		Alpha150 = canvas.NewRectangle(color.RGBA{0, 0, 0, 150})
+		Alpha180 = canvas.NewRectangle(color.RGBA{0, 0, 0, 180})
+		defaultTheme = DeroDarkTheme
+		TextColor = color.White
 	}
 
 	return defaultTheme

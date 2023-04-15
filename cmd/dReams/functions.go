@@ -113,7 +113,6 @@ func init() {
 	holdero.InitTableSettings()
 
 	dReams.os = runtime.GOOS
-	dReams.skin = saved.Skin
 	prediction.SetPrintColors(dReams.os)
 
 	c := make(chan os.Signal, 1)
@@ -121,7 +120,7 @@ func init() {
 	go func() {
 		<-c
 		menu.Exit_signal = true
-		menu.WriteDreamsConfig(rpc.Daemon.Rpc, dReams.skin)
+		menu.WriteDreamsConfig(rpc.Daemon.Rpc, bundle.AppColor)
 		fmt.Println()
 		serviceRunning()
 		go menu.StopLabel()

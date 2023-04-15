@@ -1,7 +1,6 @@
 package main
 
 import (
-	"image/color"
 	"runtime"
 	"time"
 
@@ -28,7 +27,6 @@ const (
 type dReamTables struct {
 	App       fyne.App
 	Window    fyne.Window
-	skin      color.Gray16
 	os        string
 	configure bool
 	menu      bool
@@ -66,7 +64,7 @@ func main() {
 
 	dReams.Window.SetCloseIntercept(func() {
 		menu.Exit_signal = true
-		menu.WriteDreamsConfig(rpc.Daemon.Rpc, dReams.skin)
+		menu.WriteDreamsConfig(rpc.Daemon.Rpc, bundle.AppColor)
 		serviceRunning()
 		go menu.StopLabel()
 		menu.StopGnomon("dReams")

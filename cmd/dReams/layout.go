@@ -34,17 +34,59 @@ var S dwidget.DreamsItems
 var T dwidget.DreamsItems
 
 // If dReams has not been intialized, show this screen
+//   - User selects dApps and skin to load
 func introScreen() *fyne.Container {
 	dReams.configure = true
-	title := canvas.NewText("Welcome to dReams", color.White)
+	title := canvas.NewText("Welcome to dReams", bundle.TextColor)
+	title.Alignment = fyne.TextAlignCenter
 	title.TextSize = 18
 
-	intro_label := widget.NewLabel("dReams base app has:\n\nHoldero\n\nBaccarat\n\nNFA Marketplace\n\n\nSelect further dApps to add to your dReams")
-	intro_label.Wrapping = fyne.TextWrapWord
-	intro_label.Alignment = fyne.TextAlignCenter
+	var max *fyne.Container
+	skin_title := canvas.NewText("Choose your Skin", bundle.TextColor)
+	skin_title.Alignment = fyne.TextAlignCenter
+	skin_title.TextSize = 18
+
+	skins := widget.NewRadioGroup([]string{"Dark", "Light"}, func(s string) {
+		if s == "Light" {
+			bundle.AppColor = color.White
+		} else {
+			bundle.AppColor = color.Black
+		}
+
+		dReams.App.Settings().SetTheme(bundle.DeroTheme(bundle.AppColor))
+		max.Objects[1].(*fyne.Container).Objects[1].(*canvas.Text).Color = bundle.TextColor
+		max.Objects[1].(*fyne.Container).Objects[1].Refresh()
+		max.Objects[1].(*fyne.Container).Objects[6].(*canvas.Text).Color = bundle.TextColor
+		max.Objects[1].(*fyne.Container).Objects[6].Refresh()
+		max.Objects[1].(*fyne.Container).Objects[9].(*canvas.Text).Color = bundle.TextColor
+		max.Objects[1].(*fyne.Container).Objects[9].Refresh()
+		if bundle.AppColor == color.White {
+			max.Objects[0] = canvas.NewRectangle(color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0x99})
+		} else {
+			max.Objects[0] = canvas.NewRectangle(color.RGBA{0, 0, 0, 180})
+		}
+		max.Objects[0].Refresh()
+	})
+
+	skins.Horizontal = true
+	skins.Required = true
+
+	dapp_title := canvas.NewText("Choose dApps to add to your dReams", bundle.TextColor)
+	dapp_title.Alignment = fyne.TextAlignCenter
+	dapp_title.TextSize = 18
+
+	dapp_label := widget.NewLabel("dReams base app has:\n\nHoldero\n\nBaccarat\n\nNFA Marketplace")
+	dapp_label.Wrapping = fyne.TextWrapWord
+	dapp_label.Alignment = fyne.TextAlignCenter
+
+	default_dapps := []string{"Holdero", "Baccarat", "NFA Market"}
+	default_checks := widget.NewCheckGroup(default_dapps, nil)
+	default_checks.SetSelected(default_dapps)
+	default_checks.Disable()
+	default_checks.Horizontal = true
 
 	dApps := rpc.FetchDapps()
-	dapp_checks := widget.NewCheckGroup(dApps, func(s []string) {})
+	dapp_checks := widget.NewCheckGroup(dApps, nil)
 
 	start_button := widget.NewButton("Start dReams", func() {
 		menu.Control.Dapp_list = make(map[string]bool)
@@ -55,6 +97,7 @@ func introScreen() *fyne.Container {
 		log.Println("[dReams] Loading dApps")
 		go func() {
 			menu.Control.Dapp_list["dReams"] = true
+			dReams.App.Settings().SetTheme(bundle.DeroTheme(bundle.AppColor))
 			dReams.Window.SetContent(
 				container.New(layout.NewMaxLayout(),
 					background,
@@ -64,37 +107,48 @@ func introScreen() *fyne.Container {
 
 	start_button.Importance = widget.LowImportance
 
+	dreams_img := canvas.NewImageFromResource(bundle.ResourceBlueBadge3Png)
+	dreams_img.SetMinSize(fyne.NewSize(100, 100))
+
+	powered_label := widget.NewLabel("Powered by")
+	powered_label.Alignment = fyne.TextAlignCenter
+
+	gnomon_img := canvas.NewImageFromResource(bundle.ResourceGnomoniconPng)
+	gnomon_img.SetMinSize(fyne.NewSize(60, 60))
+
 	intro := container.NewVBox(
 		layout.NewSpacer(),
-		container.NewCenter(title),
+		title,
+		container.NewCenter(dreams_img),
+		powered_label,
+		container.NewCenter(gnomon_img),
 		layout.NewSpacer(),
-		intro_label,
+		skin_title,
+		container.NewCenter(skins),
 		layout.NewSpacer(),
+		dapp_title,
+		container.NewCenter(default_checks),
 		container.NewCenter(dapp_checks),
 		layout.NewSpacer(),
 		layout.NewSpacer(),
 		start_button)
 
-	max := container.NewMax(bundle.Alpha180, intro)
+	max = container.NewMax(bundle.Alpha180, intro)
 
 	return max
 }
 
 // Select dApps to add or remove from dReams
+//   - User can change current dApps and skin
 func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 	dReams.configure = true
-	title := canvas.NewText("dReams dApps", bundle.TextColor)
-	title.Alignment = fyne.TextAlignCenter
-	title.TextSize = 18
-
-	changes_label := widget.NewLabel("Select dApps to add or remove from your dReams\n\nLoading dApp changes will disconnect your wallet")
-	changes_label.Wrapping = fyne.TextWrapWord
-	changes_label.Alignment = fyne.TextAlignCenter
+	config_title := canvas.NewText("Configure your dReams", bundle.TextColor)
+	config_title.Alignment = fyne.TextAlignCenter
+	config_title.TextSize = 18
 
 	is_enabled := []string{}
 	enabled_dapps := make(map[string]bool)
 
-	var dapp_checks *widget.CheckGroup
 	back_button := widget.NewButton("Back", func() {
 		dReams.configure = false
 		menu.Control.Dapp_list["dReams"] = true
@@ -111,6 +165,7 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 		}
 	}
 
+	var current_skin, skin_choice color.Gray16
 	load_button := widget.NewButton("Load Changes", func() {
 		rpc.Wallet.Connect = false
 		rpc.Wallet.Height = 0
@@ -120,20 +175,22 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 		menu.Exit_signal = true
 		menu.Gnomes.Checked = false
 		menu.Disconnected()
+		bundle.AppColor = skin_choice
 		go func() {
 			time.Sleep(1500 * time.Millisecond)
 			menu.Exit_signal = false
+			dReams.App.Settings().SetTheme(bundle.DeroTheme(bundle.AppColor))
 			dReams.Window.Content().(*fyne.Container).Objects[1] = place()
 			dReams.Window.Content().(*fyne.Container).Objects[1].Refresh()
 		}()
 	})
 
-	load_button.Hide()
 	load_button.Importance = widget.LowImportance
 	back_button.Importance = widget.LowImportance
 
+	var dapps_changed bool
 	dApps := rpc.FetchDapps()
-	dapp_checks = widget.NewCheckGroup(dApps, func(s []string) {
+	dapp_checks := widget.NewCheckGroup(dApps, func(s []string) {
 		for reset := range enabled_dapps {
 			enabled_dapps[reset] = false
 		}
@@ -143,9 +200,13 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 		}
 
 		if reflect.DeepEqual(enabled_dapps, menu.Control.Dapp_list) {
-			load_button.Hide()
-			back_button.Show()
+			dapps_changed = false
+			if current_skin == skin_choice {
+				load_button.Hide()
+				back_button.Show()
+			}
 		} else {
+			dapps_changed = true
 			load_button.Show()
 			back_button.Hide()
 		}
@@ -153,55 +214,88 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 
 	dapp_checks.SetSelected(is_enabled)
 
-	skin_title := canvas.NewText("Choose dReams Skin", bundle.TextColor)
+	default_dapps := []string{"Holdero", "Baccarat", "NFA Market"}
+	default_checks := widget.NewCheckGroup(default_dapps, nil)
+	default_checks.SetSelected(default_dapps)
+	default_checks.Disable()
+	default_checks.Horizontal = true
+
+	skin_title := canvas.NewText("Skin", bundle.TextColor)
 	skin_title.Alignment = fyne.TextAlignCenter
 	skin_title.TextSize = 18
 
-	skin_label := widget.NewLabel("You will need to close dReams and restart for skin changes to take effect")
+	skin_label := widget.NewLabel("Loading changes to dReams will disconnect your wallet")
 	skin_label.Alignment = fyne.TextAlignCenter
 
 	skins := widget.NewRadioGroup([]string{"Dark", "Light"}, func(s string) {
 		if s == "Light" {
-			dReams.skin = color.White
+			skin_choice = color.White
 		} else {
-			dReams.skin = color.Black
+			skin_choice = color.Black
+		}
+
+		if !dapps_changed {
+			if skin_choice == current_skin {
+				load_button.Hide()
+				back_button.Show()
+			} else {
+				load_button.Show()
+				back_button.Hide()
+			}
 		}
 	})
 
 	skins.Horizontal = true
+	skins.Required = true
 	switch bundle.AppColor {
 	case color.White:
 		skins.SetSelected("Light")
-		dReams.skin = color.White
+		current_skin = color.White
 	case color.Black:
 		skins.SetSelected("Dark")
-		dReams.skin = color.Black
+		current_skin = color.Black
 	default:
 
 	}
 
+	load_button.Hide()
+	back_button.Show()
+
+	dreams_img := canvas.NewImageFromResource(bundle.ResourceBlueBadge3Png)
+	dreams_img.SetMinSize(fyne.NewSize(100, 100))
+
+	dapp_title := canvas.NewText("dApps", bundle.TextColor)
+	dapp_title.Alignment = fyne.TextAlignCenter
+	dapp_title.TextSize = 18
+
+	changes_label := widget.NewLabel("Select dApps to add or remove from your dReams")
+	changes_label.Wrapping = fyne.TextWrapWord
+	changes_label.Alignment = fyne.TextAlignCenter
+
 	intro := container.NewVBox(
 		layout.NewSpacer(),
-		title,
-		changes_label,
-		container.NewCenter(dapp_checks),
-		layout.NewSpacer(),
+		config_title,
+		container.NewCenter(dreams_img),
 		layout.NewSpacer(),
 		skin_title,
-		skin_label,
 		container.NewCenter(skins),
 		layout.NewSpacer(),
+		layout.NewSpacer(),
+		dapp_title,
+		changes_label,
+		container.NewCenter(default_checks),
+		container.NewCenter(dapp_checks),
+		layout.NewSpacer(),
+		skin_label,
 		layout.NewSpacer(),
 		container.NewAdaptiveGrid(2, container.NewMax(load_button), back_button))
 
 	alpha := canvas.NewRectangle(color.RGBA{0, 0, 0, 180})
-	if dReams.skin == color.White {
+	if bundle.AppColor == color.White {
 		alpha = canvas.NewRectangle(color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0x99})
 	}
 
-	max := container.NewMax(alpha, intro)
-
-	return max
+	return container.NewMax(alpha, intro)
 }
 
 // Main dReams layout
