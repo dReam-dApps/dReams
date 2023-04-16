@@ -1256,7 +1256,7 @@ func menuAssetImg(img *canvas.Image, res fyne.Resource) fyne.CanvasObject {
 }
 
 // NFA listing menu
-//   - Pass resources for window
+//   - Pass resources for menu window to match main
 func listMenu(window_icon, background fyne.Resource) {
 	Control.list_open = true
 	aw := fyne.CurrentApp().NewWindow("List NFA")
@@ -1404,7 +1404,7 @@ func listMenu(window_icon, background fyne.Resource) {
 	go func() {
 		for rpc.Wallet.Connect && rpc.Daemon.Connect {
 			time.Sleep(3 * time.Second)
-			if !confirm_open {
+			if !confirm_open && isNfa(Control.Viewing_asset) {
 				icon = Assets.Icon
 				aw_content.Objects[2] = menuAssetImg(&icon, bundle.ResourceAvatarFramePng)
 				if viewing_asset != Control.Viewing_asset {
