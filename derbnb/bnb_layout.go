@@ -520,12 +520,15 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 
 	confirm_alpha := canvas.NewRectangle(color.RGBA{0, 0, 0, 150})
 	if bundle.AppColor == color.White {
-		confirm_alpha = canvas.NewRectangle(color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0x99})
+		confirm_alpha = canvas.NewRectangle(color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0xaa})
 	}
 
-	confirm_max = container.NewMax(background, confirm_alpha, confirm_border)
+	confirm_max = container.NewMax(background, confirm_alpha)
 	if imported {
-		confirm_alpha2 := canvas.NewRectangle(color.RGBA{0, 0, 0, 150})
+		confirm_alpha2 := canvas.NewRectangle(color.RGBA{0, 0, 0, 120})
+		if bundle.AppColor == color.White {
+			confirm_alpha2 = canvas.NewRectangle(color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0x55})
+		}
 		confirm_max.Add(confirm_alpha2)
 	}
 
