@@ -839,7 +839,7 @@ func SetHeaderItems(obj []fyne.CanvasObject, tabs *container.AppTabs) fyne.Canva
 
 	button := widget.NewButton("Set Headers", func() {
 		scid := Assets.Index_entry.Text
-		if len(scid) == 64 && name_entry.Text != "dReam Tables" {
+		if len(scid) == 64 && name_entry.Text != "dReam Tables" && name_entry.Text != "dReams" {
 			obj[1] = setHeaderConfirm(name_entry.Text, descr_entry.Text, icon_entry.Text, scid, obj, tabs)
 			obj[1].Refresh()
 		}
