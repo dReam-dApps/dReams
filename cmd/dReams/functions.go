@@ -50,7 +50,7 @@ var offset int
 
 // Set opts when starting dReams
 func flags() (version string) {
-	version = "v0.9.4d"
+	version = rpc.DREAMSv
 	arguments, err := docopt.ParseArgs(command_line, nil, version)
 
 	if err != nil {
