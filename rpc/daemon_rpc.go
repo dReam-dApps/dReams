@@ -166,7 +166,7 @@ func FindStringKey(scid, key, daemon string) interface{} {
 // Get list of dReams dApps from contract store
 //   - Uses remote daemon if no Daemon.Connect
 func FetchDapps() (dApps []string) {
-	dApps = []string{"dSports and dPredictions", "Iluma", "DerBnb"}
+	dApps = []string{"Holdero", "Baccarat", "dSports and dPredictions", "Iluma", "DerBnb"}
 	var daemon string
 	if !Daemon.Connect {
 		daemon = DAEMON_RPC_REMOTE5
@@ -181,6 +181,22 @@ func FetchDapps() (dApps []string) {
 	}
 
 	return
+}
+
+// Get platform fees from on chain store
+//   - Overwrites defualt fee values with current stored values
+func FetchFees() {
+	if fee, ok := FindStringKey(RatingSCID, "ContractUnlock", Daemon.Rpc).(float64); ok {
+		UnlockFee = uint64(fee)
+	} else {
+		log.Printf("[FetchFees] Could not get current contract unlock fee, using default")
+	}
+
+	if fee, ok := FindStringKey(RatingSCID, "ListingFee", Daemon.Rpc).(float64); ok {
+		ListingFee = uint64(fee)
+	} else {
+		log.Printf("[FetchFees] Could not get current listing fee, using default")
+	}
 }
 
 // Check Gnomon SC for stored contract owner

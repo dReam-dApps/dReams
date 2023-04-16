@@ -151,6 +151,7 @@ func DaemonConnectedBox() fyne.Widget {
 			go startLabel()
 			filters := searchFilters()
 			StartGnomon("dReams", filters, 3960, 490, g45Index)
+			rpc.FetchFees()
 			if Control.Dapp_list["Holdero"] {
 				Poker.contract_input.CursorColumn = 1
 				Poker.contract_input.Refresh()
@@ -792,17 +793,19 @@ func TimeOutConfirm(obj []fyne.CanvasObject, reset *container.AppTabs) fyne.Canv
 
 // Confirmation for Holdero contract installs
 func HolderoMenuConfirm(c int, obj []fyne.CanvasObject, tabs *container.AppTabs) fyne.CanvasObject {
+	gas_fee := 0.3
+	unlock_fee := float64(rpc.UnlockFee) / 100000
 	var text string
 	switch c {
 	case 1:
 		Poker.Holdero_unlock.Hide()
 		text = `You are about to unlock and install your first Holdero Table
 		
-To help support the project, there is a 3 DERO donation attached to preform this action
+To help support the project, there is a ` + fmt.Sprintf("%.5f", unlock_fee) + ` DERO donation attached to preform this action
 
 Once you've unlocked a table, you can upload as many new tables free of donation
 
-Total transaction will be 3.3 DERO (0.3 gas fee for contract install)
+Total transaction will be ` + fmt.Sprintf("%0.5f", unlock_fee+gas_fee) + ` DERO (0.3 gas fee for contract install)
 
 Select a public or private table
 
@@ -884,15 +887,17 @@ Confirm`
 // Confirmation for dPrediction contract installs
 func BettingMenuConfirmP(c int, obj []fyne.CanvasObject, tabs *container.AppTabs) fyne.CanvasObject {
 	var text string
+	gas_fee := 0.125
+	unlock_fee := float64(rpc.UnlockFee) / 100000
 	switch c {
 	case 1:
 		text = `You are about to unlock and install your first dPrediction contract 
 		
-To help support the project, there is a 3 DERO donation attached to preform this action
+To help support the project, there is a ` + fmt.Sprintf("%.5f", unlock_fee) + ` DERO donation attached to preform this action
 
 Once you've unlocked dPrediction, you can upload as many new prediction or sports contracts free of donation
 
-Total transaction will be 3.125 DERO (0.125 gas fee for contract install)
+Total transaction will be ` + fmt.Sprintf("%0.5f", unlock_fee+gas_fee) + ` DERO (0.125 gas fee for contract install)
 
 Select a public or private contract
 
@@ -960,15 +965,17 @@ Confirm`
 // Confirmation for dSports contract installs
 func BettingMenuConfirmS(c int, obj []fyne.CanvasObject, tabs *container.AppTabs) fyne.CanvasObject {
 	var text string
+	gas_fee := 0.14
+	unlock_fee := float64(rpc.UnlockFee) / 100000
 	switch c {
 	case 1:
 		text = `You are about to unlock and install your first dSports contract
 		
-To help support the project, there is a 3 DERO donation attached to preform this action
+To help support the project, there is a ` + fmt.Sprintf("%.5f", unlock_fee) + ` DERO donation attached to preform this action
 
 Once you've unlocked dSports, you can upload as many new sports or predictions contracts free of donation
 
-Total transaction will be 3.14 DERO (0.14 gas fee for contract install)
+Total transaction will be ` + fmt.Sprintf("%0.5f", unlock_fee+gas_fee) + ` DERO (0.14 gas fee for contract install)
 
 Select a public or private contract
 
@@ -1285,7 +1292,7 @@ func listMenu(window_icon, background fyne.Resource) {
 	viewing_label.Wrapping = fyne.TextWrapWord
 	viewing_label.Alignment = fyne.TextAlignCenter
 
-	fee_label := widget.NewLabel("Listing fee 0.1 Dero")
+	fee_label := widget.NewLabel(fmt.Sprintf("Listing fee %.5f Dero", float64(rpc.ListingFee)/100000))
 
 	listing_options := []string{"Auction", "Sale"}
 	listing := widget.NewSelect(listing_options, func(s string) {})
@@ -1429,7 +1436,7 @@ func listMenu(window_icon, background fyne.Resource) {
 		start,
 		charAddr,
 		charPerc,
-		container.NewAdaptiveGrid(2, layout.NewSpacer(), container.NewCenter(fee_label)),
+		container.NewCenter(fee_label),
 		container.NewAdaptiveGrid(2, layout.NewSpacer(), set_list))
 
 	aw.SetContent(

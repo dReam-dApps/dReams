@@ -1012,6 +1012,9 @@ func TradedReams(amt uint64) {
 	AddLog("Trade dReams TX: " + txid.TXID)
 }
 
+var UnlockFee = uint64(300000)
+var ListingFee = uint64(10000)
+
 // Contract unlock transfer
 func ownerT3(o bool) (t *rpc.Transfer) {
 	if o {
@@ -1022,7 +1025,7 @@ func ownerT3(o bool) (t *rpc.Transfer) {
 	} else {
 		t = &rpc.Transfer{
 			Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
-			Amount:      300000,
+			Amount:      UnlockFee,
 		}
 	}
 
@@ -2070,6 +2073,8 @@ func NfaSetListing(scid, list, char string, dur, amt, perc uint64) {
 	args := rpc.Arguments{arg1, arg2, arg3, arg4, arg5, arg6}
 	txid := rpc.Transfer_Result{}
 
+	split_fee := ListingFee / 2
+
 	asset_scid := crypto.HashHexToHash(scid)
 	t1 := rpc.Transfer{
 		SCID:        asset_scid,
@@ -2081,14 +2086,14 @@ func NfaSetListing(scid, list, char string, dur, amt, perc uint64) {
 	/// dReams
 	t2 := rpc.Transfer{
 		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
-		Amount:      5000,
+		Amount:      split_fee,
 		Burn:        0,
 	}
 
 	/// artificer
 	t3 := rpc.Transfer{
 		Destination: "dero1qy0khp9s9yw2h0eu20xmy9lth3zp5cacmx3rwt6k45l568d2mmcf6qgcsevzx",
-		Amount:      5000,
+		Amount:      split_fee,
 		Burn:        0,
 	}
 

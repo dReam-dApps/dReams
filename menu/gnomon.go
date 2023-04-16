@@ -536,7 +536,7 @@ func GnomonState(windows, config bool) {
 				Gnomes.Sync = true
 				if !config && rpc.Wallet.Connect && !Gnomes.Checked {
 					Gnomes.Syncing = true
-					if Control.Dapp_list["dSports and dPrediction"] {
+					if Control.Dapp_list["dSports and dPredictions"] {
 						go CheckBetContractOwners(contracts)
 						if !windows {
 							go PopulateSports(contracts)
