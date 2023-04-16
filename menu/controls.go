@@ -132,10 +132,12 @@ func Disconnected() {
 	// holdero.Table.NameEntry.Text = ""
 	// holdero.Table.NameEntry.Enable()
 	// holdero.Table.NameEntry.Refresh()
-	holdero.DisableHolderoTools()
-	Control.Names.ClearSelected()
-	Control.Names.Options = []string{}
-	Control.Names.Refresh()
+	if Control.Dapp_list["Holdero"] {
+		holdero.DisableHolderoTools()
+		Control.Names.ClearSelected()
+		Control.Names.Options = []string{}
+		Control.Names.Refresh()
+	}
 	Market.Auction_list.UnselectAll()
 	Market.Buy_list.UnselectAll()
 	Market.Icon = *canvas.NewImageFromImage(nil)
@@ -197,9 +199,15 @@ func disableActions(d bool) {
 		holdero.Swap.Dreams.Hide()
 		holdero.Swap.Dero.Hide()
 		holdero.Swap.DEntry.Hide()
-		Poker.Holdero_unlock.Hide()
-		Poker.Holdero_new.Hide()
-		holdero.Table.Tournament.Hide()
+
+		if Control.Dapp_list["Holdero"] {
+			Poker.Holdero_unlock.Hide()
+			Poker.Holdero_new.Hide()
+			holdero.Table.Tournament.Hide()
+			Poker.Holdero_unlock.Refresh()
+			Poker.Holdero_new.Refresh()
+			holdero.Table.Tournament.Refresh()
+		}
 
 		if Control.Dapp_list["dSports and dPredictions"] {
 			Control.Bet_new_p.Hide()
@@ -233,9 +241,6 @@ func disableActions(d bool) {
 	holdero.Swap.Dreams.Refresh()
 	holdero.Swap.DEntry.Refresh()
 	holdero.Swap.Dero.Refresh()
-	Poker.Holdero_unlock.Refresh()
-	Poker.Holdero_new.Refresh()
-	holdero.Table.Tournament.Refresh()
 }
 
 // Disable Baccarat actions

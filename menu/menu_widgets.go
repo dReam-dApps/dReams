@@ -92,15 +92,22 @@ func CheckConnection() {
 		DisableIndexControls(false)
 	} else {
 		Control.daemon_check.SetChecked(false)
-		Control.holdero_check.SetChecked(false)
 		if Control.Dapp_list["dSports and dPredictions"] {
 			Control.Predict_check.SetChecked(false)
 			Control.Sports_check.SetChecked(false)
 		}
+
 		rpc.Signal.Contract = false
 		clearContractLists()
-		disableOwnerControls(true)
-		disableBaccActions(true)
+		if Control.Dapp_list["Holdero"] {
+			Control.holdero_check.SetChecked(false)
+			disableOwnerControls(true)
+		}
+
+		if Control.Dapp_list["Baccarat"] {
+			disableBaccActions(true)
+		}
+
 		disableActions(true)
 		DisableIndexControls(true)
 		Gnomes.Init = false
@@ -110,22 +117,30 @@ func CheckConnection() {
 	if rpc.Wallet.Connect {
 		disableActions(false)
 	} else {
-		Control.holdero_check.SetChecked(false)
 		rpc.Signal.Contract = false
 		clearContractLists()
-		disableOwnerControls(true)
-		disableBaccActions(true)
+		if Control.Dapp_list["Holdero"] {
+			Control.holdero_check.SetChecked(false)
+			disableOwnerControls(true)
+		}
+
+		if Control.Dapp_list["Baccarat"] {
+			disableBaccActions(true)
+		}
+
 		disableActions(true)
 		Disconnected()
 		Gnomes.Checked = false
 	}
 
-	if rpc.Signal.Contract {
-		Control.holdero_check.SetChecked(true)
-	} else {
-		Control.holdero_check.SetChecked(false)
-		disableOwnerControls(true)
-		rpc.Signal.Sit = true
+	if Control.Dapp_list["Holdero"] {
+		if rpc.Signal.Contract {
+			Control.holdero_check.SetChecked(true)
+		} else {
+			Control.holdero_check.SetChecked(false)
+			disableOwnerControls(true)
+			rpc.Signal.Sit = true
+		}
 	}
 }
 
@@ -135,9 +150,12 @@ func DaemonConnectedBox() fyne.Widget {
 		if !Gnomes.Init && !Gnomes.Start {
 			go startLabel()
 			filters := searchFilters()
-			StartGnomon("dReams", filters, 3960, 520, g45Index)
-			Poker.contract_input.CursorColumn = 1
-			Poker.contract_input.Refresh()
+			StartGnomon("dReams", filters, 3960, 490, g45Index)
+			if Control.Dapp_list["Holdero"] {
+				Poker.contract_input.CursorColumn = 1
+				Poker.contract_input.Refresh()
+			}
+
 			if Control.Dapp_list["dSports and dPredictions"] {
 				Control.P_contract.CursorColumn = 1
 				Control.P_contract.Refresh()
@@ -289,24 +307,26 @@ func RpcConnectButton() fyne.Widget {
 			rpc.Ping()
 			rpc.GetAddress("dReams")
 			CheckConnection()
-			Poker.contract_input.CursorColumn = 1
-			Poker.contract_input.Refresh()
+			if Control.Dapp_list["Holdero"] {
+				Poker.contract_input.CursorColumn = 1
+				Poker.contract_input.Refresh()
+				rpc.CheckExisitingKey()
+				if len(rpc.Wallet.Address) == 66 {
+					Control.Names.ClearSelected()
+					Control.Names.Options = []string{}
+					Control.Names.Refresh()
+					Control.Names.Options = append(Control.Names.Options, rpc.Wallet.Address[0:12])
+					if Control.Names.Options != nil {
+						Control.Names.SetSelectedIndex(0)
+					}
+				}
+			}
+
 			if Control.Dapp_list["dSports and dPredictions"] {
 				Control.P_contract.CursorColumn = 1
 				Control.P_contract.Refresh()
 				Control.S_contract.CursorColumn = 1
 				Control.S_contract.Refresh()
-			}
-
-			rpc.CheckExisitingKey()
-			if len(rpc.Wallet.Address) == 66 {
-				Control.Names.ClearSelected()
-				Control.Names.Options = []string{}
-				Control.Names.Refresh()
-				Control.Names.Options = append(Control.Names.Options, rpc.Wallet.Address[0:12])
-				if Control.Names.Options != nil {
-					Control.Names.SetSelectedIndex(0)
-				}
 			}
 		}()
 	})

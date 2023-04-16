@@ -691,9 +691,11 @@ func RecheckDreamsAssets() {
 	Assets.Assets = []string{}
 	CheckDreamsNFAs(false, nil)
 	CheckDreamsG45s(false, nil)
-	if rpc.Wallet.Connect {
-		Control.Names.Options = []string{rpc.Wallet.Address[0:12]}
-		CheckWalletNames(rpc.Wallet.Address)
+	if Control.Dapp_list["Holdero"] {
+		if rpc.Wallet.Connect {
+			Control.Names.Options = []string{rpc.Wallet.Address[0:12]}
+			CheckWalletNames(rpc.Wallet.Address)
+		}
 	}
 	sort.Strings(Assets.Assets)
 	Assets.Asset_list.UnselectAll()

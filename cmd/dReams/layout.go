@@ -79,11 +79,10 @@ func introScreen() *fyne.Container {
 	dapp_label.Wrapping = fyne.TextWrapWord
 	dapp_label.Alignment = fyne.TextAlignCenter
 
-	default_dapps := []string{"Holdero", "Baccarat", "NFA Market"}
+	default_dapps := []string{"NFA Market"}
 	default_checks := widget.NewCheckGroup(default_dapps, nil)
 	default_checks.SetSelected(default_dapps)
 	default_checks.Disable()
-	default_checks.Horizontal = true
 
 	dApps := rpc.FetchDapps()
 	dapp_checks := widget.NewCheckGroup(dApps, nil)
@@ -96,7 +95,6 @@ func introScreen() *fyne.Container {
 
 		log.Println("[dReams] Loading dApps")
 		go func() {
-			menu.Control.Dapp_list["dReams"] = true
 			dReams.App.Settings().SetTheme(bundle.DeroTheme(bundle.AppColor))
 			dReams.Window.SetContent(
 				container.New(layout.NewMaxLayout(),
@@ -127,8 +125,7 @@ func introScreen() *fyne.Container {
 		container.NewCenter(skins),
 		layout.NewSpacer(),
 		dapp_title,
-		container.NewCenter(default_checks),
-		container.NewCenter(dapp_checks),
+		container.NewCenter(container.NewVBox(default_checks, dapp_checks)),
 		layout.NewSpacer(),
 		layout.NewSpacer(),
 		start_button)
@@ -151,7 +148,6 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 
 	back_button := widget.NewButton("Back", func() {
 		dReams.configure = false
-		menu.Control.Dapp_list["dReams"] = true
 		go func() {
 			dReams.Window.Content().(*fyne.Container).Objects[1] = reset
 			dReams.Window.Content().(*fyne.Container).Objects[1].Refresh()
@@ -169,12 +165,12 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 	load_button := widget.NewButton("Load Changes", func() {
 		rpc.Wallet.Connect = false
 		rpc.Wallet.Height = 0
+		menu.Disconnected()
 		holdero.InitTableSettings()
 		menu.Control.Dapp_list = enabled_dapps
 		log.Println("[dReams] Loading dApps")
 		menu.Exit_signal = true
 		menu.Gnomes.Checked = false
-		menu.Disconnected()
 		bundle.AppColor = skin_choice
 		go func() {
 			time.Sleep(1500 * time.Millisecond)
@@ -214,11 +210,10 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 
 	dapp_checks.SetSelected(is_enabled)
 
-	default_dapps := []string{"Holdero", "Baccarat", "NFA Market"}
+	default_dapps := []string{"NFA Market"}
 	default_checks := widget.NewCheckGroup(default_dapps, nil)
 	default_checks.SetSelected(default_dapps)
 	default_checks.Disable()
-	default_checks.Horizontal = true
 
 	skin_title := canvas.NewText("Skin", bundle.TextColor)
 	skin_title.Alignment = fyne.TextAlignCenter
@@ -283,8 +278,7 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 		layout.NewSpacer(),
 		dapp_title,
 		changes_label,
-		container.NewCenter(default_checks),
-		container.NewCenter(dapp_checks),
+		container.NewCenter(container.NewVBox(default_checks, dapp_checks)),
 		layout.NewSpacer(),
 		skin_label,
 		layout.NewSpacer(),
@@ -389,23 +383,29 @@ func place() *fyne.Container {
 	}
 	alpha_box.Objects = append(alpha_box.Objects, menu.StartIndicators())
 
-	var holdero_objs *fyne.Container
-	var contract_objs *container.Split
-	contract_change_screen := widget.NewButton("Contracts", nil)
-	contract_change_screen.OnTapped = func() {
-		go func() {
-			dReams.menu_tabs.contracts = true
-			dReams.Window.Content().(*fyne.Container).Objects[1].(*fyne.Container).Objects[1].(*container.AppTabs).Selected().Content = contract_objs
-			dReams.Window.Content().(*fyne.Container).Objects[1].(*fyne.Container).Objects[1].(*container.AppTabs).Selected().Content.Refresh()
-		}()
+	tabs := container.NewAppTabs(container.NewTabItem("Menu", menu_tabs))
+
+	if menu.Control.Dapp_list["Holdero"] {
+		var holdero_objs *fyne.Container
+		var contract_objs *container.Split
+		contract_change_screen := widget.NewButton("Contracts", nil)
+		contract_change_screen.OnTapped = func() {
+			go func() {
+				dReams.menu_tabs.contracts = true
+				dReams.Window.Content().(*fyne.Container).Objects[1].(*fyne.Container).Objects[1].(*container.AppTabs).Selected().Content = contract_objs
+				dReams.Window.Content().(*fyne.Container).Objects[1].(*fyne.Container).Objects[1].(*container.AppTabs).Selected().Content.Refresh()
+			}()
+		}
+
+		holdero_objs = placeHoldero(contract_change_screen)
+		contract_objs = placeContract(holdero_objs)
+
+		tabs.Append(container.NewTabItem("Holdero", contract_objs))
 	}
 
-	holdero_objs = placeHoldero(contract_change_screen)
-	contract_objs = placeContract(holdero_objs)
-	tabs := container.NewAppTabs(
-		container.NewTabItem("Menu", menu_tabs),
-		container.NewTabItem("Holdero", contract_objs),
-		container.NewTabItem("Baccarat", placeBacc()))
+	if menu.Control.Dapp_list["Baccarat"] {
+		tabs.Append(container.NewTabItem("Baccarat", placeBacc()))
+	}
 
 	if menu.Control.Dapp_list["dSports and dPredictions"] {
 		tabs.Append(container.NewTabItem("Predict", placePredict()))
@@ -518,16 +518,6 @@ func placeWall() *container.Split {
 
 // Holdero contract tab layout
 func placeContract(change_screen *fyne.Container) *container.Split {
-	contract_cont := container.NewHScroll(menu.HolderoContractEntry())
-	contract_cont.SetMinSize(fyne.NewSize(640, 35.1875))
-
-	asset_items := container.NewAdaptiveGrid(1, container.NewVBox(menu.TableStats()))
-
-	player_input := container.NewVBox(
-		contract_cont,
-		asset_items,
-		layout.NewSpacer())
-
 	check_box := container.NewVBox(menu.HolderoContractConnectedBox())
 
 	var tabs *container.AppTabs
@@ -587,12 +577,22 @@ func placeContract(change_screen *fyne.Container) *container.Split {
 		max.Objects[1].Refresh()
 	}
 
-	player_box := container.NewHBox(player_input, check_box)
-	menu_top := container.NewHSplit(player_box, max)
-
 	mid := container.NewVBox(layout.NewSpacer(), container.NewAdaptiveGrid(2, menu.NameEntry(), holdero.TournamentButton(max.Objects, tabs)), menu.OwnersBoxMid())
 
 	menu_bottom := container.NewGridWithColumns(3, menu.OwnersBoxLeft(max.Objects, tabs), mid, layout.NewSpacer())
+
+	contract_cont := container.NewHScroll(menu.HolderoContractEntry())
+	contract_cont.SetMinSize(fyne.NewSize(640, 35.1875))
+
+	asset_items := container.NewAdaptiveGrid(1, container.NewVBox(menu.TableStats()))
+
+	player_input := container.NewVBox(
+		contract_cont,
+		asset_items,
+		layout.NewSpacer())
+
+	player_box := container.NewHBox(player_input, check_box)
+	menu_top := container.NewHSplit(player_box, max)
 
 	menuBox := container.NewVSplit(menu_top, menu_bottom)
 	menuBox.SetOffset(1)

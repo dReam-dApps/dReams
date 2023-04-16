@@ -386,7 +386,7 @@ func singleShot(turn, trigger bool) bool {
 	}
 }
 
-// Main process loop
+// Main dReams process loop
 func fetch(quit chan struct{}) {
 	time.Sleep(3 * time.Second)
 	var ticker = time.NewTicker(3 * time.Second)
@@ -409,129 +409,133 @@ func fetch(quit chan struct{}) {
 					background.Refresh()
 
 					// Bacc
-					rpc.FetchBaccSC()
-					BaccRefresh()
-
-					// Holdero
-					rpc.FetchHolderoSC()
-					if (rpc.StringToInt(rpc.Display.Turn) == rpc.Round.ID && rpc.Wallet.Height > rpc.Signal.CHeight+4) ||
-						(rpc.StringToInt(rpc.Display.Turn) != rpc.Round.ID && rpc.Round.ID >= 1) || (!rpc.Signal.My_turn && rpc.Round.ID >= 1) {
-						if rpc.Signal.Clicked {
-							trigger = false
-							autoCF = false
-							autoD = false
-							autoB = false
-							rpc.Signal.Reveal = false
-						}
-						rpc.Signal.Clicked = false
+					if menu.Control.Dapp_list["Baccarat"] {
+						rpc.FetchBaccSC()
+						BaccRefresh()
 					}
 
-					if !rpc.Signal.Clicked {
-						if rpc.Round.First_try {
-							rpc.Round.First_try = false
-							delay = 0
-							rpc.Round.Card_delay = false
-							go refreshHolderoPlayers()
+					// Holdero
+					if menu.Control.Dapp_list["Holdero"] {
+						rpc.FetchHolderoSC()
+						if (rpc.StringToInt(rpc.Display.Turn) == rpc.Round.ID && rpc.Wallet.Height > rpc.Signal.CHeight+4) ||
+							(rpc.StringToInt(rpc.Display.Turn) != rpc.Round.ID && rpc.Round.ID >= 1) || (!rpc.Signal.My_turn && rpc.Round.ID >= 1) {
+							if rpc.Signal.Clicked {
+								trigger = false
+								autoCF = false
+								autoD = false
+								autoB = false
+								rpc.Signal.Reveal = false
+							}
+							rpc.Signal.Clicked = false
 						}
 
-						if rpc.Round.Card_delay {
-							now := time.Now().Unix()
-							delay++
-							if delay >= 15 || now > rpc.Round.Last+45 {
+						if !rpc.Signal.Clicked {
+							if rpc.Round.First_try {
+								rpc.Round.First_try = false
 								delay = 0
 								rpc.Round.Card_delay = false
-							}
-						} else {
-							setHolderoLabel()
-							holdero.GetUrls(rpc.Round.F_url, rpc.Round.B_url)
-							rpc.Called(rpc.Round.Flop, rpc.Round.Wager)
-							trigger = singleShot(rpc.Signal.My_turn, trigger)
-							HolderoRefresh()
-							if holdero.Settings.Auto_check && rpc.Signal.My_turn && !autoCF {
-								if !rpc.Signal.Reveal && !rpc.Signal.End && !rpc.Round.LocalEnd {
-									if rpc.Round.Cards.Local1 != "" {
-										holdero.HolderoButtonBuffer()
-										rpc.Check()
-										H.TopLabel.SetText("Auto Check/Fold Tx Sent")
-										H.TopLabel.Refresh()
-										autoCF = true
-
-										go func() {
-											if !isWindows() {
-												time.Sleep(500 * time.Millisecond)
-												dReams.App.SendNotification(notification("dReams - Holdero", "Auto Check/Fold Tx Sent", 9))
-											}
-										}()
-									}
-								}
+								go refreshHolderoPlayers()
 							}
 
-							if holdero.Settings.Auto_deal && rpc.Signal.My_turn && !autoD && rpc.GameIsActive() {
-								if !rpc.Signal.Reveal && !rpc.Signal.End && !rpc.Round.LocalEnd {
-									if rpc.Round.Cards.Local1 == "" {
-										autoD = true
-										go func() {
-											time.Sleep(2100 * time.Millisecond)
-											holdero.HolderoButtonBuffer()
-											rpc.DealHand()
-											H.TopLabel.SetText("Auto Deal Tx Sent")
-											H.TopLabel.Refresh()
-
-											if !isWindows() {
-												time.Sleep(300 * time.Millisecond)
-												dReams.App.SendNotification(notification("dReams - Holdero", "Auto Deal Tx Sent", 9))
-											}
-										}()
-									}
-								}
-							}
-
-							if rpc.Odds.Run && rpc.Signal.My_turn && !autoB && rpc.GameIsActive() {
-								if !rpc.Signal.Reveal && !rpc.Signal.End && !rpc.Round.LocalEnd {
-									if rpc.Round.Cards.Local1 != "" {
-										autoB = true
-										go func() {
-											time.Sleep(2100 * time.Millisecond)
-											holdero.HolderoButtonBuffer()
-											odds, future := rpc.MakeOdds()
-											rpc.BetLogic(odds, future, true)
-											H.TopLabel.SetText("Auto Bet Tx Sent")
-											H.TopLabel.Refresh()
-
-											if !isWindows() {
-												time.Sleep(300 * time.Millisecond)
-												dReams.App.SendNotification(notification("dReams - Holdero", "Auto Bet Tx Sent", 9))
-											}
-										}()
-									}
-								}
-							}
-
-							if rpc.Round.ID > 1 && rpc.Signal.My_turn && !rpc.Signal.End && !rpc.Round.LocalEnd {
+							if rpc.Round.Card_delay {
 								now := time.Now().Unix()
-								if now > rpc.Round.Last+100 {
-									holdero.Table.Warning.Show()
+								delay++
+								if delay >= 15 || now > rpc.Round.Last+45 {
+									delay = 0
+									rpc.Round.Card_delay = false
+								}
+							} else {
+								setHolderoLabel()
+								holdero.GetUrls(rpc.Round.F_url, rpc.Round.B_url)
+								rpc.Called(rpc.Round.Flop, rpc.Round.Wager)
+								trigger = singleShot(rpc.Signal.My_turn, trigger)
+								HolderoRefresh()
+								if holdero.Settings.Auto_check && rpc.Signal.My_turn && !autoCF {
+									if !rpc.Signal.Reveal && !rpc.Signal.End && !rpc.Round.LocalEnd {
+										if rpc.Round.Cards.Local1 != "" {
+											holdero.HolderoButtonBuffer()
+											rpc.Check()
+											H.TopLabel.SetText("Auto Check/Fold Tx Sent")
+											H.TopLabel.Refresh()
+											autoCF = true
+
+											go func() {
+												if !isWindows() {
+													time.Sleep(500 * time.Millisecond)
+													dReams.App.SendNotification(notification("dReams - Holdero", "Auto Check/Fold Tx Sent", 9))
+												}
+											}()
+										}
+									}
+								}
+
+								if holdero.Settings.Auto_deal && rpc.Signal.My_turn && !autoD && rpc.GameIsActive() {
+									if !rpc.Signal.Reveal && !rpc.Signal.End && !rpc.Round.LocalEnd {
+										if rpc.Round.Cards.Local1 == "" {
+											autoD = true
+											go func() {
+												time.Sleep(2100 * time.Millisecond)
+												holdero.HolderoButtonBuffer()
+												rpc.DealHand()
+												H.TopLabel.SetText("Auto Deal Tx Sent")
+												H.TopLabel.Refresh()
+
+												if !isWindows() {
+													time.Sleep(300 * time.Millisecond)
+													dReams.App.SendNotification(notification("dReams - Holdero", "Auto Deal Tx Sent", 9))
+												}
+											}()
+										}
+									}
+								}
+
+								if rpc.Odds.Run && rpc.Signal.My_turn && !autoB && rpc.GameIsActive() {
+									if !rpc.Signal.Reveal && !rpc.Signal.End && !rpc.Round.LocalEnd {
+										if rpc.Round.Cards.Local1 != "" {
+											autoB = true
+											go func() {
+												time.Sleep(2100 * time.Millisecond)
+												holdero.HolderoButtonBuffer()
+												odds, future := rpc.MakeOdds()
+												rpc.BetLogic(odds, future, true)
+												H.TopLabel.SetText("Auto Bet Tx Sent")
+												H.TopLabel.Refresh()
+
+												if !isWindows() {
+													time.Sleep(300 * time.Millisecond)
+													dReams.App.SendNotification(notification("dReams - Holdero", "Auto Bet Tx Sent", 9))
+												}
+											}()
+										}
+									}
+								}
+
+								if rpc.Round.ID > 1 && rpc.Signal.My_turn && !rpc.Signal.End && !rpc.Round.LocalEnd {
+									now := time.Now().Unix()
+									if now > rpc.Round.Last+100 {
+										holdero.Table.Warning.Show()
+									} else {
+										holdero.Table.Warning.Hide()
+									}
 								} else {
 									holdero.Table.Warning.Hide()
 								}
-							} else {
-								holdero.Table.Warning.Hide()
-							}
 
-							skip = 0
-						}
-					} else {
-						waitLabel()
-						revealingKey()
-						skip++
-						if skip >= 20 {
-							rpc.Signal.Clicked = false
-							skip = 0
-							trigger = false
-							autoCF = false
-							autoD = false
-							autoB = false
-							rpc.Signal.Reveal = false
+								skip = 0
+							}
+						} else {
+							waitLabel()
+							revealingKey()
+							skip++
+							if skip >= 20 {
+								rpc.Signal.Clicked = false
+								skip = 0
+								trigger = false
+								autoCF = false
+								autoD = false
+								autoB = false
+								rpc.Signal.Reveal = false
+							}
 						}
 					}
 
@@ -554,7 +558,7 @@ func fetch(quit chan struct{}) {
 					}
 
 					// Menu
-					go MenuRefresh(dReams.menu, menu.Gnomes.Init)
+					go MenuRefresh(dReams.menu)
 				}
 
 				if rpc.Daemon.Connect {
@@ -565,7 +569,7 @@ func fetch(quit chan struct{}) {
 					rpc.Signal.Startup = false
 				}
 			}
-		case <-quit: /// exit loop
+		case <-quit: // exit loop
 			log.Println("[dReams] Closing")
 			ticker.Stop()
 			return
@@ -944,8 +948,8 @@ func refreshPriceDisplay(c bool) {
 }
 
 // Refresh all menu gui objects
-func MenuRefresh(tab, gi bool) {
-	if tab && gi {
+func MenuRefresh(tab bool) {
+	if tab && menu.Gnomes.Init {
 		var index int
 		if !menu.GnomonClosing() && menu.FastSynced() {
 			index = int(menu.Gnomes.Indexer.ChainHeight)
@@ -1015,7 +1019,7 @@ func MainTab(ti *container.TabItem) {
 			holdero.Settings.FaceSelect.Enable()
 			holdero.Settings.BackSelect.Enable()
 		}
-		go MenuRefresh(dReams.menu, menu.Gnomes.Init)
+		go MenuRefresh(dReams.menu)
 	case "Holdero":
 		dReams.menu = false
 		dReams.holdero = true

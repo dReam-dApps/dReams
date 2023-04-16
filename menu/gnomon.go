@@ -306,19 +306,23 @@ func StopIndicators() {
 
 // dReams search filters for Gnomon index
 func searchFilters() (filter []string) {
-	holdero110 := rpc.GetHoldero110Code(0)
-	if holdero110 != "" {
-		filter = append(filter, holdero110)
+	if Control.Dapp_list["Holdero"] {
+		holdero110 := rpc.GetHoldero110Code(0)
+		if holdero110 != "" {
+			filter = append(filter, holdero110)
+		}
+
+		holdero100 := rpc.GetHoldero100Code()
+		if holdero100 != "" {
+			filter = append(filter, holdero100)
+		}
 	}
 
-	holdero100 := rpc.GetHoldero100Code()
-	if holdero100 != "" {
-		filter = append(filter, holdero100)
-	}
-
-	bacc := rpc.GetBaccCode()
-	if bacc != "" {
-		filter = append(filter, bacc)
+	if Control.Dapp_list["Baccarat"] {
+		bacc := rpc.GetBaccCode()
+		if bacc != "" {
+			filter = append(filter, bacc)
+		}
 	}
 
 	if Control.Dapp_list["dSports and dPredictions"] {
@@ -532,14 +536,23 @@ func GnomonState(windows, config bool) {
 				Gnomes.Sync = true
 				if !config && rpc.Wallet.Connect && !Gnomes.Checked {
 					Gnomes.Syncing = true
-					go CheckBetContractOwners(contracts)
-					CreateTableList(Gnomes.Checked, contracts)
+					if Control.Dapp_list["dSports and dPrediction"] {
+						go CheckBetContractOwners(contracts)
+						if !windows {
+							go PopulateSports(contracts)
+							go PopulatePredictions(contracts)
+						}
+					}
+
+					if Control.Dapp_list["Holdero"] {
+						CreateTableList(Gnomes.Checked, contracts)
+						CheckWalletNames(rpc.Wallet.Address)
+					}
+
 					go CheckDreamsG45s(Gnomes.Checked, contracts)
 					go CheckDreamsNFAs(Gnomes.Checked, contracts)
-					CheckWalletNames(rpc.Wallet.Address)
+
 					if !windows {
-						go PopulateSports(contracts)
-						go PopulatePredictions(contracts)
 						FindNfaListings(contracts)
 					}
 					Gnomes.Checked = true
@@ -550,10 +563,12 @@ func GnomonState(windows, config bool) {
 			}
 		}
 
-		Assets.Stats_box = *container.NewVBox(Assets.Collection, Assets.Name, IconImg(bundle.ResourceAvatarFramePng))
-		Assets.Stats_box.Refresh()
-		Poker.Stats_box = *container.NewVBox(Stats.Name, Stats.Desc, Stats.Version, Stats.Last, Stats.Seats, TableIcon(bundle.ResourceAvatarFramePng))
-		Poker.Stats_box.Refresh()
+		if Control.Dapp_list["Holdero"] {
+			Assets.Stats_box = *container.NewVBox(Assets.Collection, Assets.Name, IconImg(bundle.ResourceAvatarFramePng))
+			Assets.Stats_box.Refresh()
+			Poker.Stats_box = *container.NewVBox(Stats.Name, Stats.Desc, Stats.Version, Stats.Last, Stats.Seats, TableIcon(bundle.ResourceAvatarFramePng))
+			Poker.Stats_box.Refresh()
+		}
 
 		// Update live market info
 		if len(Market.Viewing) == 64 && rpc.Wallet.Connect {
@@ -621,7 +636,9 @@ func CheckDreamsNFAs(gc bool, scids map[string]string) {
 
 		sort.Strings(Assets.Assets)
 		Assets.Asset_list.Refresh()
-		holdero.DisableHolderoTools()
+		if Control.Dapp_list["Holdero"] {
+			holdero.DisableHolderoTools()
+		}
 	}
 }
 
