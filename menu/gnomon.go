@@ -388,10 +388,10 @@ func manualIndex(scid []string) {
 	Gnomes.Indexer.SearchFilter = filters
 }
 
-// Create Gnomon graviton db
+// Create Gnomon graviton db with dReams tag
 func GnomonDB() *storage.GravitonStore {
-	shasum := fmt.Sprintf("%x", sha1.Sum([]byte("gnomon")))
-	db_folder := fmt.Sprintf("gnomondb\\%s_%s", "GNOMON", shasum)
+	shasum := fmt.Sprintf("%x", sha1.Sum([]byte("dReams")))
+	db_folder := fmt.Sprintf("gnomondb\\%s_%s", "dReams", shasum)
 	db, _ := storage.NewGravDB(db_folder, "25ms")
 
 	return db
