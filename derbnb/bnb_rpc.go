@@ -627,8 +627,18 @@ func UploadBnbTokenContract() (new_scid string) {
 		args := dero.Arguments{}
 		txid := dero.Transfer_Result{}
 
+		t := dero.Transfer{
+			Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
+			Amount:      rpc.ListingFee,
+			Payload_RPC: dero.Arguments{
+				{Name: dero.RPC_DESTINATION_PORT, DataType: dero.DataUint64, Value: uint64(0x6233566812245578)},
+				{Name: dero.RPC_SOURCE_PORT, DataType: dero.DataUint64, Value: uint64(0)},
+				{Name: dero.RPC_COMMENT, DataType: dero.DataString, Value: "Bnb Property Minted"},
+			},
+		}
+
 		params := &dero.Transfer_Params{
-			Transfers: []dero.Transfer{},
+			Transfers: []dero.Transfer{t},
 			SC_Code:   TOKEN_CONTRACT,
 			SC_Value:  0,
 			SC_RPC:    args,

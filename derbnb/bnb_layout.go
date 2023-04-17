@@ -307,7 +307,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 				break
 			}
 
-			if file, file_err := os.Create("Token " + time.Now().Format(time.UnixDate)); file_err == nil {
+			if file, file_err := os.Create("Bnb-Token " + time.Now().Format(time.UnixDate)); file_err == nil {
 				defer file.Close()
 				if _, file_err = file.WriteString(new_install_scid); file_err == nil {
 					log.Println("[DerBnb] Token SCID File Saved")
@@ -365,7 +365,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 							}
 
 							i++
-							if i > 27 {
+							if i > 28 {
 								set_label.SetText("Location not set, try again")
 								set_location.Show()
 								return
@@ -398,12 +398,26 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 
 			install_box := container.NewAdaptiveGrid(2, container.NewMax(done_button), copy_button)
 
+			confirm_alpha := canvas.NewRectangle(color.RGBA{0, 0, 0, 150})
+			if bundle.AppColor == color.White {
+				confirm_alpha = canvas.NewRectangle(color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0xaa})
+			}
+
+			location_max := container.NewMax(background, confirm_alpha)
+			if imported {
+				confirm_alpha2 := canvas.NewRectangle(color.RGBA{0, 0, 0, 120})
+				if bundle.AppColor == color.White {
+					confirm_alpha2 = canvas.NewRectangle(color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0x55})
+				}
+				location_max.Add(confirm_alpha2)
+			}
+
 			if len(new_install_scid) != 64 {
 				confirm_action_label.SetText(fmt.Sprintf("Token Install Failed \n\n%s", new_install_scid))
-				w.SetContent(container.NewBorder(nil, install_box, nil, nil, confirm_action_label))
+				w.SetContent(container.NewMax(location_max, container.NewBorder(nil, install_box, nil, nil, confirm_action_label)))
 			} else {
 				confirm_action_label.SetText(fmt.Sprintf("Token Installed\n\nSCID: %s\n\n\nContinue to Set Location", new_install_scid))
-				w.SetContent(container.NewBorder(nil, install_box, nil, nil, container.NewVBox(layout.NewSpacer(), confirm_action_label, layout.NewSpacer(), location_entry_cont, layout.NewSpacer())))
+				w.SetContent(container.NewMax(location_max, container.NewBorder(nil, install_box, nil, nil, container.NewVBox(layout.NewSpacer(), confirm_action_label, layout.NewSpacer(), location_entry_cont, layout.NewSpacer()))))
 			}
 			return
 
@@ -536,7 +550,9 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 
 	mint_prop.OnTapped = func() {
 		confirm_border.Objects[4] = container.NewVBox(layout.NewSpacer(), confirm_action_label, layout.NewSpacer())
-		confirm_action_label.SetText("Mint a new property SCID\n\nAfter minting you will be promted to set your property location, do not close the app until this step is completed")
+		minting_fee := float64(rpc.ListingFee) / 100000
+		gas_fee := float64(0.015)
+		confirm_action_label.SetText(fmt.Sprintf("Mint a new property SCID\n\nMinting fee is %.5f Dero\n\nTotal transaction will be %.5f Dero (%.5f gas fee for contract install)\n\nAfter minting you will be promted to set your property location, do not close the app until this step is completed", minting_fee, minting_fee+gas_fee, gas_fee))
 		confirm_action_int = 1
 		w.SetContent(confirm_max)
 	}
@@ -609,13 +625,120 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 
 	list_button := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "contentAdd"), func() {
 		if scid_entry.Validate() == nil && price_entry.Validate() == nil && deposit_entry.Validate() == nil {
-			location := makeLocationString(scid_entry.Text)
-			data := getMetadata(scid_entry.Text)
-			data_string := fmt.Sprintf("Sq feet: %d\n\nStyle: %s\n\nBedrooms: %d\n\nMax guests: %d", data.Squarefootage, data.Style, data.NumberOfBedrooms, data.MaxNumberOfGuests)
-			confirm_border.Objects[4] = container.NewVBox(layout.NewSpacer(), confirm_action_label, layout.NewSpacer())
-			confirm_action_label.SetText(fmt.Sprintf("Listing property\n\nSCID: %s\n\n%s\n\nDaily rate of: %s Dero\n\nDamage deposit: %s Dero\n\n%s", scid_entry.Text, location, price_entry.Text, deposit_entry.Text, data_string))
-			confirm_action_int = 2
-			w.SetContent(confirm_max)
+			if location := makeLocationString(scid_entry.Text); location != "" {
+				if data := getMetadata(scid_entry.Text); data != nil {
+					data_string := fmt.Sprintf("Sq feet: %d\n\nStyle: %s\n\nBedrooms: %d\n\nMax guests: %d", data.Squarefootage, data.Style, data.NumberOfBedrooms, data.MaxNumberOfGuests)
+					confirm_border.Objects[4] = container.NewVBox(layout.NewSpacer(), confirm_action_label, layout.NewSpacer())
+					confirm_action_label.SetText(fmt.Sprintf("Listing property\n\nSCID: %s\n\n%s\n\nDaily rate of: %s Dero\n\nDamage deposit: %s Dero\n\n%s", scid_entry.Text, location, price_entry.Text, deposit_entry.Text, data_string))
+					confirm_action_int = 2
+					w.SetContent(confirm_max)
+				} else {
+					log.Println("[DerBnb] Your property needs metadata")
+				}
+			} else {
+				log.Println("[DerBnb] Your property needs a location")
+			}
+		}
+	})
+
+	var set_location_button *widget.Button
+	set_location_button = widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "contentRedo"), func() {
+		if scid_entry.Validate() == nil && rpc.TokenBalance(scid_entry.Text) == 1 {
+			var set_location *widget.Button
+
+			location_entry_label := widget.NewLabel("Location")
+			location_entry_label.Alignment = fyne.TextAlignCenter
+			city_entry := widget.NewEntry()
+			country_entry := widget.NewEntry()
+
+			city_entry.Validator = validation.NewRegexp(`^\w{1,}`, "Requires string")
+			city_entry.OnChanged = func(s string) {
+				if city_entry.Validate() == nil && country_entry.Validate() == nil {
+					set_location.Show()
+				} else {
+					set_location.Hide()
+				}
+			}
+
+			country_entry.Validator = validation.NewRegexp(`^\w{1,}`, "Requires string")
+			country_entry.OnChanged = func(s string) {
+				if city_entry.Validate() == nil && country_entry.Validate() == nil {
+					set_location.Show()
+				} else {
+					set_location.Hide()
+				}
+			}
+
+			city_entry.SetPlaceHolder("City:")
+			country_entry.SetPlaceHolder("Country:")
+
+			var location_is_set bool
+			set_label := widget.NewLabel("")
+			set_location = widget.NewButton("Set Location", func() {
+				data := location_data{}
+				data.City = city_entry.Text
+				data.Country = country_entry.Text
+				if mar, err := json.Marshal(data); err == nil {
+					set_location.Hide()
+					set_label.SetText("Wait for block")
+					set_label.Show()
+					StoreLocation(scid_entry.Text, string(mar))
+					go func() {
+						i := 0
+						time.Sleep(5 * time.Second)
+						for set_location.Hidden {
+							city, country := getLocation(scid_entry.Text)
+							if city != "" && country != "" {
+								location_is_set = true
+								set_label.SetText("Location is now set")
+								return
+							}
+
+							i++
+							if i > 28 {
+								set_label.SetText("Location not set, try again")
+								set_location.Show()
+								return
+							}
+							time.Sleep(2 * time.Second)
+						}
+					}()
+				}
+			})
+			set_location.Hide()
+
+			location_entry_cont := container.NewVBox(container.NewAdaptiveGrid(2, city_entry, country_entry), container.NewCenter(set_label), set_location)
+
+			cancel_location_button := widget.NewButton("Cancel", func() {
+				confirm_action_int = 0
+				comment_entry.SetPlaceHolder("")
+				comment_entry.SetText("")
+				release_entry.SetText("")
+				release_check.SetChecked(false)
+				confirm_action.Show()
+				set_location_button.Hide()
+				w.SetContent(reset_to_main)
+			})
+
+			copy_location_button := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "contentCopy"), func() {
+				w.Clipboard().SetContent(scid_entry.Text)
+				if location_is_set {
+					scid_entry.SetText(scid_entry.Text)
+				}
+			})
+
+			install_box := container.NewAdaptiveGrid(2, copy_location_button, cancel_location_button)
+			confirm_action_label.SetText(fmt.Sprintf("Set Location for SCID\n\n%s", scid_entry.Text))
+			location_max := container.NewMax(background, confirm_alpha)
+			if imported {
+				confirm_alpha2 := canvas.NewRectangle(color.RGBA{0, 0, 0, 120})
+				if bundle.AppColor == color.White {
+					confirm_alpha2 = canvas.NewRectangle(color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0x55})
+				}
+				location_max.Add(confirm_alpha2)
+			}
+
+			w.SetContent(container.NewMax(location_max, container.NewBorder(nil, install_box, nil, nil, container.NewVBox(layout.NewSpacer(), confirm_action_label, layout.NewSpacer(), location_entry_cont, layout.NewSpacer()))))
 		}
 	})
 
@@ -843,9 +966,11 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 		w.SetContent(confirm_max)
 	})
 
+	set_location_button.Importance = widget.LowImportance
 	list_button.Importance = widget.LowImportance
 	remove_button.Importance = widget.LowImportance
 
+	set_location_button.Hide()
 	list_button.Hide()
 	remove_button.Hide()
 	confirm_request_button.Hide()
@@ -866,11 +991,14 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 
 	var property_add_info *widget.Button
 
+	scid_entry_wait := false
 	scid_entry.OnChanged = func(s string) {
-		if scid_entry.Validate() == nil && rpc.Wallet.Connect {
+		if scid_entry.Validate() == nil && rpc.Wallet.Connect && !scid_entry_wait {
+			scid_entry_wait = true
 			if haveProperty(scid_entry.Text) {
 				change_dates.Show()
 				remove_button.Show()
+				set_location_button.Hide()
 				list_button.Hide()
 				if price_entry.Validate() == nil {
 					change_price_button.Show()
@@ -884,17 +1012,23 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 					change_dd_button.Hide()
 				}
 			} else {
-				remove_button.Hide()
-				change_dates.Hide()
-				filter := checkAssetContract(scid_entry.Text)
-				if filter == TOKEN_CONTRACT {
-					if rpc.TokenBalance(scid_entry.Text) == 1 {
-						property_add_info.Show()
-						if price_entry.Validate() == nil && deposit_entry.Validate() == nil {
-							list_button.Show()
+				go func() {
+					remove_button.Hide()
+					change_dates.Hide()
+					set_location_button.Hide()
+					if checkAssetContract(scid_entry.Text) == TOKEN_CONTRACT {
+						if rpc.TokenBalance(scid_entry.Text) == 1 {
+							if city, country := getLocation(scid_entry.Text); city == "" && country == "" {
+								set_location_button.Show()
+							} else {
+								property_add_info.Show()
+								if price_entry.Validate() == nil && deposit_entry.Validate() == nil {
+									list_button.Show()
+								}
+							}
 						}
 					}
-				}
+				}()
 			}
 		} else {
 			list_button.Hide()
@@ -906,7 +1040,10 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 			change_dd_button.Hide()
 			change_dates.Hide()
 			property_add_info.Hide()
+			set_location_button.Hide()
 		}
+
+		scid_entry_wait = false
 	}
 
 	price_entry.OnChanged = func(s string) {
@@ -955,11 +1092,11 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 				viewing_address = getOwnerAddress(split[4])
 				switch split[0] {
 				case "Request:":
+					rate_booking_button.Hide()
 					if rpc.Wallet.Connect {
 						cancel_booking_button.Show()
 						send_message.Show()
 					}
-					rate_booking_button.Hide()
 				case "Booked:":
 					cancel_booking_button.Hide()
 					rate_booking_button.Hide()
@@ -967,11 +1104,11 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 						send_message.Show()
 					}
 				case "Complete:":
+					cancel_booking_button.Hide()
 					if rpc.Wallet.Connect {
 						rate_booking_button.Show()
 						send_message.Show()
 					}
-					cancel_booking_button.Hide()
 				default:
 					cancel_booking_button.Hide()
 					rate_booking_button.Hide()
@@ -1031,6 +1168,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 						confirm_request_button.Show()
 						cancel_request_button.Show()
 					}
+					set_location_button.Hide()
 					remove_button.Hide()
 					change_dates.Hide()
 					release_button.Hide()
@@ -1049,6 +1187,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 					if rpc.Wallet.Connect {
 						send_message.Show()
 					}
+					set_location_button.Hide()
 					remove_button.Hide()
 					change_dates.Hide()
 					confirm_request_button.Hide()
@@ -1060,6 +1199,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 						rate_renter_button.Show()
 						send_message.Show()
 					}
+					set_location_button.Hide()
 					remove_button.Hide()
 					release_button.Hide()
 					change_dates.Hide()
@@ -1067,6 +1207,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 					cancel_request_button.Hide()
 					property_add_info.Hide()
 				default:
+					set_location_button.Hide()
 					remove_button.Hide()
 					change_dates.Hide()
 					send_message.Hide()
@@ -1090,6 +1231,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 		viewing_address = ""
 		property_list.UnselectAll()
 		release_button.Hide()
+		set_location_button.Hide()
 		confirm_request_button.Hide()
 		cancel_request_button.Hide()
 		cancel_request_button.Hide()
@@ -1200,7 +1342,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 		nil,
 		property_collapse_all,
 		container.NewAdaptiveGrid(2, property_scroll_up, property_scroll_down),
-		container.NewHBox(widget.NewLabel("Properties"), list_button, remove_button, property_add_info))
+		container.NewHBox(widget.NewLabel("Properties"), set_location_button, list_button, remove_button, property_add_info))
 
 	user_info := container.NewVSplit(
 		container.NewBorder(booking_list_control, container.NewAdaptiveGrid(3, container.NewMax(cancel_booking_button), container.NewMax(rate_booking_button), container.NewMax(send_message)), nil, nil, booking_list),
