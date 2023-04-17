@@ -20,7 +20,7 @@ import (
 type DreamsItems struct {
 	LeftLabel  *widget.Label
 	RightLabel *widget.Label
-	TopLabel   *widget.Label
+	TopLabel   *canvas.Text
 
 	Back    fyne.Container
 	Front   fyne.Container

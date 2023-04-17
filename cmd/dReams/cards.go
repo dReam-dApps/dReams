@@ -53,7 +53,7 @@ var Cards cards
 func Hole_1(c int, w, h float32) fyne.CanvasObject {
 	Cards.Hole1 = DisplayCard(c)
 	Cards.Hole1.Resize(fyne.NewSize(165, 225))
-	Cards.Hole1.Move(fyne.NewPos(w-335, h-350))
+	Cards.Hole1.Move(fyne.NewPos(w-335, h-335))
 
 	return Cards.Hole1
 }
@@ -61,7 +61,7 @@ func Hole_1(c int, w, h float32) fyne.CanvasObject {
 func Hole_2(c int, w, h float32) fyne.CanvasObject {
 	Cards.Hole2 = DisplayCard(c)
 	Cards.Hole2.Resize(fyne.NewSize(165, 225))
-	Cards.Hole2.Move(fyne.NewPos(w-275, h-350))
+	Cards.Hole2.Move(fyne.NewPos(w-275, h-335))
 
 	return Cards.Hole2
 }
@@ -69,7 +69,7 @@ func Hole_2(c int, w, h float32) fyne.CanvasObject {
 func Flop_1(c int) fyne.CanvasObject {
 	Cards.Flop1 = DisplayCard(c)
 	Cards.Flop1.Resize(fyne.NewSize(110, 150))
-	Cards.Flop1.Move(fyne.NewPos(257, 185))
+	Cards.Flop1.Move(fyne.NewPos(260, 203))
 
 	return Cards.Flop1
 }
@@ -77,7 +77,7 @@ func Flop_1(c int) fyne.CanvasObject {
 func Flop_2(c int) fyne.CanvasObject {
 	Cards.Flop2 = DisplayCard(c)
 	Cards.Flop2.Resize(fyne.NewSize(110, 150))
-	Cards.Flop2.Move(fyne.NewPos(377, 185))
+	Cards.Flop2.Move(fyne.NewPos(380, 203))
 
 	return Cards.Flop2
 }
@@ -85,7 +85,7 @@ func Flop_2(c int) fyne.CanvasObject {
 func Flop_3(c int) fyne.CanvasObject {
 	Cards.Flop3 = DisplayCard(c)
 	Cards.Flop3.Resize(fyne.NewSize(110, 150))
-	Cards.Flop3.Move(fyne.NewPos(497, 185))
+	Cards.Flop3.Move(fyne.NewPos(500, 203))
 
 	return Cards.Flop3
 }
@@ -93,7 +93,7 @@ func Flop_3(c int) fyne.CanvasObject {
 func Turn(c int) fyne.CanvasObject {
 	Cards.Turn = DisplayCard(c)
 	Cards.Turn.Resize(fyne.NewSize(110, 150))
-	Cards.Turn.Move(fyne.NewPos(617, 185))
+	Cards.Turn.Move(fyne.NewPos(620, 203))
 
 	return Cards.Turn
 }
@@ -101,7 +101,7 @@ func Turn(c int) fyne.CanvasObject {
 func River(c int) fyne.CanvasObject {
 	Cards.River = DisplayCard(c)
 	Cards.River.Resize(fyne.NewSize(110, 150))
-	Cards.River.Move(fyne.NewPos(737, 185))
+	Cards.River.Move(fyne.NewPos(740, 203))
 
 	return Cards.River
 }
@@ -109,7 +109,7 @@ func River(c int) fyne.CanvasObject {
 func P1_a(c int) fyne.CanvasObject {
 	Cards.P1a = DisplayCard(c)
 	Cards.P1a.Resize(fyne.NewSize(110, 150))
-	Cards.P1a.Move(fyne.NewPos(190, 10))
+	Cards.P1a.Move(fyne.NewPos(190, 25))
 
 	return Cards.P1a
 }
@@ -117,7 +117,7 @@ func P1_a(c int) fyne.CanvasObject {
 func P1_b(c int) fyne.CanvasObject {
 	Cards.P1b = DisplayCard(c)
 	Cards.P1b.Resize(fyne.NewSize(110, 150))
-	Cards.P1b.Move(fyne.NewPos(242, 10))
+	Cards.P1b.Move(fyne.NewPos(242, 25))
 
 	return Cards.P1b
 }
@@ -125,7 +125,7 @@ func P1_b(c int) fyne.CanvasObject {
 func P2_a(c int) fyne.CanvasObject {
 	Cards.P2a = DisplayCard(c)
 	Cards.P2a.Resize(fyne.NewSize(110, 150))
-	Cards.P2a.Move(fyne.NewPos(614, 10))
+	Cards.P2a.Move(fyne.NewPos(614, 25))
 
 	return Cards.P2a
 }
@@ -133,7 +133,7 @@ func P2_a(c int) fyne.CanvasObject {
 func P2_b(c int) fyne.CanvasObject {
 	Cards.P2b = DisplayCard(c)
 	Cards.P2b.Resize(fyne.NewSize(110, 150))
-	Cards.P2b.Move(fyne.NewPos(666, 10))
+	Cards.P2b.Move(fyne.NewPos(666, 25))
 
 	return Cards.P2b
 }
@@ -141,7 +141,7 @@ func P2_b(c int) fyne.CanvasObject {
 func P3_a(c int) fyne.CanvasObject {
 	Cards.P3a = DisplayCard(c)
 	Cards.P3a.Resize(fyne.NewSize(110, 150))
-	Cards.P3a.Move(fyne.NewPos(886, 115))
+	Cards.P3a.Move(fyne.NewPos(883, 129))
 
 	return Cards.P3a
 
@@ -150,7 +150,7 @@ func P3_a(c int) fyne.CanvasObject {
 func P3_b(c int) fyne.CanvasObject {
 	Cards.P3b = DisplayCard(c)
 	Cards.P3b.Resize(fyne.NewSize(110, 150))
-	Cards.P3b.Move(fyne.NewPos(938, 115))
+	Cards.P3b.Move(fyne.NewPos(935, 129))
 
 	return Cards.P3b
 }
@@ -158,7 +158,7 @@ func P3_b(c int) fyne.CanvasObject {
 func P4_a(c int) fyne.CanvasObject {
 	Cards.P4a = DisplayCard(c)
 	Cards.P4a.Resize(fyne.NewSize(110, 150))
-	Cards.P4a.Move(fyne.NewPos(766, 361))
+	Cards.P4a.Move(fyne.NewPos(766, 383))
 
 	return Cards.P4a
 }
@@ -166,7 +166,7 @@ func P4_a(c int) fyne.CanvasObject {
 func P4_b(c int) fyne.CanvasObject {
 	Cards.P4b = DisplayCard(c)
 	Cards.P4b.Resize(fyne.NewSize(110, 150))
-	Cards.P4b.Move(fyne.NewPos(818, 361))
+	Cards.P4b.Move(fyne.NewPos(818, 383))
 
 	return Cards.P4b
 }
@@ -174,7 +174,7 @@ func P4_b(c int) fyne.CanvasObject {
 func P5_a(c int) fyne.CanvasObject {
 	Cards.P5a = DisplayCard(c)
 	Cards.P5a.Resize(fyne.NewSize(110, 150))
-	Cards.P5a.Move(fyne.NewPos(336, 361))
+	Cards.P5a.Move(fyne.NewPos(336, 383))
 
 	return Cards.P5a
 }
@@ -182,7 +182,7 @@ func P5_a(c int) fyne.CanvasObject {
 func P5_b(c int) fyne.CanvasObject {
 	Cards.P5b = DisplayCard(c)
 	Cards.P5b.Resize(fyne.NewSize(110, 150))
-	Cards.P5b.Move(fyne.NewPos(388, 361))
+	Cards.P5b.Move(fyne.NewPos(388, 383))
 
 	return Cards.P5b
 }
@@ -190,7 +190,7 @@ func P5_b(c int) fyne.CanvasObject {
 func P6_a(c int) fyne.CanvasObject {
 	Cards.P6a = DisplayCard(c)
 	Cards.P6a.Resize(fyne.NewSize(110, 150))
-	Cards.P6a.Move(fyne.NewPos(63, 254))
+	Cards.P6a.Move(fyne.NewPos(65, 269))
 
 	return Cards.P6a
 }
@@ -198,7 +198,7 @@ func P6_a(c int) fyne.CanvasObject {
 func P6_b(c int) fyne.CanvasObject {
 	Cards.P6b = DisplayCard(c)
 	Cards.P6b.Resize(fyne.NewSize(110, 150))
-	Cards.P6b.Move(fyne.NewPos(115, 254))
+	Cards.P6b.Move(fyne.NewPos(117, 269))
 
 	return Cards.P6b
 }

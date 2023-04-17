@@ -457,7 +457,7 @@ func fetch(quit chan struct{}) {
 										if rpc.Round.Cards.Local1 != "" {
 											holdero.HolderoButtonBuffer()
 											rpc.Check()
-											H.TopLabel.SetText("Auto Check/Fold Tx Sent")
+											H.TopLabel.Text = "Auto Check/Fold Tx Sent"
 											H.TopLabel.Refresh()
 											autoCF = true
 
@@ -479,7 +479,7 @@ func fetch(quit chan struct{}) {
 												time.Sleep(2100 * time.Millisecond)
 												holdero.HolderoButtonBuffer()
 												rpc.DealHand()
-												H.TopLabel.SetText("Auto Deal Tx Sent")
+												H.TopLabel.Text = "Auto Deal Tx Sent"
 												H.TopLabel.Refresh()
 
 												if !isWindows() {
@@ -500,7 +500,7 @@ func fetch(quit chan struct{}) {
 												holdero.HolderoButtonBuffer()
 												odds, future := rpc.MakeOdds()
 												rpc.BetLogic(odds, future, true)
-												H.TopLabel.SetText("Auto Bet Tx Sent")
+												H.TopLabel.Text = "Auto Bet Tx Sent"
 												H.TopLabel.Refresh()
 
 												if !isWindows() {
@@ -581,7 +581,7 @@ func fetch(quit chan struct{}) {
 
 // Sets Holdero table info labels
 func setHolderoLabel() {
-	H.TopLabel.SetText(rpc.Display.Res)
+	H.TopLabel.Text = rpc.Display.Res
 	H.LeftLabel.SetText("Seats: " + rpc.Display.Seats + "      Pot: " + rpc.Display.Pot + "      Blinds: " + rpc.Display.Blinds + "      Ante: " + rpc.Display.Ante + "      Dealer: " + rpc.Display.Dealer + "      Turn: " + rpc.Display.Turn)
 	if rpc.Round.Asset {
 		if rpc.Round.Tourney {
@@ -607,7 +607,7 @@ func setHolderoLabel() {
 
 // Holdero label for waiting for block
 func waitLabel() {
-	H.TopLabel.SetText("")
+	H.TopLabel.Text = ""
 	if rpc.Round.Asset {
 		if rpc.Round.Tourney {
 			H.RightLabel.SetText("Wait for Block" + "      Player ID: " + rpc.Display.PlayerId + "      Chip Balance: " + rpc.Display.Token_balance["Tournament"] + "      Height: " + rpc.Display.Wallet_height)
@@ -731,7 +731,7 @@ func revealingKey() {
 	if rpc.Signal.Reveal && rpc.Signal.My_turn && !rpc.Signal.End {
 		if !rpc.Round.Notified {
 			rpc.Display.Res = "Revealing Key"
-			H.TopLabel.SetText(rpc.Display.Res)
+			H.TopLabel.Text = rpc.Display.Res
 			H.TopLabel.Refresh()
 			if !isWindows() {
 				dReams.App.SendNotification(notification("dReams - Holdero", "Revealing Key", 0))

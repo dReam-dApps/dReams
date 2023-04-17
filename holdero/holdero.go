@@ -151,13 +151,13 @@ func Player1_label(a, f, t fyne.Resource) fyne.CanvasObject {
 	}
 
 	name.Resize(fyne.NewSize(100, 25))
-	name.Move(fyne.NewPos(253, 20))
+	name.Move(fyne.NewPos(242, 20))
 
 	avatar.Resize(fyne.NewSize(74, 74))
-	avatar.Move(fyne.NewPos(359, 22))
+	avatar.Move(fyne.NewPos(359, 50))
 
 	frame.Resize(fyne.NewSize(78, 78))
-	frame.Move(fyne.NewPos(357, 20))
+	frame.Move(fyne.NewPos(357, 48))
 
 	return container.NewWithoutLayout(name, out, avatar, frame)
 }
@@ -201,13 +201,13 @@ func Player2_label(a, f, t fyne.Resource) fyne.CanvasObject {
 	}
 
 	name.Resize(fyne.NewSize(100, 25))
-	name.Move(fyne.NewPos(678, 20))
+	name.Move(fyne.NewPos(667, 20))
 
 	avatar.Resize(fyne.NewSize(74, 74))
-	avatar.Move(fyne.NewPos(782, 22))
+	avatar.Move(fyne.NewPos(782, 50))
 
 	frame.Resize(fyne.NewSize(78, 78))
-	frame.Move(fyne.NewPos(780, 20))
+	frame.Move(fyne.NewPos(780, 48))
 
 	return container.NewWithoutLayout(name, avatar, frame)
 }
@@ -251,13 +251,13 @@ func Player3_label(a, f, t fyne.Resource) fyne.CanvasObject {
 	}
 
 	name.Resize(fyne.NewSize(100, 25))
-	name.Move(fyne.NewPos(892, 310))
+	name.Move(fyne.NewPos(889, 300))
 
 	avatar.Resize(fyne.NewSize(74, 74))
-	avatar.Move(fyne.NewPos(997, 312))
+	avatar.Move(fyne.NewPos(987, 330))
 
 	frame.Resize(fyne.NewSize(78, 78))
-	frame.Move(fyne.NewPos(995, 310))
+	frame.Move(fyne.NewPos(985, 328))
 
 	return container.NewWithoutLayout(name, avatar, frame)
 }
@@ -301,13 +301,13 @@ func Player4_label(a, f, t fyne.Resource) fyne.CanvasObject {
 	}
 
 	name.Resize(fyne.NewSize(100, 25))
-	name.Move(fyne.NewPos(765, 555))
+	name.Move(fyne.NewPos(688, 555))
 
 	avatar.Resize(fyne.NewSize(74, 74))
-	avatar.Move(fyne.NewPos(686, 505))
+	avatar.Move(fyne.NewPos(686, 480))
 
 	frame.Resize(fyne.NewSize(78, 78))
-	frame.Move(fyne.NewPos(684, 503))
+	frame.Move(fyne.NewPos(684, 478))
 
 	return container.NewWithoutLayout(name, avatar, frame)
 }
@@ -351,13 +351,13 @@ func Player5_label(a, f, t fyne.Resource) fyne.CanvasObject {
 	}
 
 	name.Resize(fyne.NewSize(100, 25))
-	name.Move(fyne.NewPos(335, 555))
+	name.Move(fyne.NewPos(258, 555))
 
 	avatar.Resize(fyne.NewSize(74, 74))
-	avatar.Move(fyne.NewPos(257, 505))
+	avatar.Move(fyne.NewPos(257, 480))
 
 	frame.Resize(fyne.NewSize(78, 78))
-	frame.Move(fyne.NewPos(255, 503))
+	frame.Move(fyne.NewPos(255, 478))
 
 	return container.NewWithoutLayout(name, avatar, frame)
 }
@@ -401,13 +401,13 @@ func Player6_label(a, f, t fyne.Resource) fyne.CanvasObject {
 	}
 
 	name.Resize(fyne.NewSize(100, 27))
-	name.Move(fyne.NewPos(121, 261))
+	name.Move(fyne.NewPos(56, 265))
 
 	avatar.Resize(fyne.NewSize(74, 74))
-	avatar.Move(fyne.NewPos(42, 212))
+	avatar.Move(fyne.NewPos(55, 193))
 
 	frame.Resize(fyne.NewSize(78, 78))
-	frame.Move(fyne.NewPos(40, 210))
+	frame.Move(fyne.NewPos(53, 191))
 
 	return container.NewWithoutLayout(name, avatar, frame)
 }
