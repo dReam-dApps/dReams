@@ -164,6 +164,16 @@ func BidBuyConfirm(scid string, amt uint64, b int, obj *container.Split, reset f
 
 	content := container.NewVBox(layout.NewSpacer(), label, layout.NewSpacer(), buttons)
 
+	go func() {
+		for rpc.Wallet.Connect && rpc.Daemon.Connect {
+			time.Sleep(time.Second)
+		}
+
+		obj.Trailing.(*fyne.Container).Objects[1] = reset
+		obj.Trailing.(*fyne.Container).Objects[1].Refresh()
+		Market.Confirming = false
+	}()
+
 	return container.NewMax(content)
 }
 

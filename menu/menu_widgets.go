@@ -834,7 +834,11 @@ Select a public or private table
 
 	- Private will not show up in the list
 
-Confirm`
+	- All standard tables can use dReams or DERO
+
+HGC holders can choose to install a HGC table
+
+	- Public table that uses HGC or DERO`
 	case 2:
 		Poker.Holdero_new.Hide()
 		text = `You are about to install a new table
@@ -847,7 +851,11 @@ Select a public or private table
 
 	- Private will not show up in the list
 
-Confirm`
+	- All standard tables can use dReams or DERO
+
+HGC holders can choose to install a HGC table
+
+	- Public table that uses HGC or DERO`
 	}
 
 	label := widget.NewLabel(text)
@@ -855,9 +863,8 @@ Confirm`
 	label.Alignment = fyne.TextAlignCenter
 
 	var choice *widget.Select
-
 	confirm_button := widget.NewButton("Confirm", func() {
-		if choice.SelectedIndex() < 2 && choice.SelectedIndex() >= 0 {
+		if choice.SelectedIndex() < 3 && choice.SelectedIndex() >= 0 {
 			rpc.UploadHolderoContract(choice.SelectedIndex())
 		}
 
@@ -870,8 +877,12 @@ Confirm`
 	})
 
 	options := []string{"Public", "Private"}
+	if hgc := rpc.TokenBalance(rpc.HgcSCID); hgc > 0 {
+		options = append(options, "HGC")
+	}
+
 	choice = widget.NewSelect(options, func(s string) {
-		if s == "Public" || s == "Private" {
+		if s == "Public" || s == "Private" || s == "HGC" {
 			confirm_button.Show()
 		} else {
 			confirm_button.Hide()
@@ -902,6 +913,15 @@ Confirm`
 
 	content := container.NewBorder(nil, actions, nil, nil, info_box)
 
+	go func() {
+		for rpc.Wallet.Connect && rpc.Daemon.Connect {
+			time.Sleep(time.Second)
+		}
+
+		obj[1] = tabs
+		obj[1].Refresh()
+	}()
+
 	return container.NewMax(content)
 }
 
@@ -924,9 +944,7 @@ Select a public or private contract
 
 	- Public will show up in indexed list of contracts
 
-	- Private will not show up in the list
-	
-Confirm`
+	- Private will not show up in the list`
 	case 2:
 		text = `You are about to install a new dPrediction contract. 
 
@@ -936,9 +954,7 @@ Select a public or private contract
 
 	- Public will show up in indexed list of contracts
 
-	- Private will not show up in the list
-	
-Confirm`
+	- Private will not show up in the list`
 	}
 
 	label := widget.NewLabel(text)
@@ -980,6 +996,15 @@ Confirm`
 
 	content := container.NewBorder(nil, actions, nil, nil, info_box)
 
+	go func() {
+		for rpc.Wallet.Connect && rpc.Daemon.Connect {
+			time.Sleep(time.Second)
+		}
+
+		obj[1] = tabs
+		obj[1].Refresh()
+	}()
+
 	return container.NewMax(content)
 }
 
@@ -1002,9 +1027,7 @@ Select a public or private contract
 
 	- Public will show up in indexed list of contracts
 
-	- Private will not show up in the list
-	
-Confirm`
+	- Private will not show up in the list`
 	case 2:
 		text = `You are about to install a new dSports contract
 
@@ -1014,9 +1037,7 @@ Select a public or private contract
 
 	- Public will show up in indexed list of contracts
 
-	- Private will not show up in the list
-	
-Confirm`
+	- Private will not show up in the list`
 	}
 
 	label := widget.NewLabel(text)
@@ -1057,6 +1078,15 @@ Confirm`
 	info_box := container.NewVBox(layout.NewSpacer(), label, layout.NewSpacer())
 
 	content := container.NewBorder(nil, actions, nil, nil, info_box)
+
+	go func() {
+		for rpc.Wallet.Connect && rpc.Daemon.Connect {
+			time.Sleep(time.Second)
+		}
+
+		obj[1] = tabs
+		obj[1].Refresh()
+	}()
 
 	return container.NewMax(content)
 }

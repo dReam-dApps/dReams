@@ -317,7 +317,7 @@ func searchFilters() (filter []string) {
 			filter = append(filter, holdero100)
 		}
 
-		holderoHGC := rpc.GetSCCode(rpc.HHolderoSCID)
+		holderoHGC := rpc.GetHoldero110Code(2)
 		if holderoHGC != "" {
 			filter = append(filter, holderoHGC)
 		}

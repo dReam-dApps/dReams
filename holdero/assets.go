@@ -10,6 +10,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/SixofClubsss/dReams/bundle"
 	"github.com/SixofClubsss/dReams/rpc"
@@ -392,6 +393,15 @@ func DreamsConfirm(c, amt int, obj *container.Split, reset fyne.CanvasObject) fy
 
 	buttons := container.NewAdaptiveGrid(2, confirm_button, cancel_button)
 	content := container.NewVBox(layout.NewSpacer(), label, layout.NewSpacer(), buttons)
+
+	go func() {
+		for rpc.Wallet.Connect && rpc.Daemon.Connect {
+			time.Sleep(time.Second)
+		}
+
+		obj.Trailing.(*fyne.Container).Objects[1] = reset
+		obj.Trailing.(*fyne.Container).Objects[1].Refresh()
+	}()
 
 	return container.NewMax(content)
 }

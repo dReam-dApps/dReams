@@ -718,6 +718,15 @@ func ConfirmAction(i int, teamA, teamB string, obj []fyne.CanvasObject, tabs *co
 	options := container.NewAdaptiveGrid(2, confirm_button, cancel_button)
 	content := container.NewBorder(nil, options, nil, nil, display)
 
+	go func() {
+		for rpc.Wallet.Connect && rpc.Daemon.Connect {
+			time.Sleep(time.Second)
+		}
+
+		obj[1] = tabs
+		obj[1].Refresh()
+	}()
+
 	return container.NewMax(bundle.Alpha120, content)
 }
 

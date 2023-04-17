@@ -688,25 +688,38 @@ func GetHoldero100Code() string {
 }
 
 // Code for v1.1.0 Holdero public or private SC
-func GetHoldero110Code(pub int) string {
+//   - version defines which type of Holdero contratc
+//   - 0 for standard public
+//   - 1 for standard private
+//   - 2 for HGC
+func GetHoldero110Code(version int) string {
 	if Daemon.Connect {
 		rpcClientD, ctx, cancel := SetDaemonClient(Daemon.Rpc)
 		defer cancel()
 
 		var result *rpc.GetSC_Result
 		var params rpc.GetSC_Params
-		if pub == 1 {
-			params = rpc.GetSC_Params{
-				SCID:      pHolderoSCID,
-				Code:      true,
-				Variables: false,
-			}
-		} else {
+		switch version {
+		case 0:
 			params = rpc.GetSC_Params{
 				SCID:      HolderoSCID,
 				Code:      true,
 				Variables: false,
 			}
+		case 1:
+			params = rpc.GetSC_Params{
+				SCID:      pHolderoSCID,
+				Code:      true,
+				Variables: false,
+			}
+		case 2:
+			params = rpc.GetSC_Params{
+				SCID:      HHolderoSCID,
+				Code:      true,
+				Variables: false,
+			}
+		default:
+
 		}
 
 		if err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params); err != nil {
