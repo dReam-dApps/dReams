@@ -74,7 +74,7 @@ type displayStrings struct {
 	Readings string
 
 	Dero_balance  string
-	Token_balance string
+	Token_balance map[string]string
 	Wallet_height string
 }
 
@@ -135,6 +135,7 @@ type holderoValues struct {
 	Printed   bool
 	Notified  bool
 	Tourney   bool
+	AssetID   string
 	Face      string
 	Back      string
 	F_url     string

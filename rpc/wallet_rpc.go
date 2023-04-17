@@ -33,8 +33,7 @@ type wallet struct {
 	Address    string
 	ClientKey  string
 	Balance    uint64
-	TokenBal   uint64
-	TourneyBal string
+	TokenBal   map[string]uint64
 	Height     int
 	Connect    bool
 	PokerOwner bool
@@ -244,21 +243,57 @@ func TokenBalance(scid string) uint64 {
 	return result.Unlocked_Balance
 }
 
-// Get wallet dReams token balance
-func DreamsBalance() {
+// Get balances of all tokens used on dReams platform
+func GetDreamsBalances() {
 	if Wallet.Connect {
-		bal := TokenBalance(dReamsSCID)
-		Display.Token_balance = fromAtomic(bal)
-		Wallet.TokenBal = bal
+		dReam_bal := TokenBalance(dReamsSCID)
+		Display.Token_balance["dReams"] = fromAtomic(dReam_bal)
+		Wallet.TokenBal["dReams"] = dReam_bal
+
+		hgc_bal := TokenBalance(HgcSCID)
+		Display.Token_balance["HGC"] = fromAtomic(hgc_bal)
+		Wallet.TokenBal["HGC"] = hgc_bal
+
+		if Round.Tourney {
+			tourney_bal := TokenBalance(TourneySCID)
+			Display.Token_balance["Tournament"] = fromAtomic(tourney_bal)
+			Wallet.TokenBal["Tournament"] = tourney_bal
+		}
 	}
 }
 
-// Get tournament token balance
-func TourneyBalance() {
-	if Wallet.Connect && Round.Tourney {
-		bal := TokenBalance(TourneySCID)
-		value := float64(bal)
-		Wallet.TourneyBal = fmt.Sprintf("%.2f", value/100000)
+// Return asset transfer to SCID from Round.AssetID
+func GetAssetSCIDforTransfer(amt uint64) (transfer rpc.Transfer) {
+	switch Round.AssetID {
+	case dReamsSCID:
+		transfer = rpc.Transfer{
+			SCID:        crypto.HashHexToHash(dReamsSCID),
+			Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
+			Burn:        amt,
+		}
+	case HgcSCID:
+		transfer = rpc.Transfer{
+			SCID:        crypto.HashHexToHash(HgcSCID),
+			Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
+			Burn:        amt,
+		}
+
+	default:
+
+	}
+
+	return
+}
+
+// Get display name of asset by SCID
+func GetAssetSCIDName(scid string) string {
+	switch scid {
+	case dReamsSCID:
+		return "dReams"
+	case HgcSCID:
+		return "HGC"
+	default:
+		return ""
 	}
 }
 
@@ -456,7 +491,7 @@ func SetTable(seats int, bb, sb, ante uint64, chips, name, av string) {
 }
 
 // Submit blinds/ante to deal Holdero hand
-func DealHand() {
+func DealHand() (tx string) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
@@ -495,10 +530,10 @@ func DealHand() {
 			}
 			t = append(t, t1, t2)
 		} else {
-			t2 := rpc.Transfer{
-				SCID:        crypto.HashHexToHash(dReamsSCID),
-				Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
-				Burn:        amount,
+			t2 := GetAssetSCIDforTransfer(amount)
+			if t2.Destination == "" {
+				log.Println("[DealHand] Error getting asset SCID for transfer")
+				return
 			}
 			t = append(t, t1, t2)
 		}
@@ -529,10 +564,12 @@ func DealHand() {
 	log.Println("[Holdero] Deal TX:", txid)
 	updateStatsWager(float64(amount) / 100000)
 	AddLog("Deal TX: " + txid.TXID)
+
+	return txid.TXID
 }
 
 // Make Holdero bet
-func Bet(amt string) {
+func Bet(amt string) (tx string) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
@@ -549,10 +586,10 @@ func Bet(amt string) {
 				Burn:        ToAtomicOne(amt),
 			}
 		} else {
-			t1 = rpc.Transfer{
-				SCID:        crypto.HashHexToHash(dReamsSCID),
-				Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
-				Burn:        ToAtomicOne(amt),
+			t1 = GetAssetSCIDforTransfer(ToAtomicOne(amt))
+			if t1.Destination == "" {
+				log.Println("[Bet] Error getting asset SCID for transfer")
+				return
 			}
 		}
 	} else {
@@ -586,10 +623,12 @@ func Bet(amt string) {
 	Signal.PlacedBet = true
 	log.Println("[Holdero] Bet TX:", txid)
 	AddLog("Bet TX: " + txid.TXID)
+
+	return txid.TXID
 }
 
 // Holdero check and fold
-func Check() {
+func Check() (tx string) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
@@ -612,10 +651,10 @@ func Check() {
 				Burn:        0,
 			}
 		} else {
-			t1 = rpc.Transfer{
-				SCID:        crypto.HashHexToHash(dReamsSCID),
-				Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
-				Burn:        0,
+			t1 = GetAssetSCIDforTransfer(0)
+			if t1.Destination == "" {
+				log.Println("[Check] Error getting asset SCID for transfer")
+				return
 			}
 		}
 	}
@@ -638,6 +677,8 @@ func Check() {
 	Display.Res = ""
 	log.Println("[Holdero] Check/Fold TX:", txid)
 	AddLog("Check/Fold TX: " + txid.TXID)
+
+	return txid.TXID
 }
 
 // Holdero single winner payout

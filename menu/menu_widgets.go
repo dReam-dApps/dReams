@@ -278,8 +278,7 @@ func HolderoContractEntry() fyne.Widget {
 					disableOwnerControls(true)
 				}
 
-				tourney := CheckHolderoContract(text)
-				if rpc.Wallet.Connect && tourney {
+				if rpc.Wallet.Connect && CheckHolderoContract(text) {
 					holdero.Table.Tournament.Show()
 				} else {
 					holdero.Table.Tournament.Hide()
@@ -594,10 +593,10 @@ func OwnersBoxLeft(obj []fyne.CanvasObject, tabs *container.AppTabs) fyne.Canvas
 	player_select := widget.NewSelect(players, func(s string) {})
 	player_select.SetSelectedIndex(0)
 
-	blinds_entry := dwidget.TenthAmtEntry("Big Blind: ")
+	blinds_entry := dwidget.DeroAmtEntry("Big Blind: ", 0.1, 1)
 	blinds_entry.PlaceHolder = "Dero:"
 	blinds_entry.SetText("Big Blind: 0.0")
-	blinds_entry.Validator = validation.NewRegexp(`^(Big Blind: )\d{1,}\.\d{0,1}`, "Format Not Valid")
+	blinds_entry.Validator = validation.NewRegexp(`^(Big Blind: )\d{1,}\..\d{0,1}$|^(Big Blind: )\d{1,}$`, "Format Not Valid")
 	blinds_entry.OnChanged = func(s string) {
 		if blinds_entry.Validate() != nil {
 			blinds_entry.SetText("Big Blind: 0.0")
@@ -606,37 +605,59 @@ func OwnersBoxLeft(obj []fyne.CanvasObject, tabs *container.AppTabs) fyne.Canvas
 			trimmed := strings.Trim(s, "Biglnd: ")
 			if f, err := strconv.ParseFloat(trimmed, 64); err == nil {
 				if uint64(f*100000)%10000 == 0 {
-					blinds_entry.SetText("Big Blind: " + strconv.FormatFloat(roundFloat(f, 1), 'f', 1, 64))
+					blinds_entry.SetText(blinds_entry.Prefix + strconv.FormatFloat(roundFloat(f, 1), 'f', int(blinds_entry.Decimal), 64))
 					Poker.owner.blind_amount = uint64(roundFloat(f*100000, 1))
 				} else {
-					blinds_entry.SetText("Big Blind: " + strconv.FormatFloat(roundFloat(f, 1), 'f', 1, 64))
+					blinds_entry.SetText(blinds_entry.Prefix + strconv.FormatFloat(roundFloat(f, 1), 'f', int(blinds_entry.Decimal), 64))
+				}
+			}
+		}
+	}
+
+	ante_entry := dwidget.DeroAmtEntry("Ante: ", 0.1, 1)
+	ante_entry.PlaceHolder = "Ante:"
+	ante_entry.SetText("Ante: 0.0")
+	ante_entry.Validator = validation.NewRegexp(`^(Ante: )\d{1,}\..\d{0,1}|^(Ante: )\d{1,}$`, "Format Not Valid")
+	ante_entry.OnChanged = func(s string) {
+		if ante_entry.Validate() != nil {
+			ante_entry.SetText("Ante: 0.0")
+			Poker.owner.ante_amount = 0
+		} else {
+			trimmed := strings.Trim(s, ante_entry.Prefix)
+			if f, err := strconv.ParseFloat(trimmed, 64); err == nil {
+				if uint64(f*100000)%10000 == 0 {
+					ante_entry.SetText(ante_entry.Prefix + strconv.FormatFloat(roundFloat(f, 1), 'f', int(ante_entry.Decimal), 64))
+					Poker.owner.ante_amount = uint64(roundFloat(f*100000, 1))
+				} else {
+					ante_entry.SetText(ante_entry.Prefix + strconv.FormatFloat(roundFloat(f, 1), 'f', int(ante_entry.Decimal), 64))
 				}
 			}
 		}
 	}
 
 	options := []string{"DERO", "ASSET"}
-	Poker.owner.chips = widget.NewRadioGroup(options, func(s string) {})
+	Poker.owner.chips = widget.NewRadioGroup(options, nil)
+	Poker.owner.chips.SetSelected("DERO")
 	Poker.owner.chips.Horizontal = true
+	Poker.owner.chips.OnChanged = func(s string) {
+		if s == "ASSET" {
+			blinds_entry.Increment = 1
+			blinds_entry.Decimal = 0
+			blinds_entry.SetText("0")
+			blinds_entry.Refresh()
 
-	ante_entry := dwidget.TenthAmtEntry("Ante: ")
-	ante_entry.PlaceHolder = "Ante:"
-	ante_entry.SetText("Ante: 0.0")
-	ante_entry.Validator = validation.NewRegexp(`^(Ante: )\d{1,}\.\d{0,1}`, "Format Not Valid")
-	ante_entry.OnChanged = func(s string) {
-		if ante_entry.Validate() != nil {
-			ante_entry.SetText("Ante: 0.0")
-			Poker.owner.ante_amount = 0
+			ante_entry.Increment = 1
+			ante_entry.Decimal = 0
+			ante_entry.SetText("0")
+			ante_entry.Refresh()
 		} else {
-			trimmed := strings.Trim(s, "Ante: ")
-			if f, err := strconv.ParseFloat(trimmed, 64); err == nil {
-				if uint64(f*100000)%10000 == 0 {
-					ante_entry.SetText("Ante: " + strconv.FormatFloat(roundFloat(f, 1), 'f', 1, 64))
-					Poker.owner.ante_amount = uint64(roundFloat(f*100000, 1))
-				} else {
-					ante_entry.SetText("Ante: " + strconv.FormatFloat(roundFloat(f, 1), 'f', 1, 64))
-				}
-			}
+			blinds_entry.Increment = 0.1
+			blinds_entry.Decimal = 1
+			blinds_entry.Refresh()
+
+			ante_entry.Increment = 0.1
+			ante_entry.Decimal = 1
+			ante_entry.Refresh()
 		}
 	}
 
@@ -649,7 +670,7 @@ func OwnersBoxLeft(obj []fyne.CanvasObject, tabs *container.AppTabs) fyne.Canvas
 		}
 	})
 
-	clean_entry := dwidget.WholeAmtEntry("")
+	clean_entry := dwidget.DeroAmtEntry("", 1, 0)
 	clean_entry.Prefix = "Clean: "
 	clean_entry.PlaceHolder = "Atomic:"
 	clean_entry.SetText("Clean: 0")
@@ -1298,11 +1319,11 @@ func listMenu(window_icon, background fyne.Resource) {
 	listing := widget.NewSelect(listing_options, func(s string) {})
 	listing.PlaceHolder = "Type:"
 
-	duration := dwidget.WholeAmtEntry("")
+	duration := dwidget.DeroAmtEntry("", 1, 0)
 	duration.SetPlaceHolder("Duration in Hours:")
 	duration.Validator = validation.NewRegexp(`^[^0]\d{0,2}$`, "Int required")
 
-	start := dwidget.TenthAmtEntry("")
+	start := dwidget.DeroAmtEntry("", 0.1, 1)
 	start.SetPlaceHolder("Start Price:")
 	start.Validator = validation.NewRegexp(`\d{1,}\.\d{1,5}$`, "Float required")
 
@@ -1310,7 +1331,7 @@ func listMenu(window_icon, background fyne.Resource) {
 	charAddr.SetPlaceHolder("Charity Donation Address:")
 	charAddr.Validator = validation.NewRegexp(`^\w{66,66}$`, "Int required")
 
-	charPerc := dwidget.WholeAmtEntry("")
+	charPerc := dwidget.DeroAmtEntry("", 1, 0)
 	charPerc.SetPlaceHolder("Charity Donation %:")
 	charPerc.Validator = validation.NewRegexp(`^\d{1,2}$`, "Int required")
 	charPerc.OnChanged = func(s string) {

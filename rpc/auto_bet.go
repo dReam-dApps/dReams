@@ -1064,7 +1064,7 @@ func canRaise() bool {
 
 func lowBalance(amt float64) bool {
 	if Round.Asset {
-		return amt > float64(Wallet.TokenBal)/100000
+		return amt > float64(Wallet.TokenBal[GetAssetSCIDName(Round.AssetID)])/100000
 	} else {
 		return amt > float64(Wallet.Balance)/100000
 	}

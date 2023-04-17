@@ -304,11 +304,11 @@ func place() *fyne.Container {
 	B.LeftLabel = widget.NewLabel("")
 	B.RightLabel = widget.NewLabel("")
 	B.LeftLabel.SetText("Total Hands Played: " + rpc.Display.Total_w + "      Player Wins: " + rpc.Display.Player_w + "      Ties: " + rpc.Display.Ties + "      Banker Wins: " + rpc.Display.Banker_w + "      Min Bet is " + rpc.Display.BaccMin + " dReams, Max Bet is " + rpc.Display.BaccMax)
-	B.RightLabel.SetText("dReams Balance: " + rpc.Display.Token_balance + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
+	B.RightLabel.SetText("dReams Balance: " + rpc.Display.Token_balance["dReams"] + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
 
 	P.LeftLabel = widget.NewLabel("")
 	P.RightLabel = widget.NewLabel("")
-	P.RightLabel.SetText("dReams Balance: " + rpc.Display.Token_balance + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
+	P.RightLabel.SetText("dReams Balance: " + rpc.Display.Token_balance["dReams"] + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
 
 	prediction.Predict.Info = widget.NewLabel("SCID:\n\n" + prediction.Predict.Contract + "\n")
 	prediction.Predict.Info.Wrapping = fyne.TextWrapWord
@@ -316,12 +316,12 @@ func place() *fyne.Container {
 
 	S.LeftLabel = widget.NewLabel("")
 	S.RightLabel = widget.NewLabel("")
-	S.RightLabel.SetText("dReams Balance: " + rpc.Display.Token_balance + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
+	S.RightLabel.SetText("dReams Balance: " + rpc.Display.Token_balance["dReams"] + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
 
 	T.LeftLabel = widget.NewLabel("")
 	T.RightLabel = widget.NewLabel("")
 	T.LeftLabel.SetText("Total Readings: " + rpc.Display.Readings + "      Click your card for Iluma reading")
-	T.RightLabel.SetText("dReams Balance: " + rpc.Display.Token_balance + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
+	T.RightLabel.SetText("dReams Balance: " + rpc.Display.Token_balance["dReams"] + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
 
 	prediction.Sports.Info = widget.NewLabel("SCID:\n\n" + prediction.Sports.Contract + "\n")
 	prediction.Sports.Info.Wrapping = fyne.TextWrapWord
@@ -448,7 +448,7 @@ func placeWall() *container.Split {
 	daemon_cont := container.NewHScroll(menu.DaemonRpcEntry())
 	daemon_cont.SetMinSize(fyne.NewSize(340, 35.1875))
 
-	holdero.Swap.DEntry = dwidget.WholeAmtEntry("dReams: ")
+	holdero.Swap.DEntry = dwidget.DeroAmtEntry("dReams: ", 1, 0)
 	holdero.Swap.DEntry.PlaceHolder = "dReams:"
 	holdero.Swap.DEntry.Validator = validation.NewRegexp(`^(dReams: )[^0]\d{0,}$`, "Format Not Valid")
 	holdero.Swap.DEntry.OnChanged = func(s string) {

@@ -179,17 +179,17 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 	scid_entry.Validator = validation.NewRegexp(`^\w{64,64}$`, "SCID Not Valid")
 
 	// price per night entry
-	price_entry := dwidget.TenthAmtEntry("")
+	price_entry := dwidget.DeroAmtEntry("", 0.1, 5)
 	price_entry.SetPlaceHolder("Price:     ")
 	price_entry.Validator = validation.NewRegexp(`\d{1,}\.\d{1,5}`, "Float required")
 
 	// damage deposit entry
-	deposit_entry := dwidget.TenthAmtEntry("")
+	deposit_entry := dwidget.DeroAmtEntry("", 0.1, 5)
 	deposit_entry.SetPlaceHolder("Damage deposit:")
 	deposit_entry.Validator = validation.NewRegexp(`\d{1,}\.\d{1,5}`, "Float required")
 
 	// damage deposit release objects
-	release_entry := dwidget.TenthAmtEntry("")
+	release_entry := dwidget.DeroAmtEntry("", 0.1, 5)
 	release_entry.SetPlaceHolder("Damage amount in Dero:")
 	release_entry.Validator = validation.NewRegexp(`\d{1,}\.\d{1,5}`, "Float required")
 

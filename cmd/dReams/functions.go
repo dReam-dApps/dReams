@@ -108,6 +108,9 @@ func init() {
 	menu.Control.Dapp_list = make(map[string]bool)
 	menu.Control.Dapp_list = saved.Dapps
 
+	rpc.Wallet.TokenBal = make(map[string]uint64)
+	rpc.Display.Token_balance = make(map[string]string)
+
 	rpc.Signal.Sit = true
 
 	holdero.InitTableSettings()
@@ -399,8 +402,7 @@ func fetch(quit chan struct{}) {
 				rpc.Ping()
 				rpc.EchoWallet("dReams")
 				rpc.GetBalance()
-				go rpc.DreamsBalance()
-				rpc.TourneyBalance()
+				go rpc.GetDreamsBalances()
 				rpc.GetHeight()
 				if !rpc.Signal.Startup {
 					menu.CheckConnection()
@@ -553,7 +555,7 @@ func fetch(quit chan struct{}) {
 						} else if offset%5 == 0 {
 							SportsRefresh(dReams.sports)
 						}
-						S.RightLabel.SetText("dReams Balance: " + rpc.Display.Token_balance + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
+						S.RightLabel.SetText("dReams Balance: " + rpc.Display.Token_balance["dReams"] + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
 						PredictionRefresh(dReams.predict)
 					}
 
@@ -583,9 +585,10 @@ func setHolderoLabel() {
 	H.LeftLabel.SetText("Seats: " + rpc.Display.Seats + "      Pot: " + rpc.Display.Pot + "      Blinds: " + rpc.Display.Blinds + "      Ante: " + rpc.Display.Ante + "      Dealer: " + rpc.Display.Dealer + "      Turn: " + rpc.Display.Turn)
 	if rpc.Round.Asset {
 		if rpc.Round.Tourney {
-			H.RightLabel.SetText(rpc.Display.Readout + "      Player ID: " + rpc.Display.PlayerId + "      Chip Balance: " + rpc.Wallet.TourneyBal + "      Height: " + rpc.Display.Wallet_height)
+			H.RightLabel.SetText(rpc.Display.Readout + "      Player ID: " + rpc.Display.PlayerId + "      Chip Balance: " + rpc.Display.Token_balance["Tournament"] + "      Height: " + rpc.Display.Wallet_height)
 		} else {
-			H.RightLabel.SetText(rpc.Display.Readout + "      Player ID: " + rpc.Display.PlayerId + "      dReams Balance: " + rpc.Display.Token_balance + "      Height: " + rpc.Display.Wallet_height)
+			asset_name := rpc.GetAssetSCIDName(rpc.Round.AssetID)
+			H.RightLabel.SetText(rpc.Display.Readout + "      Player ID: " + rpc.Display.PlayerId + "      " + asset_name + " Balance: " + rpc.Display.Token_balance[asset_name] + "      Height: " + rpc.Display.Wallet_height)
 		}
 	} else {
 		H.RightLabel.SetText(rpc.Display.Readout + "      Player ID: " + rpc.Display.PlayerId + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
@@ -607,9 +610,10 @@ func waitLabel() {
 	H.TopLabel.SetText("")
 	if rpc.Round.Asset {
 		if rpc.Round.Tourney {
-			H.RightLabel.SetText("Wait for Block" + "      Player ID: " + rpc.Display.PlayerId + "      Chip Balance: " + rpc.Wallet.TourneyBal + "      Height: " + rpc.Display.Wallet_height)
+			H.RightLabel.SetText("Wait for Block" + "      Player ID: " + rpc.Display.PlayerId + "      Chip Balance: " + rpc.Display.Token_balance["Tournament"] + "      Height: " + rpc.Display.Wallet_height)
 		} else {
-			H.RightLabel.SetText("Wait for Block" + "      Player ID: " + rpc.Display.PlayerId + "      dReams Balance: " + rpc.Display.Token_balance + "      Height: " + rpc.Display.Wallet_height)
+			asset_name := rpc.GetAssetSCIDName(rpc.Round.AssetID)
+			H.RightLabel.SetText("Wait for Block" + "      Player ID: " + rpc.Display.PlayerId + "      " + asset_name + " Balance: " + rpc.Display.Token_balance[asset_name] + "      Height: " + rpc.Display.Wallet_height)
 		}
 
 	} else {
@@ -739,7 +743,7 @@ func revealingKey() {
 // Refresh all Baccarat objects
 func BaccRefresh() {
 	B.LeftLabel.SetText("Total Hands Played: " + rpc.Display.Total_w + "      Player Wins: " + rpc.Display.Player_w + "      Ties: " + rpc.Display.Ties + "      Banker Wins: " + rpc.Display.Banker_w + "      Min Bet is " + rpc.Display.BaccMin + " dReams, Max Bet is " + rpc.Display.BaccMax)
-	B.RightLabel.SetText("dReams Balance: " + rpc.Display.Token_balance + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
+	B.RightLabel.SetText("dReams Balance: " + rpc.Display.Token_balance["dReams"] + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
 
 	if !rpc.Bacc.Display {
 		B.Front.Objects[0] = clearBaccCards()
@@ -777,7 +781,7 @@ func PredictionRefresh(tab bool) {
 			go prediction.SetPredictionPrices(rpc.Daemon.Connect)
 		}
 
-		P.RightLabel.SetText("dReams Balance: " + rpc.Display.Token_balance + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
+		P.RightLabel.SetText("dReams Balance: " + rpc.Display.Token_balance["dReams"] + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
 
 		if menu.CheckActivePrediction(prediction.Predict.Contract) {
 			go prediction.ShowPredictionControls()
@@ -797,7 +801,7 @@ func SportsRefresh(tab bool) {
 // Refresh all Tarot objects
 func TarotRefresh() {
 	T.LeftLabel.SetText("Total Readings: " + rpc.Display.Readings + "      Click your card for Iluma reading")
-	T.RightLabel.SetText("dReams Balance: " + rpc.Display.Token_balance + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
+	T.RightLabel.SetText("dReams Balance: " + rpc.Display.Token_balance["dReams"] + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
 
 	if !rpc.Tarot.Display {
 		rpc.FetchTarotReading(rpc.Tarot.Last)
@@ -921,7 +925,7 @@ func refreshWalletDisplay(c bool) {
 	if c {
 		menu.Assets.Wall_height.Text = (" Wallet Height: " + rpc.Display.Wallet_height)
 		menu.Assets.Wall_height.Refresh()
-		menu.Assets.Dreams_bal.Text = (" dReams Balance: " + rpc.Display.Token_balance)
+		menu.Assets.Dreams_bal.Text = (" dReams Balance: " + rpc.Display.Token_balance["dReams"])
 		menu.Assets.Dreams_bal.Refresh()
 		menu.Assets.Dero_bal.Text = (" Dero Balance: " + rpc.Display.Dero_balance)
 		menu.Assets.Dero_bal.Refresh()

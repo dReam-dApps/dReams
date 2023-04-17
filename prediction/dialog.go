@@ -22,20 +22,20 @@ import (
 )
 
 type psOwnerWidgets struct {
-	S_end        *dwidget.WholeAmt
-	S_amt        *dwidget.TenthAmt
+	S_end        *dwidget.DeroAmts
+	S_amt        *dwidget.DeroAmts
 	S_game       *widget.Select
 	S_league     *widget.SelectEntry
 	S_feed       *widget.SelectEntry
-	S_deposit    *dwidget.TenthAmt
+	S_deposit    *dwidget.DeroAmts
 	S_set        *widget.Button
 	S_cancel     *widget.Button
-	P_end        *dwidget.WholeAmt
+	P_end        *dwidget.DeroAmts
 	P_mark       *widget.Entry
-	P_amt        *dwidget.TenthAmt
+	P_amt        *dwidget.DeroAmts
 	P_Name       *widget.SelectEntry
 	P_feed       *widget.SelectEntry
-	P_deposit    *dwidget.TenthAmt
+	P_deposit    *dwidget.DeroAmts
 	P_set        *widget.Button
 	P_post       *widget.Button
 	P_pay        *widget.Button
@@ -98,7 +98,7 @@ func preditctionOpts(window fyne.Window) fyne.CanvasObject {
 		}
 	}
 
-	PS_Control.P_end = dwidget.WholeAmtEntry("")
+	PS_Control.P_end = dwidget.DeroAmtEntry("", 1, 0)
 	PS_Control.P_end.SetPlaceHolder("Closes At:")
 	PS_Control.P_end.Validator = validation.NewRegexp(`^\d{10,}$`, "Format Not Valid")
 
@@ -106,7 +106,7 @@ func preditctionOpts(window fyne.Window) fyne.CanvasObject {
 	PS_Control.P_mark.SetPlaceHolder("Mark:")
 	PS_Control.P_mark.Validator = validation.NewRegexp(`^\d{1,}$`, "Format Not Valid")
 
-	PS_Control.P_amt = dwidget.TenthAmtEntry("")
+	PS_Control.P_amt = dwidget.DeroAmtEntry("", 0.1, 1)
 	PS_Control.P_amt.SetPlaceHolder("Minimum Amount:")
 	PS_Control.P_amt.Wrapping = fyne.TextTruncate
 	PS_Control.P_amt.Validator = validation.NewRegexp(`^\d{1,}\.\d{1,5}$`, "Format Not Valid")
@@ -115,7 +115,7 @@ func preditctionOpts(window fyne.Window) fyne.CanvasObject {
 	PS_Control.P_feed = widget.NewSelectEntry(feeds)
 	PS_Control.P_feed.SetPlaceHolder("Feed:")
 
-	PS_Control.P_deposit = dwidget.TenthAmtEntry("")
+	PS_Control.P_deposit = dwidget.DeroAmtEntry("", 0.1, 1)
 	PS_Control.P_deposit.SetPlaceHolder("Deposit Amount:")
 	PS_Control.P_deposit.Wrapping = fyne.TextTruncate
 	PS_Control.P_deposit.Validator = validation.NewRegexp(`^\d{1,}\.\d{1,5}$`, "Format Not Valid")
@@ -271,11 +271,11 @@ func sportsOpts(window fyne.Window) fyne.CanvasObject {
 	}
 	PS_Control.S_league.SetPlaceHolder("League:")
 
-	PS_Control.S_end = dwidget.WholeAmtEntry("")
+	PS_Control.S_end = dwidget.DeroAmtEntry("", 1, 0)
 	PS_Control.S_end.SetPlaceHolder("Closes At:")
 	PS_Control.S_end.Validator = validation.NewRegexp(`^\d{10,}$`, "Format Not Valid")
 
-	PS_Control.S_amt = dwidget.TenthAmtEntry("")
+	PS_Control.S_amt = dwidget.DeroAmtEntry("", 0.1, 1)
 	PS_Control.S_amt.SetPlaceHolder("Minimum Amount:")
 	PS_Control.S_amt.Wrapping = fyne.TextTruncate
 	PS_Control.S_amt.Validator = validation.NewRegexp(`^\d{1,}\.\d{1,5}$`, "Format Not Valid")
@@ -284,7 +284,7 @@ func sportsOpts(window fyne.Window) fyne.CanvasObject {
 	PS_Control.S_feed = widget.NewSelectEntry(feeds)
 	PS_Control.S_feed.SetPlaceHolder("Feed:")
 
-	PS_Control.S_deposit = dwidget.TenthAmtEntry("")
+	PS_Control.S_deposit = dwidget.DeroAmtEntry("", 0.1, 1)
 	PS_Control.S_deposit.SetPlaceHolder("Deposit Amount:")
 	PS_Control.S_deposit.Wrapping = fyne.TextTruncate
 	PS_Control.S_deposit.Validator = validation.NewRegexp(`^\d{1,}\.\d{1,5}$`, "Format Not Valid")
@@ -391,7 +391,7 @@ func serviceOpts(window fyne.Window) fyne.CanvasObject {
 		}
 	})
 
-	entry := dwidget.WholeAmtEntry("")
+	entry := dwidget.DeroAmtEntry("", 1, 0)
 	entry.SetPlaceHolder("Block #:")
 	entry.Wrapping = fyne.TextTruncate
 	entry.Validator = validation.NewRegexp(`^[^0]\d{0,}$`, "Format Not Valid")
@@ -524,25 +524,25 @@ func serviceOpts(window fyne.Window) fyne.CanvasObject {
 // SCID update objects for side menu
 func updateOpts() fyne.CanvasObject {
 	a_label := widget.NewLabel("Time A         ")
-	a := dwidget.WholeAmtEntry("")
+	a := dwidget.DeroAmtEntry("", 1, 0)
 	a.PlaceHolder = "Time A:"
 	a.Wrapping = fyne.TextTruncate
 	a.Validator = validation.NewRegexp(`[^0]\d{1,}$`, "Format Not Valid")
 
 	b_label := widget.NewLabel("Time B         ")
-	b := dwidget.WholeAmtEntry("")
+	b := dwidget.DeroAmtEntry("", 1, 0)
 	b.PlaceHolder = "Time B:"
 	b.Wrapping = fyne.TextTruncate
 	b.Validator = validation.NewRegexp(`[^0]\d{1,}$`, "Format Not Valid")
 
 	c_label := widget.NewLabel("Time C         ")
-	c := dwidget.WholeAmtEntry("")
+	c := dwidget.DeroAmtEntry("", 1, 0)
 	c.PlaceHolder = "Time C:"
 	c.Wrapping = fyne.TextTruncate
 	c.Validator = validation.NewRegexp(`[^0]\d{1,}$`, "Format Not Valid")
 
 	hl_label := widget.NewLabel("Max Games")
-	hl := dwidget.WholeAmtEntry("")
+	hl := dwidget.DeroAmtEntry("", 1, 0)
 	hl.PlaceHolder = "Max Games:"
 	hl.Wrapping = fyne.TextTruncate
 	hl.Validator = validation.NewRegexp(`^[^0]\d{0,}$`, "Format Not Valid")
@@ -583,7 +583,7 @@ func updateOpts() fyne.CanvasObject {
 		}
 	})
 
-	owner_num := dwidget.WholeAmtEntry("")
+	owner_num := dwidget.DeroAmtEntry("", 1, 0)
 	owner_num.PlaceHolder = "Owner #:"
 	owner_num.Validator = validation.NewRegexp(`^[^0]\d{0,0}$`, "Format Not Valid")
 	owner_num.Wrapping = fyne.TextTruncate

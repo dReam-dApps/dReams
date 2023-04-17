@@ -59,14 +59,14 @@ type tableObjects struct {
 	Bet        *widget.Button
 	Check      *widget.Button
 	Tournament *widget.Button
-	BetEntry   *dwidget.TenthAmt
+	BetEntry   *dwidget.DeroAmts
 	Warning    *fyne.Container
 }
 
 type swapObjects struct {
 	Dreams *widget.Button
 	Dero   *widget.Button
-	DEntry *dwidget.WholeAmt
+	DEntry *dwidget.DeroAmts
 }
 
 var Swap swapObjects
@@ -513,8 +513,9 @@ func LeaveButton() fyne.Widget {
 // Holdero player deal hand button
 func DealHandButton() fyne.Widget {
 	Table.Deal = widget.NewButton("Deal Hand", func() {
-		rpc.DealHand()
-		HolderoButtonBuffer()
+		if tx := rpc.DealHand(); tx != "" {
+			HolderoButtonBuffer()
+		}
 	})
 
 	Table.Deal.Hide()
@@ -526,48 +527,48 @@ func DealHandButton() fyne.Widget {
 //   - Setting the intial value based on if PlacedBet, Wager and Ante
 //   - If entry invalid, set to min bet value
 func BetAmount() fyne.CanvasObject {
-	Table.BetEntry = &dwidget.TenthAmt{}
+	Table.BetEntry = dwidget.DeroAmtEntry("", 0.1, 1)
 	Table.BetEntry.ExtendBaseWidget(Table.BetEntry)
 	Table.BetEntry.Enable()
 	if Table.BetEntry.Text == "" {
 		Table.BetEntry.SetText("0.0")
 	}
-	Table.BetEntry.Validator = validation.NewRegexp(`[^0]\d{1,}\.\d{1,1}|\d{0,1}\.\d{0,1}$`, "Format Not Valid")
+	Table.BetEntry.Validator = validation.NewRegexp(`[^0]\d{1,}\..\d{0,}$|^\d{1,1}\..\d{0,0}$|^[^0]\d{0,}$`, "Format Not Valid")
 	Table.BetEntry.OnChanged = func(s string) {
 		if f, err := strconv.ParseFloat(s, 64); err == nil {
 			if rpc.Signal.PlacedBet {
-				Table.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.Raised)/100000, 'f', 1, 64))
+				Table.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.Raised)/100000, 'f', int(Table.BetEntry.Decimal), 64))
 				if Table.BetEntry.Validate() != nil {
-					Table.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.Raised)/100000, 'f', 1, 64))
+					Table.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.Raised)/100000, 'f', int(Table.BetEntry.Decimal), 64))
 				}
 			} else {
 
 				if rpc.Round.Wager > 0 {
 					if rpc.Round.Raised > 0 {
 						if rpc.Signal.PlacedBet {
-							Table.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.Raised)/100000, 'f', 1, 64))
+							Table.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.Raised)/100000, 'f', int(Table.BetEntry.Decimal), 64))
 						} else {
-							Table.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.Wager)/100000, 'f', 1, 64))
+							Table.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.Wager)/100000, 'f', int(Table.BetEntry.Decimal), 64))
 						}
 						if Table.BetEntry.Validate() != nil {
 							if rpc.Signal.PlacedBet {
-								Table.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.Raised)/100000, 'f', 1, 64))
+								Table.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.Raised)/100000, 'f', int(Table.BetEntry.Decimal), 64))
 							} else {
-								Table.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.Wager)/100000, 'f', 1, 64))
+								Table.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.Wager)/100000, 'f', int(Table.BetEntry.Decimal), 64))
 							}
 						}
 					} else {
 
 						if f < float64(rpc.Round.Wager)/100000 {
-							Table.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.Wager)/100000, 'f', 1, 64))
+							Table.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.Wager)/100000, 'f', int(Table.BetEntry.Decimal), 64))
 						}
 
 						if Table.BetEntry.Validate() != nil {
 							float := f * 100000
 							if uint64(float)%10000 == 0 {
-								Table.BetEntry.SetText(strconv.FormatFloat(roundFloat(f, 1), 'f', 1, 64))
+								Table.BetEntry.SetText(strconv.FormatFloat(roundFloat(f, 1), 'f', int(Table.BetEntry.Decimal), 64))
 							} else if Table.BetEntry.Validate() != nil {
-								Table.BetEntry.SetText(strconv.FormatFloat(roundFloat(f, 1), 'f', 1, 64))
+								Table.BetEntry.SetText(strconv.FormatFloat(roundFloat(f, 1), 'f', int(Table.BetEntry.Decimal), 64))
 							}
 						}
 					}
@@ -576,27 +577,27 @@ func BetAmount() fyne.CanvasObject {
 					if rpc.Daemon.Connect {
 						float := f * 100000
 						if uint64(float)%10000 == 0 {
-							Table.BetEntry.SetText(strconv.FormatFloat(roundFloat(f, 1), 'f', 1, 64))
+							Table.BetEntry.SetText(strconv.FormatFloat(roundFloat(f, 1), 'f', int(Table.BetEntry.Decimal), 64))
 						} else if Table.BetEntry.Validate() != nil {
-							Table.BetEntry.SetText(strconv.FormatFloat(roundFloat(f, 1), 'f', 1, 64))
+							Table.BetEntry.SetText(strconv.FormatFloat(roundFloat(f, 1), 'f', int(Table.BetEntry.Decimal), 64))
 						}
 
 						if rpc.Round.Ante > 0 {
 							if f < float64(rpc.Round.Ante)/100000 {
-								Table.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.Ante)/100000, 'f', 1, 64))
+								Table.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.Ante)/100000, 'f', int(Table.BetEntry.Decimal), 64))
 							}
 
 							if Table.BetEntry.Validate() != nil {
-								Table.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.Ante)/100000, 'f', 1, 64))
+								Table.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.Ante)/100000, 'f', int(Table.BetEntry.Decimal), 64))
 							}
 
 						} else {
 							if f < float64(rpc.Round.BB)/100000 {
-								Table.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.BB)/100000, 'f', 1, 64))
+								Table.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.BB)/100000, 'f', int(Table.BetEntry.Decimal), 64))
 							}
 
 							if Table.BetEntry.Validate() != nil {
-								Table.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.BB)/100000, 'f', 1, 64))
+								Table.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.BB)/100000, 'f', int(Table.BetEntry.Decimal), 64))
 							}
 						}
 					}
@@ -605,9 +606,9 @@ func BetAmount() fyne.CanvasObject {
 		} else {
 			log.Println("[BetAmount]", err)
 			if rpc.Round.Ante == 0 {
-				Table.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.BB)/100000, 'f', 1, 64))
+				Table.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.BB)/100000, 'f', int(Table.BetEntry.Decimal), 64))
 			} else {
-				Table.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.Ante)/100000, 'f', 1, 64))
+				Table.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.Ante)/100000, 'f', int(Table.BetEntry.Decimal), 64))
 			}
 		}
 	}
@@ -631,9 +632,10 @@ func roundFloat(val float64, precision uint) float64 {
 func BetButton() fyne.Widget {
 	Table.Bet = widget.NewButton("Bet", func() {
 		if Table.BetEntry.Validate() == nil {
-			rpc.Bet(Table.BetEntry.Text)
-			rpc.Signal.Bet = true
-			HolderoButtonBuffer()
+			if tx := rpc.Bet(Table.BetEntry.Text); tx != "" {
+				rpc.Signal.Bet = true
+				HolderoButtonBuffer()
+			}
 		}
 	})
 
@@ -645,10 +647,10 @@ func BetButton() fyne.Widget {
 // Holdero check and fold button
 func CheckButton() fyne.Widget {
 	Table.Check = widget.NewButton("Check", func() {
-		rpc.Check()
-		rpc.Signal.Bet = true
-		HolderoButtonBuffer()
-
+		if tx := rpc.Check(); tx != "" {
+			rpc.Signal.Bet = true
+			HolderoButtonBuffer()
+		}
 	})
 
 	Table.Check.Hide()

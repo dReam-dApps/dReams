@@ -316,6 +316,11 @@ func searchFilters() (filter []string) {
 		if holdero100 != "" {
 			filter = append(filter, holdero100)
 		}
+
+		holderoHGC := rpc.GetSCCode(rpc.HHolderoSCID)
+		if holderoHGC != "" {
+			filter = append(filter, holderoHGC)
+		}
 	}
 
 	if Control.Dapp_list["Baccarat"] {

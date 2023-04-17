@@ -24,7 +24,7 @@ import (
 
 type marketObjects struct {
 	Tab           string
-	Entry         *dwidget.TenthAmt
+	Entry         *dwidget.DeroAmts
 	Name          *canvas.Text
 	Type          *canvas.Text
 	Collection    *canvas.Text
@@ -88,7 +88,7 @@ var Market marketObjects
 
 // NFA market amount entry
 func MarketEntry() fyne.CanvasObject {
-	Market.Entry = &dwidget.TenthAmt{}
+	Market.Entry = dwidget.DeroAmtEntry("", 0.1, 1)
 	Market.Entry.ExtendBaseWidget(Market.Entry)
 	Market.Entry.SetText("0.0")
 	Market.Entry.PlaceHolder = "Dero:"

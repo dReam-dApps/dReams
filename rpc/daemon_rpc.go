@@ -19,9 +19,11 @@ const (
 	NameSCID     = "0000000000000000000000000000000000000000000000000000000000000001"
 	RatingSCID   = "c66a11ddb22912e92b0a7ab777ed0d343632d9e3c6e8a81452396ca84d2decb6"
 	dReamsSCID   = "ad2e7b37c380cc1aed3a6b27224ddfc92a2d15962ca1f4d35e530dba0f9575a9"
+	HgcSCID      = "e2e45ce26f70cb551951c855e81a12fee0bb6ebe80ef115c3f50f51e119c02f3"
 	TourneySCID  = "c2e1ec16aed6f653aef99a06826b2b6f633349807d01fbb74cc0afb5ff99c3c7"
 	HolderoSCID  = "e3f37573de94560e126a9020c0a5b3dfc7a4f3a4fbbe369fba93fbd219dc5fe9"
 	pHolderoSCID = "896834d57628d3a65076d3f4d84ddc7c5daf3e86b66a47f018abda6068afe2e6"
+	HHolderoSCID = "efe646c48977fd776fee73cdd3df147a2668d3b7d965cdb7a187dda4d23005d8"
 	BaccSCID     = "8289c6109f41cbe1f6d5f27a419db537bf3bf30a25eff285241a36e1ae3e48a4"
 	PredictSCID  = "eaa62b220fa1c411785f43c0c08ec59c761261cb58a0ccedc5b358e5ed2d2c95"
 	pPredictSCID = "e5e49c9a6dc1c0dc8a94429a01bf758e705de49487cbd0b3e3550648d2460cdf"
@@ -480,12 +482,21 @@ func FetchHolderoSC() {
 				if Chips_jv != nil {
 					if fromHextoString(Chips_jv.(string)) == "ASSET" {
 						Round.Asset = true
-						Pot_jv = result.Balances[dReamsSCID]
+						if _, ok := result.VariableStringKeys["dReams"].(string); ok {
+							Pot_jv = result.Balances[dReamsSCID]
+							Round.AssetID = dReamsSCID
+						} else if _, ok = result.VariableStringKeys["HGC"].(string); ok {
+							Pot_jv = result.Balances[HgcSCID]
+							Round.AssetID = HgcSCID
+						}
 					} else {
 						Round.Asset = false
+						Round.AssetID = ""
 						Pot_jv = result.Balances["0000000000000000000000000000000000000000000000000000000000000000"]
 					}
 				} else {
+					Round.Asset = false
+					Round.AssetID = ""
 					Pot_jv = result.Balances["0000000000000000000000000000000000000000000000000000000000000000"]
 				}
 			} else {
@@ -496,9 +507,12 @@ func FetchHolderoSC() {
 						Pot_jv = result.Balances[TourneySCID]
 					} else {
 						Round.Asset = false
+						Round.AssetID = ""
 						Pot_jv = result.Balances["0000000000000000000000000000000000000000000000000000000000000000"]
 					}
 				} else {
+					Round.Asset = false
+					Round.AssetID = ""
 					Pot_jv = result.Balances["0000000000000000000000000000000000000000000000000000000000000000"]
 				}
 			}

@@ -38,6 +38,7 @@ var Shared sharedCards
 func ClearShared() {
 	rpc.Display.Res = ""
 	rpc.Round.First_try = true
+	rpc.Round.AssetID = ""
 	rpc.Round.P1_url = ""
 	rpc.Round.P2_url = ""
 	rpc.Round.P3_url = ""

@@ -51,7 +51,7 @@ func BaccResult(r string) fyne.Widget {
 
 // Baccarat action objects
 func BaccaratButtons() fyne.CanvasObject {
-	entry := dwidget.WholeAmtEntry("")
+	entry := dwidget.DeroAmtEntry("", 1, 0)
 	entry.PlaceHolder = "dReams:"
 	entry.SetText("10")
 	entry.Validator = validation.NewRegexp(`\d{1,}$`, "Format Not Valid")
