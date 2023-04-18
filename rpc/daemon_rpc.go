@@ -850,15 +850,14 @@ func FetchBaccHand(tx string) {
 						PTotal_jv := result.VariableStringKeys[w+"-Player total:"]
 						BTotal_jv := result.VariableStringKeys[w+"-Banker total:"]
 
-						prefix := "Hand# " + w + "\n"
 						p := int(PTotal_jv.(float64))
 						b := int(BTotal_jv.(float64))
 						if PTotal_jv.(float64) == BTotal_jv.(float64) {
-							Display.BaccRes = prefix + "Tie, " + strconv.Itoa(p) + " & " + strconv.Itoa(b)
+							Display.BaccRes = fmt.Sprintf("Hand# %s Tie, %d & %d", w, p, b)
 						} else if PTotal_jv.(float64) > BTotal_jv.(float64) {
-							Display.BaccRes = prefix + "Player Wins, " + strconv.Itoa(p) + " over " + strconv.Itoa(b)
+							Display.BaccRes = fmt.Sprintf("Hand# %s Player Wins, %d over %d", w, p, b)
 						} else {
-							Display.BaccRes = prefix + "Banker Wins, " + strconv.Itoa(b) + " over " + strconv.Itoa(p)
+							Display.BaccRes = fmt.Sprintf("Hand# %s Banker Wins, %d over %d", w, b, p)
 						}
 					}
 				}

@@ -66,6 +66,7 @@ func TarotBuffer(d bool) {
 // Clickable Tarot card objects
 func TarotCardBox() fyne.CanvasObject {
 	Iluma.Label = widget.NewLabel("")
+	Iluma.Label.Alignment = fyne.TextAlignCenter
 	one := widget.NewButton("", func() {
 		if rpc.Tarot.Num == 3 && !Iluma.Open && rpc.Tarot.Card1 > 0 {
 			c := rpc.Tarot.Card1
@@ -160,17 +161,17 @@ func TarotDrawText() (text string) {
 
 	switch i {
 	case 1:
-		text = "                               Accessing the Akashic Records"
+		text = "Accessing the Akashic Records"
 	case 2:
-		text = "                               Consulting your Angels & Ancestors"
+		text = "Consulting your Angels & Ancestors"
 	case 3:
-		text = "                               Scanning your Auroa"
+		text = "Scanning your Auroa"
 	case 4:
-		text = "                               Reading your Light Codes"
+		text = "Reading your Light Codes"
 	case 5:
-		text = "                               Channeling the Divine"
+		text = "Channeling the Divine"
 	case 6:
-		text = "                               Trust in your intuition"
+		text = "Trust in your intuition"
 	default:
 
 	}

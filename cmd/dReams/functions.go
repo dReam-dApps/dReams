@@ -228,11 +228,10 @@ func showBaccCards() *fyne.Container {
 	} else {
 		drawB = rpc.Bacc.B_card3
 	}
-	w := holdero.Settings.FaceSelect.SelectedIndex()
 
 	content := *container.NewWithoutLayout(
-		PlayerCards(w, BaccSuit(rpc.Bacc.P_card1), BaccSuit(rpc.Bacc.P_card2), BaccSuit(drawP)),
-		BankerCards(w, BaccSuit(rpc.Bacc.B_card1), BaccSuit(rpc.Bacc.B_card2), BaccSuit(drawB)))
+		PlayerCards(BaccSuit(rpc.Bacc.P_card1), BaccSuit(rpc.Bacc.P_card2), BaccSuit(drawP)),
+		BankerCards(BaccSuit(rpc.Bacc.B_card1), BaccSuit(rpc.Bacc.B_card2), BaccSuit(drawB)))
 
 	rpc.Bacc.Display = true
 	baccarat.BaccBuffer(false)
@@ -242,8 +241,8 @@ func showBaccCards() *fyne.Container {
 
 func clearBaccCards() *fyne.Container {
 	content := *container.NewWithoutLayout(
-		PlayerCards(0, 99, 99, 99),
-		BankerCards(0, 99, 99, 99))
+		PlayerCards(99, 99, 99),
+		BankerCards(99, 99, 99))
 
 	return &content
 }
@@ -754,11 +753,12 @@ func BaccRefresh() {
 		B.Front.Objects[0].Refresh()
 	}
 
-	if rpc.Wallet.Height > rpc.Bacc.CHeight+3 {
+	if rpc.Wallet.Height > rpc.Bacc.CHeight+3 && !rpc.Bacc.Found {
+		rpc.Display.BaccRes = ""
 		baccarat.BaccBuffer(false)
 	}
 
-	B.Back.Objects[1] = baccarat.BaccResult(rpc.Display.BaccRes)
+	B.Back.Objects[1].(*canvas.Text).Text = rpc.Display.BaccRes
 	B.Back.Objects[1].Refresh()
 
 	B.DApp.Refresh()
@@ -1189,274 +1189,4 @@ func FullScreenSet() fyne.CanvasObject {
 	cont := container.NewHBox(layout.NewSpacer(), layout.NewSpacer(), layout.NewSpacer(), container.NewVBox(button), layout.NewSpacer())
 
 	return cont
-}
-
-// Main switch used to display playing cards
-func DisplayCard(card int) *canvas.Image {
-	if !holdero.Settings.Shared || rpc.Round.ID == 1 {
-		if card == 99 {
-			return canvas.NewImageFromImage(nil)
-		}
-
-		if card > 0 {
-			i := holdero.Settings.FaceSelect.SelectedIndex()
-			switch i {
-			case -1:
-				return canvas.NewImageFromResource(DisplayLightCard(card))
-			case 0:
-				return canvas.NewImageFromResource(DisplayLightCard(card))
-			case 1:
-				return canvas.NewImageFromResource(DisplayDarkCard(card))
-			default:
-				return CustomCard(card, holdero.Settings.Faces)
-			}
-		}
-
-		i := holdero.Settings.BackSelect.SelectedIndex()
-		switch i {
-		case -1:
-			return canvas.NewImageFromResource(bundle.ResourceBack1Png)
-		case 0:
-			return canvas.NewImageFromResource(bundle.ResourceBack1Png)
-		case 1:
-			return canvas.NewImageFromResource(bundle.ResourceBack2Png)
-		default:
-			return CustomBack(holdero.Settings.Backs)
-		}
-
-	} else {
-		if card == 99 {
-			return canvas.NewImageFromImage(nil)
-		} else if card > 0 {
-			return CustomCard(card, rpc.Round.Face)
-		} else {
-			return CustomBack(rpc.Round.Back)
-		}
-	}
-}
-
-// Switch for standard light deck
-func DisplayLightCard(card int) fyne.Resource {
-	if card > 0 && card < 53 {
-		switch card {
-		case 1:
-			return bundle.ResourceLightcard1Png
-		case 2:
-			return bundle.ResourceLightcard2Png
-		case 3:
-			return bundle.ResourceLightcard3Png
-		case 4:
-			return bundle.ResourceLightcard4Png
-		case 5:
-			return bundle.ResourceLightcard5Png
-		case 6:
-			return bundle.ResourceLightcard6Png
-		case 7:
-			return bundle.ResourceLightcard7Png
-		case 8:
-			return bundle.ResourceLightcard8Png
-		case 9:
-			return bundle.ResourceLightcard9Png
-		case 10:
-			return bundle.ResourceLightcard10Png
-		case 11:
-			return bundle.ResourceLightcard11Png
-		case 12:
-			return bundle.ResourceLightcard12Png
-		case 13:
-			return bundle.ResourceLightcard13Png
-		case 14:
-			return bundle.ResourceLightcard14Png
-		case 15:
-			return bundle.ResourceLightcard15Png
-		case 16:
-			return bundle.ResourceLightcard16Png
-		case 17:
-			return bundle.ResourceLightcard17Png
-		case 18:
-			return bundle.ResourceLightcard18Png
-		case 19:
-			return bundle.ResourceLightcard19Png
-		case 20:
-			return bundle.ResourceLightcard20Png
-		case 21:
-			return bundle.ResourceLightcard21Png
-		case 22:
-			return bundle.ResourceLightcard22Png
-		case 23:
-			return bundle.ResourceLightcard23Png
-		case 24:
-			return bundle.ResourceLightcard24Png
-		case 25:
-			return bundle.ResourceLightcard25Png
-		case 26:
-			return bundle.ResourceLightcard26Png
-		case 27:
-			return bundle.ResourceLightcard27Png
-		case 28:
-			return bundle.ResourceLightcard28Png
-		case 29:
-			return bundle.ResourceLightcard29Png
-		case 30:
-			return bundle.ResourceLightcard30Png
-		case 31:
-			return bundle.ResourceLightcard31Png
-		case 32:
-			return bundle.ResourceLightcard32Png
-		case 33:
-			return bundle.ResourceLightcard33Png
-		case 34:
-			return bundle.ResourceLightcard34Png
-		case 35:
-			return bundle.ResourceLightcard35Png
-		case 36:
-			return bundle.ResourceLightcard36Png
-		case 37:
-			return bundle.ResourceLightcard37Png
-		case 38:
-			return bundle.ResourceLightcard38Png
-		case 39:
-			return bundle.ResourceLightcard39Png
-		case 40:
-			return bundle.ResourceLightcard40Png
-		case 41:
-			return bundle.ResourceLightcard41Png
-		case 42:
-			return bundle.ResourceLightcard42Png
-		case 43:
-			return bundle.ResourceLightcard43Png
-		case 44:
-			return bundle.ResourceLightcard44Png
-		case 45:
-			return bundle.ResourceLightcard45Png
-		case 46:
-			return bundle.ResourceLightcard46Png
-		case 47:
-			return bundle.ResourceLightcard47Png
-		case 48:
-			return bundle.ResourceLightcard48Png
-		case 49:
-			return bundle.ResourceLightcard49Png
-		case 50:
-			return bundle.ResourceLightcard50Png
-		case 51:
-			return bundle.ResourceLightcard51Png
-		case 52:
-			return bundle.ResourceLightcard52Png
-		}
-	}
-	return nil
-}
-
-// Switch for standard dark deck
-func DisplayDarkCard(card int) fyne.Resource {
-	if card > 0 && card < 53 {
-		switch card {
-		case 1:
-			return bundle.ResourceDarkcard1Png
-		case 2:
-			return bundle.ResourceDarkcard2Png
-		case 3:
-			return bundle.ResourceDarkcard3Png
-		case 4:
-			return bundle.ResourceDarkcard4Png
-		case 5:
-			return bundle.ResourceDarkcard5Png
-		case 6:
-			return bundle.ResourceDarkcard6Png
-		case 7:
-			return bundle.ResourceDarkcard7Png
-		case 8:
-			return bundle.ResourceDarkcard8Png
-		case 9:
-			return bundle.ResourceDarkcard9Png
-		case 10:
-			return bundle.ResourceDarkcard10Png
-		case 11:
-			return bundle.ResourceDarkcard11Png
-		case 12:
-			return bundle.ResourceDarkcard12Png
-		case 13:
-			return bundle.ResourceDarkcard13Png
-		case 14:
-			return bundle.ResourceDarkcard14Png
-		case 15:
-			return bundle.ResourceDarkcard15Png
-		case 16:
-			return bundle.ResourceDarkcard16Png
-		case 17:
-			return bundle.ResourceDarkcard17Png
-		case 18:
-			return bundle.ResourceDarkcard18Png
-		case 19:
-			return bundle.ResourceDarkcard19Png
-		case 20:
-			return bundle.ResourceDarkcard20Png
-		case 21:
-			return bundle.ResourceDarkcard21Png
-		case 22:
-			return bundle.ResourceDarkcard22Png
-		case 23:
-			return bundle.ResourceDarkcard23Png
-		case 24:
-			return bundle.ResourceDarkcard24Png
-		case 25:
-			return bundle.ResourceDarkcard25Png
-		case 26:
-			return bundle.ResourceDarkcard26Png
-		case 27:
-			return bundle.ResourceDarkcard27Png
-		case 28:
-			return bundle.ResourceDarkcard28Png
-		case 29:
-			return bundle.ResourceDarkcard29Png
-		case 30:
-			return bundle.ResourceDarkcard30Png
-		case 31:
-			return bundle.ResourceDarkcard31Png
-		case 32:
-			return bundle.ResourceDarkcard32Png
-		case 33:
-			return bundle.ResourceDarkcard33Png
-		case 34:
-			return bundle.ResourceDarkcard34Png
-		case 35:
-			return bundle.ResourceDarkcard35Png
-		case 36:
-			return bundle.ResourceDarkcard36Png
-		case 37:
-			return bundle.ResourceDarkcard37Png
-		case 38:
-			return bundle.ResourceDarkcard38Png
-		case 39:
-			return bundle.ResourceDarkcard39Png
-		case 40:
-			return bundle.ResourceDarkcard40Png
-		case 41:
-			return bundle.ResourceDarkcard41Png
-		case 42:
-			return bundle.ResourceDarkcard42Png
-		case 43:
-			return bundle.ResourceDarkcard43Png
-		case 44:
-			return bundle.ResourceDarkcard44Png
-		case 45:
-			return bundle.ResourceDarkcard45Png
-		case 46:
-			return bundle.ResourceDarkcard46Png
-		case 47:
-			return bundle.ResourceDarkcard47Png
-		case 48:
-			return bundle.ResourceDarkcard48Png
-		case 49:
-			return bundle.ResourceDarkcard49Png
-		case 50:
-			return bundle.ResourceDarkcard50Png
-		case 51:
-			return bundle.ResourceDarkcard51Png
-		case 52:
-			return bundle.ResourceDarkcard52Png
-		}
-	}
-	return nil
 }

@@ -1,6 +1,7 @@
 package baccarat
 
 import (
+	"image/color"
 	"strconv"
 
 	"github.com/SixofClubsss/dReams/dwidget"
@@ -33,7 +34,7 @@ func BaccBuffer(d bool) {
 		rpc.Bacc.Last = ""
 		rpc.Display.BaccRes = "Wait for Block..."
 	} else {
-		if rpc.Daemon.Connect {
+		if rpc.Daemon.Connect && rpc.Display.BaccRes != "Wait for Block..." {
 			Table.Actions.Show()
 		}
 	}
@@ -41,10 +42,11 @@ func BaccBuffer(d bool) {
 	Table.Actions.Refresh()
 }
 
-// Baccarat hand result display
-func BaccResult(r string) fyne.Widget {
-	label := widget.NewLabel(r)
-	label.Move(fyne.NewPos(485, 225))
+// Baccarat hand result display label
+func BaccResult(r string) *canvas.Text {
+	label := canvas.NewText(r, color.White)
+	label.Move(fyne.NewPos(564, 237))
+	label.Alignment = fyne.TextAlignCenter
 
 	return label
 }

@@ -1,20 +1,16 @@
 package main
 
 import (
-	"log"
 	"math/rand"
 	"time"
 
 	"github.com/SixofClubsss/dReams/bundle"
 	"github.com/SixofClubsss/dReams/holdero"
 	"github.com/SixofClubsss/dReams/rpc"
-	"github.com/SixofClubsss/dReams/tarot"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/layout"
-	"fyne.io/fyne/v2/widget"
 )
 
 type cards struct {
@@ -49,7 +45,8 @@ type cards struct {
 
 var Cards cards
 
-// / Table cards
+// Set player hole card one image
+//   - w and h of main window for resize
 func Hole_1(c int, w, h float32) fyne.CanvasObject {
 	Cards.Hole1 = DisplayCard(c)
 	Cards.Hole1.Resize(fyne.NewSize(165, 225))
@@ -58,6 +55,8 @@ func Hole_1(c int, w, h float32) fyne.CanvasObject {
 	return Cards.Hole1
 }
 
+// Set player hole card two image
+//   - w and h of main window for resize
 func Hole_2(c int, w, h float32) fyne.CanvasObject {
 	Cards.Hole2 = DisplayCard(c)
 	Cards.Hole2.Resize(fyne.NewSize(165, 225))
@@ -66,6 +65,7 @@ func Hole_2(c int, w, h float32) fyne.CanvasObject {
 	return Cards.Hole2
 }
 
+// Set first flop card image
 func Flop_1(c int) fyne.CanvasObject {
 	Cards.Flop1 = DisplayCard(c)
 	Cards.Flop1.Resize(fyne.NewSize(110, 150))
@@ -74,6 +74,7 @@ func Flop_1(c int) fyne.CanvasObject {
 	return Cards.Flop1
 }
 
+// Set second flop card image
 func Flop_2(c int) fyne.CanvasObject {
 	Cards.Flop2 = DisplayCard(c)
 	Cards.Flop2.Resize(fyne.NewSize(110, 150))
@@ -82,6 +83,7 @@ func Flop_2(c int) fyne.CanvasObject {
 	return Cards.Flop2
 }
 
+// Set third flop card image
 func Flop_3(c int) fyne.CanvasObject {
 	Cards.Flop3 = DisplayCard(c)
 	Cards.Flop3.Resize(fyne.NewSize(110, 150))
@@ -90,6 +92,7 @@ func Flop_3(c int) fyne.CanvasObject {
 	return Cards.Flop3
 }
 
+// Set turn card image
 func Turn(c int) fyne.CanvasObject {
 	Cards.Turn = DisplayCard(c)
 	Cards.Turn.Resize(fyne.NewSize(110, 150))
@@ -98,6 +101,7 @@ func Turn(c int) fyne.CanvasObject {
 	return Cards.Turn
 }
 
+// Set river card image
 func River(c int) fyne.CanvasObject {
 	Cards.River = DisplayCard(c)
 	Cards.River.Resize(fyne.NewSize(110, 150))
@@ -106,6 +110,7 @@ func River(c int) fyne.CanvasObject {
 	return Cards.River
 }
 
+// Set first players table card one image
 func P1_a(c int) fyne.CanvasObject {
 	Cards.P1a = DisplayCard(c)
 	Cards.P1a.Resize(fyne.NewSize(110, 150))
@@ -114,6 +119,7 @@ func P1_a(c int) fyne.CanvasObject {
 	return Cards.P1a
 }
 
+// Set first players table card two image
 func P1_b(c int) fyne.CanvasObject {
 	Cards.P1b = DisplayCard(c)
 	Cards.P1b.Resize(fyne.NewSize(110, 150))
@@ -122,6 +128,7 @@ func P1_b(c int) fyne.CanvasObject {
 	return Cards.P1b
 }
 
+// Set second players table card one image
 func P2_a(c int) fyne.CanvasObject {
 	Cards.P2a = DisplayCard(c)
 	Cards.P2a.Resize(fyne.NewSize(110, 150))
@@ -130,6 +137,7 @@ func P2_a(c int) fyne.CanvasObject {
 	return Cards.P2a
 }
 
+// Set second players table card two image
 func P2_b(c int) fyne.CanvasObject {
 	Cards.P2b = DisplayCard(c)
 	Cards.P2b.Resize(fyne.NewSize(110, 150))
@@ -138,6 +146,7 @@ func P2_b(c int) fyne.CanvasObject {
 	return Cards.P2b
 }
 
+// Set third players table card one image
 func P3_a(c int) fyne.CanvasObject {
 	Cards.P3a = DisplayCard(c)
 	Cards.P3a.Resize(fyne.NewSize(110, 150))
@@ -147,6 +156,7 @@ func P3_a(c int) fyne.CanvasObject {
 
 }
 
+// Set third players table card two image
 func P3_b(c int) fyne.CanvasObject {
 	Cards.P3b = DisplayCard(c)
 	Cards.P3b.Resize(fyne.NewSize(110, 150))
@@ -155,6 +165,7 @@ func P3_b(c int) fyne.CanvasObject {
 	return Cards.P3b
 }
 
+// Set fourth players table card one image
 func P4_a(c int) fyne.CanvasObject {
 	Cards.P4a = DisplayCard(c)
 	Cards.P4a.Resize(fyne.NewSize(110, 150))
@@ -163,6 +174,7 @@ func P4_a(c int) fyne.CanvasObject {
 	return Cards.P4a
 }
 
+// Set fourth players table card two image
 func P4_b(c int) fyne.CanvasObject {
 	Cards.P4b = DisplayCard(c)
 	Cards.P4b.Resize(fyne.NewSize(110, 150))
@@ -171,6 +183,7 @@ func P4_b(c int) fyne.CanvasObject {
 	return Cards.P4b
 }
 
+// Set fifth players table card one image
 func P5_a(c int) fyne.CanvasObject {
 	Cards.P5a = DisplayCard(c)
 	Cards.P5a.Resize(fyne.NewSize(110, 150))
@@ -179,6 +192,7 @@ func P5_a(c int) fyne.CanvasObject {
 	return Cards.P5a
 }
 
+// Set fifth players table card two image
 func P5_b(c int) fyne.CanvasObject {
 	Cards.P5b = DisplayCard(c)
 	Cards.P5b.Resize(fyne.NewSize(110, 150))
@@ -187,6 +201,7 @@ func P5_b(c int) fyne.CanvasObject {
 	return Cards.P5b
 }
 
+// Set sixth players table card one image
 func P6_a(c int) fyne.CanvasObject {
 	Cards.P6a = DisplayCard(c)
 	Cards.P6a.Resize(fyne.NewSize(110, 150))
@@ -195,6 +210,7 @@ func P6_a(c int) fyne.CanvasObject {
 	return Cards.P6a
 }
 
+// Set sixth players table card two image
 func P6_b(c int) fyne.CanvasObject {
 	Cards.P6b = DisplayCard(c)
 	Cards.P6b.Resize(fyne.NewSize(110, 150))
@@ -203,6 +219,8 @@ func P6_b(c int) fyne.CanvasObject {
 	return Cards.P6b
 }
 
+// Returns int value for player table cards display.
+// If player has no card hash values, no cards will be shown show
 func Is_In(hash string, who int, end bool) int {
 	if hash != "" {
 		if end {
@@ -215,6 +233,8 @@ func Is_In(hash string, who int, end bool) int {
 	}
 }
 
+// Returns a custom card face image
+//   - face defines which deck to look for
 func CustomCard(c int, face string) *canvas.Image {
 	dir := holdero.GetDir()
 	mid := "/cards/" + face + "/"
@@ -227,6 +247,8 @@ func CustomCard(c int, face string) *canvas.Image {
 	return canvas.NewImageFromImage(nil)
 }
 
+// Returns a custom card back image
+//   - back defines which back to look for
 func CustomBack(back string) *canvas.Image {
 	dir := holdero.GetDir()
 	post := "/cards/backs/" + back + ".png"
@@ -239,8 +261,8 @@ func CustomBack(back string) *canvas.Image {
 	return canvas.NewImageFromImage(nil)
 }
 
-func cardEnd(card int) string {
-	var suffix string
+// Used in CustomCard() to build image path
+func cardEnd(card int) (suffix string) {
 	if card > 0 && card < 53 {
 		switch card {
 		case 1:
@@ -355,59 +377,49 @@ func cardEnd(card int) string {
 
 }
 
-func PlayerCards(dl, c1, c2, c3 int) fyne.CanvasObject {
+// Set Baccarat player card images
+func PlayerCards(c1, c2, c3 int) fyne.CanvasObject {
 	card1 := DisplayCard(c1)
 	card2 := DisplayCard(c2)
 	card3 := DisplayCard(c3)
 
 	card1.Resize(fyne.NewSize(110, 150))
-	card1.Move(fyne.NewPos(180, 20))
+	card1.Move(fyne.NewPos(180, 39))
 
 	card2.Resize(fyne.NewSize(110, 150))
-	card2.Move(fyne.NewPos(290, 20))
+	card2.Move(fyne.NewPos(290, 39))
 
 	card3.Resize(fyne.NewSize(110, 150))
-	card3.Move(fyne.NewPos(400, 20))
+	card3.Move(fyne.NewPos(400, 39))
 
-	box := container.NewWithoutLayout(
-		card1,
-		card2,
-		card3,
-	)
-
-	return box
+	return container.NewWithoutLayout(card1, card2, card3)
 }
 
-func BankerCards(dl, c1, c2, c3 int) fyne.CanvasObject {
+// Set Baccarat banker card images
+func BankerCards(c1, c2, c3 int) fyne.CanvasObject {
 	card1 := DisplayCard(c1)
 	card2 := DisplayCard(c2)
 	card3 := DisplayCard(c3)
 
 	card1.Resize(fyne.NewSize(110, 150))
-	card1.Move(fyne.NewPos(600, 20))
+	card1.Move(fyne.NewPos(600, 39))
 
 	card2.Resize(fyne.NewSize(110, 150))
-	card2.Move(fyne.NewPos(710, 20))
+	card2.Move(fyne.NewPos(710, 39))
 
 	card3.Resize(fyne.NewSize(110, 150))
-	card3.Move(fyne.NewPos(820, 20))
+	card3.Move(fyne.NewPos(820, 39))
 
-	box := container.NewWithoutLayout(
-		card1,
-		card2,
-		card3,
-	)
-
-	return box
+	return container.NewWithoutLayout(card1, card2, card3)
 }
 
+// Create a random suit for baccarat card
 func BaccSuit(card int) int {
 	if card == 99 {
 		return 99
 	}
 
 	var suited int
-
 	seed := rand.NewSource(time.Now().UnixNano())
 	y := rand.New(seed)
 	x := y.Intn(4) + 1
@@ -604,6 +616,7 @@ func BaccSuit(card int) int {
 	return suited
 }
 
+// Switch for Iluma Tarot card image
 func TarotCard(c int) *canvas.Image {
 	switch c {
 	case 1:
@@ -767,73 +780,272 @@ func TarotCard(c int) *canvas.Image {
 	}
 }
 
-func TarotItems(tabs *container.AppTabs) fyne.CanvasObject {
-	search_entry := widget.NewEntry()
-	search_entry.SetPlaceHolder("TXID:")
-	search_button := widget.NewButton("    Search   ", func() {
-		txid := search_entry.Text
-		if len(txid) == 64 {
-			signer := rpc.VerifySigner(search_entry.Text)
-			if signer {
-				rpc.Tarot.Display = true
-				tarot.Iluma.Label.SetText("")
-				rpc.FetchTarotReading(txid)
-				if rpc.Tarot.Card2 != 0 && rpc.Tarot.Card3 != 0 {
-					tarot.Iluma.Card1.Objects[1] = TarotCard(rpc.Tarot.Card1)
-					tarot.Iluma.Card2.Objects[1] = TarotCard(rpc.Tarot.Card2)
-					tarot.Iluma.Card3.Objects[1] = TarotCard(rpc.Tarot.Card3)
-					rpc.Tarot.Num = 3
-				} else {
-					tarot.Iluma.Card1.Objects[1] = TarotCard(0)
-					tarot.Iluma.Card2.Objects[1] = TarotCard(rpc.Tarot.Card1)
-					tarot.Iluma.Card3.Objects[1] = TarotCard(0)
-					rpc.Tarot.Num = 1
-				}
-				tarot.Iluma.Box.Refresh()
-			} else {
-				log.Println("[Tarot] This is not your reading")
+// Main switch used to display playing card images
+func DisplayCard(card int) *canvas.Image {
+	if !holdero.Settings.Shared || rpc.Round.ID == 1 {
+		if card == 99 {
+			return canvas.NewImageFromImage(nil)
+		}
+
+		if card > 0 {
+			i := holdero.Settings.FaceSelect.SelectedIndex()
+			switch i {
+			case -1:
+				return canvas.NewImageFromResource(DisplayLightCard(card))
+			case 0:
+				return canvas.NewImageFromResource(DisplayLightCard(card))
+			case 1:
+				return canvas.NewImageFromResource(DisplayDarkCard(card))
+			default:
+				return CustomCard(card, holdero.Settings.Faces)
 			}
 		}
-	})
 
-	reset := tarot.Iluma.Card2
-
-	tarot.Iluma.Draw1 = widget.NewButton("Draw One", func() {
-		if !tarot.Iluma.Open {
-			tarot.Iluma.Draw1.Hide()
-			tarot.Iluma.Draw3.Hide()
-			tarot.Iluma.Card2 = tarot.TarotConfirm(1, reset)
+		i := holdero.Settings.BackSelect.SelectedIndex()
+		switch i {
+		case -1:
+			return canvas.NewImageFromResource(bundle.ResourceBack1Png)
+		case 0:
+			return canvas.NewImageFromResource(bundle.ResourceBack1Png)
+		case 1:
+			return canvas.NewImageFromResource(bundle.ResourceBack2Png)
+		default:
+			return CustomBack(holdero.Settings.Backs)
 		}
-	})
 
-	tarot.Iluma.Draw3 = widget.NewButton("Draw Three", func() {
-		if !tarot.Iluma.Open {
-			tarot.Iluma.Draw1.Hide()
-			tarot.Iluma.Draw3.Hide()
-			tarot.Iluma.Card2 = tarot.TarotConfirm(3, reset)
+	} else {
+		if card == 99 {
+			return canvas.NewImageFromImage(nil)
+		} else if card > 0 {
+			return CustomCard(card, rpc.Round.Face)
+		} else {
+			return CustomBack(rpc.Round.Back)
 		}
-	})
+	}
+}
 
-	tarot.Iluma.Draw1.Hide()
-	tarot.Iluma.Draw3.Hide()
+// Switch for standard light deck image
+func DisplayLightCard(card int) fyne.Resource {
+	if card > 0 && card < 53 {
+		switch card {
+		case 1:
+			return bundle.ResourceLightcard1Png
+		case 2:
+			return bundle.ResourceLightcard2Png
+		case 3:
+			return bundle.ResourceLightcard3Png
+		case 4:
+			return bundle.ResourceLightcard4Png
+		case 5:
+			return bundle.ResourceLightcard5Png
+		case 6:
+			return bundle.ResourceLightcard6Png
+		case 7:
+			return bundle.ResourceLightcard7Png
+		case 8:
+			return bundle.ResourceLightcard8Png
+		case 9:
+			return bundle.ResourceLightcard9Png
+		case 10:
+			return bundle.ResourceLightcard10Png
+		case 11:
+			return bundle.ResourceLightcard11Png
+		case 12:
+			return bundle.ResourceLightcard12Png
+		case 13:
+			return bundle.ResourceLightcard13Png
+		case 14:
+			return bundle.ResourceLightcard14Png
+		case 15:
+			return bundle.ResourceLightcard15Png
+		case 16:
+			return bundle.ResourceLightcard16Png
+		case 17:
+			return bundle.ResourceLightcard17Png
+		case 18:
+			return bundle.ResourceLightcard18Png
+		case 19:
+			return bundle.ResourceLightcard19Png
+		case 20:
+			return bundle.ResourceLightcard20Png
+		case 21:
+			return bundle.ResourceLightcard21Png
+		case 22:
+			return bundle.ResourceLightcard22Png
+		case 23:
+			return bundle.ResourceLightcard23Png
+		case 24:
+			return bundle.ResourceLightcard24Png
+		case 25:
+			return bundle.ResourceLightcard25Png
+		case 26:
+			return bundle.ResourceLightcard26Png
+		case 27:
+			return bundle.ResourceLightcard27Png
+		case 28:
+			return bundle.ResourceLightcard28Png
+		case 29:
+			return bundle.ResourceLightcard29Png
+		case 30:
+			return bundle.ResourceLightcard30Png
+		case 31:
+			return bundle.ResourceLightcard31Png
+		case 32:
+			return bundle.ResourceLightcard32Png
+		case 33:
+			return bundle.ResourceLightcard33Png
+		case 34:
+			return bundle.ResourceLightcard34Png
+		case 35:
+			return bundle.ResourceLightcard35Png
+		case 36:
+			return bundle.ResourceLightcard36Png
+		case 37:
+			return bundle.ResourceLightcard37Png
+		case 38:
+			return bundle.ResourceLightcard38Png
+		case 39:
+			return bundle.ResourceLightcard39Png
+		case 40:
+			return bundle.ResourceLightcard40Png
+		case 41:
+			return bundle.ResourceLightcard41Png
+		case 42:
+			return bundle.ResourceLightcard42Png
+		case 43:
+			return bundle.ResourceLightcard43Png
+		case 44:
+			return bundle.ResourceLightcard44Png
+		case 45:
+			return bundle.ResourceLightcard45Png
+		case 46:
+			return bundle.ResourceLightcard46Png
+		case 47:
+			return bundle.ResourceLightcard47Png
+		case 48:
+			return bundle.ResourceLightcard48Png
+		case 49:
+			return bundle.ResourceLightcard49Png
+		case 50:
+			return bundle.ResourceLightcard50Png
+		case 51:
+			return bundle.ResourceLightcard51Png
+		case 52:
+			return bundle.ResourceLightcard52Png
+		}
+	}
+	return nil
+}
 
-	draw_cont := container.NewAdaptiveGrid(5,
-		layout.NewSpacer(),
-		layout.NewSpacer(),
-		tarot.Iluma.Draw1,
-		tarot.Iluma.Draw3,
-		layout.NewSpacer())
-
-	tarot.Iluma.Search = container.NewBorder(nil, nil, nil, search_button, search_entry)
-
-	tarot.Iluma.Actions = container.NewVBox(
-		layout.NewSpacer(),
-		container.NewAdaptiveGrid(2, draw_cont, tarot.Iluma.Search))
-
-	tarot.Iluma.Search.Hide()
-	tarot.Iluma.Actions.Hide()
-
-	max := container.NewMax(tabs, tarot.Iluma.Actions)
-
-	return max
+// Switch for standard dark deck image
+func DisplayDarkCard(card int) fyne.Resource {
+	if card > 0 && card < 53 {
+		switch card {
+		case 1:
+			return bundle.ResourceDarkcard1Png
+		case 2:
+			return bundle.ResourceDarkcard2Png
+		case 3:
+			return bundle.ResourceDarkcard3Png
+		case 4:
+			return bundle.ResourceDarkcard4Png
+		case 5:
+			return bundle.ResourceDarkcard5Png
+		case 6:
+			return bundle.ResourceDarkcard6Png
+		case 7:
+			return bundle.ResourceDarkcard7Png
+		case 8:
+			return bundle.ResourceDarkcard8Png
+		case 9:
+			return bundle.ResourceDarkcard9Png
+		case 10:
+			return bundle.ResourceDarkcard10Png
+		case 11:
+			return bundle.ResourceDarkcard11Png
+		case 12:
+			return bundle.ResourceDarkcard12Png
+		case 13:
+			return bundle.ResourceDarkcard13Png
+		case 14:
+			return bundle.ResourceDarkcard14Png
+		case 15:
+			return bundle.ResourceDarkcard15Png
+		case 16:
+			return bundle.ResourceDarkcard16Png
+		case 17:
+			return bundle.ResourceDarkcard17Png
+		case 18:
+			return bundle.ResourceDarkcard18Png
+		case 19:
+			return bundle.ResourceDarkcard19Png
+		case 20:
+			return bundle.ResourceDarkcard20Png
+		case 21:
+			return bundle.ResourceDarkcard21Png
+		case 22:
+			return bundle.ResourceDarkcard22Png
+		case 23:
+			return bundle.ResourceDarkcard23Png
+		case 24:
+			return bundle.ResourceDarkcard24Png
+		case 25:
+			return bundle.ResourceDarkcard25Png
+		case 26:
+			return bundle.ResourceDarkcard26Png
+		case 27:
+			return bundle.ResourceDarkcard27Png
+		case 28:
+			return bundle.ResourceDarkcard28Png
+		case 29:
+			return bundle.ResourceDarkcard29Png
+		case 30:
+			return bundle.ResourceDarkcard30Png
+		case 31:
+			return bundle.ResourceDarkcard31Png
+		case 32:
+			return bundle.ResourceDarkcard32Png
+		case 33:
+			return bundle.ResourceDarkcard33Png
+		case 34:
+			return bundle.ResourceDarkcard34Png
+		case 35:
+			return bundle.ResourceDarkcard35Png
+		case 36:
+			return bundle.ResourceDarkcard36Png
+		case 37:
+			return bundle.ResourceDarkcard37Png
+		case 38:
+			return bundle.ResourceDarkcard38Png
+		case 39:
+			return bundle.ResourceDarkcard39Png
+		case 40:
+			return bundle.ResourceDarkcard40Png
+		case 41:
+			return bundle.ResourceDarkcard41Png
+		case 42:
+			return bundle.ResourceDarkcard42Png
+		case 43:
+			return bundle.ResourceDarkcard43Png
+		case 44:
+			return bundle.ResourceDarkcard44Png
+		case 45:
+			return bundle.ResourceDarkcard45Png
+		case 46:
+			return bundle.ResourceDarkcard46Png
+		case 47:
+			return bundle.ResourceDarkcard47Png
+		case 48:
+			return bundle.ResourceDarkcard48Png
+		case 49:
+			return bundle.ResourceDarkcard49Png
+		case 50:
+			return bundle.ResourceDarkcard50Png
+		case 51:
+			return bundle.ResourceDarkcard51Png
+		case 52:
+			return bundle.ResourceDarkcard52Png
+		}
+	}
+	return nil
 }
