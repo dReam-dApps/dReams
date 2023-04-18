@@ -458,16 +458,21 @@ func S_Results(g, gN, l, min, eA, c, tA, tB, tAV, tBV, total string, a, b uint64
 // Switch for sports api prefix
 func sports(league string) (api string) {
 	switch league {
-	case "NHL":
-		api = "http://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard"
-		// case "FIFA":
-		// 	api = "http://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard"
+	// case "FIFA":
+	// 	api = "http://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard"
 	case "EPL":
 		api = "http://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard"
+	case "MLS":
+		api = "http://site.api.espn.com/apis/site/v2/sports/soccer/usa.1/scoreboard"
+
 	case "NFL":
 		api = "http://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard"
 	case "NBA":
 		api = "http://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard"
+	case "NHL":
+		api = "http://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard"
+	case "MLB":
+		api = "http://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard"
 	case "UFC":
 		api = "http://site.api.espn.com/apis/site/v2/sports/mma/ufc/scoreboard"
 	case "Bellator":
@@ -489,12 +494,16 @@ func GetCurrentWeek(league string) {
 		switch league {
 		case "EPL":
 			GetSoccer(comp, league)
+		case "MLS":
+			GetSoccer(comp, league)
 		case "NBA":
 			GetBasketball(comp, league)
 		case "NFL":
 			GetFootball(comp, league)
 		case "NHL":
 			GetHockey(comp, league)
+		case "MLB":
+			GetBaseball(comp, league)
 		default:
 
 		}
@@ -612,6 +621,37 @@ func callBasketball(date, league string) (bb *basketball) {
 	return bb
 }
 
+// Call basketball api with chosen date and league
+func callBaseball(date, league string) (baseb *baseball) {
+	client := &http.Client{Timeout: 9 * time.Second}
+	req, err := http.NewRequest("GET", sports(league)+"?dates="+date, nil)
+	if err != nil {
+		log.Println("[callBaseball]", err)
+		return
+	}
+
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := client.Do(req)
+
+	if err != nil {
+		log.Println("[callBaseball]", err)
+		return
+	}
+
+	defer resp.Body.Close()
+	b, err := io.ReadAll(resp.Body)
+
+	if err != nil {
+		log.Println("[callBaseball]", err)
+		return
+	}
+
+	json.Unmarshal(b, &baseb)
+
+	return baseb
+}
+
 // Call football api with chosen date and league
 func callFootball(date, league string) (f *football) {
 	client := &http.Client{Timeout: 9 * time.Second}
@@ -718,6 +758,7 @@ func GetGameEnd(date, game, league string) {
 
 				if g == game {
 					PS_Control.S_end.SetText(strconv.Itoa(int(utc_time.Unix())))
+					return
 				}
 			}
 
@@ -737,6 +778,7 @@ func GetGameEnd(date, game, league string) {
 			g := a + "--" + b
 			if g == game {
 				PS_Control.S_end.SetText(strconv.Itoa(int(utc_time.Unix())))
+				return
 			}
 		}
 	}
@@ -1093,6 +1135,33 @@ func GetBasketball(date, league string) {
 			utc_time, err := time.Parse("2006-01-02T15:04", trimmed)
 			if err != nil {
 				log.Println("[GetBasketball]", err)
+			}
+
+			tz, _ := time.LoadLocation("Local")
+
+			teamA := found.Events[i].Competitions[0].Competitors[0].Team.Abbreviation
+			teamB := found.Events[i].Competitions[0].Competitors[1].Team.Abbreviation
+
+			if !found.Events[i].Status.Type.Completed && pregame == "pre" {
+				current := PS_Control.S_game.Options
+				new := append(current, utc_time.In(tz).String()[0:16]+"   "+teamA+"--"+teamB)
+				PS_Control.S_game.Options = new
+			}
+		}
+	}
+}
+
+// Gets baseball games for selected league and adds to options selection
+//   - date GetCurrentWeek()
+func GetBaseball(date, league string) {
+	found := callBaseball(date, league)
+	if found != nil {
+		for i := range found.Events {
+			pregame := found.Events[i].Competitions[0].Status.Type.State
+			trimmed := strings.Trim(found.Events[i].Competitions[0].StartDate, "Z")
+			utc_time, err := time.Parse("2006-01-02T15:04", trimmed)
+			if err != nil {
+				log.Println("[GetBaseball]", err)
 			}
 
 			tz, _ := time.LoadLocation("Local")
@@ -2302,6 +2371,409 @@ type basketball struct {
 				ShortDetail string `json:"shortDetail"`
 			} `json:"type"`
 		} `json:"status"`
+	} `json:"events"`
+}
+
+type baseball struct {
+	Leagues []struct {
+		ID           string `json:"id"`
+		UID          string `json:"uid"`
+		Name         string `json:"name"`
+		Abbreviation string `json:"abbreviation"`
+		MidsizeName  string `json:"midsizeName"`
+		Slug         string `json:"slug"`
+		Season       struct {
+			Year      int    `json:"year"`
+			StartDate string `json:"startDate"`
+			EndDate   string `json:"endDate"`
+			Type      struct {
+				ID           string `json:"id"`
+				Type         int    `json:"type"`
+				Name         string `json:"name"`
+				Abbreviation string `json:"abbreviation"`
+			} `json:"type"`
+		} `json:"season"`
+		Logos []struct {
+			Href        string   `json:"href"`
+			Width       int      `json:"width"`
+			Height      int      `json:"height"`
+			Alt         string   `json:"alt"`
+			Rel         []string `json:"rel"`
+			LastUpdated string   `json:"lastUpdated"`
+		} `json:"logos"`
+		CalendarType        string   `json:"calendarType"`
+		CalendarIsWhitelist bool     `json:"calendarIsWhitelist"`
+		CalendarStartDate   string   `json:"calendarStartDate"`
+		CalendarEndDate     string   `json:"calendarEndDate"`
+		Calendar            []string `json:"calendar"`
+	} `json:"leagues"`
+	Events []struct {
+		ID        string `json:"id"`
+		UID       string `json:"uid"`
+		Date      string `json:"date"`
+		Name      string `json:"name"`
+		ShortName string `json:"shortName"`
+		Season    struct {
+			Year int    `json:"year"`
+			Type int    `json:"type"`
+			Slug string `json:"slug"`
+		} `json:"season"`
+		Competitions []struct {
+			ID         string `json:"id"`
+			UID        string `json:"uid"`
+			Date       string `json:"date"`
+			Attendance int    `json:"attendance"`
+			Type       struct {
+				ID           string `json:"id"`
+				Abbreviation string `json:"abbreviation"`
+			} `json:"type"`
+			TimeValid             bool `json:"timeValid"`
+			NeutralSite           bool `json:"neutralSite"`
+			ConferenceCompetition bool `json:"conferenceCompetition"`
+			Recent                bool `json:"recent"`
+			WasSuspended          bool `json:"wasSuspended"`
+			Venue                 struct {
+				ID       string `json:"id"`
+				FullName string `json:"fullName"`
+				Address  struct {
+					City  string `json:"city"`
+					State string `json:"state"`
+				} `json:"address"`
+				Capacity int  `json:"capacity"`
+				Indoor   bool `json:"indoor"`
+			} `json:"venue"`
+			Competitors []struct {
+				ID       string `json:"id"`
+				UID      string `json:"uid"`
+				Type     string `json:"type"`
+				Order    int    `json:"order"`
+				HomeAway string `json:"homeAway"`
+				Winner   bool   `json:"winner"`
+				Team     struct {
+					ID               string `json:"id"`
+					UID              string `json:"uid"`
+					Location         string `json:"location"`
+					Name             string `json:"name"`
+					Abbreviation     string `json:"abbreviation"`
+					DisplayName      string `json:"displayName"`
+					ShortDisplayName string `json:"shortDisplayName"`
+					Color            string `json:"color"`
+					AlternateColor   string `json:"alternateColor"`
+					IsActive         bool   `json:"isActive"`
+					Links            []struct {
+						Rel        []string `json:"rel"`
+						Href       string   `json:"href"`
+						Text       string   `json:"text"`
+						IsExternal bool     `json:"isExternal"`
+						IsPremium  bool     `json:"isPremium"`
+					} `json:"links"`
+					Logo string `json:"logo"`
+				} `json:"team"`
+				Score      string `json:"score"`
+				Linescores []struct {
+					Value float64 `json:"value"`
+				} `json:"linescores"`
+				Statistics []struct {
+					Name         string `json:"name"`
+					Abbreviation string `json:"abbreviation"`
+					DisplayValue string `json:"displayValue"`
+				} `json:"statistics"`
+				Leaders []struct {
+					Name             string `json:"name"`
+					DisplayName      string `json:"displayName"`
+					ShortDisplayName string `json:"shortDisplayName"`
+					Abbreviation     string `json:"abbreviation"`
+					Leaders          []struct {
+						DisplayValue string  `json:"displayValue"`
+						Value        float64 `json:"value"`
+						Athlete      struct {
+							ID          string `json:"id"`
+							FullName    string `json:"fullName"`
+							DisplayName string `json:"displayName"`
+							ShortName   string `json:"shortName"`
+							Links       []struct {
+								Rel  []string `json:"rel"`
+								Href string   `json:"href"`
+							} `json:"links"`
+							Headshot string `json:"headshot"`
+							Jersey   string `json:"jersey"`
+							Position struct {
+								Abbreviation string `json:"abbreviation"`
+							} `json:"position"`
+							Team struct {
+								ID string `json:"id"`
+							} `json:"team"`
+							Active bool `json:"active"`
+						} `json:"athlete"`
+						Team struct {
+							ID string `json:"id"`
+						} `json:"team"`
+					} `json:"leaders"`
+				} `json:"leaders"`
+				Probables []struct {
+					Name             string `json:"name"`
+					DisplayName      string `json:"displayName"`
+					ShortDisplayName string `json:"shortDisplayName"`
+					Abbreviation     string `json:"abbreviation"`
+					PlayerID         int    `json:"playerId"`
+					Athlete          struct {
+						ID          string `json:"id"`
+						FullName    string `json:"fullName"`
+						DisplayName string `json:"displayName"`
+						ShortName   string `json:"shortName"`
+						Links       []struct {
+							Rel  []string `json:"rel"`
+							Href string   `json:"href"`
+						} `json:"links"`
+						Headshot string `json:"headshot"`
+						Jersey   string `json:"jersey"`
+						Position string `json:"position"`
+						Team     struct {
+							ID string `json:"id"`
+						} `json:"team"`
+					} `json:"athlete"`
+					Statistics []struct {
+						Name         string `json:"name"`
+						Abbreviation string `json:"abbreviation"`
+						DisplayValue string `json:"displayValue"`
+					} `json:"statistics"`
+				} `json:"probables"`
+				Hits    int `json:"hits"`
+				Errors  int `json:"errors"`
+				Records []struct {
+					Name         string `json:"name"`
+					Abbreviation string `json:"abbreviation,omitempty"`
+					Type         string `json:"type"`
+					Summary      string `json:"summary"`
+				} `json:"records"`
+			} `json:"competitors"`
+			Notes  []any `json:"notes"`
+			Status struct {
+				Clock        float64 `json:"clock"`
+				DisplayClock string  `json:"displayClock"`
+				Period       int     `json:"period"`
+				Type         struct {
+					ID          string `json:"id"`
+					Name        string `json:"name"`
+					State       string `json:"state"`
+					Completed   bool   `json:"completed"`
+					Description string `json:"description"`
+					Detail      string `json:"detail"`
+					ShortDetail string `json:"shortDetail"`
+				} `json:"type"`
+				FeaturedAthletes []struct {
+					Name             string `json:"name"`
+					DisplayName      string `json:"displayName"`
+					ShortDisplayName string `json:"shortDisplayName"`
+					Abbreviation     string `json:"abbreviation"`
+					PlayerID         int    `json:"playerId"`
+					Athlete          struct {
+						ID          string `json:"id"`
+						FullName    string `json:"fullName"`
+						DisplayName string `json:"displayName"`
+						ShortName   string `json:"shortName"`
+						Links       []struct {
+							Rel  []string `json:"rel"`
+							Href string   `json:"href"`
+						} `json:"links"`
+						Headshot string `json:"headshot"`
+						Jersey   string `json:"jersey"`
+						Position string `json:"position"`
+						Team     struct {
+							ID string `json:"id"`
+						} `json:"team"`
+					} `json:"athlete"`
+					Team struct {
+						ID string `json:"id"`
+					} `json:"team"`
+					Statistics []struct {
+						Name         string `json:"name"`
+						Abbreviation string `json:"abbreviation"`
+						DisplayValue string `json:"displayValue"`
+					} `json:"statistics"`
+				} `json:"featuredAthletes"`
+			} `json:"status"`
+			Broadcasts []struct {
+				Market string   `json:"market"`
+				Names  []string `json:"names"`
+			} `json:"broadcasts"`
+			Leaders []struct {
+				Name             string `json:"name"`
+				DisplayName      string `json:"displayName"`
+				ShortDisplayName string `json:"shortDisplayName"`
+				Abbreviation     string `json:"abbreviation"`
+				Leaders          []struct {
+					DisplayValue string  `json:"displayValue"`
+					Value        float64 `json:"value"`
+					Athlete      struct {
+						ID          string `json:"id"`
+						FullName    string `json:"fullName"`
+						DisplayName string `json:"displayName"`
+						ShortName   string `json:"shortName"`
+						Links       []struct {
+							Rel  []string `json:"rel"`
+							Href string   `json:"href"`
+						} `json:"links"`
+						Headshot string `json:"headshot"`
+						Jersey   string `json:"jersey"`
+						Position struct {
+							Abbreviation string `json:"abbreviation"`
+						} `json:"position"`
+						Team struct {
+							ID string `json:"id"`
+						} `json:"team"`
+						Active bool `json:"active"`
+					} `json:"athlete"`
+					Team struct {
+						ID string `json:"id"`
+					} `json:"team"`
+				} `json:"leaders"`
+			} `json:"leaders"`
+			Format struct {
+				Regulation struct {
+					Periods int `json:"periods"`
+				} `json:"regulation"`
+			} `json:"format"`
+			StartDate     string `json:"startDate"`
+			GeoBroadcasts []struct {
+				Type struct {
+					ID        string `json:"id"`
+					ShortName string `json:"shortName"`
+				} `json:"type"`
+				Market struct {
+					ID   string `json:"id"`
+					Type string `json:"type"`
+				} `json:"market"`
+				Media struct {
+					ShortName string `json:"shortName"`
+				} `json:"media"`
+				Lang   string `json:"lang"`
+				Region string `json:"region"`
+			} `json:"geoBroadcasts"`
+			Headlines []struct {
+				Description   string `json:"description"`
+				Type          string `json:"type"`
+				ShortLinkText string `json:"shortLinkText"`
+				Video         []struct {
+					ID        int    `json:"id"`
+					Source    string `json:"source"`
+					Headline  string `json:"headline"`
+					Thumbnail string `json:"thumbnail"`
+					Duration  int    `json:"duration"`
+					Tracking  struct {
+						SportName    string `json:"sportName"`
+						LeagueName   string `json:"leagueName"`
+						CoverageType string `json:"coverageType"`
+						TrackingName string `json:"trackingName"`
+						TrackingID   string `json:"trackingId"`
+					} `json:"tracking"`
+					DeviceRestrictions struct {
+						Type    string   `json:"type"`
+						Devices []string `json:"devices"`
+					} `json:"deviceRestrictions"`
+					GeoRestrictions struct {
+						Type      string   `json:"type"`
+						Countries []string `json:"countries"`
+					} `json:"geoRestrictions"`
+					Links struct {
+						API struct {
+							Self struct {
+								Href string `json:"href"`
+							} `json:"self"`
+							Artwork struct {
+								Href string `json:"href"`
+							} `json:"artwork"`
+						} `json:"api"`
+						Web struct {
+							Href  string `json:"href"`
+							Short struct {
+								Href string `json:"href"`
+							} `json:"short"`
+							Self struct {
+								Href string `json:"href"`
+							} `json:"self"`
+						} `json:"web"`
+						Source struct {
+							Mezzanine struct {
+								Href string `json:"href"`
+							} `json:"mezzanine"`
+							Flash struct {
+								Href string `json:"href"`
+							} `json:"flash"`
+							Hds struct {
+								Href string `json:"href"`
+							} `json:"hds"`
+							Hls struct {
+								Href string `json:"href"`
+								Hd   struct {
+									Href string `json:"href"`
+								} `json:"HD"`
+							} `json:"HLS"`
+							Hd struct {
+								Href string `json:"href"`
+							} `json:"HD"`
+							Full struct {
+								Href string `json:"href"`
+							} `json:"full"`
+							Href string `json:"href"`
+						} `json:"source"`
+						Mobile struct {
+							Alert struct {
+								Href string `json:"href"`
+							} `json:"alert"`
+							Source struct {
+								Href string `json:"href"`
+							} `json:"source"`
+							Href      string `json:"href"`
+							Streaming struct {
+								Href string `json:"href"`
+							} `json:"streaming"`
+							ProgressiveDownload struct {
+								Href string `json:"href"`
+							} `json:"progressiveDownload"`
+						} `json:"mobile"`
+					} `json:"links"`
+				} `json:"video"`
+			} `json:"headlines"`
+		} `json:"competitions"`
+		Links []struct {
+			Language   string   `json:"language"`
+			Rel        []string `json:"rel"`
+			Href       string   `json:"href"`
+			Text       string   `json:"text"`
+			ShortText  string   `json:"shortText"`
+			IsExternal bool     `json:"isExternal"`
+			IsPremium  bool     `json:"isPremium"`
+		} `json:"links"`
+		Status struct {
+			Clock        float64 `json:"clock"`
+			DisplayClock string  `json:"displayClock"`
+			Period       int     `json:"period"`
+			Type         struct {
+				ID          string `json:"id"`
+				Name        string `json:"name"`
+				State       string `json:"state"`
+				Completed   bool   `json:"completed"`
+				Description string `json:"description"`
+				Detail      string `json:"detail"`
+				ShortDetail string `json:"shortDetail"`
+			} `json:"type"`
+		} `json:"status"`
+		Weather struct {
+			DisplayValue    string `json:"displayValue"`
+			Temperature     int    `json:"temperature"`
+			HighTemperature int    `json:"highTemperature"`
+			ConditionID     string `json:"conditionId"`
+			Link            struct {
+				Language   string   `json:"language"`
+				Rel        []string `json:"rel"`
+				Href       string   `json:"href"`
+				Text       string   `json:"text"`
+				ShortText  string   `json:"shortText"`
+				IsExternal bool     `json:"isExternal"`
+				IsPremium  bool     `json:"isPremium"`
+			} `json:"link"`
+		} `json:"weather,omitempty"`
 	} `json:"events"`
 }
 

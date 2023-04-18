@@ -1,7 +1,10 @@
 package prediction
 
 import (
+	"encoding/hex"
+	"encoding/json"
 	"fmt"
+	"image/color"
 	"log"
 	"strconv"
 	"strings"
@@ -238,7 +241,7 @@ func sportsOpts(window fyne.Window) fyne.CanvasObject {
 	})
 	PS_Control.S_game.PlaceHolder = "Game:"
 
-	leagues := []string{"EPL", "NBA", "NFL", "NHL", "Bellator", "UFC"}
+	leagues := []string{"EPL", "MLS", "NBA", "NFL", "NHL", "MLB", "Bellator", "UFC"}
 	PS_Control.S_league = widget.NewSelectEntry(leagues)
 	PS_Control.S_league.OnChanged = func(s string) {
 		PS_Control.S_game.Options = []string{}
@@ -252,12 +255,16 @@ func sportsOpts(window fyne.Window) fyne.CanvasObject {
 		switch s {
 		case "EPL":
 			go GetCurrentWeek("EPL")
+		case "MLS":
+			go GetCurrentWeek("MLS")
 		case "NBA":
 			go GetCurrentWeek("NBA")
 		case "NFL":
 			go GetCurrentWeek("NFL")
 		case "NHL":
 			go GetCurrentWeek("NHL")
+		case "MLB":
+			go GetCurrentWeek("MLB")
 		case "UFC":
 			go GetCurrentMonth("UFC")
 		case "Bellator":
@@ -791,7 +798,7 @@ func humanTimeConvert() fyne.CanvasObject {
 // Owner menu open button for prediction tab
 func OwnerButtonP() fyne.CanvasObject {
 	menu.Control.Bet_menu_p = widget.NewButton("Owner Options", func() {
-		ownersMenu()
+		go ownersMenu()
 	})
 	menu.Control.Bet_menu_p.Hide()
 
@@ -801,7 +808,7 @@ func OwnerButtonP() fyne.CanvasObject {
 // Owner menu open button for sports tab
 func OwnerButtonS() fyne.CanvasObject {
 	menu.Control.Bet_menu_s = widget.NewButton("Owner Options", func() {
-		ownersMenu()
+		go ownersMenu()
 	})
 	menu.Control.Bet_menu_s.Hide()
 
@@ -990,19 +997,46 @@ func ownersMenu() {
 
 	img := *canvas.NewImageFromResource(bundle.ResourceOwBackgroundPng)
 
-	ow.SetContent(
-		container.New(
-			layout.NewMaxLayout(),
-			&img,
-			bundle.Alpha180,
-			border))
+	alpha := canvas.NewRectangle(color.RGBA{0, 0, 0, 180})
+	if bundle.AppColor == color.White {
+		alpha = canvas.NewRectangle(color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0x99})
+	}
 
-	owner_tabs.SelectIndex(2)
-	owner_tabs.Selected().Content = serviceOpts(ow)
-	owner_tabs.SelectIndex(1)
-	owner_tabs.Selected().Content = sportsOpts(ow)
-	owner_tabs.SelectIndex(0)
-	owner_tabs.Selected().Content = preditctionOpts(ow)
+	go func() {
+		time.Sleep(200 * time.Millisecond)
+		ow.SetContent(
+			container.New(
+				layout.NewMaxLayout(),
+				&img,
+				alpha,
+				border))
+
+		owner_tabs.SelectIndex(2)
+		owner_tabs.Selected().Content = serviceOpts(ow)
+		owner_tabs.SelectIndex(1)
+		owner_tabs.Selected().Content = sportsOpts(ow)
+		owner_tabs.SelectIndex(0)
+		owner_tabs.Selected().Content = preditctionOpts(ow)
+
+		time.Sleep(time.Second)
+		markets := []string{}
+		if stored, ok := rpc.FindStringKey(rpc.RatingSCID, "prediction_markets", rpc.Daemon.Rpc).(string); ok {
+			if h, err := hex.DecodeString(stored); err == nil {
+				if err = json.Unmarshal(h, &markets); err == nil {
+					PS_Control.P_Name.SetOptions(markets)
+				}
+			}
+		}
+
+		leagues := []string{}
+		if stored, ok := rpc.FindStringKey(rpc.RatingSCID, "sports_leagues", rpc.Daemon.Rpc).(string); ok {
+			if h, err := hex.DecodeString(stored); err == nil {
+				if err = json.Unmarshal(h, &leagues); err == nil {
+					PS_Control.S_league.SetOptions(leagues)
+				}
+			}
+		}
+	}()
 
 	ow.Show()
 }
