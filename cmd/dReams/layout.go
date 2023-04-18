@@ -89,6 +89,11 @@ func introScreen() *fyne.Container {
 
 	start_button := widget.NewButton("Start dReams", func() {
 		menu.Control.Dapp_list = make(map[string]bool)
+
+		for _, name := range dApps {
+			menu.Control.Dapp_list[name] = false
+		}
+
 		for _, name := range dapp_checks.Selected {
 			menu.Control.Dapp_list[name] = true
 		}
