@@ -181,17 +181,17 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 	// price per night entry
 	price_entry := dwidget.DeroAmtEntry("", 0.1, 5)
 	price_entry.SetPlaceHolder("Price:     ")
-	price_entry.Validator = validation.NewRegexp(`\d{1,}\.\d{1,5}`, "Float required")
+	price_entry.Validator = validation.NewRegexp(`^\d{1,}\.\d{1,5}$|^[^0]\d{0,}$`, "Float required")
 
 	// damage deposit entry
 	deposit_entry := dwidget.DeroAmtEntry("", 0.1, 5)
 	deposit_entry.SetPlaceHolder("Damage deposit:")
-	deposit_entry.Validator = validation.NewRegexp(`\d{1,}\.\d{1,5}`, "Float required")
+	deposit_entry.Validator = validation.NewRegexp(`^\d{1,}\.\d{1,5}$|^[^0]\d{0,}$`, "Float required")
 
 	// damage deposit release objects
 	release_entry := dwidget.DeroAmtEntry("", 0.1, 5)
 	release_entry.SetPlaceHolder("Damage amount in Dero:")
-	release_entry.Validator = validation.NewRegexp(`\d{1,}\.\d{1,5}`, "Float required")
+	release_entry.Validator = validation.NewRegexp(`^\d{1,}\.\d{1,5}$|^[^0]\d{0,}$`, "Float required")
 
 	comment_entry := widget.NewMultiLineEntry()
 
@@ -321,7 +321,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 			city_entry := widget.NewEntry()
 			country_entry := widget.NewEntry()
 
-			city_entry.Validator = validation.NewRegexp(`^\w{1,}`, "Requires string")
+			city_entry.Validator = validation.NewRegexp(`^\w{2,}`, "String required")
 			city_entry.OnChanged = func(s string) {
 				if city_entry.Validate() == nil && country_entry.Validate() == nil {
 					set_location.Show()
@@ -330,7 +330,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 				}
 			}
 
-			country_entry.Validator = validation.NewRegexp(`^\w{1,}`, "Requires string")
+			country_entry.Validator = validation.NewRegexp(`^\w{2,}`, "String required")
 			country_entry.OnChanged = func(s string) {
 				if city_entry.Validate() == nil && country_entry.Validate() == nil {
 					set_location.Show()
@@ -651,7 +651,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 			city_entry := widget.NewEntry()
 			country_entry := widget.NewEntry()
 
-			city_entry.Validator = validation.NewRegexp(`^\w{1,}`, "Requires string")
+			city_entry.Validator = validation.NewRegexp(`^\w{2,}`, "String required")
 			city_entry.OnChanged = func(s string) {
 				if city_entry.Validate() == nil && country_entry.Validate() == nil {
 					set_location.Show()
@@ -660,7 +660,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 				}
 			}
 
-			country_entry.Validator = validation.NewRegexp(`^\w{1,}`, "Requires string")
+			country_entry.Validator = validation.NewRegexp(`^\w{2,}`, "String required")
 			country_entry.OnChanged = func(s string) {
 				if city_entry.Validate() == nil && country_entry.Validate() == nil {
 					set_location.Show()
@@ -854,22 +854,40 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 	})
 
 	// set availibility objects
+	available_start_validation := validation.NewTime("Starting: " + TIME_FORMAT)
 	available_start_entry := widget.NewEntry()
 	available_start_entry1 := widget.NewEntry()
 	available_start_entry2 := widget.NewEntry()
 	available_start_entry3 := widget.NewEntry()
+	available_start_entry.Disable()
+	available_start_entry1.Disable()
+	available_start_entry2.Disable()
+	available_start_entry3.Disable()
 	available_start_entry1.Hide()
 	available_start_entry2.Hide()
 	available_start_entry3.Hide()
+	available_start_entry.Validator = available_start_validation
+	available_start_entry1.Validator = available_start_validation
+	available_start_entry2.Validator = available_start_validation
+	available_start_entry3.Validator = available_start_validation
 	available_start_arr = []*widget.Entry{available_start_entry, available_start_entry1, available_start_entry2, available_start_entry3}
 
+	available_end_validation := validation.NewTime("Ending: " + TIME_FORMAT)
 	available_end_entry := widget.NewEntry()
 	available_end_entry1 := widget.NewEntry()
 	available_end_entry2 := widget.NewEntry()
 	available_end_entry3 := widget.NewEntry()
+	available_end_entry.Disable()
+	available_end_entry1.Disable()
+	available_end_entry2.Disable()
+	available_end_entry3.Disable()
 	available_end_entry1.Hide()
 	available_end_entry2.Hide()
 	available_end_entry3.Hide()
+	available_end_entry.Validator = available_end_validation
+	available_end_entry1.Validator = available_end_validation
+	available_end_entry2.Validator = available_end_validation
+	available_end_entry3.Validator = available_end_validation
 	available_end_arr = []*widget.Entry{available_end_entry, available_end_entry1, available_end_entry2, available_end_entry3}
 
 	avilible_start_reset := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "viewRefresh"), func() {
@@ -903,6 +921,16 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 	avilible_end_reset3 := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "viewRefresh"), func() {
 		available_end_entry3.SetText("")
 	})
+
+	avilible_start_reset.Importance = widget.LowImportance
+	avilible_start_reset1.Importance = widget.LowImportance
+	avilible_start_reset2.Importance = widget.LowImportance
+	avilible_start_reset3.Importance = widget.LowImportance
+
+	avilible_end_reset.Importance = widget.LowImportance
+	avilible_end_reset1.Importance = widget.LowImportance
+	avilible_end_reset2.Importance = widget.LowImportance
+	avilible_end_reset3.Importance = widget.LowImportance
 
 	available_d := &add_dates{starting: available_start_arr, ending: available_end_arr}
 	available_c := xwidget.NewCalendar(now, available_d.onSelected)
@@ -957,7 +985,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 	available_border := container.NewBorder(nil, nil, nil, nil, available_vbox)
 
 	change_dates := widget.NewButton("Set Dates", func() {
-		available_label := widget.NewLabel(fmt.Sprintf("available dates for SCID:\n%s", scid_entry.Text))
+		available_label := widget.NewLabel(fmt.Sprintf("Set available dates for SCID:\n%s", scid_entry.Text))
 		available_label.Wrapping = fyne.TextWrapWord
 		confirm_border.Objects[4] = container.NewHSplit(container.NewBorder(available_label, nil, nil, nil, available_c), available_border)
 		confirm_action_label.SetText(fmt.Sprintf("Set availability dates\n\nSCID: %s", viewing_address))
@@ -1290,20 +1318,27 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 
 	photo_entry_cont := container.NewVBox(photo_entry1, photo_entry2, photo_entry3, photo_entry4, photo_entry5, photo_entry6)
 
-	sq_foot_entry := widget.NewEntry()
+	sq_foot_entry := dwidget.DeroAmtEntry("", 1, 0)
 	sq_foot_entry.SetPlaceHolder("Sq footage:")
+	sq_foot_entry.AllowFloat = false
+	sq_foot_entry.Validator = validation.NewRegexp(`^[^0]\d{0,}$`, "Int required")
 	sq_foot_cont := container.NewVBox(sq_foot_entry)
 
 	style_entry := widget.NewEntry()
 	style_entry.SetPlaceHolder("Style:")
+	style_entry.Validator = validation.NewRegexp(`^\w{2,}`, "String required")
 	style_cont := container.NewVBox(style_entry)
 
-	num_bedrooms_entry := widget.NewEntry()
+	num_bedrooms_entry := dwidget.DeroAmtEntry("", 1, 0)
 	num_bedrooms_entry.SetPlaceHolder("Number of bedrooms:")
+	num_bedrooms_entry.AllowFloat = false
+	num_bedrooms_entry.Validator = validation.NewRegexp(`^[^0]\d{0,}$`, "Int required")
 	num_bedrooms_cont := container.NewVBox(num_bedrooms_entry)
 
-	num_guests_entry := widget.NewEntry()
+	num_guests_entry := dwidget.DeroAmtEntry("", 1, 0)
 	num_guests_entry.SetPlaceHolder("Max guests:")
+	num_guests_entry.AllowFloat = false
+	num_guests_entry.Validator = validation.NewRegexp(`^[^0]\d{0,}$`, "Int required")
 	num_guests_cont := container.NewVBox(num_guests_entry)
 
 	metedata_label_arr = []*widget.Label{sq_foot_label, style_label, num_bedrooms_label, num_guests_label, photo_entry_label}
