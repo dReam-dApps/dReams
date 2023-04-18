@@ -128,10 +128,6 @@ func Disconnected() {
 	Assets.Collection.Text = (" Collection:")
 	Assets.Collection.Refresh()
 	Assets.Icon = *canvas.NewImageFromImage(nil)
-	// prediction leaderboard
-	// holdero.Table.NameEntry.Text = ""
-	// holdero.Table.NameEntry.Enable()
-	// holdero.Table.NameEntry.Refresh()
 	if Control.Dapp_list["Holdero"] {
 		holdero.DisableHolderoTools()
 		Control.Names.ClearSelected()

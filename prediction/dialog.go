@@ -640,8 +640,6 @@ func ConfirmAction(i int, teamA, teamB string, obj []fyne.CanvasObject, tabs *co
 	confirm_display.Alignment = fyne.TextAlignCenter
 
 	p_scid := Predict.Contract
-	// prediction leaderboard
-	//name := holdero.Actions.NameEntry.Text
 
 	s_scid := Sports.Contract
 	split := strings.Split(Sports.Game_select.Selected, "   ")
@@ -729,55 +727,6 @@ func ConfirmAction(i int, teamA, teamB string, obj []fyne.CanvasObject, tabs *co
 
 	return container.NewMax(bundle.Alpha120, content)
 }
-
-// prediction leaderboard
-// func namePopUp(i int) { /// name change confirmation
-// 	ncw := fyne.CurrentApp().NewWindow("Confirm")
-// 	ncw.SetIcon(bundle.ResourceDTGnomonIconPng)
-// 	ncw.Resize(fyne.NewSize(330, 150))
-// 	ncw.SetFixedSize(true)
-// 	var confirm_display = widget.NewLabel("")
-// 	confirm_display.Wrapping = fyne.TextWrapWord
-//
-// 	name := holdero.Actions.NameEntry.Text
-//
-// 	switch i {
-// 	case 1:
-// 		confirm_display.SetText("0.1 Dero Fee to Change Name\nNew name: " + name + "\n\nConfirm")
-// 	case 2:
-// 		confirm_display.SetText("0.1 Dero Fee to Remove Address from contract\n\nConfirm")
-// 	default:
-// 		confirm_display.SetText("Error")
-// 	}
-//
-// 	cancel_button := widget.NewButton("Cancel", func() {
-// 		ncw.Close()
-// 	})
-//
-// 	confirm_button := widget.NewButton("Confirm", func() {
-// 		switch i {
-// 		case 1:
-// 			rpc.NameChange(Control.Contract, name)
-// 		case 2:
-// 			rpc.RemoveAddress(Control.Contract, name)
-// 		default:
-//
-// 		}
-//
-// 		ncw.Close()
-// 	})
-//
-// 	display := container.NewVScroll(confirm_display)
-// 	options := container.NewAdaptiveGrid(2, confirm_button, cancel_button)
-// 	content := container.NewBorder(nil, options, nil, nil, display)
-//
-// 	// img := *canvas.NewImageFromResource()
-// 	ncw.SetContent(
-// 		container.New(layout.NewMaxLayout(),
-// 			&img,
-// 			content))
-// 	ncw.Show()
-// }
 
 // dReam Service start confirmation
 //   - start is starting height to run service

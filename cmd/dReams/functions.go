@@ -836,53 +836,6 @@ func TarotRefresh() {
 	}
 }
 
-// prediction leaderboard
-// func MakeLeaderBoard(dc, gs bool, scid string) {
-// 	if dc && gs && len(scid) == 64 {
-// 		leaders := make(map[string]uint64)
-// 		findLeaders := menu.Gnomes.Indexer.Backend.GetAllSCIDVariableDetails(scid)
-//
-// 		keys := make([]int64, 0, len(findLeaders))
-// 		for k := range findLeaders {
-// 			keys = append(keys, k)
-//
-// 		}
-//
-// 		sort.Slice(keys, func(i, j int) bool { return keys[i] > keys[j] })
-// 		for val := range findLeaders[keys[0]] {
-// 			a := findLeaders[keys[0]][val].Key
-// 			split := strings.Split(a.(string), "_")
-// 			if split[0] == "u" {
-// 				leaders[split[1]] = uint64(findLeaders[keys[0]][val].Value.(float64))
-// 			}
-// 		}
-//
-// 		prediction.PredictControl.Leaders_map = leaders
-//
-// 		//printLeaders()
-// 	}
-// }
-//
-// func printLeaders() {
-// 	prediction.PredictControl.Leaders_display = []string{" Leaders: " + strconv.Itoa(len(prediction.PredictControl.Leaders_map))}
-// 	keys := make([]string, 0, len(prediction.PredictControl.Leaders_map))
-//
-// 	for key := range prediction.PredictControl.Leaders_map {
-// 		keys = append(keys, key)
-// 	}
-//
-// 	sort.SliceStable(keys, func(i, j int) bool {
-// 		return prediction.PredictControl.Leaders_map[keys[i]] > prediction.PredictControl.Leaders_map[keys[j]]
-// 	})
-//
-// 	for _, k := range keys {
-// 		prediction.PredictControl.Leaders_list.Refresh()
-// 		prediction.PredictControl.Leaders_display = append(prediction.PredictControl.Leaders_display, k+": "+strconv.FormatUint(prediction.PredictControl.Leaders_map[k], 10))
-// 	}
-//
-// 	prediction.PredictControl.Leaders_list.Refresh()
-// }
-
 // Refresh Gnomon height display
 func refreshGnomonDisplay(index_height, c int) {
 	if c == 1 {
@@ -1050,9 +1003,6 @@ func MainTab(ti *container.TabItem) {
 		dReams.sports = false
 		dReams.tarot = false
 		go func() {
-			// prediction leaderboard
-			// holdero.Table.NameEntry.Text = menu.CheckPredictionName(prediction.PredictControl.Contract)
-			// holdero.Table.NameEntry.Refresh()
 			menu.PopulatePredictions(nil)
 		}()
 		PredictionRefresh(dReams.predict)

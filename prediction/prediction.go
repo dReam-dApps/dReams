@@ -21,25 +21,18 @@ import (
 )
 
 type predictObjects struct {
-	Contract    string
-	Leaders_map map[string]uint64
-	//Leaders_display []string
-	Info          *widget.Label
-	Prices        *widget.Label
-	Predict_list  *widget.List
-	Favorite_list *widget.List
-	Owned_list    *widget.List
-	Leaders_list  *widget.List
-	Remove_button *widget.Button
-
-	Higher *widget.Button
-	Lower  *widget.Button
-	// prediction leaderboard
-	//Change         *widget.Button
-	//Remove         *widget.Button
-	//NameEntry      *widget.Entry
+	Contract       string
+	Leaders_map    map[string]uint64
+	Info           *widget.Label
+	Prices         *widget.Label
+	Predict_list   *widget.List
+	Favorite_list  *widget.List
+	Owned_list     *widget.List
+	Leaders_list   *widget.List
+	Remove_button  *widget.Button
+	Higher         *widget.Button
+	Lower          *widget.Button
 	Prediction_box *fyne.Container
-	//P_contract     *widget.SelectEntry
 }
 
 var Predict predictObjects
@@ -59,10 +52,6 @@ func DisablePreditions(d bool) {
 func PredictConnectedBox() fyne.Widget {
 	menu.Control.Predict_check = widget.NewCheck("", func(b bool) {
 		if !b {
-			// prediction leaderboard
-			// holdero.Actions.NameEntry.Hide()
-			// holdero.Actions.Change.Hide()
-			//Predict.Leaders_display = []string{}
 			Predict.Higher.Hide()
 			Predict.Lower.Hide()
 
@@ -103,32 +92,11 @@ func PreictionContractEntry() fyne.Widget {
 	return menu.Control.P_contract
 }
 
-// prediction leaderboard
-// func LeadersDisplay() fyne.Widget {
-// 	Predict.Leaders_display = []string{}
-// 	Predict.Leaders_list = widget.NewList(
-// 		func() int {
-// 			return len(Predict.Leaders_display)
-// 		},
-// 		func() fyne.CanvasObject {
-// 			return widget.NewLabel("")
-// 		},
-// 		func(i widget.ListItemID, o fyne.CanvasObject) {
-// 			o.(*widget.Label).SetText(Predict.Leaders_display[i])
-// 		})
-//
-// 	return Predict.Leaders_list
-// }
-
 // When called, enable and show dPrediction controls
 func ShowPredictionControls() {
 	DisablePreditions(false)
 	Predict.Higher.Show()
 	Predict.Lower.Show()
-	// prediction leaderboard
-	// holdero.Actions.NameEntry.Show()
-	// holdero.Actions.NameEntry.Text = menu.CheckPredictionName(Predict.Contract)
-	// holdero.Actions.NameEntry.Refresh()
 }
 
 // Routine when dPrediction SCID is clicked
@@ -321,17 +289,6 @@ func PredictionOwned() fyne.CanvasObject {
 
 	return Predict.Owned_list
 }
-
-// prediction leaderboard
-// func Remove() fyne.Widget {
-// 	Predict.Remove_button = widget.NewButton("Remove", func() {
-// 		namePopUp(2)
-// 	})
-//
-// 	Predict.Remove_button.Hide()
-//
-// 	return Predict.Remove_button
-// }
 
 // Formats intialized dPrediction info string
 //   - p defines prediction

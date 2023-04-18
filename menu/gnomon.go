@@ -1405,41 +1405,6 @@ func CheckActivePrediction(scid string) bool {
 	return false
 }
 
-// prediction leaderboard
-// func CheckPredictionName(scid string) (name string) {
-// 	if len(scid) == 64 && Gnomes.Init && !GnomonClosing() {
-// 		check := Gnomes.Indexer.Backend.GetAllSCIDVariableDetails(scid)
-// 		if check != nil {
-// 			keys := make([]int64, 0, len(check))
-// 			for k := range check {
-// 				keys = append(keys, k)
-// 			}
-//
-// 			sort.Slice(keys, func(i, j int) bool { return keys[i] > keys[j] })
-// 			for val := range check[keys[0]] {
-// 				v := check[keys[0]][val].Key
-// 				if len(v.(string)) == 66 {
-// 					addr := rpc.DeroAddress(v.(string))
-// 					if addr == rpc.Wallet.Address {
-// 						value, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, v, Gnomes.Indexer.ChainHeight, true)
-// 						if value != nil {
-// 							split := strings.Split(value[0], "_")
-// 							name = split[1]
-// 							holdero.Actions.NameEntry.Disable()
-// 							holdero.Actions.Change.Show()
-// 							return
-// 						}
-//
-// 					}
-// 				}
-// 			}
-// 		}
-// 	}
-// 	holdero.Actions.NameEntry.Enable()
-// 	holdero.Actions.Change.Hide()
-// 	return
-// }
-
 // Check for live dSports on SCID
 func CheckActiveGames(scid string) bool {
 	if Gnomes.Init && !GnomonClosing() {
