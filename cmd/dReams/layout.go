@@ -836,6 +836,9 @@ func placeSports() *fyne.Container {
 	epl := widget.NewLabel("")
 	epl.Wrapping = fyne.TextWrapWord
 	epl_scroll := container.NewVScroll(epl)
+	mls := widget.NewLabel("")
+	mls.Wrapping = fyne.TextWrapWord
+	mls_scroll := container.NewVScroll(mls)
 	nba := widget.NewLabel("")
 	nba.Wrapping = fyne.TextWrapWord
 	nba_scroll := container.NewVScroll(nba)
@@ -845,6 +848,9 @@ func placeSports() *fyne.Container {
 	nhl := widget.NewLabel("")
 	nhl.Wrapping = fyne.TextWrapWord
 	nhl_scroll := container.NewVScroll(nhl)
+	mlb := widget.NewLabel("")
+	mlb.Wrapping = fyne.TextWrapWord
+	mlb_scroll := container.NewVScroll(mlb)
 	bellator := widget.NewLabel("")
 	bellator.Wrapping = fyne.TextWrapWord
 	bellator_scroll := container.NewVScroll(bellator)
@@ -853,9 +859,11 @@ func placeSports() *fyne.Container {
 	ufc_scroll := container.NewVScroll(ufc)
 	score_tabs := container.NewAppTabs(
 		container.NewTabItem("EPL", epl_scroll),
+		container.NewTabItem("MLS", mls_scroll),
 		container.NewTabItem("NBA", nba_scroll),
 		container.NewTabItem("NFL", nfl_scroll),
 		container.NewTabItem("NHL", nhl_scroll),
+		container.NewTabItem("MLB", mlb_scroll),
 		container.NewTabItem("Bellator", bellator_scroll),
 		container.NewTabItem("UFC", ufc_scroll))
 
@@ -863,12 +871,16 @@ func placeSports() *fyne.Container {
 		switch ti.Text {
 		case "EPL":
 			go prediction.GetScores(epl, "EPL")
+		case "MLS":
+			go prediction.GetScores(mls, "MLS")
 		case "NBA":
 			go prediction.GetScores(nba, "NBA")
 		case "NFL":
 			go prediction.GetScores(nfl, "NFL")
 		case "NHL":
 			go prediction.GetScores(nhl, "NHL")
+		case "MLB":
+			go prediction.GetScores(mlb, "MLB")
 		case "Bellator":
 			go prediction.GetMmaResults(bellator, "Bellator")
 		case "UFC":
