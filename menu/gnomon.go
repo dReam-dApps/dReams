@@ -19,7 +19,7 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
-	"fyne.io/fyne/v2/widget"
+	xwidget "fyne.io/x/fyne/widget"
 	"github.com/civilware/Gnomon/indexer"
 	"github.com/civilware/Gnomon/storage"
 	"github.com/civilware/Gnomon/structures"
@@ -78,7 +78,7 @@ type gnomon struct {
 	SCIDS    uint64
 	Sync_ind *fyne.Animation
 	Full_ind *fyne.Animation
-	Icon_ind *fyne.Animation
+	Icon_ind *xwidget.AnimatedGif
 	Indexer  *indexer.Indexer
 }
 
@@ -133,10 +133,10 @@ func StartIndicators() fyne.CanvasObject {
 	alpha := color.RGBA{0, 0, 0, 0}
 
 	g_top := canvas.NewRectangle(color.Black)
-	g_top.SetMinSize(fyne.NewSize(150, 12))
+	g_top.SetMinSize(fyne.NewSize(57, 10))
 
 	g_bottom := canvas.NewRectangle(color.Black)
-	g_bottom.SetMinSize(fyne.NewSize(150, 12))
+	g_bottom.SetMinSize(fyne.NewSize(57, 10))
 
 	Gnomes.Sync_ind = canvas.NewColorRGBAAnimation(purple, blue,
 		time.Second*3, func(c color.Color) {
@@ -155,7 +155,6 @@ func StartIndicators() fyne.CanvasObject {
 
 	Gnomes.Sync_ind.RepeatCount = fyne.AnimationRepeatForever
 	Gnomes.Sync_ind.AutoReverse = true
-	Gnomes.Sync_ind.Start()
 
 	sync_box := container.NewVBox(
 		g_top,
@@ -163,7 +162,7 @@ func StartIndicators() fyne.CanvasObject {
 		g_bottom)
 
 	g_full := canvas.NewRectangle(color.Black)
-	g_full.SetMinSize(fyne.NewSize(150, 36))
+	g_full.SetMinSize(fyne.NewSize(57, 36))
 
 	Gnomes.Full_ind = canvas.NewColorRGBAAnimation(purple, blue,
 		time.Second*3, func(c color.Color) {
@@ -180,19 +179,9 @@ func StartIndicators() fyne.CanvasObject {
 
 	Gnomes.Full_ind.RepeatCount = fyne.AnimationRepeatForever
 	Gnomes.Full_ind.AutoReverse = true
-	Gnomes.Full_ind.Start()
 
-	icon := widget.NewIcon(bundle.ResourceGnomoniconPng)
-	Gnomes.Icon_ind = canvas.NewPositionAnimation(fyne.NewPos(3, 4), fyne.NewPos(112, 1), time.Second*3, func(p fyne.Position) {
-		icon.Move(p)
-		width := 30 + (p.X / 30)
-		icon.Resize(fyne.NewSize(width, width))
-	})
-
-	Gnomes.Icon_ind.RepeatCount = fyne.AnimationRepeatForever
-	Gnomes.Icon_ind.AutoReverse = true
-	Gnomes.Icon_ind.Curve = fyne.AnimationEaseInOut
-	Gnomes.Icon_ind.Start()
+	Gnomes.Icon_ind, _ = xwidget.NewAnimatedGifFromResource(bundle.ResourceGnomonGifGif)
+	Gnomes.Icon_ind.SetMinSize(fyne.NewSize(36, 36))
 
 	d_rect := canvas.NewRectangle(color.Black)
 	d_rect.SetMinSize(fyne.NewSize(36, 36))
@@ -210,7 +199,6 @@ func StartIndicators() fyne.CanvasObject {
 
 	Control.Daemon_ind.RepeatCount = fyne.AnimationRepeatForever
 	Control.Daemon_ind.AutoReverse = true
-	Control.Daemon_ind.Start()
 
 	w_rect := canvas.NewRectangle(color.Black)
 	w_rect.SetMinSize(fyne.NewSize(36, 36))
@@ -228,14 +216,15 @@ func StartIndicators() fyne.CanvasObject {
 
 	Control.Wallet_ind.RepeatCount = fyne.AnimationRepeatForever
 	Control.Wallet_ind.AutoReverse = true
-	Control.Wallet_ind.Start()
 
 	d := canvas.NewText("D", bundle.TextColor)
 	d.TextStyle.Bold = true
+	d.TextSize = 16
 	w := canvas.NewText("W", bundle.TextColor)
 	w.TextStyle.Bold = true
+	w.TextSize = 16
 
-	hbox := container.NewHBox(
+	connect_box := container.NewHBox(
 		container.NewMax(d_rect, container.NewCenter(d)),
 		container.NewMax(w_rect, container.NewCenter(w)))
 
@@ -249,7 +238,7 @@ func StartIndicators() fyne.CanvasObject {
 	s_rect := canvas.NewRectangle(alpha)
 	s_rect.SetMinSize(fyne.NewSize(36, 36))
 
-	hbox2 := container.NewHBox(
+	service_box := container.NewHBox(
 		container.NewMax(p_rect, container.NewCenter(pbot)),
 		container.NewMax(s_rect, container.NewCenter(dService)))
 
@@ -281,14 +270,22 @@ func StartIndicators() fyne.CanvasObject {
 
 	Control.Poker_ind.RepeatCount = fyne.AnimationRepeatForever
 	Control.Poker_ind.AutoReverse = true
-	Control.Poker_ind.Start()
 
 	Control.Service_ind.RepeatCount = fyne.AnimationRepeatForever
 	Control.Service_ind.AutoReverse = true
-	Control.Service_ind.Start()
 
-	top_box := container.NewHBox(layout.NewSpacer(), hbox2, hbox, container.NewMax(g_full, sync_box, icon))
+	top_box := container.NewHBox(layout.NewSpacer(), service_box, connect_box, container.NewMax(g_full, sync_box, Gnomes.Icon_ind))
 	place := container.NewVBox(top_box, layout.NewSpacer())
+
+	go func() {
+		Gnomes.Sync_ind.Start()
+		Gnomes.Full_ind.Start()
+		Gnomes.Icon_ind.Start()
+		Control.Daemon_ind.Start()
+		Control.Wallet_ind.Start()
+		Control.Poker_ind.Start()
+		Control.Service_ind.Start()
+	}()
 
 	return container.NewMax(place)
 }

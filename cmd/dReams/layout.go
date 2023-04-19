@@ -25,6 +25,7 @@ import (
 	"fyne.io/fyne/v2/data/validation"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
+	xwidget "fyne.io/x/fyne/widget"
 )
 
 var H dwidget.DreamsItems
@@ -87,6 +88,9 @@ func introScreen() *fyne.Container {
 	dApps := rpc.FetchDapps()
 	dapp_checks := widget.NewCheckGroup(dApps, nil)
 
+	gnomon_gif, _ := xwidget.NewAnimatedGifFromResource(bundle.ResourceGnomonGifGif)
+	gnomon_gif.SetMinSize(fyne.NewSize(100, 100))
+
 	start_button := widget.NewButton("Start dReams", func() {
 		menu.Control.Dapp_list = make(map[string]bool)
 
@@ -116,15 +120,14 @@ func introScreen() *fyne.Container {
 	powered_label := widget.NewLabel("Powered by")
 	powered_label.Alignment = fyne.TextAlignCenter
 
-	gnomon_img := canvas.NewImageFromResource(bundle.ResourceGnomoniconPng)
-	gnomon_img.SetMinSize(fyne.NewSize(60, 60))
+	gnomon_gif.Start()
 
 	intro := container.NewVBox(
 		layout.NewSpacer(),
 		title,
 		container.NewCenter(dreams_img),
 		powered_label,
-		container.NewCenter(gnomon_img),
+		container.NewCenter(gnomon_gif),
 		layout.NewSpacer(),
 		skin_title,
 		container.NewCenter(skins),
@@ -151,8 +154,12 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 	is_enabled := []string{}
 	enabled_dapps := make(map[string]bool)
 
+	gnomon_gif, _ := xwidget.NewAnimatedGifFromResource(bundle.ResourceGnomonGifGif)
+	gnomon_gif.SetMinSize(fyne.NewSize(100, 100))
+
 	back_button := widget.NewButton("Back", func() {
 		dReams.configure = false
+		gnomon_gif.Stop()
 		go func() {
 			dReams.Window.Content().(*fyne.Container).Objects[1] = reset
 			dReams.Window.Content().(*fyne.Container).Objects[1].Refresh()
@@ -177,6 +184,7 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 		menu.Exit_signal = true
 		menu.Gnomes.Checked = false
 		bundle.AppColor = skin_choice
+		gnomon_gif.Stop()
 		go func() {
 			time.Sleep(1500 * time.Millisecond)
 			menu.Exit_signal = false
@@ -224,9 +232,6 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 	skin_title.Alignment = fyne.TextAlignCenter
 	skin_title.TextSize = 18
 
-	skin_label := widget.NewLabel("Loading changes to dReams will disconnect your wallet")
-	skin_label.Alignment = fyne.TextAlignCenter
-
 	skins := widget.NewRadioGroup([]string{"Dark", "Light"}, func(s string) {
 		if s == "Light" {
 			skin_choice = color.White
@@ -264,6 +269,8 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 	dreams_img := canvas.NewImageFromResource(bundle.ResourceBlueBadge3Png)
 	dreams_img.SetMinSize(fyne.NewSize(100, 100))
 
+	gnomon_gif.Start()
+
 	dapp_title := canvas.NewText("dApps", bundle.TextColor)
 	dapp_title.Alignment = fyne.TextAlignCenter
 	dapp_title.TextSize = 18
@@ -271,6 +278,13 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 	changes_label := widget.NewLabel("Select dApps to add or remove from your dReams")
 	changes_label.Wrapping = fyne.TextWrapWord
 	changes_label.Alignment = fyne.TextAlignCenter
+
+	gnomon_label := widget.NewLabel("Adding new dApps may require Gnomon DB resync to index the new contracts")
+	gnomon_label.Wrapping = fyne.TextWrapWord
+	gnomon_label.Alignment = fyne.TextAlignCenter
+
+	loading_label := widget.NewLabel("Loading changes to dReams will disconnect your wallet")
+	loading_label.Alignment = fyne.TextAlignCenter
 
 	intro := container.NewVBox(
 		layout.NewSpacer(),
@@ -285,7 +299,9 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 		changes_label,
 		container.NewCenter(container.NewVBox(default_checks, dapp_checks)),
 		layout.NewSpacer(),
-		skin_label,
+		gnomon_label,
+		container.NewCenter(gnomon_gif),
+		loading_label,
 		layout.NewSpacer(),
 		container.NewAdaptiveGrid(2, container.NewMax(load_button), back_button))
 
@@ -433,9 +449,8 @@ func place() *fyne.Container {
 	}
 
 	dReams.configure = false
-	max := container.NewMax(alpha_box, tabs)
 
-	return max
+	return container.NewMax(alpha_box, tabs)
 }
 
 // dReams wallet layout
