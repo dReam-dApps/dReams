@@ -461,7 +461,7 @@ func serviceOpts(window fyne.Window) fyne.CanvasObject {
 		PS_Control.Transactions.Disable()
 	}
 
-	reset := window.Content().(*fyne.Container).Objects[1]
+	reset := window.Content().(*fyne.Container).Objects[2]
 
 	PS_Control.Run_service = widget.NewButton("Run Service", func() {
 		if !rpc.Wallet.Service {
@@ -477,8 +477,8 @@ func serviceOpts(window fyne.Window) fyne.CanvasObject {
 					go func() {
 						rpc.Wallet.Service = true
 						PS_Control.Run_service.Hide()
-						window.Content().(*fyne.Container).Objects[1] = serviceRunConfirm(start, PS_Control.Service_pay.Checked, PS_Control.Transactions.Checked, window, reset)
-						window.Content().(*fyne.Container).Objects[1].Refresh()
+						window.Content().(*fyne.Container).Objects[2] = serviceRunConfirm(start, PS_Control.Service_pay.Checked, PS_Control.Transactions.Checked, window, reset)
+						window.Content().(*fyne.Container).Objects[2].Refresh()
 					}()
 				} else {
 					log.Println("[dReams] Select which services to run")
@@ -762,14 +762,14 @@ func serviceRunConfirm(start uint64, payout, tranfsers bool, window fyne.Window,
 
 	cancel_button := widget.NewButton("Cancel", func() {
 		rpc.Wallet.Service = false
-		window.Content().(*fyne.Container).Objects[1] = reset
-		window.Content().(*fyne.Container).Objects[1].Refresh()
+		window.Content().(*fyne.Container).Objects[2] = reset
+		window.Content().(*fyne.Container).Objects[2].Refresh()
 	})
 
 	confirm_button := widget.NewButton("Confirm", func() {
 		go DreamService(start, payout, tranfsers)
-		window.Content().(*fyne.Container).Objects[1] = reset
-		window.Content().(*fyne.Container).Objects[1].Refresh()
+		window.Content().(*fyne.Container).Objects[2] = reset
+		window.Content().(*fyne.Container).Objects[2].Refresh()
 	})
 
 	display := container.NewVBox(layout.NewSpacer(), confirm_display, layout.NewSpacer())
