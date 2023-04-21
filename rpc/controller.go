@@ -103,9 +103,8 @@ type hashValue struct {
 }
 
 type holderoValues struct {
-	Version int
-	Cards   hashValue
-	//Daemon    string
+	Version   int
+	Cards     hashValue
 	Contract  string
 	ID        int
 	Players   int
@@ -222,6 +221,7 @@ type signals struct {
 	CHeight   int
 }
 
+// Returns string value of atomic unit
 func fromAtomic(v interface{}) string {
 	var value float64
 
@@ -237,6 +237,7 @@ func fromAtomic(v interface{}) string {
 	return str
 }
 
+// Returns atomic value of string rounded to one decimal place
 func ToAtomicOne(v string) uint64 {
 	f, err := strconv.ParseFloat(v, 64)
 
@@ -253,6 +254,7 @@ func ToAtomicOne(v string) uint64 {
 	return u
 }
 
+// Make blinds display string
 func blindString(b, s interface{}) string {
 	bb := b.(float64) / 100000
 	sb := s.(float64) / 100000
@@ -263,6 +265,7 @@ func blindString(b, s interface{}) string {
 	return x + " / " + y
 }
 
+// Returns value plus one as string
 func addOne(v interface{}) string {
 	value := int(v.(float64) + 1)
 	str := strconv.Itoa(value)
@@ -270,6 +273,7 @@ func addOne(v interface{}) string {
 	return str
 }
 
+// If Holdero table is closed set vars accordingly
 func closedTable() {
 	Round.Winner = ""
 	Round.Players = 0
@@ -312,6 +316,7 @@ func closedTable() {
 	Display.PlayerId = ""
 }
 
+// Clear a single players name and avatar values
 func singleNameClear(p int) {
 	switch p {
 	case 1:
@@ -337,6 +342,7 @@ func singleNameClear(p int) {
 	}
 }
 
+// Returns name of Holdero player who bet
 func findBettor(p interface{}) string {
 	if p != nil {
 		switch p.(float64) {
@@ -420,6 +426,7 @@ func findBettor(p interface{}) string {
 	return ""
 }
 
+// Gets Holdero player name and avatar, returns player Id string
 func getAvatar(p int, id interface{}) string {
 	if id == nil {
 		singleNameClear(p)
@@ -465,6 +472,7 @@ func getAvatar(p int, id interface{}) string {
 	return player.Id
 }
 
+// Check if player Id matches Wallet.idHash
 func checkPlayerId(one, two, three, four, five, six string) string {
 	var id string
 	if Wallet.idHash == one {
@@ -493,6 +501,7 @@ func checkPlayerId(one, two, three, four, five, six string) string {
 	return id
 }
 
+// Set Holdero name signals for when player is at table
 func setHolderoName(one, two, three, four, five, six interface{}) {
 	if one != nil {
 		Signal.In1 = true
@@ -529,9 +538,9 @@ func setHolderoName(one, two, three, four, five, six interface{}) {
 	} else {
 		Signal.In6 = false
 	}
-
 }
 
+// When Holdero pot is empty set vars accordingly
 func potIsEmpty(pot uint64) {
 	if pot == 0 {
 		if !Signal.My_turn {
@@ -584,6 +593,7 @@ func potIsEmpty(pot uint64) {
 	}
 }
 
+// Sets Holdero sit signal if table has open seats
 func tableOpen(seats, full, two, three, four, five, six interface{}) {
 	players := 1
 	if two != nil {
@@ -642,6 +652,7 @@ func tableOpen(seats, full, two, three, four, five, six interface{}) {
 	}
 }
 
+// Gets Holdero community card values
 func getCommCardValues(f1, f2, f3, t, r interface{}) {
 	if f1 != nil {
 		Round.Flop1 = int(f1.(float64))
@@ -689,6 +700,7 @@ func getCommCardValues(f1, f2, f3, t, r interface{}) {
 	}
 }
 
+// Gets Holdero player card hash values
 func getPlayerCardValues(a1, a2, b1, b2, c1, c2, d1, d2, e1, e2, f1, f2 interface{}) {
 	if Round.ID == 1 {
 		if a1 != nil {
@@ -834,6 +846,7 @@ func getPlayerCardValues(a1, a2, b1, b2, c1, c2, d1, d2, e1, e2, f1, f2 interfac
 	}
 }
 
+// If Holdero player has called set Signal.Called, and reset Signal.PlacedBet when no wager
 func Called(fb bool, w uint64) {
 	if w == 0 {
 		if fb {
@@ -854,6 +867,7 @@ func Called(fb bool, w uint64) {
 	}
 }
 
+// Holdero players turn display string
 func turnReadout(t interface{}) string {
 	var s string
 	if t != nil {
@@ -878,6 +892,7 @@ func turnReadout(t interface{}) string {
 	return s
 }
 
+// Sets Holdero action signals
 func setSignals(pot uint64, one interface{}) {
 	if !Round.LocalEnd {
 		if len(Round.Cards.Local1) != 64 {
@@ -912,6 +927,7 @@ func setSignals(pot uint64, one interface{}) {
 	}
 }
 
+// If Holdero player has folded, set Round folded bools and clear cards
 func hasFolded(one, two, three, four, five, six interface{}) {
 	if one != nil {
 		Round.F1 = true
@@ -962,6 +978,7 @@ func hasFolded(one, two, three, four, five, six interface{}) {
 	}
 }
 
+// Determine if all players have folded and trigger payout
 func allFolded(p1, p2, p3, p4, p5, p6, s interface{}) {
 	var a, b, c, d, e, f int
 	var who string
@@ -1033,6 +1050,7 @@ func allFolded(p1, p2, p3, p4, p5, p6, s interface{}) {
 	}
 }
 
+// Payout routine when all Holdero players have folded
 func allFoldedWinner() {
 	if Round.ID == 1 {
 		if Round.LocalEnd && !Signal.Startup {
@@ -1052,6 +1070,7 @@ func allFoldedWinner() {
 	}
 }
 
+// If Holdero showdown, trigger the hand ranker routine
 func winningHand(e interface{}) {
 	if e != nil && !Signal.Startup && !Round.LocalEnd {
 		go func() {
@@ -1060,7 +1079,7 @@ func winningHand(e interface{}) {
 	}
 }
 
-// / predictions
+// Convert a milisecond string to time.Time
 func MsToTime(ms string) (time.Time, error) {
 	msInt, err := strconv.ParseInt(ms, 10, 64)
 	if err != nil {
@@ -1070,7 +1089,7 @@ func MsToTime(ms string) (time.Time, error) {
 	return time.Unix(0, msInt*int64(time.Millisecond)), nil
 }
 
-// / Sports
+// Return team param string for dSports
 func TeamReturn(t int) string {
 	var team string
 	switch t {
@@ -1086,8 +1105,8 @@ func TeamReturn(t int) string {
 	return team
 }
 
-// / Tarot
-func findTarotCard(hash interface{}) int { /// Tarot card hash
+// Find Tarot card from hash value
+func findTarotCard(hash interface{}) int {
 	if hash != nil {
 		for i := 1; i < 79; i++ {
 			finder := strconv.Itoa(i)
