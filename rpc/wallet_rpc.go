@@ -40,11 +40,13 @@ type wallet struct {
 	BetOwner   bool
 	KeyLock    bool
 	Service    bool
+	File       *walletapi.Wallet_Disk
 	LogEntry   *widget.Entry
 }
 
 var Wallet wallet
 
+// Convert string to int, returns 0 if err
 func StringToInt(s string) int {
 	if s != "" {
 		i, err := strconv.Atoi(s)
@@ -58,7 +60,7 @@ func StringToInt(s string) int {
 	return 0
 }
 
-// Add entry to gui log
+// Add entry to Wallet.LogEntry session log
 func AddLog(t string) {
 	if Wallet.LogEntry != nil {
 		Wallet.LogEntry.SetText(Wallet.LogEntry.Text + "\n\n" + t)
@@ -95,22 +97,6 @@ func SessionLog() *fyne.Container {
 
 	return max
 }
-
-// Save string data to file
-// func saveLog(data string) {
-// 	file_name := fmt.Sprintf("Log-%s", time.Now().Format(time.UnixDate))
-// 	if f, err := os.Create(file_name); err == nil {
-// 		defer f.Close()
-// 		if _, err = f.WriteString(data); err != nil {
-// 			log.Println("[saveLog]", err)
-// 			return
-// 		}
-
-// 		log.Println("[saveLog] Log File Saved", file_name)
-// 	} else {
-// 		log.Println("[saveLog]", err)
-// 	}
-// }
 
 // Get Dero address from keys
 func DeroAddress(v interface{}) (address string) {
@@ -297,7 +283,7 @@ func GetAssetSCIDName(scid string) string {
 	}
 }
 
-// Deposit tournament chips to leaderboard SC
+// Deposit tournament chip bal with name to leaderboard SC
 func TourneyDeposit(bal uint64, name string) {
 	if bal > 0 {
 		rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
@@ -357,6 +343,7 @@ func GetHeight() {
 }
 
 // Submit playerId, name, avatar and sit at Holdero table
+//   - name and av are for name and avatar in player id string
 func SitDown(name, av string) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
@@ -437,6 +424,10 @@ func Leave() {
 }
 
 // Owner table settings for Holdero
+//   - seats defines max players at table
+//   - bb, sb and ante define big blind, small blind and antes. Ante can be 0
+//   - chips defines if tables is using Dero or assets
+//   - name and av are for name and avatar in owners id string
 func SetTable(seats int, bb, sb, ante uint64, chips, name, av string) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
@@ -682,6 +673,7 @@ func Check() (tx string) {
 }
 
 // Holdero single winner payout
+//   - w defines which player the pot is going to
 func PayOut(w string) string {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
@@ -719,6 +711,7 @@ func PayOut(w string) string {
 }
 
 // Holdero split winners payout
+//   - Pass in ranker from hand and folded bools to determine split
 func PayoutSplit(r ranker, f1, f2, f3, f4, f5, f6 bool) string {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
@@ -834,7 +827,7 @@ func RevealKey(key string) {
 	AddLog("Reveal TX: " + txid.TXID)
 }
 
-// Shuffle deck for Holdero, clean above 0 can retrieve balance
+// Owner can shuffle deck for Holdero, clean above 0 can retrieve balance
 func CleanTable(amt uint64) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
@@ -869,7 +862,7 @@ func CleanTable(amt uint64) {
 	AddLog("Clean Table TX: " + txid.TXID)
 }
 
-// Timeout a player at Holdero table
+// Owner can timeout a player at Holdero table
 func TimeOut() {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
@@ -903,7 +896,7 @@ func TimeOut() {
 	AddLog("Timeout TX: " + txid.TXID)
 }
 
-// Force start a Holdero table with empty seats
+// Owner can force start a Holdero table with empty seats
 func ForceStat() {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
@@ -938,6 +931,8 @@ func ForceStat() {
 }
 
 // Share asset url at Holdero table
+//   - face and back are the names of assets
+//   - faceUrl and backUrl are the Urls for those assets
 func SharedDeckUrl(face, faceUrl, back, backUrl string) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
@@ -984,6 +979,7 @@ func SharedDeckUrl(face, faceUrl, back, backUrl string) {
 }
 
 // Swap Dero for dReams
+//   - amt of Der to swap for dReams
 func GetdReams(amt uint64) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
@@ -1018,6 +1014,7 @@ func GetdReams(amt uint64) {
 }
 
 // Swap dReams for Dero
+//   - amt of dReams to swap for Dero
 func TradedReams(amt uint64) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
@@ -1074,6 +1071,7 @@ func ownerT3(o bool) (t *rpc.Transfer) {
 }
 
 // Install new Holdero SC
+//   - pub defines public or private SC
 func UploadHolderoContract(pub int) {
 	if Daemon.Connect && Wallet.Connect {
 		rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
@@ -1108,6 +1106,8 @@ func UploadHolderoContract(pub int) {
 }
 
 // Place Baccarat bet
+//   - amt to bet
+//   - w defines where bet is placed (player, banker or tie)
 func BaccBet(amt, w string) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
@@ -1157,6 +1157,7 @@ func BaccBet(amt, w string) {
 }
 
 // Place higher prediction to SC
+//   - addr only needed if dReamService is placing prediction
 func PredictHigher(scid, addr string) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
@@ -1195,6 +1196,7 @@ func PredictHigher(scid, addr string) {
 }
 
 // Place lower prediction to SC
+//   - addr only needed if dReamService is placing prediction
 func PredictLower(scid, addr string) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
@@ -1232,7 +1234,9 @@ func PredictLower(scid, addr string) {
 	AddLog("Prediction TX: " + txid.TXID)
 }
 
-// Rate a SC with dReam Tables rating system
+// Rate a SC with dReam Tables rating system. Ratings are weight based on transactions Dero amount
+//   - amt of Dero for rating
+//   - pos defines positve or negative rating
 func RateSCID(scid string, amt, pos uint64) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
@@ -1268,7 +1272,11 @@ func RateSCID(scid string, amt, pos uint64) {
 	AddLog("Rate TX: " + txid.TXID)
 }
 
-// Service prediction place by received tx
+// dReamService prediction place by received tx
+//   - amt to send
+//   - p is what prediction
+//   - addr of placed bet and to send reply message
+//   - src and tx used in reply message
 func AutoPredict(p int, amt, src uint64, scid, addr, tx string) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
@@ -1321,7 +1329,10 @@ func AutoPredict(p int, amt, src uint64, scid, addr, tx string) {
 	AddLog("AuotPredict TX: " + txid.TXID)
 }
 
-// Service refund if bet void
+// dReamService refund if bet void
+//   - amt to send
+//   - addr to send refund to
+//   - src, msg and tx used in reply message
 func ServiceRefund(amt, src uint64, scid, addr, msg, tx string) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
@@ -1358,7 +1369,12 @@ func ServiceRefund(amt, src uint64, scid, addr, msg, tx string) {
 	AddLog("Refund TX: " + txid.TXID)
 }
 
-// Service sports book by received tx
+// dReamService sports book by received tx
+//   - amt to send
+//   - pre is what team
+//   - n is the game number
+//   - addr of placed bet and to send reply message
+//   - src, abv and tx used in reply message
 func AutoBook(amt, pre, src uint64, n, abv, scid, addr, tx string) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
@@ -1404,7 +1420,10 @@ func AutoBook(amt, pre, src uint64, n, abv, scid, addr, tx string) {
 	AddLog("AuotBook TX: " + txid.TXID)
 }
 
-// Update bet SC vars
+// Owner update for bet SC vars
+//   - ta, tb, tc are contracts time limits. Only ta, tb needed for dSports
+//   - l is the max bet limit per initialized bet
+//   - hl is the max amount of games that can be ran at once
 func VarUpdate(scid string, ta, tb, tc, l, hl int) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
@@ -1451,7 +1470,8 @@ func VarUpdate(scid string, ta, tb, tc, l, hl int) {
 	AddLog("VarUpdate TX: " + txid.TXID)
 }
 
-// Add new owner to bet SC
+// Owner can add new co-owner to bet SC
+//   - addr of new co-owner
 func AddOwner(scid, addr string) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
@@ -1486,7 +1506,8 @@ func AddOwner(scid, addr string) {
 	AddLog("Add Signer TX: " + txid.TXID)
 }
 
-// Remove owner from bet SC
+// Owner can remove co-owner from bet SC
+//   - num defines which co-owner to remove
 func RemoveOwner(scid string, num int) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
@@ -1521,7 +1542,8 @@ func RemoveOwner(scid string, num int) {
 	AddLog("Remove Signer: " + txid.TXID)
 }
 
-// User can refund a void dPrediction payout
+// User can refund a void dPrediction payout from SC
+//   - tic is the prediction id string
 func PredictionRefund(scid, tic string) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
@@ -1556,7 +1578,11 @@ func PredictionRefund(scid, tic string) {
 	AddLog("Refund TX: " + txid.TXID)
 }
 
-// Book sports team
+// Book sports team on dSports SC
+//   - multi defines 1x, 3x or 5x the minimum
+//   - n is the game number
+//   - a is amount to book
+//   - pick is team to book
 func PickTeam(scid, multi, n string, a uint64, pick int) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
@@ -1605,7 +1631,9 @@ func PickTeam(scid, multi, n string, a uint64, pick int) {
 	AddLog("Pick TX: " + txid.TXID)
 }
 
-// User can refund a void dSports payout
+// User can refund a void dSports payout from SC
+//   - tic is the bet id string
+//   - n is the game number
 func SportsRefund(scid, tic, n string) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
@@ -1641,7 +1669,12 @@ func SportsRefund(scid, tic, n string) {
 	AddLog("Refund TX: " + txid.TXID)
 }
 
-// Owner sets a game
+// Owner sets a dSports game
+//   - end is unix ending time
+//   - amt of single prediction
+//   - dep allows owner to add a intial deposit
+//   - game is name of game, formatted TEAM--TEAM
+//   - feed defines where price api data is sourced from
 func SetSports(end int, amt, dep uint64, scid, league, game, feed string) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
@@ -1680,7 +1713,13 @@ func SetSports(end int, amt, dep uint64, scid, league, game, feed string) {
 	AddLog("Set Sports TX: " + txid.TXID)
 }
 
-// Owner sets a prediction
+// Owner sets up a dPrediction prediction
+//   - end is unix ending time
+//   - mark can be predefined or passed as 0 if mark is to be posted live
+//   - amt of single prediction
+//   - dep allows owner to add a intial deposit
+//   - predict is name of what is being predicted
+//   - feed defines where price api data is sourced from
 func SetPrediction(end, mark int, amt, dep uint64, scid, predict, feed string) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
@@ -1719,7 +1758,8 @@ func SetPrediction(end, mark int, amt, dep uint64, scid, predict, feed string) {
 	AddLog("Set Prediction TX: " + txid.TXID)
 }
 
-// Owner cancel for intiated bet
+// Owner cancel for intiated bet for dSports and dPrediction contracts
+//   - b defines sports or prediction log print
 func CancelInitiatedBet(scid string, b int) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
@@ -1766,6 +1806,7 @@ func CancelInitiatedBet(scid string, b int) {
 }
 
 // Post mark to prediction SC
+//   - price is the posted mark for prediction
 func PostPrediction(scid string, price int) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
@@ -1800,7 +1841,9 @@ func PostPrediction(scid string, price int) {
 	AddLog("Post TX: " + txid.TXID)
 }
 
-// dSports payout
+// dSports SC payout
+//   - num is game number
+//   - team is winning team for game number
 func EndSports(scid, num, team string) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
@@ -1830,7 +1873,8 @@ func EndSports(scid, num, team string) {
 	AddLog("Sports Payout TX: " + txid.TXID)
 }
 
-// dPrediction payout
+// dPrediction SC payout
+//   - price is final prediction resuts
 func EndPrediction(scid string, price int) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
@@ -1860,7 +1904,9 @@ func EndPrediction(scid string, price int) {
 	AddLog("Prediction Payout TX: " + txid.TXID)
 }
 
-// Install new bet contract
+// Install new bet SC
+//   - c defines dSports or dPrediction contract
+//   - pub defines public or private contract
 func UploadBetContract(c bool, pub int) {
 	if Daemon.Connect && Wallet.Connect {
 		rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
@@ -1913,6 +1959,7 @@ func UploadBetContract(c bool, pub int) {
 }
 
 // Set any SC headers on Gnomon SC
+//   - name, desc and icon are header params
 func SetHeaders(name, desc, icon, scid string) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
@@ -1987,6 +2034,7 @@ func ClaimNfa(scid string) {
 }
 
 // Send bid or buy to NFA SC
+//   - bidor defines bid or buy call
 func NfaBidBuy(scid, bidor string, amt uint64) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
@@ -2025,7 +2073,12 @@ func NfaBidBuy(scid, bidor string, amt uint64) {
 	}
 }
 
-// List NFA for auction or sale
+// List NFA for auction or sale by SCID
+//   - list defines type of listing
+//   - char sets charity donation address
+//   - dur sets listing duration
+//   - amt sets starting price
+//   - perc sets percentage to go to chairty on sale
 func NfaSetListing(scid, list, char string, dur, amt, perc uint64) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
@@ -2082,7 +2135,8 @@ func NfaSetListing(scid, list, char string, dur, amt, perc uint64) {
 	AddLog("NFA List TX: " + txid.TXID)
 }
 
-// Cancel listed NFA
+// Cancel or close a listed NFA. Can only be canceled within opening buffer period. Can only close listing after expiriy
+//   - c defines cancel or close call
 func NfaCancelClose(scid, c string) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
@@ -2121,7 +2175,33 @@ func NfaCancelClose(scid, c string) {
 	}
 }
 
+// Upload a new SC by string
+func UploadContract(code string) (tx string) {
+	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
+	defer cancel()
+
+	txid := rpc.Transfer_Result{}
+
+	params := &rpc.Transfer_Params{
+		Transfers: []rpc.Transfer{},
+		SC_Code:   code,
+		SC_Value:  0,
+		SC_RPC:    rpc.Arguments{},
+		Ringsize:  2,
+	}
+
+	if err := rpcClientW.CallFor(ctx, &txid, "transfer", params); err != nil {
+		log.Println("[UploadContract]", err)
+		return
+	}
+
+	log.Println("[UploadContract] TXID:", txid)
+
+	return txid.TXID
+}
+
 // Get Iluma Tarot reading from SC
+//   - num defines one or three card draw
 func TarotReading(num int) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
@@ -2162,7 +2242,7 @@ func TarotReading(num int) {
 	Tarot.CHeight = Wallet.Height
 }
 
-// Send asset to a destination wallet
+// Send Dero asset to destination address with option to send asset SCID as message to destination as payload
 func SendAsset(scid, dest string, payload bool) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
@@ -2214,6 +2294,7 @@ func SendAsset(scid, dest string, payload bool) {
 
 // Watch a sent tx and retry 3 times if failed
 //   - tag for log print
+//   - Passing tries to ensure we only retry 3 times
 func ConfirmTx(txid string, tag string, tries int) (retry int) {
 	count := 0
 	for (tries < 3) && Wallet.Connect && Daemon.Connect {
@@ -2242,7 +2323,7 @@ func ConfirmTx(txid string, tag string, tries int) (retry int) {
 	return 100
 }
 
-// Send a message through Dero transaction
+// Send a message to destination address through Dero transaction, with ringsize selection
 func SendMessage(dest, msg string, rings uint64) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()

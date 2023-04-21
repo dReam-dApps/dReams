@@ -110,6 +110,7 @@ func DaemonHeight(ep string) uint64 {
 
 // SC call gas estimate, 1320 Deri max
 //   - tag for log print
+//   - Pass args and transfers for call
 func GasEstimate(scid, tag string, args rpc.Arguments, t []rpc.Transfer) uint64 {
 	rpcClientD, ctx, cancel := SetDaemonClient(Daemon.Rpc)
 	defer cancel()
@@ -191,13 +192,13 @@ func FetchFees() {
 	if fee, ok := FindStringKey(RatingSCID, "ContractUnlock", Daemon.Rpc).(float64); ok {
 		UnlockFee = uint64(fee)
 	} else {
-		log.Printf("[FetchFees] Could not get current contract unlock fee, using default")
+		log.Println("[FetchFees] Could not get current contract unlock fee, using default")
 	}
 
 	if fee, ok := FindStringKey(RatingSCID, "ListingFee", Daemon.Rpc).(float64); ok {
 		ListingFee = uint64(fee)
 	} else {
-		log.Printf("[FetchFees] Could not get current listing fee, using default")
+		log.Println("[FetchFees] Could not get current listing fee, using default")
 	}
 }
 
@@ -920,6 +921,7 @@ func FetchPredictionFinal(scid string) (txid string) {
 }
 
 // Get dPrediction SC code for public and private SC
+//   - pub defines public or private contract
 func GetPredictCode(pub int) string {
 	if Daemon.Connect {
 		rpcClientD, ctx, cancel := SetDaemonClient(Daemon.Rpc)
@@ -952,6 +954,7 @@ func GetPredictCode(pub int) string {
 }
 
 // Get dSports SC code for public and private SC
+//   - pub defines public or private contract
 func GetSportsCode(pub int) string {
 	if Daemon.Connect {
 		rpcClientD, ctx, cancel := SetDaemonClient(Daemon.Rpc)
