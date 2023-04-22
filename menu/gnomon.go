@@ -292,13 +292,15 @@ func StartIndicators() fyne.CanvasObject {
 
 // Stop dReams app status indicators
 func StopIndicators() {
-	Gnomes.Icon_ind.Stop()
 	Gnomes.Sync_ind.Stop()
 	Gnomes.Full_ind.Stop()
 	Control.Daemon_ind.Stop()
 	Control.Wallet_ind.Stop()
 	Control.Poker_ind.Stop()
 	Control.Service_ind.Stop()
+	if Gnomes.Icon_ind != nil {
+		Gnomes.Icon_ind.Stop()
+	}
 }
 
 // dReams search filters for Gnomon index

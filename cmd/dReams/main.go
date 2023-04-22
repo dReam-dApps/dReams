@@ -89,7 +89,7 @@ func main() {
 		}()
 	} else {
 		go func() {
-			time.Sleep(600 * time.Millisecond)
+			time.Sleep(750 * time.Millisecond)
 			dReams.Window.SetContent(
 				container.New(layout.NewMaxLayout(),
 					background,
