@@ -47,7 +47,8 @@ func main() {
 
 	tabs := container.NewAppTabs(
 		container.NewTabItem("Market", menu.PlaceMarket()),
-		container.NewTabItem("Assets", menu.PlaceAssets(app_tag, false, nil, nil, nil)))
+		container.NewTabItem("Assets", menu.PlaceAssets(app_tag, false, nil, nil, nil)),
+		container.NewTabItem("Mint NFA", menu.PlaceNFAMint(app_tag, w)))
 
 	tabs.SetTabLocation(container.TabLocationBottom)
 
@@ -61,7 +62,7 @@ func main() {
 		menu.WriteDreamsConfig(rpc.Daemon.Rpc, config.Skin)
 		menu.StopGnomon(app_tag)
 		rpc.Wallet.Connect = false
-		log.Printf("[%s] Closing", app_tag)
+		log.Printf("[%s] Closing\n", app_tag)
 		w.Close()
 	}()
 

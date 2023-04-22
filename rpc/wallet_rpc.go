@@ -1052,6 +1052,7 @@ func TradedReams(amt uint64) {
 
 var UnlockFee = uint64(300000)
 var ListingFee = uint64(10000)
+var MintingFee = uint64(500)
 
 // Contract unlock transfer
 func ownerT3(o bool) (t *rpc.Transfer) {
@@ -2175,15 +2176,19 @@ func NfaCancelClose(scid, c string) {
 	}
 }
 
-// Upload a new SC by string
-func UploadContract(code string) (tx string) {
+// Upload a new NFA SC by string
+func UploadNFAContract(code string) (tx string) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
 	txid := rpc.Transfer_Result{}
+	t1 := rpc.Transfer{
+		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
+		Amount:      MintingFee,
+	}
 
 	params := &rpc.Transfer_Params{
-		Transfers: []rpc.Transfer{},
+		Transfers: []rpc.Transfer{t1},
 		SC_Code:   code,
 		SC_Value:  0,
 		SC_RPC:    rpc.Arguments{},
@@ -2191,11 +2196,11 @@ func UploadContract(code string) (tx string) {
 	}
 
 	if err := rpcClientW.CallFor(ctx, &txid, "transfer", params); err != nil {
-		log.Println("[UploadContract]", err)
+		log.Println("[UploadNFAContract]", err)
 		return
 	}
 
-	log.Println("[UploadContract] TXID:", txid)
+	log.Println("[UploadNFAContract] TXID:", txid)
 
 	return txid.TXID
 }

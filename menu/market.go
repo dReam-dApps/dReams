@@ -972,7 +972,7 @@ func RunNFAMarketRoutine(tag string, quit chan struct{}, connect_box *dwidget.De
 				}
 
 			case <-quit: // exit
-				log.Printf("[%s] Closing", tag)
+				log.Printf("[%s] Closing\n", tag)
 				ticker.Stop()
 				return
 			}
