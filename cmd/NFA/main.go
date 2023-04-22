@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -32,6 +32,9 @@ func main() {
 	w.SetCloseIntercept(func() {
 		menu.WriteDreamsConfig(rpc.Daemon.Rpc, config.Skin)
 		quit <- struct{}{}
+		if rpc.Wallet.File != nil {
+			rpc.Wallet.File.Close_Encrypted_Wallet()
+		}
 		w.Close()
 	})
 
@@ -48,7 +51,7 @@ func main() {
 	tabs := container.NewAppTabs(
 		container.NewTabItem("Market", menu.PlaceMarket()),
 		container.NewTabItem("Assets", menu.PlaceAssets(app_tag, false, nil, nil, nil)),
-		container.NewTabItem("Mint NFA", menu.PlaceNFAMint(app_tag, w)))
+		container.NewTabItem("Mint", menu.PlaceNFAMint(app_tag, w)))
 
 	tabs.SetTabLocation(container.TabLocationBottom)
 
@@ -58,15 +61,21 @@ func main() {
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-c
+		quit <- struct{}{}
 		fmt.Println()
 		menu.WriteDreamsConfig(rpc.Daemon.Rpc, config.Skin)
 		menu.StopGnomon(app_tag)
 		rpc.Wallet.Connect = false
-		log.Printf("[%s] Closing\n", app_tag)
+		if rpc.Wallet.File != nil {
+			rpc.Wallet.File.Close_Encrypted_Wallet()
+		}
 		w.Close()
 	}()
 
-	go menu.RunNFAMarketRoutine(app_tag, quit, connect_box)
-	w.SetContent(max)
+	go menu.RunNFAMarket(app_tag, quit, connect_box)
+	go func() {
+		time.Sleep(450 * time.Millisecond)
+		w.SetContent(max)
+	}()
 	w.ShowAndRun()
 }

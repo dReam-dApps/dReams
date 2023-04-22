@@ -31,12 +31,12 @@ var ART_NFA_MS1 string
 // Tree object containing NFA minting instructions screen
 func HowToMintNFA(button *widget.Button) fyne.CanvasObject {
 	list := map[string][]string{
-		"":                       {"How To Mint NFA"},
-		"How To Mint NFA":        {"Get Started", "Single Asset", "Collection"},
-		"Get Started":            {"A NFA consists of four main parts: Asset file, Cover Image, Icon image, Dero file sign", "This tool automates NFA installs into three parts: File sign, Contract creation, Contract install", "Storage is not provided at this point", "Gas fee to install a NFA are ~0.20000 Dero", "There is a 0.00500 Dero dev fee for minting a NFA", "If minting a collection fees will be paid as each contract is installed", "For further info read the NFA documentation at github.com/civilware/artificer-nfa-standard"},
-		"Single Asset":           {"Disable the Collection check", "Type the name of your asset into the collection entry and click the folder button on right to set up NFA-Creation directory for your single asset", "NFA-Creation Directory", "File sign can be imported from file by clicking the file button to right of check C entry, or follow next step if you require file sign", "Single File Sign", "Fill out the rest of the information for your NFA and when complete the Create Contracts button will show", "Click Create Contract and confirm information, this will populate your bas folder with your asset contract", "Type the name of your asset in name entry and Install Contract will show if contract exists in bas folder", "Click Install Contract and confirm the install address is same as signing address", "NFA is now installed"},
+		"":                       {"How To Mint NFAs"},
+		"How To Mint NFAs":       {"Get Started", "Single Asset", "Collection"},
+		"Get Started":            {"A NFA consists of four main parts: Asset file, Cover Image, Icon image, Dero file sign", "Each NFA is its own self contained marketplace", "This tool automates three areas of NFA installs: File sign, Contract creation, Contract install", "Storage is not provided at this point", "Entries with a * are mutable, meaning they can be updated by creator (or owner) after install", "Gas fees to install a NFA are ~0.20000 Dero", "There is a 0.00500 Dero dev fee for minting a NFA with this tool", "If minting a collection fees will be paid as each contract is installed, a total will be shown before hand", "For further info read the NFA documentation at github.com/civilware/artificer-nfa-standard"},
+		"Single Asset":           {"Disable the Collection check", "Type the name of your asset into the collection entry and click the folder button on right to set up NFA-Creation directory for your single asset", "NFA-Creation Directory", "File sign can be imported from file by clicking the file button to right of check C entry, or follow next step if you require file sign", "Single File Sign", "Fill out the rest of the information for your NFA and when complete the Create Contracts button will show", "Click Create Contract and confirm information, this will populate your bas folder with your asset contract", "Type the name of your asset in name entry and Install Contract will show if contract exists in bas folder", "Click Install Contract and confirm the install address is same as signing address", "NFA is now installed, check your wallet for NFA balance"},
 		"Single File Sign":       {"Enter minting wallet file password and open minting wallet file", "Place asset file into asset folder", "Enter the name of your asset in name entry, select extension to match file", "Click Sign File and confirm information", "Once confirmed, the file check C and file check S will population with your file signs"},
-		"Collection":             {"Collection automation installs assets of same name with incrementing numbers", "Enable the Collection check", "Type the name of your collection into the collection entry and click the folder button on right to set up NFA-Creation directory for your collection", "NFA-Creation Directory", "Enter the starting number and ending number for your collection", "File signs can be done externally and placed into sign folder, or follow next step if you require file signs", "Collection File Signs", "Make sure file signs are in sign directory for contract creation", "Fill out the rest of the information for your NFA colletion and when complete the Create Contracts button will show", "The Asset Number sections are where it will add the incrementing number to your input to make the collection", "The + - buttons on top right can add or remove a increment section from Url paths", "Click Create Contract and confirm information", "Contract creation loop will start and populate your bas folder with your asset contracts, takes about 1 second per contract", "Type the name of your asset in name entry and Install Contract will show if contract exists in bas folder", "Click Install Contract and confirm the install address is same as signing address", "Minting loop will now start and takes about 45 seconds per contract", "If 100%, NFA collection is now installed"},
+		"Collection":             {"Collection automation installs assets of same name with incrementing numbers", "Enable the Collection check", "Type the name of your collection into the collection entry and click the folder button on right to set up NFA-Creation directory for your collection", "NFA-Creation Directory", "Enter the starting number and ending number for your collection", "File signs can be done externally and placed into sign folder, or follow next step if you require file signs", "Collection File Signs", "Make sure file signs are in sign directory for contract creation", "Fill out the rest of the information for your NFA colletion and when complete the Create Contracts button will show", "The Asset Number sections are where it will add the incrementing number to your input to make the collection", "The + - buttons on top right can add or remove a increment section from Url paths", "Click Create Contract and confirm information", "Contract creation loop will start and populate your bas folder with your asset contracts, takes about 1 second per contract", "Type the name of your asset in name entry and Install Contract will show if contract exists in bas folder", "Click Install Contract and confirm the install address is same as signing address", "Minting loop will now start and takes about 45 seconds per contract", "If 100%, NFA collection is now installed, check your wallet for NFA balances"},
 		"Collection File Signs":  {"Enter minting wallet file password and open minting wallet file", "Place numbered asset files into asset folder", "Enter the name of your asset in name entry, select extension to match file", "Click Sign File and confirm information", "This starts a file sign loop of your selected range and stores all signed files in sign directory, takes about 1 second per sign"},
 		"NFA-Creation Directory": {"NFA-Creation directory stores collection and single asset directories", "Inside of your asset or collection directory are five sub directories", "Your main asset files are stored in asset", "Contracts created are stored in bas", "Signed files are stored in sign", "Cover and icon are optional directories at this point and are not used in the install process"},
 	}
@@ -54,7 +54,7 @@ func HowToMintNFA(button *widget.Button) fyne.CanvasObject {
 		tree.Select(uid)
 	}
 
-	tree.OpenBranch("How To Mint NFA")
+	tree.OpenBranch("How To Mint NFAs")
 
 	return container.NewBorder(nil, button, nil, nil, tree)
 }
@@ -474,9 +474,11 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 
 	wallet_label := widget.NewLabel("Signing address:")
 	wallet_label.Alignment = fyne.TextAlignCenter
+	wallet_label.Wrapping = fyne.TextWrapWord
 
 	rpc_label := widget.NewLabel(fmt.Sprintf("Installing address: %s", rpc.Wallet.Address))
 	rpc_label.Alignment = fyne.TextAlignCenter
+	rpc_label.Wrapping = fyne.TextWrapWord
 
 	var wallet_file_path string
 	wallet_pass_entry := widget.NewPasswordEntry()
@@ -1135,13 +1137,13 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 	fff = append(fff, widget.NewFormItem("Name", container.NewBorder(nil, nil, nil, extension_select, name_cont)))
 	fff = append(fff, widget.NewFormItem("Description", descr_entry))
 	fff = append(fff, widget.NewFormItem("Type", type_select))
-	fff = append(fff, widget.NewFormItem("Tags", tags_entry))
+	fff = append(fff, widget.NewFormItem("Tags *", tags_entry))
 	fff = append(fff, widget.NewFormItem("File Check C", container.NewBorder(nil, nil, nil, import_signs, checkC_entry)))
 	fff = append(fff, widget.NewFormItem("File Check S", checkS_entry))
-	fff = append(fff, widget.NewFormItem("File URL", file_entries))
-	fff = append(fff, widget.NewFormItem("Cover URL", cover_entries))
-	fff = append(fff, widget.NewFormItem("Icon URL", icon_entries))
-	fff = append(fff, widget.NewFormItem("File Sign URL", sign_entries))
+	fff = append(fff, widget.NewFormItem("File URL *", file_entries))
+	fff = append(fff, widget.NewFormItem("Cover URL *", cover_entries))
+	fff = append(fff, widget.NewFormItem("Icon URL *", icon_entries))
+	fff = append(fff, widget.NewFormItem("File Sign URL *", sign_entries))
 	fff = append(fff, widget.NewFormItem("", layout.NewSpacer()))
 	fff = append(fff, widget.NewFormItem("Royalty", royalty_entry))
 	fff = append(fff, widget.NewFormItem("Artificer Fee", art_entry))
@@ -1163,7 +1165,8 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 	return max
 }
 
-// Set up NFA-Creation directory with sub directory for collection and sub directories for asset, bas, icon, cover and sign files
+// Set up NFA-Creation directory with sub directory for collection or single asset,
+// which contains sub directories for asset, bas, icon, cover and sign files
 func SetUpNFACreation(tag, collection string) (save_path string, sign_path string) {
 	main_path := "NFA-Creation"
 	_, main := os.Stat(main_path)

@@ -893,7 +893,7 @@ func setHeaderConfirm(name, desc, icon, scid string, obj []fyne.CanvasObject, re
 //   - tag for log print
 //   - quit for exit chan
 //   - connected box for DeroRpcEntries
-func RunNFAMarketRoutine(tag string, quit chan struct{}, connect_box *dwidget.DeroRpcEntries) {
+func RunNFAMarket(tag string, quit chan struct{}, connect_box *dwidget.DeroRpcEntries) {
 	go func() {
 		time.Sleep(6 * time.Second)
 		ticker := time.NewTicker(3 * time.Second)
