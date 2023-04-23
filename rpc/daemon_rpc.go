@@ -95,13 +95,13 @@ func Ping() {
 }
 
 // Get a daemons height
-func DaemonHeight(ep string) uint64 {
+func DaemonHeight(tag, ep string) uint64 {
 	rpcClientD, ctx, cancel := SetDaemonClient(ep)
 	defer cancel()
 
 	var result *rpc.GetHeight_Result
 	if err := rpcClientD.CallFor(ctx, &result, "DERO.GetHeight"); err != nil {
-		log.Println("[dReams]", err)
+		log.Printf("[%s] %s\n", tag, err)
 		return 0
 	}
 

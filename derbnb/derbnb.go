@@ -101,7 +101,7 @@ func fetch(quit chan struct{}) {
 		select {
 		case <-ticker.C: // do on interval
 			rpc.Ping()
-			rpc.EchoWallet("[DerBnb]")
+			rpc.EchoWallet("DerBnb")
 			GetProperties()
 			rpc.GetBalance()
 			if !rpc.Wallet.Connect {
@@ -115,7 +115,7 @@ func fetch(quit chan struct{}) {
 
 			if rpc.Daemon.Connect && menu.Gnomes.Init {
 				connect_box.Disconnect.SetChecked(true)
-				height := rpc.DaemonHeight(rpc.Daemon.Rpc)
+				height := rpc.DaemonHeight("DerBnb", rpc.Daemon.Rpc)
 				if menu.Gnomes.Indexer.ChainHeight >= int64(height)-3 {
 					menu.Gnomes.Sync = true
 				} else {

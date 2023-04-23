@@ -181,7 +181,7 @@ func main() {
 		}
 
 		log.Println("[dReamService] Starting when Gnomon is synced")
-		height = rpc.DaemonHeight(rpc.Daemon.Rpc)
+		height = rpc.DaemonHeight("dReamService", rpc.Daemon.Rpc)
 		for menu.Gnomes.Init && !menu.GnomonClosing() && rpc.Wallet.Connect && rpc.Daemon.Connect {
 			rpc.Ping()
 			rpc.EchoWallet("dReamService")

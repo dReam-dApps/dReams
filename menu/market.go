@@ -920,7 +920,7 @@ func RunNFAMarket(tag string, quit chan struct{}, connect_box *dwidget.DeroRpcEn
 				// If connected daemon connected start looking for Gnomon sync with daemon
 				if rpc.Daemon.Connect && Gnomes.Init {
 					connect_box.Disconnect.SetChecked(true)
-					height := rpc.DaemonHeight(rpc.Daemon.Rpc)
+					height := rpc.DaemonHeight(tag, rpc.Daemon.Rpc)
 					if Gnomes.Indexer.ChainHeight >= int64(height)-3 {
 						Gnomes.Sync = true
 					} else {

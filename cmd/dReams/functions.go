@@ -863,7 +863,7 @@ func refreshIndexDisplay(c bool) {
 // Refresh daemon height display
 func refreshDaemonDisplay(c bool) {
 	if c && rpc.Daemon.Connect {
-		dHeight := rpc.DaemonHeight(rpc.Daemon.Rpc)
+		dHeight := rpc.DaemonHeight("dReams", rpc.Daemon.Rpc)
 		d := strconv.Itoa(int(dHeight))
 		menu.Assets.Daem_height.Text = (" Daemon Height: " + d)
 		menu.Assets.Daem_height.Refresh()

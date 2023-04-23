@@ -369,7 +369,7 @@ func DreamService(start uint64, payouts, transfers bool) {
 		}
 
 		if start == 0 {
-			start = rpc.DaemonHeight(rpc.Daemon.Rpc)
+			start = rpc.DaemonHeight("dReamService", rpc.Daemon.Rpc)
 		}
 
 		if start > 0 {
@@ -468,7 +468,7 @@ func runPredictionPayouts(print bool) {
 			case 2:
 				value = rpc.GetBlockTime(rpc.Display.P_feed)
 			case 3:
-				d := rpc.DaemonHeight(rpc.Display.P_feed)
+				d := rpc.DaemonHeight("dReamService", rpc.Display.P_feed)
 				value = float64(d)
 			default:
 
@@ -530,7 +530,7 @@ func runPredictionPayouts(print bool) {
 			case 2:
 				amt = rpc.GetBlockTime(rpc.Display.P_feed)
 			case 3:
-				d := rpc.DaemonHeight(rpc.Display.P_feed)
+				d := rpc.DaemonHeight("dReamService", rpc.Display.P_feed)
 				amt = float64(d)
 			default:
 				sent = false

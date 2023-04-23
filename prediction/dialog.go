@@ -154,7 +154,7 @@ func preditctionOpts(window fyne.Window) fyne.CanvasObject {
 				a = rpc.GetBlockTime(rpc.Display.P_feed)
 				window.Content().(*fyne.Container).Objects[2] = ownerConfirmAction(6, a, window, reset)
 			case 3:
-				d := rpc.DaemonHeight(rpc.Display.P_feed)
+				d := rpc.DaemonHeight("dReams", rpc.Display.P_feed)
 				a = float64(d)
 				window.Content().(*fyne.Container).Objects[2] = ownerConfirmAction(6, a, window, reset)
 			default:
@@ -185,7 +185,7 @@ func preditctionOpts(window fyne.Window) fyne.CanvasObject {
 				a = rpc.GetBlockTime(rpc.Display.P_feed)
 				window.Content().(*fyne.Container).Objects[2] = ownerConfirmAction(7, a, window, reset)
 			case 3:
-				d := rpc.DaemonHeight(rpc.Display.P_feed)
+				d := rpc.DaemonHeight("dReams", rpc.Display.P_feed)
 				a = float64(d)
 				window.Content().(*fyne.Container).Objects[2] = ownerConfirmAction(7, a, window, reset)
 			default:
@@ -406,7 +406,7 @@ func serviceOpts(window fyne.Window) fyne.CanvasObject {
 	var start uint64
 	height := widget.NewCheck("Start from current height", func(b bool) {
 		if b {
-			start = rpc.DaemonHeight(rpc.Daemon.Rpc)
+			start = rpc.DaemonHeight("dReams", rpc.Daemon.Rpc)
 			entry.SetText(strconv.Itoa(int(start)))
 			entry.Disable()
 		} else {
