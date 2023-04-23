@@ -1593,7 +1593,7 @@ func SendMessageMenu(window_icon, background fyne.Resource) {
 		dest_entry := widget.NewMultiLineEntry()
 		dest_entry.SetPlaceHolder("Destination Address:")
 		dest_entry.Wrapping = fyne.TextWrapWord
-		dest_entry.Validator = validation.NewRegexp(`^(dero)\w{62}`, "Invalid Address")
+		dest_entry.Validator = validation.NewRegexp(`^(dero)\w{62}$`, "Invalid Address")
 		dest_entry.OnChanged = func(s string) {
 			if dest_entry.Validate() == nil && message_entry.Text != "" {
 				send_button.Show()
