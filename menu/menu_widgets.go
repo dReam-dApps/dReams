@@ -1116,7 +1116,7 @@ func IndexEntry(window_icon, window_background fyne.Resource) fyne.CanvasObject 
 	Control.Claim_button = widget.NewButton("Claim NFA", func() {
 		if len(Assets.Index_entry.Text) == 64 {
 			if isNfa(Assets.Index_entry.Text) {
-				rpc.ClaimNfa(Assets.Index_entry.Text)
+				rpc.ClaimNFA(Assets.Index_entry.Text)
 			}
 		}
 	})
@@ -1433,7 +1433,7 @@ func listMenu(window_icon, background fyne.Resource) {
 				})
 
 				confirm_button := widget.NewButton("Confirm", func() {
-					rpc.NfaSetListing(listing_asset, listing.Selected, charAddr.Text, d, s, cp)
+					rpc.SetNFAListing(listing_asset, listing.Selected, charAddr.Text, d, s, cp)
 					Control.list_open = false
 					if rpc.Wallet.Connect {
 						Control.Send_asset.Show()

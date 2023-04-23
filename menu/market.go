@@ -140,9 +140,9 @@ func BidBuyConfirm(scid string, amt uint64, b int, obj *container.Split, reset f
 	confirm := widget.NewButton("Confirm", func() {
 		switch b {
 		case 0:
-			rpc.NfaBidBuy(scid, "Bid", amt)
+			rpc.BidBuyNFA(scid, "Bid", amt)
 		case 1:
-			rpc.NfaBidBuy(scid, "BuyItNow", amt)
+			rpc.BidBuyNFA(scid, "BuyItNow", amt)
 		default:
 
 		}
@@ -217,9 +217,9 @@ func ConfirmCancelClose(scid string, c int, obj *container.Split, reset fyne.Can
 	confirm := widget.NewButton("Confirm", func() {
 		switch c {
 		case 0:
-			rpc.NfaCancelClose(scid, "CloseListing")
+			rpc.CancelCloseNFA(scid, "CloseListing")
 		case 1:
-			rpc.NfaCancelClose(scid, "CancelListing")
+			rpc.CancelCloseNFA(scid, "CancelListing")
 
 		default:
 
@@ -687,7 +687,7 @@ func PlaceMarket() *container.Split {
 func RecheckButton(tag string, recheck func()) fyne.CanvasObject {
 	button := widget.NewButton("Check Assets", func() {
 		if !Gnomes.Wait {
-			log.Println("[dReams] Rechecking Assets")
+			log.Printf("[%s] Rechecking Assets\n", tag)
 			go recheck()
 		}
 	})

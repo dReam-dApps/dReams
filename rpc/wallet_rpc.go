@@ -325,15 +325,16 @@ func TourneyDeposit(bal uint64, name string) {
 	}
 }
 
-// Get wallet height
-func GetHeight() {
+// Gets Dero wallet height
+//   - tag for log print
+func GetWalletHeight(tag string) {
 	if Wallet.Connect {
 		rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 		defer cancel()
 
 		var result *rpc.GetHeight_Result
 		if err := rpcClientW.CallFor(ctx, &result, "GetHeight"); err != nil {
-			log.Println("[dReams]", err)
+			log.Printf("[%s] %s\n", tag, err)
 			return
 		}
 
@@ -1980,7 +1981,7 @@ func SetHeaders(name, desc, icon, scid string) {
 	}
 
 	t := []rpc.Transfer{t1}
-	fee := GasEstimate(GnomonSCID, "[dReams]", args, t)
+	fee := GasEstimate(GnomonSCID, "[SetHeaders]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_Value:  0,
@@ -1994,12 +1995,12 @@ func SetHeaders(name, desc, icon, scid string) {
 		return
 	}
 
-	log.Println("[dReams] Set Headers TX:", txid)
+	log.Println("[SetHeaders] Set Headers TX:", txid)
 	AddLog("Set Headers TX: " + txid.TXID)
 }
 
 // Claim transfered NFA token
-func ClaimNfa(scid string) {
+func ClaimNFA(scid string) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
@@ -2016,7 +2017,7 @@ func ClaimNfa(scid string) {
 	}
 
 	t := []rpc.Transfer{t1}
-	fee := GasEstimate(scid, "[dReams]", args, t)
+	fee := GasEstimate(scid, "[ClaimNFA]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     scid,
@@ -2026,17 +2027,17 @@ func ClaimNfa(scid string) {
 	}
 
 	if err := rpcClientW.CallFor(ctx, &txid, "transfer", params); err != nil {
-		log.Println("[ClaimNfa]", err)
+		log.Println("[ClaimNFA]", err)
 		return
 	}
 
-	log.Println("[dReams] Claim TX:", txid)
-	AddLog("Claim TX: " + txid.TXID)
+	log.Println("[ClaimNFA] Claim TX:", txid)
+	AddLog("NFA Claim TX: " + txid.TXID)
 }
 
 // Send bid or buy to NFA SC
 //   - bidor defines bid or buy call
-func NfaBidBuy(scid, bidor string, amt uint64) {
+func BidBuyNFA(scid, bidor string, amt uint64) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
@@ -2051,7 +2052,7 @@ func NfaBidBuy(scid, bidor string, amt uint64) {
 	}
 
 	t := []rpc.Transfer{t1}
-	fee := GasEstimate(scid, "[dReams]", args, t)
+	fee := GasEstimate(scid, "[BidBuyNFA]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     scid,
@@ -2061,16 +2062,16 @@ func NfaBidBuy(scid, bidor string, amt uint64) {
 	}
 
 	if err := rpcClientW.CallFor(ctx, &txid, "transfer", params); err != nil {
-		log.Println("[NfaBidBuy]", err)
+		log.Println("[BidBuyNFA]", err)
 		return
 	}
 
 	if bidor == "Bid" {
-		log.Println("[dReams] NFA Bid TX:", txid)
-		AddLog("Bid TX: " + txid.TXID)
+		log.Println("[BidBuyNFA] NFA Bid TX:", txid)
+		AddLog("NFA Bid TX: " + txid.TXID)
 	} else {
-		log.Println("[dReams] NFA Buy TX:", txid)
-		AddLog("Buy TX: " + txid.TXID)
+		log.Println("[BidBuyNFA] NFA Buy TX:", txid)
+		AddLog("NFA Buy TX: " + txid.TXID)
 	}
 }
 
@@ -2080,7 +2081,7 @@ func NfaBidBuy(scid, bidor string, amt uint64) {
 //   - dur sets listing duration
 //   - amt sets starting price
 //   - perc sets percentage to go to chairty on sale
-func NfaSetListing(scid, list, char string, dur, amt, perc uint64) {
+func SetNFAListing(scid, list, char string, dur, amt, perc uint64) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
@@ -2118,7 +2119,7 @@ func NfaSetListing(scid, list, char string, dur, amt, perc uint64) {
 	}
 
 	t := []rpc.Transfer{t1, t2, t3}
-	fee := GasEstimate(scid, "[dReams]", args, t)
+	fee := GasEstimate(scid, "[SetNFAListing]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     scid,
@@ -2128,17 +2129,17 @@ func NfaSetListing(scid, list, char string, dur, amt, perc uint64) {
 	}
 
 	if err := rpcClientW.CallFor(ctx, &txid, "transfer", params); err != nil {
-		log.Println("[NfaSetListing]", err)
+		log.Println("[SetNFAListing]", err)
 		return
 	}
 
-	log.Println("[dReams] NFA List TX:", txid)
+	log.Println("[SetNFAListing] NFA List TX:", txid)
 	AddLog("NFA List TX: " + txid.TXID)
 }
 
 // Cancel or close a listed NFA. Can only be canceled within opening buffer period. Can only close listing after expiriy
 //   - c defines cancel or close call
-func NfaCancelClose(scid, c string) {
+func CancelCloseNFA(scid, c string) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
@@ -2153,7 +2154,7 @@ func NfaCancelClose(scid, c string) {
 	}
 
 	t := []rpc.Transfer{t1}
-	fee := GasEstimate(scid, "[dReams]", args, t)
+	fee := GasEstimate(scid, "[CancelCloseNFA]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     scid,
@@ -2163,16 +2164,16 @@ func NfaCancelClose(scid, c string) {
 	}
 
 	if err := rpcClientW.CallFor(ctx, &txid, "transfer", params); err != nil {
-		log.Println("[NfaCancelClose]", err)
+		log.Println("[CancelCloseNFA]", err)
 		return
 	}
 
 	if c == "CloseListing" {
-		log.Println("[dReams] Close NFA Listing TX:", txid)
-		AddLog("Close Listing TX: " + txid.TXID)
+		log.Println("[CancelCloseNFA] Close NFA Listing TX:", txid)
+		AddLog("NFA Close Listing TX: " + txid.TXID)
 	} else {
-		log.Println("[dReams] Cancel NFA Listing TX:", txid)
-		AddLog("Cancel Listing TX: " + txid.TXID)
+		log.Println("[CancelCloseNFA] Cancel NFA Listing TX:", txid)
+		AddLog("NFA Cancel Listing TX: " + txid.TXID)
 	}
 }
 

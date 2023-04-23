@@ -402,7 +402,7 @@ func fetch(quit chan struct{}) {
 				rpc.EchoWallet("dReams")
 				rpc.GetBalance()
 				go rpc.GetDreamsBalances()
-				rpc.GetHeight()
+				rpc.GetWalletHeight("dReams")
 				if !rpc.Signal.Startup {
 					menu.CheckConnection()
 					menu.GnomonEndPoint()
