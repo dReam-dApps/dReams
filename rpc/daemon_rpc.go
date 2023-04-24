@@ -200,6 +200,12 @@ func FetchFees() {
 	} else {
 		log.Println("[FetchFees] Could not get current listing fee, using default")
 	}
+
+	if fee, ok := FindStringKey(TarotSCID, "Fee", Daemon.Rpc).(float64); ok {
+		IlumaFee = uint64(fee)
+	} else {
+		log.Println("[FetchFees] Could not get current Iluma fee, using default")
+	}
 }
 
 // Check Gnomon SC for stored contract owner

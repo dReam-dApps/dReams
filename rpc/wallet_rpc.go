@@ -1054,6 +1054,7 @@ func TradedReams(amt uint64) {
 var UnlockFee = uint64(300000)
 var ListingFee = uint64(10000)
 var MintingFee = uint64(500)
+var IlumaFee = uint64(9000)
 
 // Contract unlock transfer
 func ownerT3(o bool) (t *rpc.Transfer) {
@@ -2220,7 +2221,7 @@ func TarotReading(num int) {
 	t1 := rpc.Transfer{
 		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
 		Amount:      0,
-		Burn:        10000,
+		Burn:        IlumaFee,
 	}
 
 	t := []rpc.Transfer{t1}

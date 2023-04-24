@@ -2,6 +2,7 @@ package tarot
 
 import (
 	_ "embed"
+	"fmt"
 	"image/color"
 	"math/rand"
 
@@ -184,9 +185,9 @@ func TarotDrawText() (text string) {
 func TarotConfirm(i int, reset fyne.Container) fyne.Container {
 	label := widget.NewLabel("")
 	if i == 3 {
-		label.SetText("You are about to draw three cards\n\nReading fee is 0.1 Dero\n\nConfirm")
+		label.SetText(fmt.Sprintf("You are about to draw three cards\n\nReading fee is %.5f Dero\n\nConfirm", float64(rpc.IlumaFee)/100000))
 	} else {
-		label.SetText("You are about to draw one card\n\nReading fee is 0.1 Dero\n\nConfirm")
+		label.SetText(fmt.Sprintf("You are about to draw one card\n\nReading fee is %.5f Dero\n\nConfirm", float64(rpc.IlumaFee)/100000))
 	}
 
 	label.Wrapping = fyne.TextWrapWord
