@@ -480,13 +480,13 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 			for i, cont := range metedata_entry_arr {
 				switch i {
 				case 0:
-					metadata.Squarefootage = rpc.StringToInt(cont.Objects[0].(*widget.Entry).Text)
+					metadata.Squarefootage = rpc.StringToInt(cont.Objects[0].(*dwidget.DeroAmts).Text)
 				case 1:
 					metadata.Style = cont.Objects[0].(*widget.Entry).Text
 				case 2:
-					metadata.NumberOfBedrooms = rpc.StringToInt(cont.Objects[0].(*widget.Entry).Text)
+					metadata.NumberOfBedrooms = rpc.StringToInt(cont.Objects[0].(*dwidget.DeroAmts).Text)
 				case 3:
-					metadata.MaxNumberOfGuests = rpc.StringToInt(cont.Objects[0].(*widget.Entry).Text)
+					metadata.MaxNumberOfGuests = rpc.StringToInt(cont.Objects[0].(*dwidget.DeroAmts).Text)
 				case 4:
 					for _, w := range cont.Objects {
 						if w.(*widget.Entry).Text != "" {
