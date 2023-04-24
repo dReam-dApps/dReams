@@ -2224,7 +2224,7 @@ func TarotReading(num int) {
 	}
 
 	t := []rpc.Transfer{t1}
-	fee := GasEstimate(TarotSCID, "[Tarot]", args, t)
+	fee := GasEstimate(TarotSCID, "[TarotReading]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     TarotSCID,
@@ -2242,8 +2242,8 @@ func TarotReading(num int) {
 	Tarot.Last = txid.TXID
 	Tarot.Notified = false
 
-	log.Println("[Tarot] Reading TX:", txid)
-	AddLog("Reading TX: " + txid.TXID)
+	log.Println("[TarotReading] Reading TX:", txid)
+	AddLog("Tarot Reading TX: " + txid.TXID)
 
 	Tarot.CHeight = Wallet.Height
 }

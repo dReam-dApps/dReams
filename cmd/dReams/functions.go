@@ -831,7 +831,7 @@ func TarotRefresh() {
 
 	if rpc.Tarot.Found && !rpc.Tarot.Notified {
 		if !isWindows() {
-			dReams.App.SendNotification(notification("dReams - Tarot", "Your Reading has Arrvied", 2))
+			dReams.App.SendNotification(notification("dReams - Iluma", "Your Reading has Arrvied", 2))
 		}
 	}
 }
@@ -1014,7 +1014,7 @@ func MainTab(ti *container.TabItem) {
 		dReams.sports = true
 		dReams.tarot = false
 		go menu.PopulateSports(nil)
-	case "Tarot":
+	case "Iluma":
 		dReams.menu = false
 		dReams.holdero = false
 		dReams.bacc = false

@@ -424,7 +424,7 @@ func place() *fyne.Container {
 	}
 
 	if menu.Control.Dapp_list["Iluma"] {
-		tabs.Append(container.NewTabItem("Tarot", placeTarot()))
+		tabs.Append(container.NewTabItem("Iluma", placeTarot()))
 	}
 
 	if menu.Control.Dapp_list["DerBnb"] {
@@ -442,7 +442,7 @@ func place() *fyne.Container {
 			menu_bottom.Hide()
 		}
 
-		if ti.Text == "Tarot" {
+		if ti.Text == "Iluma" {
 			tarot_bottom.Show()
 		} else {
 			tarot_bottom.Hide()
@@ -979,7 +979,7 @@ func placeTarot() fyne.CanvasObject {
 				}
 				tarot.Iluma.Box.Refresh()
 			} else {
-				log.Println("[Tarot] This is not your reading")
+				log.Println("[Iluma] This is not your reading")
 			}
 		}
 	})
