@@ -523,9 +523,13 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 		w.SetContent(reset_to_main)
 	})
 
+	derbnb_gif, _ := xwidget.NewAnimatedGifFromResource(bundle.ResourceDerbnbGifGif)
+	derbnb_gif.SetMinSize(fyne.NewSize(100, 100))
+	derbnb_gif.Start()
+
 	confirm_action_cont := container.NewAdaptiveGrid(2, container.NewMax(confirm_action), cancel_action)
 	confirm_border = container.NewBorder(
-		layout.NewSpacer(),
+		derbnb_gif,
 		confirm_action_cont,
 		layout.NewSpacer(),
 		layout.NewSpacer(),
@@ -1486,6 +1490,8 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 
 			time.Sleep(time.Second)
 		}
+
+		derbnb_gif.Stop()
 	}()
 
 	return max
