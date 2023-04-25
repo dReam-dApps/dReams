@@ -14,6 +14,7 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/data/validation"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 	xwidget "fyne.io/x/fyne/widget"
@@ -292,14 +293,18 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 	photo_entry_label := widget.NewLabel("Photos")
 	photo_entry_label.Alignment = fyne.TextAlignCenter
 
+	derbnb_gif, _ := xwidget.NewAnimatedGifFromResource(bundle.ResourceDerbnbGifGif)
+	derbnb_gif.SetMinSize(fyne.NewSize(100, 100))
+
 	var release_check *widget.Check
-	var confirm_action *widget.Button
+	var confirm_action, cancel_action *widget.Button
 	confirm_action = widget.NewButton("Confirm", func() {
 		switch confirm_action_int {
 		case 1:
 			new_install_scid := UploadBnbTokenContract()
 			if new_install_scid == "" {
 				confirm_action.Hide()
+				cancel_action.Hide()
 				confirm_action_label.SetText("Token Not Installed")
 				confirm_border.Objects[4] = container.NewVBox(layout.NewSpacer(), confirm_action_label, layout.NewSpacer())
 				w.SetContent(confirm_max)
@@ -315,6 +320,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 			}
 
 			var set_location *widget.Button
+			var balance_confirmed bool
 
 			location_entry_label := widget.NewLabel("Location")
 			location_entry_label.Alignment = fyne.TextAlignCenter
@@ -323,7 +329,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 
 			city_entry.Validator = validation.NewRegexp(`^\w{2,}`, "String required")
 			city_entry.OnChanged = func(s string) {
-				if city_entry.Validate() == nil && country_entry.Validate() == nil {
+				if balance_confirmed && city_entry.Validate() == nil && country_entry.Validate() == nil {
 					set_location.Show()
 				} else {
 					set_location.Hide()
@@ -332,7 +338,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 
 			country_entry.Validator = validation.NewRegexp(`^\w{2,}`, "String required")
 			country_entry.OnChanged = func(s string) {
-				if city_entry.Validate() == nil && country_entry.Validate() == nil {
+				if balance_confirmed && city_entry.Validate() == nil && country_entry.Validate() == nil {
 					set_location.Show()
 				} else {
 					set_location.Hide()
@@ -341,6 +347,8 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 
 			city_entry.SetPlaceHolder("City:")
 			country_entry.SetPlaceHolder("Country:")
+			city_entry.Hide()
+			country_entry.Hide()
 
 			var location_is_set bool
 			set_label := widget.NewLabel("")
@@ -365,7 +373,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 							}
 
 							i++
-							if i > 28 {
+							if i > 35 {
 								set_label.SetText("Location not set, try again")
 								set_location.Show()
 								return
@@ -414,10 +422,20 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 
 			if len(new_install_scid) != 64 {
 				confirm_action_label.SetText(fmt.Sprintf("Token Install Failed \n\n%s", new_install_scid))
-				w.SetContent(container.NewMax(location_max, container.NewBorder(nil, install_box, nil, nil, confirm_action_label)))
+				w.SetContent(container.NewMax(location_max, container.NewBorder(derbnb_gif, install_box, nil, nil, confirm_action_label)))
 			} else {
-				confirm_action_label.SetText(fmt.Sprintf("Token Installed\n\nSCID: %s\n\n\nContinue to Set Location", new_install_scid))
-				w.SetContent(container.NewMax(location_max, container.NewBorder(nil, install_box, nil, nil, container.NewVBox(layout.NewSpacer(), confirm_action_label, layout.NewSpacer(), location_entry_cont, layout.NewSpacer()))))
+				confirm_action_label.SetText(fmt.Sprintf("Waiting for Token Balance\n\nSCID: %s\n\nBalance: %d", new_install_scid, 0))
+				w.SetContent(container.NewMax(location_max, container.NewBorder(derbnb_gif, install_box, nil, nil, container.NewVBox(layout.NewSpacer(), confirm_action_label, layout.NewSpacer(), location_entry_cont, layout.NewSpacer()))))
+				go func() {
+					for !balance_confirmed {
+						if bal := rpc.TokenBalance(new_install_scid); bal > 0 {
+							balance_confirmed = true
+						}
+					}
+					confirm_action_label.SetText(fmt.Sprintf("Token Installed\n\nSCID: %s\n\nBalance: %d\n\n\nContinue to Set Location", new_install_scid, 1))
+					city_entry.Show()
+					country_entry.Show()
+				}()
 			}
 			return
 
@@ -462,7 +480,6 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 					if add_these.Start > 0 && add_these.End > 0 {
 						new_dates = append(new_dates, add_these)
 					}
-
 				}
 			}
 
@@ -510,22 +527,21 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 		release_entry.SetText("")
 		release_check.SetChecked(false)
 		confirm_action.Show()
+		cancel_action.Show()
+		derbnb_gif.Stop()
 		w.SetContent(reset_to_main)
 	})
 
-	cancel_action := widget.NewButton("Cancel", func() {
+	cancel_action = widget.NewButton("Cancel", func() {
 		confirm_action_int = 0
 		comment_entry.SetPlaceHolder("")
 		comment_entry.SetText("")
 		release_entry.SetText("")
 		release_check.SetChecked(false)
 		confirm_action.Show()
+		derbnb_gif.Stop()
 		w.SetContent(reset_to_main)
 	})
-
-	derbnb_gif, _ := xwidget.NewAnimatedGifFromResource(bundle.ResourceDerbnbGifGif)
-	derbnb_gif.SetMinSize(fyne.NewSize(100, 100))
-	derbnb_gif.Start()
 
 	confirm_action_cont := container.NewAdaptiveGrid(2, container.NewMax(confirm_action), cancel_action)
 	confirm_border = container.NewBorder(
@@ -553,6 +569,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 	confirm_max.Add(confirm_border)
 
 	mint_prop.OnTapped = func() {
+		derbnb_gif.Start()
 		confirm_border.Objects[4] = container.NewVBox(layout.NewSpacer(), confirm_action_label, layout.NewSpacer())
 		minting_fee := float64(rpc.ListingFee) / 100000
 		gas_fee := float64(0.015)
@@ -594,6 +611,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 	// bnb contract controls
 	request_button := widget.NewButton("Request Booking", func() {
 		if viewing_scid != "" && current_price != 0 && current_deposit != 0 && !start_date.IsZero() && !end_date.IsZero() && rpc.Wallet.Connect {
+			derbnb_gif.Start()
 			start := uint64(start_date.Unix())
 			end := uint64(end_date.Unix())
 			amt := current_price*((end-start)/84600) + current_deposit
@@ -631,6 +649,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 		if scid_entry.Validate() == nil && price_entry.Validate() == nil && deposit_entry.Validate() == nil {
 			if location := makeLocationString(scid_entry.Text); location != "" {
 				if data := getMetadata(scid_entry.Text); data != nil {
+					derbnb_gif.Start()
 					data_string := fmt.Sprintf("Sq feet: %d\n\nStyle: %s\n\nBedrooms: %d\n\nMax guests: %d", data.Squarefootage, data.Style, data.NumberOfBedrooms, data.MaxNumberOfGuests)
 					confirm_border.Objects[4] = container.NewVBox(layout.NewSpacer(), confirm_action_label, layout.NewSpacer())
 					confirm_action_label.SetText(fmt.Sprintf("Listing property\n\nSCID: %s\n\n%s\n\nDaily rate of: %s Dero\n\nDamage deposit: %s Dero\n\n%s", scid_entry.Text, location, price_entry.Text, deposit_entry.Text, data_string))
@@ -638,9 +657,21 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 					w.SetContent(confirm_max)
 				} else {
 					log.Println("[DerBnb] Your property needs metadata")
+					info_message := dialog.NewInformation("Add Property Info", "Your property information needs to be added before it can be listed", w)
+					info_message.SetDismissText("Add Info")
+					info_message.SetOnClosed(func() {
+						derbnb_gif.Start()
+						confirm_border.Objects[4] = container.NewVScroll(container.NewVBox(layout.NewSpacer(), confirm_action_label, layout.NewSpacer(), placeMetadataObjects(metedata_label_arr, metedata_entry_arr)))
+						confirm_action_label.SetText(fmt.Sprintf("Set property info\n\nSCID: %s", scid_entry.Text))
+						confirm_action_int = 14
+						confirm_border.Refresh()
+						w.SetContent(confirm_max)
+					})
+					info_message.Show()
 				}
 			} else {
 				log.Println("[DerBnb] Your property needs a location")
+				dialog.NewInformation("Add Property Location", "Your property needs a location added before it can be listed", w).Show()
 			}
 		}
 	})
@@ -748,6 +779,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 
 	remove_button := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "contentRemove"), func() {
 		if scid_entry.Validate() == nil {
+			derbnb_gif.Start()
 			confirm_border.Objects[4] = container.NewVBox(layout.NewSpacer(), confirm_action_label, layout.NewSpacer())
 			confirm_action_label.SetText(fmt.Sprintf("Remove property\n\nSCID: %s", scid_entry.Text))
 			confirm_action_int = 3
@@ -758,6 +790,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 	confirm_request_button = widget.NewButton("Confirm Request", func() {
 		if scid_entry.Validate() == nil {
 			if confirm_stamp != 0 && viewing_address != "" {
+				derbnb_gif.Start()
 				confirm_border.Objects[4] = container.NewVBox(layout.NewSpacer(), confirm_action_label, layout.NewSpacer())
 				confirm_action_label.SetText(fmt.Sprintf("Confirm booking Request\n\nBooking ID: %d\n\nSCID: %s\n\nRenter: %s\n\n%s", confirm_stamp, scid_entry.Text, viewing_address, confirm_dates))
 				confirm_action_int = 4
@@ -771,6 +804,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 	cancel_request_button = widget.NewButton("Reject Request", func() {
 		if scid_entry.Validate() == nil {
 			if confirm_stamp != 0 && viewing_address != "" {
+				derbnb_gif.Start()
 				confirm_border.Objects[4] = container.NewVBox(layout.NewSpacer(), confirm_action_label, layout.NewSpacer())
 				confirm_action_scid = scid_entry.Text
 				confirm_action_label.SetText(fmt.Sprintf("Reject booking request\n\nBooking ID: %d\n\nSCID: %s\n\nRenter: %s", confirm_stamp, confirm_action_scid, viewing_address))
@@ -783,6 +817,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 	release_button = widget.NewButton("Release Deposit", func() {
 		if scid_entry.Validate() == nil {
 			if confirm_stamp != 0 {
+				derbnb_gif.Start()
 				comment_entry.SetPlaceHolder("Damage Comments:")
 				confirm_action.Hide()
 				confirm_border.Objects[4] = container.NewVSplit(container.NewVBox(layout.NewSpacer(), confirm_action_label, layout.NewSpacer()), release_cont)
@@ -795,8 +830,10 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 
 	change_price_button := widget.NewButton("Change Price", func() {
 		if scid_entry.Validate() == nil && price_entry.Validate() == nil {
+			derbnb_gif.Start()
+			new_price, _ := strconv.ParseFloat(price_entry.Text, 64)
 			confirm_border.Objects[4] = container.NewVBox(layout.NewSpacer(), confirm_action_label, layout.NewSpacer())
-			confirm_action_label.SetText(fmt.Sprintf("Change price\n\nSCID: %s\n\nNew daily price: %s Dero", scid_entry.Text, price_entry.Text))
+			confirm_action_label.SetText(fmt.Sprintf("Change price\n\nSCID: %s\n\nNew daily price: %.5f Dero", scid_entry.Text, new_price))
 			confirm_action_int = 6
 			w.SetContent(confirm_max)
 		}
@@ -804,8 +841,10 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 
 	change_dd_button := widget.NewButton("Change Deposit", func() {
 		if scid_entry.Validate() == nil && deposit_entry.Validate() == nil {
+			derbnb_gif.Start()
+			new_dep, _ := strconv.ParseFloat(deposit_entry.Text, 64)
 			confirm_border.Objects[4] = container.NewVBox(layout.NewSpacer(), confirm_action_label, layout.NewSpacer())
-			confirm_action_label.SetText(fmt.Sprintf("Change damage deposit\n\nSCID: %s\n\nNew deposit price: %s Dero", scid_entry.Text, deposit_entry.Text))
+			confirm_action_label.SetText(fmt.Sprintf("Change damage deposit\n\nSCID: %s\n\nNew deposit price: %.5f Dero", scid_entry.Text, new_dep))
 			confirm_action_int = 7
 			w.SetContent(confirm_max)
 		}
@@ -813,6 +852,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 
 	cancel_booking_button = widget.NewButton("Cancel Booking", func() {
 		if len(confirm_action_scid) == 64 && confirm_stamp != 0 {
+			derbnb_gif.Start()
 			confirm_border.Objects[4] = container.NewVBox(layout.NewSpacer(), confirm_action_label, layout.NewSpacer())
 			confirm_action_label.SetText(fmt.Sprintf("Cancel booking\n\nBooking ID: %d\n\nSCID: %s", confirm_stamp, confirm_action_scid))
 			confirm_action_int = 8
@@ -822,6 +862,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 
 	rate_booking_button := widget.NewButton("Rate Booking", func() {
 		if len(confirm_action_scid) == 64 && confirm_stamp != 0 {
+			derbnb_gif.Start()
 			cont := container.NewVBox(layout.NewSpacer(), confirm_action_label, layout.NewSpacer())
 			confirm_border.Objects[4] = container.NewVSplit(cont, user_rating_cont)
 			confirm_action_label.SetText(fmt.Sprintf("Rate booking\n\nBooking ID: %d\n\nSCID: %s", confirm_stamp, confirm_action_scid))
@@ -834,6 +875,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 	rate_renter_button := widget.NewButton("Rate Renter", func() {
 		if scid_entry.Validate() == nil {
 			if confirm_stamp != 0 && viewing_address != "" {
+				derbnb_gif.Start()
 				cont := container.NewVBox(layout.NewSpacer(), confirm_action_label, layout.NewSpacer())
 				confirm_border.Objects[4] = container.NewVSplit(cont, owner_rating_cont)
 				confirm_action_scid = scid_entry.Text
@@ -846,7 +888,8 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 	})
 
 	send_message := widget.NewButton("Message", func() {
-		if len(viewing_address) == 66 {
+		if len(viewing_address) == 66 && viewing_address[0:4] == "dero" {
+			derbnb_gif.Start()
 			comment_entry.SetPlaceHolder("Message:")
 			cont := container.NewVBox(layout.NewSpacer(), confirm_action_label, layout.NewSpacer())
 			confirm_border.Objects[4] = container.NewVSplit(cont, message_cont)
@@ -988,11 +1031,17 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 	available_vbox = container.NewVBox(container.NewAdaptiveGrid(2, add_dates_button, remove_dates_button), available_dates_box, available_dates_box1, available_dates_box2, available_dates_box3)
 	available_border := container.NewBorder(nil, nil, nil, nil, available_vbox)
 
-	change_dates := widget.NewButton("Set Dates", func() {
-		available_label := widget.NewLabel(fmt.Sprintf("Set available dates for SCID:\n%s", scid_entry.Text))
+	change_dates := widget.NewButton("Off Dates", func() {
+		derbnb_gif.Start()
+		available_label := widget.NewLabel(fmt.Sprintf("Set off dates for SCID:\n%s", scid_entry.Text))
 		available_label.Wrapping = fyne.TextWrapWord
-		confirm_border.Objects[4] = container.NewHSplit(container.NewBorder(available_label, nil, nil, nil, available_c), available_border)
-		confirm_action_label.SetText(fmt.Sprintf("Set availability dates\n\nSCID: %s", viewing_address))
+		change_dates_cont := container.NewHSplit(container.NewBorder(available_label, nil, nil, nil, available_c), available_border)
+		change_dates_cont.Offset = 0.47
+		if imported {
+			change_dates_cont.Offset = 0.4
+		}
+		confirm_border.Objects[4] = change_dates_cont
+		confirm_action_label.SetText(fmt.Sprintf("Set off dates\n\nSCID: %s", viewing_address))
 		confirm_action_int = 12
 		confirm_border.Refresh()
 		w.SetContent(confirm_max)
@@ -1349,6 +1398,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 	metedata_entry_arr = []*fyne.Container{sq_foot_cont, style_cont, num_bedrooms_cont, num_guests_cont, photo_entry_cont}
 
 	property_add_info = widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "documentCreate"), func() {
+		derbnb_gif.Start()
 		confirm_border.Objects[4] = container.NewVScroll(container.NewVBox(layout.NewSpacer(), confirm_action_label, layout.NewSpacer(), placeMetadataObjects(metedata_label_arr, metedata_entry_arr)))
 		confirm_action_label.SetText(fmt.Sprintf("Set property info\n\nSCID: %s", scid_entry.Text))
 		confirm_action_int = 14
@@ -1490,8 +1540,6 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 
 			time.Sleep(time.Second)
 		}
-
-		derbnb_gif.Stop()
 	}()
 
 	return max
