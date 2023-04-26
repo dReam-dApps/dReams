@@ -457,6 +457,7 @@ func runPredictionPayouts(print bool) {
 	}
 
 	for _, sc := range post_queue {
+		var tx string
 		var sent bool
 		var value float64
 		GetPrediction(sc)
@@ -478,11 +479,11 @@ func runPredictionPayouts(print bool) {
 				sent = true
 				switch onChainPrediction(pre) {
 				case 1:
-					rpc.PostPrediction(sc, int(value))
+					tx = rpc.PostPrediction(sc, int(value))
 				case 2:
-					rpc.PostPrediction(sc, int(value*100000))
+					tx = rpc.PostPrediction(sc, int(value*100000))
 				case 3:
-					rpc.PostPrediction(sc, int(value))
+					tx = rpc.PostPrediction(sc, int(value))
 				default:
 					sent = false
 				}
@@ -495,29 +496,23 @@ func runPredictionPayouts(print bool) {
 			value, _ = holdero.GetPrice(pre)
 			if value > 0 {
 				sent = true
-				rpc.PostPrediction(sc, int(value))
+				tx = rpc.PostPrediction(sc, int(value))
 			} else {
 				serviceDebug(print, "[runPredictionPayouts]", "0 price, not posting")
 			}
 		}
 
 		if sent {
-			t := 0
 			Service.Last_block = rpc.Wallet.Height
 			serviceDebug(print, "[runPredictionPayouts]", "Tx Delay")
-			for rpc.Wallet.Height < Service.Last_block+3 {
-				if !rpc.Wallet.Service || !rpc.Wallet.Connect || !rpc.Daemon.Connect || t > 36 {
-					break
-				}
-
-				t++
-				time.Sleep(1 * time.Second)
-			}
+			time.Sleep(time.Second)
+			rpc.ConfirmTx(tx, "runPredictionPayouts", 36)
 		}
 	}
 
 	for _, sc := range pay_queue {
 		serviceDebug(print, "[runPredictionPayouts]", fmt.Sprintf("%s Paying out", sc))
+		var tx string
 		var sent bool
 		var amt float64
 		GetPrediction(sc)
@@ -541,11 +536,11 @@ func runPredictionPayouts(print bool) {
 				sent = true
 				switch onChainPrediction(pre) {
 				case 1:
-					rpc.EndPrediction(sc, int(amt))
+					tx = rpc.EndPrediction(sc, int(amt))
 				case 2:
-					rpc.EndPrediction(sc, int(amt*100000))
+					tx = rpc.EndPrediction(sc, int(amt*100000))
 				case 3:
-					rpc.EndPrediction(sc, int(amt))
+					tx = rpc.EndPrediction(sc, int(amt))
 				default:
 					sent = false
 				}
@@ -557,7 +552,7 @@ func runPredictionPayouts(print bool) {
 		} else {
 			amt, _ = holdero.GetPrice(pre)
 			if amt > 0 {
-				rpc.EndPrediction(sc, int(amt))
+				tx = rpc.EndPrediction(sc, int(amt))
 				sent = true
 			} else {
 				serviceDebug(print, "[runPredictionPayouts]", "0 price, not sending")
@@ -565,17 +560,10 @@ func runPredictionPayouts(print bool) {
 		}
 
 		if sent {
-			t := 0
 			Service.Last_block = rpc.Wallet.Height
 			serviceDebug(print, "[runPredictionPayouts]", "Tx Delay")
-			for rpc.Wallet.Height < Service.Last_block+3 {
-				if !rpc.Wallet.Service || !rpc.Wallet.Connect || !rpc.Daemon.Connect || t > 36 {
-					break
-				}
-
-				t++
-				time.Sleep(1 * time.Second)
-			}
+			time.Sleep(time.Second)
+			rpc.ConfirmTx(tx, "runPredictionPayouts", 36)
 		}
 	}
 }
@@ -612,25 +600,19 @@ func runSportsPayouts(print bool) {
 									win, _ = GetWinner(game[0], league[0])
 								}
 
+								var tx string
 								if win != "" {
-									rpc.EndSports(split[2], num, win)
+									tx = rpc.EndSports(split[2], num, win)
 									sent = true
 								} else {
 									serviceDebug(print, "[runSportsPayouts]", "Could not get winner")
 								}
 
 								if sent {
-									t := 0
 									Service.Last_block = rpc.Wallet.Height
 									serviceDebug(print, "[runSportsPayouts]", "Tx Delay")
-									for rpc.Wallet.Height < Service.Last_block+3 {
-										if !rpc.Wallet.Service || !rpc.Wallet.Connect || !rpc.Daemon.Connect || t > 36 {
-											break
-										}
-
-										t++
-										time.Sleep(1 * time.Second)
-									}
+									time.Sleep(time.Second)
+									rpc.ConfirmTx(tx, "runSportsPayouts", 36)
 								}
 							} else {
 								serviceDebug(print, "[runSportsPayouts]", fmt.Sprintf("%s Not ready for payout", game[0]))
@@ -915,7 +897,7 @@ func processBetTx(start uint64, db *bbolt.DB, print bool) {
 					}
 
 					if !sent {
-						serviceDebug(print, "[processBetTx]", fmt.Sprintf("%s Could not make out payload", e.TXID))
+						serviceDebug(print, "[processBetTx]", fmt.Sprintf("%s Could not match payload", e.TXID))
 						sendRefund(scid, destination_expected, "Bad payload", e)
 					}
 				} else {
@@ -1319,32 +1301,26 @@ func sendToPrediction(pre int, scid, destination_expected string, e dero.Entry) 
 		return false
 	}
 
+	var tx string
 	now := time.Now().Unix()
 	if now > int64(end[0]) {
-		rpc.ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "Past Deadline", e.TXID)
+		tx = rpc.ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "Past Deadline", e.TXID)
 	} else if now < int64(buffer[0]) {
-		rpc.ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "Before Buffer", e.TXID)
+		tx = rpc.ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "Before Buffer", e.TXID)
 	} else if played[0] >= limit[0] {
-		rpc.ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "Bet Limit Reached", e.TXID)
+		tx = rpc.ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "Bet Limit Reached", e.TXID)
 	} else {
-		rpc.AutoPredict(pre, e.Amount, e.SourcePort, scid, destination_expected, e.TXID)
+		tx = rpc.AutoPredict(pre, e.Amount, e.SourcePort, scid, destination_expected, e.TXID)
 	}
 
 	Service.Last_block = rpc.Wallet.Height
 
-	t := 0
 	if Service.Debug {
 		log.Println("[sendToPrediction] Tx delay")
 	}
 
-	for rpc.Wallet.Height < Service.Last_block+3 {
-		if !rpc.Wallet.Service || !rpc.Wallet.Connect || !rpc.Daemon.Connect || t > 36 {
-			break
-		}
-
-		t++
-		time.Sleep(1 * time.Second)
-	}
+	time.Sleep(time.Second)
+	rpc.ConfirmTx(tx, "sendToPrediction", 36)
 
 	return true
 }
@@ -1371,32 +1347,26 @@ func sendToSports(n, abv, team, scid, destination_expected string, e dero.Entry)
 		pre = 1
 	}
 
+	var tx string
 	now := time.Now().Unix()
 	if now > int64(end[0]) {
-		rpc.ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "Past Deadline", e.TXID)
+		tx = rpc.ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "Past Deadline", e.TXID)
 	} else if now < int64(buffer[0]) {
-		rpc.ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "Before Buffer", e.TXID)
+		tx = rpc.ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "Before Buffer", e.TXID)
 	} else if played[0] >= limit[0] {
-		rpc.ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "Bet Limit Reached", e.TXID)
+		tx = rpc.ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "Bet Limit Reached", e.TXID)
 	} else {
-		rpc.AutoBook(e.Amount, pre, e.SourcePort, n, abv, scid, destination_expected, e.TXID)
+		tx = rpc.AutoBook(e.Amount, pre, e.SourcePort, n, abv, scid, destination_expected, e.TXID)
 	}
 
 	Service.Last_block = rpc.Wallet.Height
 
-	t := 0
 	if Service.Debug {
 		log.Println("[sendToSports] Tx delay")
 	}
 
-	for rpc.Wallet.Height < Service.Last_block+3 {
-		if !rpc.Wallet.Service || !rpc.Wallet.Connect || !rpc.Daemon.Connect || t > 36 {
-			break
-		}
-
-		t++
-		time.Sleep(1 * time.Second)
-	}
+	time.Sleep(time.Second)
+	rpc.ConfirmTx(tx, "sendToSports", 36)
 
 	return true
 }
@@ -1406,21 +1376,15 @@ func sendToSports(n, abv, team, scid, destination_expected string, e dero.Entry)
 //   - scid, addr for reply message
 func sendRefund(scid, addr, msg string, e dero.Entry) {
 	waitForBlock()
-	rpc.ServiceRefund(e.Amount, e.SourcePort, scid, addr, msg, e.TXID)
+	tx := rpc.ServiceRefund(e.Amount, e.SourcePort, scid, addr, msg, e.TXID)
 	Service.Last_block = rpc.Wallet.Height
 
-	t := 0
 	if Service.Debug {
 		log.Println("[sendRefund] Tx delay")
 	}
-	for rpc.Wallet.Height < Service.Last_block+3 {
-		if !rpc.Wallet.Service || !rpc.Wallet.Connect || !rpc.Daemon.Connect || t > 36 {
-			break
-		}
 
-		t++
-		time.Sleep(1 * time.Second)
-	}
+	time.Sleep(time.Second)
+	rpc.ConfirmTx(tx, "sendRefund", 36)
 }
 
 // Pause dReamService if last tx was within 3 blocks

@@ -1275,14 +1275,14 @@ func RateSCID(scid string, amt, pos uint64) {
 //   - amt to send
 //   - p is what prediction
 //   - addr of placed bet and to send reply message
-//   - src and tx used in reply message
-func AutoPredict(p int, amt, src uint64, scid, addr, tx string) {
+//   - src and pre_tx used in reply message
+func AutoPredict(p int, amt, src uint64, scid, addr, pre_tx string) (tx string) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
 	var hl string
 	chopped_scid := scid[:6] + "..." + scid[58:]
-	chopped_txid := tx[:6] + "..." + tx[58:]
+	chopped_txid := pre_tx[:6] + "..." + pre_tx[58:]
 	switch p {
 	case 0:
 		hl = "Lower"
@@ -1326,18 +1326,20 @@ func AutoPredict(p int, amt, src uint64, scid, addr, tx string) {
 
 	log.Println("[AuotPredict] Prediction TX:", txid)
 	AddLog("AuotPredict TX: " + txid.TXID)
+
+	return txid.TXID
 }
 
 // dReamService refund if bet void
 //   - amt to send
 //   - addr to send refund to
-//   - src, msg and tx used in reply message
-func ServiceRefund(amt, src uint64, scid, addr, msg, tx string) {
+//   - src, msg and refund_tx used in reply message
+func ServiceRefund(amt, src uint64, scid, addr, msg, refund_tx string) (tx string) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
 	chopped_scid := scid[:6] + "..." + scid[58:]
-	chopped_txid := tx[:6] + "..." + tx[58:]
+	chopped_txid := refund_tx[:6] + "..." + refund_tx[58:]
 	response := rpc.Arguments{
 		{Name: rpc.RPC_DESTINATION_PORT, DataType: rpc.DataUint64, Value: uint64(0)},
 		{Name: rpc.RPC_SOURCE_PORT, DataType: rpc.DataUint64, Value: src},
@@ -1366,6 +1368,8 @@ func ServiceRefund(amt, src uint64, scid, addr, msg, tx string) {
 
 	log.Println("[ServiceRefund] Refund TX:", txid)
 	AddLog("Refund TX: " + txid.TXID)
+
+	return txid.TXID
 }
 
 // dReamService sports book by received tx
@@ -1374,12 +1378,12 @@ func ServiceRefund(amt, src uint64, scid, addr, msg, tx string) {
 //   - n is the game number
 //   - addr of placed bet and to send reply message
 //   - src, abv and tx used in reply message
-func AutoBook(amt, pre, src uint64, n, abv, scid, addr, tx string) {
+func AutoBook(amt, pre, src uint64, n, abv, scid, addr, book_tx string) (tx string) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
 	chopped_scid := scid[:6] + "..." + scid[58:]
-	chopped_txid := tx[:6] + "..." + tx[58:]
+	chopped_txid := book_tx[:6] + "..." + book_tx[58:]
 	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "Book"}
 	arg2 := rpc.Argument{Name: "pre", DataType: "U", Value: pre}
 	arg3 := rpc.Argument{Name: "n", DataType: "S", Value: n}
@@ -1417,6 +1421,8 @@ func AutoBook(amt, pre, src uint64, n, abv, scid, addr, tx string) {
 
 	log.Println("[AuotBook] Book TX:", txid)
 	AddLog("AuotBook TX: " + txid.TXID)
+
+	return txid.TXID
 }
 
 // Owner update for bet SC vars
@@ -1806,7 +1812,7 @@ func CancelInitiatedBet(scid string, b int) {
 
 // Post mark to prediction SC
 //   - price is the posted mark for prediction
-func PostPrediction(scid string, price int) {
+func PostPrediction(scid string, price int) (tx string) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
@@ -1838,12 +1844,14 @@ func PostPrediction(scid string, price int) {
 
 	log.Println("[Predictions] Post TX:", txid)
 	AddLog("Post TX: " + txid.TXID)
+
+	return txid.TXID
 }
 
 // dSports SC payout
 //   - num is game number
 //   - team is winning team for game number
-func EndSports(scid, num, team string) {
+func EndSports(scid, num, team string) (tx string) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
@@ -1870,11 +1878,13 @@ func EndSports(scid, num, team string) {
 
 	log.Println("[Sports] Payout TX:", txid)
 	AddLog("Sports Payout TX: " + txid.TXID)
+
+	return txid.TXID
 }
 
 // dPrediction SC payout
-//   - price is final prediction resuts
-func EndPrediction(scid string, price int) {
+//   - price is final prediction results
+func EndPrediction(scid string, price int) (tx string) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
@@ -1901,6 +1911,8 @@ func EndPrediction(scid string, price int) {
 
 	log.Println("[Predictions] Payout TX:", txid)
 	AddLog("Prediction Payout TX: " + txid.TXID)
+
+	return txid.TXID
 }
 
 // Install new bet SC
@@ -2292,16 +2304,49 @@ func SendAsset(scid, dest string, payload bool) {
 	AddLog("Send Asset TX: " + txid.TXID)
 }
 
-// Watch a sent tx and retry 3 times if failed
+// Watch a sent tx and return true if tx is confirmed
 //   - tag for log print
-//   - Passing tries to ensure we only retry 3 times
-func ConfirmTx(txid string, tag string, tries int) (retry int) {
+//   - timeout is duration of loop in 2sec increment, will break if reached
+func ConfirmTx(txid, tag string, timeout int) bool {
+	if txid != "" {
+		count := 0
+		for Wallet.Connect && Daemon.Connect {
+			count++
+			time.Sleep(2 * time.Second)
+			if tx := GetDaemonTx(txid); tx != nil {
+				if count > timeout {
+					break
+				}
+
+				if tx.In_pool {
+					continue
+				} else if !tx.In_pool && tx.Block_Height > 1 && tx.ValidBlock != "" {
+					log.Printf("[%s] TX Confirmed\n", tag)
+					return true
+				} else if !tx.In_pool && tx.Block_Height == 0 && tx.ValidBlock == "" {
+					log.Printf("[%s] TX Failed\n", tag)
+					return false
+				}
+			}
+		}
+	}
+
+	log.Printf("[%s] Could Not Confirm TX\n", tag)
+
+	return false
+}
+
+// Watch a sent tx with int return for retry count, failed tx returns 1, timeout returns 2
+//   - tag for log print
+//   - timeout is duration of loop in 2sec increment, will break if reached
+func ConfirmTxRetry(txid, tag string, timeout int) (retry int) {
 	count := 0
-	for (tries < 3) && Wallet.Connect && Daemon.Connect {
+	next_block := Wallet.Height + 1
+	for Wallet.Connect && Daemon.Connect {
 		count++
 		time.Sleep(2 * time.Second)
 		if tx := GetDaemonTx(txid); tx != nil {
-			if count > 36 {
+			if count > timeout {
 				break
 			}
 
@@ -2311,8 +2356,11 @@ func ConfirmTx(txid string, tag string, tries int) (retry int) {
 				log.Printf("[%s] TX Confirmed\n", tag)
 				return 100
 			} else if !tx.In_pool && tx.Block_Height == 0 && tx.ValidBlock == "" {
-				log.Printf("[%s] TX Failed, Retrying\n", tag)
-				time.Sleep(6 * time.Second)
+				log.Printf("[%s] TX Failed, Retrying next block\n", tag)
+				time.Sleep(3 * time.Second)
+				for Wallet.Height <= next_block {
+					time.Sleep(3 * time.Second)
+				}
 				return 1
 			}
 		}
@@ -2320,7 +2368,7 @@ func ConfirmTx(txid string, tag string, tries int) (retry int) {
 
 	log.Printf("[%s] Could Not Confirm TX\n", tag)
 
-	return 100
+	return 2
 }
 
 // Send a message to destination address through Dero transaction, with ringsize selection

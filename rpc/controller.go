@@ -1064,7 +1064,7 @@ func allFoldedWinner() {
 					for retry < 4 {
 						tx := PayOut(Round.Winner)
 						time.Sleep(time.Second)
-						retry += ConfirmTx(tx, "Holdero", retry)
+						retry += ConfirmTxRetry(tx, "Holdero", 36)
 					}
 				}()
 			}
