@@ -293,9 +293,8 @@ func TourneyDeposit(bal uint64, name string) {
 		args := rpc.Arguments{arg1, arg2}
 		txid := rpc.Transfer_Result{}
 
-		scid := crypto.HashHexToHash(TourneySCID)
 		t1 := rpc.Transfer{
-			SCID:        scid,
+			SCID:        crypto.HashHexToHash(TourneySCID),
 			Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
 			Amount:      0,
 			Burn:        bal,
@@ -2006,9 +2005,8 @@ func ClaimNFA(scid string) {
 	args := rpc.Arguments{arg1, arg1}
 	txid := rpc.Transfer_Result{}
 
-	nfa_sc := crypto.HashHexToHash(scid)
 	t1 := rpc.Transfer{
-		SCID:        nfa_sc,
+		SCID:        crypto.HashHexToHash(scid),
 		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
 		Amount:      0,
 		Burn:        1,
@@ -2094,9 +2092,8 @@ func SetNFAListing(scid, list, char string, dur, amt, perc uint64) {
 
 	split_fee := ListingFee / 2
 
-	asset_scid := crypto.HashHexToHash(scid)
 	t1 := rpc.Transfer{
-		SCID:        asset_scid,
+		SCID:        crypto.HashHexToHash(scid),
 		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
 		Amount:      0,
 		Burn:        1,
@@ -2251,9 +2248,8 @@ func SendAsset(scid, dest string, payload bool) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
-	asset_scid := crypto.HashHexToHash(scid)
 	t1 := rpc.Transfer{
-		SCID:        asset_scid,
+		SCID:        crypto.HashHexToHash(scid),
 		Destination: dest,
 		Amount:      1,
 	}

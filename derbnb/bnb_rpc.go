@@ -285,9 +285,8 @@ func ListProperty(scid string, amt, dd uint64) {
 	args := dero.Arguments{arg1, arg2, arg3, arg4}
 	txid := dero.Transfer_Result{}
 
-	token := crypto.HashHexToHash(scid)
 	t1 := dero.Transfer{
-		SCID:        token,
+		SCID:        crypto.HashHexToHash(scid),
 		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
 		Amount:      0,
 		Burn:        1,
@@ -670,9 +669,8 @@ func StoreLocation(scid, location string) {
 	args := dero.Arguments{arg1, arg2}
 	txid := dero.Transfer_Result{}
 
-	asset_scid := crypto.HashHexToHash(scid)
 	t1 := dero.Transfer{
-		SCID:        asset_scid,
+		SCID:        crypto.HashHexToHash(scid),
 		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
 		Amount:      0,
 		Burn:        1,
@@ -708,9 +706,8 @@ func UpdateMetadata(scid, metadata string) {
 	args := dero.Arguments{arg1, arg2}
 	txid := dero.Transfer_Result{}
 
-	asset_scid := crypto.HashHexToHash(scid)
 	t1 := dero.Transfer{
-		SCID:        asset_scid,
+		SCID:        crypto.HashHexToHash(scid),
 		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
 		Amount:      0,
 		Burn:        1,
