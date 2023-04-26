@@ -992,11 +992,13 @@ func MainTab(ti *container.TabItem) {
 		dReams.predict = false
 		dReams.sports = false
 		dReams.tarot = false
-		baccarat.GetBaccTables()
-		BaccRefresh()
-		if rpc.Wallet.Connect && rpc.Bacc.Display {
-			baccarat.BaccBuffer(false)
-		}
+		go func() {
+			baccarat.GetBaccTables()
+			BaccRefresh()
+			if rpc.Wallet.Connect && rpc.Bacc.Display {
+				baccarat.BaccBuffer(false)
+			}
+		}()
 	case "Predict":
 		dReams.menu = false
 		dReams.holdero = false

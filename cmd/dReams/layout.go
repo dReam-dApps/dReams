@@ -665,7 +665,7 @@ func placeBacc() *fyne.Container {
 		&B.Back,
 		&B.Front,
 		layout.NewSpacer(),
-		baccarat.BaccaratButtons())
+		baccarat.BaccaratButtons(dReams.Window))
 
 	return B.DApp
 }

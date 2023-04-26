@@ -13,6 +13,7 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/data/validation"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 )
@@ -55,7 +56,7 @@ func BaccResult(r string) *canvas.Text {
 }
 
 // Baccarat action objects
-func BaccaratButtons() fyne.CanvasObject {
+func BaccaratButtons(w fyne.Window) fyne.CanvasObject {
 	entry := dwidget.DeroAmtEntry("", 1, 0)
 	entry.PlaceHolder = "dReams:"
 	entry.SetText("10")
@@ -83,21 +84,27 @@ func BaccaratButtons() fyne.CanvasObject {
 		BaccBuffer(true)
 		rpc.Bacc.Found = false
 		rpc.Bacc.Display = false
-		rpc.BaccBet(entry.Text, "player")
+		if tx := rpc.BaccBet(entry.Text, "player"); tx == "ID error" {
+			dialog.NewInformation("Baccarat", "Select a table", w).Show()
+		}
 	})
 
 	banker_button := widget.NewButton("Banker", func() {
 		BaccBuffer(true)
 		rpc.Bacc.Found = false
 		rpc.Bacc.Display = false
-		rpc.BaccBet(entry.Text, "banker")
+		if tx := rpc.BaccBet(entry.Text, "banker"); tx == "ID error" {
+			dialog.NewInformation("Baccarat", "Select a table", w).Show()
+		}
 	})
 
 	tie_button := widget.NewButton("Tie", func() {
 		BaccBuffer(true)
 		rpc.Bacc.Found = false
 		rpc.Bacc.Display = false
-		rpc.BaccBet(entry.Text, "tie")
+		if tx := rpc.BaccBet(entry.Text, "tie"); tx == "ID error" {
+			dialog.NewInformation("Baccarat", "Select a table", w).Show()
+		}
 	})
 
 	amt_box := container.NewHScroll(entry)
@@ -136,8 +143,10 @@ func BaccaratButtons() fyne.CanvasObject {
 		default:
 			rpc.Bacc.Contract = Table.Map[s]
 		}
+		rpc.FetchBaccSC()
 	})
 	table_select.PlaceHolder = "Select Table:"
+	table_select.SetSelectedIndex(0)
 
 	search := container.NewVBox(
 		layout.NewSpacer(),
@@ -164,20 +173,23 @@ func BaccTable(img fyne.Resource) fyne.CanvasObject {
 	return table_img
 }
 
+// Gets list of current Baccarat tables from on chain store and refresh options
 func GetBaccTables() {
-	if table_map, ok := rpc.FindStringKey(rpc.RatingSCID, "bacc_tables", rpc.Daemon.Rpc).(string); ok {
-		if str, err := hex.DecodeString(table_map); err == nil {
-			json.Unmarshal([]byte(str), &Table.Map)
+	if rpc.Daemon.Connect {
+		if table_map, ok := rpc.FindStringKey(rpc.RatingSCID, "bacc_tables", rpc.Daemon.Rpc).(string); ok {
+			if str, err := hex.DecodeString(table_map); err == nil {
+				json.Unmarshal([]byte(str), &Table.Map)
+			}
 		}
-	}
 
-	table_names := make([]string, 0, len(Table.Map))
-	for name := range Table.Map {
-		table_names = append(table_names, name)
-	}
+		table_names := make([]string, 0, len(Table.Map))
+		for name := range Table.Map {
+			table_names = append(table_names, name)
+		}
 
-	table_select := Table.Actions.Objects[2].(*fyne.Container).Objects[1].(*fyne.Container).Objects[0].(*widget.Select)
-	table_select.Options = []string{"dReams"}
-	table_select.Options = append(table_select.Options, table_names...)
-	table_select.Refresh()
+		table_select := Table.Actions.Objects[2].(*fyne.Container).Objects[1].(*fyne.Container).Objects[0].(*widget.Select)
+		table_select.Options = []string{"dReams"}
+		table_select.Options = append(table_select.Options, table_names...)
+		table_select.Refresh()
+	}
 }

@@ -1108,7 +1108,12 @@ func UploadHolderoContract(pub int) {
 // Place Baccarat bet
 //   - amt to bet
 //   - w defines where bet is placed (player, banker or tie)
-func BaccBet(amt, w string) {
+func BaccBet(amt, w string) (tx string) {
+	if Bacc.AssetID == "" || len(Bacc.AssetID) != 64 {
+		log.Println("[Baccarat] Asset ID error")
+		return "ID error"
+	}
+
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
@@ -1153,6 +1158,8 @@ func BaccBet(amt, w string) {
 	}
 
 	Bacc.CHeight = Wallet.Height
+
+	return txid.TXID
 }
 
 // Place higher prediction to SC
