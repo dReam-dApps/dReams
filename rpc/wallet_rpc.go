@@ -216,9 +216,8 @@ func TokenBalance(scid string) uint64 {
 	defer cancel()
 
 	var result *rpc.GetBalance_Result
-	sc := crypto.HashHexToHash(scid)
 	params := &rpc.GetBalance_Params{
-		SCID: sc,
+		SCID: crypto.HashHexToHash(scid),
 	}
 
 	if err := rpcClientW.CallFor(ctx, &result, "GetBalance", params); err != nil {
@@ -232,7 +231,7 @@ func TokenBalance(scid string) uint64 {
 // Get balances of all tokens used on dReams platform
 func GetDreamsBalances() {
 	if Wallet.Connect {
-		dReam_bal := TokenBalance(dReamsSCID)
+		dReam_bal := TokenBalance(DreamsSCID)
 		Display.Token_balance["dReams"] = fromAtomic(dReam_bal)
 		Wallet.TokenBal["dReams"] = dReam_bal
 
@@ -251,9 +250,9 @@ func GetDreamsBalances() {
 // Return asset transfer to SCID from Round.AssetID
 func GetAssetSCIDforTransfer(amt uint64) (transfer rpc.Transfer) {
 	switch Round.AssetID {
-	case dReamsSCID:
+	case DreamsSCID:
 		transfer = rpc.Transfer{
-			SCID:        crypto.HashHexToHash(dReamsSCID),
+			SCID:        crypto.HashHexToHash(DreamsSCID),
 			Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
 			Burn:        amt,
 		}
@@ -274,7 +273,7 @@ func GetAssetSCIDforTransfer(amt uint64) (transfer rpc.Transfer) {
 // Get display name of asset by SCID
 func GetAssetSCIDName(scid string) string {
 	switch scid {
-	case dReamsSCID:
+	case DreamsSCID:
 		return "dReams"
 	case HgcSCID:
 		return "HGC"
@@ -1024,9 +1023,8 @@ func TradedReams(amt uint64) {
 	args := rpc.Arguments{arg1}
 	txid := rpc.Transfer_Result{}
 
-	scid := crypto.HashHexToHash(dReamsSCID)
 	t1 := rpc.Transfer{
-		SCID:        scid,
+		SCID:        crypto.HashHexToHash(DreamsSCID),
 		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
 		Amount:      0,
 		Burn:        amt,
@@ -1120,19 +1118,18 @@ func BaccBet(amt, w string) {
 	args := rpc.Arguments{arg1, arg2}
 	txid := rpc.Transfer_Result{}
 
-	scid := crypto.HashHexToHash(dReamsSCID)
 	t1 := rpc.Transfer{
-		SCID:        scid,
+		SCID:        crypto.HashHexToHash(Bacc.AssetID),
 		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
 		Amount:      0,
 		Burn:        ToAtomicOne(amt),
 	}
 
 	t := []rpc.Transfer{t1}
-	fee := GasEstimate(BaccSCID, "[Baccarat]", args, t)
+	fee := GasEstimate(Bacc.Contract, "[Baccarat]", args, t)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
-		SC_ID:     BaccSCID,
+		SC_ID:     Bacc.Contract,
 		SC_RPC:    args,
 		Ringsize:  2,
 		Fees:      fee,

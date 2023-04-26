@@ -1,6 +1,8 @@
 package baccarat
 
 import (
+	"encoding/hex"
+	"encoding/json"
 	"image/color"
 	"strconv"
 
@@ -17,6 +19,7 @@ import (
 
 type baccObjects struct {
 	Actions *fyne.Container
+	Map     map[string]string
 }
 
 var Table baccObjects
@@ -125,10 +128,21 @@ func BaccaratButtons() fyne.CanvasObject {
 		}
 	})
 
+	table_opts := []string{"dReams"}
+	table_select := widget.NewSelect(table_opts, func(s string) {
+		switch s {
+		case "dReams":
+			rpc.Bacc.Contract = rpc.BaccSCID
+		default:
+			rpc.Bacc.Contract = Table.Map[s]
+		}
+	})
+	table_select.PlaceHolder = "Select Table:"
+
 	search := container.NewVBox(
 		layout.NewSpacer(),
 		container.NewAdaptiveGrid(2,
-			layout.NewSpacer(),
+			table_select,
 			container.NewBorder(nil, nil, nil, search_button, search_entry)))
 
 	Table.Actions = container.NewVBox(
@@ -148,4 +162,22 @@ func BaccTable(img fyne.Resource) fyne.CanvasObject {
 	table_img.Move(fyne.NewPos(5, 0))
 
 	return table_img
+}
+
+func GetBaccTables() {
+	if table_map, ok := rpc.FindStringKey(rpc.RatingSCID, "bacc_tables", rpc.Daemon.Rpc).(string); ok {
+		if str, err := hex.DecodeString(table_map); err == nil {
+			json.Unmarshal([]byte(str), &Table.Map)
+		}
+	}
+
+	table_names := make([]string, 0, len(Table.Map))
+	for name := range Table.Map {
+		table_names = append(table_names, name)
+	}
+
+	table_select := Table.Actions.Objects[2].(*fyne.Container).Objects[1].(*fyne.Container).Objects[0].(*widget.Select)
+	table_select.Options = []string{"dReams"}
+	table_select.Options = append(table_select.Options, table_names...)
+	table_select.Refresh()
 }

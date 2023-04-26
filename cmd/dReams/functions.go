@@ -741,8 +741,9 @@ func revealingKey() {
 
 // Refresh all Baccarat objects
 func BaccRefresh() {
+	asset_name := rpc.GetAssetSCIDName(rpc.Bacc.AssetID)
 	B.LeftLabel.SetText("Total Hands Played: " + rpc.Display.Total_w + "      Player Wins: " + rpc.Display.Player_w + "      Ties: " + rpc.Display.Ties + "      Banker Wins: " + rpc.Display.Banker_w + "      Min Bet is " + rpc.Display.BaccMin + " dReams, Max Bet is " + rpc.Display.BaccMax)
-	B.RightLabel.SetText("dReams Balance: " + rpc.Display.Token_balance["dReams"] + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
+	B.RightLabel.SetText(asset_name + " Balance: " + rpc.Display.Token_balance[asset_name] + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
 
 	if !rpc.Bacc.Display {
 		B.Front.Objects[0] = clearBaccCards()
@@ -991,6 +992,7 @@ func MainTab(ti *container.TabItem) {
 		dReams.predict = false
 		dReams.sports = false
 		dReams.tarot = false
+		baccarat.GetBaccTables()
 		BaccRefresh()
 		if rpc.Wallet.Connect && rpc.Bacc.Display {
 			baccarat.BaccBuffer(false)

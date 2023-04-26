@@ -170,6 +170,8 @@ type baccValues struct {
 	B_card2  int
 	B_card3  int
 	CHeight  int
+	AssetID  string
+	Contract string
 	Last     string
 	Found    bool
 	Display  bool

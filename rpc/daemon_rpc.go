@@ -18,7 +18,7 @@ const (
 	DREAMSv      = "0.9.4d"
 	NameSCID     = "0000000000000000000000000000000000000000000000000000000000000001"
 	RatingSCID   = "c66a11ddb22912e92b0a7ab777ed0d343632d9e3c6e8a81452396ca84d2decb6"
-	dReamsSCID   = "ad2e7b37c380cc1aed3a6b27224ddfc92a2d15962ca1f4d35e530dba0f9575a9"
+	DreamsSCID   = "ad2e7b37c380cc1aed3a6b27224ddfc92a2d15962ca1f4d35e530dba0f9575a9"
 	HgcSCID      = "e2e45ce26f70cb551951c855e81a12fee0bb6ebe80ef115c3f50f51e119c02f3"
 	TourneySCID  = "c2e1ec16aed6f653aef99a06826b2b6f633349807d01fbb74cc0afb5ff99c3c7"
 	HolderoSCID  = "e3f37573de94560e126a9020c0a5b3dfc7a4f3a4fbbe369fba93fbd219dc5fe9"
@@ -490,8 +490,8 @@ func FetchHolderoSC() {
 					if fromHextoString(Chips_jv.(string)) == "ASSET" {
 						Round.Asset = true
 						if _, ok := result.VariableStringKeys["dReams"].(string); ok {
-							Pot_jv = result.Balances[dReamsSCID]
-							Round.AssetID = dReamsSCID
+							Pot_jv = result.Balances[DreamsSCID]
+							Round.AssetID = DreamsSCID
 						} else if _, ok = result.VariableStringKeys["HGC"].(string); ok {
 							Pot_jv = result.Balances[HgcSCID]
 							Round.AssetID = HgcSCID
@@ -749,7 +749,7 @@ func FetchBaccSC() {
 
 		var result *rpc.GetSC_Result
 		params := rpc.GetSC_Params{
-			SCID:      BaccSCID,
+			SCID:      Bacc.Contract,
 			Code:      false,
 			Variables: true,
 		}
@@ -759,6 +759,7 @@ func FetchBaccSC() {
 			return
 		}
 
+		Asset_jv := result.VariableStringKeys["tokenSCID"]
 		Total_jv := result.VariableStringKeys["TotalHandsPlayed:"]
 		Player_jv := result.VariableStringKeys["Player Wins:"]
 		Banker_jv := result.VariableStringKeys["Banker Wins:"]
@@ -767,6 +768,10 @@ func FetchBaccSC() {
 		Ties_jv := result.VariableStringKeys["Ties:"]
 		// Pot_jv = result.Balances[dReamsSCID]
 		// Pot_jv = result.Balances["0000000000000000000000000000000000000000000000000000000000000000"]
+		if Asset_jv != nil {
+			Bacc.AssetID = fmt.Sprint(Asset_jv)
+		}
+
 		if Total_jv != nil {
 			Display.Total_w = fmt.Sprint(Total_jv)
 		}
@@ -826,7 +831,7 @@ func FetchBaccHand(tx string) {
 
 		var result *rpc.GetSC_Result
 		params := rpc.GetSC_Params{
-			SCID:      BaccSCID,
+			SCID:      Bacc.Contract,
 			Code:      false,
 			Variables: true,
 		}
