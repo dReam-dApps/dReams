@@ -1202,7 +1202,7 @@ func sendAssetMenu(window_icon, background fyne.Resource) {
 	dest_entry := widget.NewMultiLineEntry()
 	dest_entry.SetPlaceHolder("Destination Address:")
 	dest_entry.Wrapping = fyne.TextWrapWord
-	dest_entry.Validator = validation.NewRegexp(`^(dero)\w{62}`, "Invalid Address")
+	dest_entry.Validator = validation.NewRegexp(`^(dero)\w{62}$`, "Invalid Address")
 	dest_entry.OnChanged = func(s string) {
 		if dest_entry.Validate() == nil {
 			info_label.SetText("")
@@ -1350,18 +1350,21 @@ func listMenu(window_icon, background fyne.Resource) {
 	listing.PlaceHolder = "Type:"
 
 	duration := dwidget.DeroAmtEntry("", 1, 0)
+	duration.AllowFloat = false
 	duration.SetPlaceHolder("Duration in Hours:")
 	duration.Validator = validation.NewRegexp(`^[^0]\d{0,2}$`, "Int required")
 
 	start := dwidget.DeroAmtEntry("", 0.1, 1)
+	start.AllowFloat = true
 	start.SetPlaceHolder("Start Price:")
-	start.Validator = validation.NewRegexp(`\d{1,}\.\d{1,5}$`, "Float required")
+	start.Validator = validation.NewRegexp(`\d{1,}\.\d{1,5}$|^[^0]\d{0,}$`, "Float required")
 
 	charAddr := widget.NewEntry()
 	charAddr.SetPlaceHolder("Charity Donation Address:")
-	charAddr.Validator = validation.NewRegexp(`^\w{66,66}$`, "Int required")
+	charAddr.Validator = validation.NewRegexp(`^(dero)\w{62}$`, "Int required")
 
 	charPerc := dwidget.DeroAmtEntry("", 1, 0)
+	charPerc.AllowFloat = false
 	charPerc.SetPlaceHolder("Charity Donation %:")
 	charPerc.Validator = validation.NewRegexp(`^\d{1,2}$`, "Int required")
 	charPerc.OnChanged = func(s string) {
