@@ -548,18 +548,21 @@ func fetch(quit chan struct{}) {
 
 					// Betting
 					if menu.Control.Dapp_list["dSports and dPredictions"] {
-						offset++
-						if offset == 21 {
-							offset = 0
-						} else if offset%5 == 0 {
+						if offset%5 == 0 {
 							SportsRefresh(dReams.sports)
 						}
+
 						S.RightLabel.SetText("dReams Balance: " + rpc.Display.Token_balance["dReams"] + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
 						PredictionRefresh(dReams.predict)
 					}
 
 					// Menu
 					go MenuRefresh(dReams.menu)
+
+					offset++
+					if offset == 21 {
+						offset = 0
+					}
 				}
 
 				if rpc.Daemon.Connect {
@@ -690,6 +693,12 @@ func HolderoRefresh() {
 				rpc.Display.Res = ""
 				rpc.Round.Notified = false
 			}
+		}
+	}
+
+	if dReams.menu_tabs.contracts {
+		if offset%3 == 0 {
+			go menu.GetTableStats(rpc.Round.Contract, false)
 		}
 	}
 
@@ -933,12 +942,6 @@ func MenuRefresh(tab bool) {
 			go refreshPriceDisplay(true)
 		}
 
-		if dReams.menu_tabs.contracts {
-			if offset%3 == 0 {
-				go menu.GetTableStats(rpc.Round.Contract, false)
-			}
-		}
-
 		if dReams.menu_tabs.market && !isWindows() {
 			menu.FindNfaListings(nil)
 		}
@@ -1041,14 +1044,12 @@ func MenuTab(ti *container.TabItem) {
 		dReams.menu_tabs.market = false
 	case "Assets":
 		dReams.menu_tabs.wallet = false
-		dReams.menu_tabs.contracts = false
 		dReams.menu_tabs.assets = true
 		dReams.menu_tabs.market = false
 		menu.Control.Viewing_asset = ""
 		menu.Assets.Asset_list.UnselectAll()
 	case "Market":
 		dReams.menu_tabs.wallet = false
-		dReams.menu_tabs.contracts = false
 		dReams.menu_tabs.assets = false
 		dReams.menu_tabs.market = true
 		go menu.FindNfaListings(nil)

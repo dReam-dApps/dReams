@@ -408,6 +408,7 @@ func place() *fyne.Container {
 			}()
 		}
 
+		dReams.menu_tabs.contracts = true
 		holdero_objs = placeHoldero(contract_change_screen)
 		contract_objs = placeContract(holdero_objs)
 
@@ -759,7 +760,7 @@ func placePredict() *fyne.Container {
 		predict_box)
 
 	go func() {
-		time.Sleep(time.Second)
+		time.Sleep(2 * time.Second)
 		for !menu.Exit_signal && menu.Control.Dapp_list["dSports and dPredictions"] {
 			if !rpc.Wallet.Connect {
 				if menu.Control.Dapp_list["dSports and dPredictions"] {

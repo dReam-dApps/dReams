@@ -1246,7 +1246,7 @@ func CreateTableList(gc bool, tables map[string]string) {
 
 // Get current Holdero table menu stats
 func GetTableStats(scid string, single bool) {
-	if len(scid) == 64 {
+	if Gnomes.Init && !GnomonClosing() && len(scid) == 64 {
 		_, v := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "V:", Gnomes.Indexer.LastIndexedHeight, true)
 		_, l := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "Last", Gnomes.Indexer.LastIndexedHeight, true)
 		_, s := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "Seats at Table:", Gnomes.Indexer.LastIndexedHeight, true)
