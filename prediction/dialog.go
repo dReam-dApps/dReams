@@ -24,7 +24,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-type psOwnerWidgets struct {
+type psOwnerObjects struct {
 	S_end        *dwidget.DeroAmts
 	S_amt        *dwidget.DeroAmts
 	S_game       *widget.Select
@@ -52,7 +52,7 @@ type psOwnerWidgets struct {
 	Transact_on  bool
 }
 
-var PS_Control psOwnerWidgets
+var PS_Control psOwnerObjects
 
 // Check if prediction is for on chain values
 func isOnChainPrediction(s string) bool {
@@ -103,7 +103,8 @@ func preditctionOpts(window fyne.Window) fyne.CanvasObject {
 
 	PS_Control.P_end = dwidget.DeroAmtEntry("", 1, 0)
 	PS_Control.P_end.SetPlaceHolder("Closes At:")
-	PS_Control.P_end.Validator = validation.NewRegexp(`^\d{10,}$`, "Format Not Valid")
+	PS_Control.P_end.AllowFloat = false
+	PS_Control.P_end.Validator = validation.NewRegexp(`^\d{10,}$`, "Unix time required")
 
 	PS_Control.P_mark = widget.NewEntry()
 	PS_Control.P_mark.SetPlaceHolder("Mark:")
@@ -111,8 +112,9 @@ func preditctionOpts(window fyne.Window) fyne.CanvasObject {
 
 	PS_Control.P_amt = dwidget.DeroAmtEntry("", 0.1, 1)
 	PS_Control.P_amt.SetPlaceHolder("Minimum Amount:")
+	PS_Control.P_amt.AllowFloat = true
 	PS_Control.P_amt.Wrapping = fyne.TextTruncate
-	PS_Control.P_amt.Validator = validation.NewRegexp(`^\d{1,}\.\d{1,5}$`, "Format Not Valid")
+	PS_Control.P_amt.Validator = validation.NewRegexp(`^\d{1,}\.\d{1,5}$|^[^0]\d{0,}$`, "Int or float required")
 
 	feeds := []string{"dReams Client"}
 	PS_Control.P_feed = widget.NewSelectEntry(feeds)
@@ -120,8 +122,9 @@ func preditctionOpts(window fyne.Window) fyne.CanvasObject {
 
 	PS_Control.P_deposit = dwidget.DeroAmtEntry("", 0.1, 1)
 	PS_Control.P_deposit.SetPlaceHolder("Deposit Amount:")
+	PS_Control.P_deposit.AllowFloat = true
 	PS_Control.P_deposit.Wrapping = fyne.TextTruncate
-	PS_Control.P_deposit.Validator = validation.NewRegexp(`^\d{1,}\.\d{1,5}$`, "Format Not Valid")
+	PS_Control.P_deposit.Validator = validation.NewRegexp(`^\d{1,}\.\d{1,5}$|^[^0]\d{0,}$`, "Int or float required")
 
 	reset := window.Content().(*fyne.Container).Objects[2]
 
@@ -280,12 +283,13 @@ func sportsOpts(window fyne.Window) fyne.CanvasObject {
 
 	PS_Control.S_end = dwidget.DeroAmtEntry("", 1, 0)
 	PS_Control.S_end.SetPlaceHolder("Closes At:")
-	PS_Control.S_end.Validator = validation.NewRegexp(`^\d{10,}$`, "Format Not Valid")
+	PS_Control.S_end.Validator = validation.NewRegexp(`^\d{10,}$`, "Unix time required")
 
 	PS_Control.S_amt = dwidget.DeroAmtEntry("", 0.1, 1)
 	PS_Control.S_amt.SetPlaceHolder("Minimum Amount:")
+	PS_Control.S_amt.AllowFloat = true
 	PS_Control.S_amt.Wrapping = fyne.TextTruncate
-	PS_Control.S_amt.Validator = validation.NewRegexp(`^\d{1,}\.\d{1,5}$`, "Format Not Valid")
+	PS_Control.S_amt.Validator = validation.NewRegexp(`^\d{1,}\.\d{1,5}$|^[^0]\d{0,}$`, "Int or float required")
 
 	feeds := []string{"dReams Client"}
 	PS_Control.S_feed = widget.NewSelectEntry(feeds)
@@ -293,8 +297,9 @@ func sportsOpts(window fyne.Window) fyne.CanvasObject {
 
 	PS_Control.S_deposit = dwidget.DeroAmtEntry("", 0.1, 1)
 	PS_Control.S_deposit.SetPlaceHolder("Deposit Amount:")
+	PS_Control.S_deposit.AllowFloat = true
 	PS_Control.S_deposit.Wrapping = fyne.TextTruncate
-	PS_Control.S_deposit.Validator = validation.NewRegexp(`^\d{1,}\.\d{1,5}$`, "Format Not Valid")
+	PS_Control.S_deposit.Validator = validation.NewRegexp(`^\d{1,}\.\d{1,5}$|^[^0]\d{0,}$`, "Int or float required")
 
 	reset := window.Content().(*fyne.Container).Objects[2]
 
