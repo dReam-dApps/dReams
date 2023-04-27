@@ -46,7 +46,6 @@ type displayStrings struct {
 	Blinds   string
 	Ante     string
 	Dealer   string
-	Turn     string
 	PlayerId string
 	Readout  string
 	B_Button string
@@ -108,6 +107,7 @@ type holderoValues struct {
 	Contract  string
 	ID        int
 	Players   int
+	Turn      int
 	Last      int64
 	Pot       uint64
 	BB        uint64
@@ -296,6 +296,7 @@ func closedTable() {
 	Round.P6_name = ""
 	Round.Bettor = ""
 	Round.Raisor = ""
+	Round.Turn = 0
 	Round.Last = 0
 	Round.Local_trigger = false
 	Round.Flop_trigger = false
@@ -314,7 +315,6 @@ func closedTable() {
 	Display.Blinds = ""
 	Display.Ante = ""
 	Display.Dealer = ""
-	Display.Turn = ""
 	Display.PlayerId = ""
 }
 

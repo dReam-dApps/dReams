@@ -112,7 +112,7 @@ func Player1_label(a, f, t fyne.Resource) fyne.CanvasObject {
 	var frame fyne.CanvasObject
 	var out fyne.CanvasObject
 	if rpc.Signal.In1 {
-		if rpc.Display.Turn == "1" {
+		if rpc.Round.Turn == 1 {
 			name = canvas.NewText(rpc.Round.P1_name, color.RGBA{105, 90, 205, 210})
 		} else {
 			name = canvas.NewText(rpc.Round.P1_name, color.White)
@@ -124,14 +124,14 @@ func Player1_label(a, f, t fyne.Resource) fyne.CanvasObject {
 	if a != nil && rpc.Signal.In1 {
 		if rpc.Round.P1_url != "" {
 			avatar = &Shared.P1_avatar
-			if rpc.Display.Turn == "1" {
+			if rpc.Round.Turn == 1 {
 				frame = canvas.NewImageFromResource(t)
 			} else {
 				frame = canvas.NewImageFromResource(f)
 			}
 		} else {
 			avatar = canvas.NewImageFromResource(a)
-			if rpc.Display.Turn == "1" {
+			if rpc.Round.Turn == 1 {
 				frame = canvas.NewImageFromResource(t)
 			} else {
 				frame = canvas.NewImageFromResource(f)
@@ -170,7 +170,7 @@ func Player2_label(a, f, t fyne.Resource) fyne.CanvasObject {
 	var avatar fyne.CanvasObject
 	var frame fyne.CanvasObject
 	if rpc.Signal.In2 {
-		if rpc.Display.Turn == "2" {
+		if rpc.Round.Turn == 2 {
 			name = canvas.NewText(rpc.Round.P2_name, color.RGBA{105, 90, 205, 210})
 		} else {
 			name = canvas.NewText(rpc.Round.P2_name, color.White)
@@ -182,14 +182,14 @@ func Player2_label(a, f, t fyne.Resource) fyne.CanvasObject {
 	if a != nil && rpc.Signal.In2 {
 		if rpc.Round.P2_url != "" {
 			avatar = &Shared.P2_avatar
-			if rpc.Display.Turn == "2" {
+			if rpc.Round.Turn == 2 {
 				frame = canvas.NewImageFromResource(t)
 			} else {
 				frame = canvas.NewImageFromResource(f)
 			}
 		} else {
 			avatar = canvas.NewImageFromResource(a)
-			if rpc.Display.Turn == "2" {
+			if rpc.Round.Turn == 2 {
 				frame = canvas.NewImageFromResource(t)
 			} else {
 				frame = canvas.NewImageFromResource(f)
@@ -220,7 +220,7 @@ func Player3_label(a, f, t fyne.Resource) fyne.CanvasObject {
 	var avatar fyne.CanvasObject
 	var frame fyne.CanvasObject
 	if rpc.Signal.In3 {
-		if rpc.Display.Turn == "3" {
+		if rpc.Round.Turn == 3 {
 			name = canvas.NewText(rpc.Round.P3_name, color.RGBA{105, 90, 205, 210})
 		} else {
 			name = canvas.NewText(rpc.Round.P3_name, color.White)
@@ -232,14 +232,14 @@ func Player3_label(a, f, t fyne.Resource) fyne.CanvasObject {
 	if a != nil && rpc.Signal.In3 {
 		if rpc.Round.P3_url != "" {
 			avatar = &Shared.P3_avatar
-			if rpc.Display.Turn == "3" {
+			if rpc.Round.Turn == 3 {
 				frame = canvas.NewImageFromResource(t)
 			} else {
 				frame = canvas.NewImageFromResource(f)
 			}
 		} else {
 			avatar = canvas.NewImageFromResource(a)
-			if rpc.Display.Turn == "3" {
+			if rpc.Round.Turn == 3 {
 				frame = canvas.NewImageFromResource(t)
 			} else {
 				frame = canvas.NewImageFromResource(f)
@@ -270,7 +270,7 @@ func Player4_label(a, f, t fyne.Resource) fyne.CanvasObject {
 	var avatar fyne.CanvasObject
 	var frame fyne.CanvasObject
 	if rpc.Signal.In4 {
-		if rpc.Display.Turn == "4" {
+		if rpc.Round.Turn == 4 {
 			name = canvas.NewText(rpc.Round.P4_name, color.RGBA{105, 90, 205, 210})
 		} else {
 			name = canvas.NewText(rpc.Round.P4_name, color.White)
@@ -282,14 +282,14 @@ func Player4_label(a, f, t fyne.Resource) fyne.CanvasObject {
 	if a != nil && rpc.Signal.In4 {
 		if rpc.Round.P4_url != "" {
 			avatar = &Shared.P4_avatar
-			if rpc.Display.Turn == "4" {
+			if rpc.Round.Turn == 4 {
 				frame = canvas.NewImageFromResource(t)
 			} else {
 				frame = canvas.NewImageFromResource(f)
 			}
 		} else {
 			avatar = canvas.NewImageFromResource(a)
-			if rpc.Display.Turn == "4" {
+			if rpc.Round.Turn == 4 {
 				frame = canvas.NewImageFromResource(t)
 			} else {
 				frame = canvas.NewImageFromResource(f)
@@ -320,7 +320,7 @@ func Player5_label(a, f, t fyne.Resource) fyne.CanvasObject {
 	var avatar fyne.CanvasObject
 	var frame fyne.CanvasObject
 	if rpc.Signal.In5 {
-		if rpc.Display.Turn == "5" {
+		if rpc.Round.Turn == 5 {
 			name = canvas.NewText(rpc.Round.P5_name, color.RGBA{105, 90, 205, 210})
 		} else {
 			name = canvas.NewText(rpc.Round.P5_name, color.White)
@@ -332,14 +332,14 @@ func Player5_label(a, f, t fyne.Resource) fyne.CanvasObject {
 	if a != nil && rpc.Signal.In5 {
 		if rpc.Round.P5_url != "" {
 			avatar = &Shared.P5_avatar
-			if rpc.Display.Turn == "5" {
+			if rpc.Round.Turn == 5 {
 				frame = canvas.NewImageFromResource(t)
 			} else {
 				frame = canvas.NewImageFromResource(f)
 			}
 		} else {
 			avatar = canvas.NewImageFromResource(a)
-			if rpc.Display.Turn == "5" {
+			if rpc.Round.Turn == 5 {
 				frame = canvas.NewImageFromResource(t)
 			} else {
 				frame = canvas.NewImageFromResource(f)
@@ -370,7 +370,7 @@ func Player6_label(a, f, t fyne.Resource) fyne.CanvasObject {
 	var avatar fyne.CanvasObject
 	var frame fyne.CanvasObject
 	if rpc.Signal.In6 {
-		if rpc.Display.Turn == "6" {
+		if rpc.Round.Turn == 6 {
 			name = canvas.NewText(rpc.Round.P6_name, color.RGBA{105, 90, 205, 210})
 		} else {
 			name = canvas.NewText(rpc.Round.P6_name, color.White)
@@ -382,14 +382,14 @@ func Player6_label(a, f, t fyne.Resource) fyne.CanvasObject {
 	if a != nil && rpc.Signal.In6 {
 		if rpc.Round.P6_url != "" {
 			avatar = &Shared.P6_avatar
-			if rpc.Display.Turn == "6" {
+			if rpc.Round.Turn == 6 {
 				frame = canvas.NewImageFromResource(t)
 			} else {
 				frame = canvas.NewImageFromResource(f)
 			}
 		} else {
 			avatar = canvas.NewImageFromResource(a)
-			if rpc.Display.Turn == "6" {
+			if rpc.Round.Turn == 6 {
 				frame = canvas.NewImageFromResource(t)
 			} else {
 				frame = canvas.NewImageFromResource(f)

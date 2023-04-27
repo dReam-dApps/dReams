@@ -418,8 +418,8 @@ func fetch(quit chan struct{}) {
 					// Holdero
 					if menu.Control.Dapp_list["Holdero"] {
 						rpc.FetchHolderoSC()
-						if (rpc.StringToInt(rpc.Display.Turn) == rpc.Round.ID && rpc.Wallet.Height > rpc.Signal.CHeight+4) ||
-							(rpc.StringToInt(rpc.Display.Turn) != rpc.Round.ID && rpc.Round.ID >= 1) || (!rpc.Signal.My_turn && rpc.Round.ID >= 1) {
+						if (rpc.Round.Turn == rpc.Round.ID && rpc.Wallet.Height > rpc.Signal.CHeight+4) ||
+							(rpc.Round.Turn != rpc.Round.ID && rpc.Round.ID >= 1) || (!rpc.Signal.My_turn && rpc.Round.ID >= 1) {
 							if rpc.Signal.Clicked {
 								trigger = false
 								autoCF = false
@@ -581,13 +581,13 @@ func fetch(quit chan struct{}) {
 // Sets Holdero table info labels
 func setHolderoLabel() {
 	H.TopLabel.Text = rpc.Display.Res
-	H.LeftLabel.SetText("Seats: " + rpc.Display.Seats + "      Pot: " + rpc.Display.Pot + "      Blinds: " + rpc.Display.Blinds + "      Ante: " + rpc.Display.Ante + "      Dealer: " + rpc.Display.Dealer + "      Turn: " + rpc.Display.Turn)
+	H.LeftLabel.SetText("Seats: " + rpc.Display.Seats + "      Pot: " + rpc.Display.Pot + "      Blinds: " + rpc.Display.Blinds + "      Ante: " + rpc.Display.Ante + "      Dealer: " + rpc.Display.Dealer)
 	if rpc.Round.Asset {
 		if rpc.Round.Tourney {
-			H.RightLabel.SetText(rpc.Display.Readout + "      Player ID: " + rpc.Display.PlayerId + "      Chip Balance: " + rpc.Display.Token_balance["Tournament"] + "      Height: " + rpc.Display.Wallet_height)
+			H.RightLabel.SetText(rpc.Display.Readout + "      Player ID: " + rpc.Display.PlayerId + "      Chip Balance: " + rpc.Display.Token_balance["Tournament"] + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
 		} else {
 			asset_name := rpc.GetAssetSCIDName(rpc.Round.AssetID)
-			H.RightLabel.SetText(rpc.Display.Readout + "      Player ID: " + rpc.Display.PlayerId + "      " + asset_name + " Balance: " + rpc.Display.Token_balance[asset_name] + "      Height: " + rpc.Display.Wallet_height)
+			H.RightLabel.SetText(rpc.Display.Readout + "      Player ID: " + rpc.Display.PlayerId + "      " + asset_name + " Balance: " + rpc.Display.Token_balance[asset_name] + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
 		}
 	} else {
 		H.RightLabel.SetText(rpc.Display.Readout + "      Player ID: " + rpc.Display.PlayerId + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
@@ -609,10 +609,10 @@ func waitLabel() {
 	H.TopLabel.Text = ""
 	if rpc.Round.Asset {
 		if rpc.Round.Tourney {
-			H.RightLabel.SetText("Wait for Block" + "      Player ID: " + rpc.Display.PlayerId + "      Chip Balance: " + rpc.Display.Token_balance["Tournament"] + "      Height: " + rpc.Display.Wallet_height)
+			H.RightLabel.SetText("Wait for Block" + "      Player ID: " + rpc.Display.PlayerId + "      Chip Balance: " + rpc.Display.Token_balance["Tournament"] + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
 		} else {
 			asset_name := rpc.GetAssetSCIDName(rpc.Round.AssetID)
-			H.RightLabel.SetText("Wait for Block" + "      Player ID: " + rpc.Display.PlayerId + "      " + asset_name + " Balance: " + rpc.Display.Token_balance[asset_name] + "      Height: " + rpc.Display.Wallet_height)
+			H.RightLabel.SetText("Wait for Block" + "      Player ID: " + rpc.Display.PlayerId + "      " + asset_name + " Balance: " + rpc.Display.Token_balance[asset_name] + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
 		}
 
 	} else {

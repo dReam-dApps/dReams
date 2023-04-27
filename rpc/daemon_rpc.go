@@ -628,10 +628,12 @@ func FetchHolderoSC() {
 			}
 
 			if Turn_jv != Seats_jv {
-				Display.Turn = addOne(Turn_jv)
 				Display.Readout = turnReadout(Turn_jv)
+				if turn, ok := Turn_jv.(float64); ok {
+					Round.Turn = int(turn) + 1
+				}
 			} else {
-				Display.Turn = "1"
+				Round.Turn = 1
 				Display.Readout = turnReadout(float64(0))
 			}
 
@@ -647,11 +649,10 @@ func FetchHolderoSC() {
 			}
 
 			if Round.Version >= 110 && Round.ID == 1 && Times.Kick > 0 && !Signal.My_turn && Round.Pot > 0 && !Round.LocalEnd && !Signal.End {
-				Last_jv := result.VariableStringKeys["Last"]
-				if Last_jv != nil {
+				if Round.Last != 0 {
 					now := time.Now().Unix()
-					if int(now) > int(Last_jv.(float64))+Times.Kick+12 {
-						if Wallet.Height > Times.Kick_block+2 {
+					if now > Round.Last+int64(Times.Kick)+18 {
+						if Wallet.Height > Times.Kick_block+3 {
 							TimeOut()
 							Times.Kick_block = Wallet.Height
 						}
