@@ -588,20 +588,30 @@ func runSportsPayouts(print bool) {
 						game, _ := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(split[2], "game_"+num, menu.Gnomes.Indexer.ChainHeight, true)
 						league, _ := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(split[2], "league_"+num, menu.Gnomes.Indexer.ChainHeight, true)
 						_, end := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(split[2], "s_end_at_"+num, menu.Gnomes.Indexer.ChainHeight, true)
-						_, add := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(split[2], "time_a", menu.Gnomes.Indexer.ChainHeight, true)
-						if game != nil && end != nil && add != nil && league != nil {
-							if end[0]+add[0] < uint64(time.Now().Unix()) {
-								log.Println("[runSportsPayouts] Paying out")
-								var win string
+						_, a_time := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(split[2], "time_a", menu.Gnomes.Indexer.ChainHeight, true)
+						_, b_time := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(split[2], "time_b", menu.Gnomes.Indexer.ChainHeight, true)
+						if game != nil && end != nil && a_time != nil && b_time != nil && league != nil {
+							if end[0]+a_time[0] < uint64(time.Now().Unix()) {
 								var sent bool
+								var win, winner, a_score, b_score, payout_str string
 								if league[0] == "Bellator" || league[0] == "UFC" {
-									win, _ = GetMmaWinner(game[0], league[0])
+									win, winner = GetMmaWinner(game[0], league[0])
+									payout_str = fmt.Sprintf("Fight: %s   Winner: %s", game[0], winner)
 								} else {
-									win, _ = GetWinner(game[0], league[0])
+									win, winner, a_score, b_score = GetWinner(game[0], league[0])
+									payout_str = fmt.Sprintf("Game: %s %s-%s   Winner: %s", game[0], a_score, b_score, winner)
 								}
 
+								if winner == "Tie" && end[0]+b_time[0] > uint64(time.Now().Unix()) {
+									serviceDebug(print, "[runSportsPayouts]", fmt.Sprintf("%s Not ready for payout", game[0]))
+									continue
+								}
+
+								log.Printf("[runSportsPayouts] %s Paying out\n", split[2])
+								log.Printf("[runSportsPayouts] %s\n", payout_str)
+
 								var tx string
-								if win != "" {
+								if (win != "" && win != "invalid") || (win != "invalid" && winner == "Tie" && end[0]+b_time[0] < uint64(time.Now().Unix())) {
 									tx = rpc.EndSports(split[2], num, win)
 									sent = true
 								} else {

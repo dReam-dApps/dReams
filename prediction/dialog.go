@@ -1103,7 +1103,7 @@ func ownerConfirmAction(i int, p float64, window fyne.Window, reset fyne.CanvasO
 	s_pay_n := n_split[0]
 	s_dep := PS_Control.S_deposit.Text
 
-	var win, team string
+	var win, team, a_score, b_score, payout_str string
 	if i == 3 {
 		if len(n_split) < 3 {
 			log.Println("[dReams] Could not format game string")
@@ -1111,8 +1111,10 @@ func ownerConfirmAction(i int, p float64, window fyne.Window, reset fyne.CanvasO
 		}
 		if n_split[1] == "Bellator" || n_split[1] == "UFC" {
 			win, team = GetMmaWinner(n_split[2], n_split[1])
+			payout_str = fmt.Sprintf("SCID:\n\n%s\n\nFight: %s\n\nWinner: %s\n\nConfirm", s_scid, PS_Control.Payout_n.Text, team)
 		} else {
-			win, team = GetWinner(n_split[2], n_split[1])
+			win, team, a_score, b_score = GetWinner(n_split[2], n_split[1])
+			payout_str = fmt.Sprintf("SCID:\n\n%s\n\nGame: %s\n\n%s: %s\n%s: %s\n\nWinner: %s\n\nConfirm", s_scid, PS_Control.Payout_n.Text, menu.TrimTeamA(n_split[2]), a_score, menu.TrimTeamB(n_split[2]), b_score, team)
 		}
 	}
 
@@ -1153,7 +1155,7 @@ func ownerConfirmAction(i int, p float64, window fyne.Window, reset fyne.CanvasO
 		confirm_display.SetText("SCID:\n\n" + p_scid + "\n\nPredicting: " + p_pre + "\n\nMinimum: " + p_amt + " Dero\n\nCloses At: " + p_end_time.String() + "\n\nMark: " + mark + "\n\n" + fn + p_feed + "\n\nInitial Deposit: " + p_dep + " Dero")
 
 	case 3:
-		confirm_display.SetText("SCID:\n\n" + s_scid + "\n\nGame: " + PS_Control.Payout_n.Text + "\n\nTeam: " + team + "\n\nConfirm")
+		confirm_display.SetText(payout_str)
 	case 4:
 		confirm_display.SetText("SCID:\n\n" + p_scid + "\n\nFeed from: dReams Client\n\nPost Price: " + price + "\n\nConfirm")
 	case 5:

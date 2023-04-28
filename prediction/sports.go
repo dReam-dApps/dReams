@@ -133,13 +133,11 @@ func formatFinals(scid string, finals []string) (text string) {
 		split := strings.Split(finals[i], "   ")
 		game := strings.Split(split[1], "_")
 		var str string
-		if len(game) == 5 {
-			str = "Game #" + split[0] + "\n" + game[2] + "  Winner: " + WinningTeam(game[2], game[4])
-		} else if len(game) == 4 {
-			/// condition until results catch up to v0.9.2 format
+		l := len(game)
+		if l == 4 {
 			str = "Game #" + split[0] + "\n" + game[1] + "  Winner: " + WinningTeam(game[1], game[3])
-		} else {
-			str = "Game #" + split[0] + "\n" + game[2] + "  Tie"
+		} else if l >= 2 {
+			str = "Game #" + split[0] + "\n" + game[1] + "  Tie"
 		}
 		text = text + "\n\n" + str + "\nTXID: " + split[2]
 	}
@@ -159,18 +157,8 @@ func WinningTeam(teams, winner string) string {
 		default:
 			return ""
 		}
-	} else {
-		/// condition until results catch up to v0.9.2 format
-		split = strings.Split(teams, "-")
-		switch winner {
-		case "a":
-			return split[0]
-		case "b":
-			return split[1]
-		default:
-			return ""
-		}
 	}
+	return ""
 }
 
 // Set dSports info label
@@ -1019,8 +1007,8 @@ func GetSoccer(date, league string) {
 
 // Gets and returns the winner of game
 //   - league defines api prefix
-func GetWinner(game, league string) (string, string) {
-	for i := -2; i < 1; i++ {
+func GetWinner(game, league string) (win string, team_name string, a_score string, b_score string) {
+	for i := -3; i < 1; i++ {
 		day := time.Now().AddDate(0, 0, i)
 		date := time.Unix(day.Unix(), 0).String()
 		date = date[0:10]
@@ -1037,29 +1025,34 @@ func GetWinner(game, league string) (string, string) {
 					if found.Events[i].Status.Type.Completed {
 						teamA := found.Events[i].Competitions[0].Competitors[0].Team.Abbreviation
 						a_win := found.Events[i].Competitions[0].Competitors[0].Winner
+						a_score = found.Events[i].Competitions[0].Competitors[0].Score
 
 						teamB := found.Events[i].Competitions[0].Competitors[1].Team.Abbreviation
 						b_win := found.Events[i].Competitions[0].Competitors[1].Winner
+						b_score = found.Events[i].Competitions[0].Competitors[0].Score
 
 						if a_win && !b_win {
-							return "team_a", teamA
+							return "team_a", teamA, a_score, b_score
 						} else if b_win && !a_win {
-							return "team_b", teamB
-						} else {
-							return "", ""
+							return "team_b", teamB, a_score, b_score
+						} else if a_score == b_score && a_score != "" && b_score != "" {
+							return "", "Tie", a_score, b_score
 						}
 					}
 				}
 			}
 		}
 	}
-	return "", ""
+
+	win = "invalid"
+
+	return
 }
 
 // Gets and returns the winner of mma match
 //   - league defines api prefix
-func GetMmaWinner(game, league string) (string, string) {
-	for i := -2; i < 1; i++ {
+func GetMmaWinner(game, league string) (win string, fighter string) {
+	for i := -3; i < 1; i++ {
 		day := time.Now().AddDate(0, 0, i)
 		date := time.Unix(day.Unix(), 0).String()
 		date = date[0:10]
@@ -1086,7 +1079,7 @@ func GetMmaWinner(game, league string) (string, string) {
 							} else if b_win && !a_win {
 								return "team_b", teamB
 							} else {
-								return "", ""
+								return "", "Tie"
 							}
 						}
 					}
@@ -1094,7 +1087,10 @@ func GetMmaWinner(game, league string) (string, string) {
 			}
 		}
 	}
-	return "", ""
+
+	win = "invalid"
+
+	return
 }
 
 // Gets football games for selected league and adds to options selection
