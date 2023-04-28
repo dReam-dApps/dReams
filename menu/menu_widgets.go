@@ -1376,6 +1376,10 @@ func listMenu(window_icon, background fyne.Resource) {
 	}
 
 	duration.OnChanged = func(s string) {
+		if rpc.StringToInt(s) > 168 {
+			duration.SetText("168")
+		}
+
 		if listing.Selected != "" && duration.Validate() == nil && start.Validate() == nil && charAddr.Validate() == nil && charPerc.Validate() == nil {
 			set_list.Show()
 		} else {
