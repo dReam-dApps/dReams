@@ -594,9 +594,9 @@ func OwnersBoxLeft(obj []fyne.CanvasObject, tabs *container.AppTabs) fyne.Canvas
 	player_select.SetSelectedIndex(0)
 
 	blinds_entry := dwidget.DeroAmtEntry("Big Blind: ", 0.1, 1)
-	blinds_entry.PlaceHolder = "Dero:"
+	blinds_entry.SetPlaceHolder("Dero:")
 	blinds_entry.SetText("Big Blind: 0.0")
-	blinds_entry.Validator = validation.NewRegexp(`^(Big Blind: )\d{1,}\..\d{0,1}$|^(Big Blind: )\d{1,}$`, "Format Not Valid")
+	blinds_entry.Validator = validation.NewRegexp(`^(Big Blind: )\d{1,}\.\d{0,1}$|^(Big Blind: )\d{1,}$`, "Int or float required")
 	blinds_entry.OnChanged = func(s string) {
 		if blinds_entry.Validate() != nil {
 			blinds_entry.SetText("Big Blind: 0.0")
@@ -615,9 +615,9 @@ func OwnersBoxLeft(obj []fyne.CanvasObject, tabs *container.AppTabs) fyne.Canvas
 	}
 
 	ante_entry := dwidget.DeroAmtEntry("Ante: ", 0.1, 1)
-	ante_entry.PlaceHolder = "Ante:"
+	ante_entry.SetPlaceHolder("Ante:")
 	ante_entry.SetText("Ante: 0.0")
-	ante_entry.Validator = validation.NewRegexp(`^(Ante: )\d{1,}\..\d{0,1}|^(Ante: )\d{1,}$`, "Format Not Valid")
+	ante_entry.Validator = validation.NewRegexp(`^(Ante: )\d{1,}\.\d{0,1}$|^(Ante: )\d{1,}$`, "Int or float required")
 	ante_entry.OnChanged = func(s string) {
 		if ante_entry.Validate() != nil {
 			ante_entry.SetText("Ante: 0.0")
@@ -670,11 +670,11 @@ func OwnersBoxLeft(obj []fyne.CanvasObject, tabs *container.AppTabs) fyne.Canvas
 		}
 	})
 
-	clean_entry := dwidget.DeroAmtEntry("", 1, 0)
-	clean_entry.Prefix = "Clean: "
-	clean_entry.PlaceHolder = "Atomic:"
+	clean_entry := dwidget.DeroAmtEntry("Clean: ", 1, 0)
+	clean_entry.AllowFloat = false
+	clean_entry.SetPlaceHolder("Atomic:")
 	clean_entry.SetText("Clean: 0")
-	clean_entry.Validator = validation.NewRegexp(`^(Clean: )\d{1,}`, "Format Not Valid")
+	clean_entry.Validator = validation.NewRegexp(`^(Clean: )\d{1,}`, "Int required")
 	clean_entry.OnChanged = func(s string) {
 		if clean_entry.Validate() != nil {
 			clean_entry.SetText("Clean: 0")
@@ -1357,7 +1357,7 @@ func listMenu(window_icon, background fyne.Resource) {
 	start := dwidget.DeroAmtEntry("", 0.1, 1)
 	start.AllowFloat = true
 	start.SetPlaceHolder("Start Price:")
-	start.Validator = validation.NewRegexp(`\d{1,}\.\d{1,5}$|^[^0]\d{0,}$`, "Float required")
+	start.Validator = validation.NewRegexp(`^\d{1,}\.\d{1,5}$|^[^0]\d{0,}$`, "Int or float required")
 
 	charAddr := widget.NewEntry()
 	charAddr.SetPlaceHolder("Charity Donation Address:")

@@ -528,12 +528,11 @@ func DealHandButton() fyne.Widget {
 //   - If entry invalid, set to min bet value
 func BetAmount() fyne.CanvasObject {
 	Table.BetEntry = dwidget.DeroAmtEntry("", 0.1, 1)
-	Table.BetEntry.ExtendBaseWidget(Table.BetEntry)
 	Table.BetEntry.Enable()
 	if Table.BetEntry.Text == "" {
 		Table.BetEntry.SetText("0.0")
 	}
-	Table.BetEntry.Validator = validation.NewRegexp(`[^0]\d{1,}\..\d{0,}$|^\d{1,1}\..\d{0,0}$|^[^0]\d{0,}$`, "Format Not Valid")
+	Table.BetEntry.Validator = validation.NewRegexp(`^\d{1,}\.\d{1,5}$|^[^0.]\d{0,}$`, "Int or float required")
 	Table.BetEntry.OnChanged = func(s string) {
 		if f, err := strconv.ParseFloat(s, 64); err == nil {
 			if rpc.Signal.PlacedBet {
@@ -628,7 +627,7 @@ func roundFloat(val float64, precision uint) float64 {
 }
 
 // Holdero place bet button
-//   - Imput from Table.BetEntry
+//   - Input from Table.BetEntry
 func BetButton() fyne.Widget {
 	Table.Bet = widget.NewButton("Bet", func() {
 		if Table.BetEntry.Validate() == nil {

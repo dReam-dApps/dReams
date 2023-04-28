@@ -462,7 +462,7 @@ func placeWall() *container.Split {
 
 	holdero.Swap.DEntry = dwidget.DeroAmtEntry("dReams: ", 1, 0)
 	holdero.Swap.DEntry.PlaceHolder = "dReams:"
-	holdero.Swap.DEntry.Validator = validation.NewRegexp(`^(dReams: )[^0]\d{0,}$`, "Format Not Valid")
+	holdero.Swap.DEntry.Validator = validation.NewRegexp(`^(dReams: )[^0]\d{0,}$`, "Int required")
 	holdero.Swap.DEntry.OnChanged = func(s string) {
 		if holdero.Swap.DEntry.Validate() != nil {
 			holdero.Swap.DEntry.SetText("dReams: 1")

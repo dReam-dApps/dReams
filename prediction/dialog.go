@@ -108,7 +108,7 @@ func preditctionOpts(window fyne.Window) fyne.CanvasObject {
 
 	PS_Control.P_mark = widget.NewEntry()
 	PS_Control.P_mark.SetPlaceHolder("Mark:")
-	PS_Control.P_mark.Validator = validation.NewRegexp(`^\d{1,}$`, "Format Not Valid")
+	PS_Control.P_mark.Validator = validation.NewRegexp(`^\d{1,}$`, "Int required")
 
 	PS_Control.P_amt = dwidget.DeroAmtEntry("", 0.1, 1)
 	PS_Control.P_amt.SetPlaceHolder("Minimum Amount:")
@@ -359,7 +359,7 @@ func serviceOpts(window fyne.Window) fyne.CanvasObject {
 	txid := widget.NewMultiLineEntry()
 	txid.SetPlaceHolder("TXID:")
 	txid.Wrapping = fyne.TextWrapWord
-	txid.Validator = validation.NewRegexp(`^\w{64,64}$`, "Format Not Valid")
+	txid.Validator = validation.NewRegexp(`^\w{64,64}$`, "Invalid TXID")
 
 	process := widget.NewButton("Process Tx", func() {
 		if !Service.Processing && !rpc.Wallet.Service {
@@ -405,8 +405,9 @@ func serviceOpts(window fyne.Window) fyne.CanvasObject {
 
 	entry := dwidget.DeroAmtEntry("", 1, 0)
 	entry.SetPlaceHolder("Block #:")
+	entry.AllowFloat = false
 	entry.Wrapping = fyne.TextTruncate
-	entry.Validator = validation.NewRegexp(`^[^0]\d{0,}$`, "Format Not Valid")
+	entry.Validator = validation.NewRegexp(`^[^0]\d{0,}$`, "Int required")
 
 	var start uint64
 	height := widget.NewCheck("Start from current height", func(b bool) {
@@ -537,27 +538,31 @@ func serviceOpts(window fyne.Window) fyne.CanvasObject {
 func updateOpts() fyne.CanvasObject {
 	a_label := widget.NewLabel("Time A         ")
 	a := dwidget.DeroAmtEntry("", 1, 0)
-	a.PlaceHolder = "Time A:"
+	a.SetPlaceHolder("Time A:")
+	a.AllowFloat = false
 	a.Wrapping = fyne.TextTruncate
-	a.Validator = validation.NewRegexp(`[^0]\d{1,}$`, "Format Not Valid")
+	a.Validator = validation.NewRegexp(`[^0]\d{1,}$`, "Int required")
 
 	b_label := widget.NewLabel("Time B         ")
 	b := dwidget.DeroAmtEntry("", 1, 0)
-	b.PlaceHolder = "Time B:"
+	b.SetPlaceHolder("Time B:")
+	b.AllowFloat = false
 	b.Wrapping = fyne.TextTruncate
-	b.Validator = validation.NewRegexp(`[^0]\d{1,}$`, "Format Not Valid")
+	b.Validator = validation.NewRegexp(`[^0]\d{1,}$`, "Int required")
 
 	c_label := widget.NewLabel("Time C         ")
 	c := dwidget.DeroAmtEntry("", 1, 0)
-	c.PlaceHolder = "Time C:"
+	c.SetPlaceHolder("Time C:")
+	c.AllowFloat = false
 	c.Wrapping = fyne.TextTruncate
-	c.Validator = validation.NewRegexp(`[^0]\d{1,}$`, "Format Not Valid")
+	c.Validator = validation.NewRegexp(`[^0]\d{1,}$`, "Int required")
 
 	hl_label := widget.NewLabel("Max Games")
 	hl := dwidget.DeroAmtEntry("", 1, 0)
-	hl.PlaceHolder = "Max Games:"
+	hl.SetPlaceHolder("Max Games:")
+	hl.AllowFloat = false
 	hl.Wrapping = fyne.TextTruncate
-	hl.Validator = validation.NewRegexp(`^[^0]\d{0,}$`, "Format Not Valid")
+	hl.Validator = validation.NewRegexp(`^[^0]\d{0,}$`, "Int required")
 
 	hl_box := container.NewBorder(nil, nil, hl_label, nil, hl)
 	hl_box.Hide()
@@ -569,21 +574,22 @@ func updateOpts() fyne.CanvasObject {
 	sc := widget.NewSelect([]string{"Prediction", "Sports"}, func(s string) {
 		if s == "Sports" {
 			c_label.SetText("Delete         ")
-			c.Validator = validation.NewRegexp(`[^0]\d{0,}$`, "Format Not Valid")
+			c.Validator = validation.NewRegexp(`[^0]\d{0,}$`, "Int required")
 			hl_box.Show()
 		} else {
 			c_label.SetText("Time C         ")
-			c.Validator = validation.NewRegexp(`[^0]\d{1,}$`, "Format Not Valid")
+			c.Validator = validation.NewRegexp(`[^0]\d{1,}$`, "Int required")
 			hl_box.Hide()
 		}
 	})
 	sc.PlaceHolder = "Select Contract"
 
 	new_owner := widget.NewMultiLineEntry()
+	new_owner.Validator = validation.NewRegexp(`^(dero)\w{62}$`, "Invalid Address")
 	new_owner.Wrapping = fyne.TextWrapWord
 	new_owner.SetPlaceHolder("New owner address:")
 	add_owner := widget.NewButton("Add Owner", func() {
-		if len(new_owner.Text) == 66 {
+		if new_owner.Validate() == nil {
 			switch sc.Selected {
 			case "Prediction":
 				rpc.AddOwner(Predict.Contract, new_owner.Text)
@@ -596,8 +602,9 @@ func updateOpts() fyne.CanvasObject {
 	})
 
 	owner_num := dwidget.DeroAmtEntry("", 1, 0)
-	owner_num.PlaceHolder = "Owner #:"
-	owner_num.Validator = validation.NewRegexp(`^[^0]\d{0,0}$`, "Format Not Valid")
+	owner_num.SetPlaceHolder("Owner #:")
+	owner_num.AllowFloat = false
+	owner_num.Validator = validation.NewRegexp(`^[^0]\d{0,0}$`, "Int required")
 	owner_num.Wrapping = fyne.TextTruncate
 
 	remove_owner := widget.NewButton("Remove Owner", func() {
@@ -786,12 +793,17 @@ func serviceRunConfirm(start uint64, payout, tranfsers bool, window fyne.Window,
 
 // Convert unix time to human readable time
 func humanTimeConvert() fyne.CanvasObject {
-	entry := widget.NewEntry()
+	entry := dwidget.DeroAmtEntry("", 1, 0)
+	entry.AllowFloat = false
+	entry.SetPlaceHolder("Unix time:")
+	entry.Validator = validation.NewRegexp(`^\d{10,}$`, "Unix time required")
 	res := widget.NewEntry()
 	res.Disable()
 	button := widget.NewButton("Human Time", func() {
-		time := time.Unix(int64(rpc.StringToInt(entry.Text)), 0).String()
-		res.SetText(time)
+		if entry.Validate() == nil {
+			time := time.Unix(int64(rpc.StringToInt(entry.Text)), 0).String()
+			res.SetText(time)
+		}
 	})
 
 	split := container.NewHSplit(entry, button)
@@ -921,8 +933,10 @@ func ownersMenu() {
 	clock := widget.NewEntry()
 	clock.Disable()
 
-	entry := widget.NewEntry()
-	entry.Validator = validation.NewRegexp(`^\d{1,}$`, "Format Not Valid")
+	entry := dwidget.DeroAmtEntry("", 1, 0)
+	entry.AllowFloat = false
+	entry.SetPlaceHolder("Hours to close:")
+	entry.Validator = validation.NewRegexp(`^\d{1,}$`, "Int required")
 	button := widget.NewButton("Add Hours", func() {
 		if entry.Validate() == nil {
 			i := rpc.StringToInt(entry.Text)

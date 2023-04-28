@@ -92,7 +92,7 @@ func MarketEntry() fyne.CanvasObject {
 	Market.Entry.ExtendBaseWidget(Market.Entry)
 	Market.Entry.SetText("0.0")
 	Market.Entry.PlaceHolder = "Dero:"
-	Market.Entry.Validator = validation.NewRegexp(`\d{1,}\.\d{1,5}$`, "Format Not Valid")
+	Market.Entry.Validator = validation.NewRegexp(`^\d{1,}\.\d{1,5}$|^[^0.]\d{0,}$`, "Int or float required")
 	Market.Entry.OnChanged = func(s string) {
 		if Market.Entry.Validate() != nil {
 			Market.Entry.SetText("0.0")

@@ -60,7 +60,7 @@ func BaccaratButtons(w fyne.Window) fyne.CanvasObject {
 	entry := dwidget.DeroAmtEntry("", 1, 0)
 	entry.PlaceHolder = "dReams:"
 	entry.SetText("10")
-	entry.Validator = validation.NewRegexp(`\d{1,}$`, "Format Not Valid")
+	entry.Validator = validation.NewRegexp(`^\d{1,}$`, "Int required")
 	entry.OnChanged = func(s string) {
 		if rpc.Daemon.Connect {
 			if f, err := strconv.ParseFloat(s, 64); err == nil {
