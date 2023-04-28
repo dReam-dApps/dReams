@@ -762,13 +762,11 @@ func placePredict() *fyne.Container {
 	go func() {
 		time.Sleep(2 * time.Second)
 		for !menu.Exit_signal && menu.Control.Dapp_list["dSports and dPredictions"] {
-			if !rpc.Wallet.Connect {
-				if menu.Control.Dapp_list["dSports and dPredictions"] {
-					menu.Control.Predict_check.SetChecked(false)
-					menu.Control.Sports_check.SetChecked(false)
-					prediction.DisablePreditions(true)
-					prediction.DisableSports(true)
-				}
+			if !rpc.Wallet.Connect && !rpc.Signal.Startup {
+				menu.Control.Predict_check.SetChecked(false)
+				menu.Control.Sports_check.SetChecked(false)
+				prediction.DisablePreditions(true)
+				prediction.DisableSports(true)
 			}
 			time.Sleep(time.Second)
 		}
