@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -72,7 +73,10 @@ var background *fyne.Container
 
 // Run DerBnb as a single dApp
 func StartApp() {
+	n := runtime.NumCPU()
+	runtime.GOMAXPROCS(n)
 	config := menu.ReadDreamsConfig("DerBnb")
+
 	a := app.New()
 	a.Settings().SetTheme(bundle.DeroTheme(config.Skin))
 	w := a.NewWindow("DerBnb Desktop")
