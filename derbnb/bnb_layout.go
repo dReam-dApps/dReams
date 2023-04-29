@@ -1495,6 +1495,11 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 			}
 		}
 
+		config := menu.ReadDreamsConfig(tag)
+		connect_box.AddDaemonOptions(config.Daemon)
+
+		connect_box.Container.Objects[0].(*fyne.Container).Add(menu.StartIndicators())
+
 		max = container.NewMax(tabs, container.NewVBox(layout.NewSpacer(), connect_box.Container))
 	}
 

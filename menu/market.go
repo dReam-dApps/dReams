@@ -920,17 +920,21 @@ func RunNFAMarket(tag string, quit chan struct{}, connect_box *dwidget.DeroRpcEn
 				// If connected daemon connected start looking for Gnomon sync with daemon
 				if rpc.Daemon.Connect && Gnomes.Init {
 					connect_box.Disconnect.SetChecked(true)
+					// Get indexed SCID count
+					if !GnomonClosing() {
+						contracts := Gnomes.Indexer.Backend.GetAllOwnersAndSCIDs()
+						Gnomes.SCIDS = uint64(len(contracts))
+						if Gnomes.SCIDS > 0 {
+							Gnomes.Checked = true
+						}
+					}
+
 					height := rpc.DaemonHeight(tag, rpc.Daemon.Rpc)
 					if Gnomes.Indexer.LastIndexedHeight >= int64(height)-3 {
 						Gnomes.Sync = true
 					} else {
 						Gnomes.Sync = false
-					}
-
-					// Get indexed SCID count
-					if !GnomonClosing() {
-						contracts := Gnomes.Indexer.Backend.GetAllOwnersAndSCIDs()
-						Gnomes.SCIDS = uint64(len(contracts))
+						Gnomes.Checked = false
 					}
 
 					// Enable index controls and check if wallet is connected
@@ -973,6 +977,9 @@ func RunNFAMarket(tag string, quit chan struct{}, connect_box *dwidget.DeroRpcEn
 
 			case <-quit: // exit
 				log.Printf("[%s] Closing\n", tag)
+				if Gnomes.Icon_ind != nil {
+					Gnomes.Icon_ind.Stop()
+				}
 				ticker.Stop()
 				return
 			}

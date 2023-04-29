@@ -80,6 +80,15 @@ func ReadDreamsConfig(tag string) (saved dReamSave) {
 			log.Printf("[%s] %s\n", tag, mkdir)
 		}
 
+		if config, err := os.Create("config/config.json"); err == nil {
+			var save dReamSave
+			json, _ := json.MarshalIndent(&save, "", " ")
+			if _, err = config.Write(json); err != nil {
+				log.Println("[WriteDreamsConfig]", err)
+			}
+			config.Close()
+		}
+
 		return
 	}
 

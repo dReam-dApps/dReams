@@ -31,6 +31,7 @@ func main() {
 	quit := make(chan struct{})
 	w.SetCloseIntercept(func() {
 		menu.WriteDreamsConfig(rpc.Daemon.Rpc, config.Skin)
+		menu.StopGnomon(app_tag)
 		quit <- struct{}{}
 		if rpc.Wallet.File != nil {
 			rpc.Wallet.File.Close_Encrypted_Wallet()
@@ -48,6 +49,9 @@ func main() {
 		}
 	}
 
+	connect_box.AddDaemonOptions(config.Daemon)
+	connect_box.Container.Objects[0].(*fyne.Container).Add(menu.StartIndicators())
+
 	tabs := container.NewAppTabs(
 		container.NewTabItem("Market", menu.PlaceMarket()),
 		container.NewTabItem("Assets", menu.PlaceAssets(app_tag, false, nil, nil, nil)),
@@ -61,11 +65,11 @@ func main() {
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-c
-		quit <- struct{}{}
 		fmt.Println()
 		menu.WriteDreamsConfig(rpc.Daemon.Rpc, config.Skin)
 		menu.StopGnomon(app_tag)
 		rpc.Wallet.Connect = false
+		quit <- struct{}{}
 		if rpc.Wallet.File != nil {
 			rpc.Wallet.File.Close_Encrypted_Wallet()
 		}

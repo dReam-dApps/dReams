@@ -86,14 +86,15 @@ func (e *DeroAmts) TypedKey(k *fyne.KeyEvent) {
 }
 
 type DeroRpcEntries struct {
-	Container  *fyne.Container
-	Daemon     *widget.SelectEntry
-	Wallet     *widget.SelectEntry
-	Auth       *widget.Entry
-	Balance    *canvas.Text
-	Button     *widget.Button
-	Disconnect *widget.Check
-	Offset     int
+	Container      *fyne.Container
+	Daemon         *widget.SelectEntry
+	Wallet         *widget.SelectEntry
+	Auth           *widget.Entry
+	Balance        *canvas.Text
+	Button         *widget.Button
+	Disconnect     *widget.Check
+	Offset         int
+	default_daemon []string
 }
 
 // Horizontal layout with daemon, wallet and user:pass entries
@@ -146,20 +147,21 @@ func HorizontalEntries(tag string, offset int) *DeroRpcEntries {
 	rpc_cont := container.NewBorder(nil, nil, &control_check, button, rpc_entry_box)
 
 	d := &DeroRpcEntries{
-		Container:  &fyne.Container{},
-		Daemon:     daemon_entry,
-		Wallet:     wallet_entry,
-		Auth:       pass_entry,
-		Balance:    &balance,
-		Button:     button,
-		Disconnect: &control_check,
-		Offset:     offset,
+		Container:      &fyne.Container{},
+		Daemon:         daemon_entry,
+		Wallet:         wallet_entry,
+		Auth:           pass_entry,
+		Balance:        &balance,
+		Button:         button,
+		Disconnect:     &control_check,
+		Offset:         offset,
+		default_daemon: default_daemon,
 	}
 
 	if offset == 1 {
-		d.Container = container.NewAdaptiveGrid(2, container.NewAdaptiveGrid(2, layout.NewSpacer(), &balance), rpc_cont)
+		d.Container = container.NewAdaptiveGrid(2, container.NewHBox(layout.NewSpacer(), &balance), rpc_cont)
 	} else {
-		d.Container = container.NewAdaptiveGrid(2, rpc_cont, container.NewAdaptiveGrid(2, &balance, layout.NewSpacer()))
+		d.Container = container.NewAdaptiveGrid(2, rpc_cont, container.NewHBox(&balance))
 	}
 
 	return d
@@ -212,14 +214,15 @@ func VerticleEntries(tag string, offset int) *DeroRpcEntries {
 	control_check.Hide()
 
 	d := &DeroRpcEntries{
-		Container:  &fyne.Container{},
-		Daemon:     daemon_entry,
-		Wallet:     wallet_entry,
-		Auth:       pass_entry,
-		Balance:    &balance,
-		Button:     button,
-		Disconnect: &control_check,
-		Offset:     offset,
+		Container:      &fyne.Container{},
+		Daemon:         daemon_entry,
+		Wallet:         wallet_entry,
+		Auth:           pass_entry,
+		Balance:        &balance,
+		Button:         button,
+		Disconnect:     &control_check,
+		Offset:         offset,
+		default_daemon: default_daemon,
 	}
 
 	if offset == 1 {
@@ -248,4 +251,11 @@ func VerticleEntries(tag string, offset int) *DeroRpcEntries {
 func (d *DeroRpcEntries) RefreshBalance() {
 	d.Balance.Text = (fmt.Sprintf("Balance: %.5f Dero", float64(rpc.Wallet.Balance)/100000))
 	d.Balance.Refresh()
+}
+
+// Add new options to default daemon rpc entry
+func (d *DeroRpcEntries) AddDaemonOptions(new_opts []string) {
+	current := d.default_daemon
+	d.Daemon.SetOptions(append(current, new_opts...))
+	d.Daemon.Refresh()
 }

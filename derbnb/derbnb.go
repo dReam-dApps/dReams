@@ -3,9 +3,12 @@ package derbnb
 import (
 	"fmt"
 	"log"
+	"os"
+	"os/signal"
 	"sort"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"fyne.io/fyne/v2"
@@ -79,9 +82,21 @@ func StartApp() {
 	quit := make(chan struct{})
 	w.SetCloseIntercept(func() {
 		menu.WriteDreamsConfig(rpc.Daemon.Rpc, config.Skin)
+		menu.StopGnomon("DerBnb")
 		quit <- struct{}{}
 		w.Close()
 	})
+
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-c
+		fmt.Println()
+		menu.WriteDreamsConfig(rpc.Daemon.Rpc, config.Skin)
+		menu.StopGnomon("DerBnb")
+		quit <- struct{}{}
+		w.Close()
+	}()
 
 	menu.Gnomes.Fast = true
 
@@ -89,7 +104,10 @@ func StartApp() {
 	background = container.NewMax(&holdero.Settings.ThemeImg)
 
 	go fetch(quit)
-	w.SetContent(container.New(layout.NewMaxLayout(), background, LayoutAllItems(false, w, background)))
+	go func() {
+		time.Sleep(450 * time.Millisecond)
+		w.SetContent(container.New(layout.NewMaxLayout(), background, LayoutAllItems(false, w, background)))
+	}()
 	w.ShowAndRun()
 }
 
@@ -116,11 +134,20 @@ func fetch(quit chan struct{}) {
 
 			if rpc.Daemon.Connect && menu.Gnomes.Init {
 				connect_box.Disconnect.SetChecked(true)
+				if !menu.GnomonClosing() {
+					contracts := menu.Gnomes.Indexer.Backend.GetAllOwnersAndSCIDs()
+					menu.Gnomes.SCIDS = uint64(len(contracts))
+					if menu.Gnomes.SCIDS > 0 {
+						menu.Gnomes.Checked = true
+					}
+				}
+
 				height := rpc.DaemonHeight("DerBnb", rpc.Daemon.Rpc)
 				if menu.Gnomes.Indexer.LastIndexedHeight >= int64(height)-3 {
 					menu.Gnomes.Sync = true
 				} else {
 					menu.Gnomes.Sync = false
+					menu.Gnomes.Checked = false
 				}
 			} else {
 				connect_box.Disconnect.SetChecked(false)
@@ -132,6 +159,7 @@ func fetch(quit chan struct{}) {
 
 		case <-quit: // exit
 			log.Println("[DerBNB] Closing")
+			menu.Gnomes.Icon_ind.Stop()
 			ticker.Stop()
 			return
 		}
