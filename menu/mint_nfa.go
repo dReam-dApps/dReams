@@ -36,7 +36,7 @@ func HowToMintNFA(button *widget.Button) fyne.CanvasObject {
 		"Get Started":            {"A NFA consists of four main parts: Asset file, Cover Image, Icon image, Dero file sign", "Each NFA is its own self contained marketplace", "This tool automates three areas of NFA installs: File sign, Contract creation, Contract install", "Storage is not provided at this point", "Entries with a * are mutable, meaning they can be updated by creator (or owner) after install", "Gas fees to install a NFA are ~0.20000 Dero", "There is a 0.00500 Dero dev fee for minting a NFA with this tool", "If minting a collection fees will be paid as each contract is installed, a total will be shown before hand", "For further info read the NFA documentation at github.com/civilware/artificer-nfa-standard"},
 		"Single Asset":           {"Disable the Collection check", "Type the name of your asset into the collection entry and click the folder button on right to set up NFA-Creation directory for your single asset", "NFA-Creation Directory", "File sign can be imported from file by clicking the file button to right of check C entry, or follow next step if you require file sign", "Single File Sign", "Fill out the rest of the information for your NFA and when complete the Create Contracts button will show", "Click Create Contract and confirm information, this will populate your bas folder with your asset contract", "Type the name of your asset in name entry and Install Contract will show if contract exists in bas folder", "Click Install Contract and confirm the install address is same as signing address", "NFA is now installed, check your wallet for NFA balance"},
 		"Single File Sign":       {"Enter minting wallet file password and open minting wallet file", "Place asset file into asset folder", "Enter the name of your asset in name entry, select extension to match file", "Click Sign File and confirm information", "Once confirmed, the file check C and file check S will population with your file signs"},
-		"Collection":             {"Collection automation installs assets of same name with incrementing numbers", "Enable the Collection check", "Type the name of your collection into the collection entry and click the folder button on right to set up NFA-Creation directory for your collection", "NFA-Creation Directory", "Enter the starting number and ending number for your collection", "File signs can be done externally and placed into sign folder, or follow next step if you require file signs", "Collection File Signs", "Make sure file signs are in sign directory for contract creation", "Fill out the rest of the information for your NFA colletion and when complete the Create Contracts button will show", "The Asset Number sections are where it will add the incrementing number to your input to make the collection", "The + - buttons on top right can add or remove a increment section from Url paths", "Click Create Contract and confirm information", "Contract creation loop will start and populate your bas folder with your asset contracts, takes about 1 second per contract", "Type the name of your asset in name entry and Install Contract will show if contract exists in bas folder", "Click Install Contract and confirm the install address is same as signing address", "Minting loop will now start and takes about 45 seconds per contract", "If 100%, NFA collection is now installed, check your wallet for NFA balances"},
+		"Collection":             {"Collection automation installs assets of same name with incrementing numbers", "Enable the Collection check", "Type the name of your collection into the collection entry and click the folder button on right to set up NFA-Creation directory for your collection", "NFA-Creation Directory", "Enter the starting number and ending number for your collection", "File signs can be done externally and placed into sign folder, or follow next step if you require file signs", "Collection File Signs", "Make sure file signs are in sign directory for contract creation", "Fill out the rest of the information for your NFA colletion and when complete the Create Contracts button will show", "The Asset Number sections are where it will add the incrementing number to your input to make the collection", "The + - buttons on top right can add or remove a increment section from Url paths", "Click Create Contract and confirm information", "Contract creation loop will start and populate your bas folder with your asset contracts, takes about 1 second per contract", "Type the name of your asset in name entry and Install Contract will show if contract exists in bas folder", "Click Install Contract and confirm the install address is same as signing address", "Minting loop will now start and installs one bas contract per block", "For larger collections this could take some time, 120 installs could take around 1 hour to complete", "If 100%, NFA collection is now installed, check your wallet for NFA balances"},
 		"Collection File Signs":  {"Enter minting wallet file password and open minting wallet file", "Place numbered asset files into asset folder", "Enter the name of your asset in name entry, select extension to match file", "Click Sign File and confirm information", "This starts a file sign loop of your selected range and stores all signed files in sign directory, takes about 1 second per sign"},
 		"NFA-Creation Directory": {"NFA-Creation directory stores collection and single asset directories", "Inside of your asset or collection directory are five sub directories", "Your main asset files are stored in asset", "Contracts created are stored in bas", "Signed files are stored in sign", "Cover and icon are optional directories at this point and are not used in the install process"},
 	}
@@ -497,6 +497,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 					if _, err := os.ReadFile(uc.URI().Path()); err != nil {
 						log.Printf("[%s] Cannot read wallet file %s\n", tag, err)
 					} else {
+						rpc.Wallet.File.SetNetwork(true)
 						log.Printf("[%s] Wallet file found , Wallet is registered: %t\n", tag, rpc.Wallet.File.IsRegistered())
 						wallet_label.SetText(fmt.Sprintf("Signing address: %s", rpc.Wallet.File.GetAddress().String()))
 						rpc_label.SetText(fmt.Sprintf("Installing address: %s", rpc.Wallet.Address))
@@ -571,6 +572,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 				return
 			}
 
+			rpc.Wallet.File.SetNetwork(true)
 			address := rpc.Wallet.File.GetAddress().String()
 			if collection_enable.Checked {
 				var count, ending_at int
@@ -983,7 +985,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 
 				total := ending_at - count + 1
 				total_fees := float64(0.21) * float64(total)
-				info := fmt.Sprintf("You are about to install %d asset files\n\nEnsure all info is correct as this process is irreversible\n\nTotal fees to install this NFA collection will be  ~%.5f Dero\n\nRefer to how to guide for any questions\n\nWallet address: %s\n\nInstalling: %s%d.bas to %s%d.bas", total, total_fees, rpc.Wallet.Address, name_entry.Text, count, name_entry.Text, ending_at)
+				info := fmt.Sprintf("You are about to install %d asset files\n\nEnsure all immutable info is correct on bas contracts as this process is irreversible\n\nTotal fees to install this NFA collection will be ~%.5f Dero\n\nRefer how to mint guide for any questions\n\nWallet address: %s\n\nInstalling: %s%d.bas to %s%d.bas", total, total_fees, rpc.Wallet.Address, name_entry.Text, count, name_entry.Text, ending_at)
 				confirm := dialog.NewConfirm("NFA Install", info, func(b bool) {
 					if b {
 						go func() {
@@ -1047,6 +1049,9 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 									error_message.Resize(fyne.NewSize(300, 150))
 									error_message.Show()
 									break
+								} else {
+									log.Printf("[%s] Confirming install TX\n", tag)
+									rpc.ConfirmTx(tx, tag, 45)
 								}
 
 								count++
@@ -1057,8 +1062,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 									break
 								}
 
-								log.Printf("[%s] Waiting for block\n", tag)
-								time.Sleep(45 * time.Second)
+								time.Sleep(6 * time.Second)
 							}
 
 							wait = false
@@ -1069,7 +1073,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 				confirm.Resize(fyne.NewSize(600, 240))
 				confirm.Show()
 			} else {
-				info := fmt.Sprintf("You are about to install asset %s.bas\n\nEnsure all info is correct as this process is irreversible\n\nFees to install a NFA are ~0.21000 Dero\n\nRefer to how to guide for any questions\n\nWallet address: %s", name_entry.Text, rpc.Wallet.Address)
+				info := fmt.Sprintf("You are about to install asset %s.bas\n\nEnsure all immutable info is correct on bas contract as this process is irreversible\n\nFees to install a NFA are ~0.21000 Dero\n\nRefer how to mint guide for any questions\n\nWallet address: %s", name_entry.Text, rpc.Wallet.Address)
 				confirm := dialog.NewConfirm("NFA Install", info, func(b bool) {
 					if b {
 						input_file := fmt.Sprintf("NFA-Creation/%s/bas/%s.bas", collection_entry.Text, name_entry.Text)
