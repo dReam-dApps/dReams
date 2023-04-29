@@ -117,7 +117,7 @@ func fetch(quit chan struct{}) {
 			if rpc.Daemon.Connect && menu.Gnomes.Init {
 				connect_box.Disconnect.SetChecked(true)
 				height := rpc.DaemonHeight("DerBnb", rpc.Daemon.Rpc)
-				if menu.Gnomes.Indexer.ChainHeight >= int64(height)-3 {
+				if menu.Gnomes.Indexer.LastIndexedHeight >= int64(height)-3 {
 					menu.Gnomes.Sync = true
 				} else {
 					menu.Gnomes.Sync = false

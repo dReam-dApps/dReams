@@ -536,7 +536,7 @@ func GnomonState(windows, config bool) {
 		Gnomes.SCIDS = uint64(len(contracts))
 		if FastSynced() && !Gnomes.Trim {
 			height := int64(rpc.Wallet.Height)
-			if Gnomes.Indexer.ChainHeight >= height-1 && height != 0 && !GnomonClosing() {
+			if Gnomes.Indexer.LastIndexedHeight >= height-3 && height != 0 && !GnomonClosing() {
 				Gnomes.Sync = true
 				if !config && rpc.Wallet.Connect && !Gnomes.Checked {
 					Gnomes.Syncing = true

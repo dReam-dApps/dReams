@@ -919,7 +919,7 @@ func MenuRefresh(tab bool) {
 	if tab && menu.Gnomes.Init {
 		var index int
 		if !menu.GnomonClosing() && menu.FastSynced() {
-			index = int(menu.Gnomes.Indexer.ChainHeight)
+			index = int(menu.Gnomes.Indexer.LastIndexedHeight)
 		}
 
 		if !menu.FastSynced() {

@@ -187,8 +187,16 @@ func main() {
 			rpc.EchoWallet("dReamService")
 			contracts := menu.Gnomes.Indexer.Backend.GetAllOwnersAndSCIDs()
 			menu.Gnomes.SCIDS = uint64(len(contracts))
-			if menu.Gnomes.Indexer.ChainHeight >= int64(height)-3 && menu.Gnomes.SCIDS >= 9 {
+			if menu.Gnomes.Indexer.LastIndexedHeight >= int64(height)-3 && menu.Gnomes.SCIDS >= 9 {
 				menu.Gnomes.Sync = true
+			} else {
+				menu.Gnomes.Sync = false
+				if !menu.Gnomes.Start && menu.Gnomes.Init {
+					diff := rpc.DaemonHeight("dReamService", rpc.Daemon.Rpc) - uint64(menu.Gnomes.Indexer.LastIndexedHeight)
+					if diff > 3 && prediction.Service.Debug {
+						log.Printf("[dReamService] Gnomon has %d blocks to go\n", diff)
+					}
+				}
 			}
 			time.Sleep(3 * time.Second)
 		}

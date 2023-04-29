@@ -921,7 +921,7 @@ func RunNFAMarket(tag string, quit chan struct{}, connect_box *dwidget.DeroRpcEn
 				if rpc.Daemon.Connect && Gnomes.Init {
 					connect_box.Disconnect.SetChecked(true)
 					height := rpc.DaemonHeight(tag, rpc.Daemon.Rpc)
-					if Gnomes.Indexer.ChainHeight >= int64(height)-3 {
+					if Gnomes.Indexer.LastIndexedHeight >= int64(height)-3 {
 						Gnomes.Sync = true
 					} else {
 						Gnomes.Sync = false
