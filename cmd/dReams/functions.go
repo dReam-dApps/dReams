@@ -108,6 +108,8 @@ func init() {
 	menu.Control.Dapp_list = make(map[string]bool)
 	menu.Control.Dapp_list = saved.Dapps
 
+	menu.Market.DreamsFilter = true
+
 	rpc.Wallet.TokenBal = make(map[string]uint64)
 	rpc.Display.Token_balance = make(map[string]string)
 
@@ -1069,36 +1071,6 @@ func MenuContractTab(ti *container.TabItem) {
 		}
 
 	default:
-	}
-}
-
-// Switch triggered when market tab changes
-func MarketTab(ti *container.TabItem) {
-	switch ti.Text {
-	case "Auctions":
-		go menu.FindNfaListings(nil)
-		menu.Market.Tab = "Auction"
-		menu.Market.Auction_list.UnselectAll()
-		menu.Market.Viewing = ""
-		menu.Market.Viewing_coll = ""
-		menu.Market.Market_button.Text = "Bid"
-		menu.Market.Market_button.Refresh()
-		menu.Market.Entry.SetText("0.0")
-		menu.Market.Entry.Enable()
-		menu.ResetAuctionInfo()
-		menu.AuctionInfo()
-	case "Buy Now":
-		go menu.FindNfaListings(nil)
-		menu.Market.Tab = "Buy"
-		menu.Market.Buy_list.UnselectAll()
-		menu.Market.Viewing = ""
-		menu.Market.Viewing_coll = ""
-		menu.Market.Market_button.Text = "Buy"
-		menu.Market.Entry.Disable()
-		menu.Market.Market_button.Refresh()
-		menu.Market.Details_box.Refresh()
-		menu.ResetBuyInfo()
-		menu.BuyNowInfo()
 	}
 }
 

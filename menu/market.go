@@ -1,6 +1,8 @@
 package menu
 
 import (
+	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"image/color"
 	"log"
@@ -51,13 +53,14 @@ type marketObjects struct {
 	Details_box   fyne.Container
 	Market_box    fyne.Container
 	Confirming    bool
-	Filter        bool
+	DreamsFilter  bool
 	Buy_amt       uint64
 	Bid_amt       uint64
 	Viewing       string
 	Viewing_coll  string
 	Auctions      []string
 	Buy_now       []string
+	Filters       []string
 }
 
 type assetObjects struct {
@@ -897,6 +900,7 @@ func RunNFAMarket(tag string, quit chan struct{}, connect_box *dwidget.DeroRpcEn
 	go func() {
 		time.Sleep(6 * time.Second)
 		ticker := time.NewTicker(3 * time.Second)
+		offset := 0
 
 		for {
 			select {
@@ -905,7 +909,13 @@ func RunNFAMarket(tag string, quit chan struct{}, connect_box *dwidget.DeroRpcEn
 				rpc.EchoWallet(tag)
 
 				// Get all NFA listings
-				FindNfaListings(nil)
+				if !GnomonClosing() && offset%2 == 0 {
+					FindNfaListings(nil)
+					if offset > 19 {
+						offset = 0
+					}
+				}
+
 				rpc.GetBalance()
 				if !rpc.Wallet.Connect {
 					rpc.Wallet.Balance = 0
@@ -918,15 +928,13 @@ func RunNFAMarket(tag string, quit chan struct{}, connect_box *dwidget.DeroRpcEn
 				}
 
 				// If connected daemon connected start looking for Gnomon sync with daemon
-				if rpc.Daemon.Connect && Gnomes.Init {
+				if rpc.Daemon.Connect && Gnomes.Init && !GnomonClosing() {
 					connect_box.Disconnect.SetChecked(true)
 					// Get indexed SCID count
-					if !GnomonClosing() {
-						contracts := Gnomes.Indexer.Backend.GetAllOwnersAndSCIDs()
-						Gnomes.SCIDS = uint64(len(contracts))
-						if Gnomes.SCIDS > 0 {
-							Gnomes.Checked = true
-						}
+					contracts := Gnomes.Indexer.Backend.GetAllOwnersAndSCIDs()
+					Gnomes.SCIDS = uint64(len(contracts))
+					if Gnomes.SCIDS > 0 {
+						Gnomes.Checked = true
 					}
 
 					height := rpc.DaemonHeight(tag, rpc.Daemon.Rpc)
@@ -975,6 +983,8 @@ func RunNFAMarket(tag string, quit chan struct{}, connect_box *dwidget.DeroRpcEn
 					rpc.Signal.Startup = false
 				}
 
+				offset++
+
 			case <-quit: // exit
 				log.Printf("[%s] Closing\n", tag)
 				if Gnomes.Icon_ind != nil {
@@ -985,4 +995,20 @@ func RunNFAMarket(tag string, quit chan struct{}, connect_box *dwidget.DeroRpcEn
 			}
 		}
 	}()
+}
+
+// Get search filters from on chain store
+func FetchFilters() {
+	check := []string{}
+	if stored, ok := rpc.FindStringKey(rpc.RatingSCID, "market_filter", rpc.Daemon.Rpc).(string); ok {
+		if h, err := hex.DecodeString(stored); err == nil {
+			if err = json.Unmarshal(h, &check); err != nil {
+				log.Println("[FetchFilters] Market Filter", err)
+			} else {
+				Market.Filters = check
+			}
+		}
+	} else {
+		log.Println("[FetchFilters] Could not get Market Filter")
+	}
 }

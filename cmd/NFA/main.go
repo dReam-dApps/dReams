@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"runtime"
 	"syscall"
 	"time"
 
@@ -22,7 +23,10 @@ import (
 const app_tag = "NFA Market"
 
 func main() {
+	n := runtime.NumCPU()
+	runtime.GOMAXPROCS(n)
 	config := menu.ReadDreamsConfig(app_tag)
+
 	a := app.New()
 	a.Settings().SetTheme(bundle.DeroTheme(config.Skin))
 	w := a.NewWindow(app_tag)
@@ -46,6 +50,8 @@ func main() {
 		rpc.Ping()
 		if rpc.Daemon.Connect && !menu.Gnomes.Init && !menu.Gnomes.Start {
 			go menu.StartGnomon(app_tag, []string{menu.NFA_SEARCH_FILTER}, 0, 0, nil)
+			rpc.FetchFees()
+			menu.FetchFilters()
 		}
 	}
 

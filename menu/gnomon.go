@@ -1478,6 +1478,10 @@ func FindNfaListings(assets map[string]string) {
 
 		i := 0
 		for k := range assets {
+			if GnomonClosing() || !Gnomes.Init {
+				return
+			}
+
 			keys[i] = k
 
 			a := checkNfaAuctionListing(keys[i])
@@ -1519,15 +1523,16 @@ func isDreamsNfaCollection(check string) bool {
 }
 
 // Check if NFA SCID is listed for auction
-//   - Market.Filter false for all NFA listings
+//   - Market.DreamsFilter false for all NFA listings
 func checkNfaAuctionListing(scid string) (asset string) {
-	if !GnomonClosing() {
+	if Gnomes.Init && !GnomonClosing() {
+		creator, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "creatorAddr", Gnomes.Indexer.ChainHeight, true)
 		listType, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "listType", Gnomes.Indexer.ChainHeight, true)
 		header, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "nameHdr", Gnomes.Indexer.ChainHeight, true)
 		coll, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "collection", Gnomes.Indexer.ChainHeight, true)
 		desc, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "descrHdr", Gnomes.Indexer.ChainHeight, true)
-		if listType != nil && header != nil {
-			if Market.Filter {
+		if listType != nil && header != nil && creator != nil {
+			if Market.DreamsFilter {
 				check := strings.Trim(header[0], "0123456789")
 				if isDreamsNfaCollection(check) {
 					if listType[0] == "auction" {
@@ -1535,8 +1540,17 @@ func checkNfaAuctionListing(scid string) (asset string) {
 					}
 				}
 			} else {
-				if listType[0] == "auction" {
-					asset = coll[0] + "   " + header[0] + "   " + desc[0] + "   " + scid
+				var hidden bool
+				for _, addr := range Market.Filters {
+					if creator[0] == addr {
+						hidden = true
+					}
+				}
+
+				if !hidden {
+					if listType[0] == "auction" {
+						asset = coll[0] + "   " + header[0] + "   " + desc[0] + "   " + scid
+					}
 				}
 			}
 		}
@@ -1546,15 +1560,16 @@ func checkNfaAuctionListing(scid string) (asset string) {
 }
 
 // Check if NFA SCID is listed as buy now
-//   - Market.Filter false for all NFA listings
+//   - Market.DreamsFilter false for all NFA listings
 func checkNfaBuyListing(scid string) (asset string) {
-	if !GnomonClosing() {
+	if Gnomes.Init && !GnomonClosing() {
+		creator, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "creatorAddr", Gnomes.Indexer.ChainHeight, true)
 		listType, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "listType", Gnomes.Indexer.ChainHeight, true)
 		header, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "nameHdr", Gnomes.Indexer.ChainHeight, true)
 		coll, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "collection", Gnomes.Indexer.ChainHeight, true)
 		desc, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "descrHdr", Gnomes.Indexer.ChainHeight, true)
 		if listType != nil && header != nil {
-			if Market.Filter {
+			if Market.DreamsFilter {
 				check := strings.Trim(header[0], "0123456789")
 				if isDreamsNfaCollection(check) {
 					if listType[0] == "sale" {
@@ -1562,8 +1577,17 @@ func checkNfaBuyListing(scid string) (asset string) {
 					}
 				}
 			} else {
-				if listType[0] == "sale" {
-					asset = coll[0] + "   " + header[0] + "   " + desc[0] + "   " + scid
+				var hidden bool
+				for _, addr := range Market.Filters {
+					if creator[0] == addr {
+						hidden = true
+					}
+				}
+
+				if !hidden {
+					if listType[0] == "sale" {
+						asset = coll[0] + "   " + header[0] + "   " + desc[0] + "   " + scid
+					}
 				}
 			}
 		}
