@@ -465,7 +465,7 @@ func fetch(quit chan struct{}) {
 											go func() {
 												if !isWindows() {
 													time.Sleep(500 * time.Millisecond)
-													dReams.App.SendNotification(notification("dReams - Holdero", "Auto Check/Fold Tx Sent", 9))
+													dReams.App.SendNotification(notification("dReams - Holdero", "Auto Check/Fold TX Sent", 9))
 												}
 											}()
 										}
@@ -485,7 +485,7 @@ func fetch(quit chan struct{}) {
 
 												if !isWindows() {
 													time.Sleep(300 * time.Millisecond)
-													dReams.App.SendNotification(notification("dReams - Holdero", "Auto Deal Tx Sent", 9))
+													dReams.App.SendNotification(notification("dReams - Holdero", "Auto Deal TX Sent", 9))
 												}
 											}()
 										}
@@ -506,7 +506,7 @@ func fetch(quit chan struct{}) {
 
 												if !isWindows() {
 													time.Sleep(300 * time.Millisecond)
-													dReams.App.SendNotification(notification("dReams - Holdero", "Auto Bet Tx Sent", 9))
+													dReams.App.SendNotification(notification("dReams - Holdero", "Auto Bet TX Sent", 9))
 												}
 											}()
 										}
