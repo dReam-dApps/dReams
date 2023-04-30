@@ -1076,9 +1076,6 @@ func PredictTab(ti *container.TabItem) {
 	switch ti.Text {
 	case "Contracts":
 		go menu.PopulatePredictions(nil)
-	// case "Leaderboard":
-	// 	go MakeLeaderBoard(rpc.Daemon.Connect, menu.Gnomes.Sync, prediction.PredictControl.Contract)
-
 	default:
 	}
 }

@@ -432,7 +432,7 @@ func TableListings(tab *container.AppTabs) fyne.CanvasObject {
 	return tables_cont
 }
 
-// Confrimation for a SCID rating
+// Confirmation for a SCID rating
 func RateConfirm(scid string, tab *container.AppTabs, reset fyne.CanvasObject) fyne.CanvasObject {
 	label := widget.NewLabel(fmt.Sprintf("Rate your experience with this contract\n\n%s", scid))
 	label.Wrapping = fyne.TextWrapWord

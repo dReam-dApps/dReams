@@ -717,7 +717,6 @@ func placePredict() *fyne.Container {
 		container.NewTabItem("Contracts", layout.NewSpacer()),
 		container.NewTabItem("Favorites", prediction.PredicitionFavorites()),
 		container.NewTabItem("Owned", owned_tab))
-	// container.NewTabItem("Leaderboard", leaders_contnet))
 
 	tabs.SelectIndex(0)
 	tabs.Selected().Content = prediction.PredictionListings(tabs)

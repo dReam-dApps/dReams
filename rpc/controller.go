@@ -197,8 +197,7 @@ type predictionValues struct {
 }
 
 type signals struct {
-	Startup bool
-	//Daemon    bool
+	Startup   bool
 	Contract  bool
 	Deal      bool
 	Bet       bool
