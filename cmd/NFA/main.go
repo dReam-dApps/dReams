@@ -31,6 +31,7 @@ func main() {
 	a.Settings().SetTheme(bundle.DeroTheme(config.Skin))
 	w := a.NewWindow(app_tag)
 	w.Resize(fyne.NewSize(1200, 800))
+	w.SetIcon(bundle.ResourceMarketIconPng)
 	w.SetMaster()
 	quit := make(chan struct{})
 	w.SetCloseIntercept(func() {
