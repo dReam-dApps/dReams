@@ -162,7 +162,7 @@ func ThemeSelect() fyne.Widget {
 				if FileExists(file, "dReams") {
 					Settings.ThemeImg = *canvas.NewImageFromFile(file)
 				} else {
-					Settings.ThemeUrl = "https://raw.githubusercontent.com/SixofClubsss/" + s + "/main/" + s + ".png"
+					Settings.ThemeUrl = "https://raw.githubusercontent.com/SixofClubsss/SIXART/main/" + s + "/" + s + ".png"
 					log.Println("[dReams] Downloading", Settings.ThemeUrl)
 					Settings.ThemeImg, _ = DownloadFile(Settings.ThemeUrl, s)
 				}
