@@ -20,6 +20,7 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/data/validation"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 )
@@ -721,7 +722,8 @@ func RecheckDreamsAssets() {
 //   - games enables dReams asset selects
 //   - recheck for RecheckButton() func
 //   - menu resources for side menus
-func PlaceAssets(tag string, games bool, recheck func(), menu_icon, menu_background fyne.Resource) *container.Split {
+//   - w for main window dialog
+func PlaceAssets(tag string, games bool, recheck func(), menu_icon, menu_background fyne.Resource, w fyne.Window) *container.Split {
 	items_box := container.NewAdaptiveGrid(2)
 
 	if games {
@@ -766,7 +768,31 @@ func PlaceAssets(tag string, games bool, recheck func(), menu_icon, menu_backgro
 
 	max := container.NewMax(bundle.Alpha120, tabs, scroll_cont)
 
-	player_input.Add(SetHeaderItems(max.Objects, tabs))
+	header_name_entry := widget.NewEntry()
+	header_name_entry.PlaceHolder = "Name:"
+	header_descr_entry := widget.NewEntry()
+	header_descr_entry.PlaceHolder = "Description"
+	header_icon_entry := widget.NewEntry()
+	header_icon_entry.PlaceHolder = "Icon:"
+
+	header_button := widget.NewButton("Set Headers", func() {
+		scid := Assets.Index_entry.Text
+		if len(scid) == 64 && header_name_entry.Text != "dReam Tables" && header_name_entry.Text != "dReams" {
+			if _, ok := rpc.FindStringKey(rpc.GnomonSCID, scid, rpc.Daemon.Rpc).(string); ok {
+				max.Objects[1] = setHeaderConfirm(header_name_entry.Text, header_descr_entry.Text, header_icon_entry.Text, scid, max.Objects, tabs)
+				max.Objects[1].Refresh()
+			} else {
+				dialog.NewInformation("Check back soon", "SCID not stored on the main Gnomon SC yet\n\nOnce stored, you can set your SCID headers", w).Show()
+			}
+		}
+	})
+
+	header_contr := container.NewVBox(header_name_entry, header_descr_entry, header_icon_entry, header_button)
+	Assets.Header_box = *container.NewAdaptiveGrid(2, header_contr)
+	Assets.Header_box.Hide()
+
+	player_input.Add(&Assets.Header_box)
+
 	player_box := container.NewHBox(player_input)
 
 	menu_top := container.NewHSplit(player_box, max)
@@ -838,31 +864,6 @@ func AssetStats() fyne.CanvasObject {
 	Assets.Stats_box = *container.NewVBox(Assets.Collection, Assets.Name, IconImg(nil))
 
 	return &Assets.Stats_box
-}
-
-// Set SCID header objects
-//   - Pass main window obj and tabs to reset to
-func SetHeaderItems(obj []fyne.CanvasObject, tabs *container.AppTabs) fyne.CanvasObject {
-	name_entry := widget.NewEntry()
-	name_entry.PlaceHolder = "Name:"
-	descr_entry := widget.NewEntry()
-	descr_entry.PlaceHolder = "Description"
-	icon_entry := widget.NewEntry()
-	icon_entry.PlaceHolder = "Icon:"
-
-	button := widget.NewButton("Set Headers", func() {
-		scid := Assets.Index_entry.Text
-		if len(scid) == 64 && name_entry.Text != "dReam Tables" && name_entry.Text != "dReams" {
-			obj[1] = setHeaderConfirm(name_entry.Text, descr_entry.Text, icon_entry.Text, scid, obj, tabs)
-			obj[1].Refresh()
-		}
-	})
-
-	contr := container.NewVBox(name_entry, descr_entry, icon_entry, button)
-	Assets.Header_box = *container.NewAdaptiveGrid(2, contr)
-	Assets.Header_box.Hide()
-
-	return &Assets.Header_box
 }
 
 // Confirmation for setting SCID headers

@@ -351,7 +351,7 @@ func place() *fyne.Container {
 	menu_tabs := container.NewAppTabs(
 		container.NewTabItem("Wallet", placeWall()),
 		container.NewTabItem("dApps", layout.NewSpacer()),
-		container.NewTabItem("Assets", menu.PlaceAssets("dReams", true, menu.RecheckDreamsAssets, bundle.ResourceDTGnomonIconPng, bundle.ResourceOwBackgroundPng)),
+		container.NewTabItem("Assets", menu.PlaceAssets("dReams", true, menu.RecheckDreamsAssets, bundle.ResourceDTGnomonIconPng, bundle.ResourceOwBackgroundPng, dReams.Window)),
 		container.NewTabItem("Market", menu.PlaceMarket()))
 
 	menu_tabs.OnSelected = func(ti *container.TabItem) {
