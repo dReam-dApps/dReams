@@ -2317,6 +2317,7 @@ func SendAsset(scid, dest string, payload bool) {
 func ConfirmTx(txid, tag string, timeout int) bool {
 	if txid != "" {
 		count := 0
+		time.Sleep(time.Second)
 		for Wallet.Connect && Daemon.Connect {
 			count++
 			time.Sleep(2 * time.Second)
@@ -2349,6 +2350,7 @@ func ConfirmTx(txid, tag string, timeout int) bool {
 func ConfirmTxRetry(txid, tag string, timeout int) (retry int) {
 	count := 0
 	next_block := Wallet.Height + 1
+	time.Sleep(time.Second)
 	for Wallet.Connect && Daemon.Connect {
 		count++
 		time.Sleep(2 * time.Second)
