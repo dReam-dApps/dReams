@@ -53,21 +53,22 @@ type ranker struct {
 	p6HighCardArr [5]int
 }
 
-func KeyCard(hash string, who int) int { /// Gets other player cards and decrypt with their keys after reveal
+// Gets other player cards and decrypt with their keys after reveal
+func KeyCard(hash string, who int) int {
 	var keyCheck string
 	switch who {
 	case 1:
-		keyCheck = CardHash.Key1
+		keyCheck = Round.Cards.Key1
 	case 2:
-		keyCheck = CardHash.Key2
+		keyCheck = Round.Cards.Key2
 	case 3:
-		keyCheck = CardHash.Key3
+		keyCheck = Round.Cards.Key3
 	case 4:
-		keyCheck = CardHash.Key4
+		keyCheck = Round.Cards.Key4
 	case 5:
-		keyCheck = CardHash.Key5
+		keyCheck = Round.Cards.Key5
 	case 6:
-		keyCheck = CardHash.Key6
+		keyCheck = Round.Cards.Key6
 	}
 
 	for i := 1; i < 53; i++ {
@@ -84,6 +85,7 @@ func KeyCard(hash string, who int) int { /// Gets other player cards and decrypt
 
 }
 
+// Check if player has revealed cards
 func revealed(c [2]int) bool {
 	if c[0] != 0 && c[1] != 0 {
 		return true
@@ -92,7 +94,8 @@ func revealed(c [2]int) bool {
 	return false
 }
 
-func getHands(totalHands int) { /// start hand ranking
+// Main routine triggered when players reveal cards at showdown to payout and end round
+func getHands(totalHands int) {
 	var r ranker
 	r.p1Rank = 100
 	r.p1HighPair = 0
@@ -107,12 +110,12 @@ func getHands(totalHands int) { /// start hand ranking
 	r.p6Rank = 100
 	r.p6HighPair = 0
 
-	r.p1HandRaw = [2]int{KeyCard(CardHash.P1C1, 1), KeyCard(CardHash.P1C2, 1)}
-	r.p2HandRaw = [2]int{KeyCard(CardHash.P2C1, 2), KeyCard(CardHash.P2C2, 2)}
-	r.p3HandRaw = [2]int{KeyCard(CardHash.P3C1, 3), KeyCard(CardHash.P3C2, 3)}
-	r.p4HandRaw = [2]int{KeyCard(CardHash.P4C1, 4), KeyCard(CardHash.P4C2, 4)}
-	r.p5HandRaw = [2]int{KeyCard(CardHash.P5C1, 5), KeyCard(CardHash.P5C2, 5)}
-	r.p6HandRaw = [2]int{KeyCard(CardHash.P6C1, 6), KeyCard(CardHash.P6C2, 6)}
+	r.p1HandRaw = [2]int{KeyCard(Round.Cards.P1C1, 1), KeyCard(Round.Cards.P1C2, 1)}
+	r.p2HandRaw = [2]int{KeyCard(Round.Cards.P2C1, 2), KeyCard(Round.Cards.P2C2, 2)}
+	r.p3HandRaw = [2]int{KeyCard(Round.Cards.P3C1, 3), KeyCard(Round.Cards.P3C2, 3)}
+	r.p4HandRaw = [2]int{KeyCard(Round.Cards.P4C1, 4), KeyCard(Round.Cards.P4C2, 4)}
+	r.p5HandRaw = [2]int{KeyCard(Round.Cards.P5C1, 5), KeyCard(Round.Cards.P5C2, 5)}
+	r.p6HandRaw = [2]int{KeyCard(Round.Cards.P6C1, 6), KeyCard(Round.Cards.P6C2, 6)}
 
 	switch totalHands {
 	case 2:
@@ -190,7 +193,8 @@ func getHands(totalHands int) { /// start hand ranking
 	Display.Res = compareAll(&r)
 }
 
-func getFlop() ([2]int, [2]int, [2]int, [2]int, [2]int) { /// Gets community cards
+// Gets community cards for ranker
+func getFlop() ([2]int, [2]int, [2]int, [2]int, [2]int) {
 	c1 := suitSplit(Round.Flop1)
 	c2 := suitSplit(Round.Flop2)
 	c3 := suitSplit(Round.Flop3)
@@ -200,7 +204,9 @@ func getFlop() ([2]int, [2]int, [2]int, [2]int, [2]int) { /// Gets community car
 	return c1, c2, c3, c4, c5
 }
 
-func getHand1(r ranker) ranker { /// Splitting card value and suit for making individual hand, highcard value and rank
+// Set player ranker values
+
+func getHand1(r ranker) ranker {
 	r.pc1 = suitSplit(r.p1HandRaw[0])
 	r.pc2 = suitSplit(r.p1HandRaw[1])
 
@@ -278,7 +284,8 @@ func getHand6(r ranker) ranker {
 	return r
 }
 
-func compareThese(r *ranker) (int, ranker) { /// Search thorugh all hand combinations to find best
+// Search thorugh all hand combinations to find best
+func compareThese(r *ranker) (int, ranker) {
 	e0Hand := []int{r.cc1[0], r.cc2[0], r.cc3[0], r.cc4[0], r.cc5[0]}
 	e0Suits := []int{r.cc1[1], r.cc2[1], r.cc3[1], r.cc4[1], r.cc5[1]}
 	fRank := makeHand(e0Hand, e0Suits)
@@ -529,7 +536,8 @@ func compareThese(r *ranker) (int, ranker) { /// Search thorugh all hand combina
 	return fRank, *r
 }
 
-func findBest(rank int, fR, h []int, r *ranker) []int { /// If better hand exists when comparing
+// If hand ranks are the same look to see which is better when comparing
+func findBest(rank int, fR, h []int, r *ranker) []int {
 	var hand = h
 	var swap = fR
 	hole := []int{r.pc1[0], r.pc2[0]}
@@ -573,6 +581,7 @@ func findBest(rank int, fR, h []int, r *ranker) []int { /// If better hand exist
 	return swap[:]
 }
 
+// Gets high pair and low pair from HighCardArr
 func getHighPair(h [5]int) (int, int) {
 	var highPair int
 	var lowPair int
@@ -595,7 +604,8 @@ func getHighPair(h [5]int) (int, int) {
 	return highPair, lowPair
 }
 
-func makeHand(h, s []int) int { /// Determines hand rank after suit slipt
+// Determines player hand rank after suit slipt
+func makeHand(h, s []int) int {
 	pHand := h
 	pSuits := s
 
@@ -670,6 +680,7 @@ func makeHand(h, s []int) int { /// Determines hand rank after suit slipt
 	}
 }
 
+// Convert hand rank int to display string
 func handToText(rank int) string {
 	var handRankText string
 	switch rank {
@@ -697,6 +708,7 @@ func handToText(rank int) string {
 	return handRankText
 }
 
+// Payout to winning Holdero hand
 func payWinningHand(w int) {
 	var winner string
 	switch w {
@@ -716,18 +728,24 @@ func payWinningHand(w int) {
 
 	updateStatsWins(Round.Pot, winner, false)
 
-	if Display.PlayerId == "1" {
+	if Round.ID == 1 {
 		if !Signal.Paid {
 			Signal.Paid = true
 			go func() {
 				time.Sleep(time.Duration(Times.Delay) * time.Second)
-				PayOut(winner)
+				retry := 0
+				for retry < 4 {
+					tx := PayOut(winner)
+					time.Sleep(time.Second)
+					retry += ConfirmTxRetry(tx, "Holdero", 36)
+				}
 			}()
 		}
 	}
 }
 
-func compareAll(r *ranker) (end_res string) { /// Main compare to determine winner
+// Main compare routine to determine Holdero winner
+func compareAll(r *ranker) (end_res string) {
 	winningRank := []int{r.p1Rank, r.p2Rank, r.p3Rank, r.p4Rank, r.p5Rank, r.p6Rank}
 	sort.Ints(winningRank)
 
@@ -1056,12 +1074,17 @@ func compareAll(r *ranker) (end_res string) { /// Main compare to determine winn
 		} else {
 			end_res = "Push"
 			updateStatsPush(*r, Round.Pot, Round.F1, Round.F2, Round.F3, Round.F4, Round.F5, Round.F6)
-			if Display.PlayerId == "1" {
+			if Round.ID == 1 {
 				if !Signal.Paid {
 					Signal.Paid = true
 					go func() {
 						time.Sleep(time.Duration(Times.Delay) * time.Second)
-						PayoutSplit(*r, Round.F1, Round.F2, Round.F3, Round.F4, Round.F5, Round.F6)
+						retry := 0
+						for retry < 4 {
+							tx := PayoutSplit(*r, Round.F1, Round.F2, Round.F3, Round.F4, Round.F5, Round.F6)
+							time.Sleep(time.Second)
+							retry += ConfirmTxRetry(tx, "Holdero", 36)
+						}
 					}()
 				}
 			}
@@ -1070,13 +1093,14 @@ func compareAll(r *ranker) (end_res string) { /// Main compare to determine winn
 
 	if !Round.Printed {
 		Round.Printed = true
-		addLog(end_res)
+		AddLog(end_res)
 	}
 
 	return end_res
 }
 
-func suitSplit(card int) [2]int { /// Splits cards inside getHand()
+// Splits cards inside getHand() to make card value and suit value
+func suitSplit(card int) [2]int {
 	var arrSplit [2]int
 	switch card {
 	////// Spades
@@ -1296,7 +1320,9 @@ func suitSplit(card int) [2]int { /// Splits cards inside getHand()
 	return arrSplit
 }
 
-func compare1_2(r *ranker) { /// Compare two individual hands and strip loosing hand
+// Compare two individual hands from ranker for high card situations, if hand being compared is worse strip values
+
+func compare1_2(r *ranker) {
 	if (r.p1HighCardArr[4] > r.p2HighCardArr[4]) ||
 		(r.p1HighCardArr[4] == r.p2HighCardArr[4] && r.p1HighCardArr[3] > r.p2HighCardArr[3]) ||
 		(r.p1HighCardArr[4] == r.p2HighCardArr[4] && r.p1HighCardArr[3] == r.p2HighCardArr[3] && r.p1HighCardArr[2] > r.p2HighCardArr[2]) ||
@@ -1305,7 +1331,6 @@ func compare1_2(r *ranker) { /// Compare two individual hands and strip loosing 
 
 		less2(r)
 	}
-
 }
 
 func compare1_3(r *ranker) {
@@ -1317,7 +1342,6 @@ func compare1_3(r *ranker) {
 
 		less3(r)
 	}
-
 }
 
 func compare1_4(r *ranker) {
@@ -1329,7 +1353,6 @@ func compare1_4(r *ranker) {
 
 		less4(r)
 	}
-
 }
 
 func compare1_5(r *ranker) {
@@ -1341,7 +1364,6 @@ func compare1_5(r *ranker) {
 
 		less5(r)
 	}
-
 }
 
 func compare1_6(r *ranker) {
@@ -1353,7 +1375,6 @@ func compare1_6(r *ranker) {
 
 		less6(r)
 	}
-
 }
 
 func compare2_1(r *ranker) {
@@ -1365,7 +1386,6 @@ func compare2_1(r *ranker) {
 
 		less1(r)
 	}
-
 }
 
 func compare2_3(r *ranker) {
@@ -1377,7 +1397,6 @@ func compare2_3(r *ranker) {
 
 		less3(r)
 	}
-
 }
 
 func compare2_4(r *ranker) {
@@ -1389,7 +1408,6 @@ func compare2_4(r *ranker) {
 
 		less4(r)
 	}
-
 }
 
 func compare2_5(r *ranker) {
@@ -1401,7 +1419,6 @@ func compare2_5(r *ranker) {
 
 		less5(r)
 	}
-
 }
 
 func compare2_6(r *ranker) {
@@ -1413,7 +1430,6 @@ func compare2_6(r *ranker) {
 
 		less6(r)
 	}
-
 }
 
 func compare3_1(r *ranker) {
@@ -1425,7 +1441,6 @@ func compare3_1(r *ranker) {
 
 		less1(r)
 	}
-
 }
 
 func compare3_2(r *ranker) {
@@ -1437,7 +1452,6 @@ func compare3_2(r *ranker) {
 
 		less2(r)
 	}
-
 }
 
 func compare3_4(r *ranker) {
@@ -1449,7 +1463,6 @@ func compare3_4(r *ranker) {
 
 		less4(r)
 	}
-
 }
 
 func compare3_5(r *ranker) {
@@ -1461,7 +1474,6 @@ func compare3_5(r *ranker) {
 
 		less5(r)
 	}
-
 }
 
 func compare3_6(r *ranker) {
@@ -1473,7 +1485,6 @@ func compare3_6(r *ranker) {
 
 		less6(r)
 	}
-
 }
 
 func compare4_1(r *ranker) {
@@ -1485,7 +1496,6 @@ func compare4_1(r *ranker) {
 
 		less1(r)
 	}
-
 }
 
 func compare4_2(r *ranker) {
@@ -1497,7 +1507,6 @@ func compare4_2(r *ranker) {
 
 		less2(r)
 	}
-
 }
 
 func compare4_3(r *ranker) {
@@ -1509,7 +1518,6 @@ func compare4_3(r *ranker) {
 
 		less3(r)
 	}
-
 }
 
 func compare4_5(r *ranker) {
@@ -1521,7 +1529,6 @@ func compare4_5(r *ranker) {
 
 		less5(r)
 	}
-
 }
 
 func compare4_6(r *ranker) {
@@ -1533,7 +1540,6 @@ func compare4_6(r *ranker) {
 
 		less6(r)
 	}
-
 }
 
 func compare5_1(r *ranker) {
@@ -1545,7 +1551,6 @@ func compare5_1(r *ranker) {
 
 		less1(r)
 	}
-
 }
 
 func compare5_2(r *ranker) {
@@ -1557,7 +1562,6 @@ func compare5_2(r *ranker) {
 
 		less2(r)
 	}
-
 }
 
 func compare5_3(r *ranker) {
@@ -1569,7 +1573,6 @@ func compare5_3(r *ranker) {
 
 		less3(r)
 	}
-
 }
 
 func compare5_4(r *ranker) {
@@ -1581,7 +1584,6 @@ func compare5_4(r *ranker) {
 
 		less4(r)
 	}
-
 }
 
 func compare5_6(r *ranker) {
@@ -1593,7 +1595,6 @@ func compare5_6(r *ranker) {
 
 		less6(r)
 	}
-
 }
 
 func compare6_1(r *ranker) {
@@ -1605,7 +1606,6 @@ func compare6_1(r *ranker) {
 
 		less1(r)
 	}
-
 }
 
 func compare6_2(r *ranker) {
@@ -1617,7 +1617,6 @@ func compare6_2(r *ranker) {
 
 		less2(r)
 	}
-
 }
 
 func compare6_3(r *ranker) {
@@ -1629,7 +1628,6 @@ func compare6_3(r *ranker) {
 
 		less3(r)
 	}
-
 }
 
 func compare6_4(r *ranker) {
@@ -1641,7 +1639,6 @@ func compare6_4(r *ranker) {
 
 		less4(r)
 	}
-
 }
 
 func compare6_5(r *ranker) {
@@ -1653,10 +1650,11 @@ func compare6_5(r *ranker) {
 
 		less5(r)
 	}
-
 }
 
-func less6(r *ranker) { /// Strip func
+// Strip player values for ranker
+
+func less6(r *ranker) {
 	r.p6HighCardArr[0] = 0
 	r.p6HighCardArr[1] = 0
 	r.p6HighCardArr[2] = 0

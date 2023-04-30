@@ -3,8 +3,8 @@ module github.com/SixofClubsss/dReams
 go 1.19
 
 require (
-	fyne.io/fyne v1.4.3
 	fyne.io/fyne/v2 v2.2.4
+	fyne.io/x/fyne v0.0.0-20230128220048-43a1c4cd1ed8
 	github.com/civilware/Gnomon v0.0.0-20230130224610-7e5b7651ce52
 	github.com/deroproject/derohe v0.0.0-20230219151438-e855701f67c9
 	github.com/superoo7/go-gecko v1.0.0
@@ -40,6 +40,7 @@ require (
 	github.com/klauspost/compress v1.15.13 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.2 // indirect
 	github.com/minio/sha256-simd v1.0.0 // indirect
+	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/satori/go.uuid v1.2.0 // indirect

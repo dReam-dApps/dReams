@@ -74,10 +74,12 @@ func rPool(p int, n []int, c []int, cc [][]int) [][]int {
 	return cc
 }
 
+// Find all combinations of n within p
 func Pool(p int, n []int) [][]int {
 	return rPool(p, n, nil, nil)
 }
 
+// Make possible cards that are left
 func cardNumbers(hole []int) (numbers []int) {
 	var used bool
 	for i := 1; i < 53; i++ {
@@ -97,6 +99,7 @@ func cardNumbers(hole []int) (numbers []int) {
 	return
 }
 
+// Compares two hands of five cards
 func compareTheseFive(cards []int) (rank int, hand []int, suits []int) {
 	c1 := suitSplit(cards[0])
 	c2 := suitSplit(cards[1])
@@ -110,6 +113,7 @@ func compareTheseFive(cards []int) (rank int, hand []int, suits []int) {
 	return
 }
 
+// Compares two hands of two cards
 func compareTheseTwo(cards []int) (rank float64, hand []int) {
 	c1 := suitSplit(cards[0])
 	c2 := suitSplit(cards[1])
@@ -120,6 +124,7 @@ func compareTheseTwo(cards []int) (rank float64, hand []int) {
 	return
 }
 
+// If card matches a value in a combo
 func match(c int, combo []int) (used bool) {
 	for i := range combo {
 		if c == combo[i] {
@@ -130,6 +135,7 @@ func match(c int, combo []int) (used bool) {
 	return
 }
 
+// If three cards match values in a combo
 func threeMatch(cards, combo []int) bool {
 	switch len(cards) {
 	case 3:
@@ -163,6 +169,7 @@ func threeMatch(cards, combo []int) bool {
 	return false
 }
 
+// Make rank for local player current hand
 func myHand(cards []int) int {
 	rank := 100
 	hand := []int{}
@@ -214,6 +221,7 @@ func myHand(cards []int) int {
 	return rank
 }
 
+// Make rank for hole card hand
 func makeHole(h, s []int) (rank float64) {
 	pHand := h
 	pSuits := s
@@ -283,6 +291,7 @@ func makeHole(h, s []int) (rank float64) {
 	return
 }
 
+// Evaluate the current board for player outs and bad odds situations
 func lookAhead(odds, future float64, rank int, comm []int) (ahead float64) {
 	fRank := float64(rank)
 	var value, suit []int
@@ -523,6 +532,7 @@ func lookAhead(odds, future float64, rank int, comm []int) (ahead float64) {
 	return
 }
 
+// Find if there is a pair or trip
 func pairOnBoard(cards []int, str string) (pair, trip int, sub []int) {
 	sub = cards
 	for i := range cards {
@@ -550,6 +560,7 @@ func pairOnBoard(cards []int, str string) (pair, trip int, sub []int) {
 	return
 }
 
+// Find if there is a run
 func runOnBoard(cards []int, str string) (run []int, run3, run4, off3, off4, in3 bool) {
 	l := len(cards)
 	for i := range cards {
@@ -610,6 +621,7 @@ func runOnBoard(cards []int, str string) (run []int, run3, run4, off3, off4, in3
 	return
 }
 
+// Find if there is suited
 func suitedBoard(l int, cards []int, str string) (suit int, suit3, suit4 bool) {
 	suit = 100
 	for i := range cards {
@@ -637,6 +649,7 @@ func suitedBoard(l int, cards []int, str string) (suit int, suit3, suit4 bool) {
 	return
 }
 
+// Gets high pair, high card and low pair
 func getHighs(h []int) (highPair int, highCard int, lowPair int) {
 	l := len(h)
 	for i := range h {
@@ -672,6 +685,7 @@ func getHighs(h []int) (highPair int, highCard int, lowPair int) {
 	return
 }
 
+// Find possible current hands that could be better to determine base odds %
 func countBetter(rank int, comm []int, p [][]int) (better float64, count float64) {
 	for i := range p {
 		if threeMatch(comm, p[i]) {
@@ -745,6 +759,7 @@ func countBetter(rank int, comm []int, p [][]int) (better float64, count float64
 	return
 }
 
+// Determine base odds % from countBetter()
 func betterHands(rank int, comm []int, p [][]int) float64 {
 	oddsLog("[betterHands]", fmt.Sprintln("Community", comm))
 	better, count := countBetter(rank, comm, p)
@@ -754,6 +769,7 @@ func betterHands(rank int, comm []int, p [][]int) float64 {
 	return better / count * 100
 }
 
+// Find possible future hands that could be better to add to base odds %
 func futureHands(p [][]int) float64 {
 	var av, count float64
 	possible := cardNumbers(append(Odds.community, Odds.hole[:]...))
@@ -774,6 +790,7 @@ func futureHands(p [][]int) float64 {
 	return av / count
 }
 
+// Find possible player future hands for futureHands() compare
 func myFutureHand(cards []int) (rank int, hand []int) {
 	rank = 100
 	p := Pool(5, cards)
@@ -812,6 +829,7 @@ func myFutureHand(cards []int) (rank int, hand []int) {
 	return
 }
 
+// Find possible future hole hands that could be better to determine base odds %
 func betterHole(cards []int) float64 {
 	var better, count float64
 	mr, _ := compareTheseTwo(cards)
@@ -832,6 +850,7 @@ func betterHole(cards []int) float64 {
 	return better / count * 100
 }
 
+// Main odds routine where base odds % and situational odds are combined before passing to BetLog()
 func MakeOdds() (odds float64, future float64) {
 	fmt.Println()
 	Odds.community = []int{}
@@ -856,7 +875,7 @@ func MakeOdds() (odds float64, future float64) {
 		Odds.community = append(Odds.community, Round.RiverCard)
 	}
 
-	Odds.hole = [2]int{Card(CardHash.Local1), Card(CardHash.Local2)}
+	Odds.hole = [2]int{Card(Round.Cards.Local1), Card(Round.Cards.Local2)}
 
 	if Odds.hole[:] == nil || Odds.hole[0] == 0 || Odds.hole[1] == 0 {
 		oddsLog("[makeOdds]", fmt.Sprintln("No Cards"))
@@ -894,6 +913,7 @@ func MakeOdds() (odds float64, future float64) {
 	}
 }
 
+// Create random values for randomized params in BetLog()
 func randomize() (float64, float64, float64) {
 	var a, b, c float64
 	if Odds.Bot.Random[1] == 1 || Odds.Bot.Random[1] == 3 {
@@ -917,6 +937,7 @@ func randomize() (float64, float64, float64) {
 	return a, b, c
 }
 
+// Find players outs for straights and flush
 func findMyOuts(l, rank int, value, suit []int) (run []int, flush int, straight_outs, flush_outs float64) {
 	sort.Ints(value)
 	sort.Ints(suit)
@@ -991,6 +1012,7 @@ func findMyOuts(l, rank int, value, suit []int) (run []int, flush int, straight_
 	return
 }
 
+// Check minimum bet at current table
 func MinBet() uint64 {
 	if Round.Ante == 0 {
 		return Round.BB
@@ -999,13 +1021,15 @@ func MinBet() uint64 {
 	return Round.Ante
 }
 
+// Check if bet is greater than allowed by Odds.Bot.Max
 func maxBet(amt float64) bool {
 	return amt > Odds.Bot.Max
 }
 
+// If bet is to be called
 func callBet(m float64, live bool) bool {
 	var amt float64
-	if Signal.PlacedBet {
+	if Signal.PlacedBet && Round.Raised > 0 {
 		amt = float64(Round.Raised) / 100000
 	} else {
 		amt = float64(Round.Wager) / 100000
@@ -1033,6 +1057,7 @@ func callBet(m float64, live bool) bool {
 	return true
 }
 
+// If bet is to be raised
 func raiseBet(m float64, live bool) bool {
 	amt := (float64(Round.Wager) / 100000) * m
 	if maxBet(amt) {
@@ -1053,6 +1078,7 @@ func raiseBet(m float64, live bool) bool {
 	return true
 }
 
+// Check if bet can be raised
 func canRaise() bool {
 	if !Signal.PlacedBet && Round.Raised == 0 && Round.Wager > 0 {
 		oddsLog("[canRaise]", "true")
@@ -1062,14 +1088,16 @@ func canRaise() bool {
 	return false
 }
 
+// Check if wallet balance is to low to call bet
 func lowBalance(amt float64) bool {
 	if Round.Asset {
-		return amt > float64(Wallet.TokenBal)/100000
+		return amt > float64(Wallet.TokenBal[GetAssetSCIDName(Round.AssetID)])/100000
 	} else {
 		return amt > float64(Wallet.Balance)/100000
 	}
 }
 
+// Find if player is in last position
 func lastPosition(id int) bool {
 	last := 0
 	ins := []bool{Signal.In1, Signal.In2, Signal.In3, Signal.In4, Signal.In5, Signal.In6}
@@ -1101,6 +1129,7 @@ func lastPosition(id int) bool {
 	return false
 }
 
+// Random switch working with Odds.Bot.Slow to keep bets from being placed when hand is good
 func slowPlay(future float64) (bool, bool) {
 	skip := true
 	i := rand.Intn(36-1) + 1
@@ -1138,6 +1167,7 @@ func slowPlay(future float64) (bool, bool) {
 	return skip, false
 }
 
+// Random switch working with Odds.Bot.Aggr will trigger bets and raises more often
 func aggressive(sure bool) (bet bool) {
 	if !sure {
 		i := rand.Intn(36-1) + 1
@@ -1170,6 +1200,7 @@ func aggressive(sure bool) (bet bool) {
 	return
 }
 
+// Random switch working with Odds.Bot.Aggr will trigger bluffing situations
 func bluff() (bet bool) {
 	if lastPosition(Round.ID) {
 		i := rand.Intn(9-1) + 1
@@ -1208,6 +1239,7 @@ func bluff() (bet bool) {
 	return
 }
 
+// Find pot odds of situation
 func potOdds(odds, straight_outs, flush_outs float64) (po float64, better bool) {
 	if Signal.PlacedBet {
 		po = float64(Round.Raised) / float64(Round.Pot) * 100
@@ -1225,6 +1257,8 @@ func potOdds(odds, straight_outs, flush_outs float64) (po float64, better bool) 
 	return
 }
 
+// Main bet logic where odds are combined with any random values,
+// then situation is evaluated against users params to determine what action to take
 func BetLogic(odds, future float64, live bool) {
 	if odds == 200 {
 		return
@@ -1372,15 +1406,18 @@ func BetLogic(odds, future float64, live bool) {
 	}
 }
 
+// Prints odds info and adds to gui log
 func oddsLog(f, str string) {
 	log.Print(f, " ", str)
 	Odds.Label.SetText(Odds.Label.Text + str)
 }
 
+// Check if current Holdero table is active
 func GameIsActive() bool {
 	return Round.Players > 1
 }
 
+// Set config to stored values
 func SetBotConfig(opt Bot_config) {
 	Odds.Bot.Risk[2] = opt.Risk[2]
 	Odds.Bot.Risk[1] = opt.Risk[1]
@@ -1396,6 +1433,7 @@ func SetBotConfig(opt Bot_config) {
 	Odds.Bot.Random[1] = opt.Random[1]
 }
 
+// Save config of current values
 func SaveBotConfig(i int, opt Bot_config) {
 	Stats.Bots[i].Risk[2] = opt.Risk[2]
 	Stats.Bots[i].Risk[1] = opt.Risk[1]
@@ -1411,6 +1449,7 @@ func SaveBotConfig(i int, opt Bot_config) {
 	Stats.Bots[i].Random[1] = opt.Random[1]
 }
 
+// Write Holdero stats to file
 func WriteHolderoStats(config Player_stats) bool {
 	file, err := os.Create("config/stats.json")
 	if err != nil {
@@ -1430,6 +1469,7 @@ func WriteHolderoStats(config Player_stats) bool {
 	return true
 }
 
+// Update win or loss of Holdero stats
 func updateStatsWins(amt uint64, player string, fold bool) {
 	if Odds.Enabled && !Signal.Odds {
 		if "Player"+Display.PlayerId == player {
@@ -1467,6 +1507,7 @@ func updateStatsWins(amt uint64, player string, fold bool) {
 	}
 }
 
+// Update wager of Holero stats
 func updateStatsWager(amt float64) {
 	if Odds.Enabled {
 		Stats.Player.Wagered = Stats.Player.Wagered + amt
@@ -1484,6 +1525,7 @@ func updateStatsWager(amt float64) {
 	}
 }
 
+// Update Holero stats when push
 func updateStatsPush(r ranker, amt uint64, f1, f2, f3, f4, f5, f6 bool) {
 	if Odds.Enabled && !Signal.Odds {
 		fold := false
