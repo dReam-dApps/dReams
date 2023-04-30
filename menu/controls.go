@@ -104,6 +104,8 @@ func ReadDreamsConfig(tag string) (saved dReamSave) {
 	}
 
 	bundle.AppColor = saved.Skin
+	Control.Dapp_list = make(map[string]bool)
+	Control.Dapp_list = saved.Dapps
 
 	return
 }

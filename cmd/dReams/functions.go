@@ -105,9 +105,6 @@ func init() {
 	menu.Control.Predict_favorites = saved.Predict
 	menu.Control.Sports_favorites = saved.Sports
 
-	menu.Control.Dapp_list = make(map[string]bool)
-	menu.Control.Dapp_list = saved.Dapps
-
 	menu.Market.DreamsFilter = true
 
 	rpc.Wallet.TokenBal = make(map[string]uint64)
