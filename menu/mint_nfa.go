@@ -167,7 +167,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 
 	descr_entry := widget.NewMultiLineEntry()
 	descr_entry.SetPlaceHolder("Asset Description:")
-	descr_entry.Validator = validation.NewRegexp(`^\w{2,}`, "String required")
+	descr_entry.Validator = validation.NewRegexp(`^\w{1,}`, "String required")
 
 	type_select := widget.NewSelect([]string{"Book", "Code", "File", "Image", "Movie", "Music", "Package", "Text"}, nil)
 	type_select.PlaceHolder = "Asset Type"
