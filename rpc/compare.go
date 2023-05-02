@@ -284,7 +284,7 @@ func getHand6(r ranker) ranker {
 	return r
 }
 
-// Search thorugh all hand combinations to find best
+// Search through all hand combinations to find best
 func compareThese(r *ranker) (int, ranker) {
 	e0Hand := []int{r.cc1[0], r.cc2[0], r.cc3[0], r.cc4[0], r.cc5[0]}
 	e0Suits := []int{r.cc1[1], r.cc2[1], r.cc3[1], r.cc4[1], r.cc5[1]}
