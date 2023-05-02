@@ -1651,8 +1651,11 @@ func GetAuctionDetails(scid string) {
 				Market.Type.Refresh()
 				Market.Collection.Text = (" Collection: " + collection[0])
 				Market.Collection.Refresh()
-				Market.Description.Text = (" Description: " + description[0])
-				Market.Description.Refresh()
+				if len(description[0]) > 64 {
+					Market.Description.Text = (" Description: " + description[0][0:64] + "...")
+				} else {
+					Market.Description.Text = (" Description: " + description[0])
+				}
 
 				Market.Creator.Text = (" Creator: " + creator[0])
 				Market.Creator.Refresh()
@@ -1778,7 +1781,11 @@ func GetBuyNowDetails(scid string) {
 				Market.Type.Refresh()
 				Market.Collection.Text = (" Collection: " + collection[0])
 				Market.Collection.Refresh()
-				Market.Description.Text = (" Description: " + description[0])
+				if len(description[0]) > 64 {
+					Market.Description.Text = (" Description: " + description[0][0:64] + "...")
+				} else {
+					Market.Description.Text = (" Description: " + description[0])
+				}
 				Market.Description.Refresh()
 
 				Market.Creator.Text = (" Creator: " + creator[0])
