@@ -1642,8 +1642,6 @@ func GetAuctionDetails(scid string) {
 					ty = "Theme/Avatar"
 				} else if check == "DBC" || check == "HighStrangeness" {
 					ty = "Avatar"
-				} else {
-					return
 				}
 
 				Market.Viewing_coll = check
@@ -1771,8 +1769,6 @@ func GetBuyNowDetails(scid string) {
 					ty = "Theme/Avatar"
 				} else if check == "DBC" || check == "HighStrangeness" {
 					ty = "Avatar"
-				} else {
-					return
 				}
 
 				Market.Viewing_coll = check
