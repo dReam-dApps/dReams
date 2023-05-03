@@ -253,7 +253,7 @@ func RequestBooking(scid string, stamp, s_key, e_key, amt uint64) {
 	}
 
 	t := []dero.Transfer{t1}
-	fee := rpc.GasEstimate(rpc.DerBnbSCID, "[RequestBooking]", args, t)
+	fee := rpc.GasEstimate(rpc.DerBnbSCID, "[RequestBooking]", args, t, rpc.LowLimitFee)
 	params := &dero.Transfer_Params{
 		Transfers: t,
 		SC_ID:     rpc.DerBnbSCID,
@@ -294,7 +294,7 @@ func ListProperty(scid string, amt, dd uint64) {
 	}
 
 	t := []dero.Transfer{t1}
-	fee := rpc.GasEstimate(rpc.DerBnbSCID, "[ListProperty]", args, t)
+	fee := rpc.GasEstimate(rpc.DerBnbSCID, "[ListProperty]", args, t, rpc.LowLimitFee)
 	params := &dero.Transfer_Params{
 		Transfers: t,
 		SC_ID:     rpc.DerBnbSCID,
@@ -329,7 +329,7 @@ func RemoveProperty(scid string) {
 	}
 
 	t := []dero.Transfer{t1}
-	fee := rpc.GasEstimate(rpc.DerBnbSCID, "[RemoveProperty]", args, t)
+	fee := rpc.GasEstimate(rpc.DerBnbSCID, "[RemoveProperty]", args, t, rpc.LowLimitFee)
 	params := &dero.Transfer_Params{
 		Transfers: t,
 		SC_ID:     rpc.DerBnbSCID,
@@ -366,7 +366,7 @@ func ChangePrice(scid string, amt uint64) {
 	}
 
 	t := []dero.Transfer{t1}
-	fee := rpc.GasEstimate(rpc.DerBnbSCID, "[ChangePrice]", args, t)
+	fee := rpc.GasEstimate(rpc.DerBnbSCID, "[ChangePrice]", args, t, rpc.LowLimitFee)
 	params := &dero.Transfer_Params{
 		Transfers: t,
 		SC_ID:     rpc.DerBnbSCID,
@@ -403,7 +403,7 @@ func ChangeDamageDeposit(scid string, amt uint64) {
 	}
 
 	t := []dero.Transfer{t1}
-	fee := rpc.GasEstimate(rpc.DerBnbSCID, "[ChangeDamageDeposit]", args, t)
+	fee := rpc.GasEstimate(rpc.DerBnbSCID, "[ChangeDamageDeposit]", args, t, rpc.LowLimitFee)
 	params := &dero.Transfer_Params{
 		Transfers: t,
 		SC_ID:     rpc.DerBnbSCID,
@@ -440,7 +440,7 @@ func ConfirmBooking(scid string, stamp uint64) {
 	}
 
 	t := []dero.Transfer{t1}
-	fee := rpc.GasEstimate(rpc.DerBnbSCID, "[ConfirmBooking]", args, t)
+	fee := rpc.GasEstimate(rpc.DerBnbSCID, "[ConfirmBooking]", args, t, rpc.LowLimitFee)
 	params := &dero.Transfer_Params{
 		Transfers: t,
 		SC_ID:     rpc.DerBnbSCID,
@@ -481,7 +481,7 @@ func ReleaseDamageDeposit(scid, desc string, id, amt uint64) {
 	}
 
 	t := []dero.Transfer{t1}
-	fee := rpc.GasEstimate(rpc.DerBnbSCID, "[ReleaseDamageDeposit]", args, t)
+	fee := rpc.GasEstimate(rpc.DerBnbSCID, "[ReleaseDamageDeposit]", args, t, rpc.LowLimitFee)
 	params := &dero.Transfer_Params{
 		Transfers: t,
 		SC_ID:     rpc.DerBnbSCID,
@@ -518,7 +518,7 @@ func CancelBooking(scid string, id uint64) {
 	}
 
 	t := []dero.Transfer{t1}
-	fee := rpc.GasEstimate(rpc.DerBnbSCID, "[CancelBooking]", args, t)
+	fee := rpc.GasEstimate(rpc.DerBnbSCID, "[CancelBooking]", args, t, rpc.LowLimitFee)
 	params := &dero.Transfer_Params{
 		Transfers: t,
 		SC_ID:     rpc.DerBnbSCID,
@@ -562,7 +562,7 @@ func RateExperience(scid string, id, renter, owner, prop, loc, overall uint64) {
 	}
 
 	t := []dero.Transfer{t1}
-	fee := rpc.GasEstimate(rpc.DerBnbSCID, "[RateExperience]", args, t)
+	fee := rpc.GasEstimate(rpc.DerBnbSCID, "[RateExperience]", args, t, rpc.LowLimitFee)
 	params := &dero.Transfer_Params{
 		Transfers: t,
 		SC_ID:     rpc.DerBnbSCID,
@@ -599,7 +599,7 @@ func ChangeAvailability(scid, cal string) {
 	}
 
 	t := []dero.Transfer{t1}
-	fee := rpc.GasEstimate(rpc.DerBnbSCID, "[ChangeAvailability]", args, t)
+	fee := rpc.GasEstimate(rpc.DerBnbSCID, "[ChangeAvailability]", args, t, rpc.LowLimitFee)
 	params := &dero.Transfer_Params{
 		Transfers: t,
 		SC_ID:     rpc.DerBnbSCID,
@@ -677,7 +677,7 @@ func StoreLocation(scid, location string) {
 	}
 
 	t := []dero.Transfer{t1}
-	fee := rpc.GasEstimate(scid, "[StoreLocation]", args, t)
+	fee := rpc.GasEstimate(scid, "[StoreLocation]", args, t, rpc.LowLimitFee)
 	params := &dero.Transfer_Params{
 		Transfers: t,
 		SC_ID:     scid,
@@ -714,7 +714,7 @@ func UpdateMetadata(scid, metadata string) {
 	}
 
 	t := []dero.Transfer{t1}
-	fee := rpc.GasEstimate(scid, "[UpdateMetadata]", args, t)
+	fee := rpc.GasEstimate(scid, "[UpdateMetadata]", args, t, rpc.HighLimitFee)
 	params := &dero.Transfer_Params{
 		Transfers: t,
 		SC_ID:     scid,
