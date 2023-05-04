@@ -162,7 +162,7 @@ func GetAddress(tag string) {
 		return
 	}
 
-	if result.Address[0:4] == "dero" && len(result.Address) == 66 {
+	if (result.Address[0:4] == "dero" || result.Address[0:4] == "deto") && len(result.Address) == 66 {
 		Wallet.Connect = true
 		log.Printf("[%s] Wallet Connected\n", tag)
 		log.Printf("[%s] Dero Address: %s\n", tag, result.Address)
