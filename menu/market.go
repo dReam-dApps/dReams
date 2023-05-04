@@ -28,21 +28,21 @@ import (
 type marketObjects struct {
 	Tab           string
 	Entry         *dwidget.DeroAmts
-	Name          *canvas.Text
-	Type          *canvas.Text
-	Collection    *canvas.Text
-	Description   *canvas.Text
-	Creator       *canvas.Text
-	Owner         *canvas.Text
-	Owner_update  *canvas.Text
-	Start_price   *canvas.Text
-	Art_fee       *canvas.Text
-	Royalty       *canvas.Text
-	Bid_count     *canvas.Text
-	Buy_price     *canvas.Text
-	Current_bid   *canvas.Text
-	Bid_price     *canvas.Text
-	End_time      *canvas.Text
+	Name          *widget.Entry
+	Type          *widget.Entry
+	Collection    *widget.Entry
+	Description   *widget.Entry
+	Creator       *widget.Entry
+	Owner         *widget.Entry
+	Owner_update  *widget.Entry
+	Start_price   *widget.Entry
+	Art_fee       *widget.Entry
+	Royalty       *widget.Entry
+	Bid_count     *widget.Entry
+	Buy_price     *widget.Entry
+	Current_bid   *widget.Entry
+	Bid_price     *widget.Entry
+	End_time      *widget.Entry
 	Loading       *canvas.Text
 	Market_button *widget.Button
 	Cancel_button *widget.Button
@@ -313,55 +313,40 @@ func BuyNowListings() fyne.Widget {
 // NFA market icon image with frame
 //   - Pass res for frame resource
 func NfaIcon(res fyne.Resource) fyne.CanvasObject {
-	Market.Icon.Resize(fyne.NewSize(94, 94))
-	Market.Icon.Move(fyne.NewPos(8, 3))
+	Market.Icon.SetMinSize(fyne.NewSize(94, 94))
 
 	frame := canvas.NewImageFromResource(res)
 	frame.SetMinSize(fyne.NewSize(100, 100))
-	frame.Resize(fyne.NewSize(100, 100))
-	frame.Move(fyne.NewPos(5, 0))
 
-	cont := *container.NewWithoutLayout(&Market.Icon, frame)
-
-	return &cont
+	return container.NewMax(&Market.Icon, frame)
 }
 
 // Badge for dReam Tools enabled assets
 //   - Pass res for frame resource
 func ToolsBadge(res fyne.Resource) fyne.CanvasObject {
 	badge := *canvas.NewImageFromResource(bundle.ResourceDReamToolsPng)
-	badge.Resize(fyne.NewSize(94, 94))
-	badge.Move(fyne.NewPos(8, 3))
+	badge.SetMinSize(fyne.NewSize(94, 94))
 
 	frame := canvas.NewImageFromResource(res)
 	frame.SetMinSize(fyne.NewSize(100, 100))
-	frame.Resize(fyne.NewSize(100, 100))
-	frame.Move(fyne.NewPos(5, 0))
 
-	cont := *container.NewWithoutLayout(&badge, frame)
-
-	return &cont
+	return container.NewMax(&badge, frame)
 }
 
 // NFA cover image for market display
-func NfaImg(img canvas.Image) *fyne.Container {
-	Market.Cover.Resize(fyne.NewSize(266, 400))
-	Market.Cover.Move(fyne.NewPos(425, -213))
+func NfaImg(img canvas.Image) fyne.CanvasObject {
+	Market.Cover.SetMinSize(fyne.NewSize(400, 600))
 
-	cont := container.NewWithoutLayout(&img)
-
-	return cont
+	return container.NewCenter(&img)
 }
 
 // Show text while loading market image
-func loadingText() *fyne.Container {
+func loadingText() fyne.CanvasObject {
 	Market.Loading = canvas.NewText("Loading", bundle.TextColor)
+	Market.Loading.Alignment = fyne.TextAlignCenter
 	Market.Loading.TextSize = 18
-	Market.Loading.Move(fyne.NewPos(400, 0))
 
-	cont := container.NewWithoutLayout(Market.Loading)
-
-	return cont
+	return container.NewMax(Market.Loading)
 }
 
 // Do while market loading text is showing
@@ -370,7 +355,6 @@ func loadingTextLoop() {
 		for i := 0; i < 3; i++ {
 			Market.Loading.Text = Market.Loading.Text + "."
 			Market.Loading.Refresh()
-			Market.Details_box.Objects[0].Refresh()
 			time.Sleep(300 * time.Millisecond)
 		}
 	}
@@ -378,73 +362,78 @@ func loadingTextLoop() {
 
 // Clears all market NFA images
 func clearNfaImages() {
-	Market.Details_box.Objects[1].(*fyne.Container).Objects[1] = layout.NewSpacer()
+	Market.Details_box.Objects[0].(*fyne.Container).Objects[0].(*fyne.Container).Objects[1] = layout.NewSpacer()
 	Market.Icon = *canvas.NewImageFromImage(nil)
-	Market.Details_box.Objects[1].Refresh()
+	Market.Details_box.Objects[0].Refresh()
 
 	Market.Cover = *canvas.NewImageFromImage(nil)
-	Market.Details_box.Objects[0] = loadingText()
-	Market.Details_box.Objects[0].Refresh()
+	Market.Details_box.Objects[1] = loadingText()
+	Market.Details_box.Objects[1].Refresh()
 	Market.Details_box.Refresh()
 }
 
 // Set up market info objects
 func NfaMarketInfo() fyne.CanvasObject {
-	Market.Name = canvas.NewText(" Name: ", bundle.TextColor)
-	Market.Type = canvas.NewText(" Asset Type: ", bundle.TextColor)
-	Market.Collection = canvas.NewText(" Collection: ", bundle.TextColor)
-	Market.Description = canvas.NewText(" Description: ", bundle.TextColor)
-	Market.Creator = canvas.NewText(" Creator: ", bundle.TextColor)
-	Market.Art_fee = canvas.NewText(" Artificer Fee: ", bundle.TextColor)
-	Market.Royalty = canvas.NewText(" Royalty: ", bundle.TextColor)
-	Market.Start_price = canvas.NewText(" Start Price: ", bundle.TextColor)
-	Market.Owner = canvas.NewText(" Owner: ", bundle.TextColor)
-	Market.Owner_update = canvas.NewText(" Owner can update: ", bundle.TextColor)
-	Market.Current_bid = canvas.NewText(" Current Bid: ", bundle.TextColor)
-	Market.Bid_price = canvas.NewText(" Minimum Bid: ", bundle.TextColor)
-	Market.Bid_count = canvas.NewText(" Bids: ", bundle.TextColor)
-	Market.End_time = canvas.NewText(" Ends At: ", bundle.TextColor)
+	Market.Name = widget.NewEntry()
+	Market.Type = widget.NewEntry()
+	Market.Collection = widget.NewEntry()
+	Market.Description = widget.NewMultiLineEntry()
+	Market.Creator = widget.NewEntry()
+	Market.Art_fee = widget.NewEntry()
+	Market.Royalty = widget.NewEntry()
+	Market.Start_price = widget.NewEntry()
+	Market.Owner = widget.NewEntry()
+	Market.Owner_update = widget.NewEntry()
+	Market.Current_bid = widget.NewEntry()
+	Market.Bid_price = widget.NewEntry()
+	Market.Bid_count = widget.NewEntry()
+	Market.End_time = widget.NewEntry()
 
-	Market.Name.TextSize = 18
-	Market.Type.TextSize = 18
-	Market.Collection.TextSize = 18
-	Market.Description.TextSize = 18
-	Market.Creator.TextSize = 18
-	Market.Art_fee.TextSize = 18
-	Market.Royalty.TextSize = 18
-	Market.Start_price.TextSize = 18
-	Market.Owner.TextSize = 18
-	Market.Owner_update.TextSize = 18
-	Market.Bid_price.TextSize = 18
-	Market.Current_bid.TextSize = 18
-	Market.Bid_count.TextSize = 18
-	Market.End_time.TextSize = 18
+	Market.Name.Disable()
+	Market.Type.Disable()
+	Market.Collection.Disable()
+	Market.Description.Disable()
+	Market.Creator.Disable()
+	Market.Art_fee.Disable()
+	Market.Royalty.Disable()
+	Market.Start_price.Disable()
+	Market.Owner.Disable()
+	Market.Owner_update.Disable()
+	Market.Current_bid.Disable()
+	Market.Bid_price.Disable()
+	Market.Bid_count.Disable()
+	Market.End_time.Disable()
 
 	Market.Icon.SetMinSize(fyne.NewSize(94, 94))
-	Market.Cover.SetMinSize(fyne.NewSize(133, 200))
+	Market.Cover.SetMinSize(fyne.NewSize(400, 600))
 
 	return AuctionInfo()
 }
 
 // Container for auction info objects
 func AuctionInfo() fyne.CanvasObject {
-	Market.Details_box = *container.NewVBox(
-		NfaImg(Market.Cover),
-		container.NewHBox(NfaIcon(bundle.ResourceAvatarFramePng), layout.NewSpacer()),
-		Market.Name,
-		Market.Type,
-		Market.Collection,
-		Market.Description,
-		Market.Creator,
-		Market.Owner,
-		Market.Art_fee,
-		Market.Royalty,
-		Market.Start_price,
-		Market.Current_bid,
-		Market.Bid_price,
-		Market.Bid_count,
-		Market.End_time)
+	auction_form := []*widget.FormItem{}
+	auction_form = append(auction_form, widget.NewFormItem("Name", Market.Name))
+	auction_form = append(auction_form, widget.NewFormItem("Asset Type", Market.Type))
+	auction_form = append(auction_form, widget.NewFormItem("Collection", Market.Collection))
+	auction_form = append(auction_form, widget.NewFormItem("Ends", Market.End_time))
+	auction_form = append(auction_form, widget.NewFormItem("Bids", Market.Bid_count))
+	auction_form = append(auction_form, widget.NewFormItem("Description", Market.Description))
+	auction_form = append(auction_form, widget.NewFormItem("Creator", Market.Creator))
+	auction_form = append(auction_form, widget.NewFormItem("Owner", Market.Owner))
+	auction_form = append(auction_form, widget.NewFormItem("Artificer %", Market.Art_fee))
+	auction_form = append(auction_form, widget.NewFormItem("Royalty %", Market.Royalty))
 
+	auction_form = append(auction_form, widget.NewFormItem("Owner Update", Market.Owner_update))
+	auction_form = append(auction_form, widget.NewFormItem("Start Price", Market.Start_price))
+
+	auction_form = append(auction_form, widget.NewFormItem("Current Bid", Market.Current_bid))
+
+	Market.Details_box = *container.NewAdaptiveGrid(2,
+		container.NewVBox(container.NewHBox(NfaIcon(bundle.ResourceAvatarFramePng), layout.NewSpacer()), widget.NewForm(auction_form...)),
+		NfaImg(Market.Cover))
+
+	Market.Description.Wrapping = fyne.TextWrapWord
 	Market.Details_box.Refresh()
 
 	return &Market.Details_box
@@ -453,77 +442,66 @@ func AuctionInfo() fyne.CanvasObject {
 // Refresh Market images
 func RefreshNfaImages() {
 	if Market.Cover.Resource != nil {
-		Market.Details_box.Objects[0] = NfaImg(Market.Cover)
-		Market.Details_box.Objects[0].Refresh()
+		Market.Details_box.Objects[1] = NfaImg(Market.Cover)
 	} else {
 		go loadingTextLoop()
 	}
 
 	if Market.Icon.Resource != nil {
-		Market.Details_box.Objects[1].(*fyne.Container).Objects[0] = NfaIcon(bundle.ResourceAvatarFramePng)
-		Market.Details_box.Objects[1].Refresh()
+		Market.Details_box.Objects[0].(*fyne.Container).Objects[0].(*fyne.Container).Objects[0] = NfaIcon(bundle.ResourceAvatarFramePng)
 	}
 	view := Market.Viewing_coll
 	if view == "AZYPC" || view == "SIXPC" || view == "AZYPCB" || view == "SIXPCB" {
-		Market.Details_box.Objects[1].(*fyne.Container).Objects[1] = ToolsBadge(bundle.ResourceAvatarFramePng)
+		Market.Details_box.Objects[0].(*fyne.Container).Objects[0].(*fyne.Container).Objects[1] = ToolsBadge(bundle.ResourceAvatarFramePng)
 	} else {
-		Market.Details_box.Objects[1].(*fyne.Container).Objects[1] = layout.NewSpacer()
+		Market.Details_box.Objects[0].(*fyne.Container).Objects[0].(*fyne.Container).Objects[1] = layout.NewSpacer()
 	}
 
-	Market.Details_box.Objects[1].Refresh()
+	Market.Details_box.Refresh()
 }
 
 // Set auction display content to default values
 func ResetAuctionInfo() {
 	Market.Bid_amt = 0
 	clearNfaImages()
-	Market.Name.Text = (" Name: ")
-	Market.Name.Refresh()
-	Market.Type.Text = (" Asset Type: ")
-	Market.Type.Refresh()
-	Market.Collection.Text = (" Collection: ")
-	Market.Collection.Refresh()
-	Market.Description.Text = (" Description: ")
-	Market.Description.Refresh()
-	Market.Creator.Text = (" Creator: ")
-	Market.Creator.Refresh()
-	Market.Art_fee.Text = (" Artificer Fee: ")
-	Market.Art_fee.Refresh()
-	Market.Royalty.Text = (" Royalty: ")
-	Market.Royalty.Refresh()
-	Market.Start_price.Text = (" Start Price: ")
-	Market.Start_price.Refresh()
-	Market.Owner.Text = (" Owner: ")
-	Market.Owner.Refresh()
-	Market.Owner_update.Text = (" Owner can update: ")
-	Market.Owner_update.Refresh()
-	Market.Current_bid.Text = (" Current Bid: ")
-	Market.Current_bid.Refresh()
-	Market.Bid_price.Text = (" Minimum Bid: ")
-	Market.Bid_price.Refresh()
-	Market.Bid_count.Text = (" Bids: ")
-	Market.Bid_count.Refresh()
-	Market.End_time.Text = (" Ends At: ")
-	Market.End_time.Refresh()
+	Market.Name.SetText("Name:")
+	Market.Type.SetText("Asset Type:")
+	Market.Collection.SetText("Collection:")
+	Market.Description.SetText("Description:")
+	Market.Creator.SetText("Creator:")
+	Market.Art_fee.SetText("Artificer Fee:")
+	Market.Royalty.SetText("Royalty:")
+	Market.Start_price.SetText("Start Price:")
+	Market.Owner.SetText("Owner:")
+	Market.Owner_update.SetText("Owner can update:")
+	Market.Current_bid.SetText("Current Bid:")
+	Market.Bid_price.SetText("Minimum Bid:")
+	Market.Bid_count.SetText("Bids:")
+	Market.End_time.SetText("Ends At:")
 	Market.Details_box.Refresh()
 }
 
 // Container for buy now info objects
 func BuyNowInfo() fyne.CanvasObject {
-	Market.Details_box = *container.NewVBox(
-		NfaImg(Market.Cover),
-		container.NewHBox(NfaIcon(bundle.ResourceAvatarFramePng), layout.NewSpacer()),
-		Market.Name,
-		Market.Type,
-		Market.Collection,
-		Market.Description,
-		Market.Creator,
-		Market.Owner,
-		Market.Art_fee,
-		Market.Royalty,
-		Market.Start_price,
-		Market.End_time)
+	buy_form := []*widget.FormItem{}
+	buy_form = append(buy_form, widget.NewFormItem("Name", Market.Name))
+	buy_form = append(buy_form, widget.NewFormItem("Asset Type", Market.Type))
+	buy_form = append(buy_form, widget.NewFormItem("Collection", Market.Collection))
+	buy_form = append(buy_form, widget.NewFormItem("Ends", Market.End_time))
+	buy_form = append(buy_form, widget.NewFormItem("Description", Market.Description))
+	buy_form = append(buy_form, widget.NewFormItem("Creator", Market.Creator))
+	buy_form = append(buy_form, widget.NewFormItem("Owner", Market.Owner))
+	buy_form = append(buy_form, widget.NewFormItem("Artificer %", Market.Art_fee))
+	buy_form = append(buy_form, widget.NewFormItem("Royalty %", Market.Royalty))
 
+	buy_form = append(buy_form, widget.NewFormItem("Owner Update", Market.Owner_update))
+	buy_form = append(buy_form, widget.NewFormItem("Price", Market.Start_price))
+
+	Market.Details_box = *container.NewAdaptiveGrid(2,
+		container.NewVBox(container.NewHBox(NfaIcon(bundle.ResourceAvatarFramePng), layout.NewSpacer()), widget.NewForm(buy_form...)),
+		NfaImg(Market.Cover))
+
+	Market.Description.Wrapping = fyne.TextWrapWord
 	Market.Details_box.Refresh()
 
 	return &Market.Details_box
@@ -533,28 +511,17 @@ func BuyNowInfo() fyne.CanvasObject {
 func ResetBuyInfo() {
 	Market.Buy_amt = 0
 	clearNfaImages()
-	Market.Name.Text = (" Name: ")
-	Market.Name.Refresh()
-	Market.Type.Text = (" Asset Type: ")
-	Market.Type.Refresh()
-	Market.Collection.Text = (" Collection: ")
-	Market.Collection.Refresh()
-	Market.Description.Text = (" Description: ")
-	Market.Description.Refresh()
-	Market.Creator.Text = (" Creator: ")
-	Market.Creator.Refresh()
-	Market.Art_fee.Text = (" Artificer Fee: ")
-	Market.Art_fee.Refresh()
-	Market.Royalty.Text = (" Royalty: ")
-	Market.Royalty.Refresh()
-	Market.Start_price.Text = (" Buy now for: ")
-	Market.Start_price.Refresh()
-	Market.Owner.Text = (" Owner: ")
-	Market.Owner.Refresh()
-	Market.Owner_update.Text = (" Owner can update: ")
-	Market.Owner_update.Refresh()
-	Market.End_time.Text = (" Ends At: ")
-	Market.End_time.Refresh()
+	Market.Name.SetText("Name:")
+	Market.Type.SetText("Asset Type:")
+	Market.Collection.SetText("Collection:")
+	Market.Description.SetText("Description:")
+	Market.Creator.SetText("Creator:")
+	Market.Art_fee.SetText("Artificer Fee:")
+	Market.Royalty.SetText("Royalty:")
+	Market.Start_price.SetText("Buy now for:")
+	Market.Owner.SetText("Owner:")
+	Market.Owner_update.SetText("Owner can update:")
+	Market.End_time.SetText("Ends At:")
 	Market.Details_box.Refresh()
 }
 
@@ -632,7 +599,7 @@ func PlaceMarket() *container.Split {
 
 	max := container.NewMax(bundle.Alpha120, tabs, scroll_cont)
 
-	details_box := container.NewVBox(layout.NewSpacer(), details)
+	details_box := container.NewVBox(layout.NewSpacer(), details, layout.NewSpacer())
 
 	menu_top := container.NewHSplit(details_box, max)
 	menu_top.SetOffset(0)

@@ -567,9 +567,10 @@ func GnomonState(windows, config bool) {
 			}
 		}
 
+		Assets.Stats_box = *container.NewVBox(Assets.Collection, Assets.Name, IconImg(bundle.ResourceAvatarFramePng))
+		Assets.Stats_box.Refresh()
+
 		if Control.Dapp_list["Holdero"] {
-			Assets.Stats_box = *container.NewVBox(Assets.Collection, Assets.Name, IconImg(bundle.ResourceAvatarFramePng))
-			Assets.Stats_box.Refresh()
 			Poker.Stats_box = *container.NewVBox(Stats.Name, Stats.Desc, Stats.Version, Stats.Last, Stats.Seats, TableIcon(bundle.ResourceAvatarFramePng))
 			Poker.Stats_box.Refresh()
 		}
@@ -1620,6 +1621,7 @@ func GetAuctionDetails(scid string) {
 		description, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "descrHdr", Gnomes.Indexer.ChainHeight, true)
 		creator, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "creatorAddr", Gnomes.Indexer.ChainHeight, true)
 		owner, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "owner", Gnomes.Indexer.ChainHeight, true)
+		typeHdr, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "typeHdr", Gnomes.Indexer.ChainHeight, true)
 		_, owner_update := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "ownerCanUpdate", Gnomes.Indexer.ChainHeight, true)
 		_, start := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "startPrice", Gnomes.Indexer.ChainHeight, true)
 		_, current := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "currBidAmt", Gnomes.Indexer.ChainHeight, true)
@@ -1630,7 +1632,7 @@ func GetAuctionDetails(scid string) {
 		_, startTime := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "startBlockTime", Gnomes.Indexer.ChainHeight, true)
 		_, artFee := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "artificerFee", Gnomes.Indexer.ChainHeight, true)
 
-		if name != nil && collection != nil && start != nil && royalty != nil && endTime != nil && artFee != nil {
+		if name != nil && collection != nil && start != nil && royalty != nil && endTime != nil && artFee != nil && typeHdr != nil {
 			go func() {
 				var ty string
 				check := strings.Trim(name[0], "0123456789")
@@ -1642,56 +1644,56 @@ func GetAuctionDetails(scid string) {
 					ty = "Theme/Avatar"
 				} else if check == "DBC" || check == "HighStrangeness" {
 					ty = "Avatar"
+				} else {
+					ty = typeHdr[0]
 				}
 
 				Market.Viewing_coll = check
-				Market.Name.Text = (" Name: " + name[0])
-				Market.Name.Refresh()
-				Market.Type.Text = (" Asset Type: " + ty)
-				Market.Type.Refresh()
-				Market.Collection.Text = (" Collection: " + collection[0])
-				Market.Collection.Refresh()
+
+				Market.Name.SetText(name[0])
+
+				Market.Type.SetText(ty)
+
+				Market.Collection.SetText(collection[0])
+
 				if len(description[0]) > 64 {
-					Market.Description.Text = (" Description: " + description[0][0:64] + "...")
+					Market.Description.SetText(description[0][0:64] + "...")
 				} else {
-					Market.Description.Text = (" Description: " + description[0])
+					Market.Description.SetText(description[0])
 				}
 
-				Market.Creator.Text = (" Creator: " + creator[0])
-				Market.Creator.Refresh()
-				Market.Owner.Text = (" Owner: " + owner[0])
-				Market.Owner.Refresh()
+				if Market.Creator.Text != creator[0] {
+					Market.Creator.SetText(creator[0])
+				}
+
+				if Market.Owner.Text != owner[0] {
+					Market.Owner.SetText(owner[0])
+				}
 				if owner_update[0] == 1 {
-					Market.Owner_update.Text = (" Owner can update: Yes")
+					Market.Owner_update.SetText("Yes")
 				} else {
-					Market.Owner_update.Text = (" Owner can update: No")
+					Market.Owner_update.SetText("No")
 				}
-				Market.Owner_update.Refresh()
 
-				Market.Art_fee.Text = (" Artificer Fee: " + strconv.Itoa(int(artFee[0])) + "%")
-				Market.Art_fee.Refresh()
+				Market.Art_fee.SetText(strconv.Itoa(int(artFee[0])) + "%")
 
-				Market.Royalty.Text = (" Royalty: " + strconv.Itoa(int(royalty[0])) + "%")
-				Market.Royalty.Refresh()
+				Market.Royalty.SetText(strconv.Itoa(int(royalty[0])) + "%")
+
 				price := float64(start[0])
 				str := fmt.Sprintf("%.5f", price/100000)
-				Market.Start_price.Text = (" Start Price: " + str + " Dero")
-				Market.Start_price.Refresh()
-				Market.Bid_count.Text = (" Bids: " + strconv.Itoa(int(bids[0])))
-				Market.Bid_count.Refresh()
+				Market.Start_price.SetText(str + " Dero")
+
+				Market.Bid_count.SetText(strconv.Itoa(int(bids[0])))
 
 				end, _ := rpc.MsToTime(strconv.Itoa(int(endTime[0]) * 1000))
-				Market.End_time.Text = (" Ends At: " + end.String())
-				Market.End_time.Refresh()
+				Market.End_time.SetText(end.String())
 
 				if current != nil {
 					value := float64(current[0])
 					str := fmt.Sprintf("%.5f", value/100000)
-					Market.Current_bid.Text = (" Current Bid: " + str)
-					Market.Current_bid.Refresh()
+					Market.Current_bid.SetText(str)
 				} else {
-					Market.Current_bid.Text = (" Current Bid: ")
-					Market.Current_bid.Refresh()
+					Market.Current_bid.SetText("")
 				}
 
 				if bid_price != nil {
@@ -1702,12 +1704,10 @@ func GetAuctionDetails(scid string) {
 					} else {
 						Market.Bid_amt = bid_price[0]
 					}
-					Market.Bid_price.Text = (" Minimum Bid: " + str)
-					Market.Bid_price.Refresh()
+					Market.Bid_price.SetText(str)
 				} else {
 					Market.Bid_amt = 0
-					Market.Bid_price.Text = (" Minimum Bid: ")
-					Market.Bid_price.Refresh()
+					Market.Bid_price.SetText("")
 				}
 
 				if amt, err := strconv.ParseFloat(Market.Entry.Text, 64); err == nil {
@@ -1753,6 +1753,7 @@ func GetBuyNowDetails(scid string) {
 		description, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "descrHdr", Gnomes.Indexer.ChainHeight, true)
 		creator, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "creatorAddr", Gnomes.Indexer.ChainHeight, true)
 		owner, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "owner", Gnomes.Indexer.ChainHeight, true)
+		typeHdr, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "typeHdr", Gnomes.Indexer.ChainHeight, true)
 		_, owner_update := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "ownerCanUpdate", Gnomes.Indexer.ChainHeight, true)
 		_, start := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "startPrice", Gnomes.Indexer.ChainHeight, true)
 		_, royalty := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "royalty", Gnomes.Indexer.ChainHeight, true)
@@ -1760,7 +1761,7 @@ func GetBuyNowDetails(scid string) {
 		_, startTime := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "startBlockTime", Gnomes.Indexer.ChainHeight, true)
 		_, artFee := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "artificerFee", Gnomes.Indexer.ChainHeight, true)
 
-		if name != nil && collection != nil && start != nil && royalty != nil && endTime != nil && artFee != nil {
+		if name != nil && collection != nil && start != nil && royalty != nil && endTime != nil && artFee != nil && typeHdr != nil {
 			go func() {
 				var ty string
 				check := strings.Trim(name[0], "0123456789")
@@ -1772,49 +1773,51 @@ func GetBuyNowDetails(scid string) {
 					ty = "Theme/Avatar"
 				} else if check == "DBC" || check == "HighStrangeness" {
 					ty = "Avatar"
+				} else {
+					ty = typeHdr[0]
 				}
 
 				Market.Viewing_coll = check
-				Market.Name.Text = (" Name: " + name[0])
-				Market.Name.Refresh()
-				Market.Type.Text = (" Asset Type: " + ty)
-				Market.Type.Refresh()
-				Market.Collection.Text = (" Collection: " + collection[0])
-				Market.Collection.Refresh()
+
+				Market.Name.SetText(name[0])
+
+				Market.Type.SetText(ty)
+
+				Market.Collection.SetText(collection[0])
+
 				if len(description[0]) > 64 {
-					Market.Description.Text = (" Description: " + description[0][0:64] + "...")
+					Market.Description.SetText(description[0][0:64] + "...")
 				} else {
-					Market.Description.Text = (" Description: " + description[0])
+					Market.Description.SetText(description[0])
 				}
-				Market.Description.Refresh()
 
-				Market.Creator.Text = (" Creator: " + creator[0])
-				Market.Creator.Refresh()
-				Market.Owner.Text = (" Owner: " + owner[0])
-				Market.Owner.Refresh()
+				if Market.Creator.Text != creator[0] {
+					Market.Creator.SetText(creator[0])
+				}
+
+				if Market.Owner.Text != owner[0] {
+					Market.Owner.SetText(owner[0])
+				}
+
 				if owner_update[0] == 1 {
-					Market.Owner_update.Text = (" Owner can update: Yes")
+					Market.Owner_update.SetText("Yes")
 				} else {
-					Market.Owner_update.Text = (" Owner can update: No")
+					Market.Owner_update.SetText("No")
 				}
-				Market.Owner_update.Refresh()
 
-				Market.Art_fee.Text = (" Artificer Fee: " + strconv.Itoa(int(artFee[0])) + "%")
-				Market.Art_fee.Refresh()
+				Market.Art_fee.SetText(strconv.Itoa(int(artFee[0])) + "%")
 
-				Market.Royalty.Text = (" Royalty: " + strconv.Itoa(int(royalty[0])) + "%")
-				Market.Royalty.Refresh()
+				Market.Royalty.SetText(strconv.Itoa(int(royalty[0])) + "%")
+
 				Market.Buy_amt = start[0]
 				value := float64(start[0])
 				str := fmt.Sprintf("%.5f", value/100000)
-				Market.Start_price.Text = (" Buy now for: " + str + " Dero")
-				Market.Start_price.Refresh()
+				Market.Start_price.SetText(str + " Dero")
 
 				Market.Entry.SetText(str)
 				Market.Entry.Disable()
 				end, _ := rpc.MsToTime(strconv.Itoa(int(endTime[0]) * 1000))
-				Market.End_time.Text = (" Ends At: " + end.String())
-				Market.End_time.Refresh()
+				Market.End_time.SetText(end.String())
 
 				now := uint64(time.Now().Unix())
 				if owner[0] == rpc.Wallet.Address {
