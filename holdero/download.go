@@ -36,6 +36,7 @@ var Shared sharedCards
 
 // Clear Holdero card values when player changes table
 func ClearShared() {
+	rpc.Round.Winning_hand = []int{}
 	rpc.Display.Res = ""
 	rpc.Round.First_try = true
 	rpc.Round.AssetID = ""

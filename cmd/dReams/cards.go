@@ -67,90 +67,210 @@ func Hole_2(c int, w, h float32) fyne.CanvasObject {
 
 // Set first flop card image
 func Flop_1(c int) fyne.CanvasObject {
+	size := fyne.NewSize(110, 150)
+	pos := fyne.NewPos(260, 203)
 	Cards.Flop1 = DisplayCard(c)
-	Cards.Flop1.Resize(fyne.NewSize(110, 150))
-	Cards.Flop1.Move(fyne.NewPos(260, 203))
+	Cards.Flop1.Resize(size)
+	Cards.Flop1.Move(pos)
+
+	for _, i := range rpc.Round.Winning_hand {
+		if c == i {
+			highlight := canvas.NewRectangle(bundle.Highlight)
+			highlight.Resize(size)
+			highlight.Move(pos)
+
+			return container.NewWithoutLayout(Cards.Flop1, highlight)
+		}
+	}
 
 	return Cards.Flop1
 }
 
 // Set second flop card image
 func Flop_2(c int) fyne.CanvasObject {
+	size := fyne.NewSize(110, 150)
+	pos := fyne.NewPos(380, 203)
 	Cards.Flop2 = DisplayCard(c)
-	Cards.Flop2.Resize(fyne.NewSize(110, 150))
-	Cards.Flop2.Move(fyne.NewPos(380, 203))
+	Cards.Flop2.Resize(size)
+	Cards.Flop2.Move(pos)
+
+	for _, i := range rpc.Round.Winning_hand {
+		if c == i {
+			highlight := canvas.NewRectangle(bundle.Highlight)
+			highlight.Resize(size)
+			highlight.Move(pos)
+
+			return container.NewWithoutLayout(Cards.Flop2, highlight)
+		}
+	}
 
 	return Cards.Flop2
 }
 
 // Set third flop card image
 func Flop_3(c int) fyne.CanvasObject {
+	size := fyne.NewSize(110, 150)
+	pos := fyne.NewPos(500, 203)
 	Cards.Flop3 = DisplayCard(c)
-	Cards.Flop3.Resize(fyne.NewSize(110, 150))
-	Cards.Flop3.Move(fyne.NewPos(500, 203))
+	Cards.Flop3.Resize(size)
+	Cards.Flop3.Move(pos)
+
+	for _, i := range rpc.Round.Winning_hand {
+		if c == i {
+			highlight := canvas.NewRectangle(bundle.Highlight)
+			highlight.Resize(size)
+			highlight.Move(pos)
+
+			return container.NewWithoutLayout(Cards.Flop3, highlight)
+		}
+	}
 
 	return Cards.Flop3
 }
 
 // Set turn card image
 func Turn(c int) fyne.CanvasObject {
+	size := fyne.NewSize(110, 150)
+	pos := fyne.NewPos(620, 203)
 	Cards.Turn = DisplayCard(c)
-	Cards.Turn.Resize(fyne.NewSize(110, 150))
-	Cards.Turn.Move(fyne.NewPos(620, 203))
+	Cards.Turn.Resize(size)
+	Cards.Turn.Move(pos)
+
+	for _, i := range rpc.Round.Winning_hand {
+		if c == i {
+			highlight := canvas.NewRectangle(bundle.Highlight)
+			highlight.Resize(size)
+			highlight.Move(pos)
+
+			return container.NewWithoutLayout(Cards.Turn, highlight)
+		}
+	}
 
 	return Cards.Turn
 }
 
 // Set river card image
 func River(c int) fyne.CanvasObject {
+	size := fyne.NewSize(110, 150)
+	pos := fyne.NewPos(740, 203)
 	Cards.River = DisplayCard(c)
-	Cards.River.Resize(fyne.NewSize(110, 150))
-	Cards.River.Move(fyne.NewPos(740, 203))
+	Cards.River.Resize(size)
+	Cards.River.Move(pos)
+
+	for _, i := range rpc.Round.Winning_hand {
+		if c == i {
+			highlight := canvas.NewRectangle(bundle.Highlight)
+			highlight.Resize(size)
+			highlight.Move(pos)
+
+			return container.NewWithoutLayout(Cards.River, highlight)
+		}
+	}
 
 	return Cards.River
 }
 
 // Set first players table card one image
 func P1_a(c int) fyne.CanvasObject {
+	size := fyne.NewSize(110, 150)
+	pos := fyne.NewPos(190, 25)
 	Cards.P1a = DisplayCard(c)
-	Cards.P1a.Resize(fyne.NewSize(110, 150))
-	Cards.P1a.Move(fyne.NewPos(190, 25))
+	Cards.P1a.Resize(size)
+	Cards.P1a.Move(pos)
+
+	for _, i := range rpc.Round.Winning_hand {
+		if c == i {
+			highlight := canvas.NewRectangle(bundle.Highlight)
+			highlight.Resize(size)
+			highlight.Move(pos)
+
+			return container.NewWithoutLayout(Cards.P1a, highlight)
+		}
+	}
 
 	return Cards.P1a
 }
 
 // Set first players table card two image
 func P1_b(c int) fyne.CanvasObject {
+	size := fyne.NewSize(110, 150)
+	pos := fyne.NewPos(242, 25)
 	Cards.P1b = DisplayCard(c)
-	Cards.P1b.Resize(fyne.NewSize(110, 150))
-	Cards.P1b.Move(fyne.NewPos(242, 25))
+	Cards.P1b.Resize(size)
+	Cards.P1b.Move(pos)
+
+	for _, i := range rpc.Round.Winning_hand {
+		if c == i {
+			highlight := canvas.NewRectangle(bundle.Highlight)
+			highlight.Resize(size)
+			highlight.Move(pos)
+
+			return container.NewWithoutLayout(Cards.P1b, highlight)
+		}
+	}
 
 	return Cards.P1b
 }
 
 // Set second players table card one image
 func P2_a(c int) fyne.CanvasObject {
+	size := fyne.NewSize(110, 150)
+	pos := fyne.NewPos(614, 25)
 	Cards.P2a = DisplayCard(c)
-	Cards.P2a.Resize(fyne.NewSize(110, 150))
-	Cards.P2a.Move(fyne.NewPos(614, 25))
+	Cards.P2a.Resize(size)
+	Cards.P2a.Move(pos)
+
+	for _, i := range rpc.Round.Winning_hand {
+		if c == i {
+			highlight := canvas.NewRectangle(bundle.Highlight)
+			highlight.Resize(size)
+			highlight.Move(pos)
+
+			return container.NewWithoutLayout(Cards.P2a, highlight)
+		}
+	}
 
 	return Cards.P2a
 }
 
 // Set second players table card two image
 func P2_b(c int) fyne.CanvasObject {
+	size := fyne.NewSize(110, 150)
+	pos := fyne.NewPos(666, 25)
 	Cards.P2b = DisplayCard(c)
-	Cards.P2b.Resize(fyne.NewSize(110, 150))
-	Cards.P2b.Move(fyne.NewPos(666, 25))
+	Cards.P2b.Resize(size)
+	Cards.P2b.Move(pos)
+
+	for _, i := range rpc.Round.Winning_hand {
+		if c == i {
+			highlight := canvas.NewRectangle(bundle.Highlight)
+			highlight.Resize(size)
+			highlight.Move(pos)
+
+			return container.NewWithoutLayout(Cards.P2b, highlight)
+		}
+	}
 
 	return Cards.P2b
 }
 
 // Set third players table card one image
 func P3_a(c int) fyne.CanvasObject {
+	size := fyne.NewSize(110, 150)
+	pos := fyne.NewPos(883, 129)
 	Cards.P3a = DisplayCard(c)
-	Cards.P3a.Resize(fyne.NewSize(110, 150))
-	Cards.P3a.Move(fyne.NewPos(883, 129))
+	Cards.P3a.Resize(size)
+	Cards.P3a.Move(pos)
+
+	for _, i := range rpc.Round.Winning_hand {
+		if c == i {
+			highlight := canvas.NewRectangle(bundle.Highlight)
+			highlight.Resize(size)
+			highlight.Move(pos)
+
+			return container.NewWithoutLayout(Cards.P3a, highlight)
+		}
+	}
 
 	return Cards.P3a
 
@@ -158,63 +278,147 @@ func P3_a(c int) fyne.CanvasObject {
 
 // Set third players table card two image
 func P3_b(c int) fyne.CanvasObject {
+	size := fyne.NewSize(110, 150)
+	pos := fyne.NewPos(935, 129)
 	Cards.P3b = DisplayCard(c)
-	Cards.P3b.Resize(fyne.NewSize(110, 150))
-	Cards.P3b.Move(fyne.NewPos(935, 129))
+	Cards.P3b.Resize(size)
+	Cards.P3b.Move(pos)
+
+	for _, i := range rpc.Round.Winning_hand {
+		if c == i {
+			highlight := canvas.NewRectangle(bundle.Highlight)
+			highlight.Resize(size)
+			highlight.Move(pos)
+
+			return container.NewWithoutLayout(Cards.P3b, highlight)
+		}
+	}
 
 	return Cards.P3b
 }
 
 // Set fourth players table card one image
 func P4_a(c int) fyne.CanvasObject {
+	size := fyne.NewSize(110, 150)
+	pos := fyne.NewPos(766, 383)
 	Cards.P4a = DisplayCard(c)
-	Cards.P4a.Resize(fyne.NewSize(110, 150))
-	Cards.P4a.Move(fyne.NewPos(766, 383))
+	Cards.P4a.Resize(size)
+	Cards.P4a.Move(pos)
+
+	for _, i := range rpc.Round.Winning_hand {
+		if c == i {
+			highlight := canvas.NewRectangle(bundle.Highlight)
+			highlight.Resize(size)
+			highlight.Move(pos)
+
+			return container.NewWithoutLayout(Cards.P4a, highlight)
+		}
+	}
 
 	return Cards.P4a
 }
 
 // Set fourth players table card two image
 func P4_b(c int) fyne.CanvasObject {
+	size := fyne.NewSize(110, 150)
+	pos := fyne.NewPos(818, 383)
 	Cards.P4b = DisplayCard(c)
-	Cards.P4b.Resize(fyne.NewSize(110, 150))
-	Cards.P4b.Move(fyne.NewPos(818, 383))
+	Cards.P4b.Resize(size)
+	Cards.P4b.Move(pos)
+
+	for _, i := range rpc.Round.Winning_hand {
+		if c == i {
+			highlight := canvas.NewRectangle(bundle.Highlight)
+			highlight.Resize(size)
+			highlight.Move(pos)
+
+			return container.NewWithoutLayout(Cards.P4b, highlight)
+		}
+	}
 
 	return Cards.P4b
 }
 
 // Set fifth players table card one image
 func P5_a(c int) fyne.CanvasObject {
+	size := fyne.NewSize(110, 150)
+	pos := fyne.NewPos(336, 383)
 	Cards.P5a = DisplayCard(c)
-	Cards.P5a.Resize(fyne.NewSize(110, 150))
-	Cards.P5a.Move(fyne.NewPos(336, 383))
+	Cards.P5a.Resize(size)
+	Cards.P5a.Move(pos)
+
+	for _, i := range rpc.Round.Winning_hand {
+		if c == i {
+			highlight := canvas.NewRectangle(bundle.Highlight)
+			highlight.Resize(size)
+			highlight.Move(pos)
+
+			return container.NewWithoutLayout(Cards.P5a, highlight)
+		}
+	}
 
 	return Cards.P5a
 }
 
 // Set fifth players table card two image
 func P5_b(c int) fyne.CanvasObject {
+	size := fyne.NewSize(110, 150)
+	pos := fyne.NewPos(388, 383)
 	Cards.P5b = DisplayCard(c)
-	Cards.P5b.Resize(fyne.NewSize(110, 150))
-	Cards.P5b.Move(fyne.NewPos(388, 383))
+	Cards.P5b.Resize(size)
+	Cards.P5b.Move(pos)
+
+	for _, i := range rpc.Round.Winning_hand {
+		if c == i {
+			highlight := canvas.NewRectangle(bundle.Highlight)
+			highlight.Resize(size)
+			highlight.Move(pos)
+
+			return container.NewWithoutLayout(Cards.P5b, highlight)
+		}
+	}
 
 	return Cards.P5b
 }
 
 // Set sixth players table card one image
 func P6_a(c int) fyne.CanvasObject {
+	size := fyne.NewSize(110, 150)
+	pos := fyne.NewPos(65, 269)
 	Cards.P6a = DisplayCard(c)
-	Cards.P6a.Resize(fyne.NewSize(110, 150))
-	Cards.P6a.Move(fyne.NewPos(65, 269))
+	Cards.P6a.Resize(size)
+	Cards.P6a.Move(pos)
+
+	for _, i := range rpc.Round.Winning_hand {
+		if c == i {
+			highlight := canvas.NewRectangle(bundle.Highlight)
+			highlight.Resize(size)
+			highlight.Move(pos)
+
+			return container.NewWithoutLayout(Cards.P6a, highlight)
+		}
+	}
 
 	return Cards.P6a
 }
 
 // Set sixth players table card two image
 func P6_b(c int) fyne.CanvasObject {
+	size := fyne.NewSize(110, 150)
+	pos := fyne.NewPos(117, 269)
 	Cards.P6b = DisplayCard(c)
-	Cards.P6b.Resize(fyne.NewSize(110, 150))
-	Cards.P6b.Move(fyne.NewPos(117, 269))
+	Cards.P6b.Resize(size)
+	Cards.P6b.Move(pos)
+
+	for _, i := range rpc.Round.Winning_hand {
+		if c == i {
+			highlight := canvas.NewRectangle(bundle.Highlight)
+			highlight.Resize(size)
+			highlight.Move(pos)
+
+			return container.NewWithoutLayout(Cards.P6b, highlight)
+		}
+	}
 
 	return Cards.P6b
 }

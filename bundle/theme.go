@@ -17,6 +17,7 @@ type configurableTheme struct {
 	sizes  map[fyne.ThemeSizeName]float32
 }
 
+var Highlight = color.NRGBA{R: 0x88, G: 0xff, B: 0xff, A: 0x22}
 var Alpha120 = canvas.NewRectangle(color.RGBA{0, 0, 0, 120})
 var Alpha150 = canvas.NewRectangle(color.RGBA{0, 0, 0, 150})
 var Alpha180 = canvas.NewRectangle(color.RGBA{0, 0, 0, 180})
@@ -105,12 +106,14 @@ var DeroLightTheme = &configurableTheme{
 
 func DeroTheme(skin color.Gray16) fyne.Theme {
 	if skin == color.White {
+		Highlight = color.NRGBA{R: 0x96, G: 0x5a, B: 0xcd, A: 0x45}
 		Alpha120 = canvas.NewRectangle(color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0x55})
 		Alpha150 = canvas.NewRectangle(color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0xaa})
 		Alpha180 = canvas.NewRectangle(color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0x99})
 		defaultTheme = DeroLightTheme
 		TextColor = color.Black
 	} else {
+		Highlight = color.NRGBA{R: 0x88, G: 0xff, B: 0xff, A: 0x22}
 		Alpha120 = canvas.NewRectangle(color.RGBA{0, 0, 0, 120})
 		Alpha150 = canvas.NewRectangle(color.RGBA{0, 0, 0, 150})
 		Alpha180 = canvas.NewRectangle(color.RGBA{0, 0, 0, 180})
