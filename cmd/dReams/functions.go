@@ -20,6 +20,7 @@ import (
 	"github.com/SixofClubsss/dReams/rpc"
 	"github.com/SixofClubsss/dReams/tarot"
 	"github.com/docopt/docopt-go"
+	"github.com/fyne-io/terminal"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -33,6 +34,7 @@ type Notification struct {
 	Title, Content string
 }
 
+var cli *terminal.Terminal
 var command_line string = `dReams
 dReam Tables all in one dApp, powered by Gnomon.
 
@@ -42,6 +44,7 @@ Usage:
 
 Options:
   -h --help     Show this screen.
+  --cli=<false>	dReams option, enables cli app tab.
   --trim=<false>	dReams option, defaults true for minimum index search filters.
   --fastsync=<false>	Gnomon option,  true/false value to define loading at chain height on start up.
   --num-parallel-blocks=<5>   Gnomon option,  defines the number of parallel blocks to index.`
@@ -88,6 +91,14 @@ func flags() (version string) {
 		}
 	}
 
+	cli := false
+	if arguments["--cli"] != nil {
+		if arguments["--cli"].(string) == "true" {
+			cli = true
+		}
+	}
+
+	dReams.cli = cli
 	menu.Gnomes.Trim = trim
 	menu.Gnomes.Fast = fastsync
 	menu.Gnomes.Para = parallel
@@ -132,6 +143,23 @@ func init() {
 		log.Println("[dReams] Closing")
 		dReams.Window.Close()
 	}()
+}
+
+// Starts a Fyne terminal in dReams
+func startTerminal() *terminal.Terminal {
+	cli = terminal.New()
+	go func() {
+		_ = cli.RunLocalShell()
+	}()
+
+	return cli
+}
+
+// Exit running dReams terminal
+func exitTerminal() {
+	if cli != nil {
+		cli.Exit()
+	}
 }
 
 // Ensure service is shutdown on app close
@@ -941,7 +969,7 @@ func MenuRefresh(tab bool) {
 			go refreshPriceDisplay(true)
 		}
 
-		if dReams.menu_tabs.market && !isWindows() {
+		if dReams.menu_tabs.market && !isWindows() && !menu.Exit_signal {
 			menu.FindNfaListings(nil)
 		}
 	}

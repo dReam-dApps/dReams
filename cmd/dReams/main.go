@@ -24,7 +24,7 @@ const (
 	App_Name   = "dReams"
 )
 
-type dReamTables struct {
+type dReamsObjects struct {
 	App       fyne.App
 	Window    fyne.Window
 	os        string
@@ -35,6 +35,7 @@ type dReamTables struct {
 	predict   bool
 	sports    bool
 	tarot     bool
+	cli       bool
 	menu_tabs struct {
 		wallet    bool
 		contracts bool
@@ -43,7 +44,7 @@ type dReamTables struct {
 	}
 }
 
-var dReams dReamTables
+var dReams dReamsObjects
 var background *fyne.Container
 
 func main() {

@@ -432,6 +432,11 @@ func place() *fyne.Container {
 		tabs.Append(container.NewTabItem("DerBnb", derbnb.LayoutAllItems(true, dReams.Window, background)))
 	}
 
+	if dReams.cli {
+		exitTerminal()
+		tabs.Append(container.NewTabItem("Cli", startTerminal()))
+	}
+
 	tabs.Append(container.NewTabItem("Log", rpc.SessionLog()))
 
 	tabs.OnSelected = func(ti *container.TabItem) {

@@ -217,11 +217,13 @@ func StartIndicators() fyne.CanvasObject {
 	Control.Wallet_ind.RepeatCount = fyne.AnimationRepeatForever
 	Control.Wallet_ind.AutoReverse = true
 
-	d := canvas.NewText("D", bundle.TextColor)
+	d := canvas.NewText(" D ", bundle.TextColor)
 	d.TextStyle.Bold = true
+	d.Alignment = fyne.TextAlignCenter
 	d.TextSize = 16
-	w := canvas.NewText("W", bundle.TextColor)
+	w := canvas.NewText(" W ", bundle.TextColor)
 	w.TextStyle.Bold = true
+	w.Alignment = fyne.TextAlignCenter
 	w.TextSize = 16
 
 	connect_box := container.NewHBox(
