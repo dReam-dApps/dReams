@@ -61,7 +61,7 @@ func main() {
 
 	tabs := container.NewAppTabs(
 		container.NewTabItem("Market", menu.PlaceMarket()),
-		container.NewTabItem("Assets", menu.PlaceAssets(app_tag, false, nil, nil, nil, w)),
+		container.NewTabItem("Assets", menu.PlaceAssets(app_tag, false, nil, bundle.ResourceMarketIconPng, nil, w)),
 		container.NewTabItem("Mint", menu.PlaceNFAMint(app_tag, w)))
 
 	tabs.SetTabLocation(container.TabLocationBottom)

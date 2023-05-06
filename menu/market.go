@@ -313,24 +313,26 @@ func BuyNowListings() fyne.Widget {
 // NFA market icon image with frame
 //   - Pass res for frame resource
 func NfaIcon(res fyne.Resource) fyne.CanvasObject {
-	Market.Icon.SetMinSize(fyne.NewSize(94, 94))
+	Market.Icon.SetMinSize(fyne.NewSize(90, 90))
+	border := container.NewBorder(layout.NewSpacer(), layout.NewSpacer(), layout.NewSpacer(), layout.NewSpacer(), &Market.Icon)
 
 	frame := canvas.NewImageFromResource(res)
 	frame.SetMinSize(fyne.NewSize(100, 100))
 
-	return container.NewMax(&Market.Icon, frame)
+	return container.NewMax(border, frame)
 }
 
 // Badge for dReam Tools enabled assets
 //   - Pass res for frame resource
 func ToolsBadge(res fyne.Resource) fyne.CanvasObject {
 	badge := *canvas.NewImageFromResource(bundle.ResourceDReamToolsPng)
-	badge.SetMinSize(fyne.NewSize(94, 94))
+	badge.SetMinSize(fyne.NewSize(90, 90))
+	border := container.NewBorder(layout.NewSpacer(), layout.NewSpacer(), layout.NewSpacer(), layout.NewSpacer(), &badge)
 
 	frame := canvas.NewImageFromResource(res)
 	frame.SetMinSize(fyne.NewSize(100, 100))
 
-	return container.NewMax(&badge, frame)
+	return container.NewMax(border, frame)
 }
 
 // NFA cover image for market display
@@ -469,7 +471,7 @@ func ResetAuctionInfo() {
 	Market.Collection.SetText("Collection:")
 	Market.Description.SetText("Description:")
 	Market.Creator.SetText("Creator:")
-	Market.Art_fee.SetText("Artificer Fee:")
+	Market.Art_fee.SetText("Artificer:")
 	Market.Royalty.SetText("Royalty:")
 	Market.Start_price.SetText("Start Price:")
 	Market.Owner.SetText("Owner:")
@@ -516,7 +518,7 @@ func ResetBuyInfo() {
 	Market.Collection.SetText("Collection:")
 	Market.Description.SetText("Description:")
 	Market.Creator.SetText("Creator:")
-	Market.Art_fee.SetText("Artificer Fee:")
+	Market.Art_fee.SetText("Artificer:")
 	Market.Royalty.SetText("Royalty:")
 	Market.Start_price.SetText("Buy now for:")
 	Market.Owner.SetText("Owner:")

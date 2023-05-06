@@ -109,7 +109,10 @@ func (t dTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) color
 		return color.RGBA{75, 75, 75, 250}
 
 	case theme.ColorNameOverlayBackground:
-		return theme.DefaultTheme().Color(name, variant)
+		if t.variant == 1 {
+			return color.White
+		}
+		return color.Black
 
 	case theme.ColorNamePlaceHolder:
 		if t.variant == 1 {
