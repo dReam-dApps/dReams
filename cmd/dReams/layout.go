@@ -378,12 +378,12 @@ func place() *fyne.Container {
 	top_bar := container.NewVBox(container.NewMax(top), layout.NewSpacer())
 
 	menu_bottom := canvas.NewRectangle(color.RGBA{0, 0, 0, 180})
-	menu_bottom.SetMinSize(fyne.NewSize(268, 40))
+	menu_bottom.SetMinSize(fyne.NewSize(268, 37))
 	menu_bottom_box := container.NewHBox(menu_bottom, layout.NewSpacer())
 	menu_bottom_bar := container.NewVBox(layout.NewSpacer(), menu_bottom_box)
 
 	tarot_bottom := canvas.NewRectangle(color.RGBA{0, 0, 0, 180})
-	tarot_bottom.SetMinSize(fyne.NewSize(135, 40))
+	tarot_bottom.SetMinSize(fyne.NewSize(136, 37))
 	tarot_bottom_box := container.NewHBox(tarot_bottom, layout.NewSpacer())
 	tarot_bottom_bar := container.NewVBox(layout.NewSpacer(), tarot_bottom_box)
 	tarot_bottom.Hide()

@@ -1472,7 +1472,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 			alpha = canvas.NewRectangle(color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0xaa})
 		}
 
-		tab_bottom.SetMinSize(fyne.NewSize(157, 40))
+		tab_bottom.SetMinSize(fyne.NewSize(157, 37))
 		tab_bottom_box := container.NewHBox(container.NewMax(tab_bottom, alpha), layout.NewSpacer())
 		tab_bottom_bar := container.NewVBox(layout.NewSpacer(), tab_bottom_box)
 
