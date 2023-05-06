@@ -11,6 +11,7 @@ Interact with a variety of different products and services on [Dero's](https://d
 	- [rpc](#rpc)
 	- [menu](#menu)
 	- [dwidget](#dwidget)
+	- [bundle](#bundle)
 6. [Donations](#donations) 
 7. [Licensing](#licensing) 
 
@@ -214,6 +215,76 @@ func main() {
 
 	// Place connection box and start app
 	w.SetContent(connect_box.Container)
+	w.ShowAndRun()
+}
+```
+### bundle
+The bundle package contains all dReams resources. Images, gifs and fonts can be imported as well as the two Dero styled base app themes for Fyne. This example starts a Fyne gui app with various widgets to show case both Dero themes and image imports from bundle.
+```
+package main
+
+import (
+	"image/color"
+
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/canvas"
+	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/widget"
+	"github.com/SixofClubsss/dReams/bundle"
+)
+
+func main() {
+	// Name my app
+	app_tag := "My_app"
+
+	// Initialize app color to bundle var
+	bundle.AppColor = color.Black
+
+	// Initialize fyne app with Dero theme
+	a := app.New()
+	a.Settings().SetTheme(bundle.DeroTheme(bundle.AppColor))
+
+	// Initialize fyne window with size and icon from bundle package
+	w := a.NewWindow(app_tag)
+	w.SetIcon(bundle.ResourceBlueBadge3Png)
+	w.Resize(fyne.NewSize(300, 100))
+	w.SetMaster()
+
+	// Initialize fyne container and add some various widgets for viewing purposes
+	cont := container.NewVBox()
+	cont.Add(container.NewAdaptiveGrid(3, widget.NewLabel("Label"), widget.NewEntry(), widget.NewButton("Button", nil)))
+	cont.Add(container.NewAdaptiveGrid(3, widget.NewLabel("Label"), widget.NewCheck("Check", nil), widget.NewButton("Button", nil)))
+	cont.Add(widget.NewPasswordEntry())
+	cont.Add(widget.NewSlider(0, 100))
+
+	// Widget to change theme
+	change_theme := widget.NewRadioGroup([]string{"Dark", "Light"}, func(s string) {
+		switch s {
+		case "Dark":
+			bundle.AppColor = color.Black
+		case "Light":
+			bundle.AppColor = color.White
+		default:
+
+		}
+
+		a.Settings().SetTheme(bundle.DeroTheme(bundle.AppColor))
+	})
+	change_theme.Horizontal = true
+	cont.Add(container.NewCenter(change_theme))
+
+	// Add a image from bundle package
+	gnomon_img := canvas.NewImageFromResource(bundle.ResourceGnomoniconPng)
+	gnomon_img.SetMinSize(fyne.NewSize(45, 45))
+	cont.Add(container.NewCenter(gnomon_img))
+
+	// Adding last widget
+	select_entry := widget.NewSelect([]string{"Choice 1", "Choice 2", "Choice 3"}, nil)
+	cont.Add(select_entry)
+
+	// Place widget container and start app
+	w.SetContent(cont)
 	w.ShowAndRun()
 }
 ```
