@@ -20,23 +20,25 @@ import (
 const (
 	MIN_WIDTH  = 1400
 	MIN_HEIGHT = 800
-	App_ID     = "dReam Tables App"
+	App_ID     = "dReams Platform"
 	App_Name   = "dReams"
 )
 
 type dReamsObjects struct {
-	App       fyne.App
-	Window    fyne.Window
-	os        string
-	configure bool
-	menu      bool
-	holdero   bool
-	bacc      bool
-	predict   bool
-	sports    bool
-	tarot     bool
-	cli       bool
-	menu_tabs struct {
+	App        fyne.App
+	Window     fyne.Window
+	background *fyne.Container
+	os         string
+	configure  bool
+	menu       bool
+	holdero    bool
+	bacc       bool
+	predict    bool
+	sports     bool
+	tarot      bool
+	cli        bool
+	quit       chan struct{}
+	menu_tabs  struct {
 		wallet    bool
 		contracts bool
 		assets    bool
@@ -45,7 +47,6 @@ type dReamsObjects struct {
 }
 
 var dReams dReamsObjects
-var background *fyne.Container
 
 func main() {
 	n := runtime.NumCPU()
@@ -61,7 +62,7 @@ func main() {
 	dReams.Window.SetFixedSize(false)
 	dReams.Window.SetIcon(bundle.ResourceCardSharkTrayPng)
 	dReams.Window.SetMaster()
-	quit := make(chan struct{})
+	dReams.quit = make(chan struct{})
 
 	dReams.Window.SetCloseIntercept(func() {
 		menu.Exit_signal = true
@@ -69,7 +70,7 @@ func main() {
 		serviceRunning()
 		go menu.StopLabel()
 		menu.StopGnomon("dReams")
-		quit <- struct{}{}
+		dReams.quit <- struct{}{}
 		menu.StopIndicators()
 		time.Sleep(time.Second)
 		dReams.Window.Close()
@@ -78,14 +79,14 @@ func main() {
 	dReams.menu = true
 
 	holdero.Settings.ThemeImg = *canvas.NewImageFromResource(bundle.ResourceBackgroundPng)
-	background = container.NewMax(&holdero.Settings.ThemeImg)
+	dReams.background = container.NewMax(&holdero.Settings.ThemeImg)
 
 	if len(menu.Control.Dapp_list) == 0 {
 		go func() {
 			time.Sleep(300 * time.Millisecond)
 			dReams.Window.SetContent(
 				container.New(layout.NewMaxLayout(),
-					background,
+					dReams.background,
 					introScreen()))
 		}()
 	} else {
@@ -93,7 +94,7 @@ func main() {
 			time.Sleep(750 * time.Millisecond)
 			dReams.Window.SetContent(
 				container.New(layout.NewMaxLayout(),
-					background,
+					dReams.background,
 					place()))
 
 		}()
@@ -103,6 +104,7 @@ func main() {
 		dReams.App.(desktop.App).SetSystemTrayIcon(bundle.ResourceCardSharkTrayPng)
 	}
 
-	go fetch(quit)
+	go fetch(dReams.quit)
 	dReams.Window.ShowAndRun()
+	<-dReams.quit
 }

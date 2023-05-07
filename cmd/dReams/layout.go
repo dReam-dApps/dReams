@@ -107,7 +107,7 @@ func introScreen() *fyne.Container {
 			dReams.App.Settings().SetTheme(bundle.DeroTheme(bundle.AppColor))
 			dReams.Window.SetContent(
 				container.New(layout.NewMaxLayout(),
-					background,
+					dReams.background,
 					place()))
 		}()
 	})
@@ -429,7 +429,7 @@ func place() *fyne.Container {
 	}
 
 	if menu.Control.Dapp_list["DerBnb"] {
-		tabs.Append(container.NewTabItem("DerBnb", derbnb.LayoutAllItems(true, dReams.Window, background)))
+		tabs.Append(container.NewTabItem("DerBnb", derbnb.LayoutAllItems(true, dReams.Window, dReams.background)))
 	}
 
 	if dReams.cli {

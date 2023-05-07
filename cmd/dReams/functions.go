@@ -140,6 +140,7 @@ func init() {
 		menu.StopGnomon("dReams")
 		menu.StopIndicators()
 		time.Sleep(time.Second)
+		dReams.quit <- struct{}{}
 		log.Println("[dReams] Closing")
 		dReams.Window.Close()
 	}()
@@ -434,7 +435,7 @@ func fetch(quit chan struct{}) {
 					menu.CheckConnection()
 					menu.GnomonEndPoint()
 					menu.GnomonState(isWindows(), dReams.configure)
-					background.Refresh()
+					dReams.background.Refresh()
 
 					// Bacc
 					if menu.Control.Dapp_list["Baccarat"] {
@@ -603,6 +604,7 @@ func fetch(quit chan struct{}) {
 		case <-quit: // exit loop
 			log.Println("[dReams] Closing")
 			ticker.Stop()
+			quit <- struct{}{}
 			return
 		}
 	}
