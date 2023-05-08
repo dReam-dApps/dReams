@@ -65,7 +65,7 @@ func main() {
 	dReams.quit = make(chan struct{})
 
 	dReams.Window.SetCloseIntercept(func() {
-		menu.Exit_signal = true
+		menu.CloseAppSignal(true)
 		menu.WriteDreamsConfig(rpc.Daemon.Rpc, bundle.AppColor)
 		serviceRunning()
 		go menu.StopLabel()

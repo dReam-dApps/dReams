@@ -181,13 +181,13 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 		holdero.InitTableSettings()
 		menu.Control.Dapp_list = enabled_dapps
 		log.Println("[dReams] Loading dApps")
-		menu.Exit_signal = true
+		menu.CloseAppSignal(true)
 		menu.Gnomes.Checked = false
 		bundle.AppColor = skin_choice
 		gnomon_gif.Stop()
 		go func() {
 			time.Sleep(1500 * time.Millisecond)
-			menu.Exit_signal = false
+			menu.CloseAppSignal(false)
 			dReams.App.Settings().SetTheme(bundle.DeroTheme(bundle.AppColor))
 			dReams.Window.Content().(*fyne.Container).Objects[1] = place()
 			dReams.Window.Content().(*fyne.Container).Objects[1].Refresh()
@@ -678,15 +678,15 @@ func placeBacc() *fyne.Container {
 
 // dReams dPrediction tab layout
 func placePredict() *fyne.Container {
-	contract_cont := container.NewHScroll(prediction.PreictionContractEntry())
-	contract_cont.SetMinSize(fyne.NewSize(600, 35.1875))
 	predict_info := container.NewVBox(prediction.Predict.Info, prediction.Predict.Prices)
 	predict_scroll := container.NewScroll(predict_info)
 	predict_scroll.SetMinSize(fyne.NewSize(540, 500))
 
 	check_box := container.NewVBox(prediction.PredictConnectedBox())
 
-	hbox := container.NewHBox(contract_cont, check_box)
+	contract_scroll := container.NewHScroll(prediction.PreictionContractEntry())
+	contract_scroll.SetMinSize(fyne.NewSize(600, 35.1875))
+	contract_cont := container.NewHBox(contract_scroll, check_box)
 
 	prediction.Predict.Higher = widget.NewButton("Higher", nil)
 	prediction.Predict.Higher.Hide()
@@ -698,14 +698,10 @@ func placePredict() *fyne.Container {
 	prediction.Predict.Prediction_box.Hide()
 
 	predict_content := container.NewVBox(
-		hbox,
+		contract_cont,
 		predict_scroll,
 		layout.NewSpacer(),
 		prediction.Predict.Prediction_box)
-
-	// leaders_scroll := container.NewScroll(prediction.LeadersDisplay())
-	// leaders_scroll.SetMinSize(fyne.NewSize(180, 500))
-	// leaders_contnet := container.NewVBox(leaders_scroll)
 
 	menu.Control.Bet_unlock_p = widget.NewButton("Unlock dPrediction Contract", nil)
 	menu.Control.Bet_unlock_p.Hide()
@@ -765,7 +761,7 @@ func placePredict() *fyne.Container {
 
 	go func() {
 		time.Sleep(2 * time.Second)
-		for !menu.Exit_signal && menu.Control.Dapp_list["dSports and dPredictions"] {
+		for !menu.ClosingApps() && menu.Control.Dapp_list["dSports and dPredictions"] {
 			if !rpc.Wallet.Connect && !rpc.Signal.Startup {
 				menu.Control.Predict_check.SetChecked(false)
 				menu.Control.Sports_check.SetChecked(false)
@@ -781,14 +777,15 @@ func placePredict() *fyne.Container {
 
 // dReams dSports tab layout
 func placeSports() *fyne.Container {
-	cont := container.NewHScroll(prediction.SportsContractEntry())
-	cont.SetMinSize(fyne.NewSize(600, 35.1875))
 	sports_content := container.NewVBox(prediction.Sports.Info)
 	sports_scroll := container.NewVScroll(sports_content)
 	sports_scroll.SetMinSize(fyne.NewSize(180, 500))
 
 	check_box := container.NewVBox(prediction.SportsConnectedBox())
-	hbox := container.NewHBox(cont, check_box)
+
+	contract_scroll := container.NewHScroll(prediction.SportsContractEntry())
+	contract_scroll.SetMinSize(fyne.NewSize(600, 35.1875))
+	contract_cont := container.NewHBox(contract_scroll, check_box)
 
 	prediction.Sports.Game_select = widget.NewSelect(prediction.Sports.Game_options, func(s string) {
 		split := strings.Split(s, "   ")
@@ -832,7 +829,7 @@ func placeSports() *fyne.Container {
 	prediction.Sports.Sports_box.Hide()
 
 	sports_left := container.NewVBox(
-		hbox,
+		contract_cont,
 		sports_scroll,
 		layout.NewSpacer(),
 		prediction.Sports.Sports_box)

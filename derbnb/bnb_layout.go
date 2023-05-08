@@ -1508,7 +1508,8 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 	// Use menu.Exit_signal to kill routine of dApp
 	go func() {
 		i := 0
-		for !menu.Exit_signal {
+		time.Sleep(2 * time.Second)
+		for !menu.ClosingApps() {
 			if !rpc.Wallet.Connect {
 				list_button.Hide()
 				remove_button.Hide()

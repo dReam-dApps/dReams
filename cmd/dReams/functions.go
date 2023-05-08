@@ -132,7 +132,7 @@ func init() {
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-c
-		menu.Exit_signal = true
+		menu.CloseAppSignal(true)
 		menu.WriteDreamsConfig(rpc.Daemon.Rpc, bundle.AppColor)
 		fmt.Println()
 		serviceRunning()
@@ -141,7 +141,6 @@ func init() {
 		menu.StopIndicators()
 		time.Sleep(time.Second)
 		dReams.quit <- struct{}{}
-		log.Println("[dReams] Closing")
 		dReams.Window.Close()
 	}()
 }
@@ -971,7 +970,7 @@ func MenuRefresh(tab bool) {
 			go refreshPriceDisplay(true)
 		}
 
-		if dReams.menu_tabs.market && !isWindows() && !menu.Exit_signal {
+		if dReams.menu_tabs.market && !isWindows() && !menu.ClosingApps() {
 			menu.FindNfaListings(nil)
 		}
 	}

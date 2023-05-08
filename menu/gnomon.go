@@ -54,16 +54,6 @@ End Function`
 	g45_search_filter = `STORE("type", "G45-NFT")`
 )
 
-type tableStats struct {
-	Name    *canvas.Text
-	Desc    *canvas.Text
-	Version *canvas.Text
-	Last    *canvas.Text
-	Seats   *canvas.Text
-	Open    *canvas.Text
-	Image   canvas.Image
-}
-
 type gnomon struct {
 	Para     int
 	Trim     bool
@@ -83,8 +73,6 @@ type gnomon struct {
 }
 
 var Gnomes gnomon
-var Stats tableStats
-var Exit_signal bool
 
 // Convert string to int64
 func stringToInt64(s string) int64 {
@@ -779,7 +767,9 @@ func checkBetContract(scid, t string, list, owned []string) ([]string, []string)
 				_, rating := Gnomes.Indexer.Backend.GetSCIDValuesByKey(rpc.RatingSCID, scid, Gnomes.Indexer.ChainHeight, true)
 
 				if restrict != nil && rating != nil {
+					Control.Lock()
 					Control.Contract_rating[scid] = rating[0]
+					Control.Unlock()
 					if rating[0] <= restrict[0] {
 						hidden = true
 					}
@@ -1206,7 +1196,9 @@ func CreateTableList(gc bool, tables map[string]string) {
 				_, rating := Gnomes.Indexer.Backend.GetSCIDValuesByKey(rpc.RatingSCID, scid, Gnomes.Indexer.ChainHeight, true)
 
 				if restrict != nil && rating != nil {
+					Control.Lock()
 					Control.Contract_rating[scid] = rating[0]
+					Control.Unlock()
 					if rating[0] <= restrict[0] {
 						hidden = true
 					}

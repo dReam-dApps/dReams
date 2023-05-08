@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/SixofClubsss/dReams/bundle"
@@ -60,6 +61,7 @@ type menuObjects struct {
 	Daemon_ind        *fyne.Animation
 	Poker_ind         *fyne.Animation
 	Service_ind       *fyne.Animation
+	sync.Mutex
 }
 
 type ownerObjects struct {
@@ -81,9 +83,40 @@ type holderoObjects struct {
 	Stats_box      fyne.Container
 	owner          ownerObjects
 }
+type tableStats struct {
+	Name    *canvas.Text
+	Desc    *canvas.Text
+	Version *canvas.Text
+	Last    *canvas.Text
+	Seats   *canvas.Text
+	Open    *canvas.Text
+	Image   canvas.Image
+}
+type exit struct {
+	Signal bool
+	sync.RWMutex
+}
 
 var Poker holderoObjects
 var Control menuObjects
+var Stats tableStats
+var Exit exit
+
+// Check for app closing signal
+func ClosingApps() (close bool) {
+	Exit.RLock()
+	close = Exit.Signal
+	Exit.RUnlock()
+
+	return
+}
+
+// Set app closing signal value
+func CloseAppSignal(value bool) {
+	Exit.Lock()
+	Exit.Signal = value
+	Exit.Unlock()
+}
 
 // Connection check for main process
 func CheckConnection() {
