@@ -1460,6 +1460,15 @@ func TrimTeamB(s string) string {
 	return ""
 }
 
+// Trim input string to specified len
+func TrimStringLen(str string, l int) string {
+	if len(str) > l {
+		return str[0:l]
+	}
+
+	return str
+}
+
 // Scan index for any active NFA listings
 //   - Pass assets from db store, can be nil arg
 func FindNfaListings(assets map[string]string) {
@@ -1531,7 +1540,8 @@ func checkNfaAuctionListing(scid string) (asset string) {
 				check := strings.Trim(header[0], "0123456789")
 				if isDreamsNfaCollection(check) {
 					if listType[0] == "auction" {
-						asset = coll[0] + "   " + header[0] + "   " + desc[0] + "   " + scid
+						desc_check := TrimStringLen(desc[0], 66)
+						asset = coll[0] + "   " + header[0] + "   " + desc_check + "   " + scid
 					}
 				}
 			} else {
@@ -1544,7 +1554,8 @@ func checkNfaAuctionListing(scid string) (asset string) {
 
 				if !hidden {
 					if listType[0] == "auction" {
-						asset = coll[0] + "   " + header[0] + "   " + desc[0] + "   " + scid
+						desc_check := TrimStringLen(desc[0], 66)
+						asset = coll[0] + "   " + header[0] + "   " + desc_check + "   " + scid
 					}
 				}
 			}
@@ -1568,7 +1579,8 @@ func checkNfaBuyListing(scid string) (asset string) {
 				check := strings.Trim(header[0], "0123456789")
 				if isDreamsNfaCollection(check) {
 					if listType[0] == "sale" {
-						asset = coll[0] + "   " + header[0] + "   " + desc[0] + "   " + scid
+						desc_check := TrimStringLen(desc[0], 66)
+						asset = coll[0] + "   " + header[0] + "   " + desc_check + "   " + scid
 					}
 				}
 			} else {
@@ -1581,7 +1593,8 @@ func checkNfaBuyListing(scid string) (asset string) {
 
 				if !hidden {
 					if listType[0] == "sale" {
-						asset = coll[0] + "   " + header[0] + "   " + desc[0] + "   " + scid
+						desc_check := TrimStringLen(desc[0], 66)
+						asset = coll[0] + "   " + header[0] + "   " + desc_check + "   " + scid
 					}
 				}
 			}
