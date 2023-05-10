@@ -416,7 +416,7 @@ func singleShot(turn, trigger bool) bool {
 }
 
 // Main dReams process loop
-func fetch(quit chan struct{}) {
+func fetch(quit, done chan struct{}) {
 	time.Sleep(3 * time.Second)
 	var ticker = time.NewTicker(3 * time.Second)
 	var autoCF, autoD, autoB, trigger bool
@@ -468,7 +468,7 @@ func fetch(quit chan struct{}) {
 							if rpc.Round.Card_delay {
 								now := time.Now().Unix()
 								delay++
-								if delay >= 15 || now > rpc.Round.Last+45 {
+								if delay >= 17 || now > rpc.Round.Last+60 {
 									delay = 0
 									rpc.Round.Card_delay = false
 								}
@@ -603,7 +603,7 @@ func fetch(quit chan struct{}) {
 		case <-quit: // exit loop
 			log.Println("[dReams] Closing")
 			ticker.Stop()
-			quit <- struct{}{}
+			done <- struct{}{}
 			return
 		}
 	}

@@ -63,6 +63,7 @@ func main() {
 	dReams.Window.SetIcon(bundle.ResourceCardSharkTrayPng)
 	dReams.Window.SetMaster()
 	dReams.quit = make(chan struct{})
+	done := make(chan struct{})
 
 	dReams.Window.SetCloseIntercept(func() {
 		menu.CloseAppSignal(true)
@@ -104,7 +105,7 @@ func main() {
 		dReams.App.(desktop.App).SetSystemTrayIcon(bundle.ResourceCardSharkTrayPng)
 	}
 
-	go fetch(dReams.quit)
+	go fetch(dReams.quit, done)
 	dReams.Window.ShowAndRun()
-	<-dReams.quit
+	<-done
 }
