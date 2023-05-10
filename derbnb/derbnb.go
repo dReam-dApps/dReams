@@ -84,6 +84,7 @@ func StartApp() {
 	w.Resize(fyne.NewSize(1200, 800))
 	w.SetMaster()
 	quit := make(chan struct{})
+	done := make(chan struct{})
 	w.SetCloseIntercept(func() {
 		menu.WriteDreamsConfig(rpc.Daemon.Rpc, config.Skin)
 		menu.StopGnomon("DerBnb")
@@ -107,16 +108,17 @@ func StartApp() {
 	holdero.Settings.ThemeImg = *canvas.NewImageFromResource(nil)
 	background = container.NewMax(&holdero.Settings.ThemeImg)
 
-	go fetch(quit)
+	go fetch(quit, done)
 	go func() {
 		time.Sleep(450 * time.Millisecond)
 		w.SetContent(container.New(layout.NewMaxLayout(), background, LayoutAllItems(false, w, background)))
 	}()
 	w.ShowAndRun()
+	<-done
 }
 
 // Main DerBnb process used in StartApp()
-func fetch(quit chan struct{}) {
+func fetch(quit, done chan struct{}) {
 	time.Sleep(6 * time.Second)
 	ticker := time.NewTicker(3 * time.Second)
 
@@ -163,8 +165,11 @@ func fetch(quit chan struct{}) {
 
 		case <-quit: // exit
 			log.Println("[DerBNB] Closing")
-			menu.Gnomes.Icon_ind.Stop()
+			if menu.Gnomes.Icon_ind != nil {
+				menu.Gnomes.Icon_ind.Stop()
+			}
 			ticker.Stop()
+			done <- struct{}{}
 			return
 		}
 	}
@@ -183,6 +188,10 @@ func haveProperty(text string) (have bool) {
 
 // Define https or ipfs urls
 func propertyImageSource(check string) string {
+	if len(check) < 8 {
+		return ""
+	}
+
 	if check[0:8] == "https://" {
 		return check
 	}
@@ -403,7 +412,7 @@ func getInfo(scid string) (info string) {
 		if owner != nil && price != nil && dep != nil {
 			location := makeLocationString(scid)
 			data := getMetadata(scid)
-			data_string := fmt.Sprintf("Sq feet: %d\n\nStyle: %s\n\nBedrooms: %d\n\nMax guests: %d", data.Squarefootage, data.Style, data.NumberOfBedrooms, data.MaxNumberOfGuests)
+			data_string := fmt.Sprintf("Sq feet: %d\n\nStyle: %s\n\nBedrooms: %d\n\nMax guests: %d\n\nDescription: %s", data.Squarefootage, data.Style, data.NumberOfBedrooms, data.MaxNumberOfGuests, data.Description)
 			current_price = price[0]
 			current_deposit = dep[0]
 			info = fmt.Sprintf("Location: %s\n\nPrice: %s Dero per night\n\nDamage Deposit: %s Dero\n\nOwner: %s\n\n%s", location, walletapi.FormatMoney(price[0]), walletapi.FormatMoney(dep[0]), owner[0], data_string)

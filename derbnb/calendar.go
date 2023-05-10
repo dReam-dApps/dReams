@@ -33,6 +33,10 @@ func (d *tirp_date) onSelected(t time.Time) {
 		}
 
 		if !end_date.IsZero() {
+			if end_date == start_date {
+				end_date = t.Add(24 * time.Hour)
+			}
+
 			d.departing.Text = ("Departing: " + end_date.Format(TIME_FORMAT))
 			d.departing.Refresh()
 		}
