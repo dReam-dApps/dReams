@@ -122,7 +122,9 @@ func getImages(scid string) {
 			if h, err := hex.DecodeString(metadata); err == nil {
 				data := property_data{}
 				if err = json.Unmarshal(h, &data); err == nil {
-					property_photos[scid] = data.Photos
+					property_photos.Lock()
+					property_photos.data[scid] = data.Photos
+					property_photos.Unlock()
 					return
 				}
 				log.Println("[getImages]", err)
@@ -241,7 +243,7 @@ func RequestBooking(scid string, stamp, s_key, e_key, amt uint64) {
 
 	arg1 := dero.Argument{Name: "entrypoint", DataType: "S", Value: "RequestBooking"}
 	arg2 := dero.Argument{Name: "scid", DataType: "S", Value: scid}
-	arg3 := dero.Argument{Name: "timestamp", DataType: "U", Value: stamp}
+	arg3 := dero.Argument{Name: "stamp", DataType: "U", Value: stamp}
 	arg4 := dero.Argument{Name: "start", DataType: "U", Value: s_key}
 	arg5 := dero.Argument{Name: "end", DataType: "U", Value: e_key}
 	args := dero.Arguments{arg1, arg2, arg3, arg4, arg5}
@@ -369,7 +371,7 @@ func ConfirmBooking(scid string, stamp uint64) {
 
 	arg1 := dero.Argument{Name: "entrypoint", DataType: "S", Value: "ConfirmBooking"}
 	arg2 := dero.Argument{Name: "scid", DataType: "S", Value: scid}
-	arg3 := dero.Argument{Name: "timestamp", DataType: "U", Value: stamp}
+	arg3 := dero.Argument{Name: "stamp", DataType: "U", Value: stamp}
 	args := dero.Arguments{arg1, arg2, arg3}
 	txid := dero.Transfer_Result{}
 
@@ -486,7 +488,7 @@ func RateExperience(scid string, id, renter, owner, prop, loc, overall uint64) {
 
 	arg1 := dero.Argument{Name: "entrypoint", DataType: "S", Value: "RateExperience"}
 	arg2 := dero.Argument{Name: "scid", DataType: "S", Value: scid}
-	arg3 := dero.Argument{Name: "booking_id", DataType: "U", Value: id}
+	arg3 := dero.Argument{Name: "id", DataType: "U", Value: id}
 	arg4 := dero.Argument{Name: "Renter", DataType: "U", Value: renter}
 	arg5 := dero.Argument{Name: "Owner", DataType: "U", Value: owner}
 	arg6 := dero.Argument{Name: "Property", DataType: "U", Value: prop}

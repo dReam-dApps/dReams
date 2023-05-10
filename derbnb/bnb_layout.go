@@ -75,43 +75,47 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 	// property images
 	var image canvas.Image
 	img_forward := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "arrowForward"), func() {
-		if len(viewing_scid) == 64 && property_photos[viewing_scid] != nil {
-			go func() {
-				if count < len(property_photos[viewing_scid])-1 {
+		go func() {
+			property_photos.RLock()
+			if len(viewing_scid) == 64 && property_photos.data[viewing_scid] != nil {
+				if count < len(property_photos.data[viewing_scid])-1 {
 					count++
-					if url := propertyImageSource(property_photos[viewing_scid][count]); url != "" {
+					if url := propertyImageSource(property_photos.data[viewing_scid][count]); url != "" {
 						image, _ := holdero.DownloadFile(url, "img")
 						image_box.Objects[0] = &image
 						image_box.Refresh()
 					}
 				} else {
 					count = 0
-					if url := propertyImageSource(property_photos[viewing_scid][count]); url != "" {
+					if url := propertyImageSource(property_photos.data[viewing_scid][count]); url != "" {
 						image, _ := holdero.DownloadFile(url, "img")
 						image_box.Objects[0] = &image
 						image_box.Refresh()
 					}
 				}
-			}()
-		}
+			}
+			property_photos.RUnlock()
+		}()
 	})
 
 	img_back := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "arrowBack"), func() {
-		if len(viewing_scid) == 64 && property_photos[viewing_scid] != nil {
-			go func() {
+		go func() {
+			property_photos.RLock()
+			if len(viewing_scid) == 64 && property_photos.data[viewing_scid] != nil {
 				if count > 0 {
 					count--
-					image, _ := holdero.DownloadFile(propertyImageSource(property_photos[viewing_scid][count]), "img")
+					image, _ := holdero.DownloadFile(propertyImageSource(property_photos.data[viewing_scid][count]), "img")
 					image_box.Objects[0] = &image
 					image_box.Refresh()
 				} else {
-					count = len(property_photos[viewing_scid]) - 1
-					image, _ := holdero.DownloadFile(propertyImageSource(property_photos[viewing_scid][count]), "img")
+					count = len(property_photos.data[viewing_scid]) - 1
+					image, _ := holdero.DownloadFile(propertyImageSource(property_photos.data[viewing_scid][count]), "img")
 					image_box.Objects[0] = &image
 					image_box.Refresh()
 				}
-			}()
-		}
+			}
+			property_photos.RUnlock()
+		}()
 	})
 
 	img_forward.Importance = widget.LowImportance
@@ -638,11 +642,13 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 				getImages(scid)
 				request_button.Show()
 				listing_label.SetText(getInfo(scid))
-				if property_photos[scid] != nil {
-					image, _ := holdero.DownloadFile(propertyImageSource(property_photos[scid][0]), "img")
+				property_photos.RLock()
+				if property_photos.data[scid] != nil {
+					image, _ := holdero.DownloadFile(propertyImageSource(property_photos.data[scid][0]), "img")
 					image_box.Objects[0] = &image
 					image_box.Refresh()
 				}
+				property_photos.RUnlock()
 			}
 		}()
 	}
@@ -1074,8 +1080,8 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 	var property_add_info *widget.Button
 
 	// renters list of rentals, requests and bookings as tree
-	my_bookings = make(map[string][]string)
-	booking_list = widget.NewTreeWithStrings(my_bookings)
+	my_bookings.data = make(map[string][]string)
+	booking_list = widget.NewTreeWithStrings(my_bookings.data)
 	booking_list.OnSelected = func(uid widget.TreeNodeID) {
 		split := strings.Split(uid, "   ")
 		if len(split) >= 5 {
@@ -1128,8 +1134,8 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 	}
 
 	// owners list of properties, booking history tree for each scid
-	my_properties = make(map[string][]string)
-	property_list = widget.NewTreeWithStrings(my_properties)
+	my_properties.data = make(map[string][]string)
+	property_list = widget.NewTreeWithStrings(my_properties.data)
 	property_list.OnSelected = func(uid widget.TreeNodeID) {
 		if len(uid) == 64 {
 			confirm_stamp = 0
@@ -1367,7 +1373,12 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 			send_message.Hide()
 			listing_label.SetText("")
 			listings_list.UnselectAll()
+			my_bookings.RLock()
+			booking_list.Refresh()
+			my_bookings.RUnlock()
+			property_list.Refresh()
 		default:
+
 		}
 	}
 
@@ -1409,7 +1420,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 		max = container.NewMax(tabs, container.NewVBox(layout.NewSpacer(), connect_box.Container))
 	}
 
-	property_photos = make(map[string][]string)
+	property_photos.data = make(map[string][]string)
 
 	// Use menu.Exit_signal to kill routine of dApp
 	go func() {
