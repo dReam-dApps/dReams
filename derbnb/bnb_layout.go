@@ -81,16 +81,18 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 				if count < len(property_photos.data[viewing_scid])-1 {
 					count++
 					if url := propertyImageSource(property_photos.data[viewing_scid][count]); url != "" {
-						image, _ := holdero.DownloadFile(url, "img")
-						image_box.Objects[0] = &image
-						image_box.Refresh()
+						if image, err := holdero.DownloadFile(url, "img"); err == nil {
+							image_box.Objects[0] = &image
+							image_box.Refresh()
+						}
 					}
 				} else {
 					count = 0
 					if url := propertyImageSource(property_photos.data[viewing_scid][count]); url != "" {
-						image, _ := holdero.DownloadFile(url, "img")
-						image_box.Objects[0] = &image
-						image_box.Refresh()
+						if image, err := holdero.DownloadFile(url, "img"); err == nil {
+							image_box.Objects[0] = &image
+							image_box.Refresh()
+						}
 					}
 				}
 			}
@@ -104,14 +106,16 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 			if len(viewing_scid) == 64 && property_photos.data[viewing_scid] != nil {
 				if count > 0 {
 					count--
-					image, _ := holdero.DownloadFile(propertyImageSource(property_photos.data[viewing_scid][count]), "img")
-					image_box.Objects[0] = &image
-					image_box.Refresh()
+					if image, err := holdero.DownloadFile(propertyImageSource(property_photos.data[viewing_scid][count]), "img"); err == nil {
+						image_box.Objects[0] = &image
+						image_box.Refresh()
+					}
 				} else {
 					count = len(property_photos.data[viewing_scid]) - 1
-					image, _ := holdero.DownloadFile(propertyImageSource(property_photos.data[viewing_scid][count]), "img")
-					image_box.Objects[0] = &image
-					image_box.Refresh()
+					if image, err := holdero.DownloadFile(propertyImageSource(property_photos.data[viewing_scid][count]), "img"); err == nil {
+						image_box.Objects[0] = &image
+						image_box.Refresh()
+					}
 				}
 			}
 			property_photos.RUnlock()
@@ -644,9 +648,10 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 				listing_label.SetText(getInfo(scid))
 				property_photos.RLock()
 				if property_photos.data[scid] != nil {
-					image, _ := holdero.DownloadFile(propertyImageSource(property_photos.data[scid][0]), "img")
-					image_box.Objects[0] = &image
-					image_box.Refresh()
+					if image, err := holdero.DownloadFile(propertyImageSource(property_photos.data[scid][0]), "img"); err == nil {
+						image_box.Objects[0] = &image
+						image_box.Refresh()
+					}
 				}
 				property_photos.RUnlock()
 			}

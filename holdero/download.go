@@ -94,20 +94,19 @@ func DownloadFile(Url, fileName string) (canvas.Image, error) {
 		return *canvas.NewImageFromImage(nil), errors.New("received non 200 response code")
 	}
 
-	img := *canvas.NewImageFromReader(response.Body, fileName)
-
-	return img, nil
+	return *canvas.NewImageFromReader(response.Body, fileName), nil
 }
 
 // Single shot control for displaying shared player avatars
 //   - If tab is not selected, we don't check
 func ShowAvatar(tab bool) {
 	if tab {
+		var err error
 		if rpc.Round.P1_url != "" {
 			if !Shared.GotP1 {
-				img1, _ := DownloadFile(rpc.Round.P1_url, "P1")
-				Shared.P1_avatar = img1
-				Shared.GotP1 = true
+				if Shared.P1_avatar, err = DownloadFile(rpc.Round.P1_url, "P1"); err == nil {
+					Shared.GotP1 = true
+				}
 			}
 		} else {
 			Shared.GotP1 = false
@@ -115,9 +114,9 @@ func ShowAvatar(tab bool) {
 
 		if rpc.Round.P2_url != "" {
 			if !Shared.GotP2 {
-				img2, _ := DownloadFile(rpc.Round.P2_url, "P2")
-				Shared.P2_avatar = img2
-				Shared.GotP2 = true
+				if Shared.P2_avatar, err = DownloadFile(rpc.Round.P2_url, "P2"); err == nil {
+					Shared.GotP2 = true
+				}
 			}
 		} else {
 			Shared.GotP2 = false
@@ -125,9 +124,9 @@ func ShowAvatar(tab bool) {
 
 		if rpc.Round.P3_url != "" {
 			if !Shared.GotP3 {
-				img3, _ := DownloadFile(rpc.Round.P3_url, "P3")
-				Shared.P3_avatar = img3
-				Shared.GotP3 = true
+				if Shared.P3_avatar, err = DownloadFile(rpc.Round.P3_url, "P3"); err == nil {
+					Shared.GotP3 = true
+				}
 			}
 		} else {
 			Shared.GotP3 = false
@@ -135,9 +134,9 @@ func ShowAvatar(tab bool) {
 
 		if rpc.Round.P4_url != "" {
 			if !Shared.GotP4 {
-				img4, _ := DownloadFile(rpc.Round.P4_url, "P4")
-				Shared.P4_avatar = img4
-				Shared.GotP4 = true
+				if Shared.P4_avatar, err = DownloadFile(rpc.Round.P4_url, "P4"); err == nil {
+					Shared.GotP4 = true
+				}
 			}
 		} else {
 			Shared.GotP4 = false
@@ -145,9 +144,9 @@ func ShowAvatar(tab bool) {
 
 		if rpc.Round.P5_url != "" {
 			if !Shared.GotP5 {
-				img5, _ := DownloadFile(rpc.Round.P5_url, "P5")
-				Shared.P5_avatar = img5
-				Shared.GotP5 = true
+				if Shared.P5_avatar, err = DownloadFile(rpc.Round.P5_url, "P5"); err == nil {
+					Shared.GotP5 = true
+				}
 			}
 		} else {
 			Shared.GotP5 = false
@@ -155,9 +154,9 @@ func ShowAvatar(tab bool) {
 
 		if rpc.Round.P6_url != "" {
 			if !Shared.GotP6 {
-				img6, _ := DownloadFile(rpc.Round.P6_url, "P6")
-				Shared.P6_avatar = img6
-				Shared.GotP6 = true
+				if Shared.P6_avatar, err = DownloadFile(rpc.Round.P6_url, "P6"); err == nil {
+					Shared.GotP6 = true
+				}
 			}
 		} else {
 			Shared.GotP6 = false
