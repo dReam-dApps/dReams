@@ -254,10 +254,10 @@ func Player3_label(a, f, t fyne.Resource) fyne.CanvasObject {
 	name.Move(fyne.NewPos(889, 300))
 
 	avatar.Resize(fyne.NewSize(74, 74))
-	avatar.Move(fyne.NewPos(987, 330))
+	avatar.Move(fyne.NewPos(987, 327))
 
 	frame.Resize(fyne.NewSize(78, 78))
-	frame.Move(fyne.NewPos(985, 328))
+	frame.Move(fyne.NewPos(985, 325))
 
 	return container.NewWithoutLayout(name, avatar, frame)
 }
@@ -401,7 +401,7 @@ func Player6_label(a, f, t fyne.Resource) fyne.CanvasObject {
 	}
 
 	name.Resize(fyne.NewSize(100, 27))
-	name.Move(fyne.NewPos(56, 265))
+	name.Move(fyne.NewPos(56, 267))
 
 	avatar.Resize(fyne.NewSize(74, 74))
 	avatar.Move(fyne.NewPos(55, 193))
