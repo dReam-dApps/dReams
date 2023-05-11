@@ -857,38 +857,42 @@ func HolderoMenuConfirm(c int, obj []fyne.CanvasObject, tabs *container.AppTabs)
 		
 To help support the project, there is a ` + fmt.Sprintf("%.5f", unlock_fee) + ` DERO donation attached to preform this action
 
-Once you've unlocked a table, you can upload as many new tables free of donation
+Unlocking a Holdero table gives you unlimited access to table uploads and all base level owner features
 
-Total transaction will be ` + fmt.Sprintf("%0.5f", unlock_fee+gas_fee) + ` DERO (0.3 gas fee for contract install)
+Total transaction will be ` + fmt.Sprintf("%0.5f", unlock_fee+gas_fee) + ` DERO (0.30000 gas fee for contract install)
+
 
 Select a public or private table
 
-	- Public will show up in indexed list of tables
+Public will show up in indexed list of tables
 
-	- Private will not show up in the list
+Private will not show up in the list
 
-	- All standard tables can use dReams or DERO
+All standard tables can use dReams or DERO
+
 
 HGC holders can choose to install a HGC table
 
-	- Public table that uses HGC or DERO`
+Public table that uses HGC or DERO`
 	case 2:
 		Poker.Holdero_new.Hide()
-		text = `You are about to install a new table
+		text = `You are about to install a new Holdero table
 
-Gas fee to install new table is 0.3 DERO
+Gas fee to install new table is 0.30000 DERO
+
 
 Select a public or private table
 
-	- Public will show up in indexed list of tables
+Public will show up in indexed list of tables
 
-	- Private will not show up in the list
+Private will not show up in the list
 
-	- All standard tables can use dReams or DERO
+All standard tables can use dReams or DERO
+
 
 HGC holders can choose to install a HGC table
 
-	- Public table that uses HGC or DERO`
+Public table that uses HGC or DERO`
 	}
 
 	label := widget.NewLabel(text)
@@ -969,25 +973,27 @@ func BettingMenuConfirmP(c int, obj []fyne.CanvasObject, tabs *container.AppTabs
 		
 To help support the project, there is a ` + fmt.Sprintf("%.5f", unlock_fee) + ` DERO donation attached to preform this action
 
-Once you've unlocked dPrediction, you can upload as many new prediction or sports contracts free of donation
+Unlocking dPrediction or dSports gives you unlimited access to bet contract uploads and all base level owner features
 
-Total transaction will be ` + fmt.Sprintf("%0.5f", unlock_fee+gas_fee) + ` DERO (0.125 gas fee for contract install)
+Total transaction will be ` + fmt.Sprintf("%0.5f", unlock_fee+gas_fee) + ` DERO (0.12500 gas fee for contract install)
+
 
 Select a public or private contract
 
-	- Public will show up in indexed list of contracts
+Public will show up in indexed list of contracts
 
-	- Private will not show up in the list`
+Private will not show up in the list`
 	case 2:
-		text = `You are about to install a new dPrediction contract. 
+		text = `You are about to install a new dPrediction contract
 
-Gas fee to install is 0.125 DERO
+Gas fee to install contract is 0.12500 DERO
+
 
 Select a public or private contract
 
-	- Public will show up in indexed list of contracts
+Public will show up in indexed list of contracts
 
-	- Private will not show up in the list`
+Private will not show up in the list`
 	}
 
 	label := widget.NewLabel(text)
@@ -1052,25 +1058,27 @@ func BettingMenuConfirmS(c int, obj []fyne.CanvasObject, tabs *container.AppTabs
 		
 To help support the project, there is a ` + fmt.Sprintf("%.5f", unlock_fee) + ` DERO donation attached to preform this action
 
-Once you've unlocked dSports, you can upload as many new sports or predictions contracts free of donation
+Unlocking dPrediction or dSports gives you unlimited access to bet contract uploads and all base level owner features
 
-Total transaction will be ` + fmt.Sprintf("%0.5f", unlock_fee+gas_fee) + ` DERO (0.14 gas fee for contract install)
+Total transaction will be ` + fmt.Sprintf("%0.5f", unlock_fee+gas_fee) + ` DERO (0.14000 gas fee for contract install)
+
 
 Select a public or private contract
 
-	- Public will show up in indexed list of contracts
+Public will show up in indexed list of contracts
 
-	- Private will not show up in the list`
+Private will not show up in the list`
 	case 2:
 		text = `You are about to install a new dSports contract
 
-Gas fee to install is 0.14 DERO
+Gas fee to install contract is 0.14000 DERO
+
 
 Select a public or private contract
 
-	- Public will show up in indexed list of contracts
+Public will show up in indexed list of contracts
 
-	- Private will not show up in the list`
+Private will not show up in the list`
 	}
 
 	label := widget.NewLabel(text)
