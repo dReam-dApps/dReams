@@ -125,6 +125,7 @@ func StartApp() {
 
 // Main DerBnb process used in StartApp()
 func fetch(quit, done chan struct{}) {
+	log.Println("[DerBnb]", rpc.DREAMSv, runtime.GOOS, runtime.GOARCH)
 	time.Sleep(6 * time.Second)
 	ticker := time.NewTicker(3 * time.Second)
 

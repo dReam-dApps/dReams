@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"image/color"
 	"log"
+	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -867,105 +868,104 @@ func setHeaderConfirm(name, desc, icon, scid string, obj []fyne.CanvasObject, re
 //   - quit for exit chan
 //   - connected box for DeroRpcEntries
 func RunNFAMarket(tag string, quit, done chan struct{}, connect_box *dwidget.DeroRpcEntries) {
-	go func() {
-		time.Sleep(6 * time.Second)
-		ticker := time.NewTicker(3 * time.Second)
-		offset := 0
+	log.Printf("[%s] %s %s %s\n", tag, rpc.DREAMSv, runtime.GOOS, runtime.GOARCH)
+	time.Sleep(6 * time.Second)
+	ticker := time.NewTicker(3 * time.Second)
+	offset := 0
 
-		for {
-			select {
-			case <-ticker.C: // do on interval
-				rpc.Ping()
-				rpc.EchoWallet(tag)
+	for {
+		select {
+		case <-ticker.C: // do on interval
+			rpc.Ping()
+			rpc.EchoWallet(tag)
 
-				// Get all NFA listings
-				if !GnomonClosing() && offset%2 == 0 {
-					FindNfaListings(nil)
-					if offset > 19 {
-						offset = 0
-					}
+			// Get all NFA listings
+			if !GnomonClosing() && offset%2 == 0 {
+				FindNfaListings(nil)
+				if offset > 19 {
+					offset = 0
 				}
-
-				rpc.GetBalance()
-				if !rpc.Wallet.Connect {
-					rpc.Wallet.Balance = 0
-				}
-
-				// Refresh Dero balance and Gnomon endpoint
-				connect_box.RefreshBalance()
-				if !rpc.Signal.Startup {
-					GnomonEndPoint()
-				}
-
-				// If connected daemon connected start looking for Gnomon sync with daemon
-				if rpc.Daemon.Connect && Gnomes.Init && !GnomonClosing() {
-					connect_box.Disconnect.SetChecked(true)
-					// Get indexed SCID count
-					contracts := Gnomes.Indexer.Backend.GetAllOwnersAndSCIDs()
-					Gnomes.SCIDS = uint64(len(contracts))
-					if Gnomes.SCIDS > 0 {
-						Gnomes.Checked = true
-					}
-
-					height := rpc.DaemonHeight(tag, rpc.Daemon.Rpc)
-					if Gnomes.Indexer.LastIndexedHeight >= int64(height)-3 {
-						Gnomes.Sync = true
-					} else {
-						Gnomes.Sync = false
-						Gnomes.Checked = false
-					}
-
-					// Enable index controls and check if wallet is connected
-					go DisableIndexControls(false)
-					if rpc.Wallet.Connect {
-						Market.Market_box.Show()
-						Control.Claim_button.Show()
-						// Update live market info
-						if len(Market.Viewing) == 64 {
-							if Market.Tab == "Buy" {
-								GetBuyNowDetails(Market.Viewing)
-								go RefreshNfaImages()
-							} else {
-								GetAuctionDetails(Market.Viewing)
-								go RefreshNfaImages()
-							}
-						}
-					} else {
-						Market.Market_box.Hide()
-						Control.List_button.Hide()
-						Control.Send_asset.Hide()
-						Control.Claim_button.Hide()
-					}
-
-					// Check wallet for all owned NFAs and refresh content
-					go CheckAllNFAs(false, nil)
-					indexed_scids := " Indexed SCIDs: " + strconv.Itoa(int(Gnomes.SCIDS))
-					Assets.Gnomes_index.Text = (indexed_scids)
-					Assets.Gnomes_index.Refresh()
-					Assets.Stats_box = *container.NewVBox(Assets.Collection, Assets.Name, IconImg(bundle.ResourceAvatarFramePng))
-					Assets.Stats_box.Refresh()
-				} else {
-					connect_box.Disconnect.SetChecked(false)
-					DisableIndexControls(true)
-				}
-
-				if rpc.Daemon.Connect {
-					rpc.Signal.Startup = false
-				}
-
-				offset++
-
-			case <-quit: // exit
-				log.Printf("[%s] Closing\n", tag)
-				if Gnomes.Icon_ind != nil {
-					Gnomes.Icon_ind.Stop()
-				}
-				ticker.Stop()
-				done <- struct{}{}
-				return
 			}
+
+			rpc.GetBalance()
+			if !rpc.Wallet.Connect {
+				rpc.Wallet.Balance = 0
+			}
+
+			// Refresh Dero balance and Gnomon endpoint
+			connect_box.RefreshBalance()
+			if !rpc.Signal.Startup {
+				GnomonEndPoint()
+			}
+
+			// If connected daemon connected start looking for Gnomon sync with daemon
+			if rpc.Daemon.Connect && Gnomes.Init && !GnomonClosing() {
+				connect_box.Disconnect.SetChecked(true)
+				// Get indexed SCID count
+				contracts := Gnomes.Indexer.Backend.GetAllOwnersAndSCIDs()
+				Gnomes.SCIDS = uint64(len(contracts))
+				if Gnomes.SCIDS > 0 {
+					Gnomes.Checked = true
+				}
+
+				height := rpc.DaemonHeight(tag, rpc.Daemon.Rpc)
+				if Gnomes.Indexer.LastIndexedHeight >= int64(height)-3 {
+					Gnomes.Sync = true
+				} else {
+					Gnomes.Sync = false
+					Gnomes.Checked = false
+				}
+
+				// Enable index controls and check if wallet is connected
+				go DisableIndexControls(false)
+				if rpc.Wallet.Connect {
+					Market.Market_box.Show()
+					Control.Claim_button.Show()
+					// Update live market info
+					if len(Market.Viewing) == 64 {
+						if Market.Tab == "Buy" {
+							GetBuyNowDetails(Market.Viewing)
+							go RefreshNfaImages()
+						} else {
+							GetAuctionDetails(Market.Viewing)
+							go RefreshNfaImages()
+						}
+					}
+				} else {
+					Market.Market_box.Hide()
+					Control.List_button.Hide()
+					Control.Send_asset.Hide()
+					Control.Claim_button.Hide()
+				}
+
+				// Check wallet for all owned NFAs and refresh content
+				go CheckAllNFAs(false, nil)
+				indexed_scids := " Indexed SCIDs: " + strconv.Itoa(int(Gnomes.SCIDS))
+				Assets.Gnomes_index.Text = (indexed_scids)
+				Assets.Gnomes_index.Refresh()
+				Assets.Stats_box = *container.NewVBox(Assets.Collection, Assets.Name, IconImg(bundle.ResourceAvatarFramePng))
+				Assets.Stats_box.Refresh()
+			} else {
+				connect_box.Disconnect.SetChecked(false)
+				DisableIndexControls(true)
+			}
+
+			if rpc.Daemon.Connect {
+				rpc.Signal.Startup = false
+			}
+
+			offset++
+
+		case <-quit: // exit
+			log.Printf("[%s] Closing\n", tag)
+			if Gnomes.Icon_ind != nil {
+				Gnomes.Icon_ind.Stop()
+			}
+			ticker.Stop()
+			done <- struct{}{}
+			return
 		}
-	}()
+	}
 }
 
 // Get search filters from on chain store
