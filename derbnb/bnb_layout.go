@@ -75,39 +75,67 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 	// property images
 	var image canvas.Image
 	img_forward := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "arrowForward"), func() {
-		if len(viewing_scid) == 64 && property_photos[viewing_scid] != nil {
-			go func() {
-				if count < len(property_photos[viewing_scid])-1 {
+		go func() {
+			property_photos.RLock()
+			if len(viewing_scid) == 64 && property_photos.data[viewing_scid] != nil {
+				if count < len(property_photos.data[viewing_scid])-1 {
 					count++
-					image, _ := holdero.DownloadFile(propertyImageSource(property_photos[viewing_scid][count]), "img")
-					image_box.Objects[0] = &image
-					image_box.Refresh()
+					if url := propertyImageSource(property_photos.data[viewing_scid][count]); url != "" {
+						if image, err := holdero.DownloadFile(url, url); err == nil {
+							image_box.Objects[0] = &image
+							image_box.Refresh()
+						} else {
+							log.Printf("[DerBnb] %s %s\n", url, err)
+						}
+					}
 				} else {
 					count = 0
-					image, _ := holdero.DownloadFile(propertyImageSource(property_photos[viewing_scid][count]), "img")
-					image_box.Objects[0] = &image
-					image_box.Refresh()
+					if url := propertyImageSource(property_photos.data[viewing_scid][count]); url != "" {
+						if image, err := holdero.DownloadFile(url, url); err == nil {
+							image_box.Objects[0] = &image
+							image_box.Refresh()
+						} else {
+							log.Printf("[DerBnb] %s %s\n", url, err)
+						}
+					}
 				}
-			}()
-		}
+			} else {
+				dialog.NewInformation("No Images", "This property has no images", w).Show()
+			}
+			property_photos.RUnlock()
+		}()
 	})
 
 	img_back := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "arrowBack"), func() {
-		if len(viewing_scid) == 64 && property_photos[viewing_scid] != nil {
-			go func() {
+		go func() {
+			property_photos.RLock()
+			if len(viewing_scid) == 64 && property_photos.data[viewing_scid] != nil {
 				if count > 0 {
 					count--
-					image, _ := holdero.DownloadFile(propertyImageSource(property_photos[viewing_scid][count]), "img")
-					image_box.Objects[0] = &image
-					image_box.Refresh()
+					if url := propertyImageSource(property_photos.data[viewing_scid][count]); url != "" {
+						if image, err := holdero.DownloadFile(url, url); err == nil {
+							image_box.Objects[0] = &image
+							image_box.Refresh()
+						} else {
+							log.Printf("[DerBnb] %s %s\n", url, err)
+						}
+					}
 				} else {
-					count = len(property_photos[viewing_scid]) - 1
-					image, _ := holdero.DownloadFile(propertyImageSource(property_photos[viewing_scid][count]), "img")
-					image_box.Objects[0] = &image
-					image_box.Refresh()
+					count = len(property_photos.data[viewing_scid]) - 1
+					if url := propertyImageSource(property_photos.data[viewing_scid][count]); url != "" {
+						if image, err := holdero.DownloadFile(url, url); err == nil {
+							image_box.Objects[0] = &image
+							image_box.Refresh()
+						} else {
+							log.Printf("[DerBnb] %s %s\n", url, err)
+						}
+					}
 				}
-			}()
-		}
+			} else {
+				dialog.NewInformation("No Images", "This property has no images", w).Show()
+			}
+			property_photos.RUnlock()
+		}()
 	})
 
 	img_forward.Importance = widget.LowImportance
@@ -182,10 +210,12 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 	// price per night entry
 	price_entry := dwidget.DeroAmtEntry("", 0.1, 5)
 	price_entry.SetPlaceHolder("Price:     ")
+	price_entry.AllowFloat = true
 	price_entry.Validator = validation.NewRegexp(`^\d{1,}\.\d{1,5}$|^[^0]\d{0,}$`, "Float required")
 
 	// damage deposit entry
 	deposit_entry := dwidget.DeroAmtEntry("", 0.1, 5)
+	deposit_entry.AllowFloat = true
 	deposit_entry.SetPlaceHolder("Damage deposit:")
 	deposit_entry.Validator = validation.NewRegexp(`^\d{1,}\.\d{1,5}$|^[^0]\d{0,}$`, "Float required")
 
@@ -266,7 +296,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 	var tabs *container.AppTabs
 	var confirm_request_button, cancel_request_button, release_button, cancel_booking_button *widget.Button
 	var confirm_border, confirm_max, max *fyne.Container
-	var metedata_label_arr []*widget.Label
+	var metedata_label_arr []string
 	var available_start_arr, available_end_arr []*widget.Entry
 	var new_dates_arr, metedata_entry_arr []*fyne.Container
 
@@ -278,20 +308,13 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 	confirm_action_label.Wrapping = fyne.TextWrapWord
 	confirm_action_label.Alignment = fyne.TextAlignCenter
 
-	sq_foot_label := widget.NewLabel("Sq footage")
-	sq_foot_label.Alignment = fyne.TextAlignCenter
-
-	style_label := widget.NewLabel("Property style")
-	style_label.Alignment = fyne.TextAlignCenter
-
-	num_bedrooms_label := widget.NewLabel("Bedrooms")
-	num_bedrooms_label.Alignment = fyne.TextAlignCenter
-
-	num_guests_label := widget.NewLabel("Max guests")
-	num_guests_label.Alignment = fyne.TextAlignCenter
-
-	photo_entry_label := widget.NewLabel("Photos")
-	photo_entry_label.Alignment = fyne.TextAlignCenter
+	// Metadata form labels
+	sq_foot_label := "Sq footage"
+	style_label := "Property style"
+	num_bedrooms_label := "Bedrooms"
+	num_guests_label := "Max guests"
+	photo_entry_label := "Photos"
+	prop_descp_label := "Describe the property"
 
 	derbnb_gif, _ := xwidget.NewAnimatedGifFromResource(bundle.ResourceDerbnbGifGif)
 	derbnb_gif.SetMinSize(fyne.NewSize(100, 100))
@@ -440,7 +463,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 			return
 
 		case 2:
-			ListProperty(scid_entry.Text, menu.ToAtomicFive(price_entry.Text), menu.ToAtomicFive(deposit_entry.Text))
+			ListProperty(scid_entry.Text, menu.ToAtomicFive(price_entry.Text), menu.ToAtomicFive(deposit_entry.Text), true)
 		case 3:
 			RemoveProperty(scid_entry.Text)
 		case 4:
@@ -450,9 +473,9 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 			ReleaseDamageDeposit(scid_entry.Text, comment_entry.Text, confirm_stamp, menu.ToAtomicFive(release_entry.Text))
 			release_button.Hide()
 		case 6:
-			ChangePrice(scid_entry.Text, menu.ToAtomicFive(price_entry.Text))
+			ListProperty(scid_entry.Text, menu.ToAtomicFive(price_entry.Text), menu.ToAtomicFive(deposit_entry.Text), false)
 		case 7:
-			ChangeDamageDeposit(scid_entry.Text, menu.ToAtomicFive(deposit_entry.Text))
+			// case removed for v0.9.6
 		case 8:
 			CancelBooking(confirm_action_scid, confirm_stamp)
 			cancel_request_button.Hide()
@@ -510,7 +533,10 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 							metadata.Photos = append(metadata.Photos, w.(*widget.Entry).Text)
 						}
 					}
+				case 5:
+					metadata.Description = cont.Objects[0].(*widget.Entry).Text
 				default:
+
 				}
 			}
 
@@ -628,6 +654,8 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 
 	listings_list.OnSelected = func(id widget.ListItemID) {
 		go func() {
+			image_box.Objects[0] = canvas.NewImageFromImage(nil)
+			image_box.Refresh()
 			split := strings.Split(listed_properties[id], "   ")
 			if len(split) > 0 {
 				scid := split[1]
@@ -635,12 +663,24 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 				count = 0
 				getImages(scid)
 				request_button.Show()
+				property_photos.RLock()
 				listing_label.SetText(getInfo(scid))
-				if property_photos[scid] != nil {
-					image, _ := holdero.DownloadFile(propertyImageSource(property_photos[scid][0]), "img")
-					image_box.Objects[0] = &image
+				if property_photos.data[scid] != nil {
+					if url := propertyImageSource(property_photos.data[scid][0]); url != "" {
+						if image, err := holdero.DownloadFile(url, url); err == nil {
+							image_box.Objects[0] = &image
+							image_box.Refresh()
+						} else {
+							log.Printf("[DerBnb] %s %s\n", url, err)
+							image_box.Objects[0] = canvas.NewImageFromImage(nil)
+							image_box.Refresh()
+						}
+					}
+				} else {
+					image_box.Objects[0] = canvas.NewImageFromImage(nil)
 					image_box.Refresh()
 				}
+				property_photos.RUnlock()
 			}
 		}()
 	}
@@ -650,9 +690,19 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 			if location := makeLocationString(scid_entry.Text); location != "" {
 				if data := getMetadata(scid_entry.Text); data != nil {
 					derbnb_gif.Start()
-					data_string := fmt.Sprintf("Sq feet: %d\n\nStyle: %s\n\nBedrooms: %d\n\nMax guests: %d", data.Squarefootage, data.Style, data.NumberOfBedrooms, data.MaxNumberOfGuests)
-					confirm_border.Objects[4] = container.NewVBox(layout.NewSpacer(), confirm_action_label, layout.NewSpacer())
-					confirm_action_label.SetText(fmt.Sprintf("Listing property\n\nSCID: %s\n\n%s\n\nDaily rate of: %s Dero\n\nDamage deposit: %s Dero\n\n%s", scid_entry.Text, location, price_entry.Text, deposit_entry.Text, data_string))
+					data_string := fmt.Sprintf("Sq feet: %d\n\nStyle: %s\n\nBedrooms: %d\n\nMax guests: %d\n\nDescription: %s", data.Squarefootage, data.Style, data.NumberOfBedrooms, data.MaxNumberOfGuests, data.Description)
+					confirm_border.Objects[4] = container.NewVScroll(container.NewVBox(layout.NewSpacer(), confirm_action_label, layout.NewSpacer()))
+					price_str := price_entry.Text
+					if price_fl, err := strconv.ParseFloat(price_str, 64); err == nil {
+						price_str = fmt.Sprintf("%.5f", float64(price_fl))
+					}
+
+					dep_str := deposit_entry.Text
+					if dep_fl, err := strconv.ParseFloat(dep_str, 64); err == nil {
+						dep_str = fmt.Sprintf("%.5f", float64(dep_fl))
+					}
+
+					confirm_action_label.SetText(fmt.Sprintf("Listing property\n\nSCID: %s\n\n%s\n\nDaily rate of: %s Dero\n\nDamage deposit: %s Dero\n\n%s", scid_entry.Text, location, price_str, dep_str, data_string))
 					confirm_action_int = 2
 					w.SetContent(confirm_max)
 				} else {
@@ -828,24 +878,14 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 		}
 	})
 
-	change_price_button := widget.NewButton("Change Price", func() {
+	change_price_button := widget.NewButton("Update Prices", func() {
 		if scid_entry.Validate() == nil && price_entry.Validate() == nil {
 			derbnb_gif.Start()
 			new_price, _ := strconv.ParseFloat(price_entry.Text, 64)
-			confirm_border.Objects[4] = container.NewVBox(layout.NewSpacer(), confirm_action_label, layout.NewSpacer())
-			confirm_action_label.SetText(fmt.Sprintf("Change price\n\nSCID: %s\n\nNew daily price: %.5f Dero", scid_entry.Text, new_price))
-			confirm_action_int = 6
-			w.SetContent(confirm_max)
-		}
-	})
-
-	change_dd_button := widget.NewButton("Change Deposit", func() {
-		if scid_entry.Validate() == nil && deposit_entry.Validate() == nil {
-			derbnb_gif.Start()
 			new_dep, _ := strconv.ParseFloat(deposit_entry.Text, 64)
 			confirm_border.Objects[4] = container.NewVBox(layout.NewSpacer(), confirm_action_label, layout.NewSpacer())
-			confirm_action_label.SetText(fmt.Sprintf("Change damage deposit\n\nSCID: %s\n\nNew deposit price: %.5f Dero", scid_entry.Text, new_dep))
-			confirm_action_int = 7
+			confirm_action_label.SetText(fmt.Sprintf("Update prices\n\nSCID: %s\n\nNew daily price: %.5f Dero\n\nNew damage deposit: %.5f Dero", scid_entry.Text, new_price, new_dep))
+			confirm_action_int = 6
 			w.SetContent(confirm_max)
 		}
 	})
@@ -1058,7 +1098,6 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 	cancel_request_button.Hide()
 	release_button.Hide()
 	change_price_button.Hide()
-	change_dd_button.Hide()
 
 	cancel_booking_button.Hide()
 	rate_booking_button.Hide()
@@ -1072,98 +1111,9 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 
 	var property_add_info *widget.Button
 
-	scid_entry_wait := false
-	scid_entry.OnChanged = func(s string) {
-		if scid_entry.Validate() == nil && rpc.Wallet.Connect && !scid_entry_wait {
-			scid_entry_wait = true
-			if haveProperty(scid_entry.Text) {
-				change_dates.Show()
-				remove_button.Show()
-				set_location_button.Hide()
-				list_button.Hide()
-				if price_entry.Validate() == nil {
-					change_price_button.Show()
-				} else {
-					change_price_button.Hide()
-				}
-
-				if deposit_entry.Validate() == nil {
-					change_dd_button.Show()
-				} else {
-					change_dd_button.Hide()
-				}
-			} else {
-				go func() {
-					remove_button.Hide()
-					change_dates.Hide()
-					set_location_button.Hide()
-					if checkAssetContract(scid_entry.Text) == TOKEN_CONTRACT {
-						if rpc.TokenBalance(scid_entry.Text) == 1 {
-							if city, country := getLocation(scid_entry.Text); city == "" && country == "" {
-								set_location_button.Show()
-							} else {
-								property_add_info.Show()
-								if price_entry.Validate() == nil && deposit_entry.Validate() == nil {
-									list_button.Show()
-								}
-							}
-						}
-					}
-				}()
-			}
-		} else {
-			list_button.Hide()
-			remove_button.Hide()
-			confirm_request_button.Hide()
-			cancel_request_button.Hide()
-			release_button.Hide()
-			change_price_button.Hide()
-			change_dd_button.Hide()
-			change_dates.Hide()
-			property_add_info.Hide()
-			set_location_button.Hide()
-		}
-
-		scid_entry_wait = false
-	}
-
-	price_entry.OnChanged = func(s string) {
-		if price_entry.Validate() == nil {
-			if scid_entry.Validate() == nil {
-				if deposit_entry.Validate() == nil && !haveProperty(scid_entry.Text) && rpc.Wallet.Connect {
-					list_button.Show()
-				}
-
-				if haveProperty(scid_entry.Text) && rpc.Wallet.Connect {
-					change_price_button.Show()
-				}
-			}
-		} else {
-			list_button.Hide()
-			change_price_button.Hide()
-		}
-	}
-
-	deposit_entry.OnChanged = func(s string) {
-		if deposit_entry.Validate() == nil {
-			if scid_entry.Validate() == nil {
-				if price_entry.Validate() == nil && !haveProperty(scid_entry.Text) && rpc.Wallet.Connect {
-					list_button.Show()
-				}
-
-				if haveProperty(scid_entry.Text) && rpc.Wallet.Connect {
-					change_dd_button.Show()
-				}
-			}
-		} else {
-			list_button.Hide()
-			change_dd_button.Hide()
-		}
-	}
-
 	// renters list of rentals, requests and bookings as tree
-	my_bookings = make(map[string][]string)
-	booking_list = widget.NewTreeWithStrings(my_bookings)
+	my_bookings.data = make(map[string][]string)
+	booking_list = widget.NewTreeWithStrings(my_bookings.data)
 	booking_list.OnSelected = func(uid widget.TreeNodeID) {
 		split := strings.Split(uid, "   ")
 		if len(split) >= 5 {
@@ -1216,8 +1166,8 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 	}
 
 	// owners list of properties, booking history tree for each scid
-	my_properties = make(map[string][]string)
-	property_list = widget.NewTreeWithStrings(my_properties)
+	my_properties.data = make(map[string][]string)
+	property_list = widget.NewTreeWithStrings(my_properties.data)
 	property_list.OnSelected = func(uid widget.TreeNodeID) {
 		if len(uid) == 64 {
 			confirm_stamp = 0
@@ -1228,10 +1178,6 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 			release_button.Hide()
 			rate_renter_button.Hide()
 			send_message.Hide()
-			if rpc.Wallet.Connect {
-				remove_button.Show()
-				change_dates.Show()
-			}
 			scid_entry.SetText(uid)
 			return
 		}
@@ -1250,8 +1196,6 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 						cancel_request_button.Show()
 					}
 					set_location_button.Hide()
-					remove_button.Hide()
-					change_dates.Hide()
 					release_button.Hide()
 					property_add_info.Hide()
 					rate_renter_button.Hide()
@@ -1269,8 +1213,6 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 						send_message.Show()
 					}
 					set_location_button.Hide()
-					remove_button.Hide()
-					change_dates.Hide()
 					confirm_request_button.Hide()
 					cancel_request_button.Hide()
 					rate_renter_button.Hide()
@@ -1281,16 +1223,12 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 						send_message.Show()
 					}
 					set_location_button.Hide()
-					remove_button.Hide()
 					release_button.Hide()
-					change_dates.Hide()
 					confirm_request_button.Hide()
 					cancel_request_button.Hide()
 					property_add_info.Hide()
 				default:
 					set_location_button.Hide()
-					remove_button.Hide()
-					change_dates.Hide()
 					send_message.Hide()
 					release_button.Hide()
 					confirm_request_button.Hide()
@@ -1324,14 +1262,13 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 	amt_cont.SetMinSize(fyne.NewSize(330, 0))
 
 	owner_entries := container.NewBorder(nil, nil, nil, amt_cont, scid_entry)
-	owner_buttons := container.NewAdaptiveGrid(7,
+	owner_buttons := container.NewAdaptiveGrid(6,
 		container.NewMax(change_dates),
 		container.NewMax(confirm_request_button),
 		container.NewMax(cancel_request_button),
 		container.NewMax(release_button),
 		container.NewMax(rate_renter_button),
-		container.NewMax(change_price_button),
-		container.NewMax(change_dd_button))
+		container.NewMax(change_price_button))
 
 	control_box := container.NewVBox(owner_entries, owner_buttons)
 
@@ -1379,7 +1316,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 
 	style_entry := widget.NewEntry()
 	style_entry.SetPlaceHolder("Style:")
-	style_entry.Validator = validation.NewRegexp(`^\w{2,}`, "String required")
+	style_entry.Validator = validation.NewRegexp(`^\w{1,}`, "String required")
 	style_cont := container.NewVBox(style_entry)
 
 	num_bedrooms_entry := dwidget.DeroAmtEntry("", 1, 0)
@@ -1394,8 +1331,14 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 	num_guests_entry.Validator = validation.NewRegexp(`^[^0]\d{0,}$`, "Int required")
 	num_guests_cont := container.NewVBox(num_guests_entry)
 
-	metedata_label_arr = []*widget.Label{sq_foot_label, style_label, num_bedrooms_label, num_guests_label, photo_entry_label}
-	metedata_entry_arr = []*fyne.Container{sq_foot_cont, style_cont, num_bedrooms_cont, num_guests_cont, photo_entry_cont}
+	prop_descp_entry := widget.NewMultiLineEntry()
+	prop_descp_entry.SetPlaceHolder("Description:")
+	prop_descp_entry.Validator = validation.NewRegexp(`^\w{1,}`, "String required")
+	prop_descp_entry.Wrapping = fyne.TextWrapWord
+	prop_descp_cont := container.NewVBox(prop_descp_entry)
+
+	metedata_label_arr = []string{sq_foot_label, style_label, num_bedrooms_label, num_guests_label, photo_entry_label, prop_descp_label}
+	metedata_entry_arr = []*fyne.Container{sq_foot_cont, style_cont, num_bedrooms_cont, num_guests_cont, photo_entry_cont, prop_descp_cont}
 
 	property_add_info = widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "documentCreate"), func() {
 		derbnb_gif.Start()
@@ -1458,10 +1401,16 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 		switch ti.Text {
 		case "Properties":
 			viewing_scid = ""
+			request_button.Hide()
 			send_message.Hide()
 			listing_label.SetText("")
 			listings_list.UnselectAll()
+			my_bookings.RLock()
+			booking_list.Refresh()
+			my_bookings.RUnlock()
+			property_list.Refresh()
 		default:
+
 		}
 	}
 
@@ -1503,12 +1452,13 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 		max = container.NewMax(tabs, container.NewVBox(layout.NewSpacer(), connect_box.Container))
 	}
 
-	property_photos = make(map[string][]string)
+	property_photos.data = make(map[string][]string)
 
 	// Use menu.Exit_signal to kill routine of dApp
 	go func() {
 		i := 0
-		for !menu.Exit_signal {
+		time.Sleep(2 * time.Second)
+		for !menu.ClosingApps() {
 			if !rpc.Wallet.Connect {
 				list_button.Hide()
 				remove_button.Hide()
@@ -1517,7 +1467,6 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 				release_button.Hide()
 				rate_renter_button.Hide()
 				change_price_button.Hide()
-				change_dd_button.Hide()
 
 				cancel_booking_button.Hide()
 				rate_booking_button.Hide()
@@ -1541,6 +1490,67 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 				i = 0
 				GetProperties()
 			}
+
+			if scid_entry.Validate() == nil && rpc.Wallet.Connect {
+				if haveProperty(scid_entry.Text) {
+					change_dates.Show()
+					remove_button.Show()
+					set_location_button.Hide()
+					list_button.Hide()
+					if price_entry.Validate() == nil && deposit_entry.Validate() == nil {
+						change_price_button.Show()
+					} else {
+						change_price_button.Hide()
+					}
+				} else {
+					go func() {
+						remove_button.Hide()
+						change_dates.Hide()
+						change_price_button.Hide()
+						set_location_button.Hide()
+						if checkAssetContract(scid_entry.Text) == TOKEN_CONTRACT {
+							if rpc.TokenBalance(scid_entry.Text) == 1 {
+								if city, country := getLocation(scid_entry.Text); city == "" && country == "" {
+									set_location_button.Show()
+								} else {
+									property_add_info.Show()
+									if price_entry.Validate() == nil && deposit_entry.Validate() == nil {
+										list_button.Show()
+									}
+								}
+							}
+						}
+					}()
+				}
+			} else {
+				list_button.Hide()
+				remove_button.Hide()
+				confirm_request_button.Hide()
+				cancel_request_button.Hide()
+				release_button.Hide()
+				change_price_button.Hide()
+				change_dates.Hide()
+				property_add_info.Hide()
+				set_location_button.Hide()
+			}
+
+			if price_entry.Validate() == nil && deposit_entry.Validate() == nil {
+				if scid_entry.Validate() == nil && rpc.Wallet.Connect {
+					if !haveProperty(scid_entry.Text) {
+						list_button.Show()
+					} else {
+						if checkAssetContract(scid_entry.Text) == TOKEN_CONTRACT {
+							if getOwnerAddress(scid_entry.Text) == rpc.Wallet.Address {
+								change_price_button.Show()
+							}
+						}
+					}
+				}
+			} else {
+				list_button.Hide()
+				change_price_button.Hide()
+			}
+
 			i++
 
 			time.Sleep(time.Second)
@@ -1551,11 +1561,12 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 }
 
 // Places metadata labels with entry objects into container
-func placeMetadataObjects(label []*widget.Label, entry []*fyne.Container) fyne.CanvasObject {
-	cont := container.NewVBox(layout.NewSpacer())
+func placeMetadataObjects(label []string, entry []*fyne.Container) fyne.CanvasObject {
+	metadata_form := []*widget.FormItem{}
 	for i := range label {
-		cont.Objects = append(cont.Objects, label[i], entry[i], layout.NewSpacer())
+		metadata_form = append(metadata_form, widget.NewFormItem(label[i], entry[i]))
+
 	}
 
-	return cont
+	return widget.NewForm(metadata_form...)
 }

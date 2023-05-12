@@ -284,7 +284,7 @@ func getHand6(r ranker) ranker {
 	return r
 }
 
-// Search thorugh all hand combinations to find best
+// Search through all hand combinations to find best
 func compareThese(r *ranker) (int, ranker) {
 	e0Hand := []int{r.cc1[0], r.cc2[0], r.cc3[0], r.cc4[0], r.cc5[0]}
 	e0Suits := []int{r.cc1[1], r.cc2[1], r.cc3[1], r.cc4[1], r.cc5[1]}
@@ -708,24 +708,95 @@ func handToText(rank int) string {
 	return handRankText
 }
 
+// Hightlights winning Holdero hand at showdown
+func highlightHand(a, b int) (hand []int) {
+	rank := 100
+	community := []int{}
+	if Round.Flop1 > 0 {
+		community = append(community, Round.Flop1)
+	}
+
+	if Round.Flop2 > 0 {
+		community = append(community, Round.Flop2)
+	}
+
+	if Round.Flop3 > 0 {
+		community = append(community, Round.Flop3)
+	}
+
+	if Round.TurnCard > 0 {
+		community = append(community, Round.TurnCard)
+	}
+
+	if Round.RiverCard > 0 {
+		community = append(community, Round.RiverCard)
+	}
+
+	hole := [2]int{a, b}
+	cards := append(community, hole[:]...)
+	p := Pool(5, cards)
+
+	var check []int
+	for i := range p {
+		r, h, _ := compareTheseFive(p[i])
+		if check == nil {
+			hand = p[i]
+			check = h
+		}
+
+		if r < rank {
+			rank = r
+			hand = p[i]
+			check = h
+		} else if r == rank {
+			var better bool
+			var r ranker
+			r.pc1 = suitSplit(hole[0])
+			r.pc2 = suitSplit(hole[1])
+			new := findBest(rank, check, h, &r)
+			for i := 0; i < 5; i++ {
+				if new[i] != check[i] {
+					better = true
+					break
+				}
+			}
+
+			if better {
+				hand = p[i]
+				check = new
+			}
+		}
+	}
+
+	return hand
+}
+
 // Payout to winning Holdero hand
-func payWinningHand(w int) {
+func payWinningHand(w int, r *ranker) {
+	hand := []int{}
 	var winner string
 	switch w {
 	case 1:
+		hand = append(hand, r.p1HandRaw[0], r.p1HandRaw[1])
 		winner = "Player1"
 	case 2:
+		hand = append(hand, r.p2HandRaw[0], r.p2HandRaw[1])
 		winner = "Player2"
 	case 3:
+		hand = append(hand, r.p3HandRaw[0], r.p3HandRaw[1])
 		winner = "Player3"
 	case 4:
+		hand = append(hand, r.p4HandRaw[0], r.p4HandRaw[1])
 		winner = "Player4"
 	case 5:
+		hand = append(hand, r.p5HandRaw[0], r.p5HandRaw[1])
 		winner = "Player5"
 	case 6:
+		hand = append(hand, r.p6HandRaw[0], r.p6HandRaw[1])
 		winner = "Player6"
 	}
 
+	Round.Winning_hand = highlightHand(hand[0], hand[1])
 	updateStatsWins(Round.Pot, winner, false)
 
 	if Round.ID == 1 {
@@ -751,22 +822,22 @@ func compareAll(r *ranker) (end_res string) {
 
 	if r.p1Rank < r.p2Rank && r.p1Rank < r.p3Rank && r.p1Rank < r.p4Rank && r.p1Rank < r.p5Rank && r.p1Rank < r.p6Rank { /// Outright win, player has highest rank
 		end_res = Round.P1_name + " Wins with " + handToText(r.p1Rank)
-		payWinningHand(1)
+		payWinningHand(1, r)
 	} else if r.p2Rank < r.p1Rank && r.p2Rank < r.p3Rank && r.p2Rank < r.p4Rank && r.p2Rank < r.p5Rank && r.p2Rank < r.p6Rank {
 		end_res = Round.P2_name + " Wins with " + handToText(r.p2Rank)
-		payWinningHand(2)
+		payWinningHand(2, r)
 	} else if r.p3Rank < r.p1Rank && r.p3Rank < r.p2Rank && r.p3Rank < r.p4Rank && r.p3Rank < r.p5Rank && r.p3Rank < r.p6Rank {
 		end_res = Round.P3_name + " Wins with " + handToText(r.p3Rank)
-		payWinningHand(3)
+		payWinningHand(3, r)
 	} else if r.p4Rank < r.p1Rank && r.p4Rank < r.p2Rank && r.p4Rank < r.p3Rank && r.p4Rank < r.p5Rank && r.p4Rank < r.p6Rank {
 		end_res = Round.P4_name + " Wins with " + handToText(r.p4Rank)
-		payWinningHand(4)
+		payWinningHand(4, r)
 	} else if r.p5Rank < r.p1Rank && r.p5Rank < r.p2Rank && r.p5Rank < r.p3Rank && r.p5Rank < r.p4Rank && r.p5Rank < r.p6Rank {
 		end_res = Round.P5_name + " Wins with " + handToText(r.p5Rank)
-		payWinningHand(5)
+		payWinningHand(5, r)
 	} else if r.p6Rank < r.p1Rank && r.p6Rank < r.p2Rank && r.p6Rank < r.p3Rank && r.p6Rank < r.p4Rank && r.p6Rank < r.p5Rank {
 		end_res = Round.P6_name + " Wins with" + handToText(r.p6Rank)
-		payWinningHand(6)
+		payWinningHand(6, r)
 	} else {
 
 		highestPair := []int{r.p1HighPair, r.p2HighPair, r.p3HighPair, r.p4HighPair, r.p5HighPair, r.p6HighPair}
@@ -853,66 +924,66 @@ func compareAll(r *ranker) (end_res string) {
 		if r.p1HighPair > r.p2HighPair && r.p1HighPair > r.p3HighPair && r.p1HighPair > r.p4HighPair && r.p1HighPair > r.p5HighPair && r.p1HighPair > r.p6HighPair { /// No outright win, highest pairing first used to compare two hands of same rank
 			if r.p1Rank == winningRank[0] {
 				end_res = Round.P1_name + " Wins with " + handToText(r.p1Rank)
-				payWinningHand(1)
+				payWinningHand(1, r)
 			}
 
 		} else if r.p2HighPair > r.p1HighPair && r.p2HighPair > r.p3HighPair && r.p2HighPair > r.p4HighPair && r.p2HighPair > r.p5HighPair && r.p2HighPair > r.p6HighPair {
 			if r.p2Rank == winningRank[0] {
 				end_res = Round.P2_name + " Wins with " + handToText(r.p2Rank)
-				payWinningHand(2)
+				payWinningHand(2, r)
 			}
 
 		} else if r.p3HighPair > r.p1HighPair && r.p3HighPair > r.p2HighPair && r.p3HighPair > r.p4HighPair && r.p3HighPair > r.p5HighPair && r.p3HighPair > r.p6HighPair {
 			if r.p3Rank == winningRank[0] {
 				end_res = Round.P3_name + " Wins with " + handToText(r.p3Rank)
-				payWinningHand(3)
+				payWinningHand(3, r)
 			}
 
 		} else if r.p4HighPair > r.p1HighPair && r.p4HighPair > r.p2HighPair && r.p4HighPair > r.p3HighPair && r.p4HighPair > r.p5HighPair && r.p4HighPair > r.p6HighPair {
 			if r.p4Rank == winningRank[0] {
 				end_res = Round.P4_name + " Wins with " + handToText(r.p4Rank)
-				payWinningHand(4)
+				payWinningHand(4, r)
 			}
 		} else if r.p5HighPair > r.p1HighPair && r.p5HighPair > r.p2HighPair && r.p5HighPair > r.p3HighPair && r.p5HighPair > r.p4HighPair && r.p5HighPair > r.p6HighPair {
 			if r.p5Rank == winningRank[0] {
 				end_res = Round.P5_name + " Wins with " + handToText(r.p5Rank)
-				payWinningHand(5)
+				payWinningHand(5, r)
 			}
 		} else if r.p6HighPair > r.p1HighPair && r.p6HighPair > r.p2HighPair && r.p6HighPair > r.p3HighPair && r.p6HighPair > r.p4HighPair && r.p6HighPair > r.p5HighPair {
 			if r.p6Rank == winningRank[0] {
 				end_res = Round.P6_name + " Wins with " + handToText(r.p6Rank)
-				payWinningHand(6)
+				payWinningHand(6, r)
 			}
 			/// no highpair winner, if two pair winning rank look for low pair winner
 		} else if winningRank[0] == 8 && r.p1LowPair > r.p2LowPair && r.p1LowPair > r.p3LowPair && r.p1LowPair > r.p4LowPair && r.p1LowPair > r.p5LowPair && r.p1LowPair > r.p6LowPair {
 			if r.p1Rank == winningRank[0] {
 				end_res = Round.P1_name + " Wins with " + handToText(r.p1Rank)
-				payWinningHand(1)
+				payWinningHand(1, r)
 			}
 		} else if winningRank[0] == 8 && r.p2LowPair > r.p1LowPair && r.p2LowPair > r.p3LowPair && r.p2LowPair > r.p4LowPair && r.p2LowPair > r.p5LowPair && r.p2LowPair > r.p6LowPair {
 			if r.p2Rank == winningRank[0] {
 				end_res = Round.P2_name + " Wins with " + handToText(r.p2Rank)
-				payWinningHand(2)
+				payWinningHand(2, r)
 			}
 		} else if winningRank[0] == 8 && r.p3LowPair > r.p1LowPair && r.p3LowPair > r.p2LowPair && r.p3LowPair > r.p4LowPair && r.p3LowPair > r.p5LowPair && r.p3LowPair > r.p6LowPair {
 			if r.p3Rank == winningRank[0] {
 				end_res = Round.P3_name + " Wins with " + handToText(r.p3Rank)
-				payWinningHand(3)
+				payWinningHand(3, r)
 			}
 		} else if winningRank[0] == 8 && r.p4LowPair > r.p1LowPair && r.p4LowPair > r.p2LowPair && r.p4LowPair > r.p3LowPair && r.p4LowPair > r.p5LowPair && r.p4LowPair > r.p6LowPair {
 			if r.p4Rank == winningRank[0] {
 				end_res = Round.P4_name + " Wins with " + handToText(r.p4Rank)
-				payWinningHand(4)
+				payWinningHand(4, r)
 			}
 		} else if winningRank[0] == 8 && r.p5LowPair > r.p1LowPair && r.p5LowPair > r.p2LowPair && r.p5LowPair > r.p3LowPair && r.p5LowPair > r.p4LowPair && r.p5LowPair > r.p6LowPair {
 			if r.p5Rank == winningRank[0] {
 				end_res = Round.P5_name + " Wins with " + handToText(r.p5Rank)
-				payWinningHand(5)
+				payWinningHand(5, r)
 			}
 		} else if winningRank[0] == 8 && r.p6LowPair > r.p1LowPair && r.p6LowPair > r.p2LowPair && r.p6LowPair > r.p3LowPair && r.p6LowPair > r.p4LowPair && r.p6LowPair > r.p5LowPair {
 			if r.p6Rank == winningRank[0] {
 				end_res = Round.P6_name + " Wins with " + handToText(r.p6Rank)
-				payWinningHand(6)
+				payWinningHand(6, r)
 			}
 
 			/// No outright or HighPair win so we comapre all left over hands to determine HighCard winner
@@ -938,7 +1009,7 @@ func compareAll(r *ranker) (end_res string) {
 
 			if r.p1Rank == winningRank[0] {
 				end_res = Round.P1_name + " Wins with " + handToText(r.p1Rank)
-				payWinningHand(1)
+				payWinningHand(1, r)
 			}
 
 		} else if (r.p2HighCardArr[4] > r.p1HighCardArr[4] && r.p2HighCardArr[4] > r.p3HighCardArr[4] && r.p2HighCardArr[4] > r.p4HighCardArr[4] && r.p2HighCardArr[4] > r.p5HighCardArr[4] && r.p2HighCardArr[4] > r.p6HighCardArr[4]) ||
@@ -963,7 +1034,7 @@ func compareAll(r *ranker) (end_res string) {
 
 			if r.p2Rank == winningRank[0] {
 				end_res = Round.P2_name + " Wins with " + handToText(r.p2Rank)
-				payWinningHand(2)
+				payWinningHand(2, r)
 
 			}
 
@@ -989,7 +1060,7 @@ func compareAll(r *ranker) (end_res string) {
 
 			if r.p3Rank == winningRank[0] {
 				end_res = Round.P3_name + " Wins with " + handToText(r.p3Rank)
-				payWinningHand(3)
+				payWinningHand(3, r)
 
 			}
 
@@ -1015,7 +1086,7 @@ func compareAll(r *ranker) (end_res string) {
 
 			if r.p4Rank == winningRank[0] {
 				end_res = Round.P4_name + " Wins with " + handToText(r.p4Rank)
-				payWinningHand(4)
+				payWinningHand(4, r)
 
 			}
 
@@ -1041,7 +1112,7 @@ func compareAll(r *ranker) (end_res string) {
 
 			if r.p5Rank == winningRank[0] {
 				end_res = Round.P5_name + " Wins with " + handToText(r.p5Rank)
-				payWinningHand(5)
+				payWinningHand(5, r)
 
 			}
 
@@ -1067,7 +1138,7 @@ func compareAll(r *ranker) (end_res string) {
 
 			if r.p6Rank == winningRank[0] {
 				end_res = Round.P6_name + " Wins with " + handToText(r.p6Rank)
-				payWinningHand(6)
+				payWinningHand(6, r)
 
 			}
 

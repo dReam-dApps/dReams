@@ -103,17 +103,6 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 	collection_entry := widget.NewEntry()
 	collection_entry.SetPlaceHolder("Collection:")
 	collection_entry.Validator = validation.NewRegexp(`^\w{2,}`, "String required")
-	collection_entry.OnCursorChanged = func() {
-		if NFACreationExists(collection_entry.Text) {
-			if rpc.Wallet.File != nil {
-				sign_button.Show()
-			}
-			collection_entry.Validator = validation.NewRegexp(`^\w{2,}`, "String required")
-		} else {
-			sign_button.Hide()
-			collection_entry.Validator = validation.NewRegexp(`^\W\D\S$`, "Invliad collection directory")
-		}
-	}
 
 	update_select := widget.NewSelect([]string{"No", "Yes"}, nil)
 	update_select.PlaceHolder = "Owner Can Update:"
@@ -122,23 +111,6 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 	name_entry.SetPlaceHolder("Asset Name:")
 	name_entry.Validator = validation.NewRegexp(`^\w{2,}`, "String required")
 	name_cont := container.NewGridWithRows(1, name_entry)
-	name_entry.OnChanged = func(s string) {
-		if collection_enable.Checked {
-			input_file_start := fmt.Sprintf("NFA-Creation/%s/bas/%s%s.bas", collection_entry.Text, s, collection_low_entry.Text)
-			if _, err := os.ReadFile(input_file_start); err == nil {
-				install_button.Show()
-			} else {
-				install_button.Hide()
-			}
-		} else {
-			input_file := fmt.Sprintf("NFA-Creation/%s/bas/%s.bas", collection_entry.Text, s)
-			if _, err := os.ReadFile(input_file); err == nil {
-				install_button.Show()
-			} else {
-				install_button.Hide()
-			}
-		}
-	}
 
 	extension_select := widget.NewSelect([]string{".jpg", ".png", ".gif", ".mp3", ".mp4", ".pdf", ".zip", ".7z", ".avi", ".mov", ".ogg"}, nil)
 	extension_select.PlaceHolder = "ext"
@@ -167,14 +139,14 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 
 	descr_entry := widget.NewMultiLineEntry()
 	descr_entry.SetPlaceHolder("Asset Description:")
-	descr_entry.Validator = validation.NewRegexp(`^\w{2,}`, "String required")
+	descr_entry.Validator = validation.NewRegexp(`^\w{1,}`, "String required")
 
 	type_select := widget.NewSelect([]string{"Book", "Code", "File", "Image", "Movie", "Music", "Package", "Text"}, nil)
 	type_select.PlaceHolder = "Asset Type"
 
 	tags_entry := widget.NewEntry()
 	tags_entry.SetPlaceHolder("Asset Tags:")
-	tags_entry.Validator = validation.NewRegexp(`^\#\w{2,}|^\w{2,}`, "String required")
+	tags_entry.Validator = validation.NewRegexp(`^\#\w{1,}|^\w{1,}`, "String required")
 
 	checkC_entry := widget.NewEntry()
 	checkC_entry.SetPlaceHolder("File Sign C:")
@@ -420,30 +392,13 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 
 	art_entry := dwidget.DeroAmtEntry("", 1, 0)
 	art_entry.AllowFloat = false
-	art_entry.SetPlaceHolder("% artificer will get from each sale:")
+	art_entry.SetPlaceHolder("% Artificer will get from each sale:")
 	art_entry.Validator = validation.NewRegexp(`^\d{1,2}$`, "Uint required")
 	art_entry.OnChanged = func(s string) {
 		art := rpc.StringToInt(s)
 		roy := rpc.StringToInt(royalty_entry.Text)
 		if art+roy > 100 {
 			art_entry.SetText(strconv.Itoa(art - 1))
-		}
-
-		if collection_entry.Validate() == nil && update_select.SelectedIndex() >= 0 && name_entry.Validate() == nil && extension_select.SelectedIndex() >= 0 && descr_entry.Validate() == nil &&
-			type_select.SelectedIndex() >= 0 && tags_entry.Validate() == nil && checkC_entry.Validate() == nil && checkS_entry.Validate() == nil &&
-			file_entry_start.Validate() == nil && cover_entry_start.Validate() == nil && icon_entry_start.Validate() == nil &&
-			sign_entry_start.Validate() == nil && royalty_entry.Validate() == nil && art_entry.Validate() == nil {
-			if collection_enable.Checked {
-				if collection_low_entry.Validate() == nil && collection_high_entry.Validate() == nil {
-					contracts_button.Show()
-				} else {
-					contracts_button.Hide()
-				}
-			} else {
-				contracts_button.Show()
-			}
-		} else {
-			contracts_button.Hide()
 		}
 	}
 
@@ -452,23 +407,6 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 		roy := rpc.StringToInt(s)
 		if art+roy > 100 {
 			royalty_entry.SetText(strconv.Itoa(roy - 1))
-		}
-
-		if collection_entry.Validate() == nil && update_select.SelectedIndex() >= 0 && name_entry.Validate() == nil && extension_select.SelectedIndex() >= 0 && descr_entry.Validate() == nil &&
-			type_select.SelectedIndex() >= 0 && tags_entry.Validate() == nil && checkC_entry.Validate() == nil && checkS_entry.Validate() == nil &&
-			file_entry_start.Validate() == nil && cover_entry_start.Validate() == nil && icon_entry_start.Validate() == nil &&
-			sign_entry_start.Validate() == nil && royalty_entry.Validate() == nil && art_entry.Validate() == nil {
-			if collection_enable.Checked {
-				if collection_low_entry.Validate() == nil && collection_high_entry.Validate() == nil {
-					contracts_button.Show()
-				} else {
-					contracts_button.Hide()
-				}
-			} else {
-				contracts_button.Show()
-			}
-		} else {
-			contracts_button.Hide()
 		}
 	}
 
@@ -485,13 +423,13 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 	wallet_pass_entry.SetPlaceHolder("Wallet file pass")
 	wallet_pass_entry.OnChanged = func(s string) {
 		rpc_label.SetText(fmt.Sprintf("Installing address: %s", rpc.Wallet.Address))
-		wallet_label.SetText("")
+		wallet_label.SetText("Signing address:")
 		sign_button.Hide()
 	}
 
 	open_wallet_button := widget.NewButton("Open Wallet File", func() {
 		open_wallet := dialog.NewFileOpen(func(uc fyne.URIReadCloser, err error) {
-			wallet_label.SetText("")
+			wallet_label.SetText("Signing address:")
 			if err == nil && uc != nil {
 				if rpc.Wallet.File, err = walletapi.Open_Encrypted_Wallet(uc.URI().Path(), wallet_pass_entry.Text); err == nil {
 					if _, err := os.ReadFile(uc.URI().Path()); err != nil {
@@ -512,6 +450,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 					error_message := dialog.NewInformation("Wallet", "Invalid password", window)
 					error_message.Resize(fyne.NewSize(300, 150))
 					error_message.Show()
+					sign_button.Hide()
 				}
 				collection_entry.SetText(collection_entry.Text)
 			}
@@ -562,6 +501,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 					error_message := dialog.NewInformation("Error", "Could not read wallet file", window)
 					error_message.Resize(fyne.NewSize(300, 150))
 					error_message.Show()
+					sign_button.Hide()
 					return
 				}
 			} else {
@@ -569,6 +509,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 				error_message := dialog.NewInformation("Wallet", "Invalid password", window)
 				error_message.Resize(fyne.NewSize(300, 150))
 				error_message.Show()
+				sign_button.Hide()
 				return
 			}
 
@@ -601,18 +542,16 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 							progress.Min = float64(count)
 							progress.Max = float64(ending_at)
 							progress_cont := container.NewBorder(nil, progress_label, nil, nil, progress)
-							wait_message := dialog.NewCustom("Signing Files", "Wait", progress_cont, window)
+							wait_message := dialog.NewCustom("Signing Files", "Stop", progress_cont, window)
 							wait_message.SetOnClosed(func() {
-								if wait {
-									wait_message.Show()
-								}
+								wait = false
 							})
 							wait_message.Resize(fyne.NewSize(450, 150))
 							wait_message.Show()
 
 							log.Printf("[%s] Starting sign loop\n", tag)
 
-							for {
+							for wait {
 								i := strconv.Itoa(count)
 								signing_asset := fmt.Sprintf("Signing %s%s%s", name_entry.Text, i, ext)
 								input_file := fmt.Sprintf("NFA-Creation/%s/asset/%s%s%s", collection_entry.Text, name_entry.Text, i, ext)
@@ -779,18 +718,16 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 						progress.Min = float64(count)
 						progress.Max = float64(ending_at)
 						progress_cont := container.NewBorder(nil, progress_label, nil, nil, progress)
-						wait_message := dialog.NewCustom("Creating Contracts", "Wait", progress_cont, window)
+						wait_message := dialog.NewCustom("Creating Contracts", "Stop", progress_cont, window)
 						wait_message.SetOnClosed(func() {
-							if wait {
-								wait_message.Show()
-							}
+							wait = false
 						})
 						wait_message.Resize(fyne.NewSize(450, 150))
 						wait_message.Show()
 
 						log.Printf("[%s] Starting contract creation loop\n", tag)
 
-						for count <= ending_at {
+						for wait && count <= ending_at {
 							incr := strconv.Itoa(count)
 							name = name_entry.Text + incr
 							file_name := fmt.Sprintf("%s.bas", name)
@@ -829,6 +766,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 									error_message := dialog.NewInformation("Error", "Could not make Urls", window)
 									error_message.Resize(fyne.NewSize(300, 150))
 									error_message.Show()
+									os.Remove(full_save_path)
 									log.Printf("[%s] Contract creation loop complete\n", tag)
 									return
 								}
@@ -843,6 +781,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 									error_message := dialog.NewInformation("Error", full_sign_path+" not found", window)
 									error_message.Resize(fyne.NewSize(300, 150))
 									error_message.Show()
+									os.Remove(full_save_path)
 									log.Printf("[%s] Contract creation loop complete\n", tag)
 									return
 								} else {
@@ -858,6 +797,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 										error_message := dialog.NewInformation("Error", full_sign_path+" not a valid Dero .sign file", window)
 										error_message.Resize(fyne.NewSize(300, 150))
 										error_message.Show()
+										os.Remove(full_save_path)
 										log.Printf("[%s] Contract creation loop complete\n", tag)
 										return
 									}
@@ -872,6 +812,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 									error_message := dialog.NewInformation("Error", fmt.Sprintf("Could not write %s", full_save_path), window)
 									error_message.Resize(fyne.NewSize(300, 150))
 									error_message.Show()
+									os.Remove(full_save_path)
 									log.Printf("[%s] Contract creation loop complete\n", tag)
 									return
 								}
@@ -996,10 +937,10 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 							progress.Min = float64(count)
 							progress.Max = float64(ending_at)
 							progress_cont := container.NewBorder(nil, progress_label, nil, nil, progress)
-							wait_message := dialog.NewCustom("NFA Install", "Wait", progress_cont, window)
+							wait_message := dialog.NewCustom("NFA Install", "Stop", progress_cont, window)
 							wait_message.SetOnClosed(func() {
 								if wait {
-									wait_message.Show()
+									wait = false
 								}
 							})
 							wait_message.Resize(fyne.NewSize(450, 150))
@@ -1038,6 +979,13 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 									wait_message.SetDismissText("Close")
 									error_message := dialog.NewInformation("Error", fmt.Sprintf("Could not read %s", input_file), window)
 									error_message.Resize(fyne.NewSize(300, 150))
+									error_message.Show()
+									break
+								}
+
+								if string(file) == "" {
+									error_message := dialog.NewInformation("Error", fmt.Sprintf("%s is a empty file", input_file), window)
+									error_message.Resize(fyne.NewSize(240, 150))
 									error_message.Show()
 									break
 								}
@@ -1090,6 +1038,13 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 							return
 						}
 
+						if string(file) == "" {
+							error_message := dialog.NewInformation("Error", fmt.Sprintf("%s is a empty file", input_file), window)
+							error_message.Resize(fyne.NewSize(240, 150))
+							error_message.Show()
+							return
+						}
+
 						if tx := rpc.UploadNFAContract(string(file)); tx == "" {
 							error_message := dialog.NewInformation("Error", "Could not install NFA", window)
 							error_message.Resize(fyne.NewSize(240, 150))
@@ -1132,31 +1087,31 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 	install_button.Hide()
 	sign_button.Hide()
 
-	fff := []*widget.FormItem{}
-	fff = append(fff, widget.NewFormItem("", instructions_button))
-	fff = append(fff, widget.NewFormItem("", collection_cont))
-	fff = append(fff, widget.NewFormItem("", layout.NewSpacer()))
-	fff = append(fff, widget.NewFormItem("Collection", container.NewBorder(nil, nil, nil, set_up_collec, collection_entry)))
-	fff = append(fff, widget.NewFormItem("Owner Can Update", update_select))
-	fff = append(fff, widget.NewFormItem("Name", container.NewBorder(nil, nil, nil, extension_select, name_cont)))
-	fff = append(fff, widget.NewFormItem("Description", descr_entry))
-	fff = append(fff, widget.NewFormItem("Type", type_select))
-	fff = append(fff, widget.NewFormItem("Tags *", tags_entry))
-	fff = append(fff, widget.NewFormItem("File Check C", container.NewBorder(nil, nil, nil, import_signs, checkC_entry)))
-	fff = append(fff, widget.NewFormItem("File Check S", checkS_entry))
-	fff = append(fff, widget.NewFormItem("File URL *", file_entries))
-	fff = append(fff, widget.NewFormItem("Cover URL *", cover_entries))
-	fff = append(fff, widget.NewFormItem("Icon URL *", icon_entries))
-	fff = append(fff, widget.NewFormItem("File Sign URL *", sign_entries))
-	fff = append(fff, widget.NewFormItem("", layout.NewSpacer()))
-	fff = append(fff, widget.NewFormItem("Royalty", royalty_entry))
-	fff = append(fff, widget.NewFormItem("Artificer Fee", art_entry))
-	fff = append(fff, widget.NewFormItem("", layout.NewSpacer()))
-	fff = append(fff, widget.NewFormItem("Wallet File", wallet_cont))
-	fff = append(fff, widget.NewFormItem("", layout.NewSpacer()))
-	fff = append(fff, widget.NewFormItem("", container.NewAdaptiveGrid(3, container.NewMax(install_button), container.NewMax(contracts_button), sign_button)))
+	mint_form := []*widget.FormItem{}
+	mint_form = append(mint_form, widget.NewFormItem("", instructions_button))
+	mint_form = append(mint_form, widget.NewFormItem("", collection_cont))
+	mint_form = append(mint_form, widget.NewFormItem("", layout.NewSpacer()))
+	mint_form = append(mint_form, widget.NewFormItem("Collection", container.NewBorder(nil, nil, nil, set_up_collec, collection_entry)))
+	mint_form = append(mint_form, widget.NewFormItem("Owner Can Update", update_select))
+	mint_form = append(mint_form, widget.NewFormItem("Name", container.NewBorder(nil, nil, nil, extension_select, name_cont)))
+	mint_form = append(mint_form, widget.NewFormItem("Description", descr_entry))
+	mint_form = append(mint_form, widget.NewFormItem("Type", type_select))
+	mint_form = append(mint_form, widget.NewFormItem("Tags *", tags_entry))
+	mint_form = append(mint_form, widget.NewFormItem("File Check C", container.NewBorder(nil, nil, nil, import_signs, checkC_entry)))
+	mint_form = append(mint_form, widget.NewFormItem("File Check S", checkS_entry))
+	mint_form = append(mint_form, widget.NewFormItem("File URL *", file_entries))
+	mint_form = append(mint_form, widget.NewFormItem("Cover URL *", cover_entries))
+	mint_form = append(mint_form, widget.NewFormItem("Icon URL *", icon_entries))
+	mint_form = append(mint_form, widget.NewFormItem("File Sign URL *", sign_entries))
+	mint_form = append(mint_form, widget.NewFormItem("", layout.NewSpacer()))
+	mint_form = append(mint_form, widget.NewFormItem("Royalty %", royalty_entry))
+	mint_form = append(mint_form, widget.NewFormItem("Artificer %", art_entry))
+	mint_form = append(mint_form, widget.NewFormItem("", layout.NewSpacer()))
+	mint_form = append(mint_form, widget.NewFormItem("Wallet File", wallet_cont))
+	mint_form = append(mint_form, widget.NewFormItem("", layout.NewSpacer()))
+	mint_form = append(mint_form, widget.NewFormItem("", container.NewAdaptiveGrid(3, container.NewMax(install_button), container.NewMax(contracts_button), sign_button)))
 
-	scroll := container.NewVScroll(widget.NewForm(fff...))
+	scroll := container.NewVScroll(widget.NewForm(mint_form...))
 	max := container.NewMax(scroll)
 	instructions_back_button := widget.NewButton("Back", func() {
 		max.Objects[0] = container.NewMax(scroll)
@@ -1165,6 +1120,96 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 	instructions_button.OnTapped = func() {
 		max.Objects[0] = HowToMintNFA(instructions_back_button)
 	}
+
+	go func() {
+		for {
+			if collection_entry.Validate() == nil && update_select.SelectedIndex() >= 0 && name_entry.Validate() == nil && extension_select.SelectedIndex() >= 0 && descr_entry.Validate() == nil &&
+				type_select.SelectedIndex() >= 0 && tags_entry.Validate() == nil && checkC_entry.Validate() == nil && checkS_entry.Validate() == nil &&
+				file_entry_start.Validate() == nil && cover_entry_start.Validate() == nil && icon_entry_start.Validate() == nil &&
+				sign_entry_start.Validate() == nil && royalty_entry.Validate() == nil && art_entry.Validate() == nil {
+				if collection_enable.Checked {
+					if collection_low_entry.Validate() == nil && collection_high_entry.Validate() == nil {
+						asset_file_start := fmt.Sprintf("NFA-Creation/%s/asset/%s%s%s", collection_entry.Text, name_entry.Text, collection_low_entry.Text, extension_select.Selected)
+						if _, err := os.ReadFile(asset_file_start); err == nil {
+							contracts_button.Show()
+						} else {
+							contracts_button.Hide()
+						}
+					} else {
+						contracts_button.Hide()
+					}
+				} else {
+					asset_file := fmt.Sprintf("NFA-Creation/%s/asset/%s%s", collection_entry.Text, name_entry.Text, extension_select.Selected)
+					if _, err := os.ReadFile(asset_file); err == nil {
+						contracts_button.Show()
+					} else {
+						contracts_button.Hide()
+					}
+				}
+			} else {
+				contracts_button.Hide()
+			}
+
+			if NFACreationExists(collection_entry.Text) {
+				if rpc.Wallet.File != nil && rpc.Wallet.File.Check_Password(wallet_pass_entry.Text) {
+					wallet_label.SetText(fmt.Sprintf("Signing address: %s", rpc.Wallet.File.GetAddress().String()))
+					if collection_enable.Checked {
+						if collection_low_entry.Text != "" && collection_high_entry.Text != "" {
+							sign_file_start := fmt.Sprintf("NFA-Creation/%s/asset/%s%s%s", collection_entry.Text, name_entry.Text, collection_low_entry.Text, extension_select.Selected)
+							if _, err := os.ReadFile(sign_file_start); err == nil {
+								sign_button.Show()
+							} else {
+								sign_button.Hide()
+							}
+						} else {
+							sign_button.Hide()
+						}
+					} else {
+						sign_file := fmt.Sprintf("NFA-Creation/%s/asset/%s%s", collection_entry.Text, name_entry.Text, extension_select.Selected)
+						if _, err := os.ReadFile(sign_file); err == nil {
+							sign_button.Show()
+						} else {
+							sign_button.Hide()
+						}
+					}
+				} else {
+					wallet_label.SetText("Signing address:")
+				}
+				collection_entry.Validator = validation.NewRegexp(`^\w{2,}`, "String required")
+			} else {
+				sign_button.Hide()
+				collection_entry.Validator = validation.NewRegexp(`^\W\D\S$`, "Invliad collection directory")
+			}
+
+			if rpc.Wallet.Connect && rpc.Daemon.Connect {
+				rpc_label.SetText(fmt.Sprintf("Installing address: %s", rpc.Wallet.Address))
+				if collection_enable.Checked {
+					if collection_low_entry.Text != "" && collection_high_entry.Text != "" {
+						input_file_start := fmt.Sprintf("NFA-Creation/%s/bas/%s%s.bas", collection_entry.Text, name_entry.Text, collection_low_entry.Text)
+						if _, err := os.ReadFile(input_file_start); err == nil {
+							install_button.Show()
+						} else {
+							install_button.Hide()
+						}
+					} else {
+						install_button.Hide()
+					}
+				} else {
+					input_file := fmt.Sprintf("NFA-Creation/%s/bas/%s.bas", collection_entry.Text, name_entry.Text)
+					if _, err := os.ReadFile(input_file); err == nil {
+						install_button.Show()
+					} else {
+						install_button.Hide()
+					}
+				}
+			} else {
+				rpc_label.SetText("Installing address:")
+				install_button.Hide()
+			}
+
+			time.Sleep(1 * time.Second)
+		}
+	}()
 
 	return max
 }

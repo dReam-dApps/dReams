@@ -34,6 +34,7 @@ func main() {
 	w.SetIcon(bundle.ResourceMarketIconPng)
 	w.SetMaster()
 	quit := make(chan struct{})
+	done := make(chan struct{})
 	w.SetCloseIntercept(func() {
 		menu.WriteDreamsConfig(rpc.Daemon.Rpc, config.Skin)
 		menu.StopGnomon(app_tag)
@@ -61,7 +62,7 @@ func main() {
 
 	tabs := container.NewAppTabs(
 		container.NewTabItem("Market", menu.PlaceMarket()),
-		container.NewTabItem("Assets", menu.PlaceAssets(app_tag, false, nil, nil, nil, w)),
+		container.NewTabItem("Assets", menu.PlaceAssets(app_tag, false, nil, bundle.ResourceMarketIconPng, nil, w)),
 		container.NewTabItem("Mint", menu.PlaceNFAMint(app_tag, w)))
 
 	tabs.SetTabLocation(container.TabLocationBottom)
@@ -83,10 +84,11 @@ func main() {
 		w.Close()
 	}()
 
-	go menu.RunNFAMarket(app_tag, quit, connect_box)
+	go menu.RunNFAMarket(app_tag, quit, done, connect_box)
 	go func() {
 		time.Sleep(450 * time.Millisecond)
 		w.SetContent(max)
 	}()
 	w.ShowAndRun()
+	<-done
 }

@@ -20,6 +20,7 @@ import (
 	"github.com/SixofClubsss/dReams/rpc"
 	"github.com/SixofClubsss/dReams/tarot"
 	"github.com/docopt/docopt-go"
+	"github.com/fyne-io/terminal"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -33,6 +34,7 @@ type Notification struct {
 	Title, Content string
 }
 
+var cli *terminal.Terminal
 var command_line string = `dReams
 dReam Tables all in one dApp, powered by Gnomon.
 
@@ -42,6 +44,7 @@ Usage:
 
 Options:
   -h --help     Show this screen.
+  --cli=<false>	dReams option, enables cli app tab.
   --trim=<false>	dReams option, defaults true for minimum index search filters.
   --fastsync=<false>	Gnomon option,  true/false value to define loading at chain height on start up.
   --num-parallel-blocks=<5>   Gnomon option,  defines the number of parallel blocks to index.`
@@ -88,6 +91,14 @@ func flags() (version string) {
 		}
 	}
 
+	cli := false
+	if arguments["--cli"] != nil {
+		if arguments["--cli"].(string) == "true" {
+			cli = true
+		}
+	}
+
+	dReams.cli = cli
 	menu.Gnomes.Trim = trim
 	menu.Gnomes.Fast = fastsync
 	menu.Gnomes.Para = parallel
@@ -121,7 +132,7 @@ func init() {
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-c
-		menu.Exit_signal = true
+		menu.CloseAppSignal(true)
 		menu.WriteDreamsConfig(rpc.Daemon.Rpc, bundle.AppColor)
 		fmt.Println()
 		serviceRunning()
@@ -129,9 +140,26 @@ func init() {
 		menu.StopGnomon("dReams")
 		menu.StopIndicators()
 		time.Sleep(time.Second)
-		log.Println("[dReams] Closing")
+		dReams.quit <- struct{}{}
 		dReams.Window.Close()
 	}()
+}
+
+// Starts a Fyne terminal in dReams
+func startTerminal() *terminal.Terminal {
+	cli = terminal.New()
+	go func() {
+		_ = cli.RunLocalShell()
+	}()
+
+	return cli
+}
+
+// Exit running dReams terminal
+func exitTerminal() {
+	if cli != nil {
+		cli.Exit()
+	}
 }
 
 // Ensure service is shutdown on app close
@@ -388,7 +416,7 @@ func singleShot(turn, trigger bool) bool {
 }
 
 // Main dReams process loop
-func fetch(quit chan struct{}) {
+func fetch(quit, done chan struct{}) {
 	time.Sleep(3 * time.Second)
 	var ticker = time.NewTicker(3 * time.Second)
 	var autoCF, autoD, autoB, trigger bool
@@ -406,7 +434,7 @@ func fetch(quit chan struct{}) {
 					menu.CheckConnection()
 					menu.GnomonEndPoint()
 					menu.GnomonState(isWindows(), dReams.configure)
-					background.Refresh()
+					dReams.background.Refresh()
 
 					// Bacc
 					if menu.Control.Dapp_list["Baccarat"] {
@@ -440,7 +468,7 @@ func fetch(quit chan struct{}) {
 							if rpc.Round.Card_delay {
 								now := time.Now().Unix()
 								delay++
-								if delay >= 15 || now > rpc.Round.Last+45 {
+								if delay >= 17 || now > rpc.Round.Last+60 {
 									delay = 0
 									rpc.Round.Card_delay = false
 								}
@@ -575,6 +603,7 @@ func fetch(quit chan struct{}) {
 		case <-quit: // exit loop
 			log.Println("[dReams] Closing")
 			ticker.Stop()
+			done <- struct{}{}
 			return
 		}
 	}
@@ -941,7 +970,7 @@ func MenuRefresh(tab bool) {
 			go refreshPriceDisplay(true)
 		}
 
-		if dReams.menu_tabs.market && !isWindows() {
+		if dReams.menu_tabs.market && !isWindows() && !menu.ClosingApps() {
 			menu.FindNfaListings(nil)
 		}
 	}

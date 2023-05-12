@@ -119,7 +119,7 @@ func BaccaratButtons(w fyne.Window) fyne.CanvasObject {
 	var searched string
 	search_entry := widget.NewEntry()
 	search_entry.SetPlaceHolder("TXID:")
-	search_button := widget.NewButton("    Search   ", func() {
+	search_button := widget.NewButton("     Search    ", func() {
 		txid := search_entry.Text
 		if len(txid) == 64 && txid != searched {
 			searched = txid

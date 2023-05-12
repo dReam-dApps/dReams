@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	DREAMSv      = "0.9.5"
+	DREAMSv      = "0.9.6"
 	NameSCID     = "0000000000000000000000000000000000000000000000000000000000000001"
 	RatingSCID   = "c66a11ddb22912e92b0a7ab777ed0d343632d9e3c6e8a81452396ca84d2decb6"
 	DreamsSCID   = "ad2e7b37c380cc1aed3a6b27224ddfc92a2d15962ca1f4d35e530dba0f9575a9"
@@ -111,7 +111,7 @@ func DaemonHeight(tag, ep string) uint64 {
 // SC call gas estimate, 1320 Deri max
 //   - tag for log print
 //   - Pass args and transfers for call
-func GasEstimate(scid, tag string, args rpc.Arguments, t []rpc.Transfer) uint64 {
+func GasEstimate(scid, tag string, args rpc.Arguments, t []rpc.Transfer, max uint64) uint64 {
 	rpcClientD, ctx, cancel := SetDaemonClient(Daemon.Rpc)
 	defer cancel()
 
@@ -137,11 +137,11 @@ func GasEstimate(scid, tag string, args rpc.Arguments, t []rpc.Transfer) uint64 
 
 	log.Println(tag+" Gas Fee:", result.GasStorage+120)
 
-	if result.GasStorage < 1200 {
+	if result.GasStorage < max {
 		return result.GasStorage + 120
 	}
 
-	return 1320
+	return max + 120
 }
 
 // Get single string key result from SCID with daemon input
@@ -205,6 +205,18 @@ func FetchFees() {
 		IlumaFee = uint64(fee)
 	} else {
 		log.Println("[FetchFees] Could not get current Iluma fee, using default")
+	}
+
+	if fee, ok := FindStringKey(RatingSCID, "LowLimitFee", Daemon.Rpc).(float64); ok {
+		LowLimitFee = uint64(fee)
+	} else {
+		log.Println("[FetchFees] Could not get current low fee limit, using default")
+	}
+
+	if fee, ok := FindStringKey(RatingSCID, "HighLimitFee", Daemon.Rpc).(float64); ok {
+		HighLimitFee = uint64(fee)
+	} else {
+		log.Println("[FetchFees] Could not get current high fee limit, using default")
 	}
 }
 

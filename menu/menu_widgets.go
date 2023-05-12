@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/SixofClubsss/dReams/bundle"
@@ -60,6 +61,7 @@ type menuObjects struct {
 	Daemon_ind        *fyne.Animation
 	Poker_ind         *fyne.Animation
 	Service_ind       *fyne.Animation
+	sync.Mutex
 }
 
 type ownerObjects struct {
@@ -81,9 +83,40 @@ type holderoObjects struct {
 	Stats_box      fyne.Container
 	owner          ownerObjects
 }
+type tableStats struct {
+	Name    *canvas.Text
+	Desc    *canvas.Text
+	Version *canvas.Text
+	Last    *canvas.Text
+	Seats   *canvas.Text
+	Open    *canvas.Text
+	Image   canvas.Image
+}
+type exit struct {
+	Signal bool
+	sync.RWMutex
+}
 
 var Poker holderoObjects
 var Control menuObjects
+var Stats tableStats
+var Exit exit
+
+// Check for app closing signal
+func ClosingApps() (close bool) {
+	Exit.RLock()
+	close = Exit.Signal
+	Exit.RUnlock()
+
+	return
+}
+
+// Set app closing signal value
+func CloseAppSignal(value bool) {
+	Exit.Lock()
+	Exit.Signal = value
+	Exit.Unlock()
+}
 
 // Connection check for main process
 func CheckConnection() {
@@ -824,38 +857,42 @@ func HolderoMenuConfirm(c int, obj []fyne.CanvasObject, tabs *container.AppTabs)
 		
 To help support the project, there is a ` + fmt.Sprintf("%.5f", unlock_fee) + ` DERO donation attached to preform this action
 
-Once you've unlocked a table, you can upload as many new tables free of donation
+Unlocking a Holdero table gives you unlimited access to table uploads and all base level owner features
 
-Total transaction will be ` + fmt.Sprintf("%0.5f", unlock_fee+gas_fee) + ` DERO (0.3 gas fee for contract install)
+Total transaction will be ` + fmt.Sprintf("%0.5f", unlock_fee+gas_fee) + ` DERO (0.30000 gas fee for contract install)
+
 
 Select a public or private table
 
-	- Public will show up in indexed list of tables
+Public will show up in indexed list of tables
 
-	- Private will not show up in the list
+Private will not show up in the list
 
-	- All standard tables can use dReams or DERO
+All standard tables can use dReams or DERO
+
 
 HGC holders can choose to install a HGC table
 
-	- Public table that uses HGC or DERO`
+Public table that uses HGC or DERO`
 	case 2:
 		Poker.Holdero_new.Hide()
-		text = `You are about to install a new table
+		text = `You are about to install a new Holdero table
 
-Gas fee to install new table is 0.3 DERO
+Gas fee to install new table is 0.30000 DERO
+
 
 Select a public or private table
 
-	- Public will show up in indexed list of tables
+Public will show up in indexed list of tables
 
-	- Private will not show up in the list
+Private will not show up in the list
 
-	- All standard tables can use dReams or DERO
+All standard tables can use dReams or DERO
+
 
 HGC holders can choose to install a HGC table
 
-	- Public table that uses HGC or DERO`
+Public table that uses HGC or DERO`
 	}
 
 	label := widget.NewLabel(text)
@@ -936,25 +973,27 @@ func BettingMenuConfirmP(c int, obj []fyne.CanvasObject, tabs *container.AppTabs
 		
 To help support the project, there is a ` + fmt.Sprintf("%.5f", unlock_fee) + ` DERO donation attached to preform this action
 
-Once you've unlocked dPrediction, you can upload as many new prediction or sports contracts free of donation
+Unlocking dPrediction or dSports gives you unlimited access to bet contract uploads and all base level owner features
 
-Total transaction will be ` + fmt.Sprintf("%0.5f", unlock_fee+gas_fee) + ` DERO (0.125 gas fee for contract install)
+Total transaction will be ` + fmt.Sprintf("%0.5f", unlock_fee+gas_fee) + ` DERO (0.12500 gas fee for contract install)
+
 
 Select a public or private contract
 
-	- Public will show up in indexed list of contracts
+Public will show up in indexed list of contracts
 
-	- Private will not show up in the list`
+Private will not show up in the list`
 	case 2:
-		text = `You are about to install a new dPrediction contract. 
+		text = `You are about to install a new dPrediction contract
 
-Gas fee to install is 0.125 DERO
+Gas fee to install contract is 0.12500 DERO
+
 
 Select a public or private contract
 
-	- Public will show up in indexed list of contracts
+Public will show up in indexed list of contracts
 
-	- Private will not show up in the list`
+Private will not show up in the list`
 	}
 
 	label := widget.NewLabel(text)
@@ -1019,25 +1058,27 @@ func BettingMenuConfirmS(c int, obj []fyne.CanvasObject, tabs *container.AppTabs
 		
 To help support the project, there is a ` + fmt.Sprintf("%.5f", unlock_fee) + ` DERO donation attached to preform this action
 
-Once you've unlocked dSports, you can upload as many new sports or predictions contracts free of donation
+Unlocking dPrediction or dSports gives you unlimited access to bet contract uploads and all base level owner features
 
-Total transaction will be ` + fmt.Sprintf("%0.5f", unlock_fee+gas_fee) + ` DERO (0.14 gas fee for contract install)
+Total transaction will be ` + fmt.Sprintf("%0.5f", unlock_fee+gas_fee) + ` DERO (0.14000 gas fee for contract install)
+
 
 Select a public or private contract
 
-	- Public will show up in indexed list of contracts
+Public will show up in indexed list of contracts
 
-	- Private will not show up in the list`
+Private will not show up in the list`
 	case 2:
 		text = `You are about to install a new dSports contract
 
-Gas fee to install is 0.14 DERO
+Gas fee to install contract is 0.14000 DERO
+
 
 Select a public or private contract
 
-	- Public will show up in indexed list of contracts
+Public will show up in indexed list of contracts
 
-	- Private will not show up in the list`
+Private will not show up in the list`
 	}
 
 	label := widget.NewLabel(text)
@@ -1539,17 +1580,17 @@ func IntroTree() fyne.CanvasObject {
 		"Wallet":                                         {"Set up and register a Dero wallet", "Your wallet will need to be running rpc server", "Using cli, start your wallet with flags --rpc-server --rpc-login=user:pass", "With Engram, turn on cyberdeck to start rpc server", "In dReams enter your wallet rpc address and rpc user:pass", "Press connect and the W light in top right will light up if connection is successful", "Once wallet is connected and Gnomon is running, Gnomon will sync with wallet", "The Gnomon indicator will turn solid when this is complete, everything is now connected"},
 
 		"dApps":                 {"Holdero", "Baccarat", "Predictions", "Sports", "dReam Service", "Tarot", "DerBnb", "Contract Ratings"},
-		"Holdero":               {"Multiplayer Texas Hold'em style on chian poker", "No limit, single raise game. Table owners choose game params", "Six players max at a table", "No side pots, must call or fold", "Standard tables can be public or private, and can use Dero or dReam Tokens", "dReam Tools", "Tournament tables can be set up to use any Token", "View table listings or launch your own Holdero contract in the owned tab"},
+		"Holdero":               {"Multiplayer Texas Hold'em style on chain poker", "No limit, single raise game. Table owners choose game params", "Six players max at a table", "No side pots, must call or fold", "Standard tables can be public or private, and can use Dero or dReam Tokens", "dReam Tools", "Tournament tables can be set up to use any Token", "View table listings or launch your own Holdero contract in the owned tab"},
 		"dReam Tools":           {"A suite of tools for Holdero, unlocked with ownership of a AZY or SIX playing card assets", "Odds calculator", "Bot player with 12 customizable parameters", "Track playing stats for user and bot players"},
-		"Baccarat":              {"A popular table game, where closest to 9 wins", "Bet on player, banker or tie as the winnng outcome", "Select table with bottom left drop down to choose currency"},
+		"Baccarat":              {"A popular table game, where closest to 9 wins", "Bet on player, banker or tie as the winning outcome", "Select table with bottom left drop down to choose currency"},
 		"Predictions":           {"Prediction contracts are for binary based predictions, (higher/lower, yes/no)", "How predictions works", "Current Markets", "dReams Client aggregated price feed", "View active prediction contracts in predictions tab or launch your own prediction contract in the owned tab"},
 		"How predictions works": {"P2P predictions", "Variable time limits allowing for different prediction set ups, each contract runs one prediction at a time", "Click a contract from the list to view it", "Closes at, is when the contract will stop accepting predictions", "Mark (price or value you are predicting on) can be set on prediction initialization or it can given live", "Posted with in, is the acceptable time frame to post the live Mark", "If Mark is not posted, prediction is voided and you will be refunded", "Payout after, is when the Final price is posted and compared to the mark to determine winners", "If the final price is not posted with in refund time frame, prediction is void and you will be refunded"},
 		"Current Markets":       {"DERO-BTC", "XMR-BTC", "BTC-USDT", "DERO-USDT", "XMR-USDT", "DERO-Difficulty", "DERO-Block Time", "DERO-Block Number"},
 		"Sports":                {"Sports contracts are for sports wagers", "How sports works", "Current Leagues", "Live game scores, and game schedules", "View active sports contracts in sports tab or launch your own sports contract in the owned tab"},
 		"How sports works":      {"P2P betting", "Variable time limits, one contract can run multiple games at the same time", "Click a contract from the list to view it", "Any active games on the contract will populate, you can pick which game you'd like to play from the drop down", "Closes at, is when the contracts stops accepting picks", "Default payout time after close is 4hr, this is when winner will be posted from client feed", "Default refund time is 8hr after close, meaning if winner is not provided past that time you will be refunded", "A Tie refunds pot to all all participants"},
 		"Current Leagues":       {"EPL", "MLS", "FIFA", "NBA", "NFL", "NHL", "MLB", "Bellator", "UFC"},
-		"dReam Service":         {"dReam Service is unlocked for all betting contract owners", "Full automation of contract posts and payouts", "Integrated address service allows bets to be placed thorugh a Dero transaction to sent to service", "Multiple owners can be added to contracts and multiple service wallets can be ran on one contract", "Stand alone cli app availible for streamlined use"},
-		"Tarot":                 {"On chian Tarot readings", "Iluma cards and readings created by Kalina Lux"},
+		"dReam Service":         {"dReam Service is unlocked for all betting contract owners", "Full automation of contract posts and payouts", "Integrated address service allows bets to be placed through a Dero transaction to sent to service", "Multiple owners can be added to contracts and multiple service wallets can be ran on one contract", "Stand alone cli app available for streamlined use"},
+		"Tarot":                 {"On chain Tarot readings", "Iluma cards and readings created by Kalina Lux"},
 		"DerBnb":                {"A property rental platform", "Users can mint properties as contracts and list for rentals", "Property owners can choose rates, damage deposits and availabilty dates", "Dero messaging helps owners and renters facilitate the final details of rental privately", "Rating system for properties"},
 		"Contract Ratings":      {"dReam Tables has a public rating store on chain for multiplayer contracts", "Players can rate other contracts positively or negatively", "Four rating tiers, tier two being the starting tier for all contracts", "Each rating transaction is weight based by its Dero value", "Contracts that fall below tier one will no longer populate in the public index"},
 		"Assets":                {"View any owned assets held in wallet", "Put owned assets up for auction or for sale", "Send assets privately to another wallet", "Indexer, add custom contracts to your index and search current index db"},

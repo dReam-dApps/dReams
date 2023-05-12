@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -63,12 +64,17 @@ type location_data struct {
 	Country string `json:"country"`
 }
 
+type string_slice_map struct {
+	data map[string][]string
+	sync.RWMutex
+}
+
 var current_price uint64
 var current_deposit uint64
 var listed_properties []string
-var property_photos map[string][]string
-var my_bookings map[string][]string
-var my_properties map[string][]string
+var property_photos string_slice_map
+var my_bookings string_slice_map
+var my_properties string_slice_map
 var background *fyne.Container
 
 // Run DerBnb as a single dApp
@@ -84,6 +90,7 @@ func StartApp() {
 	w.Resize(fyne.NewSize(1200, 800))
 	w.SetMaster()
 	quit := make(chan struct{})
+	done := make(chan struct{})
 	w.SetCloseIntercept(func() {
 		menu.WriteDreamsConfig(rpc.Daemon.Rpc, config.Skin)
 		menu.StopGnomon("DerBnb")
@@ -107,16 +114,18 @@ func StartApp() {
 	holdero.Settings.ThemeImg = *canvas.NewImageFromResource(nil)
 	background = container.NewMax(&holdero.Settings.ThemeImg)
 
-	go fetch(quit)
+	go fetch(quit, done)
 	go func() {
 		time.Sleep(450 * time.Millisecond)
 		w.SetContent(container.New(layout.NewMaxLayout(), background, LayoutAllItems(false, w, background)))
 	}()
 	w.ShowAndRun()
+	<-done
 }
 
 // Main DerBnb process used in StartApp()
-func fetch(quit chan struct{}) {
+func fetch(quit, done chan struct{}) {
+	log.Println("[DerBnb]", rpc.DREAMSv, runtime.GOOS, runtime.GOARCH)
 	time.Sleep(6 * time.Second)
 	ticker := time.NewTicker(3 * time.Second)
 
@@ -163,8 +172,11 @@ func fetch(quit chan struct{}) {
 
 		case <-quit: // exit
 			log.Println("[DerBNB] Closing")
-			menu.Gnomes.Icon_ind.Stop()
+			if menu.Gnomes.Icon_ind != nil {
+				menu.Gnomes.Icon_ind.Stop()
+			}
 			ticker.Stop()
+			done <- struct{}{}
 			return
 		}
 	}
@@ -172,17 +184,35 @@ func fetch(quit chan struct{}) {
 
 // Check if property entry exists already in my_properties
 func haveProperty(text string) (have bool) {
-	for _, prop := range my_properties[""] {
+	my_properties.RLock()
+	for _, prop := range my_properties.data[""] {
 		if text == prop {
 			have = true
+			break
 		}
 	}
+	my_properties.RUnlock()
 
 	return
 }
 
+// Check if string is a member of list
+func previouslyAdded(check string, list []string) bool {
+	for _, s := range list {
+		if check == s {
+			return true
+		}
+	}
+
+	return false
+}
+
 // Define https or ipfs urls
 func propertyImageSource(check string) string {
+	if len(check) < 8 {
+		return ""
+	}
+
 	if check[0:8] == "https://" {
 		return check
 	}
@@ -221,26 +251,23 @@ func GetProperties() {
 				}
 
 				sort.Ints(keys)
-				listed_properties = []string{}
-				my_properties[""] = []string{}
-				my_bookings[""] = []string{"Completed", "Confirmed", "Requests"}
 
-				for sc := range my_properties {
-					my_properties[sc] = []string{}
-				}
+				lp := []string{}
 
-				for _, curr := range my_bookings[""] {
-					my_bookings[curr] = []string{}
-				}
+				mpm := make(map[string][]string)
+				mpm[""] = []string{}
 
-				var double bool
+				mbm := make(map[string][]string)
+				mbm[""] = []string{"Completed", "Confirmed", "Requests"}
+
+				var doubles []string
 				added_bookings := make(map[string]bool)
 				for _, h := range info[int64(keys[len(keys)-1])] {
 					split := strings.Split(h.Key.(string), "_")
 					l := len(split)
 					if l > 1 && len(split[0]) == 64 {
 						var have bool
-						for _, p := range listed_properties {
+						for _, p := range lp {
 							if split[0] == p {
 								have = true
 								break
@@ -252,29 +279,29 @@ func GetProperties() {
 								location := makeLocationString(split[0])
 								if location != "" {
 									list_string := fmt.Sprintf("%s   %s", location, split[0])
-									listed_properties = append(listed_properties, list_string)
+									lp = append(lp, list_string)
 								}
 							}
 
 							// find owned properties
 							if h.Value.(string) == rpc.Wallet.Address {
-								my_properties[""] = append(my_properties[""], split[0])
+								mpm[""] = append(mpm[""], split[0])
 							}
 						}
 
-						// find userr confirmed booking requests
-						if !double && split[1] == "booker" && h.Value.(string) == rpc.Wallet.Address {
+						// find user confirmed booking requests
+						if !previouslyAdded(split[0], doubles) && split[1] == "booker" && h.Value.(string) == rpc.Wallet.Address {
 							booked, complete := getUserConfirmedBookings(split[0], false)
-							my_bookings["Confirmed"] = append(my_bookings["Confirmed"], booked...)
-							my_bookings["Completed"] = append(my_bookings["Completed"], complete...)
-							double = true
+							mbm["Confirmed"] = append(mbm["Confirmed"], booked...)
+							mbm["Completed"] = append(mbm["Completed"], complete...)
+							doubles = append(doubles, split[0])
 						}
 
 						if l > 3 {
 							// find request bookings of property
 							if split[1] == "request" && split[2] == "bk" && split[3] == "end" {
 								add := true
-								for _, prop := range my_properties[split[0]] {
+								for _, prop := range mpm[split[0]] {
 									check := strings.Split(prop, "   ")
 									if check[0] == split[len(split)-1] {
 										add = false
@@ -285,22 +312,22 @@ func GetProperties() {
 								if add {
 									requests := getBookingRequests(split[0], split[len(split)-1], true)
 									if requests != "" {
-										my_properties[split[0]] = append(my_properties[split[0]], requests)
+										mpm[split[0]] = append(mpm[split[0]], requests)
 									}
 								}
 							}
 
 							// find user booking requests
 							if split[2] == "booker" && h.Value.(string) == rpc.Wallet.Address {
-								my_bookings["Requests"] = append(my_bookings["Requests"], getBookingRequests(split[0], split[len(split)-1], false))
+								mbm["Requests"] = append(mbm["Requests"], getBookingRequests(split[0], split[len(split)-1], false))
 							}
 
 							// find owner confirmed booking requests
 							if !added_bookings[split[0]] && split[1] == "bk" && split[2] == "end" {
 								bookings := getOwnerConfirmedBookings(split[0], true)
 								if bookings != nil {
-									my_properties[split[0]] = append(my_properties[split[0]], bookings...)
-									sort.Strings(my_properties[split[0]])
+									mpm[split[0]] = append(mpm[split[0]], bookings...)
+									sort.Strings(mpm[split[0]])
 									added_bookings[split[0]] = true
 								}
 							}
@@ -308,21 +335,60 @@ func GetProperties() {
 					}
 				}
 				listing_label.SetText(getInfo(viewing_scid))
-				booking_list.Refresh()
-				property_list.Refresh()
+				sort.Strings(lp)
+				listed_properties = lp
 				listings_list.Refresh()
+
+				my_properties.Lock()
+				for sc := range my_properties.data {
+					my_properties.data[sc] = []string{}
+				}
+
+				for i, s := range mpm {
+					my_properties.data[i] = s
+				}
+				my_properties.Unlock()
+
+				my_properties.RLock()
+				property_list.Refresh()
+				my_properties.RUnlock()
+
+				my_bookings.Lock()
+				for _, curr := range my_bookings.data[""] {
+					my_bookings.data[curr] = []string{}
+				}
+
+				for i, s := range mbm {
+					my_bookings.data[i] = s
+				}
+				my_bookings.Unlock()
+
+				my_bookings.RLock()
+				booking_list.Refresh()
+				my_bookings.RUnlock()
 			}
 		}
 	} else {
 		listed_properties = []string{}
-		my_properties[""] = []string{}
-		my_bookings[""] = []string{"Completed", "Confirmed", "Requests"}
-		for _, curr := range my_bookings[""] {
-			my_bookings[curr] = []string{}
-		}
-		booking_list.Refresh()
-		property_list.Refresh()
 		listings_list.Refresh()
+
+		my_properties.Lock()
+		my_properties.data[""] = []string{}
+		my_properties.Unlock()
+		my_properties.RLock()
+		property_list.Refresh()
+		my_properties.RUnlock()
+
+		my_bookings.Lock()
+		my_bookings.data[""] = []string{"Completed", "Confirmed", "Requests"}
+		for _, curr := range my_bookings.data[""] {
+			my_bookings.data[curr] = []string{}
+		}
+		my_bookings.Unlock()
+
+		my_bookings.RLock()
+		booking_list.Refresh()
+		my_bookings.RUnlock()
 	}
 }
 
@@ -403,7 +469,7 @@ func getInfo(scid string) (info string) {
 		if owner != nil && price != nil && dep != nil {
 			location := makeLocationString(scid)
 			data := getMetadata(scid)
-			data_string := fmt.Sprintf("Sq feet: %d\n\nStyle: %s\n\nBedrooms: %d\n\nMax guests: %d", data.Squarefootage, data.Style, data.NumberOfBedrooms, data.MaxNumberOfGuests)
+			data_string := fmt.Sprintf("Sq feet: %d\n\nStyle: %s\n\nBedrooms: %d\n\nMax guests: %d\n\nDescription: %s", data.Squarefootage, data.Style, data.NumberOfBedrooms, data.MaxNumberOfGuests, data.Description)
 			current_price = price[0]
 			current_deposit = dep[0]
 			info = fmt.Sprintf("Location: %s\n\nPrice: %s Dero per night\n\nDamage Deposit: %s Dero\n\nOwner: %s\n\n%s", location, walletapi.FormatMoney(price[0]), walletapi.FormatMoney(dep[0]), owner[0], data_string)
@@ -427,7 +493,7 @@ func getOwnerAddress(scid string) (address string) {
 
 // Get confirmed  and completed bookings for renters
 //   - stamp is timestap key of request
-func getUserConfirmedBookings(scid string, all bool) (confirmed_bookings []string, complete_bookinds []string) {
+func getUserConfirmedBookings(scid string, all bool) (confirmed_bookings []string, complete_bookings []string) {
 	if menu.Gnomes.Init && menu.Gnomes.Sync && !menu.GnomonClosing() {
 		_, bk_last := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(rpc.DerBnbSCID, scid+"_bk_last", menu.Gnomes.Indexer.ChainHeight, true)
 		if bk_last != nil {
@@ -454,7 +520,7 @@ func getUserConfirmedBookings(scid string, all bool) (confirmed_bookings []strin
 							case "Booked:":
 								confirmed_bookings = append(confirmed_bookings, fmt.Sprintf("%s   %s   %s   %s   %s", prefix, last, s.Format(TIME_FORMAT), e.Format(TIME_FORMAT), scid))
 							case "Complete:":
-								complete_bookinds = append(complete_bookinds, fmt.Sprintf("%s   %s   %s   %s   %s", prefix, last, s.Format(TIME_FORMAT), e.Format(TIME_FORMAT), scid))
+								complete_bookings = append(complete_bookings, fmt.Sprintf("%s   %s   %s   %s   %s", prefix, last, s.Format(TIME_FORMAT), e.Format(TIME_FORMAT), scid))
 							default:
 
 							}
@@ -464,7 +530,7 @@ func getUserConfirmedBookings(scid string, all bool) (confirmed_bookings []strin
 						case "Booked:":
 							confirmed_bookings = append(confirmed_bookings, fmt.Sprintf("%s   %s   %s   %s   %s", prefix, last, s.Format(TIME_FORMAT), e.Format(TIME_FORMAT), booker[0]))
 						case "Complete:":
-							complete_bookinds = append(complete_bookinds, fmt.Sprintf("%s   %s   %s   %s   %s", prefix, last, s.Format(TIME_FORMAT), e.Format(TIME_FORMAT), booker[0]))
+							complete_bookings = append(complete_bookings, fmt.Sprintf("%s   %s   %s   %s   %s", prefix, last, s.Format(TIME_FORMAT), e.Format(TIME_FORMAT), booker[0]))
 						default:
 
 						}

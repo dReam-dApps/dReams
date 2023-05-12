@@ -15,7 +15,8 @@ type property_data struct {
 	Photos        []string `json:"photos"`
 	Squarefootage int      `json:"squarefootage"`
 	// Driveway              bool     `json:"driveway"`
-	Style string `json:"style"`
+	Style       string `json:"style"`
+	Description string `json:"description"`
 	// DistanceToCasino      string   `json:"distance-to-casino"`
 	// DistanceToRestaraunts string   `json:"distance-to-restaraunts"`
 	// FibreBroadband        bool     `json:"fibre-broadband"`
@@ -121,7 +122,9 @@ func getImages(scid string) {
 			if h, err := hex.DecodeString(metadata); err == nil {
 				data := property_data{}
 				if err = json.Unmarshal(h, &data); err == nil {
-					property_photos[scid] = data.Photos
+					property_photos.Lock()
+					property_photos.data[scid] = data.Photos
+					property_photos.Unlock()
 					return
 				}
 				log.Println("[getImages]", err)
@@ -239,10 +242,10 @@ func RequestBooking(scid string, stamp, s_key, e_key, amt uint64) {
 	defer cancel()
 
 	arg1 := dero.Argument{Name: "entrypoint", DataType: "S", Value: "RequestBooking"}
-	arg2 := dero.Argument{Name: "property_id", DataType: "S", Value: scid}
-	arg3 := dero.Argument{Name: "timestamp_key", DataType: "U", Value: stamp}
-	arg4 := dero.Argument{Name: "start_timestamp", DataType: "U", Value: s_key}
-	arg5 := dero.Argument{Name: "end_timestamp", DataType: "U", Value: e_key}
+	arg2 := dero.Argument{Name: "scid", DataType: "S", Value: scid}
+	arg3 := dero.Argument{Name: "stamp", DataType: "U", Value: stamp}
+	arg4 := dero.Argument{Name: "start", DataType: "U", Value: s_key}
+	arg5 := dero.Argument{Name: "end", DataType: "U", Value: e_key}
 	args := dero.Arguments{arg1, arg2, arg3, arg4, arg5}
 	txid := dero.Transfer_Result{}
 
@@ -253,7 +256,7 @@ func RequestBooking(scid string, stamp, s_key, e_key, amt uint64) {
 	}
 
 	t := []dero.Transfer{t1}
-	fee := rpc.GasEstimate(rpc.DerBnbSCID, "[RequestBooking]", args, t)
+	fee := rpc.GasEstimate(rpc.DerBnbSCID, "[RequestBooking]", args, t, rpc.LowLimitFee)
 	params := &dero.Transfer_Params{
 		Transfers: t,
 		SC_ID:     rpc.DerBnbSCID,
@@ -274,7 +277,8 @@ func RequestBooking(scid string, stamp, s_key, e_key, amt uint64) {
 // List a DerBnb SCID for bookings
 //   - amt is price per night in Dero atomic value
 //   - dd is damage deposit amount in Dero atomic value
-func ListProperty(scid string, amt, dd uint64) {
+//   - burn true if token deposit is required
+func ListProperty(scid string, amt, dd uint64, burn bool) {
 	rpcClientW, ctx, cancel := rpc.SetWalletClient(rpc.Wallet.Rpc, rpc.Wallet.UserPass)
 	defer cancel()
 
@@ -285,16 +289,23 @@ func ListProperty(scid string, amt, dd uint64) {
 	args := dero.Arguments{arg1, arg2, arg3, arg4}
 	txid := dero.Transfer_Result{}
 
+	tag := "[UpdatePrices]"
+	bal := uint64(0)
+	if burn {
+		tag = "[ListProperty]"
+		bal = 1
+	}
+
 	t1 := dero.Transfer{
 		SCID:        crypto.HashHexToHash(scid),
 		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
 		Amount:      0,
-		Burn:        1,
+		Burn:        bal,
 		Payload_RPC: []dero.Argument{},
 	}
 
 	t := []dero.Transfer{t1}
-	fee := rpc.GasEstimate(rpc.DerBnbSCID, "[ListProperty]", args, t)
+	fee := rpc.GasEstimate(rpc.DerBnbSCID, tag, args, t, rpc.LowLimitFee)
 	params := &dero.Transfer_Params{
 		Transfers: t,
 		SC_ID:     rpc.DerBnbSCID,
@@ -308,8 +319,13 @@ func ListProperty(scid string, amt, dd uint64) {
 		return
 	}
 
-	log.Println("[ListProperty] List TX:", txid)
-	rpc.AddLog("List Property TX: " + txid.TXID)
+	if !burn {
+		log.Println("[UpdatePrices] Update TX:", txid)
+		rpc.AddLog("Update Prices TX: " + txid.TXID)
+	} else {
+		log.Println("[ListProperty] List TX:", txid)
+		rpc.AddLog("List Property TX: " + txid.TXID)
+	}
 }
 
 // Remove a DerBnb SCID from listings
@@ -329,7 +345,7 @@ func RemoveProperty(scid string) {
 	}
 
 	t := []dero.Transfer{t1}
-	fee := rpc.GasEstimate(rpc.DerBnbSCID, "[RemoveProperty]", args, t)
+	fee := rpc.GasEstimate(rpc.DerBnbSCID, "[RemoveProperty]", args, t, rpc.LowLimitFee)
 	params := &dero.Transfer_Params{
 		Transfers: t,
 		SC_ID:     rpc.DerBnbSCID,
@@ -347,80 +363,6 @@ func RemoveProperty(scid string) {
 	rpc.AddLog("Remove Property TX: " + txid.TXID)
 }
 
-// Change DerBnb listing price
-//   - amt is new daily rate in Dero atomic value
-func ChangePrice(scid string, amt uint64) {
-	rpcClientW, ctx, cancel := rpc.SetWalletClient(rpc.Wallet.Rpc, rpc.Wallet.UserPass)
-	defer cancel()
-
-	arg1 := dero.Argument{Name: "entrypoint", DataType: "S", Value: "ChangePrice"}
-	arg2 := dero.Argument{Name: "property_id", DataType: "S", Value: scid}
-	arg3 := dero.Argument{Name: "newPrice", DataType: "U", Value: amt}
-	args := dero.Arguments{arg1, arg2, arg3}
-	txid := dero.Transfer_Result{}
-
-	t1 := dero.Transfer{
-		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
-		Amount:      0,
-		Burn:        0,
-	}
-
-	t := []dero.Transfer{t1}
-	fee := rpc.GasEstimate(rpc.DerBnbSCID, "[ChangePrice]", args, t)
-	params := &dero.Transfer_Params{
-		Transfers: t,
-		SC_ID:     rpc.DerBnbSCID,
-		SC_RPC:    args,
-		Ringsize:  2,
-		Fees:      fee,
-	}
-
-	if err := rpcClientW.CallFor(ctx, &txid, "transfer", params); err != nil {
-		log.Println("[ChangePrice]", err)
-		return
-	}
-
-	log.Println("[ChangePrice] Change price TX:", txid)
-	rpc.AddLog("Change Price TX: " + txid.TXID)
-}
-
-// Change listing damage deposit
-//   - amt is new deposit price in Dero atomic value
-func ChangeDamageDeposit(scid string, amt uint64) {
-	rpcClientW, ctx, cancel := rpc.SetWalletClient(rpc.Wallet.Rpc, rpc.Wallet.UserPass)
-	defer cancel()
-
-	arg1 := dero.Argument{Name: "entrypoint", DataType: "S", Value: "SetDamageDepositAmount"}
-	arg2 := dero.Argument{Name: "property_id", DataType: "S", Value: scid}
-	arg3 := dero.Argument{Name: "damage_deposit", DataType: "U", Value: amt}
-	args := dero.Arguments{arg1, arg2, arg3}
-	txid := dero.Transfer_Result{}
-
-	t1 := dero.Transfer{
-		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
-		Amount:      0,
-		Burn:        0,
-	}
-
-	t := []dero.Transfer{t1}
-	fee := rpc.GasEstimate(rpc.DerBnbSCID, "[ChangeDamageDeposit]", args, t)
-	params := &dero.Transfer_Params{
-		Transfers: t,
-		SC_ID:     rpc.DerBnbSCID,
-		SC_RPC:    args,
-		Ringsize:  2,
-		Fees:      fee,
-	}
-
-	if err := rpcClientW.CallFor(ctx, &txid, "transfer", params); err != nil {
-		log.Println("[ChangeDamageDeposit]", err)
-		return
-	}
-
-	log.Println("[ChangeDamageDeposit] Change damage deposit TX:", txid)
-	rpc.AddLog("Change Damage Deposit TX: " + txid.TXID)
-}
-
 // Confirm booking request on DerBnb SCID
 //   - stamp is current unix timestamp
 func ConfirmBooking(scid string, stamp uint64) {
@@ -428,8 +370,8 @@ func ConfirmBooking(scid string, stamp uint64) {
 	defer cancel()
 
 	arg1 := dero.Argument{Name: "entrypoint", DataType: "S", Value: "ConfirmBooking"}
-	arg2 := dero.Argument{Name: "property_id", DataType: "S", Value: scid}
-	arg3 := dero.Argument{Name: "timestamp_key", DataType: "U", Value: stamp}
+	arg2 := dero.Argument{Name: "scid", DataType: "S", Value: scid}
+	arg3 := dero.Argument{Name: "stamp", DataType: "U", Value: stamp}
 	args := dero.Arguments{arg1, arg2, arg3}
 	txid := dero.Transfer_Result{}
 
@@ -440,7 +382,7 @@ func ConfirmBooking(scid string, stamp uint64) {
 	}
 
 	t := []dero.Transfer{t1}
-	fee := rpc.GasEstimate(rpc.DerBnbSCID, "[ConfirmBooking]", args, t)
+	fee := rpc.GasEstimate(rpc.DerBnbSCID, "[ConfirmBooking]", args, t, rpc.LowLimitFee)
 	params := &dero.Transfer_Params{
 		Transfers: t,
 		SC_ID:     rpc.DerBnbSCID,
@@ -466,11 +408,11 @@ func ReleaseDamageDeposit(scid, desc string, id, amt uint64) {
 	rpcClientW, ctx, cancel := rpc.SetWalletClient(rpc.Wallet.Rpc, rpc.Wallet.UserPass)
 	defer cancel()
 
-	arg1 := dero.Argument{Name: "entrypoint", DataType: "S", Value: "ReleaseDamageDepositAmount"}
-	arg2 := dero.Argument{Name: "property_id", DataType: "S", Value: scid}
-	arg3 := dero.Argument{Name: "booking_id", DataType: "U", Value: id}
+	arg1 := dero.Argument{Name: "entrypoint", DataType: "S", Value: "ReleaseDamageDeposit"}
+	arg2 := dero.Argument{Name: "scid", DataType: "S", Value: scid}
+	arg3 := dero.Argument{Name: "id", DataType: "U", Value: id}
 	arg4 := dero.Argument{Name: "damage", DataType: "U", Value: amt}
-	arg5 := dero.Argument{Name: "damage_description", DataType: "S", Value: desc}
+	arg5 := dero.Argument{Name: "description", DataType: "S", Value: desc}
 	args := dero.Arguments{arg1, arg2, arg3, arg4, arg5}
 	txid := dero.Transfer_Result{}
 
@@ -481,7 +423,7 @@ func ReleaseDamageDeposit(scid, desc string, id, amt uint64) {
 	}
 
 	t := []dero.Transfer{t1}
-	fee := rpc.GasEstimate(rpc.DerBnbSCID, "[ReleaseDamageDeposit]", args, t)
+	fee := rpc.GasEstimate(rpc.DerBnbSCID, "[ReleaseDamageDeposit]", args, t, rpc.LowLimitFee)
 	params := &dero.Transfer_Params{
 		Transfers: t,
 		SC_ID:     rpc.DerBnbSCID,
@@ -506,8 +448,8 @@ func CancelBooking(scid string, id uint64) {
 	defer cancel()
 
 	arg1 := dero.Argument{Name: "entrypoint", DataType: "S", Value: "CancelBooking"}
-	arg2 := dero.Argument{Name: "property_id", DataType: "S", Value: scid}
-	arg3 := dero.Argument{Name: "timestamp_key", DataType: "U", Value: id}
+	arg2 := dero.Argument{Name: "scid", DataType: "S", Value: scid}
+	arg3 := dero.Argument{Name: "key", DataType: "U", Value: id}
 	args := dero.Arguments{arg1, arg2, arg3}
 	txid := dero.Transfer_Result{}
 
@@ -518,7 +460,7 @@ func CancelBooking(scid string, id uint64) {
 	}
 
 	t := []dero.Transfer{t1}
-	fee := rpc.GasEstimate(rpc.DerBnbSCID, "[CancelBooking]", args, t)
+	fee := rpc.GasEstimate(rpc.DerBnbSCID, "[CancelBooking]", args, t, rpc.LowLimitFee)
 	params := &dero.Transfer_Params{
 		Transfers: t,
 		SC_ID:     rpc.DerBnbSCID,
@@ -545,8 +487,8 @@ func RateExperience(scid string, id, renter, owner, prop, loc, overall uint64) {
 	defer cancel()
 
 	arg1 := dero.Argument{Name: "entrypoint", DataType: "S", Value: "RateExperience"}
-	arg2 := dero.Argument{Name: "property_id", DataType: "S", Value: scid}
-	arg3 := dero.Argument{Name: "booking_id", DataType: "U", Value: id}
+	arg2 := dero.Argument{Name: "scid", DataType: "S", Value: scid}
+	arg3 := dero.Argument{Name: "id", DataType: "U", Value: id}
 	arg4 := dero.Argument{Name: "Renter", DataType: "U", Value: renter}
 	arg5 := dero.Argument{Name: "Owner", DataType: "U", Value: owner}
 	arg6 := dero.Argument{Name: "Property", DataType: "U", Value: prop}
@@ -562,7 +504,7 @@ func RateExperience(scid string, id, renter, owner, prop, loc, overall uint64) {
 	}
 
 	t := []dero.Transfer{t1}
-	fee := rpc.GasEstimate(rpc.DerBnbSCID, "[RateExperience]", args, t)
+	fee := rpc.GasEstimate(rpc.DerBnbSCID, "[RateExperience]", args, t, rpc.LowLimitFee)
 	params := &dero.Transfer_Params{
 		Transfers: t,
 		SC_ID:     rpc.DerBnbSCID,
@@ -587,7 +529,7 @@ func ChangeAvailability(scid, cal string) {
 	defer cancel()
 
 	arg1 := dero.Argument{Name: "entrypoint", DataType: "S", Value: "ChangeAvailability"}
-	arg2 := dero.Argument{Name: "property_id", DataType: "S", Value: scid}
+	arg2 := dero.Argument{Name: "scid", DataType: "S", Value: scid}
 	arg3 := dero.Argument{Name: "calendar_url", DataType: "S", Value: cal}
 	args := dero.Arguments{arg1, arg2, arg3}
 	txid := dero.Transfer_Result{}
@@ -599,7 +541,7 @@ func ChangeAvailability(scid, cal string) {
 	}
 
 	t := []dero.Transfer{t1}
-	fee := rpc.GasEstimate(rpc.DerBnbSCID, "[ChangeAvailability]", args, t)
+	fee := rpc.GasEstimate(rpc.DerBnbSCID, "[ChangeAvailability]", args, t, rpc.LowLimitFee)
 	params := &dero.Transfer_Params{
 		Transfers: t,
 		SC_ID:     rpc.DerBnbSCID,
@@ -677,7 +619,7 @@ func StoreLocation(scid, location string) {
 	}
 
 	t := []dero.Transfer{t1}
-	fee := rpc.GasEstimate(scid, "[StoreLocation]", args, t)
+	fee := rpc.GasEstimate(scid, "[StoreLocation]", args, t, rpc.LowLimitFee)
 	params := &dero.Transfer_Params{
 		Transfers: t,
 		SC_ID:     scid,
@@ -714,7 +656,7 @@ func UpdateMetadata(scid, metadata string) {
 	}
 
 	t := []dero.Transfer{t1}
-	fee := rpc.GasEstimate(scid, "[UpdateMetadata]", args, t)
+	fee := rpc.GasEstimate(scid, "[UpdateMetadata]", args, t, rpc.HighLimitFee)
 	params := &dero.Transfer_Params{
 		Transfers: t,
 		SC_ID:     scid,

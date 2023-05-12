@@ -1029,7 +1029,7 @@ func GetWinner(game, league string) (win string, team_name string, a_score strin
 
 						teamB := found.Events[i].Competitions[0].Competitors[1].Team.Abbreviation
 						b_win := found.Events[i].Competitions[0].Competitors[1].Winner
-						b_score = found.Events[i].Competitions[0].Competitors[0].Score
+						b_score = found.Events[i].Competitions[0].Competitors[1].Score
 
 						if a_win && !b_win {
 							return "team_a", teamA, a_score, b_score

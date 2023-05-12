@@ -154,6 +154,7 @@ type holderoValues struct {
 	Bettor    string
 	Raisor    string
 
+	Winning_hand  []int
 	First_try     bool
 	Card_delay    bool
 	Local_trigger bool
@@ -547,6 +548,7 @@ func potIsEmpty(pot uint64) {
 		if !Signal.My_turn {
 			Wallet.KeyLock = false
 		}
+		Round.Winning_hand = []int{}
 		Round.Flop1 = 0
 		Round.Flop2 = 0
 		Round.Flop3 = 0
