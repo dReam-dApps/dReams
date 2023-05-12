@@ -81,20 +81,26 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 				if count < len(property_photos.data[viewing_scid])-1 {
 					count++
 					if url := propertyImageSource(property_photos.data[viewing_scid][count]); url != "" {
-						if image, err := holdero.DownloadFile(url, "img"); err == nil {
+						if image, err := holdero.DownloadFile(url, url); err == nil {
 							image_box.Objects[0] = &image
 							image_box.Refresh()
+						} else {
+							log.Printf("[DerBnb] %s %s\n", url, err)
 						}
 					}
 				} else {
 					count = 0
 					if url := propertyImageSource(property_photos.data[viewing_scid][count]); url != "" {
-						if image, err := holdero.DownloadFile(url, "img"); err == nil {
+						if image, err := holdero.DownloadFile(url, url); err == nil {
 							image_box.Objects[0] = &image
 							image_box.Refresh()
+						} else {
+							log.Printf("[DerBnb] %s %s\n", url, err)
 						}
 					}
 				}
+			} else {
+				dialog.NewInformation("No Images", "This property has no images", w).Show()
 			}
 			property_photos.RUnlock()
 		}()
@@ -106,17 +112,27 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 			if len(viewing_scid) == 64 && property_photos.data[viewing_scid] != nil {
 				if count > 0 {
 					count--
-					if image, err := holdero.DownloadFile(propertyImageSource(property_photos.data[viewing_scid][count]), "img"); err == nil {
-						image_box.Objects[0] = &image
-						image_box.Refresh()
+					if url := propertyImageSource(property_photos.data[viewing_scid][count]); url != "" {
+						if image, err := holdero.DownloadFile(url, url); err == nil {
+							image_box.Objects[0] = &image
+							image_box.Refresh()
+						} else {
+							log.Printf("[DerBnb] %s %s\n", url, err)
+						}
 					}
 				} else {
 					count = len(property_photos.data[viewing_scid]) - 1
-					if image, err := holdero.DownloadFile(propertyImageSource(property_photos.data[viewing_scid][count]), "img"); err == nil {
-						image_box.Objects[0] = &image
-						image_box.Refresh()
+					if url := propertyImageSource(property_photos.data[viewing_scid][count]); url != "" {
+						if image, err := holdero.DownloadFile(url, url); err == nil {
+							image_box.Objects[0] = &image
+							image_box.Refresh()
+						} else {
+							log.Printf("[DerBnb] %s %s\n", url, err)
+						}
 					}
 				}
+			} else {
+				dialog.NewInformation("No Images", "This property has no images", w).Show()
 			}
 			property_photos.RUnlock()
 		}()
@@ -638,6 +654,8 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 
 	listings_list.OnSelected = func(id widget.ListItemID) {
 		go func() {
+			image_box.Objects[0] = canvas.NewImageFromImage(nil)
+			image_box.Refresh()
 			split := strings.Split(listed_properties[id], "   ")
 			if len(split) > 0 {
 				scid := split[1]
@@ -645,13 +663,20 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 				count = 0
 				getImages(scid)
 				request_button.Show()
-				listing_label.SetText(getInfo(scid))
 				property_photos.RLock()
+				listing_label.SetText(getInfo(scid))
 				if property_photos.data[scid] != nil {
-					if image, err := holdero.DownloadFile(propertyImageSource(property_photos.data[scid][0]), "img"); err == nil {
-						image_box.Objects[0] = &image
-						image_box.Refresh()
+					if url := propertyImageSource(property_photos.data[scid][0]); url != "" {
+						if image, err := holdero.DownloadFile(url, url); err == nil {
+							image_box.Objects[0] = &image
+							image_box.Refresh()
+						} else {
+							log.Printf("[DerBnb] %s %s\n", url, err)
+						}
 					}
+				} else {
+					image_box.Objects[0] = canvas.NewImageFromImage(nil)
+					image_box.Refresh()
 				}
 				property_photos.RUnlock()
 			}

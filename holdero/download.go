@@ -2,7 +2,6 @@ package holdero
 
 import (
 	"archive/zip"
-	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -91,7 +90,7 @@ func DownloadFile(Url, fileName string) (canvas.Image, error) {
 	defer response.Body.Close()
 
 	if response.StatusCode != 200 {
-		return *canvas.NewImageFromImage(nil), errors.New("received non 200 response code")
+		return *canvas.NewImageFromImage(nil), fmt.Errorf("received %d response code", response.StatusCode)
 	}
 
 	return *canvas.NewImageFromReader(response.Body, fileName), nil
