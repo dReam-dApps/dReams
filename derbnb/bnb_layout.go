@@ -672,6 +672,8 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 							image_box.Refresh()
 						} else {
 							log.Printf("[DerBnb] %s %s\n", url, err)
+							image_box.Objects[0] = canvas.NewImageFromImage(nil)
+							image_box.Refresh()
 						}
 					}
 				} else {
