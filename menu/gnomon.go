@@ -1663,11 +1663,7 @@ func GetAuctionDetails(scid string) {
 
 				Market.Collection.SetText(collection[0])
 
-				if len(description[0]) > 64 {
-					Market.Description.SetText(description[0][0:64] + "...")
-				} else {
-					Market.Description.SetText(description[0])
-				}
+				Market.Description.SetText(description[0])
 
 				if Market.Creator.Text != creator[0] {
 					Market.Creator.SetText(creator[0])
@@ -1792,11 +1788,7 @@ func GetBuyNowDetails(scid string) {
 
 				Market.Collection.SetText(collection[0])
 
-				if len(description[0]) > 64 {
-					Market.Description.SetText(description[0][0:64] + "...")
-				} else {
-					Market.Description.SetText(description[0])
-				}
+				Market.Description.SetText(description[0])
 
 				if Market.Creator.Text != creator[0] {
 					Market.Creator.SetText(creator[0])
