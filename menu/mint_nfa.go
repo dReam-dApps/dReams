@@ -948,7 +948,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 
 							log.Printf("[%s] Starting install loop\n", tag)
 
-							for count <= ending_at {
+							for wait && count <= ending_at {
 								if !rpc.Wallet.Connect {
 									progress_label.SetText("Error wallet disconnected")
 									wait_message.SetDismissText("Close")
