@@ -1387,7 +1387,7 @@ func listMenu(window_icon, background fyne.Resource) {
 	fee_label := widget.NewLabel(fmt.Sprintf("Listing fee %.5f Dero", float64(rpc.ListingFee)/100000))
 
 	listing_options := []string{"Auction", "Sale"}
-	listing := widget.NewSelect(listing_options, func(s string) {})
+	listing := widget.NewSelect(listing_options, nil)
 	listing.PlaceHolder = "Type:"
 
 	duration := dwidget.DeroAmtEntry("", 1, 0)
@@ -1437,6 +1437,14 @@ func listMenu(window_icon, background fyne.Resource) {
 	}
 
 	charAddr.OnChanged = func(s string) {
+		if listing.Selected != "" && duration.Validate() == nil && start.Validate() == nil && charAddr.Validate() == nil && charPerc.Validate() == nil {
+			set_list.Show()
+		} else {
+			set_list.Hide()
+		}
+	}
+
+	listing.OnChanged = func(s string) {
 		if listing.Selected != "" && duration.Validate() == nil && start.Validate() == nil && charAddr.Validate() == nil && charPerc.Validate() == nil {
 			set_list.Show()
 		} else {
@@ -1524,6 +1532,25 @@ func listMenu(window_icon, background fyne.Resource) {
 		aw.Close()
 	}()
 
+	charAddr.Disable()
+	charPerc.Disable()
+	charAddr.SetText(rpc.Wallet.Address)
+	charPerc.SetText("0")
+
+	enable_donations := widget.NewCheck("Enable Donations", func(b bool) {
+		if b {
+			charAddr.Enable()
+			charPerc.Enable()
+			charAddr.SetText("")
+			charPerc.SetText("")
+		} else {
+			charAddr.Disable()
+			charPerc.Disable()
+			charAddr.SetText(rpc.Wallet.Address)
+			charPerc.SetText("0")
+		}
+	})
+
 	aw_content = container.NewVBox(
 		viewing_label,
 		layout.NewSpacer(),
@@ -1533,6 +1560,7 @@ func listMenu(window_icon, background fyne.Resource) {
 		listing,
 		duration,
 		start,
+		container.NewCenter(enable_donations),
 		charAddr,
 		charPerc,
 		container.NewCenter(fee_label),
