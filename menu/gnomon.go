@@ -655,12 +655,13 @@ func CheckAllNFAs(gc bool, scids map[string]string) {
 			}
 
 			keys[i] = k
-			owner, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(keys[i], "owner", Gnomes.Indexer.ChainHeight, true)
-			header, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(keys[i], "nameHdr", Gnomes.Indexer.ChainHeight, true)
-			file, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(keys[i], "fileURL", Gnomes.Indexer.ChainHeight, true)
-			if owner != nil && header != nil && file != nil {
-				if owner[0] == rpc.Wallet.Address && ValidNfa(file[0]) {
-					assets = append(assets, header[0]+"   "+keys[i])
+			if header, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(keys[i], "nameHdr", Gnomes.Indexer.ChainHeight, true); header != nil {
+				owner, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(keys[i], "owner", Gnomes.Indexer.ChainHeight, true)
+				file, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(keys[i], "fileURL", Gnomes.Indexer.ChainHeight, true)
+				if owner != nil && file != nil {
+					if owner[0] == rpc.Wallet.Address && ValidNfa(file[0]) {
+						assets = append(assets, header[0]+"   "+keys[i])
+					}
 				}
 			}
 			i++
@@ -716,13 +717,14 @@ func GetSCHeaders(scid string) []string {
 //   - Passed t defines sports or prediction contract
 func verifyBetContractOwner(scid, t string) {
 	if !GnomonClosing() {
-		owner, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "owner", Gnomes.Indexer.ChainHeight, true)
-		dev, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "dev", Gnomes.Indexer.ChainHeight, true)
-		_, init := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, t+"_init", Gnomes.Indexer.ChainHeight, true)
+		if dev, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "dev", Gnomes.Indexer.ChainHeight, true); dev != nil {
+			owner, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "owner", Gnomes.Indexer.ChainHeight, true)
+			_, init := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, t+"_init", Gnomes.Indexer.ChainHeight, true)
 
-		if owner != nil && dev != nil && init != nil {
-			if dev[0] == rpc.DevAddress && !rpc.Wallet.BetOwner {
-				SetBetOwner(owner[0])
+			if owner != nil && init != nil {
+				if dev[0] == rpc.DevAddress && !rpc.Wallet.BetOwner {
+					SetBetOwner(owner[0])
+				}
 			}
 		}
 	}
@@ -753,61 +755,63 @@ func VerifyBetSigner(scid string) bool {
 //   - Adding constructed header string to list, owned []string
 func checkBetContract(scid, t string, list, owned []string) ([]string, []string) {
 	if Gnomes.Init && !GnomonClosing() {
-		owner, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "owner", Gnomes.Indexer.ChainHeight, true)
-		dev, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "dev", Gnomes.Indexer.ChainHeight, true)
-		_, init := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, t+"_init", Gnomes.Indexer.ChainHeight, true)
+		if dev, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "dev", Gnomes.Indexer.ChainHeight, true); dev != nil {
+			owner, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "owner", Gnomes.Indexer.ChainHeight, true)
+			_, init := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, t+"_init", Gnomes.Indexer.ChainHeight, true)
 
-		if owner != nil && dev != nil && init != nil {
-			if dev[0] == rpc.DevAddress {
-				headers := GetSCHeaders(scid)
-				name := "?"
-				desc := "?"
-				var hidden bool
-				_, restrict := Gnomes.Indexer.Backend.GetSCIDValuesByKey(rpc.RatingSCID, "restrict", Gnomes.Indexer.ChainHeight, true)
-				_, rating := Gnomes.Indexer.Backend.GetSCIDValuesByKey(rpc.RatingSCID, scid, Gnomes.Indexer.ChainHeight, true)
+			if owner != nil && init != nil {
+				if dev[0] == rpc.DevAddress {
+					headers := GetSCHeaders(scid)
+					name := "?"
+					desc := "?"
+					var hidden bool
+					_, restrict := Gnomes.Indexer.Backend.GetSCIDValuesByKey(rpc.RatingSCID, "restrict", Gnomes.Indexer.ChainHeight, true)
+					_, rating := Gnomes.Indexer.Backend.GetSCIDValuesByKey(rpc.RatingSCID, scid, Gnomes.Indexer.ChainHeight, true)
 
-				if restrict != nil && rating != nil {
-					Control.Lock()
-					Control.Contract_rating[scid] = rating[0]
-					Control.Unlock()
-					if rating[0] <= restrict[0] {
-						hidden = true
-					}
-				}
-
-				if headers != nil {
-					if headers[1] != "" {
-						desc = headers[1]
+					if restrict != nil && rating != nil {
+						Control.Lock()
+						Control.Contract_rating[scid] = rating[0]
+						Control.Unlock()
+						if rating[0] <= restrict[0] {
+							hidden = true
+						}
 					}
 
-					if headers[0] != "" {
-						name = " " + headers[0]
+					if headers != nil {
+						if headers[1] != "" {
+							desc = headers[1]
+						}
+
+						if headers[0] != "" {
+							name = " " + headers[0]
+						}
+
+						if headers[0] == "-" {
+							hidden = true
+						}
 					}
 
-					if headers[0] == "-" {
-						hidden = true
+					var co_signer bool
+					if VerifyBetSigner(scid) {
+						co_signer = true
+						if !Gnomes.Import {
+							Control.Bet_menu_p.Show()
+							Control.Bet_menu_s.Show()
+						}
 					}
-				}
 
-				var co_signer bool
-				if VerifyBetSigner(scid) {
-					co_signer = true
-					if !Gnomes.Import {
-						Control.Bet_menu_p.Show()
-						Control.Bet_menu_s.Show()
+					if owner[0] == rpc.Wallet.Address || co_signer {
+						owned = append(owned, name+"   "+desc+"   "+scid)
 					}
-				}
 
-				if owner[0] == rpc.Wallet.Address || co_signer {
-					owned = append(owned, name+"   "+desc+"   "+scid)
-				}
-
-				if !hidden {
-					list = append(list, name+"   "+desc+"   "+scid)
+					if !hidden {
+						list = append(list, name+"   "+desc+"   "+scid)
+					}
 				}
 			}
 		}
 	}
+
 	return list, owned
 }
 
@@ -828,6 +832,7 @@ func PopulatePredictions(contracts map[string]string) {
 			list, owned = checkBetContract(keys[i], "p", list, owned)
 			i++
 		}
+
 		t := len(list)
 		list = append(list, " Contracts: "+strconv.Itoa(t))
 		sort.Strings(list)
@@ -888,91 +893,92 @@ func ValidNfa(file string) bool {
 //   - See games container in menu.PlaceAssets()
 func checkNFAOwner(scid string) {
 	if !GnomonClosing() {
-		owner, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "owner", Gnomes.Indexer.ChainHeight, true)
-		header, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "nameHdr", Gnomes.Indexer.ChainHeight, true)
-		file, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "fileURL", Gnomes.Indexer.ChainHeight, true)
-		if owner != nil && header != nil && file != nil {
-			if owner[0] == rpc.Wallet.Address && ValidNfa(file[0]) {
-				check := strings.Trim(header[0], "0123456789")
-				if check == "AZYDS" || check == "SIXART" {
-					themes := holdero.Settings.ThemeSelect.Options
-					new_themes := append(themes, header[0])
-					holdero.Settings.ThemeSelect.Options = new_themes
-					holdero.Settings.ThemeSelect.Refresh()
-
-					avatars := holdero.Settings.AvatarSelect.Options
-					new_avatar := append(avatars, header[0])
-					holdero.Settings.AvatarSelect.Options = new_avatar
-					holdero.Settings.AvatarSelect.Refresh()
-					Assets.Assets = append(Assets.Assets, header[0]+"   "+scid)
-				} else if check == "AZYPCB" || check == "SIXPCB" {
-					current := holdero.Settings.BackSelect.Options
-					new := append(current, header[0])
-					holdero.Settings.BackSelect.Options = new
-					holdero.Settings.BackSelect.Refresh()
-					Assets.Assets = append(Assets.Assets, header[0]+"   "+scid)
-				} else if check == "AZYPC" || check == "SIXPC" {
-					current := holdero.Settings.FaceSelect.Options
-					new := append(current, header[0])
-					holdero.Settings.FaceSelect.Options = new
-					holdero.Settings.FaceSelect.Refresh()
-					Assets.Assets = append(Assets.Assets, header[0]+"   "+scid)
-				} else if check == "DBC" {
-					current := holdero.Settings.AvatarSelect.Options
-					new := append(current, header[0])
-					holdero.Settings.AvatarSelect.Options = new
-					holdero.Settings.AvatarSelect.Refresh()
-					Assets.Assets = append(Assets.Assets, header[0]+"   "+scid)
-				} else if check == "HighStrangeness" {
-					current_av := holdero.Settings.AvatarSelect.Options
-					new_av := append(current_av, header[0])
-					holdero.Settings.AvatarSelect.Options = new_av
-					holdero.Settings.AvatarSelect.Refresh()
-					Assets.Assets = append(Assets.Assets, header[0]+"   "+scid)
-
-					var have_cards bool
-					for _, face := range holdero.Settings.FaceSelect.Options {
-						if face == "High-Strangeness" {
-							have_cards = true
-						}
-					}
-
-					if !have_cards {
-						current_d := holdero.Settings.FaceSelect.Options
-						new_d := append(current_d, "High-Strangeness")
-						holdero.Settings.FaceSelect.Options = new_d
-						holdero.Settings.FaceSelect.Refresh()
-
-						current_b := holdero.Settings.BackSelect.Options
-						new_b := append(current_b, "High-Strangeness")
-						holdero.Settings.BackSelect.Options = new_b
-						holdero.Settings.BackSelect.Refresh()
-					}
-
-					tower := 0
-					switch header[0] {
-					case "HighStrangeness363":
-						tower = 4
-					case "HighStrangeness364":
-						tower = 8
-					case "HighStrangeness365":
-						tower = 12
-					default:
-					}
-
-					var have_theme bool
-					for i := tower; i > 0; i-- {
+		if header, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "nameHdr", Gnomes.Indexer.ChainHeight, true); header != nil {
+			owner, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "owner", Gnomes.Indexer.ChainHeight, true)
+			file, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "fileURL", Gnomes.Indexer.ChainHeight, true)
+			if owner != nil && file != nil {
+				if owner[0] == rpc.Wallet.Address && ValidNfa(file[0]) {
+					check := strings.Trim(header[0], "0123456789")
+					if check == "AZYDS" || check == "SIXART" {
 						themes := holdero.Settings.ThemeSelect.Options
-						for _, th := range themes {
-							if th == "HSTheme"+strconv.Itoa(i) {
-								have_theme = true
+						new_themes := append(themes, header[0])
+						holdero.Settings.ThemeSelect.Options = new_themes
+						holdero.Settings.ThemeSelect.Refresh()
+
+						avatars := holdero.Settings.AvatarSelect.Options
+						new_avatar := append(avatars, header[0])
+						holdero.Settings.AvatarSelect.Options = new_avatar
+						holdero.Settings.AvatarSelect.Refresh()
+						Assets.Assets = append(Assets.Assets, header[0]+"   "+scid)
+					} else if check == "AZYPCB" || check == "SIXPCB" {
+						current := holdero.Settings.BackSelect.Options
+						new := append(current, header[0])
+						holdero.Settings.BackSelect.Options = new
+						holdero.Settings.BackSelect.Refresh()
+						Assets.Assets = append(Assets.Assets, header[0]+"   "+scid)
+					} else if check == "AZYPC" || check == "SIXPC" {
+						current := holdero.Settings.FaceSelect.Options
+						new := append(current, header[0])
+						holdero.Settings.FaceSelect.Options = new
+						holdero.Settings.FaceSelect.Refresh()
+						Assets.Assets = append(Assets.Assets, header[0]+"   "+scid)
+					} else if check == "DBC" {
+						current := holdero.Settings.AvatarSelect.Options
+						new := append(current, header[0])
+						holdero.Settings.AvatarSelect.Options = new
+						holdero.Settings.AvatarSelect.Refresh()
+						Assets.Assets = append(Assets.Assets, header[0]+"   "+scid)
+					} else if check == "HighStrangeness" {
+						current_av := holdero.Settings.AvatarSelect.Options
+						new_av := append(current_av, header[0])
+						holdero.Settings.AvatarSelect.Options = new_av
+						holdero.Settings.AvatarSelect.Refresh()
+						Assets.Assets = append(Assets.Assets, header[0]+"   "+scid)
+
+						var have_cards bool
+						for _, face := range holdero.Settings.FaceSelect.Options {
+							if face == "High-Strangeness" {
+								have_cards = true
 							}
 						}
 
-						if !have_theme {
-							new_themes := append(themes, "HSTheme"+strconv.Itoa(i))
-							holdero.Settings.ThemeSelect.Options = new_themes
-							holdero.Settings.ThemeSelect.Refresh()
+						if !have_cards {
+							current_d := holdero.Settings.FaceSelect.Options
+							new_d := append(current_d, "High-Strangeness")
+							holdero.Settings.FaceSelect.Options = new_d
+							holdero.Settings.FaceSelect.Refresh()
+
+							current_b := holdero.Settings.BackSelect.Options
+							new_b := append(current_b, "High-Strangeness")
+							holdero.Settings.BackSelect.Options = new_b
+							holdero.Settings.BackSelect.Refresh()
+						}
+
+						tower := 0
+						switch header[0] {
+						case "HighStrangeness363":
+							tower = 4
+						case "HighStrangeness364":
+							tower = 8
+						case "HighStrangeness365":
+							tower = 12
+						default:
+						}
+
+						var have_theme bool
+						for i := tower; i > 0; i-- {
+							themes := holdero.Settings.ThemeSelect.Options
+							for _, th := range themes {
+								if th == "HSTheme"+strconv.Itoa(i) {
+									have_theme = true
+								}
+							}
+
+							if !have_theme {
+								new_themes := append(themes, "HSTheme"+strconv.Itoa(i))
+								holdero.Settings.ThemeSelect.Options = new_themes
+								holdero.Settings.ThemeSelect.Refresh()
+							}
 						}
 					}
 				}
@@ -1171,50 +1177,52 @@ func CreateTableList(gc bool, tables map[string]string) {
 			if !Gnomes.Init || GnomonClosing() {
 				break
 			}
-			_, valid := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "Deck Count:", Gnomes.Indexer.LastIndexedHeight, true)
-			_, version := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "V:", Gnomes.Indexer.LastIndexedHeight, true)
 
-			if valid != nil && version != nil {
-				d := valid[0]
-				v := version[0]
+			if _, valid := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "Deck Count:", Gnomes.Indexer.LastIndexedHeight, true); valid != nil {
+				_, version := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "V:", Gnomes.Indexer.LastIndexedHeight, true)
 
-				headers := GetSCHeaders(scid)
-				name := "?"
-				desc := "?"
-				if headers != nil {
-					if headers[1] != "" {
-						desc = headers[1]
+				if version != nil {
+					d := valid[0]
+					v := version[0]
+
+					headers := GetSCHeaders(scid)
+					name := "?"
+					desc := "?"
+					if headers != nil {
+						if headers[1] != "" {
+							desc = headers[1]
+						}
+
+						if headers[0] != "" {
+							name = " " + headers[0]
+						}
 					}
 
-					if headers[0] != "" {
-						name = " " + headers[0]
+					var hidden bool
+					_, restrict := Gnomes.Indexer.Backend.GetSCIDValuesByKey(rpc.RatingSCID, "restrict", Gnomes.Indexer.ChainHeight, true)
+					_, rating := Gnomes.Indexer.Backend.GetSCIDValuesByKey(rpc.RatingSCID, scid, Gnomes.Indexer.ChainHeight, true)
+
+					if restrict != nil && rating != nil {
+						Control.Lock()
+						Control.Contract_rating[scid] = rating[0]
+						Control.Unlock()
+						if rating[0] <= restrict[0] {
+							hidden = true
+						}
 					}
-				}
 
-				var hidden bool
-				_, restrict := Gnomes.Indexer.Backend.GetSCIDValuesByKey(rpc.RatingSCID, "restrict", Gnomes.Indexer.ChainHeight, true)
-				_, rating := Gnomes.Indexer.Backend.GetSCIDValuesByKey(rpc.RatingSCID, scid, Gnomes.Indexer.ChainHeight, true)
-
-				if restrict != nil && rating != nil {
-					Control.Lock()
-					Control.Contract_rating[scid] = rating[0]
-					Control.Unlock()
-					if rating[0] <= restrict[0] {
-						hidden = true
+					if d >= 1 && v == 110 && !hidden {
+						list = append(list, name+"   "+desc+"   "+scid)
 					}
-				}
 
-				if d >= 1 && v == 110 && !hidden {
-					list = append(list, name+"   "+desc+"   "+scid)
-				}
-
-				if d >= 1 && v >= 100 {
-					if CheckTableOwner(scid) {
-						owned = append(owned, name+"   "+desc+"   "+scid)
-						Poker.Holdero_unlock.Hide()
-						Poker.Holdero_new.Show()
-						owner = true
-						rpc.Wallet.PokerOwner = true
+					if d >= 1 && v >= 100 {
+						if CheckTableOwner(scid) {
+							owned = append(owned, name+"   "+desc+"   "+scid)
+							Poker.Holdero_unlock.Hide()
+							Poker.Holdero_new.Show()
+							owner = true
+							rpc.Wallet.PokerOwner = true
+						}
 					}
 				}
 			}
@@ -1349,30 +1357,32 @@ func CheckDreamsG45s(gc bool, g45s map[string]string) {
 			if !rpc.Wallet.Connect || GnomonClosing() {
 				break
 			}
-			data, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "metadata", Gnomes.Indexer.LastIndexedHeight, true)
-			owner, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "owner", Gnomes.Indexer.LastIndexedHeight, true)
-			minter, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "minter", Gnomes.Indexer.LastIndexedHeight, true)
-			coll, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "collection", Gnomes.Indexer.LastIndexedHeight, true)
-			if data != nil && owner != nil && minter != nil && coll != nil {
-				if owner[0] == rpc.Wallet.Address {
-					if minter[0] == holdero.Seals_mint && coll[0] == holdero.Seals_coll {
-						var seal holdero.Seal
-						if err := json.Unmarshal([]byte(data[0]), &seal); err == nil {
-							Assets.Assets = append(Assets.Assets, seal.Name+"   "+scid)
-							current := holdero.Settings.AvatarSelect.Options
-							new := append(current, seal.Name)
-							holdero.Settings.AvatarSelect.Options = new
-							holdero.Settings.AvatarSelect.Refresh()
-						}
-					} else if minter[0] == holdero.ATeam_mint && coll[0] == holdero.ATeam_coll {
-						var agent holdero.Agent
-						if err := json.Unmarshal([]byte(data[0]), &agent); err == nil {
-							Assets.Asset_map[agent.Name] = scid
-							Assets.Assets = append(Assets.Assets, agent.Name+"   "+scid)
-							current := holdero.Settings.AvatarSelect.Options
-							new := append(current, agent.Name)
-							holdero.Settings.AvatarSelect.Options = new
-							holdero.Settings.AvatarSelect.Refresh()
+
+			if data, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "metadata", Gnomes.Indexer.LastIndexedHeight, true); data != nil {
+				owner, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "owner", Gnomes.Indexer.LastIndexedHeight, true)
+				minter, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "minter", Gnomes.Indexer.LastIndexedHeight, true)
+				coll, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "collection", Gnomes.Indexer.LastIndexedHeight, true)
+				if owner != nil && minter != nil && coll != nil {
+					if owner[0] == rpc.Wallet.Address {
+						if minter[0] == holdero.Seals_mint && coll[0] == holdero.Seals_coll {
+							var seal holdero.Seal
+							if err := json.Unmarshal([]byte(data[0]), &seal); err == nil {
+								Assets.Assets = append(Assets.Assets, seal.Name+"   "+scid)
+								current := holdero.Settings.AvatarSelect.Options
+								new := append(current, seal.Name)
+								holdero.Settings.AvatarSelect.Options = new
+								holdero.Settings.AvatarSelect.Refresh()
+							}
+						} else if minter[0] == holdero.ATeam_mint && coll[0] == holdero.ATeam_coll {
+							var agent holdero.Agent
+							if err := json.Unmarshal([]byte(data[0]), &agent); err == nil {
+								Assets.Asset_map[agent.Name] = scid
+								Assets.Assets = append(Assets.Assets, agent.Name+"   "+scid)
+								current := holdero.Settings.AvatarSelect.Options
+								new := append(current, agent.Name)
+								holdero.Settings.AvatarSelect.Options = new
+								holdero.Settings.AvatarSelect.Refresh()
+							}
 						}
 					}
 				}
@@ -1563,57 +1573,58 @@ func CheckNFAListingType(scid string) (list int, addr string) {
 //   - Market.DreamsFilter false for all NFA listings
 func checkNfaAuctionListing(scid string) (asset string, owned, expired bool) {
 	if Gnomes.Init && !GnomonClosing() {
-		creator, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "creatorAddr", Gnomes.Indexer.ChainHeight, true)
-		listType, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "listType", Gnomes.Indexer.ChainHeight, true)
-		header, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "nameHdr", Gnomes.Indexer.ChainHeight, true)
-		coll, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "collection", Gnomes.Indexer.ChainHeight, true)
-		desc, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "descrHdr", Gnomes.Indexer.ChainHeight, true)
-		if listType != nil && header != nil && creator != nil {
-			if Market.DreamsFilter {
-				check := strings.Trim(header[0], "0123456789")
-				if isDreamsNfaCollection(check) {
-					if listType[0] == "auction" {
-						desc_check := TrimStringLen(desc[0], 66)
-						asset = coll[0] + "   " + header[0] + "   " + desc_check + "   " + scid
-						if owner, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "owner", Gnomes.Indexer.ChainHeight, true); owner != nil {
-							if owner[0] == rpc.Wallet.Address {
-								owned = true
+		if creator, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "creatorAddr", Gnomes.Indexer.ChainHeight, true); creator != nil {
+			listType, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "listType", Gnomes.Indexer.ChainHeight, true)
+			header, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "nameHdr", Gnomes.Indexer.ChainHeight, true)
+			coll, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "collection", Gnomes.Indexer.ChainHeight, true)
+			desc, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "descrHdr", Gnomes.Indexer.ChainHeight, true)
+			if listType != nil && header != nil && coll != nil && desc != nil {
+				if Market.DreamsFilter {
+					check := strings.Trim(header[0], "0123456789")
+					if isDreamsNfaCollection(check) {
+						if listType[0] == "auction" {
+							desc_check := TrimStringLen(desc[0], 66)
+							asset = coll[0] + "   " + header[0] + "   " + desc_check + "   " + scid
+							if owner, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "owner", Gnomes.Indexer.ChainHeight, true); owner != nil {
+								if owner[0] == rpc.Wallet.Address {
+									owned = true
+								}
 							}
-						}
 
-						if _, endTime := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "endBlockTime", Gnomes.Indexer.ChainHeight, true); endTime != nil {
-							if _, startTime := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "startBlockTime", Gnomes.Indexer.ChainHeight, true); startTime != nil {
-								now := uint64(time.Now().Unix())
-								if now > endTime[0] && endTime[0] > 0 {
-									expired = true
+							if _, endTime := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "endBlockTime", Gnomes.Indexer.ChainHeight, true); endTime != nil {
+								if _, startTime := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "startBlockTime", Gnomes.Indexer.ChainHeight, true); startTime != nil {
+									now := uint64(time.Now().Unix())
+									if now > endTime[0] && endTime[0] > 0 {
+										expired = true
+									}
 								}
 							}
 						}
 					}
-				}
-			} else {
-				var hidden bool
-				for _, addr := range Market.Filters {
-					if creator[0] == addr {
-						hidden = true
-					}
-				}
-
-				if !hidden {
-					if listType[0] == "auction" {
-						desc_check := TrimStringLen(desc[0], 66)
-						asset = coll[0] + "   " + header[0] + "   " + desc_check + "   " + scid
-						if owner, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "owner", Gnomes.Indexer.ChainHeight, true); owner != nil {
-							if owner[0] == rpc.Wallet.Address {
-								owned = true
-							}
+				} else {
+					var hidden bool
+					for _, addr := range Market.Filters {
+						if creator[0] == addr {
+							hidden = true
 						}
+					}
 
-						if _, endTime := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "endBlockTime", Gnomes.Indexer.ChainHeight, true); endTime != nil {
-							if _, startTime := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "startBlockTime", Gnomes.Indexer.ChainHeight, true); startTime != nil {
-								now := uint64(time.Now().Unix())
-								if now > endTime[0] && endTime[0] > 0 {
-									expired = true
+					if !hidden {
+						if listType[0] == "auction" {
+							desc_check := TrimStringLen(desc[0], 66)
+							asset = coll[0] + "   " + header[0] + "   " + desc_check + "   " + scid
+							if owner, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "owner", Gnomes.Indexer.ChainHeight, true); owner != nil {
+								if owner[0] == rpc.Wallet.Address {
+									owned = true
+								}
+							}
+
+							if _, endTime := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "endBlockTime", Gnomes.Indexer.ChainHeight, true); endTime != nil {
+								if _, startTime := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "startBlockTime", Gnomes.Indexer.ChainHeight, true); startTime != nil {
+									now := uint64(time.Now().Unix())
+									if now > endTime[0] && endTime[0] > 0 {
+										expired = true
+									}
 								}
 							}
 						}
@@ -1630,57 +1641,58 @@ func checkNfaAuctionListing(scid string) (asset string, owned, expired bool) {
 //   - Market.DreamsFilter false for all NFA listings
 func checkNfaBuyListing(scid string) (asset string, owned, expired bool) {
 	if Gnomes.Init && !GnomonClosing() {
-		creator, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "creatorAddr", Gnomes.Indexer.ChainHeight, true)
-		listType, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "listType", Gnomes.Indexer.ChainHeight, true)
-		header, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "nameHdr", Gnomes.Indexer.ChainHeight, true)
-		coll, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "collection", Gnomes.Indexer.ChainHeight, true)
-		desc, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "descrHdr", Gnomes.Indexer.ChainHeight, true)
-		if listType != nil && header != nil {
-			if Market.DreamsFilter {
-				check := strings.Trim(header[0], "0123456789")
-				if isDreamsNfaCollection(check) {
-					if listType[0] == "sale" {
-						desc_check := TrimStringLen(desc[0], 66)
-						asset = coll[0] + "   " + header[0] + "   " + desc_check + "   " + scid
-						if owner, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "owner", Gnomes.Indexer.ChainHeight, true); owner != nil {
-							if owner[0] == rpc.Wallet.Address {
-								owned = true
+		if creator, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "creatorAddr", Gnomes.Indexer.ChainHeight, true); creator != nil {
+			listType, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "listType", Gnomes.Indexer.ChainHeight, true)
+			header, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "nameHdr", Gnomes.Indexer.ChainHeight, true)
+			coll, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "collection", Gnomes.Indexer.ChainHeight, true)
+			desc, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "descrHdr", Gnomes.Indexer.ChainHeight, true)
+			if listType != nil && header != nil && coll != nil && desc != nil {
+				if Market.DreamsFilter {
+					check := strings.Trim(header[0], "0123456789")
+					if isDreamsNfaCollection(check) {
+						if listType[0] == "sale" {
+							desc_check := TrimStringLen(desc[0], 66)
+							asset = coll[0] + "   " + header[0] + "   " + desc_check + "   " + scid
+							if owner, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "owner", Gnomes.Indexer.ChainHeight, true); owner != nil {
+								if owner[0] == rpc.Wallet.Address {
+									owned = true
+								}
 							}
-						}
 
-						if _, endTime := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "endBlockTime", Gnomes.Indexer.ChainHeight, true); endTime != nil {
-							if _, startTime := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "startBlockTime", Gnomes.Indexer.ChainHeight, true); startTime != nil {
-								now := uint64(time.Now().Unix())
-								if now > endTime[0] && endTime[0] > 0 {
-									expired = true
+							if _, endTime := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "endBlockTime", Gnomes.Indexer.ChainHeight, true); endTime != nil {
+								if _, startTime := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "startBlockTime", Gnomes.Indexer.ChainHeight, true); startTime != nil {
+									now := uint64(time.Now().Unix())
+									if now > endTime[0] && endTime[0] > 0 {
+										expired = true
+									}
 								}
 							}
 						}
 					}
-				}
-			} else {
-				var hidden bool
-				for _, addr := range Market.Filters {
-					if creator[0] == addr {
-						hidden = true
-					}
-				}
-
-				if !hidden {
-					if listType[0] == "sale" {
-						desc_check := TrimStringLen(desc[0], 66)
-						asset = coll[0] + "   " + header[0] + "   " + desc_check + "   " + scid
-						if owner, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "owner", Gnomes.Indexer.ChainHeight, true); owner != nil {
-							if owner[0] == rpc.Wallet.Address {
-								owned = true
-							}
+				} else {
+					var hidden bool
+					for _, addr := range Market.Filters {
+						if creator[0] == addr {
+							hidden = true
 						}
+					}
 
-						if _, endTime := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "endBlockTime", Gnomes.Indexer.ChainHeight, true); endTime != nil {
-							if _, startTime := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "startBlockTime", Gnomes.Indexer.ChainHeight, true); startTime != nil {
-								now := uint64(time.Now().Unix())
-								if now > endTime[0] && endTime[0] > 0 {
-									expired = true
+					if !hidden {
+						if listType[0] == "sale" {
+							desc_check := TrimStringLen(desc[0], 66)
+							asset = coll[0] + "   " + header[0] + "   " + desc_check + "   " + scid
+							if owner, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "owner", Gnomes.Indexer.ChainHeight, true); owner != nil {
+								if owner[0] == rpc.Wallet.Address {
+									owned = true
+								}
+							}
+
+							if _, endTime := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "endBlockTime", Gnomes.Indexer.ChainHeight, true); endTime != nil {
+								if _, startTime := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "startBlockTime", Gnomes.Indexer.ChainHeight, true); startTime != nil {
+									now := uint64(time.Now().Unix())
+									if now > endTime[0] && endTime[0] > 0 {
+										expired = true
+									}
 								}
 							}
 						}
@@ -1708,22 +1720,23 @@ func SearchNFAsBy(by int, prefix string) (results []string) {
 
 			keys[i] = k
 
-			name, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(keys[i], "nameHdr", Gnomes.Indexer.ChainHeight, true)
-			coll, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(keys[i], "collection", Gnomes.Indexer.ChainHeight, true)
-			desc, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(keys[i], "descrHdr", Gnomes.Indexer.ChainHeight, true)
-			if name != nil && coll != nil && desc != nil {
-				switch by {
-				case 0:
-					if strings.HasPrefix(coll[0], prefix) {
-						desc_check := TrimStringLen(desc[0], 66)
-						asset := coll[0] + "   " + name[0] + "   " + desc_check + "   " + keys[i]
-						results = append(results, asset)
-					}
-				case 1:
-					if strings.HasPrefix(name[0], prefix) {
-						desc_check := TrimStringLen(desc[0], 66)
-						asset := coll[0] + "   " + name[0] + "   " + desc_check + "   " + keys[i]
-						results = append(results, asset)
+			if name, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(keys[i], "nameHdr", Gnomes.Indexer.ChainHeight, true); name != nil {
+				coll, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(keys[i], "collection", Gnomes.Indexer.ChainHeight, true)
+				desc, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(keys[i], "descrHdr", Gnomes.Indexer.ChainHeight, true)
+				if coll != nil && desc != nil {
+					switch by {
+					case 0:
+						if strings.HasPrefix(coll[0], prefix) {
+							desc_check := TrimStringLen(desc[0], 66)
+							asset := coll[0] + "   " + name[0] + "   " + desc_check + "   " + keys[i]
+							results = append(results, asset)
+						}
+					case 1:
+						if strings.HasPrefix(name[0], prefix) {
+							desc_check := TrimStringLen(desc[0], 66)
+							asset := coll[0] + "   " + name[0] + "   " + desc_check + "   " + keys[i]
+							results = append(results, asset)
+						}
 					}
 				}
 			}
