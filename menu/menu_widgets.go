@@ -1646,7 +1646,7 @@ func IntroTree() fyne.CanvasObject {
 }
 
 // Send Dero message menu
-func SendMessageMenu(window_icon, background fyne.Resource) {
+func SendMessageMenu(dest string, window_icon, background fyne.Resource) {
 	if !Control.msg_open {
 		Control.msg_open = true
 		smw := fyne.CurrentApp().NewWindow("Send Asset")
@@ -1715,6 +1715,10 @@ func SendMessageMenu(window_icon, background fyne.Resource) {
 			Control.msg_open = false
 			smw.Close()
 		}()
+
+		if dest != "" {
+			dest_entry.SetText(dest)
+		}
 
 		smw.SetContent(
 			container.New(layout.NewMaxLayout(),

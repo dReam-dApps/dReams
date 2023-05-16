@@ -1475,6 +1475,7 @@ func FindNfaListings(assets map[string]string) {
 	if Gnomes.Init && Gnomes.Sync && !GnomonClosing() {
 		auction := []string{" Collection,  Name,  Description,  SCID:"}
 		buy_now := []string{" Collection,  Name,  Description,  SCID:"}
+		my_list := []string{" Collection,  Name,  Description,  SCID:"}
 		if assets == nil {
 			assets = Gnomes.Indexer.Backend.GetAllOwnersAndSCIDs()
 		}
@@ -1488,16 +1489,24 @@ func FindNfaListings(assets map[string]string) {
 
 			keys[i] = k
 
-			a := checkNfaAuctionListing(keys[i])
+			a, owned, expired := checkNfaAuctionListing(keys[i])
 
-			if a != "" {
+			if a != "" && !expired {
 				auction = append(auction, a)
 			}
 
-			b := checkNfaBuyListing(keys[i])
+			if owned {
+				my_list = append(my_list, a)
+			}
 
-			if b != "" {
+			b, owned, expired := checkNfaBuyListing(keys[i])
+
+			if b != "" && !expired {
 				buy_now = append(buy_now, b)
+			}
+
+			if owned {
+				my_list = append(my_list, a)
 			}
 
 			i++
@@ -1509,8 +1518,10 @@ func FindNfaListings(assets map[string]string) {
 
 		Market.Auctions = auction
 		Market.Buy_now = buy_now
+		Market.My_list = my_list
 		sort.Strings(Market.Auctions)
 		sort.Strings(Market.Buy_now)
+		sort.Strings(Market.My_list)
 
 		Market.Auction_list.Refresh()
 		Market.Buy_list.Refresh()
@@ -1526,9 +1537,31 @@ func isDreamsNfaCollection(check string) bool {
 	return false
 }
 
+// Check NFA listing type and return owner address
+//   - Auction returns 1
+//   - Sale returns 2
+func CheckNFAListingType(scid string) (list int, addr string) {
+	if Gnomes.Init && Gnomes.Sync && !GnomonClosing() {
+		if owner, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "owner", Gnomes.Indexer.ChainHeight, true); owner != nil {
+			if listType, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "listType", Gnomes.Indexer.ChainHeight, true); listType != nil {
+				addr = owner[0]
+				switch listType[0] {
+				case "auction":
+					list = 1
+				case "sale":
+					list = 2
+				default:
+
+				}
+			}
+		}
+	}
+	return
+}
+
 // Check if NFA SCID is listed for auction
 //   - Market.DreamsFilter false for all NFA listings
-func checkNfaAuctionListing(scid string) (asset string) {
+func checkNfaAuctionListing(scid string) (asset string, owned, expired bool) {
 	if Gnomes.Init && !GnomonClosing() {
 		creator, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "creatorAddr", Gnomes.Indexer.ChainHeight, true)
 		listType, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "listType", Gnomes.Indexer.ChainHeight, true)
@@ -1542,6 +1575,20 @@ func checkNfaAuctionListing(scid string) (asset string) {
 					if listType[0] == "auction" {
 						desc_check := TrimStringLen(desc[0], 66)
 						asset = coll[0] + "   " + header[0] + "   " + desc_check + "   " + scid
+						if owner, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "owner", Gnomes.Indexer.ChainHeight, true); owner != nil {
+							if owner[0] == rpc.Wallet.Address {
+								owned = true
+							}
+						}
+
+						if _, endTime := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "endBlockTime", Gnomes.Indexer.ChainHeight, true); endTime != nil {
+							if _, startTime := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "startBlockTime", Gnomes.Indexer.ChainHeight, true); startTime != nil {
+								now := uint64(time.Now().Unix())
+								if now > endTime[0] && endTime[0] > 0 {
+									expired = true
+								}
+							}
+						}
 					}
 				}
 			} else {
@@ -1556,6 +1603,20 @@ func checkNfaAuctionListing(scid string) (asset string) {
 					if listType[0] == "auction" {
 						desc_check := TrimStringLen(desc[0], 66)
 						asset = coll[0] + "   " + header[0] + "   " + desc_check + "   " + scid
+						if owner, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "owner", Gnomes.Indexer.ChainHeight, true); owner != nil {
+							if owner[0] == rpc.Wallet.Address {
+								owned = true
+							}
+						}
+
+						if _, endTime := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "endBlockTime", Gnomes.Indexer.ChainHeight, true); endTime != nil {
+							if _, startTime := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "startBlockTime", Gnomes.Indexer.ChainHeight, true); startTime != nil {
+								now := uint64(time.Now().Unix())
+								if now > endTime[0] && endTime[0] > 0 {
+									expired = true
+								}
+							}
+						}
 					}
 				}
 			}
@@ -1567,7 +1628,7 @@ func checkNfaAuctionListing(scid string) (asset string) {
 
 // Check if NFA SCID is listed as buy now
 //   - Market.DreamsFilter false for all NFA listings
-func checkNfaBuyListing(scid string) (asset string) {
+func checkNfaBuyListing(scid string) (asset string, owned, expired bool) {
 	if Gnomes.Init && !GnomonClosing() {
 		creator, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "creatorAddr", Gnomes.Indexer.ChainHeight, true)
 		listType, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "listType", Gnomes.Indexer.ChainHeight, true)
@@ -1581,6 +1642,20 @@ func checkNfaBuyListing(scid string) (asset string) {
 					if listType[0] == "sale" {
 						desc_check := TrimStringLen(desc[0], 66)
 						asset = coll[0] + "   " + header[0] + "   " + desc_check + "   " + scid
+						if owner, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "owner", Gnomes.Indexer.ChainHeight, true); owner != nil {
+							if owner[0] == rpc.Wallet.Address {
+								owned = true
+							}
+						}
+
+						if _, endTime := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "endBlockTime", Gnomes.Indexer.ChainHeight, true); endTime != nil {
+							if _, startTime := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "startBlockTime", Gnomes.Indexer.ChainHeight, true); startTime != nil {
+								now := uint64(time.Now().Unix())
+								if now > endTime[0] && endTime[0] > 0 {
+									expired = true
+								}
+							}
+						}
 					}
 				}
 			} else {
@@ -1595,10 +1670,68 @@ func checkNfaBuyListing(scid string) (asset string) {
 					if listType[0] == "sale" {
 						desc_check := TrimStringLen(desc[0], 66)
 						asset = coll[0] + "   " + header[0] + "   " + desc_check + "   " + scid
+						if owner, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "owner", Gnomes.Indexer.ChainHeight, true); owner != nil {
+							if owner[0] == rpc.Wallet.Address {
+								owned = true
+							}
+						}
+
+						if _, endTime := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "endBlockTime", Gnomes.Indexer.ChainHeight, true); endTime != nil {
+							if _, startTime := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "startBlockTime", Gnomes.Indexer.ChainHeight, true); startTime != nil {
+								now := uint64(time.Now().Unix())
+								if now > endTime[0] && endTime[0] > 0 {
+									expired = true
+								}
+							}
+						}
 					}
 				}
 			}
 		}
+	}
+
+	return
+}
+
+// Search NFAs in index by name or collection
+func SearchNFAsBy(by int, prefix string) (results []string) {
+	if Gnomes.Init && Gnomes.Sync && !GnomonClosing() {
+		results = []string{" Collection,  Name,  Description,  SCID:"}
+		assets := Gnomes.Indexer.Backend.GetAllOwnersAndSCIDs()
+		keys := make([]string, len(assets))
+
+		i := 0
+		for k := range assets {
+			if GnomonClosing() || !Gnomes.Init {
+				return
+			}
+
+			keys[i] = k
+
+			name, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(keys[i], "nameHdr", Gnomes.Indexer.ChainHeight, true)
+			coll, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(keys[i], "collection", Gnomes.Indexer.ChainHeight, true)
+			desc, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(keys[i], "descrHdr", Gnomes.Indexer.ChainHeight, true)
+			if name != nil && coll != nil && desc != nil {
+				switch by {
+				case 0:
+					if strings.HasPrefix(coll[0], prefix) {
+						desc_check := TrimStringLen(desc[0], 66)
+						asset := coll[0] + "   " + name[0] + "   " + desc_check + "   " + keys[i]
+						results = append(results, asset)
+					}
+				case 1:
+					if strings.HasPrefix(name[0], prefix) {
+						desc_check := TrimStringLen(desc[0], 66)
+						asset := coll[0] + "   " + name[0] + "   " + desc_check + "   " + keys[i]
+						results = append(results, asset)
+					}
+				}
+			}
+
+			i++
+		}
+
+		sort.Strings(results)
 	}
 
 	return
@@ -1839,6 +1972,91 @@ func GetBuyNowDetails(scid string) {
 				Market.Market_button.Show()
 				if now > endTime[0] || Market.Confirming {
 					Market.Market_button.Hide()
+				}
+			}()
+		}
+	}
+}
+
+// Create info for unlisted NFA
+func GetUnlistedDetails(scid string) {
+	if !GnomonClosing() && len(scid) == 64 {
+		name, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "nameHdr", Gnomes.Indexer.ChainHeight, true)
+		collection, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "collection", Gnomes.Indexer.ChainHeight, true)
+		description, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "descrHdr", Gnomes.Indexer.ChainHeight, true)
+		creator, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "creatorAddr", Gnomes.Indexer.ChainHeight, true)
+		owner, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "owner", Gnomes.Indexer.ChainHeight, true)
+		typeHdr, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "typeHdr", Gnomes.Indexer.ChainHeight, true)
+		_, owner_update := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "ownerCanUpdate", Gnomes.Indexer.ChainHeight, true)
+		_, start := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "startPrice", Gnomes.Indexer.ChainHeight, true)
+		_, royalty := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "royalty", Gnomes.Indexer.ChainHeight, true)
+		_, endTime := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "endBlockTime", Gnomes.Indexer.ChainHeight, true)
+		_, startTime := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "startBlockTime", Gnomes.Indexer.ChainHeight, true)
+		_, artFee := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "artificerFee", Gnomes.Indexer.ChainHeight, true)
+
+		if name != nil && collection != nil && start != nil && royalty != nil && endTime != nil && artFee != nil && typeHdr != nil {
+			go func() {
+				var ty string
+				check := strings.Trim(name[0], "0123456789")
+				if check == "AZYPC" || check == "SIXPC" {
+					ty = "Playing card deck"
+				} else if check == "AZYPCB" || check == "SIXPCB" {
+					ty = "Playing card back"
+				} else if check == "AZYDS" || check == "SIXART" {
+					ty = "Theme/Avatar"
+				} else if check == "DBC" || check == "HighStrangeness" {
+					ty = "Avatar"
+				} else {
+					ty = typeHdr[0]
+				}
+
+				Market.Viewing_coll = check
+
+				Market.Name.SetText(name[0])
+
+				Market.Type.SetText(ty)
+
+				Market.Collection.SetText(collection[0])
+
+				Market.Description.SetText(description[0])
+
+				if Market.Creator.Text != creator[0] {
+					Market.Creator.SetText(creator[0])
+				}
+
+				if Market.Owner.Text != owner[0] {
+					Market.Owner.SetText(owner[0])
+				}
+
+				if owner_update[0] == 1 {
+					Market.Owner_update.SetText("Yes")
+				} else {
+					Market.Owner_update.SetText("No")
+				}
+
+				Market.Art_fee.SetText(strconv.Itoa(int(artFee[0])) + "%")
+
+				Market.Royalty.SetText(strconv.Itoa(int(royalty[0])) + "%")
+
+				Market.Entry.SetText("0")
+				Market.Entry.Disable()
+
+				now := uint64(time.Now().Unix())
+				if owner[0] == rpc.Wallet.Address {
+					if now < startTime[0]+300 && startTime[0] > 0 && !Market.Confirming {
+						Market.Cancel_button.Show()
+					} else {
+						Market.Cancel_button.Hide()
+					}
+
+					if now > endTime[0] && endTime[0] > 0 && !Market.Confirming {
+						Market.Close_button.Show()
+					} else {
+						Market.Close_button.Hide()
+					}
+				} else {
+					Market.Close_button.Hide()
+					Market.Cancel_button.Hide()
 				}
 			}()
 		}

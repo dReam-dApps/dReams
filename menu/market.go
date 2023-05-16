@@ -24,6 +24,7 @@ import (
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
+	xwidget "fyne.io/x/fyne/widget"
 )
 
 type marketObjects struct {
@@ -50,6 +51,7 @@ type marketObjects struct {
 	Close_button  *widget.Button
 	Auction_list  *widget.List
 	Buy_list      *widget.List
+	My_listings   *widget.List
 	Icon          canvas.Image
 	Cover         canvas.Image
 	Details_box   fyne.Container
@@ -62,6 +64,7 @@ type marketObjects struct {
 	Viewing_coll  string
 	Auctions      []string
 	Buy_now       []string
+	My_list       []string
 	Filters       []string
 }
 
@@ -117,7 +120,7 @@ func BidBuyConfirm(scid string, amt uint64, b int, obj *container.Split, reset f
 	amt_str := fmt.Sprintf("%.5f", f/100000)
 	switch b {
 	case 0:
-		listing := checkNfaAuctionListing(scid)
+		listing, _, _ := checkNfaAuctionListing(scid)
 		split := strings.Split(listing, "   ")
 		if len(split) == 4 {
 			coll = split[0]
@@ -125,7 +128,7 @@ func BidBuyConfirm(scid string, amt uint64, b int, obj *container.Split, reset f
 		}
 		text = fmt.Sprintf("Bidding on SCID:\n\n%s\n\nAsset: %s\n\nCollection: %s\n\nBid amount: %s Dero\n\nConfirm bid", scid, name, coll, amt_str)
 	case 1:
-		listing := checkNfaBuyListing(scid)
+		listing, _, _ := checkNfaBuyListing(scid)
 		split := strings.Split(listing, "   ")
 		if len(split) == 4 {
 			coll = split[0]
@@ -190,14 +193,14 @@ func ConfirmCancelClose(scid string, c int, obj *container.Split, reset fyne.Can
 	var text, coll, name string
 
 	if Market.Tab == "Buy" {
-		listing := checkNfaBuyListing(scid)
+		listing, _, _ := checkNfaBuyListing(scid)
 		split := strings.Split(listing, "   ")
 		if len(split) == 4 {
 			coll = split[0]
 			name = split[1]
 		}
 	} else if Market.Tab == "Auction" {
-		listing := checkNfaAuctionListing(scid)
+		listing, _, _ := checkNfaAuctionListing(scid)
 		split := strings.Split(listing, "   ")
 		if len(split) == 4 {
 			coll = split[0]
@@ -309,6 +312,118 @@ func BuyNowListings() fyne.Widget {
 	}
 
 	return Market.Buy_list
+}
+
+// NFA listing for connected wallet
+//   - Gets images and details for Market objects on selected
+func MyNFAListings() fyne.Widget {
+	Market.My_listings = widget.NewList(
+		func() int {
+			return len(Market.My_list)
+		},
+		func() fyne.CanvasObject {
+			return widget.NewLabel("")
+		},
+		func(i widget.ListItemID, o fyne.CanvasObject) {
+			o.(*widget.Label).SetText(Market.My_list[i])
+		})
+
+	Market.My_listings.OnSelected = func(id widget.ListItemID) {
+		if id != 0 {
+			split := strings.Split(Market.My_list[id], "   ")
+			if split[3] != Market.Viewing {
+				clearNfaImages()
+				Market.Viewing = split[3]
+				go GetNfaImages(split[3])
+				go GetUnlistedDetails(split[3])
+			}
+		}
+	}
+
+	return Market.My_listings
+}
+
+// Search NFA objects
+func SearchNFAs() fyne.CanvasObject {
+	var dest_addr string
+	search_entry := xwidget.NewCompletionEntry([]string{})
+	search_entry.Wrapping = fyne.TextTruncate
+	search_entry.OnCursorChanged = func() {
+		split := strings.Split(search_entry.Text, "   ")
+		if len(split) > 3 {
+			if split[3] != Market.Viewing {
+				Market.Viewing = split[3]
+				list, addr := CheckNFAListingType(split[3])
+				dest_addr = addr
+				switch list {
+				case 1:
+					Market.Tab = "Auction"
+					Market.Market_button.Text = "Bid"
+					Market.Entry.SetText("0.0")
+					Market.Entry.Enable()
+					ResetAuctionInfo()
+					AuctionInfo()
+					clearNfaImages()
+					go GetNfaImages(split[3])
+					go GetAuctionDetails(split[3])
+				case 2:
+					Market.Tab = "Buy"
+					Market.Market_button.Text = "Buy"
+					Market.Entry.SetText("0.0")
+					Market.Entry.Disable()
+					ResetBuyInfo()
+					BuyNowInfo()
+					clearNfaImages()
+					go GetNfaImages(split[3])
+					go GetBuyNowDetails(split[3])
+				default:
+					Market.Tab = "Buy"
+					Market.Entry.SetText("0.0")
+					Market.Entry.Disable()
+					ResetNotListedInfo()
+					NotListedInfo()
+					clearNfaImages()
+					go GetNfaImages(split[3])
+					go GetUnlistedDetails(split[3])
+				}
+			}
+		}
+	}
+
+	search_by := widget.NewRadioGroup([]string{"Collection", "Name"}, nil)
+	search_by.Horizontal = true
+	search_by.SetSelected("Collection")
+
+	search_button := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "search"), func() {
+		if search_entry.Text != "" && rpc.Wallet.Connect {
+			switch search_by.Selected {
+			case "Collection":
+				if results := SearchNFAsBy(0, search_entry.Text); results != nil {
+					search_entry.SetOptions(results)
+					search_entry.ShowCompletion()
+				}
+			case "Name":
+				if results := SearchNFAsBy(1, search_entry.Text); results != nil {
+					search_entry.SetOptions(results)
+					search_entry.ShowCompletion()
+				}
+			}
+		}
+	})
+
+	clear_button := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "searchReplace"), func() {
+		search_entry.SetText("")
+	})
+
+	search_cont := container.NewBorder(container.NewCenter(search_by), nil, clear_button, search_button, search_entry)
+
+	message_button := widget.NewButton("Message Owner", func() {
+		if rpc.Wallet.Connect && dest_addr != "" {
+			SendMessageMenu(dest_addr, bundle.ResourceDTGnomonIconPng, bundle.ResourceOwBackgroundPng)
+		}
+	})
+
+	return container.NewBorder(search_cont, message_button, nil, nil, container.NewHBox())
 }
 
 // NFA market icon image with frame
@@ -442,6 +557,46 @@ func AuctionInfo() fyne.CanvasObject {
 	return &Market.Details_box
 }
 
+// Container for unlisted info objects
+func NotListedInfo() fyne.CanvasObject {
+	unlisted_form := []*widget.FormItem{}
+	unlisted_form = append(unlisted_form, widget.NewFormItem("Name", Market.Name))
+	unlisted_form = append(unlisted_form, widget.NewFormItem("Asset Type", Market.Type))
+	unlisted_form = append(unlisted_form, widget.NewFormItem("Collection", Market.Collection))
+	unlisted_form = append(unlisted_form, widget.NewFormItem("Description", Market.Description))
+	unlisted_form = append(unlisted_form, widget.NewFormItem("Creator", Market.Creator))
+	unlisted_form = append(unlisted_form, widget.NewFormItem("Owner", Market.Owner))
+	unlisted_form = append(unlisted_form, widget.NewFormItem("Artificer %", Market.Art_fee))
+	unlisted_form = append(unlisted_form, widget.NewFormItem("Royalty %", Market.Royalty))
+
+	unlisted_form = append(unlisted_form, widget.NewFormItem("Owner Update", Market.Owner_update))
+
+	Market.Details_box = *container.NewAdaptiveGrid(2,
+		container.NewVBox(container.NewHBox(NfaIcon(bundle.ResourceAvatarFramePng), layout.NewSpacer()), widget.NewForm(unlisted_form...)),
+		NfaImg(Market.Cover))
+
+	Market.Description.Wrapping = fyne.TextWrapWord
+	Market.Details_box.Refresh()
+
+	return &Market.Details_box
+}
+
+// Set unlisted display content to default values
+func ResetNotListedInfo() {
+	Market.Bid_amt = 0
+	clearNfaImages()
+	Market.Name.SetText("Name:")
+	Market.Type.SetText("Asset Type:")
+	Market.Collection.SetText("Collection:")
+	Market.Description.SetText("Description:")
+	Market.Creator.SetText("Creator:")
+	Market.Art_fee.SetText("Artificer:")
+	Market.Royalty.SetText("Royalty:")
+	Market.Owner.SetText("Owner:")
+	Market.Owner_update.SetText("Owner can update:")
+	Market.Details_box.Refresh()
+}
+
 // Refresh Market images
 func RefreshNfaImages() {
 	if Market.Cover.Resource != nil {
@@ -535,6 +690,7 @@ func MarketTab(ti *container.TabItem) {
 		go FindNfaListings(nil)
 		Market.Tab = "Auction"
 		Market.Auction_list.UnselectAll()
+		Market.My_listings.UnselectAll()
 		Market.Viewing = ""
 		Market.Viewing_coll = ""
 		Market.Market_button.Text = "Bid"
@@ -550,12 +706,36 @@ func MarketTab(ti *container.TabItem) {
 		Market.Viewing = ""
 		Market.Viewing_coll = ""
 		Market.Market_button.Text = "Buy"
+		Market.Entry.SetText("0.0")
 		Market.Entry.Disable()
 		Market.Market_button.Refresh()
-		Market.Details_box.Refresh()
+		ResetBuyInfo()
+		BuyNowInfo()
+	case "My Listings":
+		go FindNfaListings(nil)
+		Market.Tab = "Buy"
+		Market.My_listings.UnselectAll()
+		Market.Viewing = ""
+		Market.Viewing_coll = ""
+		Market.Entry.SetText("0.0")
+		Market.Entry.Disable()
+		ResetBuyInfo()
+		BuyNowInfo()
+	case "Search":
+		Market.Tab = "Buy"
+		Market.Auction_list.UnselectAll()
+		Market.Buy_list.UnselectAll()
+		Market.Viewing = ""
+		Market.Viewing_coll = ""
+		Market.Entry.SetText("0.0")
+		Market.Entry.Disable()
 		ResetBuyInfo()
 		BuyNowInfo()
 	}
+
+	Market.Close_button.Hide()
+	Market.Cancel_button.Hide()
+	Market.Market_button.Hide()
 }
 
 // NFA market layout
@@ -564,7 +744,9 @@ func PlaceMarket() *container.Split {
 
 	tabs := container.NewAppTabs(
 		container.NewTabItem("Auctions", AuctionListings()),
-		container.NewTabItem("Buy Now", BuyNowListings()))
+		container.NewTabItem("Buy Now", BuyNowListings()),
+		container.NewTabItem("My Listings", MyNFAListings()),
+		container.NewTabItem("Search", SearchNFAs()))
 
 	tabs.SetTabLocation(container.TabLocationTop)
 	tabs.OnSelected = func(ti *container.TabItem) {
