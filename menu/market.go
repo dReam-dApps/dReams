@@ -412,10 +412,15 @@ func SearchNFAs() fyne.CanvasObject {
 	})
 
 	clear_button := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "searchReplace"), func() {
+		search_entry.SetOptions([]string{" Collection,  Name,  Description,  SCID:"})
 		search_entry.SetText("")
 	})
 
-	search_cont := container.NewBorder(container.NewCenter(search_by), nil, clear_button, search_button, search_entry)
+	show_results := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "arrowDropDown"), func() {
+		search_entry.ShowCompletion()
+	})
+
+	search_cont := container.NewBorder(container.NewCenter(search_by), nil, container.NewHBox(clear_button, show_results), search_button, search_entry)
 
 	message_button := widget.NewButton("Message Owner", func() {
 		if rpc.Wallet.Connect && dest_addr != "" {

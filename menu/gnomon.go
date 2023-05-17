@@ -1086,7 +1086,7 @@ func GetAssetUrl(w int, scid string) (url string) {
 	case 1:
 		link, _ = Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "iconURLHdr", Gnomes.Indexer.LastIndexedHeight, true)
 	case 2:
-		link, _ = Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "coverURLHdr", Gnomes.Indexer.LastIndexedHeight, true)
+		link, _ = Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "coverURL", Gnomes.Indexer.LastIndexedHeight, true)
 	default:
 		// nothing
 	}
@@ -1720,22 +1720,26 @@ func SearchNFAsBy(by int, prefix string) (results []string) {
 
 			keys[i] = k
 
-			if name, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(keys[i], "nameHdr", Gnomes.Indexer.ChainHeight, true); name != nil {
-				coll, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(keys[i], "collection", Gnomes.Indexer.ChainHeight, true)
-				desc, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(keys[i], "descrHdr", Gnomes.Indexer.ChainHeight, true)
-				if coll != nil && desc != nil {
-					switch by {
-					case 0:
-						if strings.HasPrefix(coll[0], prefix) {
-							desc_check := TrimStringLen(desc[0], 66)
-							asset := coll[0] + "   " + name[0] + "   " + desc_check + "   " + keys[i]
-							results = append(results, asset)
-						}
-					case 1:
-						if strings.HasPrefix(name[0], prefix) {
-							desc_check := TrimStringLen(desc[0], 66)
-							asset := coll[0] + "   " + name[0] + "   " + desc_check + "   " + keys[i]
-							results = append(results, asset)
+			if file, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(keys[i], "fileURL", Gnomes.Indexer.ChainHeight, true); file != nil {
+				if ValidNfa(file[0]) {
+					if name, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(keys[i], "nameHdr", Gnomes.Indexer.ChainHeight, true); name != nil {
+						coll, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(keys[i], "collection", Gnomes.Indexer.ChainHeight, true)
+						desc, _ := Gnomes.Indexer.Backend.GetSCIDValuesByKey(keys[i], "descrHdr", Gnomes.Indexer.ChainHeight, true)
+						if coll != nil && desc != nil {
+							switch by {
+							case 0:
+								if strings.HasPrefix(coll[0], prefix) {
+									desc_check := TrimStringLen(desc[0], 66)
+									asset := coll[0] + "   " + name[0] + "   " + desc_check + "   " + keys[i]
+									results = append(results, asset)
+								}
+							case 1:
+								if strings.HasPrefix(name[0], prefix) {
+									desc_check := TrimStringLen(desc[0], 66)
+									asset := coll[0] + "   " + name[0] + "   " + desc_check + "   " + keys[i]
+									results = append(results, asset)
+								}
+							}
 						}
 					}
 				}
