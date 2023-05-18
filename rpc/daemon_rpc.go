@@ -31,6 +31,7 @@ const (
 	pSportsSCID  = "fffdc4ea6d157880841feab335ab4755edcde4e60fec2fff661009b16f44fa94"
 	TarotSCID    = "a6fc0033327073dd54e448192af929466596fce4d689302e558bc85ea8734a82"
 	DerBnbSCID   = "cfbd566d3678dec6e6dfa3a919feae5306ab12af1485e8bcf9320bd5a122b1d3"
+	TrvlSCID     = "efacf71e7b5f849653bfa49bfb9dcf7ad3d372944aef33f1e6f54dc95890e3ba"
 	GnomonSCID   = "a05395bb0cf77adc850928b0db00eb5ca7a9ccbafd9a38d021c8d299ad5ce1a4"
 	DevAddress   = "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn"
 	ArtAddress   = "dero1qy0khp9s9yw2h0eu20xmy9lth3zp5cacmx3rwt6k45l568d2mmcf6qgcsevzx"

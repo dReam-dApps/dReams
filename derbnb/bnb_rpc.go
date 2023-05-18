@@ -673,3 +673,119 @@ func UpdateMetadata(scid, metadata string) {
 	log.Println("[UpdateMetadata] Update Metedata TX:", txid)
 	rpc.AddLog("Update Metadata TX: " + txid.TXID)
 }
+
+// Deposit Dero or TRVL into Derbnb SC
+//   - token true for TRVL
+func DepositToDerBnb(token bool, amt uint64) {
+	rpcClientW, ctx, cancel := rpc.SetWalletClient(rpc.Wallet.Rpc, rpc.Wallet.UserPass)
+	defer cancel()
+
+	arg1 := dero.Argument{Name: "entrypoint", DataType: "S", Value: "Deposit"}
+	args := dero.Arguments{arg1}
+	txid := dero.Transfer_Result{}
+
+	var t1 dero.Transfer
+	if token {
+		t1 = dero.Transfer{
+			SCID:        crypto.HashHexToHash(rpc.TrvlSCID),
+			Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
+			Amount:      0,
+			Burn:        amt,
+		}
+	} else {
+		t1 = dero.Transfer{
+			Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
+			Amount:      0,
+			Burn:        amt,
+		}
+	}
+
+	t := []dero.Transfer{t1}
+	fee := rpc.GasEstimate(rpc.DerBnbSCID, "[DepositToDerBnb]", args, t, rpc.LowLimitFee)
+	params := &dero.Transfer_Params{
+		Transfers: t,
+		SC_ID:     rpc.DerBnbSCID,
+		SC_RPC:    args,
+		Ringsize:  2,
+		Fees:      fee,
+	}
+
+	if err := rpcClientW.CallFor(ctx, &txid, "transfer", params); err != nil {
+		log.Println("[DepositToDerBnb]", err)
+		return
+	}
+
+	log.Println("[DepositToDerBnb] Deposit TX:", txid)
+	rpc.AddLog("DerBnb Deposit TX: " + txid.TXID)
+}
+
+// Withdraw Dero from Derbnb SC
+func WithdrawFromDerBnb() {
+	rpcClientW, ctx, cancel := rpc.SetWalletClient(rpc.Wallet.Rpc, rpc.Wallet.UserPass)
+	defer cancel()
+
+	arg1 := dero.Argument{Name: "entrypoint", DataType: "S", Value: "Withdraw"}
+	arg2 := dero.Argument{Name: "allowance", DataType: "U", Value: 0}
+	arg3 := dero.Argument{Name: "seat", DataType: "U", Value: 99}
+	args := dero.Arguments{arg1, arg2, arg3}
+	txid := dero.Transfer_Result{}
+
+	t1 := dero.Transfer{
+		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
+		Amount:      0,
+		Burn:        0,
+	}
+
+	t := []dero.Transfer{t1}
+	fee := rpc.GasEstimate(rpc.DerBnbSCID, "[WithdrawFromDerBnb]", args, t, rpc.LowLimitFee)
+	params := &dero.Transfer_Params{
+		Transfers: t,
+		SC_ID:     rpc.DerBnbSCID,
+		SC_RPC:    args,
+		Ringsize:  2,
+		Fees:      fee,
+	}
+
+	if err := rpcClientW.CallFor(ctx, &txid, "transfer", params); err != nil {
+		log.Println("[WithdrawFromDerBnb]", err)
+		return
+	}
+
+	log.Println("[WithdrawFromDerBnb] Withdraw TX:", txid)
+	rpc.AddLog("DerBnb Withdraw TX: " + txid.TXID)
+}
+
+// Sell shares stored in DerBnb SC
+func SellDerBnbShares(shares uint64) {
+	rpcClientW, ctx, cancel := rpc.SetWalletClient(rpc.Wallet.Rpc, rpc.Wallet.UserPass)
+	defer cancel()
+
+	arg1 := dero.Argument{Name: "entrypoint", DataType: "S", Value: "SellShares"}
+	arg2 := dero.Argument{Name: "shares", DataType: "U", Value: shares}
+	args := dero.Arguments{arg1, arg2}
+	txid := dero.Transfer_Result{}
+
+	t1 := dero.Transfer{
+		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
+		Amount:      0,
+		Burn:        0,
+	}
+
+	t := []dero.Transfer{t1}
+	fee := rpc.GasEstimate(rpc.DerBnbSCID, "[SellDerBnbShares]", args, t, rpc.LowLimitFee)
+	params := &dero.Transfer_Params{
+		Transfers: t,
+		SC_ID:     rpc.DerBnbSCID,
+		SC_RPC:    args,
+		Ringsize:  2,
+		Fees:      fee,
+	}
+
+	if err := rpcClientW.CallFor(ctx, &txid, "transfer", params); err != nil {
+		log.Println("[SellDerBnbShares]", err)
+		return
+	}
+
+	log.Println("[SellDerBnbShares] Sell Shares TX:", txid)
+	rpc.AddLog("DerBnb Sell Shares TX: " + txid.TXID)
+}

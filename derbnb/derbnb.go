@@ -547,3 +547,13 @@ func getUserConfirmedBookings(scid string, all bool) (confirmed_bookings []strin
 
 	return
 }
+
+func getUserShares() (shares, epoch uint64) {
+	if _, check_shares := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(rpc.DerBnbSCID, rpc.Wallet.Address+"_SHARES", menu.Gnomes.Indexer.ChainHeight, true); check_shares != nil {
+		shares = check_shares[0]
+		if _, check_epoch := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(rpc.DerBnbSCID, rpc.Wallet.Address+"_EPOCH", menu.Gnomes.Indexer.ChainHeight, true); check_epoch != nil {
+			epoch = check_epoch[0]
+		}
+	}
+	return
+}

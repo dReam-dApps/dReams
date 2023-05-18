@@ -319,6 +319,13 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 	derbnb_gif, _ := xwidget.NewAnimatedGifFromResource(bundle.ResourceDerbnbGifGif)
 	derbnb_gif.SetMinSize(fyne.NewSize(100, 100))
 
+	// DerBnb SC deposit/withdraw entry and container
+	var trvl_border *fyne.Container
+	trvl_entry := dwidget.DeroAmtEntry("", 1, 0)
+	trvl_entry.SetPlaceHolder("Amount:")
+	trvl_entry.AllowFloat = false
+	trvl_entry.Validator = validation.NewRegexp(`^\d{1,}\.\d{1,5}$|^[^0]\d{0,}$`, "Float required")
+
 	var release_check *widget.Check
 	var confirm_action, cancel_action *widget.Button
 	confirm_action = widget.NewButton("Confirm", func() {
@@ -543,6 +550,16 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 			if mar, err := json.Marshal(metadata); err == nil {
 				UpdateMetadata(scid_entry.Text, string(mar))
 			}
+		case 15:
+			if amt_fl, err := strconv.ParseFloat(trvl_entry.Text, 64); err == nil {
+				DepositToDerBnb(true, uint64(amt_fl))
+			}
+		case 16:
+			if amt_fl, err := strconv.ParseFloat(trvl_entry.Text, 64); err == nil {
+				SellDerBnbShares(uint64(amt_fl))
+			}
+		case 17:
+			WithdrawFromDerBnb()
 		default:
 
 		}
@@ -559,14 +576,27 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 	})
 
 	cancel_action = widget.NewButton("Cancel", func() {
+		check := confirm_action_int
 		confirm_action_int = 0
 		comment_entry.SetPlaceHolder("")
 		comment_entry.SetText("")
 		release_entry.SetText("")
 		release_check.SetChecked(false)
 		confirm_action.Show()
-		derbnb_gif.Stop()
-		w.SetContent(reset_to_main)
+		if check < 15 {
+			derbnb_gif.Stop()
+			w.SetContent(reset_to_main)
+			return
+		}
+
+		trvl_entry.SetText("")
+		trvl_bal := rpc.TokenBalance(rpc.TrvlSCID)
+		shares, epoch := getUserShares()
+		next_withdraw := uint64(time.Now().Unix()-1684428835) / 2629743
+		confirm_action_label.SetText(fmt.Sprintf("TRVL Balance: %d\n\nShares: %d\n\nWithdraw Available: %t", trvl_bal, shares, next_withdraw < epoch))
+		confirm_border.Objects[4] = container.NewVBox(layout.NewSpacer(), confirm_action_label, layout.NewSpacer())
+		confirm_border.Objects[2] = trvl_border
+		w.SetContent(confirm_max)
 	})
 
 	confirm_action_cont := container.NewAdaptiveGrid(2, container.NewMax(confirm_action), cancel_action)
@@ -650,6 +680,59 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 			confirm_action_int = 13
 			w.SetContent(confirm_max)
 		}
+	})
+
+	// DerBnb SC deposit/withdraw controls
+	trvl_dep := widget.NewButton("Deposit", func() {
+		if trvl_entry.Validate() == nil {
+			confirm_action_label.SetText(fmt.Sprintf("Deposit %s TRVL", trvl_entry.Text))
+			confirm_border.Objects[4] = container.NewVBox(layout.NewSpacer(), confirm_action_label, layout.NewSpacer())
+			confirm_border.Objects[2] = confirm_action_cont
+			confirm_action_int = 15
+		}
+	})
+
+	trvl_sell := widget.NewButton("Sell Shares", func() {
+		if trvl_entry.Validate() == nil {
+			confirm_action_label.SetText(fmt.Sprintf("Sell %s Shares", trvl_entry.Text))
+			confirm_border.Objects[4] = container.NewVBox(layout.NewSpacer(), confirm_action_label, layout.NewSpacer())
+			confirm_border.Objects[2] = confirm_action_cont
+			confirm_action_int = 16
+		}
+	})
+
+	trvl_withdraw := widget.NewButton("Withdraw", func() {
+		shares, _ := getUserShares()
+		confirm_action_label.SetText(fmt.Sprintf("Withdraw Dero\n\nYou have %d Shares", shares))
+		confirm_border.Objects[4] = container.NewVBox(layout.NewSpacer(), confirm_action_label, layout.NewSpacer())
+		confirm_border.Objects[2] = confirm_action_cont
+		confirm_action_int = 17
+	})
+
+	trvl_back := widget.NewButton("Back", func() {
+		confirm_action_int = 0
+		comment_entry.SetPlaceHolder("")
+		comment_entry.SetText("")
+		release_entry.SetText("")
+		release_check.SetChecked(false)
+		confirm_action.Show()
+		derbnb_gif.Stop()
+		confirm_border.Objects[2] = confirm_action_cont
+		w.SetContent(reset_to_main)
+	})
+
+	trvl_border = container.NewVBox(layout.NewSpacer(), container.NewAdaptiveGrid(2, trvl_entry, layout.NewSpacer()), container.NewAdaptiveGrid(4, trvl_dep, trvl_sell, trvl_withdraw, trvl_back))
+
+	trvl_button := widget.NewButton("TRVL Tokens", func() {
+		derbnb_gif.Start()
+		trvl_entry.SetText("")
+		trvl_bal := rpc.TokenBalance(rpc.TrvlSCID)
+		shares, epoch := getUserShares()
+		next_withdraw := uint64(time.Now().Unix()-1684428835) / 2629743
+		confirm_action_label.SetText(fmt.Sprintf("TRVL Balance: %d\n\nShares: %d\n\nWithdraw Available: %t", trvl_bal, shares, next_withdraw < epoch))
+		confirm_border.Objects[4] = container.NewVBox(layout.NewSpacer(), confirm_action_label, layout.NewSpacer())
+		confirm_border.Objects[2] = trvl_border
+		w.SetContent(confirm_max)
 	})
 
 	listings_list.OnSelected = func(id widget.ListItemID) {
@@ -1106,6 +1189,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 
 	change_dates.Hide()
 
+	trvl_button.Hide()
 	request_button.Hide()
 	mint_prop.Hide()
 
@@ -1377,7 +1461,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 		container.NewHBox(widget.NewLabel("Properties"), set_location_button, list_button, remove_button, property_add_info))
 
 	user_info := container.NewVSplit(
-		container.NewBorder(booking_list_control, container.NewAdaptiveGrid(3, container.NewMax(cancel_booking_button), container.NewMax(rate_booking_button), container.NewMax(send_message)), nil, nil, booking_list),
+		container.NewBorder(booking_list_control, container.NewAdaptiveGrid(4, container.NewMax(cancel_booking_button), container.NewMax(rate_booking_button), container.NewMax(send_message), container.NewMax(trvl_button)), nil, nil, booking_list),
 		container.NewBorder(property_list_control, nil, nil, nil, property_list))
 
 	layout1 := container.NewBorder(dates_box, container.NewAdaptiveGrid(3, layout.NewSpacer(), request_button, layout.NewSpacer()), nil, nil, layout1_split)
@@ -1475,6 +1559,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 				change_dates.Hide()
 				property_add_info.Hide()
 
+				trvl_button.Hide()
 				request_button.Hide()
 				mint_prop.Hide()
 
@@ -1483,6 +1568,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 
 				listing_label.SetText("")
 			} else if rpc.Daemon.Connect {
+				trvl_button.Show()
 				mint_prop.Show()
 			}
 
