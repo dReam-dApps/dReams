@@ -59,25 +59,25 @@ func BaccResult(r string) *canvas.Text {
 func BaccaratButtons(w fyne.Window) fyne.CanvasObject {
 	entry := dwidget.DeroAmtEntry("", 1, 0)
 	entry.PlaceHolder = "dReams:"
+	entry.AllowFloat = false
 	entry.SetText("10")
 	entry.Validator = validation.NewRegexp(`^\d{1,}$`, "Int required")
 	entry.OnChanged = func(s string) {
 		if rpc.Daemon.Connect {
 			if f, err := strconv.ParseFloat(s, 64); err == nil {
-				if f < 10 {
-					entry.SetText("10")
+				if f < rpc.Bacc.MinBet {
+					entry.SetText(rpc.Display.BaccMin)
 				}
 
-				if f > 250 {
-					entry.SetText("250")
+				if f > rpc.Bacc.MaxBet {
+					entry.SetText(rpc.Display.BaccMax)
 				}
 			}
 
 			if entry.Validate() != nil {
-				entry.SetText("10")
+				entry.SetText(rpc.Display.BaccMin)
 			}
 		}
-
 	}
 
 	player_button := widget.NewButton("Player", func() {
@@ -176,6 +176,7 @@ func BaccTable(img fyne.Resource) fyne.CanvasObject {
 // Gets list of current Baccarat tables from on chain store and refresh options
 func GetBaccTables() {
 	if rpc.Daemon.Connect {
+		Table.Map = make(map[string]string)
 		if table_map, ok := rpc.FindStringKey(rpc.RatingSCID, "bacc_tables", rpc.Daemon.Rpc).(string); ok {
 			if str, err := hex.DecodeString(table_map); err == nil {
 				json.Unmarshal([]byte(str), &Table.Map)

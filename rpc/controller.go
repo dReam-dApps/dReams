@@ -171,6 +171,8 @@ type baccValues struct {
 	B_card2  int
 	B_card3  int
 	CHeight  int
+	MinBet   float64
+	MaxBet   float64
 	AssetID  string
 	Contract string
 	Last     string

@@ -802,12 +802,20 @@ func FetchBaccSC() {
 			Display.Ties = fmt.Sprint(Ties_jv)
 		}
 
-		if Max_jv != nil {
-			Display.BaccMax = fmt.Sprintf("%.0f", Max_jv.(float64)/100000)
+		if max, ok := Max_jv.(float64); ok {
+			Display.BaccMax = fmt.Sprintf("%.0f", max/100000)
+			Bacc.MaxBet = max / 100000
+		} else {
+			Display.BaccMax = "250"
+			Bacc.MaxBet = 250
 		}
 
-		if Min_jv != nil {
-			Display.BaccMin = fmt.Sprintf("%.0f", Min_jv.(float64)/100000)
+		if min, ok := Min_jv.(float64); ok {
+			Display.BaccMin = fmt.Sprintf("%.0f", min/100000)
+			Bacc.MinBet = min / 100000
+		} else {
+			Display.BaccMin = "10"
+			Bacc.MinBet = 10
 		}
 	}
 }
