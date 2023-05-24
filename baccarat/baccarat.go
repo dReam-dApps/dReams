@@ -135,6 +135,7 @@ func BaccaratButtons(w fyne.Window) fyne.CanvasObject {
 		}
 	})
 
+	rpc.Display.BaccMin = "10"
 	table_opts := []string{"dReams"}
 	table_select := widget.NewSelect(table_opts, func(s string) {
 		switch s {
@@ -144,6 +145,7 @@ func BaccaratButtons(w fyne.Window) fyne.CanvasObject {
 			rpc.Bacc.Contract = Table.Map[s]
 		}
 		rpc.FetchBaccSC()
+		entry.SetText(rpc.Display.BaccMin)
 	})
 	table_select.PlaceHolder = "Select Table:"
 	table_select.SetSelectedIndex(0)
