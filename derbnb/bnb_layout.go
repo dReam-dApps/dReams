@@ -321,10 +321,24 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 
 	// DerBnb SC deposit/withdraw entry and container
 	var trvl_border *fyne.Container
-	trvl_entry := dwidget.DeroAmtEntry("", 1, 0)
-	trvl_entry.SetPlaceHolder("Amount:")
-	trvl_entry.AllowFloat = false
-	trvl_entry.Validator = validation.NewRegexp(`^\d{1,}\.\d{1,5}$|^[^0]\d{0,}$`, "Float required")
+	trvl_amt_entry := dwidget.DeroAmtEntry("", 10000, 0)
+	trvl_amt_entry.SetPlaceHolder("TRVL:")
+	trvl_amt_entry.AllowFloat = false
+	trvl_amt_entry.Validator = validation.NewRegexp(`^[^0]\d{4,}$`, "Int required")
+	trvl_amt_entry.OnChanged = func(s string) {
+		if trvl_amt_entry.Validate() == nil {
+			if f, err := strconv.ParseInt(s, 10, 64); err == nil {
+				if f%10000 != 0 {
+					trvl_amt_entry.SetText(fmt.Sprintf("%d", (f/10000)*10000))
+				}
+			}
+		}
+	}
+
+	trvl_share_entry := dwidget.DeroAmtEntry("", 1, 0)
+	trvl_share_entry.SetPlaceHolder("Shares:")
+	trvl_share_entry.AllowFloat = false
+	trvl_share_entry.Validator = validation.NewRegexp(`^[^0]\d{0,}$`, "Int required")
 
 	var release_check *widget.Check
 	var confirm_action, cancel_action *widget.Button
@@ -550,16 +564,6 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 			if mar, err := json.Marshal(metadata); err == nil {
 				UpdateMetadata(scid_entry.Text, string(mar))
 			}
-		case 15:
-			if amt_fl, err := strconv.ParseFloat(trvl_entry.Text, 64); err == nil {
-				DepositToDerBnb(true, uint64(amt_fl))
-			}
-		case 16:
-			if amt_fl, err := strconv.ParseFloat(trvl_entry.Text, 64); err == nil {
-				SellDerBnbShares(uint64(amt_fl))
-			}
-		case 17:
-			WithdrawFromDerBnb()
 		default:
 
 		}
@@ -576,27 +580,14 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 	})
 
 	cancel_action = widget.NewButton("Cancel", func() {
-		check := confirm_action_int
 		confirm_action_int = 0
 		comment_entry.SetPlaceHolder("")
 		comment_entry.SetText("")
 		release_entry.SetText("")
 		release_check.SetChecked(false)
 		confirm_action.Show()
-		if check < 15 {
-			derbnb_gif.Stop()
-			w.SetContent(reset_to_main)
-			return
-		}
-
-		trvl_entry.SetText("")
-		trvl_bal := rpc.TokenBalance(rpc.TrvlSCID)
-		shares, epoch := getUserShares()
-		next_withdraw := uint64(time.Now().Unix()-1684428835) / 2629743
-		confirm_action_label.SetText(fmt.Sprintf("TRVL Balance: %d\n\nShares: %d\n\nWithdraw Available: %t", trvl_bal, shares, next_withdraw < epoch))
-		confirm_border.Objects[4] = container.NewVBox(layout.NewSpacer(), confirm_action_label, layout.NewSpacer())
-		confirm_border.Objects[2] = trvl_border
-		w.SetContent(confirm_max)
+		derbnb_gif.Stop()
+		w.SetContent(reset_to_main)
 	})
 
 	confirm_action_cont := container.NewAdaptiveGrid(2, container.NewMax(confirm_action), cancel_action)
@@ -683,56 +674,102 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 	})
 
 	// DerBnb SC deposit/withdraw controls
-	trvl_dep := widget.NewButton("Deposit", func() {
-		if trvl_entry.Validate() == nil {
-			confirm_action_label.SetText(fmt.Sprintf("Deposit %s TRVL", trvl_entry.Text))
-			confirm_border.Objects[4] = container.NewVBox(layout.NewSpacer(), confirm_action_label, layout.NewSpacer())
-			confirm_border.Objects[2] = confirm_action_cont
-			confirm_action_int = 15
+	trvl_dep := widget.NewButton("Deposit TRVL", func() {
+		if trvl_amt_entry.Validate() == nil {
+			trvl_amt, err := strconv.ParseInt(trvl_amt_entry.Text, 10, 64)
+			if err != nil || trvl_amt%10000 != 0 {
+				dialog.NewInformation("Error", "TRVL amount error", w).Show()
+				return
+			}
+
+			if trvl_bal := rpc.TokenBalance(rpc.TrvlSCID); trvl_bal < uint64(trvl_amt) {
+				dialog.NewInformation("Not Enough TRVL", "You do not have that much TRVL", w).Show()
+				return
+			}
+
+			info := fmt.Sprintf("Deposit %s TRVL\n\nYou will get %d Shares", trvl_amt_entry.Text, trvl_amt/10000)
+			dialog.NewConfirm("Deposit TRVL", info, func(b bool) {
+				if b {
+					DepositToDerBnb(true, uint64(trvl_amt))
+				}
+			}, w).Show()
 		}
 	})
 
 	trvl_sell := widget.NewButton("Sell Shares", func() {
-		if trvl_entry.Validate() == nil {
-			confirm_action_label.SetText(fmt.Sprintf("Sell %s Shares", trvl_entry.Text))
-			confirm_border.Objects[4] = container.NewVBox(layout.NewSpacer(), confirm_action_label, layout.NewSpacer())
-			confirm_border.Objects[2] = confirm_action_cont
-			confirm_action_int = 16
+		if trvl_share_entry.Validate() == nil {
+			check, err := strconv.ParseInt(trvl_share_entry.Text, 10, 64)
+			if err != nil {
+				dialog.NewInformation("Error", "Share amount error", w).Show()
+				return
+			}
+
+			if shares, _, _ := getUserShares(); shares < uint64(check) {
+				dialog.NewInformation("Not Enough Shares", "You do not have that many shares", w).Show()
+				return
+			}
+
+			info := fmt.Sprintf("Selling %s Shares\n\nYou will get %s0000 TRVL Tokens", trvl_share_entry.Text, trvl_share_entry.Text)
+			dialog.NewConfirm("Sell Shares", info, func(b bool) {
+				if b {
+					SellDerBnbShares(uint64(check))
+				}
+			}, w).Show()
 		}
 	})
 
 	trvl_withdraw := widget.NewButton("Withdraw", func() {
-		shares, _ := getUserShares()
-		confirm_action_label.SetText(fmt.Sprintf("Withdraw Dero\n\nYou have %d Shares", shares))
-		confirm_border.Objects[4] = container.NewVBox(layout.NewSpacer(), confirm_action_label, layout.NewSpacer())
-		confirm_border.Objects[2] = confirm_action_cont
-		confirm_action_int = 17
+		shares, epoch, treasury := getUserShares()
+		if shares == 0 {
+			dialog.NewInformation("No Shares", "You do not have any shares", w).Show()
+			return
+		}
+
+		next_withdraw := uint64(time.Now().Unix()-1684428835) / 2629743
+		if next_withdraw < epoch {
+			pay := (shares * treasury) / 1000000
+			info := fmt.Sprintf("You have %d Shares\n\nYou will get %0.5f Dero", shares, float64(pay)/100000)
+			dialog.NewConfirm("Withdraw Dero", info, func(b bool) {
+				if b {
+					WithdrawFromDerBnb()
+				}
+			}, w).Show()
+
+			return
+		}
+
+		dialog.NewInformation("Not Ready", "Your next withdraw is not ready", w).Show()
 	})
 
+	var trvl_exit bool
 	trvl_back := widget.NewButton("Back", func() {
-		confirm_action_int = 0
-		comment_entry.SetPlaceHolder("")
-		comment_entry.SetText("")
-		release_entry.SetText("")
-		release_check.SetChecked(false)
-		confirm_action.Show()
+		trvl_exit = true
 		derbnb_gif.Stop()
-		confirm_border.Objects[2] = confirm_action_cont
 		w.SetContent(reset_to_main)
 	})
 
-	trvl_border = container.NewVBox(layout.NewSpacer(), container.NewAdaptiveGrid(2, trvl_entry, layout.NewSpacer()), container.NewAdaptiveGrid(4, trvl_dep, trvl_sell, trvl_withdraw, trvl_back))
+	trvl_border = container.NewVBox(
+		layout.NewSpacer(),
+		container.NewAdaptiveGrid(4, trvl_amt_entry, trvl_share_entry, layout.NewSpacer(), layout.NewSpacer()),
+		container.NewAdaptiveGrid(4, trvl_dep, trvl_sell, trvl_withdraw, trvl_back))
 
 	trvl_button := widget.NewButton("TRVL Tokens", func() {
 		derbnb_gif.Start()
-		trvl_entry.SetText("")
-		trvl_bal := rpc.TokenBalance(rpc.TrvlSCID)
-		shares, epoch := getUserShares()
-		next_withdraw := uint64(time.Now().Unix()-1684428835) / 2629743
-		confirm_action_label.SetText(fmt.Sprintf("TRVL Balance: %d\n\nShares: %d\n\nWithdraw Available: %t", trvl_bal, shares, next_withdraw < epoch))
+		trvl_amt_entry.SetText("")
+		trvl_share_entry.SetText("")
 		confirm_border.Objects[4] = container.NewVBox(layout.NewSpacer(), confirm_action_label, layout.NewSpacer())
 		confirm_border.Objects[2] = trvl_border
 		w.SetContent(confirm_max)
+		go func() {
+			for !menu.ClosingApps() && !trvl_exit {
+				trvl_bal := rpc.TokenBalance(rpc.TrvlSCID)
+				shares, epoch, _ := getUserShares()
+				next_withdraw := uint64(time.Now().Unix()-1684428835) / 2629743
+				confirm_action_label.SetText(fmt.Sprintf("Shares allow you to withdraw Dero from the DerBnb treasury each month\n\n10000 TRVL = 1 Share\n\nTRVL Balance: %d\n\nShares: %d\n\nWithdraw Available: %t", trvl_bal, shares, next_withdraw < epoch))
+				time.Sleep(time.Second)
+			}
+			trvl_exit = false
+		}()
 	})
 
 	listings_list.OnSelected = func(id widget.ListItemID) {
@@ -962,10 +999,20 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 	})
 
 	change_price_button := widget.NewButton("Update Prices", func() {
-		if scid_entry.Validate() == nil && price_entry.Validate() == nil {
+		if scid_entry.Validate() == nil && price_entry.Validate() == nil && deposit_entry.Validate() == nil {
 			derbnb_gif.Start()
-			new_price, _ := strconv.ParseFloat(price_entry.Text, 64)
-			new_dep, _ := strconv.ParseFloat(deposit_entry.Text, 64)
+			new_price, err := strconv.ParseFloat(price_entry.Text, 64)
+			if err != nil {
+				dialog.NewInformation("Error", "Price amount error", w).Show()
+				return
+			}
+
+			new_dep, err := strconv.ParseFloat(deposit_entry.Text, 64)
+			if err != nil {
+				dialog.NewInformation("Error", "Deposit amount error", w).Show()
+				return
+			}
+
 			confirm_border.Objects[4] = container.NewVBox(layout.NewSpacer(), confirm_action_label, layout.NewSpacer())
 			confirm_action_label.SetText(fmt.Sprintf("Update prices\n\nSCID: %s\n\nNew daily price: %.5f Dero\n\nNew damage deposit: %.5f Dero", scid_entry.Text, new_price, new_dep))
 			confirm_action_int = 6
