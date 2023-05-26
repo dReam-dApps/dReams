@@ -1517,6 +1517,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 			rpc.GetAddress(tag)
 			rpc.Ping()
 			if rpc.Daemon.Connect && !menu.Gnomes.Init && !menu.Gnomes.Start {
+				property_filter = menu.FetchFilters("derbnb_filter")
 				filters := BnbSearchFilter()
 				go menu.StartGnomon(tag, filters, 0, 0, nil)
 			}

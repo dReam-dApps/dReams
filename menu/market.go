@@ -1156,17 +1156,16 @@ func RunNFAMarket(tag string, quit, done chan struct{}, connect_box *dwidget.Der
 }
 
 // Get search filters from on chain store
-func FetchFilters() {
-	check := []string{}
-	if stored, ok := rpc.FindStringKey(rpc.RatingSCID, "market_filter", rpc.Daemon.Rpc).(string); ok {
+func FetchFilters(check string) (filter []string) {
+	if stored, ok := rpc.FindStringKey(rpc.RatingSCID, check, rpc.Daemon.Rpc).(string); ok {
 		if h, err := hex.DecodeString(stored); err == nil {
-			if err = json.Unmarshal(h, &check); err != nil {
-				log.Println("[FetchFilters] Market Filter", err)
-			} else {
-				Market.Filters = check
+			if err = json.Unmarshal(h, &filter); err != nil {
+				log.Println("[FetchFilters]", check, err)
 			}
 		}
 	} else {
-		log.Println("[FetchFilters] Could not get Market Filter")
+		log.Println("[FetchFilters] Could not get", check)
 	}
+
+	return
 }

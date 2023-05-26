@@ -71,6 +71,7 @@ type string_slice_map struct {
 
 var current_price uint64
 var current_deposit uint64
+var property_filter []string
 var listed_properties []string
 var property_photos string_slice_map
 var my_bookings string_slice_map
@@ -232,6 +233,15 @@ func makeLocationString(scid string) (location string) {
 	return
 }
 
+func filterProperty(check interface{}) bool {
+	for _, addr := range property_filter {
+		if a, ok := check.(string); ok && a == addr {
+			return true
+		}
+	}
+	return false
+}
+
 // Get all DerBnb property info from contract
 func GetProperties() {
 	if rpc.Wallet.Connect && rpc.Daemon.Connect {
@@ -275,6 +285,10 @@ func GetProperties() {
 						}
 
 						if split[1] == "owner" {
+							if filterProperty(h.Value) {
+								continue
+							}
+
 							if !have {
 								location := makeLocationString(split[0])
 								if location != "" {
