@@ -122,6 +122,9 @@ package main
 
 import (
 	"log"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/SixofClubsss/dReams/menu"
@@ -147,15 +150,24 @@ func main() {
 		filter := []string{menu.NFA_SEARCH_FILTER}
 		menu.StartGnomon(app_tag, filter, 0, 0, nil)
 
+		var exit bool
+		c := make(chan os.Signal, 1)
+		signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+		go func() {
+			<-c
+			exit = true
+		}()
+
 		// Gnomon will continue to run if daemon is connected
-		for rpc.Daemon.Connect {
-			rpc.Ping()
+		for !exit && rpc.Daemon.Connect {
+			contracts := menu.Gnomes.Indexer.Backend.GetAllOwnersAndSCIDs()
+			log.Printf("[%s] Index contains %d contracts\n", app_tag, len(contracts))
 			time.Sleep(time.Second)
-			log.Printf("[%s] Index contains %d contracts\n", app_tag, len(menu.Gnomes.Indexer.Backend.GetAllOwnersAndSCIDs()))
+			rpc.Ping()
 		}
 
 		// Stop Gnomon
-		menu.StopGnomon("My_App")
+		menu.StopGnomon(app_tag)
 	}
 
 	log.Printf("[%s] Done\n", app_tag)
