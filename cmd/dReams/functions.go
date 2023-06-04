@@ -36,7 +36,7 @@ type Notification struct {
 
 var cli *terminal.Terminal
 var command_line string = `dReams
-dReam Tables all in one dApp, powered by Gnomon.
+Platform for Dero dApps, powered by Gnomon.
 
 Usage:
   dReams [options]

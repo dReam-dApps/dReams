@@ -1242,7 +1242,7 @@ func PredictLower(scid, addr string) {
 	AddLog("Prediction TX: " + txid.TXID)
 }
 
-// Rate a SC with dReam Tables rating system. Ratings are weight based on transactions Dero amount
+// Rate a SC with dReams rating system. Ratings are weight based on transactions Dero amount
 //   - amt of Dero for rating
 //   - pos defines positve or negative rating
 func RateSCID(scid string, amt, pos uint64) {

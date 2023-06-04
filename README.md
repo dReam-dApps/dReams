@@ -312,4 +312,4 @@ func main() {
 
 dReams platform and packages are free and open source. 
 The source code is published under the [MIT](https://github.com/SixofClubsss/dReams/blob/main/LICENSE) License. 
-Copyright © 2022-2023 dReam Tables 
+Copyright © 2023 dReam dApps 
