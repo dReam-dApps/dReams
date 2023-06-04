@@ -1507,7 +1507,7 @@ func updateStatsWins(amt uint64, player string, fold bool) {
 	}
 }
 
-// Update wager of Holero stats
+// Update wager of Holdero stats
 func updateStatsWager(amt float64) {
 	if Odds.Enabled {
 		Stats.Player.Wagered = Stats.Player.Wagered + amt
@@ -1525,7 +1525,7 @@ func updateStatsWager(amt float64) {
 	}
 }
 
-// Update Holero stats when push
+// Update Holdero stats when push
 func updateStatsPush(r ranker, amt uint64, f1, f2, f3, f4, f5, f6 bool) {
 	if Odds.Enabled && !Signal.Odds {
 		fold := false

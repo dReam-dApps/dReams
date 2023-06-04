@@ -63,7 +63,7 @@ func isOnChainPrediction(s string) bool {
 	return false
 }
 
-// Check which on chain values are requierd
+// Check which on chain values are required
 func onChainPrediction(s string) int {
 	switch s {
 	case "DERO-Difficulty":
@@ -77,7 +77,7 @@ func onChainPrediction(s string) int {
 	}
 }
 
-// dPrediction owner contol objects for side menu
+// dPrediction owner control objects for side menu
 //   - Pass side menu window to reset to
 func preditctionOpts(window fyne.Window) fyne.CanvasObject {
 	pred := []string{"DERO-BTC", "XMR-BTC", "BTC-USDT", "DERO-USDT", "XMR-USDT", "DERO-Difficulty", "DERO-Block Time", "DERO-Block Number"}

@@ -174,7 +174,7 @@ func main() {
 }
 ```
 ### dwidget
-The dwidget package is a extension to fyne widgets that intends to make creating dApps simpler and quicker with widgets specified for use with Dero. Numerical entries have prefix, increment and decimal control and preconfigured connection boxes can be used that are tied into dReams rpc vars and have default Dero connection addresses populated. There is objects for shutdown control as well as a spot for the dReams indicators, or new ones. This example starts a Fyne gui app using `VerticleEntries()` to start Gnomon when connected.
+The dwidget package is a extension to fyne widgets that intends to make creating dApps simpler and quicker with widgets specified for use with Dero. Numerical entries have prefix, increment and decimal control and pre-configured connection boxes can be used that are tied into dReams rpc vars and have default Dero connection addresses populated. There is objects for shutdown control as well as a spot for the dReams indicators, or new ones. This example starts a Fyne gui app using `VerticleEntries()` to start Gnomon when connected.
 ```
 package main
 

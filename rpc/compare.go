@@ -708,7 +708,7 @@ func handToText(rank int) string {
 	return handRankText
 }
 
-// Hightlights winning Holdero hand at showdown
+// Highlights winning Holdero hand at showdown
 func highlightHand(a, b int) (hand []int) {
 	rank := 100
 	community := []int{}
@@ -843,7 +843,7 @@ func compareAll(r *ranker) (end_res string) {
 		highestPair := []int{r.p1HighPair, r.p2HighPair, r.p3HighPair, r.p4HighPair, r.p5HighPair, r.p6HighPair}
 		sort.Ints(highestPair)
 
-		if r.p1Rank != winningRank[0] || (winningRank[0] == 9 && r.p1HighPair != highestPair[5]) { /// If player hand is not the higest rank or if doesn't have high pair stip cards
+		if r.p1Rank != winningRank[0] || (winningRank[0] == 9 && r.p1HighPair != highestPair[5]) { /// If player hand is not the highest rank or if doesn't have high pair strip cards
 			less1(r)
 		}
 
@@ -954,7 +954,7 @@ func compareAll(r *ranker) (end_res string) {
 				end_res = Round.P6_name + " Wins with " + handToText(r.p6Rank)
 				payWinningHand(6, r)
 			}
-			/// no highpair winner, if two pair winning rank look for low pair winner
+			/// no high pair winner, if two pair winning rank look for low pair winner
 		} else if winningRank[0] == 8 && r.p1LowPair > r.p2LowPair && r.p1LowPair > r.p3LowPair && r.p1LowPair > r.p4LowPair && r.p1LowPair > r.p5LowPair && r.p1LowPair > r.p6LowPair {
 			if r.p1Rank == winningRank[0] {
 				end_res = Round.P1_name + " Wins with " + handToText(r.p1Rank)
@@ -986,7 +986,7 @@ func compareAll(r *ranker) (end_res string) {
 				payWinningHand(6, r)
 			}
 
-			/// No outright or HighPair win so we comapre all left over hands to determine HighCard winner
+			/// No outright or HighPair win so we compare all left over hands to determine HighCard winner
 		} else if (r.p1HighCardArr[4] > r.p2HighCardArr[4] && r.p1HighCardArr[4] > r.p3HighCardArr[4] && r.p1HighCardArr[4] > r.p4HighCardArr[4] && r.p1HighCardArr[4] > r.p5HighCardArr[4] && r.p1HighCardArr[4] > r.p6HighCardArr[4]) ||
 
 			(r.p1HighCardArr[4] >= r.p2HighCardArr[4] && r.p1HighCardArr[4] >= r.p3HighCardArr[4] && r.p1HighCardArr[4] >= r.p4HighCardArr[4] && r.p1HighCardArr[4] >= r.p5HighCardArr[4] && r.p1HighCardArr[4] >= r.p6HighCardArr[4] &&

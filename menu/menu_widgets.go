@@ -177,7 +177,7 @@ func CheckConnection() {
 	}
 }
 
-// Hiden object, controls Gnomon start and stop based on daemon connection
+// Hidden object, controls Gnomon start and stop based on daemon connection
 func DaemonConnectedBox() fyne.Widget {
 	Control.daemon_check = widget.NewCheck("", func(b bool) {
 		if !Gnomes.Init && !Gnomes.Start {
@@ -1233,7 +1233,7 @@ func sendAssetMenu(window_icon, background fyne.Resource) {
 
 	viewing_asset := Control.Viewing_asset
 
-	viewing_label := widget.NewLabel(fmt.Sprintf("Sending SCID:\n\n%s\n\nEnter destination address below\n\nSCID can be sent to reciever as payload\n\n", viewing_asset))
+	viewing_label := widget.NewLabel(fmt.Sprintf("Sending SCID:\n\n%s\n\nEnter destination address below\n\nSCID can be sent to receiver as payload\n\n", viewing_asset))
 	viewing_label.Wrapping = fyne.TextWrapWord
 	viewing_label.Alignment = fyne.TextAlignCenter
 
@@ -1321,7 +1321,7 @@ func sendAssetMenu(window_icon, background fyne.Resource) {
 				saw_content.Objects[1] = menuAssetImg(&icon, bundle.ResourceAvatarFramePng)
 				if viewing_asset != Control.Viewing_asset {
 					viewing_asset = Control.Viewing_asset
-					viewing_label.SetText("Sending SCID:\n\n" + viewing_asset + " \n\nEnter destination address below\n\nSCID can be sent to reciever as payload\n\n")
+					viewing_label.SetText("Sending SCID:\n\n" + viewing_asset + " \n\nEnter destination address below\n\nSCID can be sent to receiver as payload\n\n")
 				}
 				saw_content.Refresh()
 			}
@@ -1473,7 +1473,7 @@ func listMenu(window_icon, background fyne.Resource) {
 
 				first_line := fmt.Sprintf("Listing SCID:\n\n%s\n\nList Type: %s\n\nDuration: %s Hours\n\nStart Price: %0.5f Dero\n\n", listing_asset, listing.Selected, duration.Text, sp)
 				second_line := fmt.Sprintf("Artificer Fee: %.0f%s - %0.5f Dero\n\nRoyalties: %.0f%s - %0.5f Dero\n\n", artP*100, "%", art_gets, royaltyP*100, "%", royalty_gets)
-				third_line := fmt.Sprintf("Chairity Address: %s\n\nCharity Percent: %s%s - %0.5f Dero\n\nYou will receive %.5f Dero if asset sells at start price", charAddr.Text, charPerc.Text, "%", char_gets, total)
+				third_line := fmt.Sprintf("Charity Address: %s\n\nCharity Percent: %s%s - %0.5f Dero\n\nYou will receive %.5f Dero if asset sells at start price", charAddr.Text, charPerc.Text, "%", char_gets, total)
 
 				confirm_label := widget.NewLabel(first_line + second_line + third_line)
 				confirm_label.Wrapping = fyne.TextWrapWord
@@ -1597,7 +1597,7 @@ func IntroTree() fyne.CanvasObject {
 		"Get Started":             {"Visit dero.io for daemon and wallet download info", "Connecting", "FAQ"},
 		"Connecting":              {"Daemon", "Wallet"},
 		"FAQ":                     {"Can't connect", "How to resync Gnomon db", "Can't see any tables, contracts or market info", "How to see terminal log"},
-		"Can't connect":           {"Using a local daemon will yeild the best results", "If you are using a remote daemon, try changing daemons", "Any connection errors can be found in terminal log"},
+		"Can't connect":           {"Using a local daemon will yield the best results", "If you are using a remote daemon, try changing daemons", "Any connection errors can be found in terminal log"},
 		"How to resync Gnomon db": {"Shut down dReams", "Find and delete the Gnomon db folder that is in your dReams directory", "Restart dReams and connect to resync db", "Any sync errors can be found in terminal log"},
 		"Can't see any tables, contracts or market info": {"Make sure daemon, wallet and Gnomon indicators are lit up solid", "If you've added new dApps to your dReams, a Gnomon resync will add them to your index", "Look in the asset tab for number of indexed SCIDs", "If indexed SCIDs is less than 4000 your db is not fully synced", "Try resyncing", "Any errors can be found in terminal log"},
 		"How to see terminal log":                        {"Windows", "Mac", "Linux"},
@@ -1619,7 +1619,7 @@ func IntroTree() fyne.CanvasObject {
 		"Current Leagues":       {"EPL", "MLS", "FIFA", "NBA", "NFL", "NHL", "MLB", "Bellator", "UFC"},
 		"dReam Service":         {"dReam Service is unlocked for all betting contract owners", "Full automation of contract posts and payouts", "Integrated address service allows bets to be placed through a Dero transaction to sent to service", "Multiple owners can be added to contracts and multiple service wallets can be ran on one contract", "Stand alone cli app available for streamlined use"},
 		"Tarot":                 {"On chain Tarot readings", "Iluma cards and readings created by Kalina Lux"},
-		"DerBnb":                {"A property rental platform", "Users can mint properties as contracts and list for rentals", "Property owners can choose rates, damage deposits and availabilty dates", "Dero messaging helps owners and renters facilitate the final details of rental privately", "Rating system for properties"},
+		"DerBnb":                {"A property rental platform", "Users can mint properties as contracts and list for rentals", "Property owners can choose rates, damage deposits and availability dates", "Dero messaging helps owners and renters facilitate the final details of rental privately", "Rating system for properties"},
 		"Contract Ratings":      {"dReams has a public rating store on chain for multiplayer contracts", "Players can rate other contracts positively or negatively", "Four rating tiers, tier two being the starting tier for all contracts", "Each rating transaction is weight based by its Dero value", "Contracts that fall below tier one will no longer populate in the public index"},
 		"Assets":                {"View any owned assets held in wallet", "Put owned assets up for auction or for sale", "Send assets privately to another wallet", "Indexer, add custom contracts to your index and search current index db"},
 		"Market":                {"View any in game assets up for auction or sale", "Bid on or buy assets", "Cancel or close out any existing listings"},

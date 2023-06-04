@@ -188,7 +188,7 @@ func FetchDapps() (dApps []string) {
 }
 
 // Get platform fees from on chain store
-//   - Overwrites defualt fee values with current stored values
+//   - Overwrites default fee values with current stored values
 func FetchFees() {
 	if fee, ok := FindStringKey(RatingSCID, "ContractUnlock", Daemon.Rpc).(float64); ok {
 		UnlockFee = uint64(fee)
@@ -709,7 +709,7 @@ func GetHoldero100Code() string {
 }
 
 // Code for v1.1.0 Holdero public or private SC
-//   - version defines which type of Holdero contratc
+//   - version defines which type of Holdero contract
 //   - 0 for standard public
 //   - 1 for standard private
 //   - 2 for HGC

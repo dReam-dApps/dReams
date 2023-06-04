@@ -152,12 +152,12 @@ func intgPredictionArgs(scid string, print bool) (higher_arg dero.Arguments, low
 			}
 		} else {
 			if Service.Debug {
-				serviceDebug(print, "[intgPredictionArgs]", fmt.Sprintf("%s Not initalized", scid))
+				serviceDebug(print, "[intgPredictionArgs]", fmt.Sprintf("%s Not initialized", scid))
 			}
 		}
 	} else {
 		if Service.Debug {
-			serviceDebug(print, "[intgPredictionArgs]", "Gnomon is not initalized")
+			serviceDebug(print, "[intgPredictionArgs]", "Gnomon is not initialized")
 		}
 	}
 

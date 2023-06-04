@@ -68,7 +68,7 @@ func SportsConnectedBox() fyne.Widget {
 }
 
 // Entry for dPrediction SCID
-//   - Bound to Sports.Contractt
+//   - Bound to Sports.Contract
 //   - Checks for valid SCID on changed
 func SportsContractEntry() fyne.Widget {
 	options := []string{""}
@@ -411,8 +411,8 @@ func GetBook(scid string) (info string) {
 //   - c is current number of picks
 //   - tA, tB are team names of A and B
 //   - tAV, tBV is total picks for A or B
-//   - total is curent game Dero pot total
-//   - a, b are current contrct time frames
+//   - total is current game Dero pot total
+//   - a, b are current contract time frames
 func S_Results(g, gN, l, min, eA, c, tA, tB, tAV, tBV, total string, a, b uint64) (info string) { /// sports info label
 	result, err := strconv.ParseFloat(total, 32)
 
@@ -1120,7 +1120,7 @@ func GetFootball(date, league string) {
 	}
 }
 
-// Gets basketabll games for selected league and adds to options selection
+// Gets basketball games for selected league and adds to options selection
 //   - date GetCurrentWeek()
 func GetBasketball(date, league string) {
 	found := callBasketball(date, league)

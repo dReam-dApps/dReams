@@ -407,7 +407,7 @@ func GetProperties() {
 }
 
 // Get request to owners and of the renters
-//   - stamp is timestap key of request
+//   - stamp is timestamp key of request
 func getBookingRequests(scid, stamp string, owned bool) (request string) {
 	if menu.Gnomes.Init && menu.Gnomes.Sync && !menu.GnomonClosing() {
 		_, start := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(rpc.DerBnbSCID, scid+"_request_bk_start_"+stamp, menu.Gnomes.Indexer.ChainHeight, true)
@@ -430,7 +430,7 @@ func getBookingRequests(scid, stamp string, owned bool) (request string) {
 }
 
 // Get confirmed bookings for owners
-//   - stamp is timestap key of request
+//   - stamp is timestamp key of request
 func getOwnerConfirmedBookings(scid string, all bool) (bookings []string) {
 	if menu.Gnomes.Init && menu.Gnomes.Sync && !menu.GnomonClosing() {
 		_, bk_last := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(rpc.DerBnbSCID, scid+"_bk_last", menu.Gnomes.Indexer.ChainHeight, true)
@@ -506,7 +506,7 @@ func getOwnerAddress(scid string) (address string) {
 }
 
 // Get confirmed  and completed bookings for renters
-//   - stamp is timestap key of request
+//   - stamp is timestamp key of request
 func getUserConfirmedBookings(scid string, all bool) (confirmed_bookings []string, complete_bookings []string) {
 	if menu.Gnomes.Init && menu.Gnomes.Sync && !menu.GnomonClosing() {
 		_, bk_last := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(rpc.DerBnbSCID, scid+"_bk_last", menu.Gnomes.Indexer.ChainHeight, true)

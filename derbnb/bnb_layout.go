@@ -620,7 +620,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 		confirm_border.Objects[4] = container.NewVBox(layout.NewSpacer(), confirm_action_label, layout.NewSpacer())
 		minting_fee := float64(rpc.ListingFee) / 100000
 		gas_fee := float64(0.015)
-		confirm_action_label.SetText(fmt.Sprintf("Mint a new property SCID\n\nMinting fee is %.5f Dero\n\nTotal transaction will be %.5f Dero (%.5f gas fee for contract install)\n\nAfter minting you will be promted to set your property location, do not close the app until this step is completed", minting_fee, minting_fee+gas_fee, gas_fee))
+		confirm_action_label.SetText(fmt.Sprintf("Mint a new property SCID\n\nMinting fee is %.5f Dero\n\nTotal transaction will be %.5f Dero (%.5f gas fee for contract install)\n\nAfter minting you will be prompted to set your property location, do not close the app until this step is completed", minting_fee, minting_fee+gas_fee, gas_fee))
 		confirm_action_int = 1
 		w.SetContent(confirm_max)
 	}
@@ -1070,7 +1070,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 		}
 	})
 
-	// set availibility objects
+	// set availability objects
 	available_start_validation := validation.NewTime("Starting: " + TIME_FORMAT)
 	available_start_entry := widget.NewEntry()
 	available_start_entry1 := widget.NewEntry()

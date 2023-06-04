@@ -1084,7 +1084,7 @@ func winningHand(e interface{}) {
 	}
 }
 
-// Convert a milisecond string to time.Time
+// Convert a millisecond string to time.Time
 func MsToTime(ms string) (time.Time, error) {
 	msInt, err := strconv.ParseInt(ms, 10, 64)
 	if err != nil {

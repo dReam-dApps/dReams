@@ -34,7 +34,7 @@ var P dwidget.DreamsItems
 var S dwidget.DreamsItems
 var T dwidget.DreamsItems
 
-// If dReams has not been intialized, show this screen
+// If dReams has not been initialized, show this screen
 //   - User selects dApps and skin to load
 func introScreen() *fyne.Container {
 	dReams.configure = true

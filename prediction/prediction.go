@@ -290,7 +290,7 @@ func PredictionOwned() fyne.CanvasObject {
 	return Predict.Owned_list
 }
 
-// Formats intialized dPrediction info string
+// Formats initialized dPrediction info string
 //   - p defines prediction
 //   - amt is Dero value
 //   - eA is prediction end time
@@ -301,7 +301,7 @@ func PredictionOwned() fyne.CanvasObject {
 //   - r is total completed prediction rounds
 //   - f is prediction feed
 //   - m is prediction mark
-//   - ta, tb, tc are current contrct time frames
+//   - ta, tb, tc are current contract time frames
 func P_initResults(p, amt, eA, c, to, u, d, r, f, m string, ta, tb, tc int) (info string) {
 	end_time, _ := rpc.MsToTime(eA)
 	utc := end_time.String()
@@ -374,7 +374,7 @@ func P_initResults(p, amt, eA, c, to, u, d, r, f, m string, ta, tb, tc int) (inf
 }
 
 // Format dPrediction end result text
-//   - fr is the unsplit result string
+//   - fr is the un-split result string
 //   - m is prediction mark
 func roundResults(fr, m string) string {
 	if len(Predict.Contract) == 64 && fr != "" {
@@ -443,8 +443,8 @@ func roundResults(fr, m string) string {
 	return ""
 }
 
-// Formats non-intialized dPrediction info string
-//   - fr is the unsplit result string
+// Formats non-initialized dPrediction info string
+//   - fr is the un-split result string
 //   - tx is the previous payout TXID
 //   - r is total completed prediction rounds
 //   - m is prediction mark
@@ -457,7 +457,7 @@ func P_no_initResults(fr, tx, r, m string) (info string) {
 	return
 }
 
-// Gets dPrecition data from SCID and return formatted info string
+// Gets dPrediction data from SCID and return formatted info string
 func GetPrediction(scid string) (info string) {
 	if rpc.Daemon.Connect && menu.Gnomes.Init && !menu.GnomonClosing() && menu.Gnomes.Sync {
 		predicting, _ := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "predicting", menu.Gnomes.Indexer.ChainHeight, true)

@@ -869,7 +869,7 @@ func TarotRefresh() {
 
 	if rpc.Tarot.Found && !rpc.Tarot.Notified {
 		if !isWindows() {
-			dReams.App.SendNotification(notification("dReams - Iluma", "Your Reading has Arrvied", 2))
+			dReams.App.SendNotification(notification("dReams - Iluma", "Your Reading has Arrived", 2))
 		}
 	}
 }
@@ -1121,7 +1121,7 @@ func TarotTab(ti *container.TabItem) {
 	}
 }
 
-// Set and revert main window fullscreen mode
+// Set and revert main window full screen mode
 func FullScreenSet() fyne.CanvasObject {
 	var button *widget.Button
 	button = widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "viewFullScreen"), func() {

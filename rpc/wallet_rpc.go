@@ -1244,7 +1244,7 @@ func PredictLower(scid, addr string) {
 
 // Rate a SC with dReams rating system. Ratings are weight based on transactions Dero amount
 //   - amt of Dero for rating
-//   - pos defines positve or negative rating
+//   - pos defines positive or negative rating
 func RateSCID(scid string, amt, pos uint64) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
@@ -1319,7 +1319,7 @@ func AutoPredict(p int, amt, src uint64, scid, addr, pre_tx string) (tx string) 
 	}
 
 	t := []rpc.Transfer{t1}
-	fee := GasEstimate(scid, "[AuotPredict]", args, t, LowLimitFee)
+	fee := GasEstimate(scid, "[AutoPredict]", args, t, LowLimitFee)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     scid,
@@ -1329,12 +1329,12 @@ func AutoPredict(p int, amt, src uint64, scid, addr, pre_tx string) (tx string) 
 	}
 
 	if err := rpcClientW.CallFor(ctx, &txid, "transfer", params); err != nil {
-		log.Println("[AuotPredict]", err)
+		log.Println("[AutoPredict]", err)
 		return
 	}
 
-	log.Println("[AuotPredict] Prediction TX:", txid)
-	AddLog("AuotPredict TX: " + txid.TXID)
+	log.Println("[AutoPredict] Prediction TX:", txid)
+	AddLog("AutoPredict TX: " + txid.TXID)
 
 	return txid.TXID
 }
@@ -1414,7 +1414,7 @@ func AutoBook(amt, pre, src uint64, n, abv, scid, addr, book_tx string) (tx stri
 	}
 
 	t := []rpc.Transfer{t1}
-	fee := GasEstimate(scid, "[AuotBook]", args, t, LowLimitFee)
+	fee := GasEstimate(scid, "[AutoBook]", args, t, LowLimitFee)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_ID:     scid,
@@ -1424,12 +1424,12 @@ func AutoBook(amt, pre, src uint64, n, abv, scid, addr, book_tx string) (tx stri
 	}
 
 	if err := rpcClientW.CallFor(ctx, &txid, "transfer", params); err != nil {
-		log.Println("[AuotBook]", err)
+		log.Println("[AutoBook]", err)
 		return
 	}
 
-	log.Println("[AuotBook] Book TX:", txid)
-	AddLog("AuotBook TX: " + txid.TXID)
+	log.Println("[AutoBook] Book TX:", txid)
+	AddLog("AutoBook TX: " + txid.TXID)
 
 	return txid.TXID
 }
@@ -1686,7 +1686,7 @@ func SportsRefund(scid, tic, n string) {
 // Owner sets a dSports game
 //   - end is unix ending time
 //   - amt of single prediction
-//   - dep allows owner to add a intial deposit
+//   - dep allows owner to add a initial deposit
 //   - game is name of game, formatted TEAM--TEAM
 //   - feed defines where price api data is sourced from
 func SetSports(end int, amt, dep uint64, scid, league, game, feed string) {
@@ -1731,7 +1731,7 @@ func SetSports(end int, amt, dep uint64, scid, league, game, feed string) {
 //   - end is unix ending time
 //   - mark can be predefined or passed as 0 if mark is to be posted live
 //   - amt of single prediction
-//   - dep allows owner to add a intial deposit
+//   - dep allows owner to add a initial deposit
 //   - predict is name of what is being predicted
 //   - feed defines where price api data is sourced from
 func SetPrediction(end, mark int, amt, dep uint64, scid, predict, feed string) {
@@ -1772,7 +1772,7 @@ func SetPrediction(end, mark int, amt, dep uint64, scid, predict, feed string) {
 	AddLog("Set Prediction TX: " + txid.TXID)
 }
 
-// Owner cancel for intiated bet for dSports and dPrediction contracts
+// Owner cancel for initiated bet for dSports and dPrediction contracts
 //   - b defines sports or prediction log print
 func CancelInitiatedBet(scid string, b int) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
@@ -2017,7 +2017,7 @@ func SetHeaders(name, desc, icon, scid string) {
 	AddLog("Set Headers TX: " + txid.TXID)
 }
 
-// Claim transfered NFA token
+// Claim transferred NFA token
 func ClaimNFA(scid string) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
@@ -2097,7 +2097,7 @@ func BidBuyNFA(scid, bidor string, amt uint64) {
 //   - char sets charity donation address
 //   - dur sets listing duration
 //   - amt sets starting price
-//   - perc sets percentage to go to chairty on sale
+//   - perc sets percentage to go to charity on sale
 func SetNFAListing(scid, list, char string, dur, amt, perc uint64) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()

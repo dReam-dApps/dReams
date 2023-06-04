@@ -94,7 +94,7 @@ func startLabel() {
 	Assets.Gnomes_sync.Refresh()
 }
 
-// Menu label when Gomon scans wallet
+// Menu label when Gnomon scans wallet
 func checkLabel() {
 	Assets.Gnomes_sync.Text = (" Checking for Assets")
 	Assets.Gnomes_sync.Refresh()

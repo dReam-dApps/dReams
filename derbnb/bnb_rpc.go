@@ -18,7 +18,7 @@ type property_data struct {
 	Style       string `json:"style"`
 	Description string `json:"description"`
 	// DistanceToCasino      string   `json:"distance-to-casino"`
-	// DistanceToRestaraunts string   `json:"distance-to-restaraunts"`
+	// DistanceToRestaurants string   `json:"distance-to-restaurants"`
 	// FibreBroadband        bool     `json:"fibre-broadband"`
 	// AcceptsDero           bool     `json:"accepts-dero"`
 	// AcceptsCrypto         bool     `json:"accepts-crypto"`
@@ -403,7 +403,7 @@ func ConfirmBooking(scid string, stamp uint64) {
 // Release specified deposit amount of DerBnb booking
 //   - desc is string comment from owner when releasing deposit
 //   - id is booking id to be released
-//   - amt is amount of damage to be witheld by owner in Dero atomic value
+//   - amt is amount of damage to be withheld by owner in Dero atomic value
 func ReleaseDamageDeposit(scid, desc string, id, amt uint64) {
 	rpcClientW, ctx, cancel := rpc.SetWalletClient(rpc.Wallet.Rpc, rpc.Wallet.UserPass)
 	defer cancel()
@@ -522,7 +522,7 @@ func RateExperience(scid string, id, renter, owner, prop, loc, overall uint64) {
 	rpc.AddLog("Rate Experience TX: " + txid.TXID)
 }
 
-// Change availiblility days for booking requests
+// Change availability days for booking requests
 //   - cal is available_dates json object
 func ChangeAvailability(scid, cal string) {
 	rpcClientW, ctx, cancel := rpc.SetWalletClient(rpc.Wallet.Rpc, rpc.Wallet.UserPass)
@@ -555,7 +555,7 @@ func ChangeAvailability(scid, cal string) {
 		return
 	}
 
-	log.Println("[ChangeAvailability] Change Availibility TX:", txid)
+	log.Println("[ChangeAvailability] Change Availability TX:", txid)
 	rpc.AddLog("Change Availability TX: " + txid.TXID)
 }
 

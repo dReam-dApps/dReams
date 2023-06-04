@@ -83,7 +83,7 @@ func (t dTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) color
 		return color.White
 
 	case theme.ColorNameHover:
-		// button hightlight
+		// button highlight
 		if t.variant == 1 {
 			return color.NRGBA{R: 0x96, G: 0x5a, B: 0xcd, A: 0x45}
 		}

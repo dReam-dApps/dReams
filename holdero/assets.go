@@ -412,7 +412,7 @@ func tourneyConfirm(obj []fyne.CanvasObject, tabs *container.AppTabs) fyne.Canva
 	bal := rpc.TokenBalance(rpc.TourneySCID)
 	balance := float64(bal) / 100000
 	a := fmt.Sprint(strconv.FormatFloat(balance, 'f', 2, 64))
-	text := fmt.Sprintf("You are about to deposit %s Tournament Chips into leaderboard contract\n\nConfirm", a)
+	text := fmt.Sprintf("You are about to deposit %s Tournament Chips into leader board contract\n\nConfirm", a)
 
 	label := widget.NewLabel(text)
 	label.Wrapping = fyne.TextWrapWord

@@ -524,7 +524,7 @@ func DealHandButton() fyne.Widget {
 }
 
 // Holdero bet entry amount
-//   - Setting the intial value based on if PlacedBet, Wager and Ante
+//   - Setting the initial value based on if PlacedBet, Wager and Ante
 //   - If entry invalid, set to min bet value
 func BetAmount() fyne.CanvasObject {
 	Table.BetEntry = dwidget.DeroAmtEntry("", 0.1, 1)
@@ -958,7 +958,7 @@ func holderoTools(deal, check *widget.Check, button *widget.Button) {
 		}()
 	}
 
-	aggr_label := widget.NewLabel("Agression: " + fmt.Sprintf("%.0f", rpc.Odds.Bot.Aggr))
+	aggr_label := widget.NewLabel("Aggression: " + fmt.Sprintf("%.0f", rpc.Odds.Bot.Aggr))
 	aggr_slider := widget.NewSlider(1, 5)
 	aggr_slider.SetValue(rpc.Odds.Bot.Aggr)
 	aggr_slider.OnChanged = func(f float64) {
@@ -974,7 +974,7 @@ func holderoTools(deal, check *widget.Check, button *widget.Button) {
 				mb_slider.SetValue(rpc.Odds.Bot.Max)
 			}
 
-			aggr_label.SetText("Agression: " + fmt.Sprintf("%.0f", f))
+			aggr_label.SetText("Aggression: " + fmt.Sprintf("%.0f", f))
 		}()
 	}
 

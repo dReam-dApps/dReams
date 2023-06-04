@@ -98,7 +98,7 @@ type DeroRpcEntries struct {
 }
 
 // Horizontal layout with daemon, wallet and user:pass entries
-//   - Objects bound to dReams rpc Deamon and Wallet vars with disconnect control
+//   - Objects bound to dReams rpc Daemon and Wallet vars with disconnect control
 //   - Balance canvas to display wallet balance
 //   - Button for OnTapped func()
 //   - Offset of 1 puts entries on trailing edge
@@ -167,8 +167,8 @@ func HorizontalEntries(tag string, offset int) *DeroRpcEntries {
 	return d
 }
 
-// Verticle layout with daemon, wallet and user:pass entries
-//   - Objects bound to dReams rpc Deamon and Wallet vars with disconnect control
+// Vertical layout with daemon, wallet and user:pass entries
+//   - Objects bound to dReams rpc Daemon and Wallet vars with disconnect control
 //   - Balance canvas to display wallet balance
 //   - Button for OnTapped func()
 //   - Offset of 1 puts entries on top edge
