@@ -1,7 +1,9 @@
 package menu
 
 import (
+	"bytes"
 	"fmt"
+	"image"
 	"log"
 	"math"
 	"sort"
@@ -1134,7 +1136,7 @@ Private will not show up in the list`
 
 // Index entry and NFA control objects
 //   - Pass window resources for side menu windows
-func IndexEntry(window_icon, window_background fyne.Resource) fyne.CanvasObject {
+func IndexEntry(window_icon fyne.Resource) fyne.CanvasObject {
 	Assets.Index_entry = widget.NewMultiLineEntry()
 	Assets.Index_entry.PlaceHolder = "SCID:"
 	Assets.Index_button = widget.NewButton("Add to Index", func() {
@@ -1147,11 +1149,11 @@ func IndexEntry(window_icon, window_background fyne.Resource) fyne.CanvasObject 
 	})
 
 	Control.Send_asset = widget.NewButton("Send Asset", func() {
-		go sendAssetMenu(window_icon, window_background)
+		go sendAssetMenu(window_icon)
 	})
 
 	Control.List_button = widget.NewButton("List Asset", func() {
-		go listMenu(window_icon, window_background)
+		go listMenu(window_icon)
 	})
 
 	Control.Claim_button = widget.NewButton("Claim NFA", func() {
@@ -1208,7 +1210,7 @@ func AssetList() fyne.CanvasObject {
 // Send Dero asset menu
 //   - Asset SCID can be sent as payload to receiver when sending asset
 //   - Pass resources for window
-func sendAssetMenu(window_icon, background fyne.Resource) {
+func sendAssetMenu(window_icon fyne.Resource) {
 	Control.send_open = true
 	saw := fyne.CurrentApp().NewWindow("Send Asset")
 	saw.Resize(fyne.NewSize(330, 700))
@@ -1229,7 +1231,6 @@ func sendAssetMenu(window_icon, background fyne.Resource) {
 
 	var saw_content *fyne.Container
 	var send_button *widget.Button
-	background_img := *canvas.NewImageFromResource(background)
 
 	viewing_asset := Control.Viewing_asset
 
@@ -1280,7 +1281,7 @@ func sendAssetMenu(window_icon, background fyne.Resource) {
 				confirm_open = false
 				saw.SetContent(
 					container.New(layout.NewMaxLayout(),
-						&background_img,
+						BackgroundRast("sendAssetMenu"),
 						bundle.Alpha180,
 						saw_content))
 			})
@@ -1295,7 +1296,7 @@ func sendAssetMenu(window_icon, background fyne.Resource) {
 			confirm_content := container.NewBorder(nil, confirm_options, nil, nil, confirm_display)
 			saw.SetContent(
 				container.New(layout.NewMaxLayout(),
-					&background_img,
+					BackgroundRast("sendAssetMenu"),
 					bundle.Alpha180,
 					confirm_content))
 		}
@@ -1332,7 +1333,7 @@ func sendAssetMenu(window_icon, background fyne.Resource) {
 
 	saw.SetContent(
 		container.New(layout.NewMaxLayout(),
-			&background_img,
+			BackgroundRast("sendAssetMenu"),
 			bundle.Alpha180,
 			saw_content))
 	saw.Show()
@@ -1356,7 +1357,7 @@ func menuAssetImg(img *canvas.Image, res fyne.Resource) fyne.CanvasObject {
 
 // NFA listing menu
 //   - Pass resources for menu window to match main
-func listMenu(window_icon, background fyne.Resource) {
+func listMenu(window_icon fyne.Resource) {
 	Control.list_open = true
 	aw := fyne.CurrentApp().NewWindow("List NFA")
 	aw.Resize(fyne.NewSize(330, 700))
@@ -1377,7 +1378,6 @@ func listMenu(window_icon, background fyne.Resource) {
 
 	var aw_content *fyne.Container
 	var set_list *widget.Button
-	background_img := *canvas.NewImageFromResource(background)
 
 	viewing_asset := Control.Viewing_asset
 	viewing_label := widget.NewLabel(fmt.Sprintf("Listing SCID:\n\n%s", viewing_asset))
@@ -1483,7 +1483,7 @@ func listMenu(window_icon, background fyne.Resource) {
 					confirm_open = false
 					aw.SetContent(
 						container.New(layout.NewMaxLayout(),
-							&background_img,
+							BackgroundRast("listMenu"),
 							bundle.Alpha180,
 							aw_content))
 				})
@@ -1505,7 +1505,7 @@ func listMenu(window_icon, background fyne.Resource) {
 
 				aw.SetContent(
 					container.New(layout.NewMaxLayout(),
-						&background_img,
+						BackgroundRast("listMenu"),
 						bundle.Alpha180,
 						confirm_content))
 			}
@@ -1568,7 +1568,7 @@ func listMenu(window_icon, background fyne.Resource) {
 
 	aw.SetContent(
 		container.New(layout.NewMaxLayout(),
-			&background_img,
+			BackgroundRast("listMenu"),
 			bundle.Alpha180,
 			aw_content))
 	aw.Show()
@@ -1645,8 +1645,25 @@ func IntroTree() fyne.CanvasObject {
 	return max
 }
 
+// Create a new raster from image, looking for holdero.Settings.ThemeImg
+// and will fallback to bundle.ResourceBackgroundPng if err
+func BackgroundRast(tag string) *canvas.Raster {
+	var err error
+	var img image.Image
+	if img, _, err = image.Decode(bytes.NewReader(holdero.Settings.ThemeImg.Resource.Content())); err != nil {
+		if img, _, err = image.Decode(bytes.NewReader(bundle.ResourceBackgroundPng.Content())); err != nil {
+			log.Printf("[%s] Fallback %s\n", tag, err)
+			source := image.Rect(2, 2, 4, 4)
+
+			return canvas.NewRasterFromImage(source)
+		}
+	}
+
+	return canvas.NewRasterFromImage(img)
+}
+
 // Send Dero message menu
-func SendMessageMenu(dest string, window_icon, background fyne.Resource) {
+func SendMessageMenu(dest string, window_icon fyne.Resource) {
 	if !Control.msg_open {
 		Control.msg_open = true
 		smw := fyne.CurrentApp().NewWindow("Send Asset")
@@ -1659,7 +1676,6 @@ func SendMessageMenu(dest string, window_icon, background fyne.Resource) {
 		smw.SetFixedSize(true)
 
 		var send_button *widget.Button
-		img := *canvas.NewImageFromResource(background)
 
 		label := widget.NewLabel("Sending Message:\n\nEnter ringsize and destination address below")
 		label.Wrapping = fyne.TextWrapWord
@@ -1722,7 +1738,7 @@ func SendMessageMenu(dest string, window_icon, background fyne.Resource) {
 
 		smw.SetContent(
 			container.New(layout.NewMaxLayout(),
-				&img,
+				BackgroundRast("SendMessageMenu"),
 				bundle.Alpha180,
 				content))
 		smw.Show()

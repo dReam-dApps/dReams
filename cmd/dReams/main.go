@@ -60,7 +60,7 @@ func main() {
 	dReams.Window.SetMaster()
 	dReams.Window.Resize(fyne.NewSize(MIN_WIDTH, MIN_HEIGHT))
 	dReams.Window.SetFixedSize(false)
-	dReams.Window.SetIcon(bundle.ResourceCardSharkTrayPng)
+	dReams.Window.SetIcon(bundle.ResourceDReamsIconPng)
 	dReams.Window.SetMaster()
 	dReams.quit = make(chan struct{})
 	done := make(chan struct{})

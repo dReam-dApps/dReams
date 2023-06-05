@@ -901,7 +901,7 @@ func GetActiveGames(dc bool) {
 func ownersMenu() {
 	ow := fyne.CurrentApp().NewWindow("Bet Contracts")
 	ow.Resize(fyne.NewSize(330, 700))
-	ow.SetIcon(bundle.ResourceDTGnomonIconPng)
+	ow.SetIcon(bundle.ResourceDReamsIconAltPng)
 	menu.Control.Bet_menu_p.Hide()
 	menu.Control.Bet_menu_s.Hide()
 	quit := make(chan struct{})
@@ -1014,8 +1014,6 @@ func ownersMenu() {
 
 	border := container.NewBorder(nil, bottom_box, nil, nil, owner_tabs)
 
-	img := *canvas.NewImageFromResource(bundle.ResourceOwBackgroundPng)
-
 	alpha := canvas.NewRectangle(color.RGBA{0, 0, 0, 180})
 	if bundle.AppColor == color.White {
 		alpha = canvas.NewRectangle(color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0x99})
@@ -1026,7 +1024,7 @@ func ownersMenu() {
 		ow.SetContent(
 			container.New(
 				layout.NewMaxLayout(),
-				&img,
+				menu.BackgroundRast("ownersMenu"),
 				alpha,
 				border))
 

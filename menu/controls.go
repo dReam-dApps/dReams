@@ -121,7 +121,7 @@ func Disconnected() {
 	rpc.Odds.Run = false
 	holdero.Settings.FaceSelect.Options = []string{"Light", "Dark"}
 	holdero.Settings.BackSelect.Options = []string{"Light", "Dark"}
-	holdero.Settings.ThemeSelect.Options = []string{"Main"}
+	holdero.Settings.ThemeSelect.Options = []string{"Main", "Legacy"}
 	holdero.Settings.AvatarSelect.Options = []string{"None"}
 	holdero.Settings.FaceUrl = ""
 	holdero.Settings.BackUrl = ""

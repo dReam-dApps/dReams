@@ -134,13 +134,15 @@ func BackSelect() fyne.Widget {
 // dReams app theme selection object
 //   - If image is not present locally, it is downloaded
 func ThemeSelect() fyne.Widget {
-	options := []string{"Main"}
+	options := []string{"Main", "Legacy"}
 	Settings.ThemeSelect = widget.NewSelect(options, func(s string) {
 		switch Settings.ThemeSelect.SelectedIndex() {
 		case -1:
 			Settings.Theme = "Main"
 		case 0:
 			Settings.Theme = "Main"
+		case 1:
+			Settings.Theme = "Legacy"
 		default:
 			Settings.Theme = s
 		}
@@ -176,10 +178,10 @@ func ThemeSelect() fyne.Widget {
 					log.Println("[dReams] Downloading", Settings.ThemeUrl)
 					Settings.ThemeImg, _ = DownloadFile(Settings.ThemeUrl, s)
 				}
-			}
-
-			if s == "Main" {
+			} else if s == "Main" {
 				Settings.ThemeImg = *canvas.NewImageFromResource(bundle.ResourceBackgroundPng)
+			} else if s == "Legacy" {
+				Settings.ThemeImg = *canvas.NewImageFromResource(bundle.ResourceLegacyBackgroundPng)
 			}
 		}()
 	})

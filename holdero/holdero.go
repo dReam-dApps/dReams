@@ -1,8 +1,10 @@
 package holdero
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"image"
 	"image/color"
 	"log"
 	"math"
@@ -742,7 +744,7 @@ func holderoTools(deal, check *widget.Check, button *widget.Button) {
 	bm := fyne.CurrentApp().NewWindow("Holdero Tools")
 	bm.Resize(fyne.NewSize(330, 700))
 	bm.SetFixedSize(true)
-	bm.SetIcon(bundle.ResourceDTGnomonIconPng)
+	bm.SetIcon(bundle.ResourceDReamsIconAltPng)
 	bm.SetCloseIntercept(func() {
 		button.Show()
 		bm.Close()
@@ -1188,10 +1190,25 @@ func holderoTools(deal, check *widget.Check, button *widget.Button) {
 		bm.Close()
 	}()
 
-	img := *canvas.NewImageFromResource(bundle.ResourceOwBackgroundPng)
+	var err error
+	var img image.Image
+	var rast *canvas.Raster
+	if img, _, err = image.Decode(bytes.NewReader(Settings.ThemeImg.Resource.Content())); err != nil {
+		if img, _, err = image.Decode(bytes.NewReader(bundle.ResourceBackgroundPng.Content())); err != nil {
+			log.Printf("[holderoTools] Fallback %s\n", err)
+			source := image.Rect(2, 2, 4, 4)
+
+			rast = canvas.NewRasterFromImage(source)
+		} else {
+			rast = canvas.NewRasterFromImage(img)
+		}
+	} else {
+		rast = canvas.NewRasterFromImage(img)
+	}
+
 	bm.SetContent(
 		container.New(layout.NewMaxLayout(),
-			&img,
+			rast,
 			bundle.Alpha180,
 			tabs))
 	bm.Show()

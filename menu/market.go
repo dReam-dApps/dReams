@@ -423,7 +423,7 @@ func SearchNFAs() fyne.CanvasObject {
 
 	message_button := widget.NewButton("Message Owner", func() {
 		if rpc.Wallet.Connect && dest_addr != "" {
-			SendMessageMenu(dest_addr, bundle.ResourceDTGnomonIconPng, bundle.ResourceOwBackgroundPng)
+			SendMessageMenu(dest_addr, bundle.ResourceDReamsIconAltPng)
 		}
 	})
 
@@ -879,7 +879,7 @@ func RecheckDreamsAssets() {
 //   - recheck for RecheckButton() func
 //   - menu resources for side menus
 //   - w for main window dialog
-func PlaceAssets(tag string, games bool, recheck func(), menu_icon, menu_background fyne.Resource, w fyne.Window) *container.Split {
+func PlaceAssets(tag string, games bool, recheck func(), menu_icon fyne.Resource, w fyne.Window) *container.Split {
 	items_box := container.NewAdaptiveGrid(2)
 
 	if games {
@@ -952,7 +952,7 @@ func PlaceAssets(tag string, games bool, recheck func(), menu_icon, menu_backgro
 	player_box := container.NewHBox(player_input)
 
 	menu_top := container.NewHSplit(player_box, max)
-	menu_bottom := container.NewAdaptiveGrid(1, IndexEntry(menu_icon, menu_background))
+	menu_bottom := container.NewAdaptiveGrid(1, IndexEntry(menu_icon))
 
 	menu_box := container.NewVSplit(menu_top, menu_bottom)
 	menu_box.SetOffset(1)
@@ -998,15 +998,13 @@ func MenuDisplay() fyne.CanvasObject {
 func IconImg(res fyne.Resource) *fyne.Container {
 	Assets.Icon.SetMinSize(fyne.NewSize(100, 100))
 	Assets.Icon.Resize(fyne.NewSize(94, 94))
-	Assets.Icon.Move(fyne.NewPos(8, 3))
+	Assets.Icon.Move(fyne.NewPos(7, 3))
 
 	frame := canvas.NewImageFromResource(res)
 	frame.Resize(fyne.NewSize(100, 100))
-	frame.Move(fyne.NewPos(5, 0))
+	frame.Move(fyne.NewPos(4, 0))
 
-	cont := container.NewWithoutLayout(&Assets.Icon, frame)
-
-	return cont
+	return container.NewWithoutLayout(&Assets.Icon, frame)
 }
 
 // Display for owned asset info

@@ -208,7 +208,7 @@ func systemTray(w fyne.App) bool {
 		m := fyne.NewMenu("MyApp",
 			fyne.NewMenuItem("Send Message", func() {
 				if !dReams.configure && rpc.Wallet.Connect {
-					menu.SendMessageMenu("", bundle.ResourceDTGnomonIconPng, bundle.ResourceOwBackgroundPng)
+					menu.SendMessageMenu("", bundle.ResourceDReamsIconAltPng)
 				}
 			}),
 			fyne.NewMenuItemSeparator(),

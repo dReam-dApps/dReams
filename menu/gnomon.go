@@ -627,7 +627,7 @@ func CheckDreamsNFAs(gc bool, scids map[string]string) {
 		ld := []string{"Light", "Dark"}
 		holdero.Settings.FaceSelect.Options = append(ld, holdero.Settings.FaceSelect.Options...)
 		holdero.Settings.BackSelect.Options = append(ld, holdero.Settings.BackSelect.Options...)
-		holdero.Settings.ThemeSelect.Options = append([]string{"Main"}, holdero.Settings.ThemeSelect.Options...)
+		holdero.Settings.ThemeSelect.Options = append([]string{"Main", "Legacy"}, holdero.Settings.ThemeSelect.Options...)
 
 		sort.Strings(Assets.Assets)
 		Assets.Asset_list.Refresh()
