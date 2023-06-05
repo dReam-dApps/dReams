@@ -1178,7 +1178,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 				collection_entry.Validator = validation.NewRegexp(`^\w{2,}`, "String required")
 			} else {
 				sign_button.Hide()
-				collection_entry.Validator = validation.NewRegexp(`^\W\D\S$`, "Invliad collection directory")
+				collection_entry.Validator = validation.NewRegexp(`^\W\D\S$`, "Invalid collection directory")
 			}
 
 			if rpc.Wallet.Connect && rpc.Daemon.Connect {

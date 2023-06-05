@@ -165,7 +165,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 
 	now := time.Now()
 
-	cal_dates := &tirp_date{arriving: arrive_canvas, departing: depart_canvas}
+	cal_dates := &trip_date{arriving: arrive_canvas, departing: depart_canvas}
 	calendar := xwidget.NewCalendar(now, cal_dates.onSelected)
 
 	arrive_box := container.NewBorder(nil, nil, arrive_reset, nil, arrive_canvas)
@@ -296,9 +296,9 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 	var tabs *container.AppTabs
 	var confirm_request_button, cancel_request_button, release_button, cancel_booking_button *widget.Button
 	var confirm_border, confirm_max, max *fyne.Container
-	var metedata_label_arr []string
+	var metadata_label_arr []string
 	var available_start_arr, available_end_arr []*widget.Entry
-	var new_dates_arr, metedata_entry_arr []*fyne.Container
+	var new_dates_arr, metadata_entry_arr []*fyne.Container
 
 	// confirmation screen objects
 	var confirm_action_int int
@@ -432,7 +432,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 			location_entry_cont := container.NewVBox(container.NewAdaptiveGrid(2, city_entry, country_entry), container.NewCenter(set_label), set_location)
 
 			done_button := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "confirm"), func() {
-				confirm_border.Objects[4] = container.NewVScroll(container.NewVBox(layout.NewSpacer(), confirm_action_label, layout.NewSpacer(), placeMetadataObjects(metedata_label_arr, metedata_entry_arr)))
+				confirm_border.Objects[4] = container.NewVScroll(container.NewVBox(layout.NewSpacer(), confirm_action_label, layout.NewSpacer(), placeMetadataObjects(metadata_label_arr, metadata_entry_arr)))
 				confirm_action_label.SetText(fmt.Sprintf("Set property info\n\nSCID: %s\n\n", scid_entry.Text))
 				confirm_action_int = 14
 				confirm_border.Refresh()
@@ -538,7 +538,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 			RequestBooking(viewing_scid, uint64(time.Now().Unix()), start, end, amt)
 		case 14:
 			metadata := property_data{}
-			for i, cont := range metedata_entry_arr {
+			for i, cont := range metadata_entry_arr {
 				switch i {
 				case 0:
 					metadata.Squarefootage = rpc.StringToInt(cont.Objects[0].(*dwidget.DeroAmts).Text)
@@ -831,7 +831,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 					info_message.SetDismissText("Add Info")
 					info_message.SetOnClosed(func() {
 						derbnb_gif.Start()
-						confirm_border.Objects[4] = container.NewVScroll(container.NewVBox(layout.NewSpacer(), confirm_action_label, layout.NewSpacer(), placeMetadataObjects(metedata_label_arr, metedata_entry_arr)))
+						confirm_border.Objects[4] = container.NewVScroll(container.NewVBox(layout.NewSpacer(), confirm_action_label, layout.NewSpacer(), placeMetadataObjects(metadata_label_arr, metadata_entry_arr)))
 						confirm_action_label.SetText(fmt.Sprintf("Set property info\n\nSCID: %s", scid_entry.Text))
 						confirm_action_int = 14
 						confirm_border.Refresh()
@@ -1107,65 +1107,65 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 	available_end_entry3.Validator = available_end_validation
 	available_end_arr = []*widget.Entry{available_end_entry, available_end_entry1, available_end_entry2, available_end_entry3}
 
-	avilible_start_reset := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "viewRefresh"), func() {
+	available_start_reset := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "viewRefresh"), func() {
 		available_start_entry.SetText("")
 	})
 
-	avilible_end_reset := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "viewRefresh"), func() {
+	available_end_reset := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "viewRefresh"), func() {
 		available_end_entry.SetText("")
 	})
 
-	avilible_start_reset1 := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "viewRefresh"), func() {
+	available_start_reset1 := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "viewRefresh"), func() {
 		available_start_entry1.SetText("")
 	})
 
-	avilible_end_reset1 := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "viewRefresh"), func() {
+	available_end_reset1 := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "viewRefresh"), func() {
 		available_end_entry1.SetText("")
 	})
 
-	avilible_start_reset2 := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "viewRefresh"), func() {
+	available_start_reset2 := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "viewRefresh"), func() {
 		available_start_entry2.SetText("")
 	})
 
-	avilible_end_reset2 := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "viewRefresh"), func() {
+	available_end_reset2 := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "viewRefresh"), func() {
 		available_end_entry2.SetText("")
 	})
 
-	avilible_start_reset3 := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "viewRefresh"), func() {
+	available_start_reset3 := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "viewRefresh"), func() {
 		available_start_entry3.SetText("")
 	})
 
-	avilible_end_reset3 := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "viewRefresh"), func() {
+	available_end_reset3 := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "viewRefresh"), func() {
 		available_end_entry3.SetText("")
 	})
 
-	avilible_start_reset.Importance = widget.LowImportance
-	avilible_start_reset1.Importance = widget.LowImportance
-	avilible_start_reset2.Importance = widget.LowImportance
-	avilible_start_reset3.Importance = widget.LowImportance
+	available_start_reset.Importance = widget.LowImportance
+	available_start_reset1.Importance = widget.LowImportance
+	available_start_reset2.Importance = widget.LowImportance
+	available_start_reset3.Importance = widget.LowImportance
 
-	avilible_end_reset.Importance = widget.LowImportance
-	avilible_end_reset1.Importance = widget.LowImportance
-	avilible_end_reset2.Importance = widget.LowImportance
-	avilible_end_reset3.Importance = widget.LowImportance
+	available_end_reset.Importance = widget.LowImportance
+	available_end_reset1.Importance = widget.LowImportance
+	available_end_reset2.Importance = widget.LowImportance
+	available_end_reset3.Importance = widget.LowImportance
 
 	available_d := &add_dates{starting: available_start_arr, ending: available_end_arr}
 	available_c := xwidget.NewCalendar(now, available_d.onSelected)
 
-	available_start_box := container.NewBorder(nil, nil, nil, avilible_start_reset, available_start_arr[0])
-	available_end_box := container.NewBorder(nil, nil, layout.NewSpacer(), avilible_end_reset, available_end_arr[0])
+	available_start_box := container.NewBorder(nil, nil, nil, available_start_reset, available_start_arr[0])
+	available_end_box := container.NewBorder(nil, nil, layout.NewSpacer(), available_end_reset, available_end_arr[0])
 	available_dates_box := container.NewAdaptiveGrid(2, available_start_box, available_end_box)
 
-	available_start_box1 := container.NewBorder(nil, nil, nil, avilible_start_reset1, available_start_arr[1])
-	available_end_box1 := container.NewBorder(nil, nil, layout.NewSpacer(), avilible_end_reset1, available_end_arr[1])
+	available_start_box1 := container.NewBorder(nil, nil, nil, available_start_reset1, available_start_arr[1])
+	available_end_box1 := container.NewBorder(nil, nil, layout.NewSpacer(), available_end_reset1, available_end_arr[1])
 	available_dates_box1 := container.NewAdaptiveGrid(2, available_start_box1, available_end_box1)
 
-	available_start_box2 := container.NewBorder(nil, nil, nil, avilible_start_reset2, available_start_arr[2])
-	available_end_box2 := container.NewBorder(nil, nil, layout.NewSpacer(), avilible_end_reset2, available_end_arr[2])
+	available_start_box2 := container.NewBorder(nil, nil, nil, available_start_reset2, available_start_arr[2])
+	available_end_box2 := container.NewBorder(nil, nil, layout.NewSpacer(), available_end_reset2, available_end_arr[2])
 	available_dates_box2 := container.NewAdaptiveGrid(2, available_start_box2, available_end_box2)
 
-	available_start_box3 := container.NewBorder(nil, nil, nil, avilible_start_reset3, available_start_arr[3])
-	available_end_box3 := container.NewBorder(nil, nil, layout.NewSpacer(), avilible_end_reset3, available_end_arr[3])
+	available_start_box3 := container.NewBorder(nil, nil, nil, available_start_reset3, available_start_arr[3])
+	available_end_box3 := container.NewBorder(nil, nil, layout.NewSpacer(), available_end_reset3, available_end_arr[3])
 	available_dates_box3 := container.NewAdaptiveGrid(2, available_start_box3, available_end_box3)
 
 	available_dates_box1.Hide()
@@ -1468,12 +1468,12 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 	prop_descp_entry.Wrapping = fyne.TextWrapWord
 	prop_descp_cont := container.NewVBox(prop_descp_entry)
 
-	metedata_label_arr = []string{sq_foot_label, style_label, num_bedrooms_label, num_guests_label, photo_entry_label, prop_descp_label}
-	metedata_entry_arr = []*fyne.Container{sq_foot_cont, style_cont, num_bedrooms_cont, num_guests_cont, photo_entry_cont, prop_descp_cont}
+	metadata_label_arr = []string{sq_foot_label, style_label, num_bedrooms_label, num_guests_label, photo_entry_label, prop_descp_label}
+	metadata_entry_arr = []*fyne.Container{sq_foot_cont, style_cont, num_bedrooms_cont, num_guests_cont, photo_entry_cont, prop_descp_cont}
 
 	property_add_info = widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "documentCreate"), func() {
 		derbnb_gif.Start()
-		confirm_border.Objects[4] = container.NewVScroll(container.NewVBox(layout.NewSpacer(), confirm_action_label, layout.NewSpacer(), placeMetadataObjects(metedata_label_arr, metedata_entry_arr)))
+		confirm_border.Objects[4] = container.NewVScroll(container.NewVBox(layout.NewSpacer(), confirm_action_label, layout.NewSpacer(), placeMetadataObjects(metadata_label_arr, metadata_entry_arr)))
 		confirm_action_label.SetText(fmt.Sprintf("Set property info\n\nSCID: %s", scid_entry.Text))
 		confirm_action_int = 14
 		confirm_border.Refresh()

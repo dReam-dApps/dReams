@@ -117,7 +117,7 @@ func DecryptFile(filename, pass, add string) []byte {
 }
 
 // Check if Holdero key exists and decrypt
-func CheckExisitingKey() {
+func CheckExistingKey() {
 	if _, err := os.Stat("config/.key"); err == nil {
 		key := DecryptFile("config/.key", Wallet.UserPass, Wallet.Address)
 		if key != nil {

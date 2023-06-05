@@ -8,7 +8,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-type tirp_date struct {
+type trip_date struct {
 	arriving  *canvas.Text
 	departing *canvas.Text
 }
@@ -19,7 +19,7 @@ type add_dates struct {
 }
 
 // Set arriving date before departing date for single pair of entries
-func (d *tirp_date) onSelected(t time.Time) {
+func (d *trip_date) onSelected(t time.Time) {
 	if t.Unix() > time.Now().Unix() {
 		if t.Before(start_date) || start_date.IsZero() {
 			start_date = t

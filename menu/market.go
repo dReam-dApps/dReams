@@ -85,7 +85,6 @@ type assetObjects struct {
 	Asset_map     map[string]string
 	Name          *canvas.Text
 	Collection    *canvas.Text
-	Descrption    *canvas.Text
 	Icon          canvas.Image
 	Stats_box     fyne.Container
 	Header_box    fyne.Container

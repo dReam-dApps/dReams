@@ -343,7 +343,7 @@ func RpcConnectButton() fyne.Widget {
 			if Control.Dapp_list["Holdero"] {
 				Poker.contract_input.CursorColumn = 1
 				Poker.contract_input.Refresh()
-				rpc.CheckExisitingKey()
+				rpc.CheckExistingKey()
 				if len(rpc.Wallet.Address) == 66 {
 					Control.Names.ClearSelected()
 					Control.Names.Options = []string{}

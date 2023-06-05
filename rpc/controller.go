@@ -152,7 +152,7 @@ type holderoValues struct {
 	P5_url    string
 	P6_url    string
 	Bettor    string
-	Raisor    string
+	Raiser    string
 
 	Winning_hand  []int
 	First_try     bool
@@ -297,7 +297,7 @@ func closedTable() {
 	Round.P5_name = ""
 	Round.P6_name = ""
 	Round.Bettor = ""
-	Round.Raisor = ""
+	Round.Raiser = ""
 	Round.Turn = 0
 	Round.Last = 0
 	Round.Local_trigger = false
@@ -590,7 +590,7 @@ func potIsEmpty(pot uint64) {
 		Signal.Odds = false
 		Display.Res = ""
 		Round.Bettor = ""
-		Round.Raisor = ""
+		Round.Raiser = ""
 		Round.Local_trigger = false
 		Round.Flop_trigger = false
 		Round.Turn_trigger = false

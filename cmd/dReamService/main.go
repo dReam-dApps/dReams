@@ -91,10 +91,10 @@ func flags() (version string) {
 	}
 
 	// Default false, integrated addresses generated through dReams
-	tranfsers := false
+	transfers := false
 	if arguments["--transfers"] != nil {
 		if arguments["--transfers"].(string) == "true" {
-			tranfsers = true
+			transfers = true
 		}
 	}
 
@@ -107,7 +107,7 @@ func flags() (version string) {
 
 	rpc.Wallet.Service = true
 	menu.Gnomes.Trim = true
-	enable_transfers = tranfsers
+	enable_transfers = transfers
 	prediction.Service.Debug = debug
 	menu.Gnomes.Fast = fastsync
 	menu.Gnomes.Para = parallel

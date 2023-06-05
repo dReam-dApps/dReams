@@ -52,7 +52,7 @@ func ClearShared() {
 	rpc.Round.P5_name = ""
 	rpc.Round.P6_name = ""
 	rpc.Round.Bettor = ""
-	rpc.Round.Raisor = ""
+	rpc.Round.Raiser = ""
 	rpc.Round.Last = 0
 	rpc.Signal.Reveal = false
 	rpc.Signal.Out1 = false

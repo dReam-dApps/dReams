@@ -585,14 +585,14 @@ func FetchHolderoSC() {
 			}
 
 			if Raised_jv != nil {
-				if Round.Raisor == "" {
-					Round.Raisor = findBettor(Turn_jv)
+				if Round.Raiser == "" {
+					Round.Raiser = findBettor(Turn_jv)
 				}
 				Round.Raised = uint64(Raised_jv.(float64))
 				Display.B_Button = "Call"
 				Display.C_Button = "Fold"
 			} else {
-				Round.Raisor = ""
+				Round.Raiser = ""
 				Round.Raised = 0
 			}
 

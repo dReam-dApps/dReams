@@ -370,7 +370,7 @@ func ifBet(w, r uint64) {
 		float := float64(w) / 100000
 		wager := strconv.FormatFloat(float, 'f', 1, 64)
 		holdero.Table.BetEntry.SetText(wager)
-		rpc.Display.Res = rpc.Round.Raisor + " Raised, " + wager + " to Call "
+		rpc.Display.Res = rpc.Round.Raiser + " Raised, " + wager + " to Call "
 	} else if w > 0 && !rpc.Signal.PlacedBet {
 		float := float64(w) / 100000
 		wager := strconv.FormatFloat(float, 'f', 1, 64)
@@ -378,9 +378,9 @@ func ifBet(w, r uint64) {
 		rpc.Display.Res = rpc.Round.Bettor + " Bet " + wager
 	} else if r > 0 && rpc.Signal.PlacedBet {
 		float := float64(r) / 100000
-		rasied := strconv.FormatFloat(float, 'f', 1, 64)
-		holdero.Table.BetEntry.SetText(rasied)
-		rpc.Display.Res = rpc.Round.Raisor + " Raised, " + rasied + " to Call"
+		raised := strconv.FormatFloat(float, 'f', 1, 64)
+		holdero.Table.BetEntry.SetText(raised)
+		rpc.Display.Res = rpc.Round.Raiser + " Raised, " + raised + " to Call"
 	} else if w == 0 && !rpc.Signal.Bet {
 		var float float64
 		if rpc.Round.Ante == 0 {
@@ -824,7 +824,7 @@ func PredictionRefresh(tab bool) {
 		if menu.CheckActivePrediction(prediction.Predict.Contract) {
 			go prediction.ShowPredictionControls()
 		} else {
-			prediction.DisablePreditions(true)
+			prediction.DisablePredictions(true)
 		}
 	}
 }

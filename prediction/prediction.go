@@ -38,7 +38,7 @@ type predictObjects struct {
 var Predict predictObjects
 
 // Disable dPrediction objects
-func DisablePreditions(d bool) {
+func DisablePredictions(d bool) {
 	if d {
 		Predict.Prediction_box.Hide()
 	} else {
@@ -65,7 +65,7 @@ func PredictConnectedBox() fyne.Widget {
 // Entry for dPrediction SCID
 //   - Bound to Predict.Contract
 //   - Checks for valid SCID on changed
-func PreictionContractEntry() fyne.Widget {
+func PredictionContractEntry() fyne.Widget {
 	options := []string{}
 	menu.Control.P_contract = widget.NewSelectEntry(options)
 	menu.Control.P_contract.PlaceHolder = "Contract Address: "
@@ -94,7 +94,7 @@ func PreictionContractEntry() fyne.Widget {
 
 // When called, enable and show dPrediction controls
 func ShowPredictionControls() {
-	DisablePreditions(false)
+	DisablePredictions(false)
 	Predict.Higher.Show()
 	Predict.Lower.Show()
 }
@@ -113,7 +113,7 @@ func setPredictionControls(str string) (item string) {
 			if menu.CheckActivePrediction(trimmed) {
 				ShowPredictionControls()
 			} else {
-				DisablePreditions(true)
+				DisablePredictions(true)
 			}
 		}
 	}
@@ -179,7 +179,7 @@ func PredictionListings(tab *container.AppTabs) fyne.CanvasObject {
 			Predict.Favorite_list.UnselectAll()
 			Predict.Owned_list.UnselectAll()
 		} else {
-			DisablePreditions(true)
+			DisablePredictions(true)
 		}
 	}
 
@@ -211,7 +211,7 @@ func PredictionListings(tab *container.AppTabs) fyne.CanvasObject {
 }
 
 // List object for populating favorite dPrediction contracts, with remove favorite control
-func PredicitionFavorites() fyne.CanvasObject {
+func PredictionFavorites() fyne.CanvasObject {
 	Predict.Favorite_list = widget.NewList(
 		func() int {
 			return len(menu.Control.Predict_favorites)
@@ -231,7 +231,7 @@ func PredicitionFavorites() fyne.CanvasObject {
 			Predict.Predict_list.UnselectAll()
 			Predict.Owned_list.UnselectAll()
 		} else {
-			DisablePreditions(true)
+			DisablePredictions(true)
 		}
 	}
 
@@ -282,9 +282,8 @@ func PredictionOwned() fyne.CanvasObject {
 			Predict.Predict_list.UnselectAll()
 			Predict.Favorite_list.UnselectAll()
 		} else {
-			DisablePreditions(true)
+			DisablePredictions(true)
 		}
-
 	}
 
 	return Predict.Owned_list

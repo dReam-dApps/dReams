@@ -79,7 +79,7 @@ func onChainPrediction(s string) int {
 
 // dPrediction owner control objects for side menu
 //   - Pass side menu window to reset to
-func preditctionOpts(window fyne.Window) fyne.CanvasObject {
+func predictionOpts(window fyne.Window) fyne.CanvasObject {
 	pred := []string{"DERO-BTC", "XMR-BTC", "BTC-USDT", "DERO-USDT", "XMR-USDT", "DERO-Difficulty", "DERO-Block Time", "DERO-Block Number"}
 	PS_Control.P_Name = widget.NewSelectEntry(pred)
 	PS_Control.P_Name.SetPlaceHolder("Name:")
@@ -751,9 +751,9 @@ func ConfirmAction(i int, teamA, teamB string, obj []fyne.CanvasObject, tabs *co
 //   - start is starting height to run service
 //   - payout and transfers, params for service
 //   - Pass side window to reset to
-func serviceRunConfirm(start uint64, payout, tranfsers bool, window fyne.Window, reset fyne.CanvasObject) fyne.CanvasObject {
+func serviceRunConfirm(start uint64, payout, transfers bool, window fyne.Window, reset fyne.CanvasObject) fyne.CanvasObject {
 	var pay, transac string
-	if tranfsers {
+	if transfers {
 		transac = "process transactions sent to your integrated address"
 		if payout {
 			transac = transac + " "
@@ -761,7 +761,7 @@ func serviceRunConfirm(start uint64, payout, tranfsers bool, window fyne.Window,
 	}
 
 	if payout {
-		if tranfsers {
+		if transfers {
 			pay = "and "
 		}
 		pay = pay + "process payouts to contracts"
@@ -779,7 +779,7 @@ func serviceRunConfirm(start uint64, payout, tranfsers bool, window fyne.Window,
 	})
 
 	confirm_button := widget.NewButton("Confirm", func() {
-		go DreamService(start, payout, tranfsers)
+		go DreamService(start, payout, transfers)
 		window.Content().(*fyne.Container).Objects[2] = reset
 		window.Content().(*fyne.Container).Objects[2].Refresh()
 	})
@@ -1035,7 +1035,7 @@ func ownersMenu() {
 		owner_tabs.SelectIndex(1)
 		owner_tabs.Selected().Content = sportsOpts(ow)
 		owner_tabs.SelectIndex(0)
-		owner_tabs.Selected().Content = preditctionOpts(ow)
+		owner_tabs.Selected().Content = predictionOpts(ow)
 
 		time.Sleep(time.Second)
 		markets := []string{}

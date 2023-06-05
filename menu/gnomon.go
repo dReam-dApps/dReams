@@ -585,7 +585,7 @@ func searchIndex(scid string) {
 		all := Gnomes.Indexer.Backend.GetAllOwnersAndSCIDs()
 		for sc := range all {
 			if scid == sc {
-				log.Println("[dReams] " + scid + " Indxed")
+				log.Println("[dReams] " + scid + " Indexed")
 				found = true
 			}
 		}

@@ -282,7 +282,7 @@ func GetAssetSCIDName(scid string) string {
 	}
 }
 
-// Deposit tournament chip bal with name to leaderboard SC
+// Deposit tournament chip bal with name to leader board SC
 func TourneyDeposit(bal uint64, name string) {
 	if bal > 0 {
 		rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
@@ -2153,7 +2153,7 @@ func SetNFAListing(scid, list, char string, dur, amt, perc uint64) {
 	AddLog("NFA List TX: " + txid.TXID)
 }
 
-// Cancel or close a listed NFA. Can only be canceled within opening buffer period. Can only close listing after expiriy
+// Cancel or close a listed NFA. Can only be canceled within opening buffer period. Can only close listing after expiry
 //   - c defines cancel or close call
 func CancelCloseNFA(scid, c string) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)

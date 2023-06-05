@@ -670,7 +670,7 @@ func UpdateMetadata(scid, metadata string) {
 		return
 	}
 
-	log.Println("[UpdateMetadata] Update Metedata TX:", txid)
+	log.Println("[UpdateMetadata] Update Metadata TX:", txid)
 	rpc.AddLog("Update Metadata TX: " + txid.TXID)
 }
 

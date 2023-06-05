@@ -684,7 +684,7 @@ func placePredict() *fyne.Container {
 
 	check_box := container.NewVBox(prediction.PredictConnectedBox())
 
-	contract_scroll := container.NewHScroll(prediction.PreictionContractEntry())
+	contract_scroll := container.NewHScroll(prediction.PredictionContractEntry())
 	contract_scroll.SetMinSize(fyne.NewSize(600, 35.1875))
 	contract_cont := container.NewHBox(contract_scroll, check_box)
 
@@ -716,7 +716,7 @@ func placePredict() *fyne.Container {
 
 	tabs := container.NewAppTabs(
 		container.NewTabItem("Contracts", layout.NewSpacer()),
-		container.NewTabItem("Favorites", prediction.PredicitionFavorites()),
+		container.NewTabItem("Favorites", prediction.PredictionFavorites()),
 		container.NewTabItem("Owned", owned_tab))
 
 	tabs.SelectIndex(0)
@@ -765,7 +765,7 @@ func placePredict() *fyne.Container {
 			if !rpc.Wallet.Connect && !rpc.Signal.Startup {
 				menu.Control.Predict_check.SetChecked(false)
 				menu.Control.Sports_check.SetChecked(false)
-				prediction.DisablePreditions(true)
+				prediction.DisablePredictions(true)
 				prediction.DisableSports(true)
 			}
 			time.Sleep(time.Second)
@@ -819,9 +819,9 @@ func placeSports() *fyne.Container {
 	prediction.Sports.ButtonB = widget.NewButton("TEAM B", nil)
 	prediction.Sports.ButtonB.Hide()
 
-	sports_muli := container.NewCenter(prediction.Sports.Multi)
+	sports_multi := container.NewCenter(prediction.Sports.Multi)
 	prediction.Sports.Sports_box = container.NewVBox(
-		sports_muli,
+		sports_multi,
 		prediction.Sports.Game_select,
 		prediction.Sports.ButtonA,
 		prediction.Sports.ButtonB)

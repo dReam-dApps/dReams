@@ -172,7 +172,7 @@ func HorizontalEntries(tag string, offset int) *DeroRpcEntries {
 //   - Balance canvas to display wallet balance
 //   - Button for OnTapped func()
 //   - Offset of 1 puts entries on top edge
-func VerticleEntries(tag string, offset int) *DeroRpcEntries {
+func VerticalEntries(tag string, offset int) *DeroRpcEntries {
 	default_daemon := []string{"", rpc.DAEMON_RPC_DEFAULT, rpc.DAEMON_RPC_REMOTE5, rpc.DAEMON_RPC_REMOTE6}
 	daemon_entry := widget.NewSelectEntry(default_daemon)
 	daemon_entry.SetPlaceHolder("Daemon RPC:")
