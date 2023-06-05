@@ -1516,7 +1516,7 @@ func FindNfaListings(assets map[string]string) {
 			}
 
 			if owned {
-				my_list = append(my_list, a)
+				my_list = append(my_list, b)
 			}
 
 			i++
@@ -1592,11 +1592,9 @@ func checkNfaAuctionListing(scid string) (asset string, owned, expired bool) {
 							}
 
 							if _, endTime := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "endBlockTime", Gnomes.Indexer.ChainHeight, true); endTime != nil {
-								if _, startTime := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "startBlockTime", Gnomes.Indexer.ChainHeight, true); startTime != nil {
-									now := uint64(time.Now().Unix())
-									if now > endTime[0] && endTime[0] > 0 {
-										expired = true
-									}
+								now := uint64(time.Now().Unix())
+								if now > endTime[0] && endTime[0] > 0 {
+									expired = true
 								}
 							}
 						}
@@ -1620,11 +1618,9 @@ func checkNfaAuctionListing(scid string) (asset string, owned, expired bool) {
 							}
 
 							if _, endTime := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "endBlockTime", Gnomes.Indexer.ChainHeight, true); endTime != nil {
-								if _, startTime := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "startBlockTime", Gnomes.Indexer.ChainHeight, true); startTime != nil {
-									now := uint64(time.Now().Unix())
-									if now > endTime[0] && endTime[0] > 0 {
-										expired = true
-									}
+								now := uint64(time.Now().Unix())
+								if now > endTime[0] && endTime[0] > 0 {
+									expired = true
 								}
 							}
 						}
@@ -1660,11 +1656,9 @@ func checkNfaBuyListing(scid string) (asset string, owned, expired bool) {
 							}
 
 							if _, endTime := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "endBlockTime", Gnomes.Indexer.ChainHeight, true); endTime != nil {
-								if _, startTime := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "startBlockTime", Gnomes.Indexer.ChainHeight, true); startTime != nil {
-									now := uint64(time.Now().Unix())
-									if now > endTime[0] && endTime[0] > 0 {
-										expired = true
-									}
+								now := uint64(time.Now().Unix())
+								if now > endTime[0] && endTime[0] > 0 {
+									expired = true
 								}
 							}
 						}
@@ -1688,11 +1682,9 @@ func checkNfaBuyListing(scid string) (asset string, owned, expired bool) {
 							}
 
 							if _, endTime := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "endBlockTime", Gnomes.Indexer.ChainHeight, true); endTime != nil {
-								if _, startTime := Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "startBlockTime", Gnomes.Indexer.ChainHeight, true); startTime != nil {
-									now := uint64(time.Now().Unix())
-									if now > endTime[0] && endTime[0] > 0 {
-										expired = true
-									}
+								now := uint64(time.Now().Unix())
+								if now > endTime[0] && endTime[0] > 0 {
+									expired = true
 								}
 							}
 						}
