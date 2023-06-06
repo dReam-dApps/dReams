@@ -1606,7 +1606,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 			if rpc.Daemon.Connect && !menu.Gnomes.Init && !menu.Gnomes.Start {
 				property_filter = menu.FetchFilters("derbnb_filter")
 				filters := BnbSearchFilter()
-				go menu.StartGnomon(tag, filters, 0, 0, nil)
+				go menu.StartGnomon(tag, "gravdb", filters, 0, 0, nil)
 			}
 		}
 

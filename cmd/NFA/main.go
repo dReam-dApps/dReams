@@ -51,7 +51,7 @@ func main() {
 		rpc.GetAddress(app_tag)
 		rpc.Ping()
 		if rpc.Daemon.Connect && !menu.Gnomes.Init && !menu.Gnomes.Start {
-			go menu.StartGnomon(app_tag, []string{menu.NFA_SEARCH_FILTER}, 0, 0, nil)
+			go menu.StartGnomon(app_tag, "gravdb", []string{menu.NFA_SEARCH_FILTER}, 0, 0, nil)
 			rpc.FetchFees()
 			menu.Market.Filters = menu.FetchFilters("market_filter")
 		}

@@ -326,10 +326,10 @@ func SportsPayouts() fyne.CanvasObject {
 // Gets dSports data from SCID and return formatted info string
 func GetBook(scid string) (info string) {
 	if menu.Gnomes.Init && !menu.GnomonClosing() && menu.Gnomes.Sync {
-		_, initValue := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "s_init", menu.Gnomes.Indexer.ChainHeight, true)
+		_, initValue := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "s_init", menu.Gnomes.Indexer.ChainHeight, true)
 		if initValue != nil {
-			_, playedValue := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "s_played", menu.Gnomes.Indexer.ChainHeight, true)
-			//_, hl := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "hl", menu.Gnomes.Indexer.ChainHeight, true)
+			_, playedValue := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "s_played", menu.Gnomes.Indexer.ChainHeight, true)
+			//_, hl := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "hl", menu.Gnomes.Indexer.ChainHeight, true)
 			init := initValue[0]
 			played := playedValue[0]
 
@@ -345,20 +345,20 @@ func GetBook(scid string) (info string) {
 			var single bool
 			iv := 1
 			for {
-				_, s_init := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "s_init_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
+				_, s_init := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "s_init_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
 				if s_init != nil {
-					game, _ := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "game_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
-					league, _ := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "league_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
-					_, s_n := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "s_#_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
-					_, s_amt := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "s_amount_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
-					_, s_end := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "s_end_at_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
-					_, s_total := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "s_total_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
-					//s_urlValue, _ := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "s_url_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
-					_, s_ta := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "team_a_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
-					_, s_tb := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "team_b_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
-					_, time_a := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "time_a", menu.Gnomes.Indexer.ChainHeight, true)
-					_, time_b := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "time_b", menu.Gnomes.Indexer.ChainHeight, true)
-					_, buffer := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(scid, "buffer"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
+					game, _ := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "game_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
+					league, _ := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "league_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
+					_, s_n := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "s_#_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
+					_, s_amt := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "s_amount_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
+					_, s_end := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "s_end_at_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
+					_, s_total := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "s_total_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
+					//s_urlValue, _ := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "s_url_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
+					_, s_ta := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "team_a_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
+					_, s_tb := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "team_b_"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
+					_, time_a := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "time_a", menu.Gnomes.Indexer.ChainHeight, true)
+					_, time_b := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "time_b", menu.Gnomes.Indexer.ChainHeight, true)
+					_, buffer := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "buffer"+strconv.Itoa(iv), menu.Gnomes.Indexer.ChainHeight, true)
 
 					team_a := menu.TrimTeamA(game[0])
 					team_b := menu.TrimTeamB(game[0])

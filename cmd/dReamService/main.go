@@ -172,7 +172,7 @@ func main() {
 	menu.Control.Contract_rating = make(map[string]uint64)
 
 	// Start Gnomon with search filters
-	go menu.StartGnomon("dReamService", filter, 0, 0, nil)
+	go menu.StartGnomon("dReamService", "gravdb", filter, 0, 0, nil)
 
 	// Routine for checking daemon, wallet connection and Gnomon sync
 	go func() {
@@ -185,7 +185,7 @@ func main() {
 		for menu.Gnomes.Init && !menu.GnomonClosing() && rpc.Wallet.Connect && rpc.Daemon.Connect {
 			rpc.Ping()
 			rpc.EchoWallet("dReamService")
-			contracts := menu.Gnomes.Indexer.Backend.GetAllOwnersAndSCIDs()
+			contracts := menu.Gnomes.Indexer.GravDBBackend.GetAllOwnersAndSCIDs()
 			menu.Gnomes.SCIDS = uint64(len(contracts))
 			if menu.Gnomes.Indexer.LastIndexedHeight >= int64(height)-3 && menu.Gnomes.SCIDS >= 9 {
 				menu.Gnomes.Sync = true

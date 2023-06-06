@@ -150,7 +150,7 @@ func fetch(quit, done chan struct{}) {
 			if rpc.Daemon.Connect && menu.Gnomes.Init {
 				connect_box.Disconnect.SetChecked(true)
 				if !menu.GnomonClosing() {
-					contracts := menu.Gnomes.Indexer.Backend.GetAllOwnersAndSCIDs()
+					contracts := menu.Gnomes.Indexer.GravDBBackend.GetAllOwnersAndSCIDs()
 					menu.Gnomes.SCIDS = uint64(len(contracts))
 					if menu.Gnomes.SCIDS > 0 {
 						menu.Gnomes.Checked = true
@@ -246,7 +246,7 @@ func filterProperty(check interface{}) bool {
 func SearchProperties(prefix string, search_city bool) (results []string) {
 	if rpc.Wallet.Connect && rpc.Daemon.Connect {
 		if menu.Gnomes.Init && menu.Gnomes.Sync && !menu.GnomonClosing() {
-			info := menu.Gnomes.Indexer.Backend.GetAllSCIDVariableDetails(rpc.DerBnbSCID)
+			info := menu.Gnomes.Indexer.GravDBBackend.GetAllSCIDVariableDetails(rpc.DerBnbSCID)
 			if info != nil {
 				i := 0
 				keys := make([]int, len(info))
@@ -314,7 +314,7 @@ func SearchProperties(prefix string, search_city bool) (results []string) {
 func GetProperties() {
 	if rpc.Wallet.Connect && rpc.Daemon.Connect {
 		if menu.Gnomes.Init && menu.Gnomes.Sync && !menu.GnomonClosing() {
-			info := menu.Gnomes.Indexer.Backend.GetAllSCIDVariableDetails(rpc.DerBnbSCID)
+			info := menu.Gnomes.Indexer.GravDBBackend.GetAllSCIDVariableDetails(rpc.DerBnbSCID)
 			if info != nil {
 				i := 0
 				keys := make([]int, len(info))
@@ -480,9 +480,9 @@ func GetProperties() {
 //   - stamp is timestamp key of request
 func getBookingRequests(scid, stamp string, owned bool) (request string) {
 	if menu.Gnomes.Init && menu.Gnomes.Sync && !menu.GnomonClosing() {
-		_, start := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(rpc.DerBnbSCID, scid+"_request_bk_start_"+stamp, menu.Gnomes.Indexer.ChainHeight, true)
-		_, end := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(rpc.DerBnbSCID, scid+"_request_bk_end_"+stamp, menu.Gnomes.Indexer.ChainHeight, true)
-		booker, _ := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(rpc.DerBnbSCID, scid+"_request_booker_"+stamp, menu.Gnomes.Indexer.ChainHeight, true)
+		_, start := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(rpc.DerBnbSCID, scid+"_request_bk_start_"+stamp, menu.Gnomes.Indexer.ChainHeight, true)
+		_, end := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(rpc.DerBnbSCID, scid+"_request_bk_end_"+stamp, menu.Gnomes.Indexer.ChainHeight, true)
+		booker, _ := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(rpc.DerBnbSCID, scid+"_request_booker_"+stamp, menu.Gnomes.Indexer.ChainHeight, true)
 
 		if start != nil && end != nil && booker != nil {
 			s := time.Unix(int64(start[0]), 0)
@@ -503,15 +503,15 @@ func getBookingRequests(scid, stamp string, owned bool) (request string) {
 //   - stamp is timestamp key of request
 func getOwnerConfirmedBookings(scid string, all bool) (bookings []string) {
 	if menu.Gnomes.Init && menu.Gnomes.Sync && !menu.GnomonClosing() {
-		_, bk_last := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(rpc.DerBnbSCID, scid+"_bk_last", menu.Gnomes.Indexer.ChainHeight, true)
+		_, bk_last := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(rpc.DerBnbSCID, scid+"_bk_last", menu.Gnomes.Indexer.ChainHeight, true)
 		if bk_last != nil {
 			i := int(bk_last[0])
 			for {
 				last := strconv.Itoa(i)
-				_, start := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(rpc.DerBnbSCID, scid+"_bk_start_"+last, menu.Gnomes.Indexer.ChainHeight, true)
-				_, end := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(rpc.DerBnbSCID, scid+"_bk_end_"+last, menu.Gnomes.Indexer.ChainHeight, true)
-				booker, _ := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(rpc.DerBnbSCID, scid+"_booker_"+last, menu.Gnomes.Indexer.ChainHeight, true)
-				complete, _ := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(rpc.DerBnbSCID, scid+"_"+last+"_damage_renter", menu.Gnomes.Indexer.ChainHeight, true)
+				_, start := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(rpc.DerBnbSCID, scid+"_bk_start_"+last, menu.Gnomes.Indexer.ChainHeight, true)
+				_, end := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(rpc.DerBnbSCID, scid+"_bk_end_"+last, menu.Gnomes.Indexer.ChainHeight, true)
+				booker, _ := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(rpc.DerBnbSCID, scid+"_booker_"+last, menu.Gnomes.Indexer.ChainHeight, true)
+				complete, _ := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(rpc.DerBnbSCID, scid+"_"+last+"_damage_renter", menu.Gnomes.Indexer.ChainHeight, true)
 
 				if start != nil && end != nil && booker != nil {
 					prefix := "Booked:"
@@ -545,10 +545,10 @@ func getOwnerConfirmedBookings(scid string, all bool) (bookings []string) {
 // Get property info from DerBnb contract for display
 func getInfo(scid string) (info string) {
 	if menu.Gnomes.Init && menu.Gnomes.Sync && !menu.GnomonClosing() {
-		owner, _ := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(rpc.DerBnbSCID, scid+"_owner", menu.Gnomes.Indexer.ChainHeight, true)
-		_, price := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(rpc.DerBnbSCID, scid+"_price", menu.Gnomes.Indexer.ChainHeight, true)
-		_, dep := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(rpc.DerBnbSCID, scid+"_damage_deposit", menu.Gnomes.Indexer.ChainHeight, true)
-		//_, bk_last := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(CONTRACT, scid+"_bk_last", menu.Gnomes.Indexer.ChainHeight, true)
+		owner, _ := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(rpc.DerBnbSCID, scid+"_owner", menu.Gnomes.Indexer.ChainHeight, true)
+		_, price := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(rpc.DerBnbSCID, scid+"_price", menu.Gnomes.Indexer.ChainHeight, true)
+		_, dep := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(rpc.DerBnbSCID, scid+"_damage_deposit", menu.Gnomes.Indexer.ChainHeight, true)
+		//_, bk_last := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(CONTRACT, scid+"_bk_last", menu.Gnomes.Indexer.ChainHeight, true)
 
 		if owner != nil && price != nil && dep != nil {
 			location := makeLocationString(scid)
@@ -566,7 +566,7 @@ func getInfo(scid string) (info string) {
 // Get owner address of DerBnb property
 func getOwnerAddress(scid string) (address string) {
 	if menu.Gnomes.Init && menu.Gnomes.Sync && !menu.GnomonClosing() {
-		owner, _ := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(rpc.DerBnbSCID, scid+"_owner", menu.Gnomes.Indexer.ChainHeight, true)
+		owner, _ := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(rpc.DerBnbSCID, scid+"_owner", menu.Gnomes.Indexer.ChainHeight, true)
 		if owner != nil {
 			return owner[0]
 		}
@@ -579,15 +579,15 @@ func getOwnerAddress(scid string) (address string) {
 //   - stamp is timestamp key of request
 func getUserConfirmedBookings(scid string, all bool) (confirmed_bookings []string, complete_bookings []string) {
 	if menu.Gnomes.Init && menu.Gnomes.Sync && !menu.GnomonClosing() {
-		_, bk_last := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(rpc.DerBnbSCID, scid+"_bk_last", menu.Gnomes.Indexer.ChainHeight, true)
+		_, bk_last := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(rpc.DerBnbSCID, scid+"_bk_last", menu.Gnomes.Indexer.ChainHeight, true)
 		if bk_last != nil {
 			i := int(bk_last[0])
 			for {
 				last := strconv.Itoa(i)
-				_, start := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(rpc.DerBnbSCID, scid+"_bk_start_"+last, menu.Gnomes.Indexer.ChainHeight, true)
-				_, end := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(rpc.DerBnbSCID, scid+"_bk_end_"+last, menu.Gnomes.Indexer.ChainHeight, true)
-				booker, _ := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(rpc.DerBnbSCID, scid+"_booker_"+last, menu.Gnomes.Indexer.ChainHeight, true)
-				complete, _ := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(rpc.DerBnbSCID, scid+"_"+last+"_damage_renter", menu.Gnomes.Indexer.ChainHeight, true)
+				_, start := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(rpc.DerBnbSCID, scid+"_bk_start_"+last, menu.Gnomes.Indexer.ChainHeight, true)
+				_, end := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(rpc.DerBnbSCID, scid+"_bk_end_"+last, menu.Gnomes.Indexer.ChainHeight, true)
+				booker, _ := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(rpc.DerBnbSCID, scid+"_booker_"+last, menu.Gnomes.Indexer.ChainHeight, true)
+				complete, _ := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(rpc.DerBnbSCID, scid+"_"+last+"_damage_renter", menu.Gnomes.Indexer.ChainHeight, true)
 
 				if start != nil && end != nil && booker != nil {
 					prefix := "Booked:"
@@ -633,11 +633,11 @@ func getUserConfirmedBookings(scid string, all bool) (confirmed_bookings []strin
 }
 
 func getUserShares() (shares, epoch, treasury uint64) {
-	if _, check_shares := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(rpc.DerBnbSCID, rpc.Wallet.Address+"_SHARES", menu.Gnomes.Indexer.ChainHeight, true); check_shares != nil {
+	if _, check_shares := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(rpc.DerBnbSCID, rpc.Wallet.Address+"_SHARES", menu.Gnomes.Indexer.ChainHeight, true); check_shares != nil {
 		shares = check_shares[0]
-		if _, check_epoch := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(rpc.DerBnbSCID, rpc.Wallet.Address+"_EPOCH", menu.Gnomes.Indexer.ChainHeight, true); check_epoch != nil {
+		if _, check_epoch := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(rpc.DerBnbSCID, rpc.Wallet.Address+"_EPOCH", menu.Gnomes.Indexer.ChainHeight, true); check_epoch != nil {
 			epoch = check_epoch[0]
-			if _, check_treasury := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(rpc.DerBnbSCID, "TREASURY", menu.Gnomes.Indexer.ChainHeight, true); check_treasury != nil {
+			if _, check_treasury := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(rpc.DerBnbSCID, "TREASURY", menu.Gnomes.Indexer.ChainHeight, true); check_treasury != nil {
 				treasury = check_treasury[0]
 			}
 		}

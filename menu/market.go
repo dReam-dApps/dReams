@@ -1086,7 +1086,7 @@ func RunNFAMarket(tag string, quit, done chan struct{}, connect_box *dwidget.Der
 			if rpc.Daemon.Connect && Gnomes.Init && !GnomonClosing() {
 				connect_box.Disconnect.SetChecked(true)
 				// Get indexed SCID count
-				contracts := Gnomes.Indexer.Backend.GetAllOwnersAndSCIDs()
+				contracts := Gnomes.Indexer.GravDBBackend.GetAllOwnersAndSCIDs()
 				Gnomes.SCIDS = uint64(len(contracts))
 				if Gnomes.SCIDS > 0 {
 					Gnomes.Checked = true
