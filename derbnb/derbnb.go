@@ -69,6 +69,7 @@ type string_slice_map struct {
 	sync.RWMutex
 }
 
+var searching_properties bool
 var current_price uint64
 var current_deposit uint64
 var property_filter []string
@@ -221,7 +222,7 @@ func propertyImageSource(check string) string {
 	return "https://ipfs.io/ipfs/" + check
 }
 
-// Make a formated City, Country location string from SCID
+// Make a formatted City, Country location string from SCID
 func makeLocationString(scid string) (location string) {
 	city, country := getLocation(scid)
 	if city != "" && country != "" {
@@ -240,6 +241,73 @@ func filterProperty(check interface{}) bool {
 		}
 	}
 	return false
+}
+
+func SearchProperties(prefix string, search_city bool) (results []string) {
+	if rpc.Wallet.Connect && rpc.Daemon.Connect {
+		if menu.Gnomes.Init && menu.Gnomes.Sync && !menu.GnomonClosing() {
+			info := menu.Gnomes.Indexer.Backend.GetAllSCIDVariableDetails(rpc.DerBnbSCID)
+			if info != nil {
+				i := 0
+				keys := make([]int, len(info))
+				for k := range info {
+					keys[i] = int(k)
+					i++
+				}
+
+				// If no info, return
+				if len(keys) == 0 {
+					return
+				}
+
+				sort.Ints(keys)
+
+				for _, h := range info[int64(keys[len(keys)-1])] {
+					split := strings.Split(h.Key.(string), "_")
+					if len(split) > 1 && len(split[0]) == 64 {
+						var have bool
+						if split[1] == "owner" {
+							if filterProperty(h.Value) {
+								continue
+							}
+
+							if !have {
+								location := makeLocationString(split[0])
+								if search_city {
+									if strings.HasPrefix(location, prefix) {
+										list_string := fmt.Sprintf("%s   %s", location, split[0])
+										results = append(results, list_string)
+									}
+								} else {
+									if strings.HasPrefix(location, prefix) {
+										list_string := fmt.Sprintf("%s   %s", location, split[0])
+										results = append(results, list_string)
+									}
+
+									if country_check := strings.Split(location, ", "); country_check != nil {
+										l := len(country_check)
+										if l > 1 {
+											if strings.HasPrefix(country_check[l-1], prefix) {
+												list_string := fmt.Sprintf("%s   %s", location, split[0])
+												results = append(results, list_string)
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+
+				searching_properties = true
+				sort.Strings(results)
+				listed_properties = results
+				listings_list.Refresh()
+			}
+		}
+	}
+
+	return
 }
 
 // Get all DerBnb property info from contract
@@ -289,7 +357,7 @@ func GetProperties() {
 								continue
 							}
 
-							if !have {
+							if !have && !searching_properties {
 								location := makeLocationString(split[0])
 								if location != "" {
 									list_string := fmt.Sprintf("%s   %s", location, split[0])
@@ -349,9 +417,11 @@ func GetProperties() {
 					}
 				}
 				listing_label.SetText(getInfo(viewing_scid))
-				sort.Strings(lp)
-				listed_properties = lp
-				listings_list.Refresh()
+				if !searching_properties {
+					sort.Strings(lp)
+					listed_properties = lp
+					listings_list.Refresh()
+				}
 
 				my_properties.Lock()
 				for sc := range my_properties.data {
