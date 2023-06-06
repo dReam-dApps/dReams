@@ -160,6 +160,7 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 	back_button := widget.NewButton("Back", func() {
 		dReams.configure = false
 		gnomon_gif.Stop()
+		menu.RestartGif(menu.Gnomes.Icon_ind)
 		go func() {
 			dReams.Window.Content().(*fyne.Container).Objects[1] = reset
 			dReams.Window.Content().(*fyne.Container).Objects[1].Refresh()

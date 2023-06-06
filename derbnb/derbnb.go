@@ -637,8 +637,8 @@ func getUserShares() (shares, epoch, treasury uint64) {
 		shares = check_shares[0]
 		if _, check_epoch := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(rpc.DerBnbSCID, rpc.Wallet.Address+"_EPOCH", menu.Gnomes.Indexer.ChainHeight, true); check_epoch != nil {
 			epoch = check_epoch[0]
-			if _, check_tresury := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(rpc.DerBnbSCID, "TREASURY", menu.Gnomes.Indexer.ChainHeight, true); check_tresury != nil {
-				treasury = check_tresury[0]
+			if _, check_treasury := menu.Gnomes.Indexer.Backend.GetSCIDValuesByKey(rpc.DerBnbSCID, "TREASURY", menu.Gnomes.Indexer.ChainHeight, true); check_treasury != nil {
+				treasury = check_treasury[0]
 			}
 		}
 	}

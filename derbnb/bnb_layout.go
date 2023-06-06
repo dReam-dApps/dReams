@@ -613,6 +613,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 		confirm_action.Show()
 		cancel_action.Show()
 		derbnb_gif.Stop()
+		menu.RestartGif(menu.Gnomes.Icon_ind)
 		w.SetContent(reset_to_main)
 	})
 
@@ -624,6 +625,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 		release_check.SetChecked(false)
 		confirm_action.Show()
 		derbnb_gif.Stop()
+		menu.RestartGif(menu.Gnomes.Icon_ind)
 		w.SetContent(reset_to_main)
 	})
 
@@ -782,6 +784,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 	trvl_back := widget.NewButton("Back", func() {
 		trvl_exit = true
 		derbnb_gif.Stop()
+		menu.RestartGif(menu.Gnomes.Icon_ind)
 		w.SetContent(reset_to_main)
 	})
 

@@ -280,6 +280,14 @@ func StartIndicators() fyne.CanvasObject {
 	return container.NewMax(place)
 }
 
+// Main gif seems to stop when hidden for 5min+
+// will use this for now to check if running and restart
+func RestartGif(g *xwidget.AnimatedGif) {
+	if g != nil {
+		g.Start()
+	}
+}
+
 // Stop dReams app status indicators
 func StopIndicators() {
 	Gnomes.Sync_ind.Stop()
