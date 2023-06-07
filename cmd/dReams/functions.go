@@ -44,10 +44,11 @@ Usage:
 
 Options:
   -h --help     Show this screen.
-  --cli=<false>	dReams option, enables cli app tab.
+  --cli=<false>		dReams option, enables cli app tab.
   --trim=<false>	dReams option, defaults true for minimum index search filters.
   --fastsync=<false>	Gnomon option,  true/false value to define loading at chain height on start up.
-  --num-parallel-blocks=<5>   Gnomon option,  defines the number of parallel blocks to index.`
+  --num-parallel-blocks=<5>   Gnomon option,  defines the number of parallel blocks to index.
+  --dbtype=<boltdb>     Gnomon option,  defines type of database 'gravdb' or 'boltdb'.`
 
 var offset int
 
@@ -58,6 +59,13 @@ func flags() (version string) {
 
 	if err != nil {
 		log.Fatalf("Error while parsing arguments: %s\n", err)
+	}
+
+	dbType := "boltdb"
+	if arguments["--dbtype"] != nil {
+		if arguments["--dbtype"] == "gravdb" {
+			dbType = arguments["--dbtype"].(string)
+		}
 	}
 
 	trim := true
@@ -102,6 +110,7 @@ func flags() (version string) {
 	menu.Gnomes.Trim = trim
 	menu.Gnomes.Fast = fastsync
 	menu.Gnomes.Para = parallel
+	menu.Gnomes.DBType = dbType
 
 	return
 }
@@ -137,7 +146,7 @@ func init() {
 		fmt.Println()
 		serviceRunning()
 		go menu.StopLabel()
-		menu.StopGnomon("dReams")
+		menu.Gnomes.Stop("dReams")
 		menu.StopIndicators()
 		time.Sleep(time.Second)
 		dReams.quit <- struct{}{}
@@ -946,7 +955,7 @@ func refreshPriceDisplay(c bool) {
 func MenuRefresh(tab bool) {
 	if tab && menu.Gnomes.Init {
 		var index int
-		if !menu.GnomonClosing() && menu.FastSynced() {
+		if !menu.Gnomes.Closing() && menu.FastSynced() {
 			index = int(menu.Gnomes.Indexer.LastIndexedHeight)
 		}
 
@@ -954,7 +963,7 @@ func MenuRefresh(tab bool) {
 			menu.Assets.Gnomes_sync.Text = (" Gnomon Syncing... ")
 			menu.Assets.Gnomes_sync.Refresh()
 		} else {
-			if !menu.GnomonClosing() {
+			if !menu.Gnomes.Closing() {
 				menu.Assets.Gnomes_sync.Text = ("")
 				menu.Assets.Gnomes_sync.Refresh()
 			}

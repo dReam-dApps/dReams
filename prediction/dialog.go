@@ -834,11 +834,11 @@ func OwnerButtonS() fyne.CanvasObject {
 
 // Check dPrediction SCID for live status
 func CheckPredictionStatus() {
-	if rpc.Daemon.Connect && menu.Gnomes.Init && !menu.GnomonClosing() {
-		_, ends := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(Predict.Contract, "p_end_at", menu.Gnomes.Indexer.ChainHeight, true)
-		_, time_a := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(Predict.Contract, "time_a", menu.Gnomes.Indexer.ChainHeight, true)
-		_, time_c := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(Predict.Contract, "time_c", menu.Gnomes.Indexer.ChainHeight, true)
-		_, mark := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(Predict.Contract, "mark", menu.Gnomes.Indexer.ChainHeight, true)
+	if rpc.Daemon.Connect && menu.Gnomes.Init && !menu.Gnomes.Closing() {
+		_, ends := menu.Gnomes.GetSCIDValuesByKey(Predict.Contract, "p_end_at")
+		_, time_a := menu.Gnomes.GetSCIDValuesByKey(Predict.Contract, "time_a")
+		_, time_c := menu.Gnomes.GetSCIDValuesByKey(Predict.Contract, "time_c")
+		_, mark := menu.Gnomes.GetSCIDValuesByKey(Predict.Contract, "mark")
 		if ends != nil && time_a != nil && time_c != nil {
 			now := uint64(time.Now().Unix())
 			if now >= ends[0] && now <= ends[0]+time_a[0] && mark == nil {
@@ -862,26 +862,26 @@ func CheckPredictionStatus() {
 }
 
 // Check dSports SCID for active games
-func GetActiveGames(dc bool) {
-	if dc && menu.Gnomes.Init && !menu.GnomonClosing() {
+func GetActiveGames() {
+	if rpc.Daemon.Connect && menu.Gnomes.Init && !menu.Gnomes.Closing() {
 		options := []string{}
-		contracts := menu.Gnomes.Indexer.GravDBBackend.GetAllOwnersAndSCIDs()
+		contracts := menu.Gnomes.GetAllOwnersAndSCIDs()
 		keys := make([]string, len(contracts))
 
 		i := 0
 		for k := range contracts {
 			keys[i] = k
-			owner, _ := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(keys[i], "owner", menu.Gnomes.Indexer.ChainHeight, true)
+			owner, _ := menu.Gnomes.GetSCIDValuesByKey(keys[i], "owner")
 			if (owner != nil && owner[0] == rpc.Wallet.Address) || menu.VerifyBetSigner(keys[i]) {
 				if len(keys[i]) == 64 {
-					_, init := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(keys[i], "s_init", menu.Gnomes.Indexer.ChainHeight, true)
+					_, init := menu.Gnomes.GetSCIDValuesByKey(keys[i], "s_init")
 					if init != nil {
 						for ic := uint64(1); ic <= init[0]; ic++ {
 							num := strconv.Itoa(int(ic))
-							game, _ := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(keys[i], "game_"+num, menu.Gnomes.Indexer.ChainHeight, true)
-							league, _ := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(keys[i], "league_"+num, menu.Gnomes.Indexer.ChainHeight, true)
-							_, end := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(keys[i], "s_end_at_"+num, menu.Gnomes.Indexer.ChainHeight, true)
-							_, add := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(keys[i], "time_a", menu.Gnomes.Indexer.ChainHeight, true)
+							game, _ := menu.Gnomes.GetSCIDValuesByKey(keys[i], "game_"+num)
+							league, _ := menu.Gnomes.GetSCIDValuesByKey(keys[i], "league_"+num)
+							_, end := menu.Gnomes.GetSCIDValuesByKey(keys[i], "s_end_at_"+num)
+							_, add := menu.Gnomes.GetSCIDValuesByKey(keys[i], "time_a")
 							if game != nil && end != nil && add != nil {
 								if end[0]+add[0] < uint64(time.Now().Unix()) {
 									options = append(options, num+"   "+league[0]+"   "+game[0])
@@ -923,7 +923,7 @@ func ownersMenu() {
 	owner_tabs.OnSelected = func(ti *container.TabItem) {
 		switch ti.Text {
 		case "Sports":
-			go GetActiveGames(rpc.Daemon.Connect)
+			go GetActiveGames()
 		case "Service":
 			go makeIntegratedAddr(false)
 		}

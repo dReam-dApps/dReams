@@ -70,7 +70,7 @@ func main() {
 		menu.WriteDreamsConfig(rpc.Daemon.Rpc, bundle.AppColor)
 		serviceRunning()
 		go menu.StopLabel()
-		menu.StopGnomon("dReams")
+		menu.Gnomes.Stop("dReams")
 		dReams.quit <- struct{}{}
 		menu.StopIndicators()
 		time.Sleep(time.Second)

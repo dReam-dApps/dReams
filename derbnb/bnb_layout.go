@@ -1612,7 +1612,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 
 		connect_box.Disconnect.OnChanged = func(b bool) {
 			if !b {
-				menu.StopGnomon(tag)
+				menu.Gnomes.Stop(tag)
 			}
 		}
 

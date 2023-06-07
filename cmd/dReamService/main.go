@@ -122,7 +122,7 @@ func init() {
 	go func() {
 		<-c
 		fmt.Println()
-		menu.StopGnomon("dReamService")
+		menu.Gnomes.Stop("dReamService")
 		rpc.Wallet.Connect = false
 		rpc.Wallet.Service = false
 		for prediction.Service.Processing {
@@ -182,10 +182,10 @@ func main() {
 
 		log.Println("[dReamService] Starting when Gnomon is synced")
 		height = rpc.DaemonHeight("dReamService", rpc.Daemon.Rpc)
-		for menu.Gnomes.Init && !menu.GnomonClosing() && rpc.Wallet.Connect && rpc.Daemon.Connect {
+		for menu.Gnomes.Init && !menu.Gnomes.Closing() && rpc.Wallet.Connect && rpc.Daemon.Connect {
 			rpc.Ping()
 			rpc.EchoWallet("dReamService")
-			contracts := menu.Gnomes.Indexer.GravDBBackend.GetAllOwnersAndSCIDs()
+			contracts := menu.Gnomes.GetAllOwnersAndSCIDs()
 			menu.Gnomes.SCIDS = uint64(len(contracts))
 			if menu.Gnomes.Indexer.LastIndexedHeight >= int64(height)-3 && menu.Gnomes.SCIDS >= 9 {
 				menu.Gnomes.Sync = true

@@ -458,24 +458,24 @@ func P_no_initResults(fr, tx, r, m string) (info string) {
 
 // Gets dPrediction data from SCID and return formatted info string
 func GetPrediction(scid string) (info string) {
-	if rpc.Daemon.Connect && menu.Gnomes.Init && !menu.GnomonClosing() && menu.Gnomes.Sync {
-		predicting, _ := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "predicting", menu.Gnomes.Indexer.ChainHeight, true)
-		url, _ := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "p_url", menu.Gnomes.Indexer.ChainHeight, true)
-		final, _ := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "p_final", menu.Gnomes.Indexer.ChainHeight, true)
-		//final_tx, _ := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "p_final_txid", menu.Gnomes.Indexer.ChainHeight, true)
-		_, amt := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "p_amount", menu.Gnomes.Indexer.ChainHeight, true)
-		_, init := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "p_init", menu.Gnomes.Indexer.ChainHeight, true)
-		_, up := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "p_up", menu.Gnomes.Indexer.ChainHeight, true)
-		_, down := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "p_down", menu.Gnomes.Indexer.ChainHeight, true)
-		_, count := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "p_#", menu.Gnomes.Indexer.ChainHeight, true)
-		_, end := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "p_end_at", menu.Gnomes.Indexer.ChainHeight, true)
-		_, buffer := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "buffer", menu.Gnomes.Indexer.ChainHeight, true)
-		_, pot := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "p_total", menu.Gnomes.Indexer.ChainHeight, true)
-		_, rounds := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "p_played", menu.Gnomes.Indexer.ChainHeight, true)
-		_, mark := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "mark", menu.Gnomes.Indexer.ChainHeight, true)
-		_, time_a := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "time_a", menu.Gnomes.Indexer.ChainHeight, true)
-		_, time_b := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "time_b", menu.Gnomes.Indexer.ChainHeight, true)
-		_, time_c := menu.Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "time_c", menu.Gnomes.Indexer.ChainHeight, true)
+	if rpc.Daemon.Connect && menu.Gnomes.Init && !menu.Gnomes.Closing() && menu.Gnomes.Sync {
+		predicting, _ := menu.Gnomes.GetSCIDValuesByKey(scid, "predicting")
+		url, _ := menu.Gnomes.GetSCIDValuesByKey(scid, "p_url")
+		final, _ := menu.Gnomes.GetSCIDValuesByKey(scid, "p_final")
+		//final_tx, _ := menu.Gnomes.GetSCIDValuesByKey(scid, "p_final_txid")
+		_, amt := menu.Gnomes.GetSCIDValuesByKey(scid, "p_amount")
+		_, init := menu.Gnomes.GetSCIDValuesByKey(scid, "p_init")
+		_, up := menu.Gnomes.GetSCIDValuesByKey(scid, "p_up")
+		_, down := menu.Gnomes.GetSCIDValuesByKey(scid, "p_down")
+		_, count := menu.Gnomes.GetSCIDValuesByKey(scid, "p_#")
+		_, end := menu.Gnomes.GetSCIDValuesByKey(scid, "p_end_at")
+		_, buffer := menu.Gnomes.GetSCIDValuesByKey(scid, "buffer")
+		_, pot := menu.Gnomes.GetSCIDValuesByKey(scid, "p_total")
+		_, rounds := menu.Gnomes.GetSCIDValuesByKey(scid, "p_played")
+		_, mark := menu.Gnomes.GetSCIDValuesByKey(scid, "mark")
+		_, time_a := menu.Gnomes.GetSCIDValuesByKey(scid, "time_a")
+		_, time_b := menu.Gnomes.GetSCIDValuesByKey(scid, "time_b")
+		_, time_c := menu.Gnomes.GetSCIDValuesByKey(scid, "time_c")
 
 		var pre, p_played, p_final, p_mark string
 		if init != nil {

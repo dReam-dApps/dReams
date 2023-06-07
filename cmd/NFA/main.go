@@ -37,7 +37,7 @@ func main() {
 	done := make(chan struct{})
 	w.SetCloseIntercept(func() {
 		menu.WriteDreamsConfig(rpc.Daemon.Rpc, config.Skin)
-		menu.StopGnomon(app_tag)
+		menu.Gnomes.Stop(app_tag)
 		quit <- struct{}{}
 		if rpc.Wallet.File != nil {
 			rpc.Wallet.File.Close_Encrypted_Wallet()
@@ -75,7 +75,7 @@ func main() {
 		<-c
 		fmt.Println()
 		menu.WriteDreamsConfig(rpc.Daemon.Rpc, config.Skin)
-		menu.StopGnomon(app_tag)
+		menu.Gnomes.Stop(app_tag)
 		rpc.Wallet.Connect = false
 		quit <- struct{}{}
 		if rpc.Wallet.File != nil {

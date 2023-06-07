@@ -7,7 +7,6 @@ import (
 	"image/color"
 	"log"
 	"os"
-	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -57,6 +56,7 @@ End Function`
 )
 
 type gnomon struct {
+	DBType   string
 	Para     int
 	Trim     bool
 	Fast     bool
@@ -393,38 +393,38 @@ func manualIndex(scid []string) {
 }
 
 // Create Gnomon graviton db with dReams tag
-func GnomonGravDB(dbtype string) *storage.GravitonStore {
-	if dbtype == "boltdb" {
+//   - If dbType is boltdb, will return nil gravdb
+func GnomonGravDB(dbType, dbPath string) *storage.GravitonStore {
+	if dbType == "boltdb" {
 		return nil
 	}
 
-	shasum := fmt.Sprintf("%x", sha1.Sum([]byte("dReams")))
-	db_folder := fmt.Sprintf("gnomondb\\%s_%s", "dReams", shasum)
-	db, err := storage.NewGravDB(db_folder, "25ms")
+	db, err := storage.NewGravDB(dbPath, "25ms")
 	if err != nil {
-		log.Fatalf("[GnomonGravDB] Error creating gravdb: %s\n", err)
+		log.Fatalf("[GnomonGravDB] %s\n", err)
 	}
 
 	return db
 }
 
 // Create Gnomon bbolt db with dReams tag
-func GnomonBoltDB(dbtype string) *storage.BboltStore {
-	if dbtype != "boltdb" {
+//   - If dbType is not boltdb, will return nil boltdb
+func GnomonBoltDB(dbType, dbPath string) *storage.BboltStore {
+	if dbType != "boltdb" {
 		return nil
 	}
 
-	shasum := fmt.Sprintf("%x", sha1.Sum([]byte("dReams"))) // shasum can be used to unique a given db directory if you choose, can use normal words as well - whatever your
+	shasum := fmt.Sprintf("%x", sha1.Sum([]byte("dReams")))
 	db_name := fmt.Sprintf("gnomondb_bolt\\%s_%s.db", "dReams", shasum)
-	current_path, err := os.Getwd()
-	if err != nil {
-		log.Printf("[GnomonBoltDB] %v\n", err)
+	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
+		if err := os.Mkdir(dbPath, 0755); err != nil {
+			log.Fatalf("[GnomonBoltDB] %s\n", err)
+		}
 	}
 
-	db_path := filepath.Join(current_path, db_name)
-	db, err := storage.NewBBoltDB(db_path, db_name)
+	db, err := storage.NewBBoltDB(dbPath, dbPath+"/"+db_name)
 	if err != nil {
-		log.Fatalf("[GnomonBoltDB] Error creating boltdb: %s\n", err)
+		log.Fatalf("[GnomonBoltDB] %s\n", err)
 	}
 
 	return db
@@ -441,8 +441,10 @@ func GnomonBoltDB(dbtype string) *storage.BboltStore {
 func StartGnomon(tag, dbtype string, filters []string, upper, lower int, custom func()) {
 	Gnomes.Start = true
 	log.Printf("[%s] Starting Gnomon\n", tag)
-	bolt_backend := GnomonBoltDB(dbtype)
-	grav_backend := GnomonGravDB(dbtype)
+	shasum := fmt.Sprintf("%x", sha1.Sum([]byte("dReams")))
+	db_path := fmt.Sprintf("gnomondb\\%s_%s", "dReams", shasum)
+	bolt_backend := GnomonBoltDB(dbtype, db_path)
+	grav_backend := GnomonGravDB(dbtype, db_path)
 
 	var last_height int64
 	if dbtype == "boltdb" {
@@ -464,7 +466,7 @@ func StartGnomon(tag, dbtype string, filters []string, upper, lower int, custom 
 		if Gnomes.Trim {
 			i := 0
 			for {
-				contracts := len(Gnomes.Indexer.GravDBBackend.GetAllOwnersAndSCIDs())
+				contracts := len(Gnomes.GetAllOwnersAndSCIDs())
 				if contracts >= upper {
 					Gnomes.Trim = false
 					break
@@ -522,32 +524,46 @@ func GnomonEndPoint() {
 
 // Shut down Gnomes.Indexer
 //   - tag for log print
-func StopGnomon(tag string) {
-	if Gnomes.Init && !GnomonClosing() {
+func (g *gnomon) Stop(tag string) {
+	if g.Init && !g.Closing() {
 		log.Printf("[%s] Putting Gnomon to Sleep\n", tag)
-		Gnomes.Indexer.Close()
-		Gnomes.Init = false
+		g.Indexer.Close()
+		g.Init = false
 		time.Sleep(1 * time.Second)
 		log.Printf("[%s] Gnomon is Sleeping\n", tag)
 	}
 }
 
 // Check if Gnomon is writing
-func GnomonWriting() bool {
-	return Gnomes.Indexer.GravDBBackend.Writing == 1
+func (g *gnomon) Writing() bool {
+	switch g.Indexer.DBType {
+	case "gravdb":
+		return g.Indexer.GravDBBackend.Writing == 1
+	case "boltdb":
+		return g.Indexer.BBSBackend.Writing == 1
+	default:
+		return g.Indexer.GravDBBackend.Writing == 1
+	}
 }
 
 // Check if Gnomon is closing
-func GnomonClosing() bool {
-	if !Gnomes.Init {
+func (g *gnomon) Closing() bool {
+	if !g.Init {
 		return false
 	}
 
-	if Gnomes.Indexer.Closing || Gnomes.Indexer.GravDBBackend.Closing {
+	if g.Indexer.Closing {
 		return true
 	}
 
-	return false
+	switch g.Indexer.DBType {
+	case "gravdb":
+		return g.Indexer.GravDBBackend.Closing
+	case "boltdb":
+		return g.Indexer.BBSBackend.Closing
+	default:
+		return false
+	}
 }
 
 // Check if Gnomon index contains SCIDs
@@ -564,16 +580,68 @@ func Connected() bool {
 	return false
 }
 
+// Method of Gnomon GetAllOwnersAndSCIDs() where DB type is defined by Indexer.DBType
+//   - Default is gravdb
+func (g *gnomon) GetAllOwnersAndSCIDs() map[string]string {
+	switch g.Indexer.DBType {
+	case "gravdb":
+		return g.Indexer.GravDBBackend.GetAllOwnersAndSCIDs()
+	case "boltdb":
+		return g.Indexer.BBSBackend.GetAllOwnersAndSCIDs()
+	default:
+		return g.Indexer.GravDBBackend.GetAllOwnersAndSCIDs()
+	}
+}
+
+// Method of Gnomon GetSCIDValuesByKey() where DB type is defined by Indexer.DBType
+//   - Default is gravdb
+func (g *gnomon) GetSCIDValuesByKey(scid string, key interface{}) (valuesstring []string, valuesuint64 []uint64) {
+	switch g.Indexer.DBType {
+	case "gravdb":
+		return g.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, key, g.Indexer.ChainHeight, true)
+	case "boltdb":
+		return g.Indexer.BBSBackend.GetSCIDValuesByKey(scid, key, g.Indexer.ChainHeight, true)
+	default:
+		return g.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, key, g.Indexer.ChainHeight, true)
+	}
+}
+
+// Method of Gnomon GetSCIDKeysByValue() where DB type is defined by Indexer.DBType
+//   - Default is gravdb
+func (g *gnomon) GetSCIDKeysByValue(scid string, key interface{}) (valuesstring []string, valuesuint64 []uint64) {
+	switch g.Indexer.DBType {
+	case "gravdb":
+		return g.Indexer.GravDBBackend.GetSCIDKeysByValue(scid, key, g.Indexer.ChainHeight, true)
+	case "boltdb":
+		return g.Indexer.BBSBackend.GetSCIDKeysByValue(scid, key, g.Indexer.ChainHeight, true)
+	default:
+		return g.Indexer.GravDBBackend.GetSCIDKeysByValue(scid, key, g.Indexer.ChainHeight, true)
+	}
+}
+
+// Method of Gnomon GetAllSCIDVariableDetails() where DB type is defined by Indexer.DBType
+//   - Default is gravdb
+func (g *gnomon) GetAllSCIDVariableDetails(scid string) map[int64][]*structures.SCIDVariable {
+	switch g.Indexer.DBType {
+	case "gravdb":
+		return g.Indexer.GravDBBackend.GetAllSCIDVariableDetails(scid)
+	case "boltdb":
+		return g.Indexer.BBSBackend.GetAllSCIDVariableDetails(scid)
+	default:
+		return g.Indexer.GravDBBackend.GetAllSCIDVariableDetails(scid)
+	}
+}
+
 // Gnomon will scan connected wallet on start up, then ensure sync
 //   - Hold out checking if dReams is in configure
 //   - windows disables certain initial sync routines from running on windows os
 func GnomonState(windows, config bool) {
-	if rpc.Daemon.Connect && Gnomes.Init && !GnomonClosing() {
-		contracts := Gnomes.Indexer.GravDBBackend.GetAllOwnersAndSCIDs()
+	if rpc.Daemon.Connect && Gnomes.Init && !Gnomes.Closing() {
+		contracts := Gnomes.GetAllOwnersAndSCIDs()
 		Gnomes.SCIDS = uint64(len(contracts))
 		if FastSynced() && !Gnomes.Trim {
 			height := int64(rpc.Wallet.Height)
-			if Gnomes.Indexer.LastIndexedHeight >= height-3 && height != 0 && !GnomonClosing() {
+			if Gnomes.Indexer.LastIndexedHeight >= height-3 && height != 0 && !Gnomes.Closing() {
 				Gnomes.Sync = true
 				if !config && rpc.Wallet.Connect && !Gnomes.Checked {
 					Gnomes.Syncing = true
@@ -629,7 +697,7 @@ func GnomonState(windows, config bool) {
 func searchIndex(scid string) {
 	if len(scid) == 64 {
 		var found bool
-		all := Gnomes.Indexer.GravDBBackend.GetAllOwnersAndSCIDs()
+		all := Gnomes.GetAllOwnersAndSCIDs()
 		for sc := range all {
 			if scid == sc {
 				log.Println("[dReams] " + scid + " Indexed")
@@ -646,10 +714,10 @@ func searchIndex(scid string) {
 //   - Pass scids from db store, can be nil arg
 //   - Pass false gc for rechecks
 func CheckDreamsNFAs(gc bool, scids map[string]string) {
-	if Gnomes.Sync && !gc && !GnomonClosing() {
+	if Gnomes.Sync && !gc && !Gnomes.Closing() {
 		go checkLabel()
 		if scids == nil {
-			scids = Gnomes.Indexer.GravDBBackend.GetAllOwnersAndSCIDs()
+			scids = Gnomes.GetAllOwnersAndSCIDs()
 		}
 		keys := make([]string, len(scids))
 		log.Println("[dReams] Checking NFA Assets")
@@ -660,7 +728,7 @@ func CheckDreamsNFAs(gc bool, scids map[string]string) {
 
 		i := 0
 		for k := range scids {
-			if !rpc.Wallet.Connect || GnomonClosing() {
+			if !rpc.Wallet.Connect || Gnomes.Closing() {
 				break
 			}
 			keys[i] = k
@@ -688,23 +756,23 @@ func CheckDreamsNFAs(gc bool, scids map[string]string) {
 //   - Pass scids from db store, can be nil arg
 //   - Pass false gc for rechecks
 func CheckAllNFAs(gc bool, scids map[string]string) {
-	if Gnomes.Sync && !gc && !GnomonClosing() {
+	if Gnomes.Sync && !gc && !Gnomes.Closing() {
 		if scids == nil {
-			scids = Gnomes.Indexer.GravDBBackend.GetAllOwnersAndSCIDs()
+			scids = Gnomes.GetAllOwnersAndSCIDs()
 		}
 		keys := make([]string, len(scids))
 
 		i := 0
 		assets := []string{}
 		for k := range scids {
-			if !rpc.Wallet.Connect || GnomonClosing() {
+			if !rpc.Wallet.Connect || Gnomes.Closing() {
 				break
 			}
 
 			keys[i] = k
-			if header, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(keys[i], "nameHdr", Gnomes.Indexer.ChainHeight, true); header != nil {
-				owner, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(keys[i], "owner", Gnomes.Indexer.ChainHeight, true)
-				file, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(keys[i], "fileURL", Gnomes.Indexer.ChainHeight, true)
+			if header, _ := Gnomes.GetSCIDValuesByKey(keys[i], "nameHdr"); header != nil {
+				owner, _ := Gnomes.GetSCIDValuesByKey(keys[i], "owner")
+				file, _ := Gnomes.GetSCIDValuesByKey(keys[i], "fileURL")
 				if owner != nil && file != nil {
 					if owner[0] == rpc.Wallet.Address && ValidNfa(file[0]) {
 						assets = append(assets, header[0]+"   "+keys[i])
@@ -723,9 +791,9 @@ func CheckAllNFAs(gc bool, scids map[string]string) {
 // Scan all bet contracts to verify if owner
 //   - Pass contracts from db store, can be nil arg
 func CheckBetContractOwners(contracts map[string]string) {
-	if Gnomes.Sync && !Gnomes.Checked && !GnomonClosing() {
+	if Gnomes.Sync && !Gnomes.Checked && !Gnomes.Closing() {
 		if contracts == nil {
-			contracts = Gnomes.Indexer.GravDBBackend.GetAllOwnersAndSCIDs()
+			contracts = Gnomes.GetAllOwnersAndSCIDs()
 		}
 		keys := make([]string, len(contracts))
 
@@ -744,8 +812,8 @@ func CheckBetContractOwners(contracts map[string]string) {
 
 // Get Gnomon headers of SCID
 func GetSCHeaders(scid string) []string {
-	if !GnomonClosing() {
-		headers, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(rpc.GnomonSCID, scid, Gnomes.Indexer.ChainHeight, true)
+	if !Gnomes.Closing() {
+		headers, _ := Gnomes.GetSCIDValuesByKey(rpc.GnomonSCID, scid)
 
 		if headers != nil {
 			split := strings.Split(headers[0], ";")
@@ -763,10 +831,10 @@ func GetSCHeaders(scid string) []string {
 // Verify if wallet is owner on bet contract
 //   - Passed t defines sports or prediction contract
 func verifyBetContractOwner(scid, t string) {
-	if !GnomonClosing() {
-		if dev, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "dev", Gnomes.Indexer.ChainHeight, true); dev != nil {
-			owner, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "owner", Gnomes.Indexer.ChainHeight, true)
-			_, init := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, t+"_init", Gnomes.Indexer.ChainHeight, true)
+	if !Gnomes.Closing() {
+		if dev, _ := Gnomes.GetSCIDValuesByKey(scid, "dev"); dev != nil {
+			owner, _ := Gnomes.GetSCIDValuesByKey(scid, "owner")
+			_, init := Gnomes.GetSCIDValuesByKey(scid, t+"_init")
 
 			if owner != nil && init != nil {
 				if dev[0] == rpc.DevAddress && !rpc.Wallet.BetOwner {
@@ -779,13 +847,13 @@ func verifyBetContractOwner(scid, t string) {
 
 // Verify if wallet is a co owner on bet contract
 func VerifyBetSigner(scid string) bool {
-	if Gnomes.Init && Gnomes.Sync && !GnomonClosing() {
+	if Gnomes.Init && Gnomes.Sync && !Gnomes.Closing() {
 		for i := 2; i < 10; i++ {
-			if GnomonClosing() {
+			if Gnomes.Closing() {
 				break
 			}
 
-			signer_addr, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "co_signer"+strconv.Itoa(i), Gnomes.Indexer.ChainHeight, true)
+			signer_addr, _ := Gnomes.GetSCIDValuesByKey(scid, "co_signer"+strconv.Itoa(i))
 			if signer_addr != nil {
 				if signer_addr[0] == rpc.Wallet.Address {
 					return true
@@ -801,10 +869,10 @@ func VerifyBetSigner(scid string) bool {
 //   - Passed t defines sports or prediction contract
 //   - Adding constructed header string to list, owned []string
 func checkBetContract(scid, t string, list, owned []string) ([]string, []string) {
-	if Gnomes.Init && !GnomonClosing() {
-		if dev, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "dev", Gnomes.Indexer.ChainHeight, true); dev != nil {
-			owner, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "owner", Gnomes.Indexer.ChainHeight, true)
-			_, init := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, t+"_init", Gnomes.Indexer.ChainHeight, true)
+	if Gnomes.Init && !Gnomes.Closing() {
+		if dev, _ := Gnomes.GetSCIDValuesByKey(scid, "dev"); dev != nil {
+			owner, _ := Gnomes.GetSCIDValuesByKey(scid, "owner")
+			_, init := Gnomes.GetSCIDValuesByKey(scid, t+"_init")
 
 			if owner != nil && init != nil {
 				if dev[0] == rpc.DevAddress {
@@ -812,8 +880,8 @@ func checkBetContract(scid, t string, list, owned []string) ([]string, []string)
 					name := "?"
 					desc := "?"
 					var hidden bool
-					_, restrict := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(rpc.RatingSCID, "restrict", Gnomes.Indexer.ChainHeight, true)
-					_, rating := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(rpc.RatingSCID, scid, Gnomes.Indexer.ChainHeight, true)
+					_, restrict := Gnomes.GetSCIDValuesByKey(rpc.RatingSCID, "restrict")
+					_, rating := Gnomes.GetSCIDValuesByKey(rpc.RatingSCID, scid)
 
 					if restrict != nil && rating != nil {
 						Control.Lock()
@@ -865,11 +933,11 @@ func checkBetContract(scid, t string, list, owned []string) ([]string, []string)
 // Populate all dReams dPrediction contracts
 //   - Pass contracts from db store, can be nil arg
 func PopulatePredictions(contracts map[string]string) {
-	if rpc.Daemon.Connect && Gnomes.Sync && !GnomonClosing() {
+	if rpc.Daemon.Connect && Gnomes.Sync && !Gnomes.Closing() {
 		list := []string{}
 		owned := []string{}
 		if contracts == nil {
-			contracts = Gnomes.Indexer.GravDBBackend.GetAllOwnersAndSCIDs()
+			contracts = Gnomes.GetAllOwnersAndSCIDs()
 		}
 		keys := make([]string, len(contracts))
 
@@ -894,11 +962,11 @@ func PopulatePredictions(contracts map[string]string) {
 // Populate all dReams dSports contracts
 //   - Pass contracts from db store, can be nil arg
 func PopulateSports(contracts map[string]string) {
-	if rpc.Daemon.Connect && Gnomes.Sync && !GnomonClosing() {
+	if rpc.Daemon.Connect && Gnomes.Sync && !Gnomes.Closing() {
 		list := []string{}
 		owned := []string{}
 		if contracts == nil {
-			contracts = Gnomes.Indexer.GravDBBackend.GetAllOwnersAndSCIDs()
+			contracts = Gnomes.GetAllOwnersAndSCIDs()
 		}
 		keys := make([]string, len(contracts))
 
@@ -921,8 +989,8 @@ func PopulateSports(contracts map[string]string) {
 
 // Check if SCID is a NFA
 func isNfa(scid string) bool {
-	if Gnomes.Init && Gnomes.Sync && !GnomonClosing() {
-		artAddr, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "artificerAddr", Gnomes.Indexer.ChainHeight, true)
+	if Gnomes.Init && Gnomes.Sync && !Gnomes.Closing() {
+		artAddr, _ := Gnomes.GetSCIDValuesByKey(scid, "artificerAddr")
 		if artAddr != nil {
 			return artAddr[0] == rpc.ArtAddress
 		}
@@ -939,10 +1007,10 @@ func ValidNfa(file string) bool {
 // If wallet owns dReams NFA, populate for use in dReams
 //   - See games container in menu.PlaceAssets()
 func checkNFAOwner(scid string) {
-	if !GnomonClosing() {
-		if header, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "nameHdr", Gnomes.Indexer.ChainHeight, true); header != nil {
-			owner, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "owner", Gnomes.Indexer.ChainHeight, true)
-			file, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "fileURL", Gnomes.Indexer.ChainHeight, true)
+	if !Gnomes.Closing() {
+		if header, _ := Gnomes.GetSCIDValuesByKey(scid, "nameHdr"); header != nil {
+			owner, _ := Gnomes.GetSCIDValuesByKey(scid, "owner")
+			file, _ := Gnomes.GetSCIDValuesByKey(scid, "fileURL")
 			if owner != nil && file != nil {
 				if owner[0] == rpc.Wallet.Address && ValidNfa(file[0]) {
 					check := strings.Trim(header[0], "0123456789")
@@ -1036,12 +1104,12 @@ func checkNFAOwner(scid string) {
 
 // Get SCID info and update Asset content
 func GetOwnedAssetStats(scid string) {
-	if Gnomes.Init && !GnomonClosing() {
-		n, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "nameHdr", Gnomes.Indexer.LastIndexedHeight, true)
+	if Gnomes.Init && !Gnomes.Closing() {
+		n, _ := Gnomes.GetSCIDValuesByKey(scid, "nameHdr")
 		if n != nil {
-			c, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "collection", Gnomes.Indexer.LastIndexedHeight, true)
-			//d, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "descrHdr:", Gnomes.Indexer.LastIndexedHeight, true)
-			i, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "iconURLHdr", Gnomes.Indexer.LastIndexedHeight, true)
+			c, _ := Gnomes.GetSCIDValuesByKey(scid, "collection")
+			//d, _ := Gnomes.GetSCIDValuesByKey(scid, "descrHdr:")
+			i, _ := Gnomes.GetSCIDValuesByKey(scid, "iconURLHdr")
 
 			if n != nil {
 				Assets.Name.Text = (" Name: " + n[0])
@@ -1061,7 +1129,7 @@ func GetOwnedAssetStats(scid string) {
 				Assets.Collection.Text = (" Collection: " + c[0])
 				Assets.Collection.Refresh()
 				if c[0] == "High Strangeness" {
-					a, _ = Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "fileURL", Gnomes.Indexer.ChainHeight, true)
+					a, _ = Gnomes.GetSCIDValuesByKey(scid, "fileURL")
 				}
 			} else {
 				Assets.Collection.Text = (" Collection: ?")
@@ -1080,9 +1148,9 @@ func GetOwnedAssetStats(scid string) {
 
 		} else {
 			Control.List_button.Hide()
-			data, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "metadata", Gnomes.Indexer.LastIndexedHeight, true)
-			minter, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "minter", Gnomes.Indexer.LastIndexedHeight, true)
-			coll, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "collection", Gnomes.Indexer.LastIndexedHeight, true)
+			data, _ := Gnomes.GetSCIDValuesByKey(scid, "metadata")
+			minter, _ := Gnomes.GetSCIDValuesByKey(scid, "minter")
+			coll, _ := Gnomes.GetSCIDValuesByKey(scid, "collection")
 			if data != nil && minter != nil && coll != nil {
 				if minter[0] == holdero.Seals_mint && coll[0] == holdero.Seals_coll {
 					var seal holdero.Seal
@@ -1129,11 +1197,11 @@ func GetAssetUrl(w int, scid string) (url string) {
 	var link []string
 	switch w {
 	case 0:
-		link, _ = Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "fileURL", Gnomes.Indexer.ChainHeight, true)
+		link, _ = Gnomes.GetSCIDValuesByKey(scid, "fileURL")
 	case 1:
-		link, _ = Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "iconURLHdr", Gnomes.Indexer.LastIndexedHeight, true)
+		link, _ = Gnomes.GetSCIDValuesByKey(scid, "iconURLHdr")
 	case 2:
-		link, _ = Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "coverURL", Gnomes.Indexer.LastIndexedHeight, true)
+		link, _ = Gnomes.GetSCIDValuesByKey(scid, "coverURL")
 	default:
 		// nothing
 	}
@@ -1147,7 +1215,7 @@ func GetAssetUrl(w int, scid string) (url string) {
 
 // Check if wallet owns Holdero table
 func CheckTableOwner(scid string) bool {
-	if len(scid) != 64 || !Gnomes.Init || GnomonClosing() {
+	if len(scid) != 64 || !Gnomes.Init || Gnomes.Closing() {
 		return false
 	}
 
@@ -1156,7 +1224,7 @@ func CheckTableOwner(scid string) bool {
 		return false
 	}
 
-	owner, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "owner:", Gnomes.Indexer.LastIndexedHeight, true)
+	owner, _ := Gnomes.GetSCIDValuesByKey(scid, "owner:")
 	if owner != nil {
 		return owner[0] == rpc.Wallet.Address
 	}
@@ -1166,13 +1234,13 @@ func CheckTableOwner(scid string) bool {
 
 // Check if Holdero table is a tournament table
 func CheckHolderoContract(scid string) bool {
-	if len(scid) != 64 || !Gnomes.Init || GnomonClosing() {
+	if len(scid) != 64 || !Gnomes.Init || Gnomes.Closing() {
 		return false
 	}
 
-	_, deck := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "Deck Count:", Gnomes.Indexer.LastIndexedHeight, true)
-	_, version := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "V:", Gnomes.Indexer.LastIndexedHeight, true)
-	_, tourney := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "Tournament", Gnomes.Indexer.LastIndexedHeight, true)
+	_, deck := Gnomes.GetSCIDValuesByKey(scid, "Deck Count:")
+	_, version := Gnomes.GetSCIDValuesByKey(scid, "V:")
+	_, tourney := Gnomes.GetSCIDValuesByKey(scid, "Tournament")
 	if deck != nil && version != nil && version[0] >= 100 {
 		rpc.Signal.Contract = true
 	}
@@ -1186,11 +1254,11 @@ func CheckHolderoContract(scid string) bool {
 
 // Check owner of any SCID using "owner" key
 func CheckOwner(scid string) bool {
-	if len(scid) != 64 || !Gnomes.Init || GnomonClosing() {
+	if len(scid) != 64 || !Gnomes.Init || Gnomes.Closing() {
 		return false
 	}
 
-	owner, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "owner", Gnomes.Indexer.LastIndexedHeight, true)
+	owner, _ := Gnomes.GetSCIDValuesByKey(scid, "owner")
 	if owner != nil {
 		return owner[0] == rpc.Wallet.Address
 	}
@@ -1200,7 +1268,7 @@ func CheckOwner(scid string) bool {
 
 // Check Holdero table version
 func checkTableVersion(scid string) uint64 {
-	_, v := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "V:", Gnomes.Indexer.LastIndexedHeight, true)
+	_, v := Gnomes.GetSCIDValuesByKey(scid, "V:")
 
 	if v != nil && v[0] >= 100 {
 		return v[0]
@@ -1212,21 +1280,21 @@ func checkTableVersion(scid string) uint64 {
 //   - Pass tables from db store, can be nil arg
 //   - Pass false gc for rechecks
 func CreateTableList(gc bool, tables map[string]string) {
-	if Gnomes.Init && !gc && !GnomonClosing() {
+	if Gnomes.Init && !gc && !Gnomes.Closing() {
 		var owner bool
 		list := []string{}
 		owned := []string{}
 		if tables == nil {
-			tables = Gnomes.Indexer.GravDBBackend.GetAllOwnersAndSCIDs()
+			tables = Gnomes.GetAllOwnersAndSCIDs()
 		}
 
 		for scid := range tables {
-			if !Gnomes.Init || GnomonClosing() {
+			if !Gnomes.Init || Gnomes.Closing() {
 				break
 			}
 
-			if _, valid := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "Deck Count:", Gnomes.Indexer.LastIndexedHeight, true); valid != nil {
-				_, version := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "V:", Gnomes.Indexer.LastIndexedHeight, true)
+			if _, valid := Gnomes.GetSCIDValuesByKey(scid, "Deck Count:"); valid != nil {
+				_, version := Gnomes.GetSCIDValuesByKey(scid, "V:")
 
 				if version != nil {
 					d := valid[0]
@@ -1246,8 +1314,8 @@ func CreateTableList(gc bool, tables map[string]string) {
 					}
 
 					var hidden bool
-					_, restrict := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(rpc.RatingSCID, "restrict", Gnomes.Indexer.ChainHeight, true)
-					_, rating := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(rpc.RatingSCID, scid, Gnomes.Indexer.ChainHeight, true)
+					_, restrict := Gnomes.GetSCIDValuesByKey(rpc.RatingSCID, "restrict")
+					_, rating := Gnomes.GetSCIDValuesByKey(rpc.RatingSCID, scid)
 
 					if restrict != nil && rating != nil {
 						Control.Lock()
@@ -1296,17 +1364,17 @@ func CreateTableList(gc bool, tables map[string]string) {
 
 // Get current Holdero table menu stats
 func GetTableStats(scid string, single bool) {
-	if Gnomes.Init && !GnomonClosing() && len(scid) == 64 {
-		_, v := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "V:", Gnomes.Indexer.LastIndexedHeight, true)
-		_, l := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "Last", Gnomes.Indexer.LastIndexedHeight, true)
-		_, s := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "Seats at Table:", Gnomes.Indexer.LastIndexedHeight, true)
-		// _, o := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "Open", Gnomes.Indexer.LastIndexedHeight, true)
-		// p1, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "Player 1 ID:", Gnomes.Indexer.LastIndexedHeight, true)
-		p2, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "Player2 ID:", Gnomes.Indexer.LastIndexedHeight, true)
-		p3, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "Player3 ID:", Gnomes.Indexer.LastIndexedHeight, true)
-		p4, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "Player4 ID:", Gnomes.Indexer.LastIndexedHeight, true)
-		p5, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "Player5 ID:", Gnomes.Indexer.LastIndexedHeight, true)
-		p6, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "Player6 ID:", Gnomes.Indexer.LastIndexedHeight, true)
+	if Gnomes.Init && !Gnomes.Closing() && len(scid) == 64 {
+		_, v := Gnomes.GetSCIDValuesByKey(scid, "V:")
+		_, l := Gnomes.GetSCIDValuesByKey(scid, "Last")
+		_, s := Gnomes.GetSCIDValuesByKey(scid, "Seats at Table:")
+		// _, o := Gnomes.GetSCIDValuesByKey(scid, "Open")
+		// p1, _ := Gnomes.GetSCIDValuesByKey(scid, "Player 1 ID:")
+		p2, _ := Gnomes.GetSCIDValuesByKey(scid, "Player2 ID:")
+		p3, _ := Gnomes.GetSCIDValuesByKey(scid, "Player3 ID:")
+		p4, _ := Gnomes.GetSCIDValuesByKey(scid, "Player4 ID:")
+		p5, _ := Gnomes.GetSCIDValuesByKey(scid, "Player5 ID:")
+		p6, _ := Gnomes.GetSCIDValuesByKey(scid, "Player6 ID:")
 		h := GetSCHeaders(scid)
 
 		if single {
@@ -1382,8 +1450,8 @@ func GetTableStats(scid string, single bool) {
 
 // Get a wallets registered names
 func CheckWalletNames(value string) {
-	if Gnomes.Init && Gnomes.Sync && !GnomonClosing() {
-		names, _ := Gnomes.Indexer.GravDBBackend.GetSCIDKeysByValue(rpc.NameSCID, value, Gnomes.Indexer.LastIndexedHeight, true)
+	if Gnomes.Init && Gnomes.Sync && !Gnomes.Closing() {
+		names, _ := Gnomes.GetSCIDKeysByValue(rpc.NameSCID, value)
 
 		sort.Strings(names)
 		Control.Names.Options = append(Control.Names.Options, names...)
@@ -1394,21 +1462,21 @@ func CheckWalletNames(value string) {
 //   - Pass g45s from db store, can be nil arg
 //   - Pass false gc for rechecks
 func CheckDreamsG45s(gc bool, g45s map[string]string) {
-	if Gnomes.Init && Gnomes.Sync && !gc && !GnomonClosing() {
+	if Gnomes.Init && Gnomes.Sync && !gc && !Gnomes.Closing() {
 		if g45s == nil {
-			g45s = Gnomes.Indexer.GravDBBackend.GetAllOwnersAndSCIDs()
+			g45s = Gnomes.GetAllOwnersAndSCIDs()
 		}
 		log.Println("[dReams] Checking G45 Assets")
 
 		for scid := range g45s {
-			if !rpc.Wallet.Connect || GnomonClosing() {
+			if !rpc.Wallet.Connect || Gnomes.Closing() {
 				break
 			}
 
-			if data, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "metadata", Gnomes.Indexer.LastIndexedHeight, true); data != nil {
-				owner, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "owner", Gnomes.Indexer.LastIndexedHeight, true)
-				minter, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "minter", Gnomes.Indexer.LastIndexedHeight, true)
-				coll, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "collection", Gnomes.Indexer.LastIndexedHeight, true)
+			if data, _ := Gnomes.GetSCIDValuesByKey(scid, "metadata"); data != nil {
+				owner, _ := Gnomes.GetSCIDValuesByKey(scid, "owner")
+				minter, _ := Gnomes.GetSCIDValuesByKey(scid, "minter")
+				coll, _ := Gnomes.GetSCIDValuesByKey(scid, "collection")
 				if owner != nil && minter != nil && coll != nil {
 					if owner[0] == rpc.Wallet.Address {
 						if minter[0] == holdero.Seals_mint && coll[0] == holdero.Seals_coll {
@@ -1443,9 +1511,9 @@ func CheckDreamsG45s(gc bool, g45s map[string]string) {
 
 // Check if dPrediction is live on SCID
 func CheckActivePrediction(scid string) bool {
-	if len(scid) == 64 && Gnomes.Init && !GnomonClosing() {
-		_, ends := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "p_end_at", Gnomes.Indexer.ChainHeight, true)
-		_, buff := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "buffer", Gnomes.Indexer.ChainHeight, true)
+	if len(scid) == 64 && Gnomes.Init && !Gnomes.Closing() {
+		_, ends := Gnomes.GetSCIDValuesByKey(scid, "p_end_at")
+		_, buff := Gnomes.GetSCIDValuesByKey(scid, "buffer")
 		if ends != nil && buff != nil {
 			now := time.Now().Unix()
 			if now < int64(ends[0]) && now > int64(buff[0]) {
@@ -1458,9 +1526,9 @@ func CheckActivePrediction(scid string) bool {
 
 // Check for live dSports on SCID
 func CheckActiveGames(scid string) bool {
-	if Gnomes.Init && !GnomonClosing() {
-		_, played := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "s_played", Gnomes.Indexer.ChainHeight, true)
-		_, init := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "s_init", Gnomes.Indexer.ChainHeight, true)
+	if Gnomes.Init && !Gnomes.Closing() {
+		_, played := Gnomes.GetSCIDValuesByKey(scid, "s_played")
+		_, init := Gnomes.GetSCIDValuesByKey(scid, "s_init")
 
 		if played != nil && init != nil {
 			return played[0] == init[0]
@@ -1471,7 +1539,7 @@ func CheckActiveGames(scid string) bool {
 }
 
 func GetSportsAmt(scid, n string) uint64 {
-	_, amt := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "s_amount_"+n, Gnomes.Indexer.ChainHeight, true)
+	_, amt := Gnomes.GetSCIDValuesByKey(scid, "s_amount_"+n)
 	if amt != nil {
 		return amt[0]
 	} else {
@@ -1481,7 +1549,7 @@ func GetSportsAmt(scid, n string) uint64 {
 
 // Get current dSports game teams
 func GetSportsTeams(scid, n string) (string, string) {
-	game, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "game_"+n, Gnomes.Indexer.ChainHeight, true)
+	game, _ := Gnomes.GetSCIDValuesByKey(scid, "game_"+n)
 
 	if game != nil {
 		team_a := TrimTeamA(game[0])
@@ -1529,18 +1597,18 @@ func TrimStringLen(str string, l int) string {
 // Scan index for any active NFA listings
 //   - Pass assets from db store, can be nil arg
 func FindNfaListings(assets map[string]string) {
-	if Gnomes.Init && Gnomes.Sync && !GnomonClosing() {
+	if Gnomes.Init && Gnomes.Sync && !Gnomes.Closing() {
 		auction := []string{" Collection,  Name,  Description,  SCID:"}
 		buy_now := []string{" Collection,  Name,  Description,  SCID:"}
 		my_list := []string{" Collection,  Name,  Description,  SCID:"}
 		if assets == nil {
-			assets = Gnomes.Indexer.GravDBBackend.GetAllOwnersAndSCIDs()
+			assets = Gnomes.GetAllOwnersAndSCIDs()
 		}
 		keys := make([]string, len(assets))
 
 		i := 0
 		for k := range assets {
-			if GnomonClosing() || !Gnomes.Init {
+			if Gnomes.Closing() || !Gnomes.Init {
 				return
 			}
 
@@ -1569,7 +1637,7 @@ func FindNfaListings(assets map[string]string) {
 			i++
 		}
 
-		if GnomonClosing() {
+		if Gnomes.Closing() {
 			return
 		}
 
@@ -1598,9 +1666,9 @@ func isDreamsNfaCollection(check string) bool {
 //   - Auction returns 1
 //   - Sale returns 2
 func CheckNFAListingType(scid string) (list int, addr string) {
-	if Gnomes.Init && Gnomes.Sync && !GnomonClosing() {
-		if owner, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "owner", Gnomes.Indexer.ChainHeight, true); owner != nil {
-			if listType, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "listType", Gnomes.Indexer.ChainHeight, true); listType != nil {
+	if Gnomes.Init && Gnomes.Sync && !Gnomes.Closing() {
+		if owner, _ := Gnomes.GetSCIDValuesByKey(scid, "owner"); owner != nil {
+			if listType, _ := Gnomes.GetSCIDValuesByKey(scid, "listType"); listType != nil {
 				addr = owner[0]
 				switch listType[0] {
 				case "auction":
@@ -1619,12 +1687,12 @@ func CheckNFAListingType(scid string) (list int, addr string) {
 // Check if NFA SCID is listed for auction
 //   - Market.DreamsFilter false for all NFA listings
 func checkNfaAuctionListing(scid string) (asset string, owned, expired bool) {
-	if Gnomes.Init && !GnomonClosing() {
-		if creator, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "creatorAddr", Gnomes.Indexer.ChainHeight, true); creator != nil {
-			listType, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "listType", Gnomes.Indexer.ChainHeight, true)
-			header, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "nameHdr", Gnomes.Indexer.ChainHeight, true)
-			coll, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "collection", Gnomes.Indexer.ChainHeight, true)
-			desc, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "descrHdr", Gnomes.Indexer.ChainHeight, true)
+	if Gnomes.Init && !Gnomes.Closing() {
+		if creator, _ := Gnomes.GetSCIDValuesByKey(scid, "creatorAddr"); creator != nil {
+			listType, _ := Gnomes.GetSCIDValuesByKey(scid, "listType")
+			header, _ := Gnomes.GetSCIDValuesByKey(scid, "nameHdr")
+			coll, _ := Gnomes.GetSCIDValuesByKey(scid, "collection")
+			desc, _ := Gnomes.GetSCIDValuesByKey(scid, "descrHdr")
 			if listType != nil && header != nil && coll != nil && desc != nil {
 				if Market.DreamsFilter {
 					check := strings.Trim(header[0], "0123456789")
@@ -1632,13 +1700,13 @@ func checkNfaAuctionListing(scid string) (asset string, owned, expired bool) {
 						if listType[0] == "auction" {
 							desc_check := TrimStringLen(desc[0], 66)
 							asset = coll[0] + "   " + header[0] + "   " + desc_check + "   " + scid
-							if owner, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "owner", Gnomes.Indexer.ChainHeight, true); owner != nil {
+							if owner, _ := Gnomes.GetSCIDValuesByKey(scid, "owner"); owner != nil {
 								if owner[0] == rpc.Wallet.Address {
 									owned = true
 								}
 							}
 
-							if _, endTime := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "endBlockTime", Gnomes.Indexer.ChainHeight, true); endTime != nil {
+							if _, endTime := Gnomes.GetSCIDValuesByKey(scid, "endBlockTime"); endTime != nil {
 								now := uint64(time.Now().Unix())
 								if now > endTime[0] && endTime[0] > 0 {
 									expired = true
@@ -1658,13 +1726,13 @@ func checkNfaAuctionListing(scid string) (asset string, owned, expired bool) {
 						if listType[0] == "auction" {
 							desc_check := TrimStringLen(desc[0], 66)
 							asset = coll[0] + "   " + header[0] + "   " + desc_check + "   " + scid
-							if owner, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "owner", Gnomes.Indexer.ChainHeight, true); owner != nil {
+							if owner, _ := Gnomes.GetSCIDValuesByKey(scid, "owner"); owner != nil {
 								if owner[0] == rpc.Wallet.Address {
 									owned = true
 								}
 							}
 
-							if _, endTime := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "endBlockTime", Gnomes.Indexer.ChainHeight, true); endTime != nil {
+							if _, endTime := Gnomes.GetSCIDValuesByKey(scid, "endBlockTime"); endTime != nil {
 								now := uint64(time.Now().Unix())
 								if now > endTime[0] && endTime[0] > 0 {
 									expired = true
@@ -1683,12 +1751,12 @@ func checkNfaAuctionListing(scid string) (asset string, owned, expired bool) {
 // Check if NFA SCID is listed as buy now
 //   - Market.DreamsFilter false for all NFA listings
 func checkNfaBuyListing(scid string) (asset string, owned, expired bool) {
-	if Gnomes.Init && !GnomonClosing() {
-		if creator, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "creatorAddr", Gnomes.Indexer.ChainHeight, true); creator != nil {
-			listType, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "listType", Gnomes.Indexer.ChainHeight, true)
-			header, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "nameHdr", Gnomes.Indexer.ChainHeight, true)
-			coll, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "collection", Gnomes.Indexer.ChainHeight, true)
-			desc, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "descrHdr", Gnomes.Indexer.ChainHeight, true)
+	if Gnomes.Init && !Gnomes.Closing() {
+		if creator, _ := Gnomes.GetSCIDValuesByKey(scid, "creatorAddr"); creator != nil {
+			listType, _ := Gnomes.GetSCIDValuesByKey(scid, "listType")
+			header, _ := Gnomes.GetSCIDValuesByKey(scid, "nameHdr")
+			coll, _ := Gnomes.GetSCIDValuesByKey(scid, "collection")
+			desc, _ := Gnomes.GetSCIDValuesByKey(scid, "descrHdr")
 			if listType != nil && header != nil && coll != nil && desc != nil {
 				if Market.DreamsFilter {
 					check := strings.Trim(header[0], "0123456789")
@@ -1696,13 +1764,13 @@ func checkNfaBuyListing(scid string) (asset string, owned, expired bool) {
 						if listType[0] == "sale" {
 							desc_check := TrimStringLen(desc[0], 66)
 							asset = coll[0] + "   " + header[0] + "   " + desc_check + "   " + scid
-							if owner, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "owner", Gnomes.Indexer.ChainHeight, true); owner != nil {
+							if owner, _ := Gnomes.GetSCIDValuesByKey(scid, "owner"); owner != nil {
 								if owner[0] == rpc.Wallet.Address {
 									owned = true
 								}
 							}
 
-							if _, endTime := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "endBlockTime", Gnomes.Indexer.ChainHeight, true); endTime != nil {
+							if _, endTime := Gnomes.GetSCIDValuesByKey(scid, "endBlockTime"); endTime != nil {
 								now := uint64(time.Now().Unix())
 								if now > endTime[0] && endTime[0] > 0 {
 									expired = true
@@ -1722,13 +1790,13 @@ func checkNfaBuyListing(scid string) (asset string, owned, expired bool) {
 						if listType[0] == "sale" {
 							desc_check := TrimStringLen(desc[0], 66)
 							asset = coll[0] + "   " + header[0] + "   " + desc_check + "   " + scid
-							if owner, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "owner", Gnomes.Indexer.ChainHeight, true); owner != nil {
+							if owner, _ := Gnomes.GetSCIDValuesByKey(scid, "owner"); owner != nil {
 								if owner[0] == rpc.Wallet.Address {
 									owned = true
 								}
 							}
 
-							if _, endTime := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "endBlockTime", Gnomes.Indexer.ChainHeight, true); endTime != nil {
+							if _, endTime := Gnomes.GetSCIDValuesByKey(scid, "endBlockTime"); endTime != nil {
 								now := uint64(time.Now().Unix())
 								if now > endTime[0] && endTime[0] > 0 {
 									expired = true
@@ -1746,24 +1814,24 @@ func checkNfaBuyListing(scid string) (asset string, owned, expired bool) {
 
 // Search NFAs in index by name or collection
 func SearchNFAsBy(by int, prefix string) (results []string) {
-	if Gnomes.Init && Gnomes.Sync && !GnomonClosing() {
+	if Gnomes.Init && Gnomes.Sync && !Gnomes.Closing() {
 		results = []string{" Collection,  Name,  Description,  SCID:"}
-		assets := Gnomes.Indexer.GravDBBackend.GetAllOwnersAndSCIDs()
+		assets := Gnomes.GetAllOwnersAndSCIDs()
 		keys := make([]string, len(assets))
 
 		i := 0
 		for k := range assets {
-			if GnomonClosing() || !Gnomes.Init {
+			if Gnomes.Closing() || !Gnomes.Init {
 				return
 			}
 
 			keys[i] = k
 
-			if file, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(keys[i], "fileURL", Gnomes.Indexer.ChainHeight, true); file != nil {
+			if file, _ := Gnomes.GetSCIDValuesByKey(keys[i], "fileURL"); file != nil {
 				if ValidNfa(file[0]) {
-					if name, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(keys[i], "nameHdr", Gnomes.Indexer.ChainHeight, true); name != nil {
-						coll, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(keys[i], "collection", Gnomes.Indexer.ChainHeight, true)
-						desc, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(keys[i], "descrHdr", Gnomes.Indexer.ChainHeight, true)
+					if name, _ := Gnomes.GetSCIDValuesByKey(keys[i], "nameHdr"); name != nil {
+						coll, _ := Gnomes.GetSCIDValuesByKey(keys[i], "collection")
+						desc, _ := Gnomes.GetSCIDValuesByKey(keys[i], "descrHdr")
 						if coll != nil && desc != nil {
 							switch by {
 							case 0:
@@ -1795,10 +1863,10 @@ func SearchNFAsBy(by int, prefix string) (results []string) {
 
 // Get NFA image files
 func GetNfaImages(scid string) {
-	if !GnomonClosing() && len(scid) == 64 {
-		name, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "nameHdr", Gnomes.Indexer.ChainHeight, true)
-		icon, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "iconURLHdr", Gnomes.Indexer.LastIndexedHeight, true)
-		cover, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "coverURL", Gnomes.Indexer.LastIndexedHeight, true)
+	if !Gnomes.Closing() && len(scid) == 64 {
+		name, _ := Gnomes.GetSCIDValuesByKey(scid, "nameHdr")
+		icon, _ := Gnomes.GetSCIDValuesByKey(scid, "iconURLHdr")
+		cover, _ := Gnomes.GetSCIDValuesByKey(scid, "coverURL")
 		if icon != nil {
 			Market.Icon, _ = holdero.DownloadFile(icon[0], name[0])
 			Market.Cover, _ = holdero.DownloadFile(cover[0], name[0]+"-cover")
@@ -1811,22 +1879,22 @@ func GetNfaImages(scid string) {
 
 // Create auction tab info for current asset
 func GetAuctionDetails(scid string) {
-	if !GnomonClosing() && len(scid) == 64 {
-		name, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "nameHdr", Gnomes.Indexer.ChainHeight, true)
-		collection, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "collection", Gnomes.Indexer.ChainHeight, true)
-		description, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "descrHdr", Gnomes.Indexer.ChainHeight, true)
-		creator, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "creatorAddr", Gnomes.Indexer.ChainHeight, true)
-		owner, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "owner", Gnomes.Indexer.ChainHeight, true)
-		typeHdr, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "typeHdr", Gnomes.Indexer.ChainHeight, true)
-		_, owner_update := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "ownerCanUpdate", Gnomes.Indexer.ChainHeight, true)
-		_, start := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "startPrice", Gnomes.Indexer.ChainHeight, true)
-		_, current := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "currBidAmt", Gnomes.Indexer.ChainHeight, true)
-		_, bid_price := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "currBidPrice", Gnomes.Indexer.ChainHeight, true)
-		_, royalty := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "royalty", Gnomes.Indexer.ChainHeight, true)
-		_, bids := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "bidCount", Gnomes.Indexer.ChainHeight, true)
-		_, endTime := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "endBlockTime", Gnomes.Indexer.ChainHeight, true)
-		_, startTime := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "startBlockTime", Gnomes.Indexer.ChainHeight, true)
-		_, artFee := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "artificerFee", Gnomes.Indexer.ChainHeight, true)
+	if !Gnomes.Closing() && len(scid) == 64 {
+		name, _ := Gnomes.GetSCIDValuesByKey(scid, "nameHdr")
+		collection, _ := Gnomes.GetSCIDValuesByKey(scid, "collection")
+		description, _ := Gnomes.GetSCIDValuesByKey(scid, "descrHdr")
+		creator, _ := Gnomes.GetSCIDValuesByKey(scid, "creatorAddr")
+		owner, _ := Gnomes.GetSCIDValuesByKey(scid, "owner")
+		typeHdr, _ := Gnomes.GetSCIDValuesByKey(scid, "typeHdr")
+		_, owner_update := Gnomes.GetSCIDValuesByKey(scid, "ownerCanUpdate")
+		_, start := Gnomes.GetSCIDValuesByKey(scid, "startPrice")
+		_, current := Gnomes.GetSCIDValuesByKey(scid, "currBidAmt")
+		_, bid_price := Gnomes.GetSCIDValuesByKey(scid, "currBidPrice")
+		_, royalty := Gnomes.GetSCIDValuesByKey(scid, "royalty")
+		_, bids := Gnomes.GetSCIDValuesByKey(scid, "bidCount")
+		_, endTime := Gnomes.GetSCIDValuesByKey(scid, "endBlockTime")
+		_, startTime := Gnomes.GetSCIDValuesByKey(scid, "startBlockTime")
+		_, artFee := Gnomes.GetSCIDValuesByKey(scid, "artificerFee")
 
 		if name != nil && collection != nil && start != nil && royalty != nil && endTime != nil && artFee != nil && typeHdr != nil {
 			go func() {
@@ -1939,19 +2007,19 @@ func GetAuctionDetails(scid string) {
 
 // Create buy now tab info for current asset
 func GetBuyNowDetails(scid string) {
-	if !GnomonClosing() && len(scid) == 64 {
-		name, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "nameHdr", Gnomes.Indexer.ChainHeight, true)
-		collection, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "collection", Gnomes.Indexer.ChainHeight, true)
-		description, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "descrHdr", Gnomes.Indexer.ChainHeight, true)
-		creator, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "creatorAddr", Gnomes.Indexer.ChainHeight, true)
-		owner, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "owner", Gnomes.Indexer.ChainHeight, true)
-		typeHdr, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "typeHdr", Gnomes.Indexer.ChainHeight, true)
-		_, owner_update := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "ownerCanUpdate", Gnomes.Indexer.ChainHeight, true)
-		_, start := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "startPrice", Gnomes.Indexer.ChainHeight, true)
-		_, royalty := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "royalty", Gnomes.Indexer.ChainHeight, true)
-		_, endTime := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "endBlockTime", Gnomes.Indexer.ChainHeight, true)
-		_, startTime := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "startBlockTime", Gnomes.Indexer.ChainHeight, true)
-		_, artFee := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "artificerFee", Gnomes.Indexer.ChainHeight, true)
+	if !Gnomes.Closing() && len(scid) == 64 {
+		name, _ := Gnomes.GetSCIDValuesByKey(scid, "nameHdr")
+		collection, _ := Gnomes.GetSCIDValuesByKey(scid, "collection")
+		description, _ := Gnomes.GetSCIDValuesByKey(scid, "descrHdr")
+		creator, _ := Gnomes.GetSCIDValuesByKey(scid, "creatorAddr")
+		owner, _ := Gnomes.GetSCIDValuesByKey(scid, "owner")
+		typeHdr, _ := Gnomes.GetSCIDValuesByKey(scid, "typeHdr")
+		_, owner_update := Gnomes.GetSCIDValuesByKey(scid, "ownerCanUpdate")
+		_, start := Gnomes.GetSCIDValuesByKey(scid, "startPrice")
+		_, royalty := Gnomes.GetSCIDValuesByKey(scid, "royalty")
+		_, endTime := Gnomes.GetSCIDValuesByKey(scid, "endBlockTime")
+		_, startTime := Gnomes.GetSCIDValuesByKey(scid, "startBlockTime")
+		_, artFee := Gnomes.GetSCIDValuesByKey(scid, "artificerFee")
 
 		if name != nil && collection != nil && start != nil && royalty != nil && endTime != nil && artFee != nil && typeHdr != nil {
 			go func() {
@@ -2036,19 +2104,19 @@ func GetBuyNowDetails(scid string) {
 
 // Create info for unlisted NFA
 func GetUnlistedDetails(scid string) {
-	if !GnomonClosing() && len(scid) == 64 {
-		name, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "nameHdr", Gnomes.Indexer.ChainHeight, true)
-		collection, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "collection", Gnomes.Indexer.ChainHeight, true)
-		description, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "descrHdr", Gnomes.Indexer.ChainHeight, true)
-		creator, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "creatorAddr", Gnomes.Indexer.ChainHeight, true)
-		owner, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "owner", Gnomes.Indexer.ChainHeight, true)
-		typeHdr, _ := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "typeHdr", Gnomes.Indexer.ChainHeight, true)
-		_, owner_update := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "ownerCanUpdate", Gnomes.Indexer.ChainHeight, true)
-		_, start := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "startPrice", Gnomes.Indexer.ChainHeight, true)
-		_, royalty := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "royalty", Gnomes.Indexer.ChainHeight, true)
-		_, endTime := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "endBlockTime", Gnomes.Indexer.ChainHeight, true)
-		_, startTime := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "startBlockTime", Gnomes.Indexer.ChainHeight, true)
-		_, artFee := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "artificerFee", Gnomes.Indexer.ChainHeight, true)
+	if !Gnomes.Closing() && len(scid) == 64 {
+		name, _ := Gnomes.GetSCIDValuesByKey(scid, "nameHdr")
+		collection, _ := Gnomes.GetSCIDValuesByKey(scid, "collection")
+		description, _ := Gnomes.GetSCIDValuesByKey(scid, "descrHdr")
+		creator, _ := Gnomes.GetSCIDValuesByKey(scid, "creatorAddr")
+		owner, _ := Gnomes.GetSCIDValuesByKey(scid, "owner")
+		typeHdr, _ := Gnomes.GetSCIDValuesByKey(scid, "typeHdr")
+		_, owner_update := Gnomes.GetSCIDValuesByKey(scid, "ownerCanUpdate")
+		_, start := Gnomes.GetSCIDValuesByKey(scid, "startPrice")
+		_, royalty := Gnomes.GetSCIDValuesByKey(scid, "royalty")
+		_, endTime := Gnomes.GetSCIDValuesByKey(scid, "endBlockTime")
+		_, startTime := Gnomes.GetSCIDValuesByKey(scid, "startBlockTime")
+		_, artFee := Gnomes.GetSCIDValuesByKey(scid, "artificerFee")
 
 		if name != nil && collection != nil && start != nil && royalty != nil && endTime != nil && artFee != nil && typeHdr != nil {
 			go func() {
@@ -2121,9 +2189,9 @@ func GetUnlistedDetails(scid string) {
 
 // Get percentages for a NFA
 func GetListingPercents(scid string) (artP float64, royaltyP float64) {
-	if Gnomes.Init && Gnomes.Sync && !GnomonClosing() {
-		_, artFee := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "artificerFee", Gnomes.Indexer.ChainHeight, true)
-		_, royalty := Gnomes.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, "royalty", Gnomes.Indexer.ChainHeight, true)
+	if Gnomes.Init && Gnomes.Sync && !Gnomes.Closing() {
+		_, artFee := Gnomes.GetSCIDValuesByKey(scid, "artificerFee")
+		_, royalty := Gnomes.GetSCIDValuesByKey(scid, "royalty")
 
 		if artFee != nil && royalty != nil {
 			artP = float64(artFee[0]) / 100

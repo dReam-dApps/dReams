@@ -1064,7 +1064,7 @@ func RunNFAMarket(tag string, quit, done chan struct{}, connect_box *dwidget.Der
 			rpc.EchoWallet(tag)
 
 			// Get all NFA listings
-			if !GnomonClosing() && offset%2 == 0 {
+			if !Gnomes.Closing() && offset%2 == 0 {
 				FindNfaListings(nil)
 				if offset > 19 {
 					offset = 0
@@ -1083,10 +1083,10 @@ func RunNFAMarket(tag string, quit, done chan struct{}, connect_box *dwidget.Der
 			}
 
 			// If connected daemon connected start looking for Gnomon sync with daemon
-			if rpc.Daemon.Connect && Gnomes.Init && !GnomonClosing() {
+			if rpc.Daemon.Connect && Gnomes.Init && !Gnomes.Closing() {
 				connect_box.Disconnect.SetChecked(true)
 				// Get indexed SCID count
-				contracts := Gnomes.Indexer.GravDBBackend.GetAllOwnersAndSCIDs()
+				contracts := Gnomes.GetAllOwnersAndSCIDs()
 				Gnomes.SCIDS = uint64(len(contracts))
 				if Gnomes.SCIDS > 0 {
 					Gnomes.Checked = true

@@ -185,7 +185,7 @@ func DaemonConnectedBox() fyne.Widget {
 		if !Gnomes.Init && !Gnomes.Start {
 			go startLabel()
 			filters := searchFilters()
-			StartGnomon("dReams", "gravdb", filters, 3960, 490, g45Index)
+			StartGnomon("dReams", Gnomes.DBType, filters, 3960, 490, g45Index)
 			rpc.FetchFees()
 			if Control.Dapp_list["Holdero"] {
 				Poker.contract_input.CursorColumn = 1
@@ -202,7 +202,7 @@ func DaemonConnectedBox() fyne.Widget {
 
 		if !b {
 			go StopLabel()
-			StopGnomon("dReams")
+			Gnomes.Stop("dReams")
 			go SleepLabel()
 		}
 	})

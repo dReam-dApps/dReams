@@ -148,7 +148,7 @@ func main() {
 	if rpc.Daemon.Connect {
 		// Initialize NFA search filter and start Gnomon
 		filter := []string{menu.NFA_SEARCH_FILTER}
-		menu.StartGnomon(app_tag, filter, 0, 0, nil)
+		menu.StartGnomon(app_tag, "gravdb", filter, 0, 0, nil)
 
 		var exit bool
 		c := make(chan os.Signal, 1)
@@ -160,14 +160,14 @@ func main() {
 
 		// Gnomon will continue to run if daemon is connected
 		for !exit && rpc.Daemon.Connect {
-			contracts := menu.Gnomes.Indexer.Backend.GetAllOwnersAndSCIDs()
+			contracts := menu.Gnomes.GetAllOwnersAndSCIDs()
 			log.Printf("[%s] Index contains %d contracts\n", app_tag, len(contracts))
 			time.Sleep(time.Second)
 			rpc.Ping()
 		}
 
 		// Stop Gnomon
-		menu.StopGnomon(app_tag)
+		menu.Gnomes.Stop(app_tag)
 	}
 
 	log.Printf("[%s] Done\n", app_tag)
@@ -207,7 +207,7 @@ func main() {
 	// When window closes, stop Gnomon if running
 	w.SetCloseIntercept(func() {
 		if menu.Gnomes.Init {
-			menu.StopGnomon(app_tag)
+			menu.Gnomes.Stop(app_tag)
 		}
 		w.Close()
 	})
@@ -221,7 +221,7 @@ func main() {
 		rpc.GetAddress(app_tag)
 		rpc.Ping()
 		if rpc.Daemon.Connect && !menu.Gnomes.Init && !menu.Gnomes.Start {
-			go menu.StartGnomon(app_tag, []string{menu.NFA_SEARCH_FILTER}, 0, 0, nil)
+			go menu.StartGnomon(app_tag, "gravdb", []string{menu.NFA_SEARCH_FILTER}, 0, 0, nil)
 		}
 	}
 
