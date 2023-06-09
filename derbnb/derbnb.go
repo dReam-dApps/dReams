@@ -137,7 +137,7 @@ func fetch(quit, done chan struct{}) {
 			rpc.Ping()
 			rpc.EchoWallet("DerBnb")
 			GetProperties()
-			rpc.GetBalance()
+			rpc.Wallet.GetBalance()
 			if !rpc.Wallet.Connect {
 				rpc.Wallet.Balance = 0
 			}

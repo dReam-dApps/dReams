@@ -38,18 +38,20 @@ type kuFeed struct {
 	} `json:"data"`
 }
 
-// Used for placing coin decimal when value displayed
+// Used for placing coin decimal, default returns 2 decimal place
 func CoinDecimal(ticker string) int {
 	split := strings.Split(ticker, "-")
-
 	if len(split) == 2 {
 		switch split[1] {
 		case "BTC":
 			return 8
+		case "DERO":
+			return 5
 		default:
 			return 2
 		}
 	}
+
 	return 2
 }
 

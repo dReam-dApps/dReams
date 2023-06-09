@@ -69,8 +69,8 @@ type marketObjects struct {
 }
 
 type assetObjects struct {
-	Dreams_bal    *canvas.Text
-	Dero_bal      *canvas.Text
+	Swap          *fyne.Container
+	Balances      *widget.List
 	Dero_price    *canvas.Text
 	Wall_height   *canvas.Text
 	Daem_height   *canvas.Text
@@ -389,14 +389,14 @@ func SearchNFAs() fyne.CanvasObject {
 		}
 	}
 
-	search_by := widget.NewRadioGroup([]string{"Collection", "Name"}, nil)
+	search_by := widget.NewRadioGroup([]string{"Collection   ", "Name"}, nil)
 	search_by.Horizontal = true
-	search_by.SetSelected("Collection")
+	search_by.SetSelected("Collection   ")
 
 	search_button := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "search"), func() {
 		if search_entry.Text != "" && rpc.Wallet.Connect {
 			switch search_by.Selected {
-			case "Collection":
+			case "Collection   ":
 				if results := SearchNFAsBy(0, search_entry.Text); results != nil {
 					search_entry.SetOptions(results)
 					search_entry.ShowCompletion()
@@ -966,31 +966,26 @@ func MenuDisplay() fyne.CanvasObject {
 	Assets.Gnomes_height = canvas.NewText(" Gnomon Height: ", bundle.TextColor)
 	Assets.Daem_height = canvas.NewText(" Daemon Height: ", bundle.TextColor)
 	Assets.Wall_height = canvas.NewText(" Wallet Height: ", bundle.TextColor)
-	Assets.Dreams_bal = canvas.NewText(" dReams Balance: ", bundle.TextColor)
-	Assets.Dero_bal = canvas.NewText(" Dero Balance: ", bundle.TextColor)
-	// price := getOgre("DERO-USDT")
 	Assets.Dero_price = canvas.NewText(" Dero Price: $", bundle.TextColor)
 
 	Assets.Gnomes_sync.TextSize = 18
 	Assets.Gnomes_height.TextSize = 18
 	Assets.Daem_height.TextSize = 18
 	Assets.Wall_height.TextSize = 18
-	Assets.Dreams_bal.TextSize = 18
-	Assets.Dero_bal.TextSize = 18
 	Assets.Dero_price.TextSize = 18
-	exLabel := canvas.NewText(" 1 Dero = 333 dReams", bundle.TextColor)
-	exLabel.TextSize = 18
 
-	box := container.NewVBox(
+	Assets.Gnomes_sync.Alignment = fyne.TextAlignCenter
+	Assets.Gnomes_height.Alignment = fyne.TextAlignCenter
+	Assets.Daem_height.Alignment = fyne.TextAlignCenter
+	Assets.Wall_height.Alignment = fyne.TextAlignCenter
+	Assets.Dero_price.Alignment = fyne.TextAlignCenter
+
+	return container.NewVBox(
 		Assets.Gnomes_sync,
 		Assets.Gnomes_height,
 		Assets.Daem_height,
 		Assets.Wall_height,
-		Assets.Dreams_bal,
-		Assets.Dero_bal,
-		Assets.Dero_price, exLabel)
-
-	return box
+		Assets.Dero_price)
 }
 
 // Icon image for Holdero tables and asset viewing
@@ -1071,7 +1066,7 @@ func RunNFAMarket(tag string, quit, done chan struct{}, connect_box *dwidget.Der
 				}
 			}
 
-			rpc.GetBalance()
+			rpc.Wallet.GetBalance()
 			if !rpc.Wallet.Connect {
 				rpc.Wallet.Balance = 0
 			}

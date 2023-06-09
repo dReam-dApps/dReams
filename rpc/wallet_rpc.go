@@ -98,6 +98,16 @@ func SessionLog() *fyne.Container {
 	return max
 }
 
+func InitBalances() {
+	Wallet.TokenBal = make(map[string]uint64)
+	Display.Balance = make(map[string]string)
+	Display.Balance["Dero"] = "0"
+	Display.Balance["dReams"] = "0"
+	Display.Balance["HGC"] = "0"
+	Display.Balance["TRVL"] = "0"
+	Signal.Sit = true
+}
+
 // Get Dero address from keys
 func DeroAddress(v interface{}) (address string) {
 	switch val := v.(type) {
@@ -193,21 +203,35 @@ func GetWalletTx(txid string) *rpc.Entry {
 	return &result.Entry
 }
 
-// Get wallet Dero balance
-func GetBalance() {
-	if Wallet.Connect {
-		rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
+// Get Wallet.Balance
+func (w *wallet) GetBalance() {
+	if w.Connect {
+		rpcClientW, ctx, cancel := SetWalletClient(w.Rpc, w.UserPass)
 		defer cancel()
 
 		var result *rpc.GetBalance_Result
 		if err := rpcClientW.CallFor(ctx, &result, "GetBalance"); err != nil {
 			log.Println("[GetBalance]", err)
+			w.Balance = 0
 			return
 		}
 
-		Wallet.Balance = result.Unlocked_Balance
-		Display.Dero_balance = fromAtomic(result.Unlocked_Balance)
+		w.Balance = result.Unlocked_Balance
 	}
+}
+
+// Return Dero wallet balance
+func GetBalance() uint64 {
+	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
+	defer cancel()
+
+	var result *rpc.GetBalance_Result
+	if err := rpcClientW.CallFor(ctx, &result, "GetBalance"); err != nil {
+		log.Println("[GetBalance]", err)
+		return 0
+	}
+
+	return result.Unlocked_Balance
 }
 
 // Get wallet balance of token by SCID
@@ -228,23 +252,44 @@ func TokenBalance(scid string) uint64 {
 	return result.Unlocked_Balance
 }
 
-// Get balances of all tokens used on dReams platform
+// Get Dero balance and all tokens used on dReams platform
 func GetDreamsBalances() {
 	if Wallet.Connect {
+		bal := GetBalance()
+		Wallet.Balance = bal
+		Display.Balance["Dero"] = fromAtomic(bal)
+
 		dReam_bal := TokenBalance(DreamsSCID)
-		Display.Token_balance["dReams"] = fromAtomic(dReam_bal)
+		Display.Balance["dReams"] = fromAtomic(dReam_bal)
 		Wallet.TokenBal["dReams"] = dReam_bal
 
+		trvl_bal := TokenBalance(TrvlSCID)
+		Display.Balance["TRVL"] = strconv.Itoa(int(trvl_bal))
+		Wallet.TokenBal["TRVL"] = trvl_bal
+
 		hgc_bal := TokenBalance(HgcSCID)
-		Display.Token_balance["HGC"] = fromAtomic(hgc_bal)
+		Display.Balance["HGC"] = fromAtomic(hgc_bal)
 		Wallet.TokenBal["HGC"] = hgc_bal
 
 		if Round.Tourney {
 			tourney_bal := TokenBalance(TourneySCID)
-			Display.Token_balance["Tournament"] = fromAtomic(tourney_bal)
+			Display.Balance["Tournament"] = fromAtomic(tourney_bal)
 			Wallet.TokenBal["Tournament"] = tourney_bal
 		}
+
+		return
 	}
+
+	Display.Balance["Dero"] = "0"
+	Wallet.Balance = 0
+	Display.Balance["dReams"] = "0"
+	Wallet.TokenBal["dReams"] = 0
+	Display.Balance["TRVL"] = "0"
+	Wallet.TokenBal["TRVL"] = 0
+	Display.Balance["HGC"] = "0"
+	Wallet.TokenBal["HGC"] = 0
+	Display.Balance["Tournament"] = "0"
+	Wallet.TokenBal["Tournament"] = 0
 }
 
 // Return asset transfer to SCID from Round.AssetID
@@ -1008,8 +1053,8 @@ func GetdReams(amt uint64) {
 		return
 	}
 
-	log.Println("[dReams] Get dReams", txid)
-	AddLog("Get dReams " + txid.TXID)
+	log.Println("[dReams] DERO-dReams", txid)
+	AddLog("DERO-dReams " + txid.TXID)
 }
 
 // Swap dReams for Dero
@@ -1044,8 +1089,8 @@ func TradedReams(amt uint64) {
 		return
 	}
 
-	log.Println("[dReams] Trade dReams TX:", txid)
-	AddLog("Trade dReams TX: " + txid.TXID)
+	log.Println("[dReams] dReams-DERO TX:", txid)
+	AddLog("dReams-DERO TX: " + txid.TXID)
 }
 
 var UnlockFee = uint64(300000)

@@ -353,23 +353,24 @@ func TournamentButton(obj []fyne.CanvasObject, tabs *container.AppTabs) fyne.Can
 	return Table.Tournament
 }
 
-// Confirmation for dReams-Dero swap
+// Confirmation for dReams-Dero swap pairs
 //   - c defines swap for Dero or dReams
 //   - amt of Dero in atomic units
 //   - Pass main window obj to reset to
-func DreamsConfirm(c, amt int, obj *container.Split, reset fyne.CanvasObject) fyne.CanvasObject {
+func DreamsConfirm(c, amt float64, obj *fyne.Container, reset fyne.CanvasObject) fyne.CanvasObject {
 	var text string
-	dero := float64(amt) / 333
+	dero := (amt / 100000) / 333
 	ratio := math.Pow(10, float64(5))
 	x := math.Round(dero*ratio) / ratio
 	a := fmt.Sprint(strconv.FormatFloat(dero, 'f', 5, 64))
 	switch c {
 	case 1:
-		text = fmt.Sprintf("You are about to swap %s DERO for %d dReams\n\nConfirm", a, amt)
+		text = fmt.Sprintf("You are about to swap %s DERO for %.5f dReams", a, amt/100000)
 	case 2:
-		text = fmt.Sprintf("You are about to swap %d dReams for %s Dero\n\nConfirm", amt, a)
+		text = fmt.Sprintf("You are about to swap %.5f dReams for %s Dero", amt/100000, a)
 	}
 
+	done := false
 	label := widget.NewLabel(text)
 	label.Wrapping = fyne.TextWrapWord
 	label.Alignment = fyne.TextAlignCenter
@@ -379,18 +380,20 @@ func DreamsConfirm(c, amt int, obj *container.Split, reset fyne.CanvasObject) fy
 		case 1:
 			rpc.GetdReams(uint64(x * 100000))
 		case 2:
-			rpc.TradedReams(uint64(amt * 100000))
+			rpc.TradedReams(uint64(amt))
 		default:
 
 		}
 
-		obj.Trailing.(*fyne.Container).Objects[1] = reset
-		obj.Trailing.(*fyne.Container).Objects[1].Refresh()
+		done = true
+		obj.Objects[0] = reset
+		obj.Objects[0].Refresh()
 	})
 
 	cancel_button := widget.NewButton("Cancel", func() {
-		obj.Trailing.(*fyne.Container).Objects[1] = reset
-		obj.Trailing.(*fyne.Container).Objects[1].Refresh()
+		done = true
+		obj.Objects[0] = reset
+		obj.Objects[0].Refresh()
 	})
 
 	buttons := container.NewAdaptiveGrid(2, confirm_button, cancel_button)
@@ -399,10 +402,13 @@ func DreamsConfirm(c, amt int, obj *container.Split, reset fyne.CanvasObject) fy
 	go func() {
 		for rpc.Wallet.Connect && rpc.Daemon.Connect {
 			time.Sleep(time.Second)
+			if done {
+				return
+			}
 		}
 
-		obj.Trailing.(*fyne.Container).Objects[1] = reset
-		obj.Trailing.(*fyne.Container).Objects[1].Refresh()
+		obj.Objects[0] = reset
+		obj.Objects[0].Refresh()
 	}()
 
 	return container.NewMax(content)

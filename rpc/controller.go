@@ -72,8 +72,7 @@ type displayStrings struct {
 
 	Readings string
 
-	Dero_balance  string
-	Token_balance map[string]string
+	Balance       map[string]string
 	Wallet_height string
 }
 

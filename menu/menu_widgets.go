@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"image"
+	"image/color"
 	"log"
 	"math"
 	"sort"
@@ -1643,6 +1644,71 @@ func IntroTree() fyne.CanvasObject {
 	max := container.NewMax(tree)
 
 	return max
+}
+
+func CreateSwapContainer(pair string) (*dwidget.DeroAmts, *fyne.Container) {
+	split := strings.Split(pair, "-")
+	if len(split) != 2 {
+		return dwidget.DeroAmtEntry("", 0, 0), container.NewMax(widget.NewLabel("Invalid Pair"))
+	}
+
+	incr := 0.1
+	switch split[0] {
+	case "dReams":
+		incr = 1
+	}
+
+	color1 := color.RGBA{31, 150, 200, 45}
+	color2 := color.RGBA{105, 90, 205, 45}
+	if bundle.AppColor == color.White {
+		color1 = color.RGBA{31, 150, 200, 150}
+		color2 = color.RGBA{105, 90, 205, 150}
+	}
+
+	rect2 := canvas.NewRectangle(color2)
+	rect2.SetMinSize(fyne.NewSize(200, 100))
+	swap2_label := canvas.NewText(split[1], bundle.TextColor)
+	swap2_label.Alignment = fyne.TextAlignCenter
+	swap2_label.TextSize = 18
+	swap2_entry := dwidget.DeroAmtEntry("", incr, uint(holdero.CoinDecimal(split[0])))
+	swap2_entry.SetText("0")
+	swap2_entry.Disable()
+
+	swap2 := container.NewBorder(swap2_label, swap2_entry, nil, nil, layout.NewSpacer())
+	cont2 := container.NewMax(rect2, swap2)
+
+	rect1 := canvas.NewRectangle(color1)
+	rect1.SetMinSize(fyne.NewSize(200, 100))
+	swap1_label := canvas.NewText(split[0], bundle.TextColor)
+	swap1_label.Alignment = fyne.TextAlignCenter
+	swap1_label.TextSize = 18
+	swap1_entry := dwidget.DeroAmtEntry("", incr, uint(holdero.CoinDecimal(split[0])))
+	swap1_entry.SetText("0")
+	swap1_entry.Validator = validation.NewRegexp(`^\d{1,}\.\d{1,5}$|^[^0.]\d{0,}$`, "Int or float required")
+	swap1_entry.OnChanged = func(s string) {
+		switch pair {
+		case "DERO-dReams", "dReams-DERO":
+			if f, err := strconv.ParseFloat(s, 64); err == nil {
+				ex := float64(333)
+				if split[0] == "dReams" {
+					new := f / ex
+					swap2_entry.SetText(fmt.Sprintf("%.5f", new))
+					return
+				}
+
+				new := f * ex
+				swap2_entry.SetText(fmt.Sprintf("%.5f", new))
+
+			}
+		default:
+			// other pairs
+		}
+	}
+
+	swap1 := container.NewBorder(swap1_label, swap1_entry, nil, nil, layout.NewSpacer())
+	cont1 := container.NewMax(rect1, swap1)
+
+	return swap1_entry, container.NewAdaptiveGrid(2, cont1, cont2)
 }
 
 // Create a new raster from image, looking for holdero.Settings.ThemeImg

@@ -203,10 +203,7 @@ func DisableIndexControls(d bool) {
 // Disable actions requiring connection
 func disableActions(d bool) {
 	if d {
-		holdero.Swap.Dreams.Hide()
-		holdero.Swap.Dero.Hide()
-		holdero.Swap.DEntry.Hide()
-
+		Assets.Swap.Hide()
 		if Control.Dapp_list["Holdero"] {
 			Poker.Holdero_unlock.Hide()
 			Poker.Holdero_new.Hide()
@@ -240,14 +237,12 @@ func disableActions(d bool) {
 			tarot.Iluma.Search.Refresh()
 		}
 	} else {
-		holdero.Swap.Dreams.Show()
-		holdero.Swap.Dero.Show()
-		holdero.Swap.DEntry.Show()
+		if rpc.Daemon.Connect {
+			Assets.Swap.Show()
+		}
 	}
 
-	holdero.Swap.Dreams.Refresh()
-	holdero.Swap.DEntry.Refresh()
-	holdero.Swap.Dero.Refresh()
+	Assets.Swap.Refresh()
 }
 
 // Disable Baccarat actions

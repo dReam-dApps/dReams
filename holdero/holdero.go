@@ -65,13 +65,6 @@ type tableObjects struct {
 	Warning    *fyne.Container
 }
 
-type swapObjects struct {
-	Dreams *widget.Button
-	Dero   *widget.Button
-	DEntry *dwidget.DeroAmts
-}
-
-var Swap swapObjects
 var Table tableObjects
 var Settings settings
 var Poker_name string
