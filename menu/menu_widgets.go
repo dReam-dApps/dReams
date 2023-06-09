@@ -1658,12 +1658,10 @@ func CreateSwapContainer(pair string) (*dwidget.DeroAmts, *fyne.Container) {
 		incr = 1
 	}
 
-	color1 := color.RGBA{31, 150, 200, 45}
-	color2 := color.RGBA{105, 90, 205, 45}
-	if bundle.AppColor == color.White {
-		color1 = color.RGBA{31, 150, 200, 150}
-		color2 = color.RGBA{105, 90, 205, 150}
-	}
+	color1 := color.RGBA{0, 0, 0, 0}
+	color2 := color.RGBA{0, 0, 0, 0}
+	image1 := canvas.NewImageFromResource(bundle.ResourceSwapFrame1Png)
+	image2 := canvas.NewImageFromResource(bundle.ResourceSwapFrame2Png)
 
 	rect2 := canvas.NewRectangle(color2)
 	rect2.SetMinSize(fyne.NewSize(200, 100))
@@ -1674,8 +1672,10 @@ func CreateSwapContainer(pair string) (*dwidget.DeroAmts, *fyne.Container) {
 	swap2_entry.SetText("0")
 	swap2_entry.Disable()
 
-	swap2 := container.NewBorder(swap2_label, swap2_entry, nil, nil, layout.NewSpacer())
-	cont2 := container.NewMax(rect2, swap2)
+	pad2 := container.NewBorder(layout.NewSpacer(), layout.NewSpacer(), layout.NewSpacer(), layout.NewSpacer(), swap2_entry)
+
+	swap2 := container.NewBorder(nil, pad2, nil, nil, container.NewCenter(swap2_label))
+	cont2 := container.NewMax(rect2, image2, swap2)
 
 	rect1 := canvas.NewRectangle(color1)
 	rect1.SetMinSize(fyne.NewSize(200, 100))
@@ -1705,8 +1705,10 @@ func CreateSwapContainer(pair string) (*dwidget.DeroAmts, *fyne.Container) {
 		}
 	}
 
-	swap1 := container.NewBorder(swap1_label, swap1_entry, nil, nil, layout.NewSpacer())
-	cont1 := container.NewMax(rect1, swap1)
+	pad1 := container.NewBorder(layout.NewSpacer(), layout.NewSpacer(), layout.NewSpacer(), layout.NewSpacer(), swap1_entry)
+
+	swap1 := container.NewBorder(nil, pad1, nil, nil, container.NewCenter(swap1_label))
+	cont1 := container.NewMax(rect1, image1, swap1)
 
 	return swap1_entry, container.NewAdaptiveGrid(2, cont1, cont2)
 }
