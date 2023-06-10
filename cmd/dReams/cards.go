@@ -7,6 +7,7 @@ import (
 	"github.com/SixofClubsss/dReams/bundle"
 	"github.com/SixofClubsss/dReams/holdero"
 	"github.com/SixofClubsss/dReams/rpc"
+	"github.com/SixofClubsss/dReams/tarot"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -824,163 +825,163 @@ func BaccSuit(card int) int {
 func TarotCard(c int) *canvas.Image {
 	switch c {
 	case 1:
-		return canvas.NewImageFromResource(bundle.ResourceIluma1Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma1Jpg)
 	case 2:
-		return canvas.NewImageFromResource(bundle.ResourceIluma2Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma2Jpg)
 	case 3:
-		return canvas.NewImageFromResource(bundle.ResourceIluma3Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma3Jpg)
 	case 4:
-		return canvas.NewImageFromResource(bundle.ResourceIluma4Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma4Jpg)
 	case 5:
-		return canvas.NewImageFromResource(bundle.ResourceIluma5Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma5Jpg)
 	case 6:
-		return canvas.NewImageFromResource(bundle.ResourceIluma6Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma6Jpg)
 	case 7:
-		return canvas.NewImageFromResource(bundle.ResourceIluma7Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma7Jpg)
 	case 8:
-		return canvas.NewImageFromResource(bundle.ResourceIluma8Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma8Jpg)
 	case 9:
-		return canvas.NewImageFromResource(bundle.ResourceIluma9Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma9Jpg)
 	case 10:
-		return canvas.NewImageFromResource(bundle.ResourceIluma10Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma10Jpg)
 	case 11:
-		return canvas.NewImageFromResource(bundle.ResourceIluma11Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma11Jpg)
 	case 12:
-		return canvas.NewImageFromResource(bundle.ResourceIluma12Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma12Jpg)
 	case 13:
-		return canvas.NewImageFromResource(bundle.ResourceIluma13Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma13Jpg)
 	case 14:
-		return canvas.NewImageFromResource(bundle.ResourceIluma14Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma14Jpg)
 	case 15:
-		return canvas.NewImageFromResource(bundle.ResourceIluma15Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma15Jpg)
 	case 16:
-		return canvas.NewImageFromResource(bundle.ResourceIluma16Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma16Jpg)
 	case 17:
-		return canvas.NewImageFromResource(bundle.ResourceIluma17Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma17Jpg)
 	case 18:
-		return canvas.NewImageFromResource(bundle.ResourceIluma18Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma18Jpg)
 	case 19:
-		return canvas.NewImageFromResource(bundle.ResourceIluma19Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma19Jpg)
 	case 20:
-		return canvas.NewImageFromResource(bundle.ResourceIluma20Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma20Jpg)
 	case 21:
-		return canvas.NewImageFromResource(bundle.ResourceIluma21Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma21Jpg)
 	case 22:
-		return canvas.NewImageFromResource(bundle.ResourceIluma22Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma22Jpg)
 	case 23:
-		return canvas.NewImageFromResource(bundle.ResourceIluma23Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma23Jpg)
 	case 24:
-		return canvas.NewImageFromResource(bundle.ResourceIluma24Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma24Jpg)
 	case 25:
-		return canvas.NewImageFromResource(bundle.ResourceIluma25Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma25Jpg)
 	case 26:
-		return canvas.NewImageFromResource(bundle.ResourceIluma26Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma26Jpg)
 	case 27:
-		return canvas.NewImageFromResource(bundle.ResourceIluma27Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma27Jpg)
 	case 28:
-		return canvas.NewImageFromResource(bundle.ResourceIluma28Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma28Jpg)
 	case 29:
-		return canvas.NewImageFromResource(bundle.ResourceIluma29Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma29Jpg)
 	case 30:
-		return canvas.NewImageFromResource(bundle.ResourceIluma30Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma30Jpg)
 	case 31:
-		return canvas.NewImageFromResource(bundle.ResourceIluma31Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma31Jpg)
 	case 32:
-		return canvas.NewImageFromResource(bundle.ResourceIluma32Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma32Jpg)
 	case 33:
-		return canvas.NewImageFromResource(bundle.ResourceIluma33Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma33Jpg)
 	case 34:
-		return canvas.NewImageFromResource(bundle.ResourceIluma34Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma34Jpg)
 	case 35:
-		return canvas.NewImageFromResource(bundle.ResourceIluma35Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma35Jpg)
 	case 36:
-		return canvas.NewImageFromResource(bundle.ResourceIluma36Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma36Jpg)
 	case 37:
-		return canvas.NewImageFromResource(bundle.ResourceIluma37Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma37Jpg)
 	case 38:
-		return canvas.NewImageFromResource(bundle.ResourceIluma38Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma38Jpg)
 	case 39:
-		return canvas.NewImageFromResource(bundle.ResourceIluma39Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma39Jpg)
 	case 40:
-		return canvas.NewImageFromResource(bundle.ResourceIluma40Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma40Jpg)
 	case 41:
-		return canvas.NewImageFromResource(bundle.ResourceIluma41Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma41Jpg)
 	case 42:
-		return canvas.NewImageFromResource(bundle.ResourceIluma42Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma42Jpg)
 	case 43:
-		return canvas.NewImageFromResource(bundle.ResourceIluma43Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma43Jpg)
 	case 44:
-		return canvas.NewImageFromResource(bundle.ResourceIluma44Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma44Jpg)
 	case 45:
-		return canvas.NewImageFromResource(bundle.ResourceIluma45Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma45Jpg)
 	case 46:
-		return canvas.NewImageFromResource(bundle.ResourceIluma46Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma46Jpg)
 	case 47:
-		return canvas.NewImageFromResource(bundle.ResourceIluma47Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma47Jpg)
 	case 48:
-		return canvas.NewImageFromResource(bundle.ResourceIluma48Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma48Jpg)
 	case 49:
-		return canvas.NewImageFromResource(bundle.ResourceIluma49Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma49Jpg)
 	case 50:
-		return canvas.NewImageFromResource(bundle.ResourceIluma50Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma50Jpg)
 	case 51:
-		return canvas.NewImageFromResource(bundle.ResourceIluma51Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma51Jpg)
 	case 52:
-		return canvas.NewImageFromResource(bundle.ResourceIluma52Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma52Jpg)
 	case 53:
-		return canvas.NewImageFromResource(bundle.ResourceIluma53Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma53Jpg)
 	case 54:
-		return canvas.NewImageFromResource(bundle.ResourceIluma54Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma54Jpg)
 	case 55:
-		return canvas.NewImageFromResource(bundle.ResourceIluma55Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma55Jpg)
 	case 56:
-		return canvas.NewImageFromResource(bundle.ResourceIluma56Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma56Jpg)
 	case 57:
-		return canvas.NewImageFromResource(bundle.ResourceIluma57Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma57Jpg)
 	case 58:
-		return canvas.NewImageFromResource(bundle.ResourceIluma58Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma58Jpg)
 	case 59:
-		return canvas.NewImageFromResource(bundle.ResourceIluma59Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma59Jpg)
 	case 60:
-		return canvas.NewImageFromResource(bundle.ResourceIluma60Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma60Jpg)
 	case 61:
-		return canvas.NewImageFromResource(bundle.ResourceIluma61Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma61Jpg)
 	case 62:
-		return canvas.NewImageFromResource(bundle.ResourceIluma62Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma62Jpg)
 	case 63:
-		return canvas.NewImageFromResource(bundle.ResourceIluma63Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma63Jpg)
 	case 64:
-		return canvas.NewImageFromResource(bundle.ResourceIluma64Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma64Jpg)
 	case 65:
-		return canvas.NewImageFromResource(bundle.ResourceIluma65Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma65Jpg)
 	case 66:
-		return canvas.NewImageFromResource(bundle.ResourceIluma66Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma66Jpg)
 	case 67:
-		return canvas.NewImageFromResource(bundle.ResourceIluma67Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma67Jpg)
 	case 68:
-		return canvas.NewImageFromResource(bundle.ResourceIluma68Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma68Jpg)
 	case 69:
-		return canvas.NewImageFromResource(bundle.ResourceIluma69Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma69Jpg)
 	case 70:
-		return canvas.NewImageFromResource(bundle.ResourceIluma70Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma70Jpg)
 	case 71:
-		return canvas.NewImageFromResource(bundle.ResourceIluma71Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma71Jpg)
 	case 72:
-		return canvas.NewImageFromResource(bundle.ResourceIluma72Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma72Jpg)
 	case 73:
-		return canvas.NewImageFromResource(bundle.ResourceIluma73Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma73Jpg)
 	case 74:
-		return canvas.NewImageFromResource(bundle.ResourceIluma74Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma74Jpg)
 	case 75:
-		return canvas.NewImageFromResource(bundle.ResourceIluma75Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma75Jpg)
 	case 76:
-		return canvas.NewImageFromResource(bundle.ResourceIluma76Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma76Jpg)
 	case 77:
-		return canvas.NewImageFromResource(bundle.ResourceIluma77Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma77Jpg)
 	case 78:
-		return canvas.NewImageFromResource(bundle.ResourceIluma78Jpg)
+		return canvas.NewImageFromResource(tarot.ResourceIluma78Jpg)
 	default:
-		return canvas.NewImageFromResource(bundle.ResourceIluma81Png)
+		return canvas.NewImageFromResource(tarot.ResourceIluma81Png)
 	}
 }
 

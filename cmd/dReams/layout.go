@@ -1043,7 +1043,7 @@ func placeTarot() fyne.CanvasObject {
 		if !tarot.Iluma.Open {
 			tarot.Iluma.Draw1.Hide()
 			tarot.Iluma.Draw3.Hide()
-			tarot.Iluma.Card2 = tarot.TarotConfirm(1, reset)
+			tarot.Iluma.Card2 = *tarot.TarotConfirm(1, reset)
 		}
 	})
 
@@ -1051,7 +1051,7 @@ func placeTarot() fyne.CanvasObject {
 		if !tarot.Iluma.Open {
 			tarot.Iluma.Draw1.Hide()
 			tarot.Iluma.Draw3.Hide()
-			tarot.Iluma.Card2 = tarot.TarotConfirm(3, reset)
+			tarot.Iluma.Card2 = *tarot.TarotConfirm(3, reset)
 		}
 	})
 

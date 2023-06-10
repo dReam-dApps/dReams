@@ -37,11 +37,11 @@ var Iluma tarot
 // Tarot object buffer when action triggered
 func TarotBuffer(d bool) {
 	if d {
-		Iluma.Card1.Objects[1] = canvas.NewImageFromResource(bundle.ResourceIluma81Png)
+		Iluma.Card1.Objects[1] = canvas.NewImageFromResource(ResourceIluma81Png)
 		Iluma.Card1.Refresh()
-		Iluma.Card2.Objects[1] = canvas.NewImageFromResource(bundle.ResourceIluma81Png)
+		Iluma.Card2.Objects[1] = canvas.NewImageFromResource(ResourceIluma81Png)
 		Iluma.Card2.Refresh()
-		Iluma.Card3.Objects[1] = canvas.NewImageFromResource(bundle.ResourceIluma81Png)
+		Iluma.Card3.Objects[1] = canvas.NewImageFromResource(ResourceIluma81Png)
 		Iluma.Card3.Refresh()
 		Iluma.Draw1.Hide()
 		Iluma.Draw3.Hide()
@@ -76,7 +76,7 @@ func TarotCardBox() fyne.CanvasObject {
 		}
 	})
 
-	card_back := canvas.NewImageFromResource(bundle.ResourceIluma81Png)
+	card_back := canvas.NewImageFromResource(ResourceIluma81Png)
 
 	Iluma.Card1 = *container.NewMax(one, card_back)
 	pad1 := container.NewBorder(nil, nil, TarotPadding(), TarotPadding(), &Iluma.Card1)
@@ -136,16 +136,14 @@ func TarotCardBox() fyne.CanvasObject {
 		alpha = canvas.NewRectangle(color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0x55})
 	}
 
-	box := *container.NewBorder(
+	box := container.NewBorder(
 		nil,
 		actions,
 		nil,
 		nil,
 		pad)
 
-	max := container.NewMax(alpha, &box)
-
-	return max
+	return container.NewMax(alpha, box)
 }
 
 // Padding section for Tarot card layouts
@@ -182,7 +180,7 @@ func TarotDrawText() (text string) {
 
 // Confirm Tarot draw of one or three cards
 //   - i defines 1 or 3 card draw
-func TarotConfirm(i int, reset fyne.Container) fyne.Container {
+func TarotConfirm(i int, reset fyne.Container) *fyne.Container {
 	label := widget.NewLabel("")
 	if i == 3 {
 		label.SetText(fmt.Sprintf("You are about to draw three cards\n\nReading fee is %.5f Dero\n\nConfirm", float64(rpc.IlumaFee)/100000))
@@ -194,7 +192,7 @@ func TarotConfirm(i int, reset fyne.Container) fyne.Container {
 	label.Alignment = fyne.TextAlignCenter
 
 	confirm := widget.NewButton("Confirm", func() {
-		Iluma.Card2 = reset
+		Iluma.Card2.Objects = reset.Objects
 		Iluma.Card2.Refresh()
 
 		if i == 3 {
@@ -216,11 +214,11 @@ func TarotConfirm(i int, reset fyne.Container) fyne.Container {
 
 	cancel := widget.NewButton("Cancel", func() {
 		Iluma.Open = false
-		Iluma.Draw1.Show()
-		Iluma.Draw3.Show()
 		go func() {
-			Iluma.Card2 = reset
+			Iluma.Card2.Objects = reset.Objects
 			Iluma.Card2.Refresh()
+			Iluma.Draw1.Show()
+			Iluma.Draw3.Show()
 		}()
 	})
 
@@ -234,7 +232,7 @@ func TarotConfirm(i int, reset fyne.Container) fyne.Container {
 
 	Iluma.Open = true
 
-	return *container.NewMax(cont)
+	return container.NewMax(cont)
 }
 
 // Display Iluma description for Tarot card
@@ -276,7 +274,7 @@ func IlumaDialog(card int, text string, reset fyne.Container) *fyne.Container {
 func PlaceIluma() *fyne.Container {
 	var first, second, third bool
 	var display int
-	img := canvas.NewImageFromResource(bundle.ResourceIluma82Png)
+	img := canvas.NewImageFromResource(ResourceIluma82Png)
 	intro := widget.NewLabel(iluma_intro)
 	scroll := container.NewScroll(intro)
 
@@ -305,19 +303,19 @@ func PlaceIluma() *fyne.Container {
 		switch display {
 		case 1:
 			if !first {
-				cont.Objects[1] = canvas.NewImageFromResource(bundle.ResourceIluma82Png)
+				cont.Objects[1] = canvas.NewImageFromResource(ResourceIluma82Png)
 				cont.Refresh()
 				first = true
 			}
 		case 2:
 			if !second {
-				cont.Objects[1] = canvas.NewImageFromResource(bundle.ResourceIluma80Png)
+				cont.Objects[1] = canvas.NewImageFromResource(ResourceIluma80Png)
 				cont.Refresh()
 				second = true
 			}
 		case 3:
 			if !third {
-				cont.Objects[1] = canvas.NewImageFromResource(bundle.ResourceIluma83Png)
+				cont.Objects[1] = canvas.NewImageFromResource(ResourceIluma83Png)
 				cont.Refresh()
 				third = true
 			}
