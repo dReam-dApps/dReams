@@ -7,6 +7,7 @@ import (
 	"image/color"
 	"log"
 	"os"
+	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -415,16 +416,16 @@ func GnomonBoltDB(dbType, dbPath string) *storage.BboltStore {
 	}
 
 	shasum := fmt.Sprintf("%x", sha1.Sum([]byte("dReams")))
-	db_name := fmt.Sprintf("gnomondb_bolt\\%s_%s.db", "dReams", shasum)
+	db_name := fmt.Sprintf("gnomondb_bolt_%s_%s.db", "dReams", shasum)
 	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
-		if err := os.Mkdir(dbPath, 0755); err != nil {
+		if err := os.MkdirAll(dbPath, 0755); err != nil {
 			log.Fatalf("[GnomonBoltDB] %s\n", err)
 		}
 	}
 
-	db, err := storage.NewBBoltDB(dbPath, dbPath+"/"+db_name)
+	db, err := storage.NewBBoltDB(dbPath, filepath.Join(dbPath, db_name))
 	if err != nil {
-		log.Fatalf("[GnomonBoltDB] %s\n", err)
+		log.Fatalf("%s\n", err)
 	}
 
 	return db
@@ -442,7 +443,7 @@ func StartGnomon(tag, dbtype string, filters []string, upper, lower int, custom 
 	Gnomes.Start = true
 	log.Printf("[%s] Starting Gnomon\n", tag)
 	shasum := fmt.Sprintf("%x", sha1.Sum([]byte("dReams")))
-	db_path := fmt.Sprintf("gnomondb\\%s_%s", "dReams", shasum)
+	db_path := filepath.Join("gnomondb", fmt.Sprintf("%s_%s", "dReams", shasum))
 	bolt_backend := GnomonBoltDB(dbtype, db_path)
 	grav_backend := GnomonGravDB(dbtype, db_path)
 
