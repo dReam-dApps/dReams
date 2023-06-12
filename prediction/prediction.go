@@ -335,11 +335,11 @@ func P_initResults(p, amt, eA, c, to, u, d, r, f, m string, ta, tb, tc int) (inf
 
 		if isOnChainPrediction(p) {
 			info = "SCID:\n\n" + Predict.Contract + "\n\n" + p + wfp + "\n\nNode: " + f + "\n\nMark: " + mark + "\nRound Pot: " + s +
-				"\n\nPredictions: " + c + "\nHigher Predictions: " + u + "\nLower Predictions: " + d +
+				" Dero\n\nPredictions: " + c + "\nHigher Predictions: " + u + "\nLower Predictions: " + d +
 				"\n\nPayout After: " + end_pay.String() + "\nRefund if not paid within " + rf + " minutes\n\nRounds Completed: " + r
 		} else {
 			info = "SCID:\n\n" + Predict.Contract + "\n\n" + p + wfp + "\n\nMark: " + mark + "\nRound Pot: " + s +
-				"\n\nPredictions: " + c + "\nHigher Predictions: " + u + "\nLower Predictions: " + d +
+				" Dero\n\nPredictions: " + c + "\nHigher Predictions: " + u + "\nLower Predictions: " + d +
 				"\n\nPayout After: " + end_pay.String() + "\nRefund if not paid within " + rf + " minutes\n\nRounds Completed: " + r
 		}
 
@@ -352,6 +352,10 @@ func P_initResults(p, amt, eA, c, to, u, d, r, f, m string, ta, tb, tc int) (inf
 			live = "\n\n" + p + "\nBuffer ends in " + strconv.Itoa(int(left)) + " seconds"
 		}
 
+		if amt_f, err := strconv.ParseFloat(amt, 64); err == nil {
+			amt = fmt.Sprintf("%.5f", amt_f)
+		}
+
 		node := ""
 		if isOnChainPrediction(p) {
 			node = "\n\nNode: " + f
@@ -360,11 +364,11 @@ func P_initResults(p, amt, eA, c, to, u, d, r, f, m string, ta, tb, tc int) (inf
 		if m == "0" {
 			pw := strconv.Itoa(ta / 60)
 			info = "SCID:\n\n" + Predict.Contract + live + node +
-				"\n\nCloses at: " + utc + "\nMark posted with in " + pw + " minutes of close\n\nPrediction Amount: " + amt + " Dero\nRound Pot: " + s + " \n\nPredictions: " + c +
+				"\n\nCloses at: " + utc + "\nMark posted with in " + pw + " minutes of close\n\nPrediction Amount: " + amt + " Dero\nRound Pot: " + s + " Dero\n\nPredictions: " + c +
 				"\nHigher Predictions: " + u + "\nLower Predictions: " + d + "\n\nPayout After: " + end_pay.String() + "\nRefund if not paid within " + rf + " minutes\n\nRounds Completed: " + r
 		} else {
 			info = "SCID:\n\n" + Predict.Contract + live + node +
-				"\n\nCloses at: " + utc + "\nMark: " + m + "\n\nPrediction Amount: " + amt + " Dero\nRound Pot: " + s + "\n\nPredictions: " + c +
+				"\n\nCloses at: " + utc + "\nMark: " + m + "\n\nPrediction Amount: " + amt + " Dero\nRound Pot: " + s + " Dero\n\nPredictions: " + c +
 				"\nHigher Predictions: " + u + "\nLower Predictions: " + d + "\n\nPayout After: " + end_pay.String() + "\nRefund if not paid within " + rf + " minutes\n\nRounds Completed: " + r
 		}
 	}

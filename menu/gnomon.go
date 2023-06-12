@@ -52,20 +52,6 @@ End Function`
 	g45_search_filter = `STORE("type", "G45-NFT")`
 )
 
-// Convert string to int64
-func stringToInt64(s string) int64 {
-	if s != "" {
-		i, err := strconv.Atoi(s)
-		if err != nil {
-			log.Println("[stringToInt64]", err)
-			return 0
-		}
-		return int64(i)
-	}
-
-	return 0
-}
-
 // dReams search filters for Gnomon index
 func searchFilters() (filter []string) {
 	if Control.Dapp_list["Holdero"] {

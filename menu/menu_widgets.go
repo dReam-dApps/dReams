@@ -1461,10 +1461,10 @@ func listMenu(window_icon fyne.Resource) {
 				listing_asset := viewing_asset
 				artP, royaltyP := GetListingPercents(listing_asset)
 
-				d := uint64(stringToInt64(duration.Text))
-				s := ToAtomicFive(start.Text)
+				d := rpc.StringToUint64(duration.Text)
+				s := rpc.ToAtomic(start.Text, 5)
 				sp := float64(s) / 100000
-				cp := uint64(stringToInt64(charPerc.Text))
+				cp := rpc.StringToUint64(charPerc.Text)
 
 				art_gets := (float64(s) * artP) / 100000
 				royalty_gets := (float64(s) * royaltyP) / 100000
@@ -1573,21 +1573,6 @@ func listMenu(window_icon fyne.Resource) {
 			bundle.Alpha180,
 			aw_content))
 	aw.Show()
-}
-
-// Convert string to atomic value
-func ToAtomicFive(v string) uint64 {
-	f, err := strconv.ParseFloat(v, 64)
-
-	if err != nil {
-		log.Println("[ToAtomicFive]", err)
-		return 0
-	}
-
-	ratio := math.Pow(10, float64(5))
-	rf := math.Round(f*ratio) / ratio
-
-	return uint64(math.Round(rf * 100000))
 }
 
 // Menu instruction tree
@@ -1779,8 +1764,8 @@ func SendMessageMenu(dest string, window_icon fyne.Resource) {
 
 		send_button = widget.NewButton("Send Message", func() {
 			if dest_entry.Validate() == nil && message_entry.Text != "" {
-				rings := stringToInt64(ringsize.Selected)
-				go rpc.SendMessage(dest_entry.Text, dest_entry.Text, uint64(rings))
+				rings := rpc.StringToUint64(ringsize.Selected)
+				go rpc.SendMessage(dest_entry.Text, message_entry.Text, rings)
 				Control.msg_open = false
 				smw.Close()
 			}

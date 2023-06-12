@@ -26,20 +26,6 @@ import (
 	"github.com/ybbus/jsonrpc/v3"
 )
 
-// Convert string to int, returns 0 if err
-func StringToInt(s string) int {
-	if s != "" {
-		i, err := strconv.Atoi(s)
-		if err != nil {
-			log.Println("[StringToInt]", err)
-			return 0
-		}
-		return i
-	}
-
-	return 0
-}
-
 // Add entry to Wallet.LogEntry session log
 func AddLog(t string) {
 	if Wallet.LogEntry != nil {
@@ -73,9 +59,7 @@ func SessionLog() *fyne.Container {
 		layout.NewSpacer(),
 		container.NewBorder(nil, layout.NewSpacer(), nil, button, layout.NewSpacer()))
 
-	max := container.NewMax(cont, vbox)
-
-	return max
+	return container.NewMax(cont, vbox)
 }
 
 func InitBalances() {
@@ -86,23 +70,6 @@ func InitBalances() {
 	Display.Balance["HGC"] = "0"
 	Display.Balance["TRVL"] = "0"
 	Signal.Sit = true
-}
-
-// Get Dero address from keys
-func DeroAddress(v interface{}) (address string) {
-	switch val := v.(type) {
-	case string:
-		decd, _ := hex.DecodeString(val)
-		p := new(crypto.Point)
-		if err := p.DecodeCompressed(decd); err == nil {
-			addr := rpc.NewAddressFromKeys(p)
-			address = addr.String()
-		} else {
-			address = string(decd)
-		}
-	}
-
-	return address
 }
 
 // Set wallet rpc client with auth, context and 5 sec cancel
@@ -223,10 +190,10 @@ func GetDreamsBalances() {
 	if Wallet.Connect {
 		bal := GetBalance()
 		Wallet.Balance = bal
-		Display.Balance["Dero"] = fromAtomic(bal)
+		Display.Balance["Dero"] = FromAtomic(bal, 5)
 
 		dReam_bal := TokenBalance(DreamsSCID)
-		Display.Balance["dReams"] = fromAtomic(dReam_bal)
+		Display.Balance["dReams"] = FromAtomic(dReam_bal, 5)
 		Wallet.TokenBal["dReams"] = dReam_bal
 
 		trvl_bal := TokenBalance(TrvlSCID)
@@ -234,12 +201,12 @@ func GetDreamsBalances() {
 		Wallet.TokenBal["TRVL"] = trvl_bal
 
 		hgc_bal := TokenBalance(HgcSCID)
-		Display.Balance["HGC"] = fromAtomic(hgc_bal)
+		Display.Balance["HGC"] = FromAtomic(hgc_bal, 5)
 		Wallet.TokenBal["HGC"] = hgc_bal
 
 		if Round.Tourney {
 			tourney_bal := TokenBalance(TourneySCID)
-			Display.Balance["Tournament"] = fromAtomic(tourney_bal)
+			Display.Balance["Tournament"] = FromAtomic(tourney_bal, 5)
 			Wallet.TokenBal["Tournament"] = tourney_bal
 		}
 
@@ -584,10 +551,10 @@ func Bet(amt string) (tx string) {
 			t1 = rpc.Transfer{
 				SCID:        crypto.HashHexToHash(TourneySCID),
 				Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
-				Burn:        ToAtomicOne(amt),
+				Burn:        ToAtomic(amt, 1),
 			}
 		} else {
-			t1 = GetAssetSCIDforTransfer(ToAtomicOne(amt))
+			t1 = GetAssetSCIDforTransfer(ToAtomic(amt, 1))
 			if t1.Destination == "" {
 				log.Println("[Bet] Error getting asset SCID for transfer")
 				return
@@ -597,7 +564,7 @@ func Bet(amt string) (tx string) {
 		t1 = rpc.Transfer{
 			Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
 			Amount:      0,
-			Burn:        ToAtomicOne(amt),
+			Burn:        ToAtomic(amt, 1),
 		}
 	}
 
@@ -1139,7 +1106,7 @@ func BaccBet(amt, w string) (tx string) {
 		SCID:        crypto.HashHexToHash(Bacc.AssetID),
 		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
 		Amount:      0,
-		Burn:        ToAtomicOne(amt),
+		Burn:        ToAtomic(amt, 1),
 	}
 
 	t := []rpc.Transfer{t1}

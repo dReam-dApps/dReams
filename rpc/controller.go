@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"math"
 	"strconv"
 	"time"
 )
@@ -224,56 +223,15 @@ type signals struct {
 	CHeight   int
 }
 
-// Returns string value of atomic unit
-func fromAtomic(v interface{}) string {
-	var value float64
-
-	switch v := v.(type) {
-	case uint64:
-		value = float64(v)
-	case float64:
-		value = v
-	}
-
-	str := fmt.Sprintf("%.5f", value/100000)
-
-	return str
-}
-
-// Returns atomic value of string rounded to one decimal place
-func ToAtomicOne(v string) uint64 {
-	f, err := strconv.ParseFloat(v, 64)
-
-	if err != nil {
-		log.Println("[ToAtomicOne]", err)
-		return 0
-	}
-
-	ratio := math.Pow(10, float64(1))
-	rf := math.Round(f*ratio) / ratio
-
-	u := uint64(math.Round(rf * 100000))
-
-	return u
-}
-
 // Make blinds display string
 func blindString(b, s interface{}) string {
-	bb := b.(float64) / 100000
-	sb := s.(float64) / 100000
+	if bb, ok := b.(float64); ok {
+		if sb, ok := s.(float64); ok {
+			return fmt.Sprintf("%.5f / %.5f", bb/100000, sb/100000)
+		}
+	}
 
-	x := fmt.Sprintf("%.5f", bb)
-	y := fmt.Sprintf("%.5f", sb)
-
-	return x + " / " + y
-}
-
-// Returns value plus one as string
-func addOne(v interface{}) string {
-	value := int(v.(float64) + 1)
-	str := strconv.Itoa(value)
-
-	return str
+	return "? / ?"
 }
 
 // If Holdero table is closed set vars accordingly
@@ -442,7 +400,7 @@ func getAvatar(p int, id interface{}) string {
 		return str
 	}
 
-	av := fromHextoString(str)
+	av := HexToString(str)
 
 	var player playerId
 
@@ -872,28 +830,27 @@ func Called(fb bool, w uint64) {
 }
 
 // Holdero players turn display string
-func turnReadout(t interface{}) string {
-	var s string
+func turnReadout(t interface{}) (turn string) {
 	if t != nil {
-		if addOne(t) == Display.PlayerId {
-			s = "Your Turn"
-		} else {
-			if addOne(t) == "1" {
-				s = "Player 1's Turn"
-			} else if addOne(t) == "2" {
-				s = "Player 2's Turn"
-			} else if addOne(t) == "3" {
-				s = "Player 3's Turn"
-			} else if addOne(t) == "4" {
-				s = "Player 4's Turn"
-			} else if addOne(t) == "5" {
-				s = "Player 5's Turn"
-			} else if addOne(t) == "6" {
-				s = "Player 6's Turn"
-			}
+		switch AddOne(t) {
+		case Display.PlayerId:
+			turn = "Your Turn"
+		case "1":
+			turn = "Player 1's Turn"
+		case "2":
+			turn = "Player 2's Turn"
+		case "3":
+			turn = "Player 3's Turn"
+		case "4":
+			turn = "Player 4's Turn"
+		case "5":
+			turn = "Player 5's Turn"
+		case "6":
+			turn = "Player 6's Turn"
 		}
 	}
-	return s
+
+	return
 }
 
 // Sets Holdero action signals
@@ -1081,16 +1038,6 @@ func winningHand(e interface{}) {
 			getHands(StringToInt(Display.Seats))
 		}()
 	}
-}
-
-// Convert a millisecond string to time.Time
-func MsToTime(ms string) (time.Time, error) {
-	msInt, err := strconv.ParseInt(ms, 10, 64)
-	if err != nil {
-		return time.Time{}, err
-	}
-
-	return time.Unix(0, msInt*int64(time.Millisecond)), nil
 }
 
 // Return team param string for dSports

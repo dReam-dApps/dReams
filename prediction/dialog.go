@@ -1071,11 +1071,17 @@ func ownerConfirmAction(i int, p float64, window fyne.Window, reset fyne.CanvasO
 	p_scid := Predict.Contract
 	p_pre := PS_Control.P_Name.Text
 	p_amt := PS_Control.P_amt.Text
+	if p_amt_f, err := strconv.ParseFloat(p_amt, 64); err == nil {
+		p_amt = fmt.Sprintf("%.5f", p_amt_f)
+	}
 	p_mark := PS_Control.P_mark.Text
 	p_end := PS_Control.P_end.Text
 	p_end_time, _ := rpc.MsToTime(p_end + "000")
 	p_feed := PS_Control.P_feed.Text
 	p_dep := PS_Control.P_deposit.Text
+	if p_dep_f, err := strconv.ParseFloat(p_dep, 64); err == nil {
+		p_dep = fmt.Sprintf("%.5f", p_dep_f)
+	}
 	var price string
 	if holdero.CoinDecimal(pre) == 8 {
 		price = fmt.Sprintf("%.8f", p/100000000)
@@ -1094,12 +1100,18 @@ func ownerConfirmAction(i int, p float64, window fyne.Window, reset fyne.CanvasO
 
 	s_league := PS_Control.S_league.Text
 	s_amt := PS_Control.S_amt.Text
+	if s_amt_f, err := strconv.ParseFloat(s_amt, 64); err == nil {
+		s_amt = fmt.Sprintf("%.5f", s_amt_f)
+	}
 	s_end := PS_Control.S_end.Text
 	s_end_time, _ := rpc.MsToTime(s_end + "000")
 	s_feed := PS_Control.S_feed.Text
 	n_split := strings.Split(PS_Control.Payout_n.Text, "   ")
 	s_pay_n := n_split[0]
 	s_dep := PS_Control.S_deposit.Text
+	if s_dep_f, err := strconv.ParseFloat(s_dep, 64); err == nil {
+		s_dep = fmt.Sprintf("%.5f", s_dep_f)
+	}
 
 	var win, team, a_score, b_score, payout_str string
 	if i == 3 {
@@ -1196,12 +1208,12 @@ func ownerConfirmAction(i int, p float64, window fyne.Window, reset fyne.CanvasO
 		PS_Control.Payout_n.SetText("")
 		switch i {
 		case 1:
-			rpc.SetSports(rpc.StringToInt(s_end), menu.ToAtomicFive(s_amt), menu.ToAtomicFive(s_dep), s_scid, s_league, s_game, s_feed)
+			rpc.SetSports(rpc.StringToInt(s_end), rpc.ToAtomic(s_amt, 5), rpc.ToAtomic(s_dep, 5), s_scid, s_league, s_game, s_feed)
 		case 2:
 			if onChainPrediction(pre) == 2 || onChainPrediction(p_pre) == 2 { /// decimal of one place for block time
-				rpc.SetPrediction(rpc.StringToInt(p_end), rpc.StringToInt(p_mark)*10000, menu.ToAtomicFive(p_amt), menu.ToAtomicFive(p_dep), p_scid, p_pre, p_feed)
+				rpc.SetPrediction(rpc.StringToInt(p_end), rpc.StringToInt(p_mark)*10000, rpc.ToAtomic(p_amt, 5), rpc.ToAtomic(p_dep, 5), p_scid, p_pre, p_feed)
 			} else {
-				rpc.SetPrediction(rpc.StringToInt(p_end), rpc.StringToInt(p_mark), menu.ToAtomicFive(p_amt), menu.ToAtomicFive(p_dep), p_scid, p_pre, p_feed)
+				rpc.SetPrediction(rpc.StringToInt(p_end), rpc.StringToInt(p_mark), rpc.ToAtomic(p_amt, 5), rpc.ToAtomic(p_dep, 5), p_scid, p_pre, p_feed)
 			}
 		case 3:
 			rpc.EndSports(s_scid, s_pay_n, win)

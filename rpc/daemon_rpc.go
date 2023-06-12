@@ -60,15 +60,6 @@ var Signal signals
 var Predict predictionValues
 var Tarot tarotValues
 
-// Convert hex value to string
-func fromHextoString(h string) string {
-	if str, err := hex.DecodeString(h); err == nil {
-		return string(str)
-	}
-
-	return ""
-}
-
 // Set daemon rpc client with context and 5 sec cancel
 func SetDaemonClient(addr string) (jsonrpc.RPCClient, context.Context, context.CancelFunc) {
 	client := jsonrpc.NewClient("http://" + addr + "/json_rpc")
@@ -239,7 +230,7 @@ func CheckForIndex(scid string) interface{} {
 	}
 
 	owner := result.VariableStringKeys[scid+"owner"]
-	address := DeroAddress(owner)
+	address := DeroAddressFromKey(owner)
 
 	return address
 }
@@ -443,7 +434,7 @@ func FetchHolderoSC() {
 		// Open_jv := result.VariableStringKeys["Open"]
 		Seed_jv := result.VariableStringKeys["HandSeed"]
 		Face_jv := result.VariableStringKeys["Face:"]
-		Back_jv := result.VariableStringKeys["Back:"]
+		//Back_jv := result.VariableStringKeys["Back:"]
 		V_jv := result.VariableStringKeys["V:"]
 
 		if V_jv != nil {
@@ -500,7 +491,7 @@ func FetchHolderoSC() {
 			if Tourney_jv == nil {
 				Round.Tourney = false
 				if Chips_jv != nil {
-					if fromHextoString(Chips_jv.(string)) == "ASSET" {
+					if HexToString(Chips_jv) == "ASSET" {
 						Round.Asset = true
 						if _, ok := result.VariableStringKeys["dReams"].(string); ok {
 							Pot_jv = result.Balances[DreamsSCID]
@@ -522,7 +513,7 @@ func FetchHolderoSC() {
 			} else {
 				Round.Tourney = true
 				if Chips_jv != nil {
-					if fromHextoString(Chips_jv.(string)) == "ASSET" {
+					if HexToString(Chips_jv) == "ASSET" {
 						Round.Asset = true
 						Pot_jv = result.Balances[TourneySCID]
 					} else {
@@ -604,21 +595,23 @@ func FetchHolderoSC() {
 				Signal.My_turn = false
 			}
 
-			Display.Pot = fromAtomic(Pot_jv)
+			Display.Pot = FromAtomic(Pot_jv, 5)
 			Display.Seats = fmt.Sprint(Seats_jv)
-			Display.Ante = fromAtomic(Ante_jv)
+			Display.Ante = FromAtomic(Ante_jv, 5)
 			Display.Blinds = blindString(BigBlind_jv, SmallBlind_jv)
-			Display.Dealer = fmt.Sprint(Dealer_jv.(float64) + 1)
+			Display.Dealer = AddOne(Dealer_jv)
 
 			Round.SC_seed = fmt.Sprint(Seed_jv)
 
-			if Face_jv != nil && Face_jv.(string) != "nil" {
-				var c = &CardSpecs{}
-				json.Unmarshal([]byte(fromHextoString(Face_jv.(string))), c)
-				Round.Face = c.Faces.Name
-				Round.Back = c.Backs.Name
-				Round.F_url = c.Faces.Url
-				Round.B_url = c.Backs.Url
+			if face, ok := Face_jv.(string); ok {
+				if face != "nil" {
+					var c = &CardSpecs{}
+					json.Unmarshal([]byte(HexToString(face)), c)
+					Round.Face = c.Faces.Name
+					Round.Back = c.Backs.Name
+					Round.F_url = c.Faces.Url
+					Round.B_url = c.Backs.Url
+				}
 			} else {
 				Round.Face = ""
 				Round.Back = ""
@@ -626,13 +619,16 @@ func FetchHolderoSC() {
 				Round.B_url = ""
 			}
 
-			if Back_jv != nil && Back_jv.(string) != "nil" {
-				var a = &TableSpecs{}
-				json.Unmarshal([]byte(fromHextoString(Back_jv.(string))), a)
-			}
+			// // Unused at moment
+			// if back, ok := Back_jv.(string); ok {
+			// 	if back != "nil" {
+			// 		var a = &TableSpecs{}
+			// 		json.Unmarshal([]byte(FromHexToString(back)), a)
+			// 	}
+			// }
 
 			if RevealBool_jv != nil && !Signal.Reveal && !Round.LocalEnd {
-				if addOne(Turn_jv) == Display.PlayerId {
+				if AddOne(Turn_jv) == Display.PlayerId {
 					Signal.Clicked = true
 					Signal.CHeight = Wallet.Height
 					Signal.Reveal = true
@@ -920,7 +916,7 @@ func ValidBetContract(scid string) bool {
 
 	d := fmt.Sprint(result.VariableStringKeys["dev"])
 
-	return DeroAddress(d) == DevAddress
+	return DeroAddressFromKey(d) == DevAddress
 }
 
 // Get dPrediction final TXID

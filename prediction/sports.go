@@ -415,9 +415,12 @@ func GetBook(scid string) (info string) {
 //   - a, b are current contract time frames
 func S_Results(g, gN, l, min, eA, c, tA, tB, tAV, tBV, total string, a, b uint64) (info string) { /// sports info label
 	result, err := strconv.ParseFloat(total, 32)
-
 	if err != nil {
 		log.Println("[Sports]", err)
+	}
+
+	if min_f, err := strconv.ParseFloat(min, 64); err == nil {
+		min = fmt.Sprintf("%.5f", min_f)
 	}
 
 	s := fmt.Sprintf("%.5f", result/100000)
@@ -438,7 +441,7 @@ func S_Results(g, gN, l, min, eA, c, tA, tB, tAV, tBV, total string, a, b uint64
 	}
 
 	info = ("\n" + event + gN + ": " + g + "\nLeague: " + l + "\nMinimum: " + min +
-		" Dero\nCloses at: " + utc_end + "\nPayout " + pa + " hours after close\nRefund if not paid " + rf + " within hours\nPot Total: " + s + "\nPicks: " + c + "\n" + tA + " Picks: " + tAV + "\n" + tB + " Picks: " + tBV + "\n")
+		" Dero\nCloses at: " + utc_end + "\nPayout " + pa + " hours after close\nRefund if not paid " + rf + " within hours\nPot Total: " + s + " Dero\nPicks: " + c + "\n" + tA + " Picks: " + tAV + "\n" + tB + " Picks: " + tBV + "\n")
 
 	return
 }

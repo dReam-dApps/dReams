@@ -799,7 +799,7 @@ func PlaceMarket() *container.Split {
 			text := Market.Market_button.Text
 			Market.Market_button.Hide()
 			if text == "Bid" {
-				amt := ToAtomicFive(Market.Entry.Text)
+				amt := rpc.ToAtomic(Market.Entry.Text, 5)
 				menu_top.Trailing.(*fyne.Container).Objects[1] = BidBuyConfirm(scid, amt, 0, menu_top, container.NewMax(tabs, scroll_cont))
 				menu_top.Trailing.(*fyne.Container).Objects[1].Refresh()
 			} else if text == "Buy" {

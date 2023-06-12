@@ -521,17 +521,17 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 			return
 
 		case 2:
-			ListProperty(scid_entry.Text, menu.ToAtomicFive(price_entry.Text), menu.ToAtomicFive(deposit_entry.Text), true)
+			ListProperty(scid_entry.Text, rpc.ToAtomic(price_entry.Text, 5), rpc.ToAtomic(deposit_entry.Text, 5), true)
 		case 3:
 			RemoveProperty(scid_entry.Text)
 		case 4:
 			ConfirmBooking(scid_entry.Text, confirm_stamp)
 			confirm_request_button.Hide()
 		case 5:
-			ReleaseDamageDeposit(scid_entry.Text, comment_entry.Text, confirm_stamp, menu.ToAtomicFive(release_entry.Text))
+			ReleaseDamageDeposit(scid_entry.Text, comment_entry.Text, confirm_stamp, rpc.ToAtomic(release_entry.Text, 5))
 			release_button.Hide()
 		case 6:
-			ListProperty(scid_entry.Text, menu.ToAtomicFive(price_entry.Text), menu.ToAtomicFive(deposit_entry.Text), false)
+			ListProperty(scid_entry.Text, rpc.ToAtomic(price_entry.Text, 5), rpc.ToAtomic(deposit_entry.Text, 5), false)
 		case 7:
 			// case removed for v0.9.6
 		case 8:
@@ -665,6 +665,17 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 	}
 
 	release_check = widget.NewCheck("", func(b bool) {
+		f, err := strconv.ParseFloat(release_entry.Text, 64)
+		if err != nil {
+			return
+		}
+
+		if b && f > 0 && len(comment_entry.Text) < 3 {
+			dialog.NewInformation("Needs Comment", "Add a comment for damage description", w).Show()
+			release_check.SetChecked(false)
+			return
+		}
+
 		if b {
 			confirm_action.Show()
 			comment_entry.SetPlaceHolder("")
