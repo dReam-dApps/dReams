@@ -26,26 +26,6 @@ import (
 	"github.com/ybbus/jsonrpc/v3"
 )
 
-type wallet struct {
-	UserPass   string
-	idHash     string
-	Rpc        string
-	Address    string
-	ClientKey  string
-	Balance    uint64
-	TokenBal   map[string]uint64
-	Height     int
-	Connect    bool
-	PokerOwner bool
-	BetOwner   bool
-	KeyLock    bool
-	Service    bool
-	File       *walletapi.Wallet_Disk
-	LogEntry   *widget.Entry
-}
-
-var Wallet wallet
-
 // Convert string to int, returns 0 if err
 func StringToInt(s string) int {
 	if s != "" {
@@ -148,13 +128,13 @@ func EchoWallet(tag string) {
 		var result string
 		params := []string{"Hello", "World", "!"}
 		if err := rpcClientW.CallFor(ctx, &result, "Echo", params); err != nil {
-			Wallet.Connect = false
+			Wallet.Connected(false)
 			log.Printf("[%s] %s\n", tag, err)
 			return
 		}
 
 		if result != "WALLET Hello World !" {
-			Wallet.Connect = false
+			Wallet.Connected(false)
 		}
 	}
 }
@@ -167,13 +147,13 @@ func GetAddress(tag string) {
 
 	var result *rpc.GetAddress_Result
 	if err := rpcClientW.CallFor(ctx, &result, "GetAddress"); err != nil {
-		Wallet.Connect = false
+		Wallet.Connected(false)
 		log.Printf("[%s] %s\n", tag, err)
 		return
 	}
 
 	if (result.Address[0:4] == "dero" || result.Address[0:4] == "deto") && len(result.Address) == 66 {
-		Wallet.Connect = true
+		Wallet.Connected(true)
 		log.Printf("[%s] Wallet Connected\n", tag)
 		log.Printf("[%s] Dero Address: %s\n", tag, result.Address)
 		Wallet.Address = result.Address
@@ -181,7 +161,7 @@ func GetAddress(tag string) {
 		hash := sha256.Sum256(id)
 		Wallet.idHash = hex.EncodeToString(hash[:])
 	} else {
-		Wallet.Connect = false
+		Wallet.Connected(false)
 	}
 }
 
@@ -203,24 +183,7 @@ func GetWalletTx(txid string) *rpc.Entry {
 	return &result.Entry
 }
 
-// Get Wallet.Balance
-func (w *wallet) GetBalance() {
-	if w.Connect {
-		rpcClientW, ctx, cancel := SetWalletClient(w.Rpc, w.UserPass)
-		defer cancel()
-
-		var result *rpc.GetBalance_Result
-		if err := rpcClientW.CallFor(ctx, &result, "GetBalance"); err != nil {
-			log.Println("[GetBalance]", err)
-			w.Balance = 0
-			return
-		}
-
-		w.Balance = result.Unlocked_Balance
-	}
-}
-
-// Return Dero wallet balance
+// Returns Dero wallet balance
 func GetBalance() uint64 {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
@@ -234,7 +197,7 @@ func GetBalance() uint64 {
 	return result.Unlocked_Balance
 }
 
-// Get wallet balance of token by SCID
+// Returns wallet balance of token by SCID
 func TokenBalance(scid string) uint64 {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
@@ -254,6 +217,9 @@ func TokenBalance(scid string) uint64 {
 
 // Get Dero balance and all tokens used on dReams platform
 func GetDreamsBalances() {
+	Wallet.MuB.Lock()
+	defer Wallet.MuB.Unlock()
+
 	if Wallet.Connect {
 		bal := GetBalance()
 		Wallet.Balance = bal

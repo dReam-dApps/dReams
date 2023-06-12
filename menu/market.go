@@ -1067,9 +1067,6 @@ func RunNFAMarket(tag string, quit, done chan struct{}, connect_box *dwidget.Der
 			}
 
 			rpc.Wallet.GetBalance()
-			if !rpc.Wallet.Connect {
-				rpc.Wallet.Balance = 0
-			}
 
 			// Refresh Dero balance and Gnomon endpoint
 			connect_box.RefreshBalance()

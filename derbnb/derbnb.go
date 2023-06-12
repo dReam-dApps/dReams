@@ -130,6 +130,7 @@ func fetch(quit, done chan struct{}) {
 	log.Println("[DerBnb]", rpc.DREAMSv, runtime.GOOS, runtime.GOARCH)
 	time.Sleep(6 * time.Second)
 	ticker := time.NewTicker(3 * time.Second)
+	rpc.Wallet.TokenBal = make(map[string]uint64)
 
 	for {
 		select {
@@ -138,9 +139,7 @@ func fetch(quit, done chan struct{}) {
 			rpc.EchoWallet("DerBnb")
 			GetProperties()
 			rpc.Wallet.GetBalance()
-			if !rpc.Wallet.Connect {
-				rpc.Wallet.Balance = 0
-			}
+			rpc.Wallet.GetTokenBalance("TRVL", rpc.TrvlSCID)
 
 			connect_box.RefreshBalance()
 			if !rpc.Signal.Startup {
@@ -633,14 +632,17 @@ func getUserConfirmedBookings(scid string, all bool) (confirmed_bookings []strin
 }
 
 func getUserShares() (shares, epoch, treasury uint64) {
-	if _, check_shares := menu.Gnomes.GetSCIDValuesByKey(rpc.DerBnbSCID, rpc.Wallet.Address+"_SHARES"); check_shares != nil {
-		shares = check_shares[0]
-		if _, check_epoch := menu.Gnomes.GetSCIDValuesByKey(rpc.DerBnbSCID, rpc.Wallet.Address+"_EPOCH"); check_epoch != nil {
-			epoch = check_epoch[0]
-			if _, check_treasury := menu.Gnomes.GetSCIDValuesByKey(rpc.DerBnbSCID, "TREASURY"); check_treasury != nil {
-				treasury = check_treasury[0]
+	if menu.Gnomes.Init && menu.Gnomes.Sync && !menu.Gnomes.Closing() {
+		if _, check_shares := menu.Gnomes.GetSCIDValuesByKey(rpc.DerBnbSCID, rpc.Wallet.Address+"_SHARES"); check_shares != nil {
+			shares = check_shares[0]
+			if _, check_epoch := menu.Gnomes.GetSCIDValuesByKey(rpc.DerBnbSCID, rpc.Wallet.Address+"_EPOCH"); check_epoch != nil {
+				epoch = check_epoch[0]
+				if _, check_treasury := menu.Gnomes.GetSCIDValuesByKey(rpc.DerBnbSCID, "TREASURY"); check_treasury != nil {
+					treasury = check_treasury[0]
+				}
 			}
 		}
 	}
+
 	return
 }

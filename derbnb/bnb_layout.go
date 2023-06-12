@@ -721,7 +721,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 				return
 			}
 
-			if trvl_bal := rpc.TokenBalance(rpc.TrvlSCID); trvl_bal < uint64(trvl_amt) {
+			if rpc.Wallet.ReadTokenBalance("TRVL") < uint64(trvl_amt) {
 				dialog.NewInformation("Not Enough TRVL", "You do not have that much TRVL", w).Show()
 				return
 			}
@@ -802,10 +802,15 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 		w.SetContent(confirm_max)
 		go func() {
 			for !menu.ClosingApps() && !trvl_exit {
-				trvl_bal := rpc.TokenBalance(rpc.TrvlSCID)
+				if !rpc.Wallet.IsConnected() {
+					derbnb_gif.Stop()
+					menu.RestartGif(menu.Gnomes.Icon_ind)
+					w.SetContent(reset_to_main)
+					break
+				}
 				shares, epoch, _ := getUserShares()
 				next_withdraw := uint64(time.Now().Unix()-1684428835) / 2629743
-				confirm_action_label.SetText(fmt.Sprintf("Shares allow you to withdraw Dero from the DerBnb treasury each month\n\n10000 TRVL = 1 Share\n\nTRVL Balance: %d\n\nShares: %d\n\nWithdraw Available: %t", trvl_bal, shares, next_withdraw < epoch))
+				confirm_action_label.SetText(fmt.Sprintf("Shares allow you to withdraw Dero from the DerBnb treasury each month\n\n10000 TRVL = 1 Share\n\nTRVL Balance: %d\n\nShares: %d\n\nWithdraw Available: %t", rpc.Wallet.ReadTokenBalance("TRVL"), shares, next_withdraw < epoch))
 				time.Sleep(time.Second)
 			}
 			trvl_exit = false
