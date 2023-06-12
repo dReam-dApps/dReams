@@ -394,7 +394,7 @@ func place() *fyne.Container {
 	if dReams.os != "darwin" {
 		alpha_box.Objects = append(alpha_box.Objects, FullScreenSet())
 	}
-	alpha_box.Objects = append(alpha_box.Objects, menu.StartIndicators())
+	alpha_box.Objects = append(alpha_box.Objects, menu.StartDreamsIndicators())
 
 	tabs := container.NewAppTabs(container.NewTabItem("Menu", menu_tabs))
 
