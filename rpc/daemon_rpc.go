@@ -153,9 +153,7 @@ func FindStringKey(scid, key, daemon string) interface{} {
 		return nil
 	}
 
-	value := result.VariableStringKeys[key]
-
-	return value
+	return result.VariableStringKeys[key]
 }
 
 // Get list of dReams dApps from contract store
@@ -229,10 +227,7 @@ func CheckForIndex(scid string) interface{} {
 		return nil
 	}
 
-	owner := result.VariableStringKeys[scid+"owner"]
-	address := DeroAddressFromKey(owner)
-
-	return address
+	return DeroAddressFromKey(result.VariableStringKeys[scid+"owner"])
 }
 
 // Get code of a SC
@@ -384,11 +379,7 @@ func VerifySigner(txid string) bool {
 		return false
 	}
 
-	if result.Txs[0].Signer == Wallet.Address {
-		return true
-	}
-
-	return false
+	return result.Txs[0].Signer == Wallet.Address
 }
 
 // Get Holdero SC data
@@ -411,37 +402,37 @@ func FetchHolderoSC() {
 
 		var Pot_jv uint64
 		Seats_jv := result.VariableStringKeys["Seats at Table:"]
-		// Count_jv := result.VariableStringKeys["Counter:"]
-		Ante_jv := result.VariableStringKeys["Ante:"]
-		BigBlind_jv := result.VariableStringKeys["BB:"]
-		SmallBlind_jv := result.VariableStringKeys["SB:"]
-		Turn_jv := result.VariableStringKeys["Player:"]
-		OneId_jv := result.VariableStringKeys["Player1 ID:"]
-		TwoId_jv := result.VariableStringKeys["Player2 ID:"]
-		ThreeId_jv := result.VariableStringKeys["Player3 ID:"]
-		FourId_jv := result.VariableStringKeys["Player4 ID:"]
-		FiveId_jv := result.VariableStringKeys["Player5 ID:"]
-		SixId_jv := result.VariableStringKeys["Player6 ID:"]
-		Dealer_jv := result.VariableStringKeys["Dealer:"]
-		Wager_jv := result.VariableStringKeys["Wager:"]
-		Raised_jv := result.VariableStringKeys["Raised:"]
-		FlopBool_jv := result.VariableStringKeys["Flop"]
-		// TurnBool_jv = result.VariableStringKeys["Turn"]
-		// RiverBool_jv = result.VariableStringKeys["River"]
-		RevealBool_jv := result.VariableStringKeys["Reveal"]
-		// Bet_jv := result.VariableStringKeys["Bet"]
-		Full_jv := result.VariableStringKeys["Full"]
-		// Open_jv := result.VariableStringKeys["Open"]
-		Seed_jv := result.VariableStringKeys["HandSeed"]
-		Face_jv := result.VariableStringKeys["Face:"]
-		//Back_jv := result.VariableStringKeys["Back:"]
 		V_jv := result.VariableStringKeys["V:"]
 
 		if V_jv != nil {
-			Round.Version = int(V_jv.(float64))
+			Round.Version = intType(V_jv)
 		}
 
-		if Seats_jv != nil && int(Seats_jv.(float64)) > 0 {
+		if Seats_jv != nil && intType(Seats_jv) > 0 {
+			// Count_jv := result.VariableStringKeys["Counter:"]
+			Ante_jv := result.VariableStringKeys["Ante:"]
+			BigBlind_jv := result.VariableStringKeys["BB:"]
+			SmallBlind_jv := result.VariableStringKeys["SB:"]
+			Turn_jv := result.VariableStringKeys["Player:"]
+			OneId_jv := result.VariableStringKeys["Player1 ID:"]
+			TwoId_jv := result.VariableStringKeys["Player2 ID:"]
+			ThreeId_jv := result.VariableStringKeys["Player3 ID:"]
+			FourId_jv := result.VariableStringKeys["Player4 ID:"]
+			FiveId_jv := result.VariableStringKeys["Player5 ID:"]
+			SixId_jv := result.VariableStringKeys["Player6 ID:"]
+			Dealer_jv := result.VariableStringKeys["Dealer:"]
+			Wager_jv := result.VariableStringKeys["Wager:"]
+			Raised_jv := result.VariableStringKeys["Raised:"]
+			FlopBool_jv := result.VariableStringKeys["Flop"]
+			// TurnBool_jv = result.VariableStringKeys["Turn"]
+			// RiverBool_jv = result.VariableStringKeys["River"]
+			RevealBool_jv := result.VariableStringKeys["Reveal"]
+			// Bet_jv := result.VariableStringKeys["Bet"]
+			Full_jv := result.VariableStringKeys["Full"]
+			// Open_jv := result.VariableStringKeys["Open"]
+			Seed_jv := result.VariableStringKeys["HandSeed"]
+			Face_jv := result.VariableStringKeys["Face:"]
+			//Back_jv := result.VariableStringKeys["Back:"]
 			Flop1_jv := result.VariableStringKeys["FlopCard1"]
 			Flop2_jv := result.VariableStringKeys["FlopCard2"]
 			Flop3_jv := result.VariableStringKeys["FlopCard3"]
@@ -483,7 +474,7 @@ func FetchHolderoSC() {
 			Last_jv := result.VariableStringKeys["Last"]
 
 			if Last_jv != nil {
-				Round.Last = int64(Last_jv.(float64))
+				Round.Last = int64(float64Type(Last_jv))
 			} else {
 				Round.Last = 0
 			}
@@ -528,9 +519,9 @@ func FetchHolderoSC() {
 				}
 			}
 
-			Round.Ante = uint64(Ante_jv.(float64))
-			Round.BB = uint64(BigBlind_jv.(float64))
-			Round.SB = uint64(SmallBlind_jv.(float64))
+			Round.Ante = uint64Type(Ante_jv)
+			Round.BB = uint64Type(BigBlind_jv)
+			Round.SB = uint64Type(SmallBlind_jv)
 			Round.Pot = Pot_jv
 
 			hasFolded(P1F_jv, P2F_jv, P3F_jv, P4F_jv, P5F_jv, P6F_jv)
@@ -567,7 +558,7 @@ func FetchHolderoSC() {
 				if Round.Bettor == "" {
 					Round.Bettor = findBettor(Turn_jv)
 				}
-				Round.Wager = uint64(Wager_jv.(float64))
+				Round.Wager = uint64Type(Wager_jv)
 				Display.B_Button = "Call/Raise"
 				Display.C_Button = "Fold"
 			} else {
@@ -579,7 +570,7 @@ func FetchHolderoSC() {
 				if Round.Raiser == "" {
 					Round.Raiser = findBettor(Turn_jv)
 				}
-				Round.Raised = uint64(Raised_jv.(float64))
+				Round.Raised = uint64Type(Raised_jv)
 				Display.B_Button = "Call"
 				Display.C_Button = "Fold"
 			} else {
@@ -587,7 +578,7 @@ func FetchHolderoSC() {
 				Round.Raised = 0
 			}
 
-			if Round.ID == int(Turn_jv.(float64))+1 {
+			if Round.ID == intType(Turn_jv)+1 {
 				Signal.My_turn = true
 			} else if Round.ID == 1 && Turn_jv == Seats_jv {
 				Signal.My_turn = true
@@ -861,7 +852,8 @@ func FetchBaccHand(tx string) {
 
 		Total_jv := result.VariableStringKeys["TotalHandsPlayed:"]
 		if Total_jv != nil {
-			start := int(Total_jv.(float64)) - 21
+			Display_jv := result.VariableStringKeys["display"]
+			start := intType(Total_jv) - intType(Display_jv)
 			i := start
 			for i < start+45 {
 				h := "-Hand#TXID:"
@@ -871,20 +863,20 @@ func FetchBaccHand(tx string) {
 				if TXID_jv != nil {
 					if TXID_jv.(string) == tx {
 						Bacc.Found = true
-						Bacc.P_card1 = int(result.VariableStringKeys[w+"-Player x:"].(float64))
-						Bacc.P_card2 = int(result.VariableStringKeys[w+"-Player y:"].(float64))
-						Bacc.P_card3 = int(result.VariableStringKeys[w+"-Player z:"].(float64))
-						Bacc.B_card1 = int(result.VariableStringKeys[w+"-Banker x:"].(float64))
-						Bacc.B_card2 = int(result.VariableStringKeys[w+"-Banker y:"].(float64))
-						Bacc.B_card3 = int(result.VariableStringKeys[w+"-Banker z:"].(float64))
+						Bacc.P_card1 = intType(result.VariableStringKeys[w+"-Player x:"])
+						Bacc.P_card2 = intType(result.VariableStringKeys[w+"-Player y:"])
+						Bacc.P_card3 = intType(result.VariableStringKeys[w+"-Player z:"])
+						Bacc.B_card1 = intType(result.VariableStringKeys[w+"-Banker x:"])
+						Bacc.B_card2 = intType(result.VariableStringKeys[w+"-Banker y:"])
+						Bacc.B_card3 = intType(result.VariableStringKeys[w+"-Banker z:"])
 						PTotal_jv := result.VariableStringKeys[w+"-Player total:"]
 						BTotal_jv := result.VariableStringKeys[w+"-Banker total:"]
 
-						p := int(PTotal_jv.(float64))
-						b := int(BTotal_jv.(float64))
-						if PTotal_jv.(float64) == BTotal_jv.(float64) {
+						p := intType(PTotal_jv)
+						b := intType(BTotal_jv)
+						if intType(PTotal_jv) == intType(BTotal_jv) {
 							Display.BaccRes = fmt.Sprintf("Hand# %s Tie, %d & %d", w, p, b)
-						} else if PTotal_jv.(float64) > BTotal_jv.(float64) {
+						} else if intType(PTotal_jv) > intType(BTotal_jv) {
 							Display.BaccRes = fmt.Sprintf("Hand# %s Player Wins, %d over %d", w, p, b)
 						} else {
 							Display.BaccRes = fmt.Sprintf("Hand# %s Banker Wins, %d over %d", w, b, p)
@@ -941,12 +933,10 @@ func FetchPredictionFinal(scid string) (txid string) {
 
 		if p_txid != nil {
 			txid = fmt.Sprint(p_txid)
-
 		}
-		return txid
 	}
 
-	return ""
+	return
 }
 
 // Get dPrediction SC code for public and private SC
@@ -1035,7 +1025,7 @@ func FetchSportsFinal(scid string) (finals []string) {
 
 		played := result.VariableStringKeys["s_played"]
 		if played != nil {
-			start := int(played.(float64)) - 4
+			start := intType(played) - 4
 			i := start
 			for {
 				str := fmt.Sprint(i)
@@ -1043,9 +1033,10 @@ func FetchSportsFinal(scid string) (finals []string) {
 				s_txid := result.VariableStringKeys["s_final_txid_"+str]
 
 				if s_txid != nil && game != nil {
-					decode, _ := hex.DecodeString(game.(string))
-					final := str + "   " + string(decode) + "   " + s_txid.(string)
-					finals = append(finals, final)
+					if decode, err := hex.DecodeString(fmt.Sprint(game)); err == nil {
+						final := str + "   " + string(decode) + "   " + fmt.Sprint(s_txid)
+						finals = append(finals, final)
+					}
 				}
 
 				i++
@@ -1105,7 +1096,8 @@ func FetchTarotReading(tx string) {
 
 		Reading_jv := result.VariableStringKeys["readings:"]
 		if Reading_jv != nil {
-			start := int(Reading_jv.(float64)) - 21
+			Display_jv := result.VariableStringKeys["Display"]
+			start := intType(Reading_jv) - intType(Display_jv)
 			i := start
 			for i < start+45 {
 				h := "-readingTXID:"
@@ -1113,7 +1105,7 @@ func FetchTarotReading(tx string) {
 				TXID_jv := result.VariableStringKeys[w+h]
 
 				if TXID_jv != nil {
-					if TXID_jv.(string) == tx {
+					if fmt.Sprint(TXID_jv) == tx {
 						Tarot.Found = true
 						Tarot.Card1 = findTarotCard(result.VariableStringKeys[w+"-card1:"])
 						Tarot.Card2 = findTarotCard(result.VariableStringKeys[w+"-card2:"])

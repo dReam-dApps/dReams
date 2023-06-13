@@ -16,9 +16,9 @@ import (
 // Switch to convert interface to int
 func intType(v interface{}) (value int) {
 	switch v := v.(type) {
-	case uint64:
-		value = int(v)
 	case float64:
+		value = int(v)
+	case uint64:
 		value = int(v)
 	case string:
 		if i, err := strconv.ParseInt(v, 10, 64); err == nil {
@@ -29,13 +29,29 @@ func intType(v interface{}) (value int) {
 	return
 }
 
+// Switch to convert interface to uint64
+func uint64Type(v interface{}) (value uint64) {
+	switch v := v.(type) {
+	case float64:
+		value = uint64(v)
+	case uint64:
+		value = v
+	case string:
+		if u, err := strconv.ParseUint(v, 10, 64); err == nil {
+			value = u
+		}
+	}
+
+	return
+}
+
 // Switch to convert interface to float64
 func float64Type(v interface{}) (value float64) {
 	switch v := v.(type) {
-	case uint64:
-		value = float64(v)
 	case float64:
 		value = v
+	case uint64:
+		value = float64(v)
 	case string:
 		if f, err := strconv.ParseFloat(v, 64); err == nil {
 			value = f
