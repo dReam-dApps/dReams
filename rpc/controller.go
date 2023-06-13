@@ -306,7 +306,7 @@ func singleNameClear(p int) {
 // Returns name of Holdero player who bet
 func findBettor(p interface{}) string {
 	if p != nil {
-		switch p.(float64) {
+		switch float64Type(p) {
 		case 0:
 			if Round.P6_name != "" && !Round.F6 {
 				return Round.P6_name
@@ -588,7 +588,7 @@ func tableOpen(seats, full, two, three, four, five, six interface{}) {
 		Signal.Sit = true
 		return
 	}
-	s := int(seats.(float64))
+	s := intType(seats)
 	if s >= 2 && two == nil && Round.ID != 1 {
 		Signal.Sit = false
 	}
@@ -617,7 +617,7 @@ func tableOpen(seats, full, two, three, four, five, six interface{}) {
 // Gets Holdero community card values
 func getCommCardValues(f1, f2, f3, t, r interface{}) {
 	if f1 != nil {
-		Round.Flop1 = int(f1.(float64))
+		Round.Flop1 = intType(f1)
 		if !Round.Flop_trigger {
 			Round.Card_delay = true
 		}
@@ -628,19 +628,19 @@ func getCommCardValues(f1, f2, f3, t, r interface{}) {
 	}
 
 	if f2 != nil {
-		Round.Flop2 = int(f2.(float64))
+		Round.Flop2 = intType(f2)
 	} else {
 		Round.Flop2 = 0
 	}
 
 	if f3 != nil {
-		Round.Flop3 = int(f3.(float64))
+		Round.Flop3 = intType(f3)
 	} else {
 		Round.Flop3 = 0
 	}
 
 	if t != nil {
-		Round.TurnCard = int(t.(float64))
+		Round.TurnCard = intType(t)
 		if !Round.Turn_trigger {
 			Round.Card_delay = true
 		}
@@ -651,7 +651,7 @@ func getCommCardValues(f1, f2, f3, t, r interface{}) {
 	}
 
 	if r != nil {
-		Round.RiverCard = int(r.(float64))
+		Round.RiverCard = intType(r)
 		if !Round.River_trigger {
 			Round.Card_delay = true
 		}
@@ -666,8 +666,8 @@ func getCommCardValues(f1, f2, f3, t, r interface{}) {
 func getPlayerCardValues(a1, a2, b1, b2, c1, c2, d1, d2, e1, e2, f1, f2 interface{}) {
 	if Round.ID == 1 {
 		if a1 != nil {
-			Round.Cards.Local1 = a1.(string)
-			Round.Cards.Local2 = a2.(string)
+			Round.Cards.Local1 = fmt.Sprint(a1)
+			Round.Cards.Local2 = fmt.Sprint(a2)
 			if !Round.Local_trigger {
 				Round.Card_delay = true
 			}
@@ -680,8 +680,8 @@ func getPlayerCardValues(a1, a2, b1, b2, c1, c2, d1, d2, e1, e2, f1, f2 interfac
 	}
 
 	if a1 != nil {
-		Round.Cards.P1C1 = a1.(string)
-		Round.Cards.P1C2 = a2.(string)
+		Round.Cards.P1C1 = fmt.Sprint(a1)
+		Round.Cards.P1C2 = fmt.Sprint(a2)
 	} else {
 		Round.Cards.P1C1 = ""
 		Round.Cards.P1C2 = ""
@@ -689,8 +689,8 @@ func getPlayerCardValues(a1, a2, b1, b2, c1, c2, d1, d2, e1, e2, f1, f2 interfac
 
 	if Round.ID == 2 {
 		if b1 != nil {
-			Round.Cards.Local1 = b1.(string)
-			Round.Cards.Local2 = b2.(string)
+			Round.Cards.Local1 = fmt.Sprint(b1)
+			Round.Cards.Local2 = fmt.Sprint(b2)
 			if !Round.Local_trigger {
 				Round.Card_delay = true
 			}
@@ -703,8 +703,8 @@ func getPlayerCardValues(a1, a2, b1, b2, c1, c2, d1, d2, e1, e2, f1, f2 interfac
 	}
 
 	if b1 != nil {
-		Round.Cards.P2C1 = b1.(string)
-		Round.Cards.P2C2 = b2.(string)
+		Round.Cards.P2C1 = fmt.Sprint(b1)
+		Round.Cards.P2C2 = fmt.Sprint(b2)
 	} else {
 		Round.Cards.P2C1 = ""
 		Round.Cards.P2C2 = ""
@@ -712,8 +712,8 @@ func getPlayerCardValues(a1, a2, b1, b2, c1, c2, d1, d2, e1, e2, f1, f2 interfac
 
 	if Round.ID == 3 {
 		if c1 != nil {
-			Round.Cards.Local1 = c1.(string)
-			Round.Cards.Local2 = c2.(string)
+			Round.Cards.Local1 = fmt.Sprint(c1)
+			Round.Cards.Local2 = fmt.Sprint(c2)
 			if !Round.Local_trigger {
 				Round.Card_delay = true
 			}
@@ -726,8 +726,8 @@ func getPlayerCardValues(a1, a2, b1, b2, c1, c2, d1, d2, e1, e2, f1, f2 interfac
 	}
 
 	if c1 != nil {
-		Round.Cards.P3C1 = c1.(string)
-		Round.Cards.P3C2 = c2.(string)
+		Round.Cards.P3C1 = fmt.Sprint(c1)
+		Round.Cards.P3C2 = fmt.Sprint(c2)
 	} else {
 		Round.Cards.P3C1 = ""
 		Round.Cards.P3C2 = ""
@@ -735,8 +735,8 @@ func getPlayerCardValues(a1, a2, b1, b2, c1, c2, d1, d2, e1, e2, f1, f2 interfac
 
 	if Round.ID == 4 {
 		if d1 != nil {
-			Round.Cards.Local1 = d1.(string)
-			Round.Cards.Local2 = d2.(string)
+			Round.Cards.Local1 = fmt.Sprint(d1)
+			Round.Cards.Local2 = fmt.Sprint(d2)
 			if !Round.Local_trigger {
 				Round.Card_delay = true
 			}
@@ -749,8 +749,8 @@ func getPlayerCardValues(a1, a2, b1, b2, c1, c2, d1, d2, e1, e2, f1, f2 interfac
 	}
 
 	if d1 != nil {
-		Round.Cards.P4C1 = d1.(string)
-		Round.Cards.P4C2 = d2.(string)
+		Round.Cards.P4C1 = fmt.Sprint(d1)
+		Round.Cards.P4C2 = fmt.Sprint(d2)
 	} else {
 		Round.Cards.P4C1 = ""
 		Round.Cards.P4C2 = ""
@@ -758,8 +758,8 @@ func getPlayerCardValues(a1, a2, b1, b2, c1, c2, d1, d2, e1, e2, f1, f2 interfac
 
 	if Round.ID == 5 {
 		if e1 != nil {
-			Round.Cards.Local1 = e1.(string)
-			Round.Cards.Local2 = e2.(string)
+			Round.Cards.Local1 = fmt.Sprint(e1)
+			Round.Cards.Local2 = fmt.Sprint(e2)
 			if !Round.Local_trigger {
 				Round.Card_delay = true
 			}
@@ -772,8 +772,8 @@ func getPlayerCardValues(a1, a2, b1, b2, c1, c2, d1, d2, e1, e2, f1, f2 interfac
 	}
 
 	if e1 != nil {
-		Round.Cards.P5C1 = e1.(string)
-		Round.Cards.P5C2 = e2.(string)
+		Round.Cards.P5C1 = fmt.Sprint(e1)
+		Round.Cards.P5C2 = fmt.Sprint(e2)
 	} else {
 		Round.Cards.P5C1 = ""
 		Round.Cards.P5C2 = ""
@@ -781,8 +781,8 @@ func getPlayerCardValues(a1, a2, b1, b2, c1, c2, d1, d2, e1, e2, f1, f2 interfac
 
 	if Round.ID == 6 {
 		if f1 != nil {
-			Round.Cards.Local1 = f1.(string)
-			Round.Cards.Local2 = f2.(string)
+			Round.Cards.Local1 = fmt.Sprint(f1)
+			Round.Cards.Local2 = fmt.Sprint(f2)
 			if !Round.Local_trigger {
 				Round.Card_delay = true
 			}
@@ -795,8 +795,8 @@ func getPlayerCardValues(a1, a2, b1, b2, c1, c2, d1, d2, e1, e2, f1, f2 interfac
 	}
 
 	if f1 != nil {
-		Round.Cards.P6C1 = f1.(string)
-		Round.Cards.P6C2 = f2.(string)
+		Round.Cards.P6C1 = fmt.Sprint(f1)
+		Round.Cards.P6C2 = fmt.Sprint(f2)
 	} else {
 		Round.Cards.P6C1 = ""
 		Round.Cards.P6C2 = ""
@@ -944,50 +944,51 @@ func allFolded(p1, p2, p3, p4, p5, p6, s interface{}) {
 	var a, b, c, d, e, f int
 	var who string
 	var display string
-	if int(s.(float64)) >= 2 {
+	seats := intType(s)
+	if seats >= 2 {
 		if p1 != nil {
-			a = int(p1.(float64))
+			a = intType(p1)
 		} else {
 			who = "Player1"
 			display = Round.P1_name
 		}
 		if p2 != nil {
-			b = int(p2.(float64))
+			b = intType(p2)
 		} else {
 			who = "Player2"
 			display = Round.P2_name
 		}
 	}
-	if int(s.(float64)) >= 3 {
+	if seats >= 3 {
 		if p3 != nil {
-			c = int(p3.(float64))
+			c = intType(p3)
 		} else {
 			who = "Player3"
 			display = Round.P3_name
 		}
 	}
 
-	if int(s.(float64)) >= 4 {
+	if seats >= 4 {
 		if p4 != nil {
-			d = int(p4.(float64))
+			d = intType(p4)
 		} else {
 			who = "Player4"
 			display = Round.P4_name
 		}
 	}
 
-	if int(s.(float64)) >= 5 {
+	if seats >= 5 {
 		if p5 != nil {
-			e = int(p5.(float64))
+			e = intType(p5)
 		} else {
 			who = "Player5"
 			display = Round.P5_name
 		}
 	}
 
-	if int(s.(float64)) >= 6 {
+	if seats >= 6 {
 		if p6 != nil {
-			f = int(p6.(float64))
+			f = intType(p6)
 		} else {
 			who = "Player6"
 			display = Round.P6_name
@@ -996,7 +997,7 @@ func allFolded(p1, p2, p3, p4, p5, p6, s interface{}) {
 
 	i := a + b + c + d + e + f
 
-	if 1+i-int(s.(float64)) == 0 {
+	if 1+i-seats == 0 {
 		Round.LocalEnd = true
 		Round.Winner = who
 		Display.Res = display + " Wins, All Players Have Folded"
@@ -1040,22 +1041,6 @@ func winningHand(e interface{}) {
 	}
 }
 
-// Return team param string for dSports
-func TeamReturn(t int) string {
-	var team string
-	switch t {
-	case 0:
-		team = "team_a"
-	case 1:
-		team = "team_b"
-	default:
-		team = "none"
-
-	}
-
-	return team
-}
-
 // Find Tarot card from hash value
 func findTarotCard(hash interface{}) int {
 	if hash != nil {
@@ -1064,7 +1049,7 @@ func findTarotCard(hash interface{}) int {
 			card := sha256.Sum256([]byte(finder))
 			str := hex.EncodeToString(card[:])
 
-			if str == hash.(string) {
+			if str == fmt.Sprint(hash) {
 				return i
 			}
 		}
