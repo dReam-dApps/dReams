@@ -1703,16 +1703,20 @@ func CreateSwapContainer(pair string) (*dwidget.DeroAmts, *fyne.Container) {
 func BackgroundRast(tag string) *canvas.Raster {
 	var err error
 	var img image.Image
-	if img, _, err = image.Decode(bytes.NewReader(holdero.Settings.ThemeImg.Resource.Content())); err != nil {
-		if img, _, err = image.Decode(bytes.NewReader(bundle.ResourceBackgroundPng.Content())); err != nil {
-			log.Printf("[%s] Fallback %s\n", tag, err)
-			source := image.Rect(2, 2, 4, 4)
-
-			return canvas.NewRasterFromImage(source)
+	if holdero.Settings.ThemeImg.Resource != nil {
+		if img, _, err = image.Decode(bytes.NewReader(holdero.Settings.ThemeImg.Resource.Content())); err == nil {
+			return canvas.NewRasterFromImage(img)
 		}
+
+		if img, _, err = image.Decode(bytes.NewReader(bundle.ResourceBackgroundPng.Content())); err == nil {
+			return canvas.NewRasterFromImage(img)
+		}
+
+		log.Printf("[%s] Fallback %s\n", tag, err)
 	}
 
-	return canvas.NewRasterFromImage(img)
+	return canvas.NewRasterFromImage(image.Rect(2, 2, 4, 4))
+
 }
 
 // Send Dero message menu
