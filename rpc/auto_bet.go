@@ -1091,9 +1091,9 @@ func canRaise() bool {
 // Check if wallet balance is to low to call bet
 func lowBalance(amt float64) bool {
 	if Round.Asset {
-		return amt > float64(Wallet.TokenBal[GetAssetSCIDName(Round.AssetID)])/100000
+		return amt > float64(Wallet.ReadTokenBalance(GetAssetSCIDName(Round.AssetID)))/100000
 	} else {
-		return amt > float64(Wallet.Balance)/100000
+		return amt > float64(Wallet.ReadBalance())/100000
 	}
 }
 

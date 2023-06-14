@@ -249,7 +249,7 @@ func VerticalEntries(tag string, offset int) *DeroRpcEntries {
 // Refresh Balance of DeroRpcEntries
 //   - Gets balance from rpc.Wallet.Balance
 func (d *DeroRpcEntries) RefreshBalance() {
-	d.Balance.Text = (fmt.Sprintf("Balance: %.5f Dero", float64(rpc.Wallet.Balance)/100000))
+	d.Balance.Text = (fmt.Sprintf("Balance: %.5f Dero", float64(rpc.Wallet.ReadBalance())/100000))
 	d.Balance.Refresh()
 }
 

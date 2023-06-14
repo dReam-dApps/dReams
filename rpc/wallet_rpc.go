@@ -88,7 +88,7 @@ func SetWalletClient(addr, pass string) (jsonrpc.RPCClient, context.Context, con
 // Echo Dero wallet for connection
 //   - tag for log print
 func EchoWallet(tag string) {
-	if Wallet.Connect {
+	if Wallet.IsConnected() {
 		rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 		defer cancel()
 
@@ -187,7 +187,7 @@ func GetDreamsBalances() {
 	Wallet.MuB.Lock()
 	defer Wallet.MuB.Unlock()
 
-	if Wallet.Connect {
+	if Wallet.IsConnected() {
 		bal := GetBalance()
 		Wallet.Balance = bal
 		Display.Balance["Dero"] = FromAtomic(bal, 5)
@@ -223,6 +223,14 @@ func GetDreamsBalances() {
 	Wallet.TokenBal["HGC"] = 0
 	Display.Balance["Tournament"] = "0"
 	Wallet.TokenBal["Tournament"] = 0
+}
+
+// Return Display.Balance string of name
+func DisplayBalance(name string) string {
+	Wallet.MuB.Lock()
+	defer Wallet.MuB.Unlock()
+
+	return Display.Balance[name]
 }
 
 // Return asset transfer to SCID from Round.AssetID
@@ -304,7 +312,7 @@ func TourneyDeposit(bal uint64, name string) {
 // Gets Dero wallet height
 //   - tag for log print
 func GetWalletHeight(tag string) {
-	if Wallet.Connect {
+	if Wallet.IsConnected() {
 		rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 		defer cancel()
 

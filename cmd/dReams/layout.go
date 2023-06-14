@@ -322,16 +322,16 @@ func place() *fyne.Container {
 	H.TopLabel = canvas.NewText(rpc.Display.Res, color.White)
 	H.TopLabel.Move(fyne.NewPos(387, 204))
 	H.LeftLabel.SetText("Seats: " + rpc.Display.Seats + "      Pot: " + rpc.Display.Pot + "      Blinds: " + rpc.Display.Blinds + "      Ante: " + rpc.Display.Ante + "      Dealer: " + rpc.Display.Dealer)
-	H.RightLabel.SetText(rpc.Display.Readout + "      Player ID: " + rpc.Display.PlayerId + "      Dero Balance: " + rpc.Display.Balance["Dero"] + "      Height: " + rpc.Display.Wallet_height)
+	H.RightLabel.SetText(rpc.Display.Readout + "      Player ID: " + rpc.Display.PlayerId + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Display.Wallet_height)
 
 	B.LeftLabel = widget.NewLabel("")
 	B.RightLabel = widget.NewLabel("")
 	B.LeftLabel.SetText("Total Hands Played: " + rpc.Display.Total_w + "      Player Wins: " + rpc.Display.Player_w + "      Ties: " + rpc.Display.Ties + "      Banker Wins: " + rpc.Display.Banker_w + "      Min Bet is " + rpc.Display.BaccMin + " dReams, Max Bet is " + rpc.Display.BaccMax)
-	B.RightLabel.SetText("dReams Balance: " + rpc.Display.Balance["dReams"] + "      Dero Balance: " + rpc.Display.Balance["Dero"] + "      Height: " + rpc.Display.Wallet_height)
+	B.RightLabel.SetText("dReams Balance: " + rpc.DisplayBalance("dReams") + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Display.Wallet_height)
 
 	P.LeftLabel = widget.NewLabel("")
 	P.RightLabel = widget.NewLabel("")
-	P.RightLabel.SetText("dReams Balance: " + rpc.Display.Balance["dReams"] + "      Dero Balance: " + rpc.Display.Balance["Dero"] + "      Height: " + rpc.Display.Wallet_height)
+	P.RightLabel.SetText("dReams Balance: " + rpc.DisplayBalance("dReams") + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Display.Wallet_height)
 
 	prediction.Predict.Info = widget.NewLabel("SCID:\n\n" + prediction.Predict.Contract + "\n")
 	prediction.Predict.Info.Wrapping = fyne.TextWrapWord
@@ -339,12 +339,12 @@ func place() *fyne.Container {
 
 	S.LeftLabel = widget.NewLabel("")
 	S.RightLabel = widget.NewLabel("")
-	S.RightLabel.SetText("dReams Balance: " + rpc.Display.Balance["dReams"] + "      Dero Balance: " + rpc.Display.Balance["Dero"] + "      Height: " + rpc.Display.Wallet_height)
+	S.RightLabel.SetText("dReams Balance: " + rpc.DisplayBalance("dReams") + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Display.Wallet_height)
 
 	T.LeftLabel = widget.NewLabel("")
 	T.RightLabel = widget.NewLabel("")
 	T.LeftLabel.SetText("Total Readings: " + rpc.Display.Readings + "      Click your card for Iluma reading")
-	T.RightLabel.SetText("dReams Balance: " + rpc.Display.Balance["dReams"] + "      Dero Balance: " + rpc.Display.Balance["Dero"] + "      Height: " + rpc.Display.Wallet_height)
+	T.RightLabel.SetText("dReams Balance: " + rpc.DisplayBalance("dReams") + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Display.Wallet_height)
 
 	prediction.Sports.Info = widget.NewLabel("SCID:\n\n" + prediction.Sports.Contract + "\n")
 	prediction.Sports.Info.Wrapping = fyne.TextWrapWord
@@ -514,7 +514,7 @@ func placeSwap() *container.Split {
 			return widget.NewLabel("")
 		},
 		func(i widget.ListItemID, o fyne.CanvasObject) {
-			o.(*widget.Label).SetText(assets[i] + fmt.Sprintf(": %s", rpc.Display.Balance[assets[i]]))
+			o.(*widget.Label).SetText(assets[i] + fmt.Sprintf(": %s", rpc.DisplayBalance(assets[i])))
 		})
 
 	balance_tabs := container.NewAppTabs(container.NewTabItem("Balances", menu.Assets.Balances))

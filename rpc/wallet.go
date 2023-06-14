@@ -47,7 +47,10 @@ func (w *wallet) Connected(b bool) {
 
 // Get Wallet.Balance, 0 if not connected
 func (w *wallet) GetBalance() {
-	if w.Connect {
+	w.MuB.Lock()
+	defer w.MuB.Unlock()
+
+	if w.IsConnected() {
 		rpcClientW, ctx, cancel := SetWalletClient(w.Rpc, w.UserPass)
 		defer cancel()
 
@@ -71,7 +74,7 @@ func (w *wallet) GetTokenBalance(name, scid string) {
 	w.MuB.Lock()
 	defer w.MuB.Unlock()
 
-	if w.Connect {
+	if w.IsConnected() {
 		rpcClientW, ctx, cancel := SetWalletClient(w.Rpc, w.UserPass)
 		defer cancel()
 
@@ -93,6 +96,14 @@ func (w *wallet) GetTokenBalance(name, scid string) {
 	}
 
 	w.TokenBal[name] = 0
+}
+
+// Read Wallet.Balance
+func (w *wallet) ReadBalance() uint64 {
+	w.MuB.RLock()
+	defer w.MuB.RUnlock()
+
+	return w.Balance
 }
 
 // Read Wallet.TokenBal[name]
