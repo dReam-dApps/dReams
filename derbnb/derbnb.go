@@ -146,22 +146,20 @@ func fetch(quit, done chan struct{}) {
 				menu.GnomonEndPoint()
 			}
 
-			if rpc.Daemon.Connect && menu.Gnomes.Init {
+			if rpc.Daemon.Connect && menu.Gnomes.IsInitialized() {
 				connect_box.Disconnect.SetChecked(true)
-				if !menu.Gnomes.Closing() {
-					contracts := menu.Gnomes.GetAllOwnersAndSCIDs()
-					menu.Gnomes.SCIDS = uint64(len(contracts))
-					if menu.Gnomes.SCIDS > 0 {
-						menu.Gnomes.Checked = true
+				if menu.Gnomes.IsRunning() {
+					menu.Gnomes.IndexContains()
+					if menu.Gnomes.HasIndex(1) {
+						menu.Gnomes.Checked(true)
 					}
 				}
 
-				height := rpc.DaemonHeight("DerBnb", rpc.Daemon.Rpc)
-				if menu.Gnomes.Indexer.LastIndexedHeight >= int64(height)-3 {
-					menu.Gnomes.Sync = true
+				if menu.Gnomes.Indexer.LastIndexedHeight >= menu.Gnomes.Indexer.ChainHeight-3 {
+					menu.Gnomes.Synced(true)
 				} else {
-					menu.Gnomes.Sync = false
-					menu.Gnomes.Checked = false
+					menu.Gnomes.Synced(false)
+					menu.Gnomes.Checked(false)
 				}
 			} else {
 				connect_box.Disconnect.SetChecked(false)
@@ -243,8 +241,8 @@ func filterProperty(check interface{}) bool {
 }
 
 func SearchProperties(prefix string, search_city bool) (results []string) {
-	if rpc.Wallet.Connect && rpc.Daemon.Connect {
-		if menu.Gnomes.Init && menu.Gnomes.Sync && !menu.Gnomes.Closing() {
+	if rpc.Wallet.IsConnected() && rpc.Daemon.Connect {
+		if menu.Gnomes.IsReady() {
 			info := menu.Gnomes.GetAllSCIDVariableDetails(rpc.DerBnbSCID)
 			if info != nil {
 				i := 0
@@ -311,8 +309,8 @@ func SearchProperties(prefix string, search_city bool) (results []string) {
 
 // Get all DerBnb property info from contract
 func GetProperties() {
-	if rpc.Wallet.Connect && rpc.Daemon.Connect {
-		if menu.Gnomes.Init && menu.Gnomes.Sync && !menu.Gnomes.Closing() {
+	if rpc.Wallet.IsConnected() && rpc.Daemon.Connect {
+		if menu.Gnomes.IsReady() {
 			info := menu.Gnomes.GetAllSCIDVariableDetails(rpc.DerBnbSCID)
 			if info != nil {
 				i := 0
@@ -478,7 +476,7 @@ func GetProperties() {
 // Get request to owners and of the renters
 //   - stamp is timestamp key of request
 func getBookingRequests(scid, stamp string, owned bool) (request string) {
-	if menu.Gnomes.Init && menu.Gnomes.Sync && !menu.Gnomes.Closing() {
+	if menu.Gnomes.IsReady() {
 		_, start := menu.Gnomes.GetSCIDValuesByKey(rpc.DerBnbSCID, scid+"_request_bk_start_"+stamp)
 		_, end := menu.Gnomes.GetSCIDValuesByKey(rpc.DerBnbSCID, scid+"_request_bk_end_"+stamp)
 		booker, _ := menu.Gnomes.GetSCIDValuesByKey(rpc.DerBnbSCID, scid+"_request_booker_"+stamp)
@@ -501,7 +499,7 @@ func getBookingRequests(scid, stamp string, owned bool) (request string) {
 // Get confirmed bookings for owners
 //   - stamp is timestamp key of request
 func getOwnerConfirmedBookings(scid string, all bool) (bookings []string) {
-	if menu.Gnomes.Init && menu.Gnomes.Sync && !menu.Gnomes.Closing() {
+	if menu.Gnomes.IsReady() {
 		_, bk_last := menu.Gnomes.GetSCIDValuesByKey(rpc.DerBnbSCID, scid+"_bk_last")
 		if bk_last != nil {
 			i := int(bk_last[0])
@@ -543,7 +541,7 @@ func getOwnerConfirmedBookings(scid string, all bool) (bookings []string) {
 
 // Get property info from DerBnb contract for display
 func getInfo(scid string) (info string) {
-	if menu.Gnomes.Init && menu.Gnomes.Sync && !menu.Gnomes.Closing() {
+	if menu.Gnomes.IsReady() {
 		owner, _ := menu.Gnomes.GetSCIDValuesByKey(rpc.DerBnbSCID, scid+"_owner")
 		_, price := menu.Gnomes.GetSCIDValuesByKey(rpc.DerBnbSCID, scid+"_price")
 		_, dep := menu.Gnomes.GetSCIDValuesByKey(rpc.DerBnbSCID, scid+"_damage_deposit")
@@ -564,7 +562,7 @@ func getInfo(scid string) (info string) {
 
 // Get owner address of DerBnb property
 func getOwnerAddress(scid string) (address string) {
-	if menu.Gnomes.Init && menu.Gnomes.Sync && !menu.Gnomes.Closing() {
+	if menu.Gnomes.IsReady() {
 		owner, _ := menu.Gnomes.GetSCIDValuesByKey(rpc.DerBnbSCID, scid+"_owner")
 		if owner != nil {
 			return owner[0]
@@ -577,7 +575,7 @@ func getOwnerAddress(scid string) (address string) {
 // Get confirmed  and completed bookings for renters
 //   - stamp is timestamp key of request
 func getUserConfirmedBookings(scid string, all bool) (confirmed_bookings []string, complete_bookings []string) {
-	if menu.Gnomes.Init && menu.Gnomes.Sync && !menu.Gnomes.Closing() {
+	if menu.Gnomes.IsReady() {
 		_, bk_last := menu.Gnomes.GetSCIDValuesByKey(rpc.DerBnbSCID, scid+"_bk_last")
 		if bk_last != nil {
 			i := int(bk_last[0])
@@ -632,7 +630,7 @@ func getUserConfirmedBookings(scid string, all bool) (confirmed_bookings []strin
 }
 
 func getUserShares() (shares, epoch, treasury uint64) {
-	if menu.Gnomes.Init && menu.Gnomes.Sync && !menu.Gnomes.Closing() {
+	if menu.Gnomes.IsReady() {
 		if _, check_shares := menu.Gnomes.GetSCIDValuesByKey(rpc.DerBnbSCID, rpc.Wallet.Address+"_SHARES"); check_shares != nil {
 			shares = check_shares[0]
 			if _, check_epoch := menu.Gnomes.GetSCIDValuesByKey(rpc.DerBnbSCID, rpc.Wallet.Address+"_EPOCH"); check_epoch != nil {

@@ -54,7 +54,7 @@ func StartDreamsIndicators() fyne.CanvasObject {
 
 	Gnomes.Sync_ind = canvas.NewColorRGBAAnimation(purple, blue,
 		time.Second*3, func(c color.Color) {
-			if Gnomes.Init && !Gnomes.Checked {
+			if Gnomes.IsInitialized() && !Gnomes.HasChecked() {
 				g_top.FillColor = c
 				canvas.Refresh(g_top)
 				g_bottom.FillColor = c
@@ -80,7 +80,7 @@ func StartDreamsIndicators() fyne.CanvasObject {
 
 	Gnomes.Full_ind = canvas.NewColorRGBAAnimation(purple, blue,
 		time.Second*3, func(c color.Color) {
-			if Gnomes.Init && FastSynced() && Gnomes.Checked {
+			if Gnomes.IsInitialized() && Gnomes.HasIndex(2) && Gnomes.HasChecked() {
 				g_full.FillColor = c
 				canvas.Refresh(g_full)
 				sync_box.Hide()
@@ -119,7 +119,7 @@ func StartDreamsIndicators() fyne.CanvasObject {
 
 	Control.Wallet_ind = canvas.NewColorRGBAAnimation(purple, blue,
 		time.Second*3, func(c color.Color) {
-			if rpc.Wallet.Connect {
+			if rpc.Wallet.IsConnected() {
 				w_rect.FillColor = c
 				canvas.Refresh(w_rect)
 			} else {
@@ -220,7 +220,7 @@ func StartIndicators() fyne.CanvasObject {
 
 	Gnomes.Sync_ind = canvas.NewColorRGBAAnimation(purple, blue,
 		time.Second*3, func(c color.Color) {
-			if Gnomes.Init && !Gnomes.Checked {
+			if Gnomes.IsInitialized() && !Gnomes.HasChecked() {
 				g_top.FillColor = c
 				canvas.Refresh(g_top)
 				g_bottom.FillColor = c
@@ -246,7 +246,7 @@ func StartIndicators() fyne.CanvasObject {
 
 	Gnomes.Full_ind = canvas.NewColorRGBAAnimation(purple, blue,
 		time.Second*3, func(c color.Color) {
-			if Gnomes.Init && FastSynced() && Gnomes.Checked {
+			if Gnomes.IsInitialized() && Gnomes.HasIndex(1) && Gnomes.HasChecked() {
 				g_full.FillColor = c
 				canvas.Refresh(g_full)
 				sync_box.Hide()
@@ -285,7 +285,7 @@ func StartIndicators() fyne.CanvasObject {
 
 	Control.Wallet_ind = canvas.NewColorRGBAAnimation(purple, blue,
 		time.Second*3, func(c color.Color) {
-			if rpc.Wallet.Connect {
+			if rpc.Wallet.IsConnected() {
 				w_rect.FillColor = c
 				canvas.Refresh(w_rect)
 			} else {

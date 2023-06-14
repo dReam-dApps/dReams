@@ -179,7 +179,7 @@ func DisableIndexControls(d bool) {
 	} else {
 		Assets.Index_button.Show()
 		Assets.Index_search.Show()
-		if rpc.Wallet.Connect {
+		if rpc.Wallet.IsConnected() {
 			Control.Claim_button.Show()
 			Assets.Header_box.Show()
 			Market.Market_box.Show()

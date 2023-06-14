@@ -213,7 +213,7 @@ func systemTray(w fyne.App) bool {
 	if desk, ok := w.(desktop.App); ok {
 		m := fyne.NewMenu("MyApp",
 			fyne.NewMenuItem("Send Message", func() {
-				if !dReams.configure && rpc.Wallet.Connect {
+				if !dReams.configure && rpc.Wallet.IsConnected() {
 					menu.SendMessageMenu("", bundle.ResourceDReamsIconAltPng)
 				}
 			}),
@@ -941,22 +941,16 @@ func refreshPriceDisplay(c bool) {
 
 // Refresh all menu gui objects
 func MenuRefresh(tab bool) {
-	if tab && menu.Gnomes.Init {
-		var index int
-		if !menu.Gnomes.Closing() && menu.FastSynced() {
-			index = int(menu.Gnomes.Indexer.LastIndexedHeight)
-		}
-
-		if !menu.FastSynced() {
-			menu.Assets.Gnomes_sync.Text = (" Gnomon Syncing... ")
+	if tab && menu.Gnomes.IsInitialized() {
+		index := menu.Gnomes.Indexer.LastIndexedHeight
+		if index < menu.Gnomes.Indexer.ChainHeight-4 || !menu.Gnomes.HasIndex(2) {
+			menu.Assets.Gnomes_sync.Text = (" Gnomon Syncing...")
 			menu.Assets.Gnomes_sync.Refresh()
 		} else {
-			if !menu.Gnomes.Closing() {
-				menu.Assets.Gnomes_sync.Text = ("")
-				menu.Assets.Gnomes_sync.Refresh()
-			}
+			menu.Assets.Gnomes_sync.Text = ("")
+			menu.Assets.Gnomes_sync.Refresh()
 		}
-		go refreshGnomonDisplay(index, 1)
+		go refreshGnomonDisplay(int(index), 1)
 		go refreshIndexDisplay(true)
 
 		if rpc.Daemon.Connect {
@@ -979,7 +973,7 @@ func MenuRefresh(tab bool) {
 		go refreshGnomonDisplay(0, 0)
 	}
 
-	if rpc.Wallet.Connect {
+	if rpc.Wallet.IsConnected() {
 		go refreshWalletDisplay(true)
 	} else {
 		go refreshWalletDisplay(false)

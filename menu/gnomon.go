@@ -210,7 +210,7 @@ func StartGnomon(tag, dbtype string, filters []string, upper, lower int, custom 
 		Gnomes.Indexer = indexer.NewIndexer(grav_backend, bolt_backend, dbtype, filters, last_height, rpc.Daemon.Rpc, runmode, mbl, closeondisconnect, Gnomes.Fast)
 		go Gnomes.Indexer.StartDaemonMode(Gnomes.Para)
 		time.Sleep(3 * time.Second)
-		Gnomes.Init = true
+		Gnomes.Initialized(true)
 
 		if Gnomes.Trim {
 			i := 0
@@ -266,19 +266,14 @@ func g45Index() {
 
 // Update Gnomon endpoint to current rpc.Daemon.Rpc value
 func GnomonEndPoint() {
-	if rpc.Daemon.Connect && Gnomes.Init && !Gnomes.Syncing {
+	if rpc.Daemon.Connect && Gnomes.IsInitialized() && !Gnomes.IsScanning() {
 		Gnomes.Indexer.Endpoint = rpc.Daemon.Rpc
 	}
 }
 
-// Check if Gnomon index contains SCIDs
-func FastSynced() bool {
-	return Gnomes.SCIDS > 0
-}
-
 // Check three connection signals
 func Connected() bool {
-	if rpc.Daemon.Connect && rpc.Wallet.Connect && Gnomes.Sync {
+	if rpc.Daemon.Connect && rpc.Wallet.IsConnected() && Gnomes.IsSynced() {
 		return true
 	}
 
@@ -289,15 +284,14 @@ func Connected() bool {
 //   - Hold out checking if dReams is in configure
 //   - windows disables certain initial sync routines from running on windows os
 func GnomonState(windows, config bool) {
-	if rpc.Daemon.Connect && Gnomes.Init && !Gnomes.Closing() {
-		contracts := Gnomes.GetAllOwnersAndSCIDs()
-		Gnomes.SCIDS = uint64(len(contracts))
-		if FastSynced() && !Gnomes.Trim {
+	if rpc.Daemon.Connect && Gnomes.IsRunning() {
+		contracts := Gnomes.IndexContains()
+		if Gnomes.HasIndex(2) && !Gnomes.Trim {
 			height := int64(rpc.Wallet.Height)
-			if Gnomes.Indexer.LastIndexedHeight >= height-3 && height != 0 && !Gnomes.Closing() {
-				Gnomes.Sync = true
-				if !config && rpc.Wallet.Connect && !Gnomes.Checked {
-					Gnomes.Syncing = true
+			if Gnomes.IsRunning() && Gnomes.Indexer.LastIndexedHeight >= height-3 && height != 0 {
+				Gnomes.Synced(true)
+				if !config && rpc.Wallet.IsConnected() && !Gnomes.Check {
+					Gnomes.Scanning(true)
 					if Control.Dapp_list["dSports and dPredictions"] {
 						go CheckBetContractOwners(contracts)
 						if !windows {
@@ -307,21 +301,21 @@ func GnomonState(windows, config bool) {
 					}
 
 					if Control.Dapp_list["Holdero"] {
-						CreateTableList(Gnomes.Checked, contracts)
+						CreateTableList(Gnomes.Check, contracts)
 						CheckWalletNames(rpc.Wallet.Address)
 					}
 
-					go CheckDreamsG45s(Gnomes.Checked, contracts)
-					go CheckDreamsNFAs(Gnomes.Checked, contracts)
+					go CheckDreamsG45s(Gnomes.Check, contracts)
+					go CheckDreamsNFAs(Gnomes.Check, contracts)
 
 					if !windows {
 						FindNfaListings(contracts)
 					}
-					Gnomes.Checked = true
-					Gnomes.Syncing = false
+					Gnomes.Checked(true)
+					Gnomes.Scanning(false)
 				}
 			} else {
-				Gnomes.Sync = false
+				Gnomes.Synced(false)
 			}
 		}
 
@@ -334,7 +328,7 @@ func GnomonState(windows, config bool) {
 		}
 
 		// Update live market info
-		if len(Market.Viewing) == 64 && rpc.Wallet.Connect {
+		if len(Market.Viewing) == 64 && rpc.Wallet.IsConnected() {
 			if Market.Tab == "Buy" {
 				GetBuyNowDetails(Market.Viewing)
 				go RefreshNfaImages()
@@ -367,7 +361,7 @@ func searchIndex(scid string) {
 //   - Pass scids from db store, can be nil arg
 //   - Pass false gc for rechecks
 func CheckDreamsNFAs(gc bool, scids map[string]string) {
-	if Gnomes.Sync && !gc && !Gnomes.Closing() {
+	if Gnomes.IsReady() && !gc {
 		go checkLabel()
 		if scids == nil {
 			scids = Gnomes.GetAllOwnersAndSCIDs()
@@ -381,7 +375,7 @@ func CheckDreamsNFAs(gc bool, scids map[string]string) {
 
 		i := 0
 		for k := range scids {
-			if !rpc.Wallet.Connect || Gnomes.Closing() {
+			if !rpc.Wallet.IsConnected() || !Gnomes.IsRunning() {
 				break
 			}
 			keys[i] = k
@@ -409,7 +403,7 @@ func CheckDreamsNFAs(gc bool, scids map[string]string) {
 //   - Pass scids from db store, can be nil arg
 //   - Pass false gc for rechecks
 func CheckAllNFAs(gc bool, scids map[string]string) {
-	if Gnomes.Sync && !gc && !Gnomes.Closing() {
+	if Gnomes.IsReady() && !gc {
 		if scids == nil {
 			scids = Gnomes.GetAllOwnersAndSCIDs()
 		}
@@ -418,7 +412,7 @@ func CheckAllNFAs(gc bool, scids map[string]string) {
 		i := 0
 		assets := []string{}
 		for k := range scids {
-			if !rpc.Wallet.Connect || Gnomes.Closing() {
+			if !rpc.Wallet.IsConnected() || !Gnomes.IsRunning() {
 				break
 			}
 
@@ -444,7 +438,7 @@ func CheckAllNFAs(gc bool, scids map[string]string) {
 // Scan all bet contracts to verify if owner
 //   - Pass contracts from db store, can be nil arg
 func CheckBetContractOwners(contracts map[string]string) {
-	if Gnomes.Sync && !Gnomes.Checked && !Gnomes.Closing() {
+	if Gnomes.IsReady() && !Gnomes.HasChecked() {
 		if contracts == nil {
 			contracts = Gnomes.GetAllOwnersAndSCIDs()
 		}
@@ -465,7 +459,7 @@ func CheckBetContractOwners(contracts map[string]string) {
 
 // Get Gnomon headers of SCID
 func GetSCHeaders(scid string) []string {
-	if !Gnomes.Closing() {
+	if Gnomes.IsRunning() {
 		headers, _ := Gnomes.GetSCIDValuesByKey(rpc.GnomonSCID, scid)
 
 		if headers != nil {
@@ -484,7 +478,7 @@ func GetSCHeaders(scid string) []string {
 // Verify if wallet is owner on bet contract
 //   - Passed t defines sports or prediction contract
 func verifyBetContractOwner(scid, t string) {
-	if !Gnomes.Closing() {
+	if Gnomes.IsReady() {
 		if dev, _ := Gnomes.GetSCIDValuesByKey(scid, "dev"); dev != nil {
 			owner, _ := Gnomes.GetSCIDValuesByKey(scid, "owner")
 			_, init := Gnomes.GetSCIDValuesByKey(scid, t+"_init")
@@ -500,9 +494,9 @@ func verifyBetContractOwner(scid, t string) {
 
 // Verify if wallet is a co owner on bet contract
 func VerifyBetSigner(scid string) bool {
-	if Gnomes.Init && Gnomes.Sync && !Gnomes.Closing() {
+	if Gnomes.IsReady() {
 		for i := 2; i < 10; i++ {
-			if Gnomes.Closing() {
+			if !Gnomes.IsRunning() {
 				break
 			}
 
@@ -522,7 +516,7 @@ func VerifyBetSigner(scid string) bool {
 //   - Passed t defines sports or prediction contract
 //   - Adding constructed header string to list, owned []string
 func checkBetContract(scid, t string, list, owned []string) ([]string, []string) {
-	if Gnomes.Init && !Gnomes.Closing() {
+	if Gnomes.IsReady() {
 		if dev, _ := Gnomes.GetSCIDValuesByKey(scid, "dev"); dev != nil {
 			owner, _ := Gnomes.GetSCIDValuesByKey(scid, "owner")
 			_, init := Gnomes.GetSCIDValuesByKey(scid, t+"_init")
@@ -586,7 +580,7 @@ func checkBetContract(scid, t string, list, owned []string) ([]string, []string)
 // Populate all dReams dPrediction contracts
 //   - Pass contracts from db store, can be nil arg
 func PopulatePredictions(contracts map[string]string) {
-	if rpc.Daemon.Connect && Gnomes.Sync && !Gnomes.Closing() {
+	if rpc.Daemon.Connect && Gnomes.IsReady() {
 		list := []string{}
 		owned := []string{}
 		if contracts == nil {
@@ -615,7 +609,7 @@ func PopulatePredictions(contracts map[string]string) {
 // Populate all dReams dSports contracts
 //   - Pass contracts from db store, can be nil arg
 func PopulateSports(contracts map[string]string) {
-	if rpc.Daemon.Connect && Gnomes.Sync && !Gnomes.Closing() {
+	if rpc.Daemon.Connect && Gnomes.IsReady() {
 		list := []string{}
 		owned := []string{}
 		if contracts == nil {
@@ -642,7 +636,7 @@ func PopulateSports(contracts map[string]string) {
 
 // Check if SCID is a NFA
 func isNfa(scid string) bool {
-	if Gnomes.Init && Gnomes.Sync && !Gnomes.Closing() {
+	if Gnomes.IsReady() {
 		artAddr, _ := Gnomes.GetSCIDValuesByKey(scid, "artificerAddr")
 		if artAddr != nil {
 			return artAddr[0] == rpc.ArtAddress
@@ -660,7 +654,7 @@ func ValidNfa(file string) bool {
 // If wallet owns dReams NFA, populate for use in dReams
 //   - See games container in menu.PlaceAssets()
 func checkNFAOwner(scid string) {
-	if !Gnomes.Closing() {
+	if Gnomes.IsRunning() {
 		if header, _ := Gnomes.GetSCIDValuesByKey(scid, "nameHdr"); header != nil {
 			owner, _ := Gnomes.GetSCIDValuesByKey(scid, "owner")
 			file, _ := Gnomes.GetSCIDValuesByKey(scid, "fileURL")
@@ -757,7 +751,7 @@ func checkNFAOwner(scid string) {
 
 // Get SCID info and update Asset content
 func GetOwnedAssetStats(scid string) {
-	if Gnomes.Init && !Gnomes.Closing() {
+	if Gnomes.IsReady() {
 		n, _ := Gnomes.GetSCIDValuesByKey(scid, "nameHdr")
 		if n != nil {
 			c, _ := Gnomes.GetSCIDValuesByKey(scid, "collection")
@@ -868,7 +862,7 @@ func GetAssetUrl(w int, scid string) (url string) {
 
 // Check if wallet owns Holdero table
 func CheckTableOwner(scid string) bool {
-	if len(scid) != 64 || !Gnomes.Init || Gnomes.Closing() {
+	if len(scid) != 64 || !Gnomes.IsReady() {
 		return false
 	}
 
@@ -887,7 +881,7 @@ func CheckTableOwner(scid string) bool {
 
 // Check if Holdero table is a tournament table
 func CheckHolderoContract(scid string) bool {
-	if len(scid) != 64 || !Gnomes.Init || Gnomes.Closing() {
+	if len(scid) != 64 || !Gnomes.IsReady() {
 		return false
 	}
 
@@ -907,7 +901,7 @@ func CheckHolderoContract(scid string) bool {
 
 // Check owner of any SCID using "owner" key
 func CheckOwner(scid string) bool {
-	if len(scid) != 64 || !Gnomes.Init || Gnomes.Closing() {
+	if len(scid) != 64 || !Gnomes.IsReady() {
 		return false
 	}
 
@@ -933,7 +927,7 @@ func checkTableVersion(scid string) uint64 {
 //   - Pass tables from db store, can be nil arg
 //   - Pass false gc for rechecks
 func CreateTableList(gc bool, tables map[string]string) {
-	if Gnomes.Init && !gc && !Gnomes.Closing() {
+	if Gnomes.IsReady() && !gc {
 		var owner bool
 		list := []string{}
 		owned := []string{}
@@ -942,7 +936,7 @@ func CreateTableList(gc bool, tables map[string]string) {
 		}
 
 		for scid := range tables {
-			if !Gnomes.Init || Gnomes.Closing() {
+			if !Gnomes.IsReady() {
 				break
 			}
 
@@ -1017,7 +1011,7 @@ func CreateTableList(gc bool, tables map[string]string) {
 
 // Get current Holdero table menu stats
 func GetTableStats(scid string, single bool) {
-	if Gnomes.Init && !Gnomes.Closing() && len(scid) == 64 {
+	if Gnomes.IsReady() && len(scid) == 64 {
 		_, v := Gnomes.GetSCIDValuesByKey(scid, "V:")
 		_, l := Gnomes.GetSCIDValuesByKey(scid, "Last")
 		_, s := Gnomes.GetSCIDValuesByKey(scid, "Seats at Table:")
@@ -1103,7 +1097,7 @@ func GetTableStats(scid string, single bool) {
 
 // Get a wallets registered names
 func CheckWalletNames(value string) {
-	if Gnomes.Init && Gnomes.Sync && !Gnomes.Closing() {
+	if Gnomes.IsReady() {
 		names, _ := Gnomes.GetSCIDKeysByValue(rpc.NameSCID, value)
 
 		sort.Strings(names)
@@ -1115,14 +1109,14 @@ func CheckWalletNames(value string) {
 //   - Pass g45s from db store, can be nil arg
 //   - Pass false gc for rechecks
 func CheckDreamsG45s(gc bool, g45s map[string]string) {
-	if Gnomes.Init && Gnomes.Sync && !gc && !Gnomes.Closing() {
+	if Gnomes.IsReady() && !gc {
 		if g45s == nil {
 			g45s = Gnomes.GetAllOwnersAndSCIDs()
 		}
 		log.Println("[dReams] Checking G45 Assets")
 
 		for scid := range g45s {
-			if !rpc.Wallet.Connect || Gnomes.Closing() {
+			if !rpc.Wallet.IsConnected() || !Gnomes.IsRunning() {
 				break
 			}
 
@@ -1164,7 +1158,7 @@ func CheckDreamsG45s(gc bool, g45s map[string]string) {
 
 // Check if dPrediction is live on SCID
 func CheckActivePrediction(scid string) bool {
-	if len(scid) == 64 && Gnomes.Init && !Gnomes.Closing() {
+	if len(scid) == 64 && Gnomes.IsReady() {
 		_, ends := Gnomes.GetSCIDValuesByKey(scid, "p_end_at")
 		_, buff := Gnomes.GetSCIDValuesByKey(scid, "buffer")
 		if ends != nil && buff != nil {
@@ -1179,7 +1173,7 @@ func CheckActivePrediction(scid string) bool {
 
 // Check for live dSports on SCID
 func CheckActiveGames(scid string) bool {
-	if Gnomes.Init && !Gnomes.Closing() {
+	if Gnomes.IsReady() {
 		_, played := Gnomes.GetSCIDValuesByKey(scid, "s_played")
 		_, init := Gnomes.GetSCIDValuesByKey(scid, "s_init")
 
@@ -1250,7 +1244,7 @@ func TrimStringLen(str string, l int) string {
 // Scan index for any active NFA listings
 //   - Pass assets from db store, can be nil arg
 func FindNfaListings(assets map[string]string) {
-	if Gnomes.Init && Gnomes.Sync && !Gnomes.Closing() {
+	if Gnomes.IsReady() {
 		auction := []string{" Collection,  Name,  Description,  SCID:"}
 		buy_now := []string{" Collection,  Name,  Description,  SCID:"}
 		my_list := []string{" Collection,  Name,  Description,  SCID:"}
@@ -1261,7 +1255,7 @@ func FindNfaListings(assets map[string]string) {
 
 		i := 0
 		for k := range assets {
-			if Gnomes.Closing() || !Gnomes.Init {
+			if !Gnomes.IsRunning() {
 				return
 			}
 
@@ -1290,7 +1284,7 @@ func FindNfaListings(assets map[string]string) {
 			i++
 		}
 
-		if Gnomes.Closing() {
+		if !Gnomes.IsRunning() {
 			return
 		}
 
@@ -1319,7 +1313,7 @@ func isDreamsNfaCollection(check string) bool {
 //   - Auction returns 1
 //   - Sale returns 2
 func CheckNFAListingType(scid string) (list int, addr string) {
-	if Gnomes.Init && Gnomes.Sync && !Gnomes.Closing() {
+	if Gnomes.IsReady() {
 		if owner, _ := Gnomes.GetSCIDValuesByKey(scid, "owner"); owner != nil {
 			if listType, _ := Gnomes.GetSCIDValuesByKey(scid, "listType"); listType != nil {
 				addr = owner[0]
@@ -1340,7 +1334,7 @@ func CheckNFAListingType(scid string) (list int, addr string) {
 // Check if NFA SCID is listed for auction
 //   - Market.DreamsFilter false for all NFA listings
 func checkNfaAuctionListing(scid string) (asset string, owned, expired bool) {
-	if Gnomes.Init && !Gnomes.Closing() {
+	if Gnomes.IsReady() {
 		if creator, _ := Gnomes.GetSCIDValuesByKey(scid, "creatorAddr"); creator != nil {
 			listType, _ := Gnomes.GetSCIDValuesByKey(scid, "listType")
 			header, _ := Gnomes.GetSCIDValuesByKey(scid, "nameHdr")
@@ -1404,7 +1398,7 @@ func checkNfaAuctionListing(scid string) (asset string, owned, expired bool) {
 // Check if NFA SCID is listed as buy now
 //   - Market.DreamsFilter false for all NFA listings
 func checkNfaBuyListing(scid string) (asset string, owned, expired bool) {
-	if Gnomes.Init && !Gnomes.Closing() {
+	if Gnomes.IsReady() {
 		if creator, _ := Gnomes.GetSCIDValuesByKey(scid, "creatorAddr"); creator != nil {
 			listType, _ := Gnomes.GetSCIDValuesByKey(scid, "listType")
 			header, _ := Gnomes.GetSCIDValuesByKey(scid, "nameHdr")
@@ -1467,14 +1461,14 @@ func checkNfaBuyListing(scid string) (asset string, owned, expired bool) {
 
 // Search NFAs in index by name or collection
 func SearchNFAsBy(by int, prefix string) (results []string) {
-	if Gnomes.Init && Gnomes.Sync && !Gnomes.Closing() {
+	if Gnomes.IsReady() {
 		results = []string{" Collection,  Name,  Description,  SCID:"}
 		assets := Gnomes.GetAllOwnersAndSCIDs()
 		keys := make([]string, len(assets))
 
 		i := 0
 		for k := range assets {
-			if Gnomes.Closing() || !Gnomes.Init {
+			if !Gnomes.IsReady() {
 				return
 			}
 
@@ -1516,7 +1510,7 @@ func SearchNFAsBy(by int, prefix string) (results []string) {
 
 // Get NFA image files
 func GetNfaImages(scid string) {
-	if !Gnomes.Closing() && len(scid) == 64 {
+	if Gnomes.IsReady() && len(scid) == 64 {
 		name, _ := Gnomes.GetSCIDValuesByKey(scid, "nameHdr")
 		icon, _ := Gnomes.GetSCIDValuesByKey(scid, "iconURLHdr")
 		cover, _ := Gnomes.GetSCIDValuesByKey(scid, "coverURL")
@@ -1532,7 +1526,7 @@ func GetNfaImages(scid string) {
 
 // Create auction tab info for current asset
 func GetAuctionDetails(scid string) {
-	if !Gnomes.Closing() && len(scid) == 64 {
+	if Gnomes.IsReady() && len(scid) == 64 {
 		name, _ := Gnomes.GetSCIDValuesByKey(scid, "nameHdr")
 		collection, _ := Gnomes.GetSCIDValuesByKey(scid, "collection")
 		description, _ := Gnomes.GetSCIDValuesByKey(scid, "descrHdr")
@@ -1660,7 +1654,7 @@ func GetAuctionDetails(scid string) {
 
 // Create buy now tab info for current asset
 func GetBuyNowDetails(scid string) {
-	if !Gnomes.Closing() && len(scid) == 64 {
+	if Gnomes.IsReady() && len(scid) == 64 {
 		name, _ := Gnomes.GetSCIDValuesByKey(scid, "nameHdr")
 		collection, _ := Gnomes.GetSCIDValuesByKey(scid, "collection")
 		description, _ := Gnomes.GetSCIDValuesByKey(scid, "descrHdr")
@@ -1757,7 +1751,7 @@ func GetBuyNowDetails(scid string) {
 
 // Create info for unlisted NFA
 func GetUnlistedDetails(scid string) {
-	if !Gnomes.Closing() && len(scid) == 64 {
+	if Gnomes.IsReady() && len(scid) == 64 {
 		name, _ := Gnomes.GetSCIDValuesByKey(scid, "nameHdr")
 		collection, _ := Gnomes.GetSCIDValuesByKey(scid, "collection")
 		description, _ := Gnomes.GetSCIDValuesByKey(scid, "descrHdr")
@@ -1842,7 +1836,7 @@ func GetUnlistedDetails(scid string) {
 
 // Get percentages for a NFA
 func GetListingPercents(scid string) (artP float64, royaltyP float64) {
-	if Gnomes.Init && Gnomes.Sync && !Gnomes.Closing() {
+	if Gnomes.IsReady() {
 		_, artFee := Gnomes.GetSCIDValuesByKey(scid, "artificerFee")
 		_, royalty := Gnomes.GetSCIDValuesByKey(scid, "royalty")
 

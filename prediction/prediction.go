@@ -462,7 +462,7 @@ func P_no_initResults(fr, tx, r, m string) (info string) {
 
 // Gets dPrediction data from SCID and return formatted info string
 func GetPrediction(scid string) (info string) {
-	if rpc.Daemon.Connect && menu.Gnomes.Init && !menu.Gnomes.Closing() && menu.Gnomes.Sync {
+	if rpc.Daemon.Connect && menu.Gnomes.IsReady() {
 		predicting, _ := menu.Gnomes.GetSCIDValuesByKey(scid, "predicting")
 		url, _ := menu.Gnomes.GetSCIDValuesByKey(scid, "p_url")
 		final, _ := menu.Gnomes.GetSCIDValuesByKey(scid, "p_final")

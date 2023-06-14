@@ -350,7 +350,7 @@ func makeIntegratedAddr(print bool) {
 //   - start defines service starting height
 //   - payouts, transfers for service params
 func DreamService(start uint64, payouts, transfers bool) {
-	if rpc.Daemon.Connect && rpc.Wallet.Connect {
+	if rpc.Daemon.Connect && rpc.Wallet.IsConnected() {
 		db := boltDB()
 		if db == nil {
 			log.Println("[dReamService] Closing")
@@ -386,7 +386,7 @@ func DreamService(start uint64, payouts, transfers bool) {
 				log.Println("[dReamService] Starting")
 			}
 
-			for rpc.Wallet.Service && rpc.Wallet.Connect && rpc.Daemon.Connect {
+			for rpc.Wallet.Service && rpc.Wallet.IsConnected() && rpc.Daemon.Connect {
 				Service.Processing = true
 				if transfers {
 					processBetTx(start, db, Service.Debug)
@@ -399,7 +399,7 @@ func DreamService(start uint64, payouts, transfers bool) {
 
 				for i := 0; i < 10; i++ {
 					time.Sleep(1 * time.Second)
-					if !rpc.Wallet.Service || !rpc.Wallet.Connect || !rpc.Daemon.Connect {
+					if !rpc.Wallet.Service || !rpc.Wallet.IsConnected() || !rpc.Daemon.Connect {
 						break
 					}
 				}
@@ -420,7 +420,7 @@ func runPredictionPayouts(print bool) {
 	contracts := menu.Control.Predict_owned
 	var pay_queue, post_queue []string
 	for i := range contracts {
-		if !menu.Gnomes.Init || menu.Gnomes.Closing() {
+		if !menu.Gnomes.IsRunning() {
 			return
 		}
 		split := strings.Split(contracts[i], "   ")
@@ -573,7 +573,7 @@ func runPredictionPayouts(print bool) {
 func runSportsPayouts(print bool) {
 	contracts := menu.Control.Sports_owned
 	for i := range contracts {
-		if !menu.Gnomes.Init || menu.Gnomes.Closing() {
+		if !menu.Gnomes.IsRunning() {
 			return
 		}
 		split := strings.Split(contracts[i], "   ")

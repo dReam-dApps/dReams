@@ -76,7 +76,7 @@ func main() {
 		fmt.Println()
 		menu.WriteDreamsConfig(rpc.Daemon.Rpc, config.Skin)
 		menu.Gnomes.Stop(app_tag)
-		rpc.Wallet.Connect = false
+		rpc.Wallet.Connected(false)
 		quit <- struct{}{}
 		if rpc.Wallet.File != nil {
 			rpc.Wallet.File.Close_Encrypted_Wallet()

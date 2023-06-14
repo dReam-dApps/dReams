@@ -172,7 +172,7 @@ func BidBuyConfirm(scid string, amt uint64, b int, obj *container.Split, reset f
 	content := container.NewVBox(layout.NewSpacer(), label, layout.NewSpacer(), buttons)
 
 	go func() {
-		for rpc.Wallet.Connect && rpc.Daemon.Connect {
+		for rpc.Wallet.IsConnected() && rpc.Daemon.Connect {
 			time.Sleep(time.Second)
 		}
 
@@ -422,7 +422,7 @@ func SearchNFAs() fyne.CanvasObject {
 	search_cont := container.NewBorder(container.NewCenter(search_by), nil, container.NewHBox(clear_button, show_results), search_button, search_entry)
 
 	message_button := widget.NewButton("Message Owner", func() {
-		if rpc.Wallet.Connect && dest_addr != "" {
+		if rpc.Wallet.IsConnected() && dest_addr != "" {
 			SendMessageMenu(dest_addr, bundle.ResourceDReamsIconAltPng)
 		}
 	})
@@ -862,7 +862,7 @@ func RecheckDreamsAssets() {
 	CheckDreamsNFAs(false, nil)
 	CheckDreamsG45s(false, nil)
 	if Control.Dapp_list["Holdero"] {
-		if rpc.Wallet.Connect {
+		if rpc.Wallet.IsConnected() {
 			Control.Names.Options = []string{rpc.Wallet.Address[0:12]}
 			CheckWalletNames(rpc.Wallet.Address)
 		}
@@ -1059,7 +1059,7 @@ func RunNFAMarket(tag string, quit, done chan struct{}, connect_box *dwidget.Der
 			rpc.EchoWallet(tag)
 
 			// Get all NFA listings
-			if !Gnomes.Closing() && offset%2 == 0 {
+			if Gnomes.IsRunning() && offset%2 == 0 {
 				FindNfaListings(nil)
 				if offset > 19 {
 					offset = 0
@@ -1075,26 +1075,24 @@ func RunNFAMarket(tag string, quit, done chan struct{}, connect_box *dwidget.Der
 			}
 
 			// If connected daemon connected start looking for Gnomon sync with daemon
-			if rpc.Daemon.Connect && Gnomes.Init && !Gnomes.Closing() {
+			if rpc.Daemon.Connect && Gnomes.IsRunning() {
 				connect_box.Disconnect.SetChecked(true)
 				// Get indexed SCID count
-				contracts := Gnomes.GetAllOwnersAndSCIDs()
-				Gnomes.SCIDS = uint64(len(contracts))
-				if Gnomes.SCIDS > 0 {
-					Gnomes.Checked = true
+				Gnomes.IndexContains()
+				if Gnomes.HasIndex(0) {
+					Gnomes.Checked(true)
 				}
 
-				height := rpc.DaemonHeight(tag, rpc.Daemon.Rpc)
-				if Gnomes.Indexer.LastIndexedHeight >= int64(height)-3 {
-					Gnomes.Sync = true
+				if Gnomes.Indexer.LastIndexedHeight >= Gnomes.Indexer.ChainHeight-3 {
+					Gnomes.Synced(true)
 				} else {
-					Gnomes.Sync = false
-					Gnomes.Checked = false
+					Gnomes.Synced(false)
+					Gnomes.Checked(false)
 				}
 
 				// Enable index controls and check if wallet is connected
 				go DisableIndexControls(false)
-				if rpc.Wallet.Connect {
+				if rpc.Wallet.IsConnected() {
 					Market.Market_box.Show()
 					Control.Claim_button.Show()
 					// Update live market info

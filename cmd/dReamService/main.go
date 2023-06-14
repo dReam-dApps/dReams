@@ -123,7 +123,7 @@ func init() {
 		<-c
 		fmt.Println()
 		menu.Gnomes.Stop("dReamService")
-		rpc.Wallet.Connect = false
+		rpc.Wallet.Connected(false)
 		rpc.Wallet.Service = false
 		for prediction.Service.Processing {
 			log.Println("[dReamService] Waiting for service to close")
@@ -176,23 +176,22 @@ func main() {
 
 	// Routine for checking daemon, wallet connection and Gnomon sync
 	go func() {
-		for !menu.Gnomes.Init {
+		for !menu.Gnomes.IsInitialized() {
 			time.Sleep(time.Second)
 		}
 
 		log.Println("[dReamService] Starting when Gnomon is synced")
-		height = rpc.DaemonHeight("dReamService", rpc.Daemon.Rpc)
-		for menu.Gnomes.Init && !menu.Gnomes.Closing() && rpc.Wallet.Connect && rpc.Daemon.Connect {
+		height = uint64(menu.Gnomes.Indexer.ChainHeight)
+		for menu.Gnomes.IsRunning() && rpc.Wallet.IsConnected() && rpc.Daemon.Connect {
 			rpc.Ping()
 			rpc.EchoWallet("dReamService")
-			contracts := menu.Gnomes.GetAllOwnersAndSCIDs()
-			menu.Gnomes.SCIDS = uint64(len(contracts))
-			if menu.Gnomes.Indexer.LastIndexedHeight >= int64(height)-3 && menu.Gnomes.SCIDS >= 9 {
-				menu.Gnomes.Sync = true
+			menu.Gnomes.IndexContains()
+			if menu.Gnomes.Indexer.LastIndexedHeight >= menu.Gnomes.Indexer.ChainHeight-3 && menu.Gnomes.HasIndex(9) {
+				menu.Gnomes.Synced(true)
 			} else {
-				menu.Gnomes.Sync = false
-				if !menu.Gnomes.Start && menu.Gnomes.Init {
-					diff := rpc.DaemonHeight("dReamService", rpc.Daemon.Rpc) - uint64(menu.Gnomes.Indexer.LastIndexedHeight)
+				menu.Gnomes.Synced(false)
+				if !menu.Gnomes.Start && menu.Gnomes.IsInitialized() {
+					diff := menu.Gnomes.Indexer.ChainHeight - menu.Gnomes.Indexer.LastIndexedHeight
 					if diff > 3 && prediction.Service.Debug {
 						log.Printf("[dReamService] Gnomon has %d blocks to go\n", diff)
 					}
@@ -203,7 +202,7 @@ func main() {
 	}()
 
 	// Wait for Gnomon to sync
-	for !menu.Gnomes.Sync && menu.Gnomes.SCIDS < 100 {
+	for !menu.Gnomes.IsSynced() && !menu.Gnomes.HasIndex(100) {
 		time.Sleep(time.Second)
 	}
 

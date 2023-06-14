@@ -177,14 +177,14 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 
 	var current_skin, skin_choice color.Gray16
 	load_button := widget.NewButton("Load Changes", func() {
-		rpc.Wallet.Connect = false
+		rpc.Wallet.Connected(false)
 		rpc.Wallet.Height = 0
 		menu.Disconnected()
 		holdero.InitTableSettings()
 		menu.Control.Dapp_list = enabled_dapps
 		log.Println("[dReams] Loading dApps")
 		menu.CloseAppSignal(true)
-		menu.Gnomes.Checked = false
+		menu.Gnomes.Checked(false)
 		bundle.AppColor = skin_choice
 		gnomon_gif.Stop()
 		go func() {
@@ -359,7 +359,7 @@ func place() *fyne.Container {
 	menu_tabs.OnSelected = func(ti *container.TabItem) {
 		MenuTab(ti)
 		if ti.Text == "dApps" {
-			if menu.Gnomes.Syncing {
+			if menu.Gnomes.IsScanning() {
 				menu_tabs.SelectIndex(0)
 			} else {
 				go func() {
@@ -806,7 +806,7 @@ func placePredict() *fyne.Container {
 	go func() {
 		time.Sleep(2 * time.Second)
 		for !menu.ClosingApps() && menu.Control.Dapp_list["dSports and dPredictions"] {
-			if !rpc.Wallet.Connect && !rpc.Signal.Startup {
+			if !rpc.Wallet.IsConnected() && !rpc.Signal.Startup {
 				menu.Control.Predict_check.SetChecked(false)
 				menu.Control.Sports_check.SetChecked(false)
 				prediction.DisablePredictions(true)

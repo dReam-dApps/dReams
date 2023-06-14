@@ -146,11 +146,11 @@ func CheckConnection() {
 
 		disableActions(true)
 		DisableIndexControls(true)
-		Gnomes.Init = false
-		Gnomes.Checked = false
+		Gnomes.Initialized(false)
+		Gnomes.Checked(false)
 	}
 
-	if rpc.Wallet.Connect {
+	if rpc.Wallet.IsConnected() {
 		disableActions(false)
 	} else {
 		rpc.Signal.Contract = false
@@ -166,7 +166,7 @@ func CheckConnection() {
 
 		disableActions(true)
 		Disconnected()
-		Gnomes.Checked = false
+		Gnomes.Checked(false)
 	}
 
 	if Control.Dapp_list["Holdero"] {
@@ -183,7 +183,7 @@ func CheckConnection() {
 // Hidden object, controls Gnomon start and stop based on daemon connection
 func DaemonConnectedBox() fyne.Widget {
 	Control.daemon_check = widget.NewCheck("", func(b bool) {
-		if !Gnomes.Init && !Gnomes.Start {
+		if !Gnomes.IsInitialized() && !Gnomes.Start {
 			go startLabel()
 			filters := searchFilters()
 			StartGnomon("dReams", Gnomes.DBType, filters, 3960, 490, g45Index)
@@ -249,11 +249,11 @@ func WalletRpcEntry() fyne.Widget {
 	entry := widget.NewSelectEntry(options)
 	entry.PlaceHolder = "Wallet RPC: "
 	entry.OnCursorChanged = func() {
-		if rpc.Wallet.Connect {
+		if rpc.Wallet.IsConnected() {
 			rpc.Wallet.Address = ""
 			rpc.Display.Wallet_height = "0"
 			rpc.Wallet.Height = 0
-			rpc.Wallet.Connect = false
+			rpc.Wallet.Connected(false)
 			CheckConnection()
 		}
 	}
@@ -271,7 +271,7 @@ func UserPassEntry() fyne.Widget {
 	entry := widget.NewPasswordEntry()
 	entry.PlaceHolder = "user:pass"
 	entry.OnCursorChanged = func() {
-		if rpc.Wallet.Connect {
+		if rpc.Wallet.IsConnected() {
 			rpc.GetAddress("dReams")
 			CheckConnection()
 		}
@@ -314,7 +314,7 @@ func HolderoContractEntry() fyne.Widget {
 					disableOwnerControls(true)
 				}
 
-				if rpc.Wallet.Connect && CheckHolderoContract(text) {
+				if rpc.Wallet.IsConnected() && CheckHolderoContract(text) {
 					holdero.Table.Tournament.Show()
 				} else {
 					holdero.Table.Tournament.Hide()
@@ -346,8 +346,8 @@ func RpcConnectButton() fyne.Widget {
 			if Control.Dapp_list["Holdero"] {
 				Poker.contract_input.CursorColumn = 1
 				Poker.contract_input.Refresh()
-				rpc.CheckExistingKey()
 				if len(rpc.Wallet.Address) == 66 {
+					rpc.CheckExistingKey()
 					Control.Names.ClearSelected()
 					Control.Names.Options = []string{}
 					Control.Names.Refresh()
@@ -954,7 +954,7 @@ Public table that uses HGC or DERO`
 	content := container.NewBorder(nil, actions, nil, nil, info_box)
 
 	go func() {
-		for rpc.Wallet.Connect && rpc.Daemon.Connect {
+		for rpc.Wallet.IsConnected() && rpc.Daemon.Connect {
 			time.Sleep(time.Second)
 		}
 
@@ -1039,7 +1039,7 @@ Private will not show up in the list`
 	content := container.NewBorder(nil, actions, nil, nil, info_box)
 
 	go func() {
-		for rpc.Wallet.Connect && rpc.Daemon.Connect {
+		for rpc.Wallet.IsConnected() && rpc.Daemon.Connect {
 			time.Sleep(time.Second)
 		}
 
@@ -1124,7 +1124,7 @@ Private will not show up in the list`
 	content := container.NewBorder(nil, actions, nil, nil, info_box)
 
 	go func() {
-		for rpc.Wallet.Connect && rpc.Daemon.Connect {
+		for rpc.Wallet.IsConnected() && rpc.Daemon.Connect {
 			time.Sleep(time.Second)
 		}
 
@@ -1220,7 +1220,7 @@ func sendAssetMenu(window_icon fyne.Resource) {
 	Control.List_button.Hide()
 	saw.SetCloseIntercept(func() {
 		Control.send_open = false
-		if rpc.Wallet.Connect {
+		if rpc.Wallet.IsConnected() {
 			Control.Send_asset.Show()
 			if isNfa(Control.Viewing_asset) {
 				Control.List_button.Show()
@@ -1316,7 +1316,7 @@ func sendAssetMenu(window_icon fyne.Resource) {
 		container.NewAdaptiveGrid(2, layout.NewSpacer(), send_button))
 
 	go func() {
-		for rpc.Wallet.Connect && rpc.Daemon.Connect {
+		for rpc.Wallet.IsConnected() && rpc.Daemon.Connect {
 			time.Sleep(3 * time.Second)
 			if !confirm_open {
 				icon = Assets.Icon
@@ -1367,7 +1367,7 @@ func listMenu(window_icon fyne.Resource) {
 	Control.Send_asset.Hide()
 	aw.SetCloseIntercept(func() {
 		Control.list_open = false
-		if rpc.Wallet.Connect {
+		if rpc.Wallet.IsConnected() {
 			Control.Send_asset.Show()
 			if isNfa(Control.Viewing_asset) {
 				Control.List_button.Show()
@@ -1492,7 +1492,7 @@ func listMenu(window_icon fyne.Resource) {
 				confirm_button := widget.NewButton("Confirm", func() {
 					rpc.SetNFAListing(listing_asset, listing.Selected, charAddr.Text, d, s, cp)
 					Control.list_open = false
-					if rpc.Wallet.Connect {
+					if rpc.Wallet.IsConnected() {
 						Control.Send_asset.Show()
 						if isNfa(Control.Viewing_asset) {
 							Control.List_button.Show()
@@ -1517,7 +1517,7 @@ func listMenu(window_icon fyne.Resource) {
 	icon := Assets.Icon
 
 	go func() {
-		for rpc.Wallet.Connect && rpc.Daemon.Connect {
+		for rpc.Wallet.IsConnected() && rpc.Daemon.Connect {
 			time.Sleep(3 * time.Second)
 			if !confirm_open && isNfa(Control.Viewing_asset) {
 				icon = Assets.Icon
@@ -1778,7 +1778,7 @@ func SendMessageMenu(dest string, window_icon fyne.Resource) {
 		content := container.NewVSplit(dest_cont, message_cont)
 
 		go func() {
-			for rpc.Wallet.Connect && rpc.Daemon.Connect {
+			for rpc.Wallet.IsConnected() && rpc.Daemon.Connect {
 				time.Sleep(3 * time.Second)
 			}
 			Control.msg_open = false

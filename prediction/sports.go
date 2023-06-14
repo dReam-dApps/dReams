@@ -325,7 +325,7 @@ func SportsPayouts() fyne.CanvasObject {
 
 // Gets dSports data from SCID and return formatted info string
 func GetBook(scid string) (info string) {
-	if menu.Gnomes.Init && !menu.Gnomes.Closing() && menu.Gnomes.Sync {
+	if menu.Gnomes.IsReady() {
 		_, initValue := menu.Gnomes.GetSCIDValuesByKey(scid, "s_init")
 		if initValue != nil {
 			_, playedValue := menu.Gnomes.GetSCIDValuesByKey(scid, "s_played")

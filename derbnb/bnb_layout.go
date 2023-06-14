@@ -193,7 +193,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 	property_search_by.SetSelected("Country  ")
 
 	property_search_button := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "search"), func() {
-		if property_search_entry.Text != "" && rpc.Wallet.Connect {
+		if property_search_entry.Text != "" && rpc.Wallet.IsConnected() {
 			viewing_scid = ""
 			listings_list.UnselectAll()
 			switch property_search_by.Selected {
@@ -707,7 +707,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 
 	// bnb contract controls
 	request_button = widget.NewButton("Request Booking", func() {
-		if viewing_scid != "" && current_price != 0 && current_deposit != 0 && !start_date.IsZero() && !end_date.IsZero() && rpc.Wallet.Connect {
+		if viewing_scid != "" && current_price != 0 && current_deposit != 0 && !start_date.IsZero() && !end_date.IsZero() && rpc.Wallet.IsConnected() {
 			derbnb_gif.Start()
 			start := uint64(start_date.Unix())
 			end := uint64(end_date.Unix())
@@ -1311,19 +1311,19 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 				switch split[0] {
 				case "Request:":
 					rate_booking_button.Hide()
-					if rpc.Wallet.Connect {
+					if rpc.Wallet.IsConnected() {
 						cancel_booking_button.Show()
 						send_message.Show()
 					}
 				case "Booked:":
 					cancel_booking_button.Hide()
 					rate_booking_button.Hide()
-					if rpc.Wallet.Connect {
+					if rpc.Wallet.IsConnected() {
 						send_message.Show()
 					}
 				case "Complete:":
 					cancel_booking_button.Hide()
-					if rpc.Wallet.Connect {
+					if rpc.Wallet.IsConnected() {
 						rate_booking_button.Show()
 						send_message.Show()
 					}
@@ -1377,7 +1377,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 				confirm_dates = fmt.Sprintf("From: %s  -  To: %s", split[2], split[3])
 				switch split[0] {
 				case "Request:":
-					if rpc.Wallet.Connect {
+					if rpc.Wallet.IsConnected() {
 						send_message.Show()
 						confirm_request_button.Show()
 						cancel_request_button.Show()
@@ -1389,14 +1389,14 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 				case "Booked:":
 					if date, err := time.Parse(TIME_FORMAT, split[3]); err == nil {
 						if date.Unix() < time.Now().UTC().Unix() {
-							if rpc.Wallet.Connect {
+							if rpc.Wallet.IsConnected() {
 								release_button.Show()
 							}
 						} else {
 							release_button.Hide()
 						}
 					}
-					if rpc.Wallet.Connect {
+					if rpc.Wallet.IsConnected() {
 						send_message.Show()
 					}
 					set_location_button.Hide()
@@ -1405,7 +1405,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 					rate_renter_button.Hide()
 					property_add_info.Hide()
 				case "Complete:":
-					if rpc.Wallet.Connect {
+					if rpc.Wallet.IsConnected() {
 						rate_renter_button.Show()
 						send_message.Show()
 					}
@@ -1647,7 +1647,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 		i := 0
 		time.Sleep(2 * time.Second)
 		for !menu.ClosingApps() {
-			if !rpc.Wallet.Connect {
+			if !rpc.Wallet.IsConnected() || !rpc.Daemon.Connect {
 				list_button.Hide()
 				remove_button.Hide()
 				confirm_request_button.Hide()
@@ -1671,7 +1671,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 				image_box.Refresh()
 
 				listing_label.SetText("")
-			} else if rpc.Daemon.Connect {
+			} else {
 				trvl_button.Show()
 				mint_prop.Show()
 			}
@@ -1681,7 +1681,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 				GetProperties()
 			}
 
-			if scid_entry.Validate() == nil && rpc.Wallet.Connect {
+			if scid_entry.Validate() == nil && rpc.Wallet.IsConnected() {
 				if haveProperty(scid_entry.Text) {
 					change_dates.Show()
 					remove_button.Show()
@@ -1725,7 +1725,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 			}
 
 			if price_entry.Validate() == nil && deposit_entry.Validate() == nil {
-				if scid_entry.Validate() == nil && rpc.Wallet.Connect {
+				if scid_entry.Validate() == nil && rpc.Wallet.IsConnected() {
 					if !haveProperty(scid_entry.Text) {
 						list_button.Show()
 					} else {

@@ -890,7 +890,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 	}
 
 	install_button.OnTapped = func() {
-		if rpc.Wallet.Connect {
+		if rpc.Wallet.IsConnected() {
 			if collection_enable.Checked {
 				var count, ending_at int
 				if count = rpc.StringToInt(collection_low_entry.Text); count < 1 {
@@ -949,7 +949,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 							log.Printf("[%s] Starting install loop\n", tag)
 
 							for wait && count <= ending_at {
-								if !rpc.Wallet.Connect {
+								if !rpc.Wallet.IsConnected() {
 									progress_label.SetText("Error wallet disconnected")
 									wait_message.SetDismissText("Close")
 									error_message := dialog.NewInformation("Error", "Wallet rpc disconnected", window)
@@ -1181,7 +1181,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 				collection_entry.Validator = validation.NewRegexp(`^\W\D\S$`, "Invalid collection directory")
 			}
 
-			if rpc.Wallet.Connect && rpc.Daemon.Connect {
+			if rpc.Wallet.IsConnected() && rpc.Daemon.Connect {
 				rpc_label.SetText(fmt.Sprintf("Installing address: %s", rpc.Wallet.Address))
 				if collection_enable.Checked {
 					if collection_low_entry.Text != "" && collection_high_entry.Text != "" {

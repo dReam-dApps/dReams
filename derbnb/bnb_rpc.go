@@ -561,7 +561,7 @@ func ChangeAvailability(scid, cal string) {
 
 // Upload a new DerBnb property token contract
 func UploadBnbTokenContract() (new_scid string) {
-	if rpc.Daemon.Connect && rpc.Wallet.Connect {
+	if rpc.Daemon.Connect && rpc.Wallet.IsConnected() {
 		rpcClientW, ctx, cancel := rpc.SetWalletClient(rpc.Wallet.Rpc, rpc.Wallet.UserPass)
 		defer cancel()
 

@@ -115,10 +115,10 @@ func HorizontalEntries(tag string, offset int) *DeroRpcEntries {
 	this_wallet := binding.BindString(&rpc.Wallet.Rpc)
 	wallet_entry.Bind(this_wallet)
 	wallet_entry.OnCursorChanged = func() {
-		if rpc.Wallet.Connect {
+		if rpc.Wallet.IsConnected() {
 			rpc.Wallet.Address = ""
 			rpc.Wallet.Height = 0
-			rpc.Wallet.Connect = false
+			rpc.Wallet.Connected(false)
 		}
 	}
 
@@ -127,9 +127,9 @@ func HorizontalEntries(tag string, offset int) *DeroRpcEntries {
 	this_auth := binding.BindString(&rpc.Wallet.UserPass)
 	pass_entry.Bind(this_auth)
 	pass_entry.OnCursorChanged = func() {
-		if rpc.Wallet.Connect {
+		if rpc.Wallet.IsConnected() {
 			rpc.GetAddress(tag)
-			if !rpc.Wallet.Connect {
+			if !rpc.Wallet.IsConnected() {
 				rpc.Wallet.Address = ""
 				rpc.Wallet.Height = 0
 			}
@@ -185,10 +185,10 @@ func VerticalEntries(tag string, offset int) *DeroRpcEntries {
 	this_wallet := binding.BindString(&rpc.Wallet.Rpc)
 	wallet_entry.Bind(this_wallet)
 	wallet_entry.OnCursorChanged = func() {
-		if rpc.Wallet.Connect {
+		if rpc.Wallet.IsConnected() {
 			rpc.Wallet.Address = ""
 			rpc.Wallet.Height = 0
-			rpc.Wallet.Connect = false
+			rpc.Wallet.Connected(false)
 		}
 	}
 
@@ -197,9 +197,9 @@ func VerticalEntries(tag string, offset int) *DeroRpcEntries {
 	this_auth := binding.BindString(&rpc.Wallet.UserPass)
 	pass_entry.Bind(this_auth)
 	pass_entry.OnCursorChanged = func() {
-		if rpc.Wallet.Connect {
+		if rpc.Wallet.IsConnected() {
 			rpc.GetAddress(tag)
-			if !rpc.Wallet.Connect {
+			if !rpc.Wallet.IsConnected() {
 				rpc.Wallet.Address = ""
 				rpc.Wallet.Height = 0
 			}

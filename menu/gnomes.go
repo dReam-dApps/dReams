@@ -2,6 +2,7 @@ package menu
 
 import (
 	"log"
+	"sync"
 	"time"
 
 	"fyne.io/fyne/v2"
@@ -19,7 +20,7 @@ type gnomon struct {
 	Init     bool
 	Sync     bool
 	Syncing  bool
-	Checked  bool
+	Check    bool
 	Wait     bool
 	Import   bool
 	SCIDS    uint64
@@ -27,6 +28,7 @@ type gnomon struct {
 	Full_ind *fyne.Animation
 	Icon_ind *xwidget.AnimatedGif
 	Indexer  *indexer.Indexer
+	sync.RWMutex
 }
 
 var Gnomes gnomon
@@ -34,6 +36,7 @@ var Gnomes gnomon
 // Shut down Gnomes.Indexer
 //   - tag for log print
 func (g *gnomon) Stop(tag string) {
+	g.Lock()
 	if g.Init && !g.Closing() {
 		log.Printf("[%s] Putting Gnomon to Sleep\n", tag)
 		g.Indexer.Close()
@@ -41,6 +44,7 @@ func (g *gnomon) Stop(tag string) {
 		time.Sleep(1 * time.Second)
 		log.Printf("[%s] Gnomon is Sleeping\n", tag)
 	}
+	g.Unlock()
 }
 
 // Check if Gnomon is writing
@@ -73,6 +77,109 @@ func (g *gnomon) Closing() bool {
 	default:
 		return false
 	}
+}
+
+// Set Gnomes.Init var
+func (g *gnomon) Initialized(b bool) {
+	g.Lock()
+	g.Init = b
+	g.Unlock()
+}
+
+// Check if Gnomes.Init
+func (g *gnomon) IsInitialized() bool {
+	g.RLock()
+	defer g.RUnlock()
+
+	return g.Init
+}
+
+// Set Gnomes.Syncing var when scanning wallet
+func (g *gnomon) Scanning(b bool) {
+	g.Lock()
+	g.Syncing = b
+	g.Unlock()
+}
+
+// Check if Gnomes.Syncing
+func (g *gnomon) IsScanning() bool {
+	g.RLock()
+	defer g.RUnlock()
+
+	return g.Syncing
+}
+
+// Set Gnomes.Checked var
+func (g *gnomon) Checked(b bool) {
+	g.Lock()
+	g.Check = b
+	g.Unlock()
+}
+
+// Check if Gnomes.Checked
+func (g *gnomon) HasChecked() bool {
+	g.RLock()
+	defer g.RUnlock()
+
+	return g.Check
+}
+
+// Set Gnomes.SCIDS index count and return GetAllOwnersAndSCIDs()
+func (g *gnomon) IndexContains() map[string]string {
+	contracts := g.GetAllOwnersAndSCIDs()
+
+	g.Lock()
+	g.SCIDS = uint64(len(contracts))
+	g.Unlock()
+
+	return contracts
+}
+
+// Check if Gnomes index contains SCIDs >= u
+func (g *gnomon) HasIndex(u uint64) bool {
+	g.RLock()
+	defer g.RUnlock()
+
+	return g.SCIDS >= u
+}
+
+// Set Gnomes.Sync var
+func (g *gnomon) Synced(b bool) {
+	g.Lock()
+	g.Sync = b
+	g.Unlock()
+}
+
+// Check if Gnomes.Sync
+func (g *gnomon) IsSynced() bool {
+	g.RLock()
+	defer g.RUnlock()
+
+	return g.Sync
+}
+
+// Check if Gnomon is initialized, and not closing
+func (g *gnomon) IsRunning() bool {
+	g.RLock()
+	defer g.RUnlock()
+
+	if g.Init && !g.Closing() {
+		return true
+	}
+
+	return false
+}
+
+// Check if Gnomon is initialized, synced and not closing
+func (g *gnomon) IsReady() bool {
+	g.RLock()
+	defer g.RUnlock()
+
+	if g.Init && g.Sync && !g.Closing() {
+		return true
+	}
+
+	return false
 }
 
 // Method of Gnomon GetAllOwnersAndSCIDs() where DB type is defined by Indexer.DBType

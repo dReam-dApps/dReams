@@ -1175,7 +1175,7 @@ func holderoTools(deal, check *widget.Check, button *widget.Button) {
 	}
 
 	go func() {
-		for rpc.Wallet.Connect {
+		for rpc.Wallet.IsConnected() {
 			time.Sleep(1 * time.Second)
 		}
 

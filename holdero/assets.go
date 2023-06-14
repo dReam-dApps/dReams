@@ -400,7 +400,7 @@ func DreamsConfirm(c, amt float64, obj *fyne.Container, reset fyne.CanvasObject)
 	content := container.NewVBox(layout.NewSpacer(), label, layout.NewSpacer(), buttons)
 
 	go func() {
-		for rpc.Wallet.Connect && rpc.Daemon.Connect {
+		for rpc.Wallet.IsConnected() && rpc.Daemon.Connect {
 			time.Sleep(time.Second)
 			if done {
 				return
