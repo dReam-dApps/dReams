@@ -74,7 +74,7 @@ type property_data struct {
 
 // Get DerBnb SC code
 func BnbSearchFilter() (filter []string) {
-	if rpc.Daemon.Connect {
+	if rpc.Daemon.IsConnected() {
 		rpcClientD, ctx, cancel := rpc.SetDaemonClient(rpc.Daemon.Rpc)
 		defer cancel()
 
@@ -101,7 +101,7 @@ func BnbSearchFilter() (filter []string) {
 
 // Get image urls from DerBnb property SCID
 func getImages(scid string) {
-	if rpc.Daemon.Connect {
+	if rpc.Daemon.IsConnected() {
 		rpcClientD, ctx, cancel := rpc.SetDaemonClient(rpc.Daemon.Rpc)
 		defer cancel()
 
@@ -137,7 +137,7 @@ func getImages(scid string) {
 
 // Get location data from DerBnb property SCID
 func getLocation(scid string) (city string, country string) {
-	if rpc.Daemon.Connect {
+	if rpc.Daemon.IsConnected() {
 		rpcClientD, ctx, cancel := rpc.SetDaemonClient(rpc.Daemon.Rpc)
 		defer cancel()
 
@@ -175,7 +175,7 @@ func getLocation(scid string) (city string, country string) {
 
 // Get metadata from DerBnb property SCID
 func getMetadata(scid string) *property_data {
-	if rpc.Daemon.Connect {
+	if rpc.Daemon.IsConnected() {
 		rpcClientD, ctx, cancel := rpc.SetDaemonClient(rpc.Daemon.Rpc)
 		defer cancel()
 
@@ -210,7 +210,7 @@ func getMetadata(scid string) *property_data {
 
 // Check that SC code of asset matches DerBnb standard
 func checkAssetContract(scid string) string {
-	if rpc.Daemon.Connect {
+	if rpc.Daemon.IsConnected() {
 		rpcClientD, ctx, cancel := rpc.SetDaemonClient(rpc.Daemon.Rpc)
 		defer cancel()
 
@@ -561,7 +561,7 @@ func ChangeAvailability(scid, cal string) {
 
 // Upload a new DerBnb property token contract
 func UploadBnbTokenContract() (new_scid string) {
-	if rpc.Daemon.Connect && rpc.Wallet.IsConnected() {
+	if rpc.IsReady() {
 		rpcClientW, ctx, cancel := rpc.SetWalletClient(rpc.Wallet.Rpc, rpc.Wallet.UserPass)
 		defer cancel()
 

@@ -70,7 +70,7 @@ func PredictionContractEntry() fyne.Widget {
 	menu.Control.P_contract = widget.NewSelectEntry(options)
 	menu.Control.P_contract.PlaceHolder = "Contract Address: "
 	menu.Control.P_contract.OnCursorChanged = func() {
-		if rpc.Daemon.Connect {
+		if rpc.Daemon.IsConnected() {
 			go func() {
 				if len(Predict.Contract) == 64 {
 					yes := rpc.ValidBetContract(Predict.Contract)
@@ -462,7 +462,7 @@ func P_no_initResults(fr, tx, r, m string) (info string) {
 
 // Gets dPrediction data from SCID and return formatted info string
 func GetPrediction(scid string) (info string) {
-	if rpc.Daemon.Connect && menu.Gnomes.IsReady() {
+	if rpc.Daemon.IsConnected() && menu.Gnomes.IsReady() {
 		predicting, _ := menu.Gnomes.GetSCIDValuesByKey(scid, "predicting")
 		url, _ := menu.Gnomes.GetSCIDValuesByKey(scid, "p_url")
 		final, _ := menu.Gnomes.GetSCIDValuesByKey(scid, "p_final")

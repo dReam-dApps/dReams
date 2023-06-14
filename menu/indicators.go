@@ -102,7 +102,7 @@ func StartDreamsIndicators() fyne.CanvasObject {
 
 	Control.Daemon_ind = canvas.NewColorRGBAAnimation(purple, blue,
 		time.Second*3, func(c color.Color) {
-			if rpc.Daemon.Connect {
+			if rpc.Daemon.IsConnected() {
 				d_rect.FillColor = c
 				canvas.Refresh(d_rect)
 			} else {
@@ -268,7 +268,7 @@ func StartIndicators() fyne.CanvasObject {
 
 	Control.Daemon_ind = canvas.NewColorRGBAAnimation(purple, blue,
 		time.Second*3, func(c color.Color) {
-			if rpc.Daemon.Connect {
+			if rpc.Daemon.IsConnected() {
 				d_rect.FillColor = c
 				canvas.Refresh(d_rect)
 			} else {

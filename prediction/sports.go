@@ -75,7 +75,7 @@ func SportsContractEntry() fyne.Widget {
 	menu.Control.S_contract = widget.NewSelectEntry(options)
 	menu.Control.S_contract.PlaceHolder = "Contract Address: "
 	menu.Control.S_contract.OnCursorChanged = func() {
-		if rpc.Daemon.Connect {
+		if rpc.Daemon.IsConnected() {
 			go func() {
 				if len(Sports.Contract) == 64 {
 					yes := rpc.ValidBetContract(Sports.Contract)

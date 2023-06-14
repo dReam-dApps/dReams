@@ -51,7 +51,7 @@ func TarotBuffer(d bool) {
 		rpc.Tarot.Last = ""
 		Iluma.Search.Hide()
 	} else {
-		if rpc.Daemon.Connect && rpc.Wallet.Connect {
+		if rpc.IsReady() {
 			if !Iluma.Open {
 				Iluma.Draw1.Show()
 				Iluma.Draw3.Show()

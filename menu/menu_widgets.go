@@ -123,7 +123,7 @@ func CloseAppSignal(value bool) {
 
 // Connection check for main process
 func CheckConnection() {
-	if rpc.Daemon.Connect {
+	if rpc.Daemon.IsConnected() {
 		Control.daemon_check.SetChecked(true)
 		DisableIndexControls(false)
 	} else {
@@ -294,7 +294,7 @@ func HolderoContractEntry() fyne.Widget {
 	Poker.contract_input.SetOptions(options)
 	Poker.contract_input.PlaceHolder = "Holdero Contract Address: "
 	Poker.contract_input.OnCursorChanged = func() {
-		if rpc.Daemon.Connect && !wait {
+		if rpc.Daemon.IsConnected() && !wait {
 			wait = true
 			text := Poker.contract_input.Text
 			holdero.ClearShared()
@@ -954,7 +954,7 @@ Public table that uses HGC or DERO`
 	content := container.NewBorder(nil, actions, nil, nil, info_box)
 
 	go func() {
-		for rpc.Wallet.IsConnected() && rpc.Daemon.Connect {
+		for rpc.IsReady() {
 			time.Sleep(time.Second)
 		}
 
@@ -1039,7 +1039,7 @@ Private will not show up in the list`
 	content := container.NewBorder(nil, actions, nil, nil, info_box)
 
 	go func() {
-		for rpc.Wallet.IsConnected() && rpc.Daemon.Connect {
+		for rpc.IsReady() {
 			time.Sleep(time.Second)
 		}
 
@@ -1124,7 +1124,7 @@ Private will not show up in the list`
 	content := container.NewBorder(nil, actions, nil, nil, info_box)
 
 	go func() {
-		for rpc.Wallet.IsConnected() && rpc.Daemon.Connect {
+		for rpc.IsReady() {
 			time.Sleep(time.Second)
 		}
 
@@ -1316,7 +1316,7 @@ func sendAssetMenu(window_icon fyne.Resource) {
 		container.NewAdaptiveGrid(2, layout.NewSpacer(), send_button))
 
 	go func() {
-		for rpc.Wallet.IsConnected() && rpc.Daemon.Connect {
+		for rpc.IsReady() {
 			time.Sleep(3 * time.Second)
 			if !confirm_open {
 				icon = Assets.Icon
@@ -1517,7 +1517,7 @@ func listMenu(window_icon fyne.Resource) {
 	icon := Assets.Icon
 
 	go func() {
-		for rpc.Wallet.IsConnected() && rpc.Daemon.Connect {
+		for rpc.IsReady() {
 			time.Sleep(3 * time.Second)
 			if !confirm_open && isNfa(Control.Viewing_asset) {
 				icon = Assets.Icon
@@ -1778,7 +1778,7 @@ func SendMessageMenu(dest string, window_icon fyne.Resource) {
 		content := container.NewVSplit(dest_cont, message_cont)
 
 		go func() {
-			for rpc.Wallet.IsConnected() && rpc.Daemon.Connect {
+			for rpc.IsReady() {
 				time.Sleep(3 * time.Second)
 			}
 			Control.msg_open = false

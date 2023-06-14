@@ -237,7 +237,7 @@ func disableActions(d bool) {
 			tarot.Iluma.Search.Refresh()
 		}
 	} else {
-		if rpc.Daemon.Connect {
+		if rpc.Daemon.IsConnected() {
 			Assets.Swap.Show()
 		}
 	}

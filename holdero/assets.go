@@ -244,7 +244,7 @@ func ValidAsset(s string) bool {
 
 // Rpc call to get A-Team agent number
 func getAgentNumber(scid string) int {
-	if rpc.Daemon.Connect {
+	if rpc.Daemon.IsConnected() {
 		rpcClientD, ctx, cancel := rpc.SetDaemonClient(rpc.Daemon.Rpc)
 		defer cancel()
 
@@ -400,7 +400,7 @@ func DreamsConfirm(c, amt float64, obj *fyne.Container, reset fyne.CanvasObject)
 	content := container.NewVBox(layout.NewSpacer(), label, layout.NewSpacer(), buttons)
 
 	go func() {
-		for rpc.Wallet.IsConnected() && rpc.Daemon.Connect {
+		for rpc.IsReady() {
 			time.Sleep(time.Second)
 			if done {
 				return

@@ -81,7 +81,7 @@ func intgPredictionArgs(scid string, print bool) (higher_arg dero.Arguments, low
 	var p_amt []uint64
 	var end uint64
 	var pre, mark string
-	if menu.Gnomes.Init {
+	if menu.Gnomes.IsInitialized() {
 		_, init := menu.Gnomes.GetSCIDValuesByKey(scid, "p_init")
 		if init != nil && init[0] == 1 {
 			predicting, _ := menu.Gnomes.GetSCIDValuesByKey(scid, "predicting")
@@ -169,7 +169,7 @@ func intgPredictionArgs(scid string, print bool) (higher_arg dero.Arguments, low
 func intgSportsArgs(scid string, print bool) (args [][]dero.Arguments) {
 	var end uint64
 	var league, game, a_string, b_string string
-	if menu.Gnomes.Init {
+	if menu.Gnomes.IsInitialized() {
 		_, init := menu.Gnomes.GetSCIDValuesByKey(scid, "s_init")
 		_, played := menu.Gnomes.GetSCIDValuesByKey(scid, "s_played")
 		if init != nil && played != nil {
@@ -350,7 +350,7 @@ func makeIntegratedAddr(print bool) {
 //   - start defines service starting height
 //   - payouts, transfers for service params
 func DreamService(start uint64, payouts, transfers bool) {
-	if rpc.Daemon.Connect && rpc.Wallet.IsConnected() {
+	if rpc.IsReady() {
 		db := boltDB()
 		if db == nil {
 			log.Println("[dReamService] Closing")
@@ -386,7 +386,7 @@ func DreamService(start uint64, payouts, transfers bool) {
 				log.Println("[dReamService] Starting")
 			}
 
-			for rpc.Wallet.Service && rpc.Wallet.IsConnected() && rpc.Daemon.Connect {
+			for rpc.Wallet.Service && rpc.IsReady() {
 				Service.Processing = true
 				if transfers {
 					processBetTx(start, db, Service.Debug)
@@ -399,7 +399,7 @@ func DreamService(start uint64, payouts, transfers bool) {
 
 				for i := 0; i < 10; i++ {
 					time.Sleep(1 * time.Second)
-					if !rpc.Wallet.Service || !rpc.Wallet.IsConnected() || !rpc.Daemon.Connect {
+					if !rpc.Wallet.Service || !rpc.IsReady() {
 						break
 					}
 				}

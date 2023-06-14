@@ -1053,7 +1053,7 @@ func ownerT3(o bool) (t *rpc.Transfer) {
 // Install new Holdero SC
 //   - pub defines public or private SC
 func UploadHolderoContract(pub int) {
-	if Daemon.Connect && Wallet.Connect {
+	if IsReady() {
 		rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 		defer cancel()
 
@@ -1906,7 +1906,7 @@ func EndPrediction(scid string, price int) (tx string) {
 //   - c defines dSports or dPrediction contract
 //   - pub defines public or private contract
 func UploadBetContract(c bool, pub int) {
-	if Daemon.Connect && Wallet.Connect {
+	if IsReady() {
 		rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 		defer cancel()
 
@@ -2298,7 +2298,7 @@ func ConfirmTx(txid, tag string, timeout int) bool {
 	if txid != "" {
 		count := 0
 		time.Sleep(time.Second)
-		for Wallet.Connect && Daemon.Connect {
+		for IsReady() {
 			count++
 			time.Sleep(2 * time.Second)
 			if tx := GetDaemonTx(txid); tx != nil {
@@ -2331,7 +2331,7 @@ func ConfirmTxRetry(txid, tag string, timeout int) (retry int) {
 	count := 0
 	next_block := Wallet.Height + 1
 	time.Sleep(time.Second)
-	for Wallet.Connect && Daemon.Connect {
+	for IsReady() {
 		count++
 		time.Sleep(2 * time.Second)
 		if tx := GetDaemonTx(txid); tx != nil {

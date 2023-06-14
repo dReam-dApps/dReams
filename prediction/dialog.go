@@ -736,7 +736,7 @@ func ConfirmAction(i int, teamA, teamB string, obj []fyne.CanvasObject, tabs *co
 	content := container.NewBorder(nil, options, nil, nil, display)
 
 	go func() {
-		for rpc.Wallet.IsConnected() && rpc.Daemon.Connect {
+		for rpc.IsReady() {
 			time.Sleep(time.Second)
 		}
 
@@ -834,7 +834,7 @@ func OwnerButtonS() fyne.CanvasObject {
 
 // Check dPrediction SCID for live status
 func CheckPredictionStatus() {
-	if rpc.Daemon.Connect && menu.Gnomes.IsReady() {
+	if rpc.Daemon.IsConnected() && menu.Gnomes.IsReady() {
 		_, ends := menu.Gnomes.GetSCIDValuesByKey(Predict.Contract, "p_end_at")
 		_, time_a := menu.Gnomes.GetSCIDValuesByKey(Predict.Contract, "time_a")
 		_, time_c := menu.Gnomes.GetSCIDValuesByKey(Predict.Contract, "time_c")
@@ -863,7 +863,7 @@ func CheckPredictionStatus() {
 
 // Check dSports SCID for active games
 func GetActiveGames() {
-	if rpc.Daemon.Connect && menu.Gnomes.IsReady() {
+	if rpc.Daemon.IsConnected() && menu.Gnomes.IsReady() {
 		options := []string{}
 		contracts := menu.Gnomes.GetAllOwnersAndSCIDs()
 		keys := make([]string, len(contracts))

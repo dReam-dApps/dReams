@@ -182,7 +182,7 @@ func main() {
 
 		log.Println("[dReamService] Starting when Gnomon is synced")
 		height = uint64(menu.Gnomes.Indexer.ChainHeight)
-		for menu.Gnomes.IsRunning() && rpc.Wallet.IsConnected() && rpc.Daemon.Connect {
+		for menu.Gnomes.IsRunning() && rpc.IsReady() {
 			rpc.Ping()
 			rpc.EchoWallet("dReamService")
 			menu.Gnomes.IndexContains()

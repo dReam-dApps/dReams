@@ -146,7 +146,7 @@ func fetch(quit, done chan struct{}) {
 				menu.GnomonEndPoint()
 			}
 
-			if rpc.Daemon.Connect && menu.Gnomes.IsInitialized() {
+			if rpc.Daemon.IsConnected() && menu.Gnomes.IsInitialized() {
 				connect_box.Disconnect.SetChecked(true)
 				if menu.Gnomes.IsRunning() {
 					menu.Gnomes.IndexContains()
@@ -165,7 +165,7 @@ func fetch(quit, done chan struct{}) {
 				connect_box.Disconnect.SetChecked(false)
 			}
 
-			if rpc.Daemon.Connect {
+			if rpc.Daemon.IsConnected() {
 				rpc.Signal.Startup = false
 			}
 
@@ -241,7 +241,7 @@ func filterProperty(check interface{}) bool {
 }
 
 func SearchProperties(prefix string, search_city bool) (results []string) {
-	if rpc.Wallet.IsConnected() && rpc.Daemon.Connect {
+	if rpc.IsReady() {
 		if menu.Gnomes.IsReady() {
 			info := menu.Gnomes.GetAllSCIDVariableDetails(rpc.DerBnbSCID)
 			if info != nil {
@@ -309,7 +309,7 @@ func SearchProperties(prefix string, search_city bool) (results []string) {
 
 // Get all DerBnb property info from contract
 func GetProperties() {
-	if rpc.Wallet.IsConnected() && rpc.Daemon.Connect {
+	if rpc.IsReady() {
 		if menu.Gnomes.IsReady() {
 			info := menu.Gnomes.GetAllSCIDVariableDetails(rpc.DerBnbSCID)
 			if info != nil {

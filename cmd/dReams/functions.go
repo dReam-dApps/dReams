@@ -597,7 +597,7 @@ func fetch(quit, done chan struct{}) {
 					}
 				}
 
-				if rpc.Daemon.Connect {
+				if rpc.Daemon.IsConnected() {
 					if rpc.Signal.Startup {
 						go refreshPriceDisplay(true)
 					}
@@ -905,7 +905,7 @@ func refreshIndexDisplay(c bool) {
 
 // Refresh daemon height display
 func refreshDaemonDisplay(c bool) {
-	if c && rpc.Daemon.Connect {
+	if c && rpc.Daemon.IsConnected() {
 		dHeight := rpc.DaemonHeight("dReams", rpc.Daemon.Rpc)
 		d := strconv.Itoa(int(dHeight))
 		menu.Assets.Daem_height.Text = (" Daemon Height: " + d)
@@ -929,7 +929,7 @@ func refreshWalletDisplay(c bool) {
 
 // Refresh current Dero-USDT price
 func refreshPriceDisplay(c bool) {
-	if c && rpc.Daemon.Connect {
+	if c && rpc.Daemon.IsConnected() {
 		_, price := holdero.GetPrice("DERO-USDT")
 		menu.Assets.Dero_price.Text = (" Dero Price: $" + price)
 		menu.Assets.Dero_price.Refresh()
@@ -953,7 +953,7 @@ func MenuRefresh(tab bool) {
 		go refreshGnomonDisplay(int(index), 1)
 		go refreshIndexDisplay(true)
 
-		if rpc.Daemon.Connect {
+		if rpc.Daemon.IsConnected() {
 			go refreshDaemonDisplay(true)
 		}
 
@@ -966,7 +966,7 @@ func MenuRefresh(tab bool) {
 		}
 	}
 
-	if rpc.Daemon.Connect {
+	if rpc.Daemon.IsConnected() {
 		go refreshDaemonDisplay(true)
 	} else {
 		go refreshDaemonDisplay(false)
@@ -1085,7 +1085,7 @@ func MenuTab(ti *container.TabItem) {
 func MenuContractTab(ti *container.TabItem) {
 	switch ti.Text {
 	case "Tables":
-		if rpc.Daemon.Connect {
+		if rpc.Daemon.IsConnected() {
 			go menu.CreateTableList(false, nil)
 		}
 

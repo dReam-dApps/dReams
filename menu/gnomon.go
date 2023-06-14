@@ -266,14 +266,14 @@ func g45Index() {
 
 // Update Gnomon endpoint to current rpc.Daemon.Rpc value
 func GnomonEndPoint() {
-	if rpc.Daemon.Connect && Gnomes.IsInitialized() && !Gnomes.IsScanning() {
+	if rpc.Daemon.IsConnected() && Gnomes.IsInitialized() && !Gnomes.IsScanning() {
 		Gnomes.Indexer.Endpoint = rpc.Daemon.Rpc
 	}
 }
 
 // Check three connection signals
 func Connected() bool {
-	if rpc.Daemon.Connect && rpc.Wallet.IsConnected() && Gnomes.IsSynced() {
+	if rpc.IsReady() && Gnomes.IsSynced() {
 		return true
 	}
 
@@ -284,7 +284,7 @@ func Connected() bool {
 //   - Hold out checking if dReams is in configure
 //   - windows disables certain initial sync routines from running on windows os
 func GnomonState(windows, config bool) {
-	if rpc.Daemon.Connect && Gnomes.IsRunning() {
+	if rpc.Daemon.IsConnected() && Gnomes.IsRunning() {
 		contracts := Gnomes.IndexContains()
 		if Gnomes.HasIndex(2) && !Gnomes.Trim {
 			height := int64(rpc.Wallet.Height)
@@ -580,7 +580,7 @@ func checkBetContract(scid, t string, list, owned []string) ([]string, []string)
 // Populate all dReams dPrediction contracts
 //   - Pass contracts from db store, can be nil arg
 func PopulatePredictions(contracts map[string]string) {
-	if rpc.Daemon.Connect && Gnomes.IsReady() {
+	if rpc.Daemon.IsConnected() && Gnomes.IsReady() {
 		list := []string{}
 		owned := []string{}
 		if contracts == nil {
@@ -609,7 +609,7 @@ func PopulatePredictions(contracts map[string]string) {
 // Populate all dReams dSports contracts
 //   - Pass contracts from db store, can be nil arg
 func PopulateSports(contracts map[string]string) {
-	if rpc.Daemon.Connect && Gnomes.IsReady() {
+	if rpc.Daemon.IsConnected() && Gnomes.IsReady() {
 		list := []string{}
 		owned := []string{}
 		if contracts == nil {

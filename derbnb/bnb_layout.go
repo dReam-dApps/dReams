@@ -1619,7 +1619,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 		connect_box.Button.OnTapped = func() {
 			rpc.GetAddress(tag)
 			rpc.Ping()
-			if rpc.Daemon.Connect && !menu.Gnomes.Init && !menu.Gnomes.Start {
+			if rpc.Daemon.IsConnected() && !menu.Gnomes.IsInitialized() && !menu.Gnomes.Start {
 				property_filter = menu.FetchFilters("derbnb_filter")
 				filters := BnbSearchFilter()
 				go menu.StartGnomon(tag, "gravdb", filters, 0, 0, nil)
@@ -1647,7 +1647,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 		i := 0
 		time.Sleep(2 * time.Second)
 		for !menu.ClosingApps() {
-			if !rpc.Wallet.IsConnected() || !rpc.Daemon.Connect {
+			if !rpc.Wallet.IsConnected() || !rpc.Daemon.IsConnected() {
 				list_button.Hide()
 				remove_button.Hide()
 				confirm_request_button.Hide()

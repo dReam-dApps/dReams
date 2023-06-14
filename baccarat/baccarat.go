@@ -38,7 +38,7 @@ func BaccBuffer(d bool) {
 		rpc.Bacc.Last = ""
 		rpc.Display.BaccRes = "Wait for Block..."
 	} else {
-		if rpc.Daemon.Connect && rpc.Display.BaccRes != "Wait for Block..." {
+		if rpc.Daemon.IsConnected() && rpc.Display.BaccRes != "Wait for Block..." {
 			Table.Actions.Show()
 		}
 	}
@@ -63,7 +63,7 @@ func BaccaratButtons(w fyne.Window) fyne.CanvasObject {
 	entry.SetText("10")
 	entry.Validator = validation.NewRegexp(`^\d{1,}$`, "Int required")
 	entry.OnChanged = func(s string) {
-		if rpc.Daemon.Connect {
+		if rpc.Daemon.IsConnected() {
 			if f, err := strconv.ParseFloat(s, 64); err == nil {
 				if f < rpc.Bacc.MinBet {
 					entry.SetText(rpc.Display.BaccMin)
@@ -177,7 +177,7 @@ func BaccTable(img fyne.Resource) fyne.CanvasObject {
 
 // Gets list of current Baccarat tables from on chain store and refresh options
 func GetBaccTables() {
-	if rpc.Daemon.Connect {
+	if rpc.Daemon.IsConnected() {
 		Table.Map = make(map[string]string)
 		if table_map, ok := rpc.FindStringKey(rpc.RatingSCID, "bacc_tables", rpc.Daemon.Rpc).(string); ok {
 			if str, err := hex.DecodeString(table_map); err == nil {

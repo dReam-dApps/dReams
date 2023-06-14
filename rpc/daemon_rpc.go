@@ -8,6 +8,7 @@ import (
 	"log"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/deroproject/derohe/rpc"
@@ -49,6 +50,7 @@ type daemon struct {
 	Rpc     string
 	Connect bool
 	Height  uint64
+	sync.RWMutex
 }
 
 var Daemon daemon
@@ -59,6 +61,27 @@ var Bacc baccValues
 var Signal signals
 var Predict predictionValues
 var Tarot tarotValues
+
+func (d *daemon) Connected(b bool) {
+	d.Lock()
+	d.Connect = b
+	d.Unlock()
+}
+
+func (d *daemon) IsConnected() bool {
+	d.RLock()
+	defer d.RUnlock()
+
+	return d.Connect
+}
+
+func IsReady() bool {
+	if Wallet.IsConnected() && Daemon.IsConnected() {
+		return true
+	}
+
+	return false
+}
 
 // Set daemon rpc client with context and 5 sec cancel
 func SetDaemonClient(addr string) (jsonrpc.RPCClient, context.Context, context.CancelFunc) {
@@ -75,14 +98,14 @@ func Ping() {
 
 	var result string
 	if err := rpcClientD.CallFor(ctx, &result, "DERO.Ping"); err != nil {
-		Daemon.Connect = false
+		Daemon.Connected(false)
 		return
 	}
 
 	if result == "Pong " {
-		Daemon.Connect = true
+		Daemon.Connected(true)
 	} else {
-		Daemon.Connect = false
+		Daemon.Connected(false)
 	}
 }
 
@@ -161,7 +184,7 @@ func FindStringKey(scid, key, daemon string) interface{} {
 func FetchDapps() (dApps []string) {
 	dApps = []string{"Holdero", "Baccarat", "dSports and dPredictions", "Iluma", "DerBnb"}
 	var daemon string
-	if !Daemon.Connect {
+	if !Daemon.IsConnected() {
 		daemon = DAEMON_RPC_REMOTE5
 	} else {
 		daemon = Daemon.Rpc
@@ -232,7 +255,7 @@ func CheckForIndex(scid string) interface{} {
 
 // Get code of a SC
 func GetSCCode(scid string) string {
-	if Daemon.Connect {
+	if Daemon.IsConnected() {
 		rpcClientD, ctx, cancel := SetDaemonClient(Daemon.Rpc)
 		defer cancel()
 
@@ -255,7 +278,7 @@ func GetSCCode(scid string) string {
 
 // Get name service SC code
 func GetNameServiceCode() string {
-	if Daemon.Connect {
+	if Daemon.IsConnected() {
 		rpcClientD, ctx, cancel := SetDaemonClient(Daemon.Rpc)
 		defer cancel()
 
@@ -278,7 +301,7 @@ func GetNameServiceCode() string {
 
 // Get Gnomon SC code
 func GetGnomonCode() string {
-	if Daemon.Connect {
+	if Daemon.IsConnected() {
 		rpcClientD, ctx, cancel := SetDaemonClient(Daemon.Rpc)
 		defer cancel()
 
@@ -384,7 +407,7 @@ func VerifySigner(txid string) bool {
 
 // Get Holdero SC data
 func FetchHolderoSC() {
-	if Daemon.Connect && Signal.Contract {
+	if Daemon.IsConnected() && Signal.Contract {
 		rpcClientD, ctx, cancel := SetDaemonClient(Daemon.Rpc)
 		defer cancel()
 
@@ -672,7 +695,7 @@ func FetchHolderoSC() {
 
 // Code for v1.0.0 Holdero SC
 func GetHoldero100Code() string {
-	if Daemon.Connect {
+	if Daemon.IsConnected() {
 		rpcClientD, ctx, cancel := SetDaemonClient(Daemon.Rpc)
 		defer cancel()
 
@@ -701,7 +724,7 @@ func GetHoldero100Code() string {
 //   - 1 for standard private
 //   - 2 for HGC
 func GetHoldero110Code(version int) string {
-	if Daemon.Connect {
+	if Daemon.IsConnected() {
 		rpcClientD, ctx, cancel := SetDaemonClient(Daemon.Rpc)
 		defer cancel()
 
@@ -744,7 +767,7 @@ func GetHoldero110Code(version int) string {
 
 // Get Baccarat SC data
 func FetchBaccSC() {
-	if Daemon.Connect {
+	if Daemon.IsConnected() {
 		rpcClientD, ctx, cancel := SetDaemonClient(Daemon.Rpc)
 		defer cancel()
 
@@ -809,7 +832,7 @@ func FetchBaccSC() {
 
 // Get Baccarat SC code
 func GetBaccCode() string {
-	if Daemon.Connect {
+	if Daemon.IsConnected() {
 		rpcClientD, ctx, cancel := SetDaemonClient(Daemon.Rpc)
 		defer cancel()
 
@@ -834,7 +857,7 @@ func GetBaccCode() string {
 
 // Find played Baccarat hand
 func FetchBaccHand(tx string) {
-	if Daemon.Connect && tx != "" {
+	if Daemon.IsConnected() && tx != "" {
 		rpcClientD, ctx, cancel := SetDaemonClient(Daemon.Rpc)
 		defer cancel()
 
@@ -913,7 +936,7 @@ func ValidBetContract(scid string) bool {
 
 // Get dPrediction final TXID
 func FetchPredictionFinal(scid string) (txid string) {
-	if Daemon.Connect {
+	if Daemon.IsConnected() {
 		rpcClientD, ctx, cancel := SetDaemonClient(Daemon.Rpc)
 		defer cancel()
 
@@ -942,7 +965,7 @@ func FetchPredictionFinal(scid string) (txid string) {
 // Get dPrediction SC code for public and private SC
 //   - pub defines public or private contract
 func GetPredictCode(pub int) string {
-	if Daemon.Connect {
+	if Daemon.IsConnected() {
 		rpcClientD, ctx, cancel := SetDaemonClient(Daemon.Rpc)
 		defer cancel()
 
@@ -975,7 +998,7 @@ func GetPredictCode(pub int) string {
 // Get dSports SC code for public and private SC
 //   - pub defines public or private contract
 func GetSportsCode(pub int) string {
-	if Daemon.Connect {
+	if Daemon.IsConnected() {
 		rpcClientD, ctx, cancel := SetDaemonClient(Daemon.Rpc)
 		defer cancel()
 
@@ -1007,7 +1030,7 @@ func GetSportsCode(pub int) string {
 
 // Get recent dSports final results and TXIDs
 func FetchSportsFinal(scid string) (finals []string) {
-	if Daemon.Connect {
+	if Daemon.IsConnected() {
 		rpcClientD, ctx, cancel := SetDaemonClient(Daemon.Rpc)
 		defer cancel()
 
@@ -1052,7 +1075,7 @@ func FetchSportsFinal(scid string) (finals []string) {
 
 // Get Tarot SC data
 func FetchTarotSC() {
-	if Daemon.Connect {
+	if Daemon.IsConnected() {
 		rpcClientD, ctx, cancel := SetDaemonClient(Daemon.Rpc)
 		defer cancel()
 
@@ -1077,7 +1100,7 @@ func FetchTarotSC() {
 
 // Find Tarot reading on SC
 func FetchTarotReading(tx string) {
-	if Daemon.Connect && len(tx) == 64 {
+	if Daemon.IsConnected() && len(tx) == 64 {
 		rpcClientD, ctx, cancel := SetDaemonClient(Daemon.Rpc)
 		defer cancel()
 

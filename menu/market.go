@@ -172,7 +172,7 @@ func BidBuyConfirm(scid string, amt uint64, b int, obj *container.Split, reset f
 	content := container.NewVBox(layout.NewSpacer(), label, layout.NewSpacer(), buttons)
 
 	go func() {
-		for rpc.Wallet.IsConnected() && rpc.Daemon.Connect {
+		for rpc.IsReady() {
 			time.Sleep(time.Second)
 		}
 
@@ -1075,7 +1075,7 @@ func RunNFAMarket(tag string, quit, done chan struct{}, connect_box *dwidget.Der
 			}
 
 			// If connected daemon connected start looking for Gnomon sync with daemon
-			if rpc.Daemon.Connect && Gnomes.IsRunning() {
+			if rpc.Daemon.IsConnected() && Gnomes.IsRunning() {
 				connect_box.Disconnect.SetChecked(true)
 				// Get indexed SCID count
 				Gnomes.IndexContains()
@@ -1124,7 +1124,7 @@ func RunNFAMarket(tag string, quit, done chan struct{}, connect_box *dwidget.Der
 				DisableIndexControls(true)
 			}
 
-			if rpc.Daemon.Connect {
+			if rpc.Daemon.IsConnected() {
 				rpc.Signal.Startup = false
 			}
 

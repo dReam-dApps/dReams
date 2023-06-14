@@ -1181,7 +1181,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 				collection_entry.Validator = validation.NewRegexp(`^\W\D\S$`, "Invalid collection directory")
 			}
 
-			if rpc.Wallet.IsConnected() && rpc.Daemon.Connect {
+			if rpc.IsReady() {
 				rpc_label.SetText(fmt.Sprintf("Installing address: %s", rpc.Wallet.Address))
 				if collection_enable.Checked {
 					if collection_low_entry.Text != "" && collection_high_entry.Text != "" {

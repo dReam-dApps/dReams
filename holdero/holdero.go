@@ -568,7 +568,7 @@ func BetAmount() fyne.CanvasObject {
 					}
 				} else {
 
-					if rpc.Daemon.Connect {
+					if rpc.Daemon.IsConnected() {
 						float := f * 100000
 						if uint64(float)%10000 == 0 {
 							Table.BetEntry.SetText(strconv.FormatFloat(roundFloat(f, 1), 'f', int(Table.BetEntry.Decimal), 64))
