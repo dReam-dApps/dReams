@@ -2,10 +2,12 @@ package menu
 
 import (
 	"log"
+	"strconv"
 	"sync"
-	"time"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/widget"
 	xwidget "fyne.io/x/fyne/widget"
 	"github.com/civilware/Gnomon/indexer"
 	"github.com/civilware/Gnomon/structures"
@@ -41,7 +43,7 @@ func (g *gnomon) Stop(tag string) {
 		log.Printf("[%s] Putting Gnomon to Sleep\n", tag)
 		g.Indexer.Close()
 		g.Init = false
-		time.Sleep(1 * time.Second)
+		g.Check = false
 		log.Printf("[%s] Gnomon is Sleeping\n", tag)
 	}
 	g.Unlock()
@@ -232,4 +234,47 @@ func (g *gnomon) GetAllSCIDVariableDetails(scid string) map[int64][]*structures.
 	default:
 		return g.Indexer.GravDBBackend.GetAllSCIDVariableDetails(scid)
 	}
+}
+
+func (g *gnomon) ControlPanel() *fyne.Container {
+	db := widget.NewRadioGroup([]string{"boltdb", "gravdb"}, func(s string) {
+		g.DBType = s
+	})
+	db.Horizontal = true
+	db.SetSelected(g.DBType)
+
+	fast := widget.NewRadioGroup([]string{"true", "false"}, func(s string) {
+		if b, err := strconv.ParseBool(s); err == nil {
+			g.Fast = b
+
+			return
+		}
+
+		g.Fast = true
+	})
+	fast.Horizontal = true
+	fast.SetSelected(strconv.FormatBool(g.Fast))
+
+	para := widget.NewSelect([]string{"1", "2", "3", "4", "5"}, func(s string) {
+		if i, err := strconv.ParseInt(s, 10, 64); err == nil {
+			g.Para = int(i)
+
+			return
+		}
+
+		g.Para = 1
+	})
+
+	if g.Para < 6 && g.Para > 1 {
+		para.SetSelectedIndex(g.Para - 1)
+	} else {
+		para.SetSelectedIndex(0)
+	}
+
+	gnomes_form := []*widget.FormItem{}
+	gnomes_form = append(gnomes_form, widget.NewFormItem("DB Type", db))
+	gnomes_form = append(gnomes_form, widget.NewFormItem("Fastsync", fast))
+	gnomes_form = append(gnomes_form, widget.NewFormItem("Parallel Blocks", para))
+
+	return container.NewBorder(nil, nil, nil, nil, widget.NewForm(gnomes_form...))
 }

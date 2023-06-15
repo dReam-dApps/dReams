@@ -146,8 +146,6 @@ func CheckConnection() {
 
 		disableActions(true)
 		DisableIndexControls(true)
-		Gnomes.Initialized(false)
-		Gnomes.Checked(false)
 	}
 
 	if rpc.Wallet.IsConnected() {
@@ -254,7 +252,7 @@ func WalletRpcEntry() fyne.Widget {
 			rpc.Display.Wallet_height = "0"
 			rpc.Wallet.Height = 0
 			rpc.Wallet.Connected(false)
-			CheckConnection()
+			go CheckConnection()
 		}
 	}
 
@@ -273,7 +271,7 @@ func UserPassEntry() fyne.Widget {
 	entry.OnCursorChanged = func() {
 		if rpc.Wallet.IsConnected() {
 			rpc.GetAddress("dReams")
-			CheckConnection()
+			go CheckConnection()
 		}
 	}
 
@@ -338,31 +336,36 @@ func HolderoContractEntry() fyne.Widget {
 //   - Pressed calls rpc.Ping(), rpc.GetAddress(), CheckConnection(),
 //     checks for Holdero key and clears names for population
 func RpcConnectButton() fyne.Widget {
+	var wait bool
 	button := widget.NewButton("Connect", func() {
 		go func() {
-			rpc.Ping()
-			rpc.GetAddress("dReams")
-			CheckConnection()
-			if Control.Dapp_list["Holdero"] {
-				Poker.contract_input.CursorColumn = 1
-				Poker.contract_input.Refresh()
-				if len(rpc.Wallet.Address) == 66 {
-					rpc.CheckExistingKey()
-					Control.Names.ClearSelected()
-					Control.Names.Options = []string{}
-					Control.Names.Refresh()
-					Control.Names.Options = append(Control.Names.Options, rpc.Wallet.Address[0:12])
-					if Control.Names.Options != nil {
-						Control.Names.SetSelectedIndex(0)
+			if !wait {
+				wait = true
+				rpc.Ping()
+				rpc.GetAddress("dReams")
+				CheckConnection()
+				if Control.Dapp_list["Holdero"] {
+					Poker.contract_input.CursorColumn = 1
+					Poker.contract_input.Refresh()
+					if len(rpc.Wallet.Address) == 66 {
+						rpc.CheckExistingKey()
+						Control.Names.ClearSelected()
+						Control.Names.Options = []string{}
+						Control.Names.Refresh()
+						Control.Names.Options = append(Control.Names.Options, rpc.Wallet.Address[0:12])
+						if Control.Names.Options != nil {
+							Control.Names.SetSelectedIndex(0)
+						}
 					}
 				}
-			}
 
-			if Control.Dapp_list["dSports and dPredictions"] {
-				Control.P_contract.CursorColumn = 1
-				Control.P_contract.Refresh()
-				Control.S_contract.CursorColumn = 1
-				Control.S_contract.Refresh()
+				if Control.Dapp_list["dSports and dPredictions"] {
+					Control.P_contract.CursorColumn = 1
+					Control.P_contract.Refresh()
+					Control.S_contract.CursorColumn = 1
+					Control.S_contract.Refresh()
+				}
+				wait = false
 			}
 		}()
 	})

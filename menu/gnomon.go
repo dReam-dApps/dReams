@@ -287,7 +287,7 @@ func GnomonState(windows, config bool) {
 	if rpc.Daemon.IsConnected() && Gnomes.IsRunning() {
 		contracts := Gnomes.IndexContains()
 		if Gnomes.HasIndex(2) && !Gnomes.Trim {
-			height := int64(rpc.Wallet.Height)
+			height := Gnomes.Indexer.ChainHeight
 			if Gnomes.IsRunning() && Gnomes.Indexer.LastIndexedHeight >= height-3 && height != 0 {
 				Gnomes.Synced(true)
 				if !config && rpc.Wallet.IsConnected() && !Gnomes.Check {

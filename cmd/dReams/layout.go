@@ -24,6 +24,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 	xwidget "fyne.io/x/fyne/widget"
@@ -481,7 +482,23 @@ func placeWall() *container.Split {
 	daemon_check_cont := container.NewVBox(menu.DaemonConnectedBox())
 
 	user_input_box := container.NewHBox(user_input_cont, daemon_check_cont)
-	connect_tabs := container.NewAppTabs(container.NewTabItem("Connect", container.NewCenter(user_input_box)))
+	connect_tabs := container.NewAppTabs(
+		container.NewTabItem("Connect", container.NewCenter(user_input_box)),
+		container.NewTabItem("Gnomon", menu.Gnomes.ControlPanel()))
+
+	connect_tabs.OnSelected = func(ti *container.TabItem) {
+		if ti.Text == "Gnomon" {
+			if rpc.Daemon.IsConnected() || menu.Gnomes.IsInitialized() {
+				dialog.NewInformation("Gnomon Running", "Shut down Gnomon to make changes", dReams.Window).Show()
+				connect_tabs.DisableIndex(1)
+
+			}
+
+			return
+		}
+
+		connect_tabs.EnableIndex(1)
+	}
 
 	menu_top := container.NewHSplit(container.NewMax(bundle.Alpha120, menu.IntroTree()), connect_tabs)
 	menu_top.SetOffset(0.66)
