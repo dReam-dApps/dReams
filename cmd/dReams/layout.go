@@ -446,7 +446,7 @@ func place() *fyne.Container {
 		MainTab(ti)
 		if ti.Text == "Menu" {
 			menu_bottom.Show()
-			menu_tabs.Items[0].Content.(*container.Split).Leading.(*container.Split).Trailing.Refresh()
+			menu_tabs.Items[0].Content.(*container.Split).Leading.(*container.Split).Leading.Refresh()
 		} else {
 			menu_bottom.Hide()
 		}
