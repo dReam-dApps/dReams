@@ -402,7 +402,7 @@ func place() *fyne.Container {
 	if menu.Control.Dapp_list["Holdero"] {
 		var holdero_objs *fyne.Container
 		var contract_objs *container.Split
-		contract_change_screen := widget.NewButton("Contracts", nil)
+		contract_change_screen := widget.NewButton("Tables", nil)
 		contract_change_screen.OnTapped = func() {
 			go func() {
 				dReams.menu_tabs.contracts = true
@@ -484,7 +484,7 @@ func placeWall() *container.Split {
 	user_input_box := container.NewHBox(user_input_cont, daemon_check_cont)
 	connect_tabs := container.NewAppTabs(
 		container.NewTabItem("Connect", container.NewCenter(user_input_box)),
-		container.NewTabItem("Gnomon", menu.Gnomes.ControlPanel()))
+		container.NewTabItem("Gnomon", menu.Gnomes.ControlPanel(dReams.Window)))
 
 	connect_tabs.OnSelected = func(ti *container.TabItem) {
 		if ti.Text == "Gnomon" {
@@ -617,14 +617,14 @@ func placeContract(change_screen *fyne.Container) *container.Split {
 		container.NewTabItem("Tables", layout.NewSpacer()),
 		container.NewTabItem("Favorites", menu.HolderoFavorites()),
 		container.NewTabItem("Owned", owned_tab),
-		container.NewTabItem("View", layout.NewSpacer()))
+		container.NewTabItem("View Table", layout.NewSpacer()))
 
 	tabs.SelectIndex(0)
 	tabs.Selected().Content = menu.TableListings(tabs)
 
 	tabs.OnSelected = func(ti *container.TabItem) {
 		MenuContractTab(ti)
-		if ti.Text == "View" {
+		if ti.Text == "View Table" {
 			go func() {
 				if len(rpc.Round.Contract) == 64 {
 					rpc.FetchHolderoSC()

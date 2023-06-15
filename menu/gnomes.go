@@ -2,11 +2,13 @@ package menu
 
 import (
 	"log"
+	"os"
 	"strconv"
 	"sync"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
 	xwidget "fyne.io/x/fyne/widget"
 	"github.com/civilware/Gnomon/indexer"
@@ -236,7 +238,7 @@ func (g *gnomon) GetAllSCIDVariableDetails(scid string) map[int64][]*structures.
 	}
 }
 
-func (g *gnomon) ControlPanel() *fyne.Container {
+func (g *gnomon) ControlPanel(w fyne.Window) *fyne.Container {
 	db := widget.NewRadioGroup([]string{"boltdb", "gravdb"}, func(s string) {
 		g.DBType = s
 	})
@@ -271,10 +273,18 @@ func (g *gnomon) ControlPanel() *fyne.Container {
 		para.SetSelectedIndex(0)
 	}
 
+	delete_db := widget.NewButton("Delete DB", func() {
+		dialog.NewConfirm("Delete DB", "This will delete your current Gnomon DB", func(b bool) {
+			if b {
+				os.RemoveAll("gnomondb")
+			}
+		}, w).Show()
+	})
+
 	gnomes_form := []*widget.FormItem{}
 	gnomes_form = append(gnomes_form, widget.NewFormItem("DB Type", db))
 	gnomes_form = append(gnomes_form, widget.NewFormItem("Fastsync", fast))
 	gnomes_form = append(gnomes_form, widget.NewFormItem("Parallel Blocks", para))
 
-	return container.NewBorder(nil, nil, nil, nil, widget.NewForm(gnomes_form...))
+	return container.NewBorder(nil, container.NewCenter(delete_db), nil, nil, widget.NewForm(gnomes_form...))
 }
