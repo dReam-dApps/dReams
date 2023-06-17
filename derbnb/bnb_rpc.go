@@ -12,45 +12,65 @@ import (
 )
 
 type property_data struct {
-	Photos        []string `json:"photos"`
-	Squarefootage int      `json:"squarefootage"`
+	Squarefootage     int      `json:"squarefootage"`
+	Style             string   `json:"style"`
+	NumberOfBedrooms  int      `json:"number-of-bedrooms"`
+	Beds              int      `json:"beds"`
+	MaxNumberOfGuests int      `json:"max-number-of-guests"`
+	Photos            []string `json:"photos"`
+	Description       string   `json:"description"`
+	CleaningFee       int      `json:"cleaning-fee"`
+	MinimumStay       int      `json:"minimum-stay"`
+	MaximumStay       int      `json:"maximum-stay"`
+	CheckInWindow     available_dates
+	CheckOut          int
+	XCord             int `json:"x-cord"`
+	YCord             int `json:"y-cord"`
+	Amenities         struct {
+		Wifi             bool `json:"wifi"`
+		TV               bool `json:"tv"`
+		Kitchen          bool `json:"kitchen"`
+		Washer           bool `json:"washer"`
+		Parking          bool `json:"parking"`
+		AirConditioner   bool `json:"air-conditioner"`
+		Workspace        bool `json:"workspace"`
+		Pool             bool `json:"pool"`
+		HotTub           bool `json:"hot-tub"`
+		BBQ              bool `json:"bbq"`
+		OutdoorDining    bool `json:"outdoor-dining"`
+		FirePit          bool `json:"fire-pit"`
+		GamesRoom        bool `json:"games-room"`
+		ExerciseEquip    bool `json:"exercise-equip"`
+		LakeAccess       bool `json:"lake-access"`
+		BeachAccess      bool `json:"beach-access"`
+		SmokeAlarm       bool `json:"smoke-alarm"`
+		FireExtinguisher bool `json:"fire-extinguisher"`
+	} `json:"amenities"`
 	// Driveway              bool     `json:"driveway"`
-	Style       string `json:"style"`
-	Description string `json:"description"`
 	// DistanceToCasino      string   `json:"distance-to-casino"`
 	// DistanceToRestaurants string   `json:"distance-to-restaurants"`
-	// FibreBroadband        bool     `json:"fibre-broadband"`
 	// AcceptsDero           bool     `json:"accepts-dero"`
 	// AcceptsCrypto         bool     `json:"accepts-crypto"`
-	// HasPool               bool     `json:"has-pool"`
-	//ParkingGarage bool `json:"parking-garage"`
 	// DistanceToTrain       string   `json:"distance-to-train"`
 	// DistanceToAirport     string   `json:"distance-to-airport"`
 	// DistanceToSubway      string   `json:"distance-to-subway"`
 	// DistanceToBus         string   `json:"distance-to-bus"`
 	// DistanceToFerry       string   `json:"distance-to-ferry"`
-	NumberOfBedrooms  int `json:"number-of-bedrooms"`
-	MaxNumberOfGuests int `json:"max-number-of-guests"`
-	//HasWasherAndDryer bool `json:"has-washer-and-dryer"`
 	// HasOceanViews         bool     `json:"has-ocean-views"`
 	// HasBalcony            bool     `json:"has-balcony"`
 	// HasPrivatePool        bool     `json:"has-private-pool"`
-	// HasAirConditioner     bool     `json:"has-air-conditioner"`
 	// HasHeating            bool     `json:"has-heating"`
-	// HasTV                 bool     `json:"has-TV"`
 	// HasFridge             bool     `json:"has-fridge"`
 	// HasStovetop           bool     `json:"has-stovetop"`
 	// HasOven               bool     `json:"has-oven"`
 	// HasCoffeeMaker        bool     `json:"has-coffee-maker"`
 	// HasBlender            bool     `json:"has-blender"`
-	// HasPrivateBeachAccess bool     `json:"has-private-beach-access"`
 	// DistanceToCapital     string   `json:"distance-to-capital"`
 	// DistanceToShop        string   `json:"distance-to-shop"`
 	// DistanceToClubs       string   `json:"distance-to-clubs"`
 	// DistanceToBeach       string   `json:"distance-to-beach"`
 	// HasSmokeAlarm         bool     `json:"has-smoke-alarm"`
 	// HasCO2Detector        bool     `json:"has-CO2-detector"`
-	// HasFireExtinguisher   bool     `json:"has-fire-extinguisher"`
 	// Basement              bool     `json:"basement"`
 	// Fireplaces            int      `json:"fireplaces"`
 	// Flooring              string   `json:"flooring"`
@@ -64,7 +84,6 @@ type property_data struct {
 	// BuildingExterior      string   `json:"building-exterior"`
 	// Foundation            string   `json:"foundation"`
 	// Levels                int      `json:"levels"`
-	// Homestyle             string   `json:"homestyle"`
 	// YearBuilt             int      `json:"year-built"`
 	// ConstructionMaterials string   `json:"construction-materials"`
 	// Roof                  string   `json:"roof"`

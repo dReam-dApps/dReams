@@ -345,14 +345,6 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 	confirm_action_label.Wrapping = fyne.TextWrapWord
 	confirm_action_label.Alignment = fyne.TextAlignCenter
 
-	// Metadata form labels
-	sq_foot_label := "Sq footage"
-	style_label := "Property style"
-	num_bedrooms_label := "Bedrooms"
-	num_guests_label := "Max guests"
-	photo_entry_label := "Photos"
-	prop_descp_label := "Describe the property"
-
 	derbnb_gif, _ := xwidget.NewAnimatedGifFromResource(bundle.ResourceDerbnbGifGif)
 	derbnb_gif.SetMinSize(fyne.NewSize(100, 100))
 
@@ -593,6 +585,48 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 					}
 				case 5:
 					metadata.Description = cont.Objects[0].(*widget.Entry).Text
+				case 6:
+					metadata.CleaningFee = rpc.StringToInt(cont.Objects[0].(*dwidget.DeroAmts).Text)
+				case 7:
+					metadata.MinimumStay = rpc.StringToInt(cont.Objects[0].(*dwidget.DeroAmts).Text)
+				case 8:
+					metadata.MaximumStay = rpc.StringToInt(cont.Objects[0].(*dwidget.DeroAmts).Text)
+				case 9:
+					metadata.Amenities.Wifi = amenityValue(cont.Objects[0].(*widget.RadioGroup).Selected)
+				case 10:
+					metadata.Amenities.TV = amenityValue(cont.Objects[0].(*widget.RadioGroup).Selected)
+				case 11:
+					metadata.Amenities.Kitchen = amenityValue(cont.Objects[0].(*widget.RadioGroup).Selected)
+				case 12:
+					metadata.Amenities.Washer = amenityValue(cont.Objects[0].(*widget.RadioGroup).Selected)
+				case 13:
+					metadata.Amenities.Parking = amenityValue(cont.Objects[0].(*widget.RadioGroup).Selected)
+				case 14:
+					metadata.Amenities.AirConditioner = amenityValue(cont.Objects[0].(*widget.RadioGroup).Selected)
+				case 15:
+					metadata.Amenities.Workspace = amenityValue(cont.Objects[0].(*widget.RadioGroup).Selected)
+				case 16:
+					metadata.Amenities.Pool = amenityValue(cont.Objects[0].(*widget.RadioGroup).Selected)
+				case 17:
+					metadata.Amenities.HotTub = amenityValue(cont.Objects[0].(*widget.RadioGroup).Selected)
+				case 18:
+					metadata.Amenities.BBQ = amenityValue(cont.Objects[0].(*widget.RadioGroup).Selected)
+				case 19:
+					metadata.Amenities.OutdoorDining = amenityValue(cont.Objects[0].(*widget.RadioGroup).Selected)
+				case 20:
+					metadata.Amenities.FirePit = amenityValue(cont.Objects[0].(*widget.RadioGroup).Selected)
+				case 21:
+					metadata.Amenities.GamesRoom = amenityValue(cont.Objects[0].(*widget.RadioGroup).Selected)
+				case 22:
+					metadata.Amenities.ExerciseEquip = amenityValue(cont.Objects[0].(*widget.RadioGroup).Selected)
+				case 23:
+					metadata.Amenities.LakeAccess = amenityValue(cont.Objects[0].(*widget.RadioGroup).Selected)
+				case 24:
+					metadata.Amenities.BeachAccess = amenityValue(cont.Objects[0].(*widget.RadioGroup).Selected)
+				case 25:
+					metadata.Amenities.SmokeAlarm = amenityValue(cont.Objects[0].(*widget.RadioGroup).Selected)
+				case 26:
+					metadata.Amenities.FireExtinguisher = amenityValue(cont.Objects[0].(*widget.RadioGroup).Selected)
 				default:
 
 				}
@@ -1480,21 +1514,6 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 	booking_list_control := container.NewBorder(nil, nil, booking_collapse_all, container.NewAdaptiveGrid(2, booking_scroll_up, booking_scroll_down), widget.NewLabel("Bookings"))
 
 	// properties list control objects
-	photo_entry1 := widget.NewEntry()
-	photo_entry2 := widget.NewEntry()
-	photo_entry3 := widget.NewEntry()
-	photo_entry4 := widget.NewEntry()
-	photo_entry5 := widget.NewEntry()
-	photo_entry6 := widget.NewEntry()
-	photo_entry1.SetPlaceHolder("Photo #1:")
-	photo_entry2.SetPlaceHolder("Photo #2:")
-	photo_entry3.SetPlaceHolder("Photo #3:")
-	photo_entry4.SetPlaceHolder("Photo #4:")
-	photo_entry5.SetPlaceHolder("Photo #5:")
-	photo_entry6.SetPlaceHolder("Photo #6:")
-
-	photo_entry_cont := container.NewVBox(photo_entry1, photo_entry2, photo_entry3, photo_entry4, photo_entry5, photo_entry6)
-
 	sq_foot_entry := dwidget.DeroAmtEntry("", 1, 0)
 	sq_foot_entry.SetPlaceHolder("Sq footage:")
 	sq_foot_entry.AllowFloat = false
@@ -1518,14 +1537,90 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 	num_guests_entry.Validator = validation.NewRegexp(`^[^0]\d{0,}$`, "Int required")
 	num_guests_cont := container.NewVBox(num_guests_entry)
 
+	photo_entry1 := widget.NewEntry()
+	photo_entry2 := widget.NewEntry()
+	photo_entry3 := widget.NewEntry()
+	photo_entry4 := widget.NewEntry()
+	photo_entry5 := widget.NewEntry()
+	photo_entry6 := widget.NewEntry()
+	photo_entry1.SetPlaceHolder("Photo #1:")
+	photo_entry2.SetPlaceHolder("Photo #2:")
+	photo_entry3.SetPlaceHolder("Photo #3:")
+	photo_entry4.SetPlaceHolder("Photo #4:")
+	photo_entry5.SetPlaceHolder("Photo #5:")
+	photo_entry6.SetPlaceHolder("Photo #6:")
+
+	photo_entry_cont := container.NewVBox(photo_entry1, photo_entry2, photo_entry3, photo_entry4, photo_entry5, photo_entry6)
+
 	prop_descp_entry := widget.NewMultiLineEntry()
 	prop_descp_entry.SetPlaceHolder("Description:")
 	prop_descp_entry.Validator = validation.NewRegexp(`^\w{1,}`, "String required")
 	prop_descp_entry.Wrapping = fyne.TextWrapWord
 	prop_descp_cont := container.NewVBox(prop_descp_entry)
 
-	metadata_label_arr = []string{sq_foot_label, style_label, num_bedrooms_label, num_guests_label, photo_entry_label, prop_descp_label}
-	metadata_entry_arr = []*fyne.Container{sq_foot_cont, style_cont, num_bedrooms_cont, num_guests_cont, photo_entry_cont, prop_descp_cont}
+	cleaning_fee_entry := dwidget.DeroAmtEntry("", 1, 0)
+	cleaning_fee_entry.SetPlaceHolder("Cleaning fee:")
+	cleaning_fee_entry.AllowFloat = false
+	cleaning_fee_entry.Validator = validation.NewRegexp(`^[^0]\d{0,}$`, "Int required")
+	cleaning_fee_cont := container.NewVBox(cleaning_fee_entry)
+
+	min_stay_entry := dwidget.DeroAmtEntry("", 1, 0)
+	min_stay_entry.SetPlaceHolder("Minimum stay:")
+	min_stay_entry.AllowFloat = false
+	min_stay_entry.Validator = validation.NewRegexp(`^[^0]\d{0,}$`, "Int required")
+	min_stay_cont := container.NewVBox(min_stay_entry)
+
+	max_stay_entry := dwidget.DeroAmtEntry("", 1, 0)
+	max_stay_entry.SetPlaceHolder("Maximum stay:")
+	max_stay_entry.AllowFloat = false
+	max_stay_entry.Validator = validation.NewRegexp(`^[^0]\d{0,}$`, "Int required")
+	max_stay_cont := container.NewVBox(max_stay_entry)
+
+	metadata_label_arr = []string{
+		"Sq Footage",
+		"Property Style",
+		"Bedrooms",
+		"Max Guests",
+		"Photos",
+		"Describe the Property",
+		"Cleaning Fee",
+		"Minimum Stay",
+		"Maximum Stay",
+		"Wifi",
+		"TV",
+		"Kitchen",
+		"Washer",
+		"Free Parking",
+		"Air conditioner",
+		"Workspace",
+		"Pool Access",
+		"Hot Tub",
+		"BBQ",
+		"Outdoor Dining",
+		"Fire Pit",
+		"Games Room",
+		"Exercise Equipment",
+		"Lake Access",
+		"Beach Access",
+		"Smoke Alarm",
+		"Fire Extinguisher",
+	}
+
+	metadata_entry_arr = []*fyne.Container{
+		sq_foot_cont,
+		style_cont,
+		num_bedrooms_cont,
+		num_guests_cont,
+		photo_entry_cont,
+		prop_descp_cont,
+		cleaning_fee_cont,
+		min_stay_cont,
+		max_stay_cont,
+	}
+
+	for i := 0; i < 18; i++ {
+		metadata_entry_arr = append(metadata_entry_arr, placeAmenityObjects())
+	}
 
 	property_add_info = widget.NewButtonWithIcon("Edit", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "documentCreate"), func() {
 		derbnb_gif.Start()
@@ -1754,6 +1849,16 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 	}()
 
 	return max
+}
+
+func placeAmenityObjects() *fyne.Container {
+	opts := []string{"No", "Yes"}
+	amenity := widget.NewRadioGroup(opts, nil)
+	amenity.Horizontal = true
+	amenity.SetSelected("No")
+
+	return container.NewVBox(amenity)
+
 }
 
 // Places metadata labels with entry objects into container

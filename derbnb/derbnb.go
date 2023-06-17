@@ -550,14 +550,26 @@ func getInfo(scid string) (info string) {
 		if owner != nil && price != nil && dep != nil {
 			location := makeLocationString(scid)
 			data := getMetadata(scid)
-			data_string := fmt.Sprintf("Sq feet: %d\n\nStyle: %s\n\nBedrooms: %d\n\nMax guests: %d\n\nDescription: %s", data.Squarefootage, data.Style, data.NumberOfBedrooms, data.MaxNumberOfGuests, data.Description)
+			data_string := fmt.Sprintf("Sq feet: %d\n\nStyle: %s\n\nBedrooms: %d\n\nMax guests: %d\n\nDescription: %s\n\nCleaning Fee: %d\n\nMinimum Stay: %d\n\nMaximum Stay: %d", data.Squarefootage, data.Style, data.NumberOfBedrooms, data.MaxNumberOfGuests, data.Description, data.CleaningFee, data.MinimumStay, data.MaximumStay)
 			current_price = price[0]
 			current_deposit = dep[0]
-			info = fmt.Sprintf("Location: %s\n\nPrice: %s Dero per night\n\nDamage Deposit: %s Dero\n\nOwner: %s\n\n%s", location, walletapi.FormatMoney(price[0]), walletapi.FormatMoney(dep[0]), owner[0], data_string)
+			info = fmt.Sprintf("Location: %s\n\nPrice: %s Dero per night\n\nDamage Deposit: %s Dero\n\nOwner: %s\n\n%s\n\n", location, walletapi.FormatMoney(price[0]), walletapi.FormatMoney(dep[0]), owner[0], data_string) + makeAmenityInfo(data)
 		}
 	}
 
 	return
+}
+
+func makeAmenityInfo(data *property_data) (info string) {
+	info = fmt.Sprintf("Has Wifi: %t\n\nHas TV: %t\n\nHas Kitchen: %t\n\nHas Washer: %t\n\nHas Parking: %t\n\nHas Air Conditioning: %t\n\nHas Workspace: %t\n\nHas Pool: %t\n\n", data.Amenities.Wifi, data.Amenities.TV, data.Amenities.Kitchen, data.Amenities.Washer, data.Amenities.Parking, data.Amenities.AirConditioner, data.Amenities.Workspace, data.Amenities.Pool)
+	info = info + fmt.Sprintf("Has Hot Tub: %t\n\nHas BBQ: %t\n\nHas Outdoor Dining: %t\n\nHas FIre Pit: %t\n\nHas Games Room: %t\n\nHas Exercise Equipment: %t\n\n", data.Amenities.HotTub, data.Amenities.BBQ, data.Amenities.OutdoorDining, data.Amenities.FirePit, data.Amenities.GamesRoom, data.Amenities.ExerciseEquip)
+	info = info + fmt.Sprintf("Has Lake Access: %t\n\nHas Beach Access: %t\n\nHas Smoke Alarm: %t\n\nHas Fire Extinguisher: %t\n\n", data.Amenities.LakeAccess, data.Amenities.BeachAccess, data.Amenities.SmokeAlarm, data.Amenities.FireExtinguisher)
+
+	return
+}
+
+func amenityValue(a string) bool {
+	return a == "Yes"
 }
 
 // Get owner address of DerBnb property
