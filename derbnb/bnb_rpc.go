@@ -12,20 +12,20 @@ import (
 )
 
 type property_data struct {
-	Squarefootage     int      `json:"squarefootage"`
-	Style             string   `json:"style"`
-	NumberOfBedrooms  int      `json:"number-of-bedrooms"`
-	Beds              int      `json:"beds"`
-	MaxNumberOfGuests int      `json:"max-number-of-guests"`
-	Photos            []string `json:"photos"`
-	Description       string   `json:"description"`
-	CleaningFee       int      `json:"cleaning-fee"`
-	MinimumStay       int      `json:"minimum-stay"`
-	MaximumStay       int      `json:"maximum-stay"`
-	CheckInWindow     available_dates
-	CheckOut          int
-	XCord             int `json:"x-cord"`
-	YCord             int `json:"y-cord"`
+	Surface           int             `json:"surface"`
+	Style             string          `json:"style"`
+	NumberOfBedrooms  int             `json:"number-of-bedrooms"`
+	Beds              int             `json:"beds"`
+	MaxNumberOfGuests int             `json:"max-number-of-guests"`
+	Photos            []string        `json:"photos"`
+	Description       string          `json:"description"`
+	CleaningFee       int             `json:"cleaning-fee"`
+	MinimumStay       int             `json:"minimum-stay"`
+	MaximumStay       int             `json:"maximum-stay"`
+	CheckInWindow     available_dates `json:"check-in"`
+	CheckOut          int             `json:"check-out"`
+	XCord             int             `json:"x-cord"`
+	YCord             int             `json:"y-cord"`
 	Amenities         struct {
 		Wifi             bool `json:"wifi"`
 		TV               bool `json:"tv"`

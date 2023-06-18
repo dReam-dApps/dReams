@@ -88,6 +88,10 @@ func MsToTime(ms string) (time.Time, error) {
 	return time.Unix(0, msInt*int64(time.Millisecond)), nil
 }
 
+func SqfootToSqMeter(sqft float64) float64 {
+	return sqft * 0.092903
+}
+
 // Convert string to int, returns 0 if err
 func StringToInt(s string) int {
 	if s != "" {

@@ -570,7 +570,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 			for i, cont := range metadata_entry_arr {
 				switch i {
 				case 0:
-					metadata.Squarefootage = rpc.StringToInt(cont.Objects[0].(*dwidget.DeroAmts).Text)
+					metadata.Surface = rpc.StringToInt(cont.Objects[0].(*dwidget.DeroAmts).Text)
 				case 1:
 					metadata.Style = cont.Objects[0].(*widget.Entry).Text
 				case 2:
@@ -900,7 +900,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 			if location := makeLocationString(scid_entry.Text); location != "" {
 				if data := getMetadata(scid_entry.Text); data != nil {
 					derbnb_gif.Start()
-					data_string := fmt.Sprintf("Sq feet: %d\n\nStyle: %s\n\nBedrooms: %d\n\nMax guests: %d\n\nDescription: %s", data.Squarefootage, data.Style, data.NumberOfBedrooms, data.MaxNumberOfGuests, data.Description)
+					data_string := fmt.Sprintf("Surface: %d\n\nStyle: %s\n\nBedrooms: %d\n\nMax guests: %d\n\nDescription: %s", data.Surface, data.Style, data.NumberOfBedrooms, data.MaxNumberOfGuests, data.Description)
 					confirm_border.Objects[4] = container.NewVScroll(container.NewVBox(layout.NewSpacer(), confirm_action_label, layout.NewSpacer()))
 					price_str := price_entry.Text
 					if price_fl, err := strconv.ParseFloat(price_str, 64); err == nil {
@@ -1514,11 +1514,25 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 	booking_list_control := container.NewBorder(nil, nil, booking_collapse_all, container.NewAdaptiveGrid(2, booking_scroll_up, booking_scroll_down), widget.NewLabel("Bookings"))
 
 	// properties list control objects
-	sq_foot_entry := dwidget.DeroAmtEntry("", 1, 0)
-	sq_foot_entry.SetPlaceHolder("Sq footage:")
-	sq_foot_entry.AllowFloat = false
-	sq_foot_entry.Validator = validation.NewRegexp(`^[^0]\d{0,}$`, "Int required")
-	sq_foot_cont := container.NewVBox(sq_foot_entry)
+	squared_symbol := "\u00B2"
+
+	surface_entry := dwidget.DeroAmtEntry("", 1, 0)
+	surface_entry.SetPlaceHolder("Sq Meters:")
+	surface_entry.AllowFloat = false
+	surface_entry.Validator = validation.NewRegexp(`^[^0]\d{0,}$`, "Int required")
+	meter_foot_entry := dwidget.DeroAmtEntry("", 1, 0)
+	meter_foot_entry.AllowFloat = false
+	meter_foot_entry.SetPlaceHolder("Sq Feet:")
+	meter_foot_button := widget.NewButton(fmt.Sprintf("Convert Foot%s to Meter%s", squared_symbol, squared_symbol), func() {
+		if f, err := strconv.ParseFloat(meter_foot_entry.Text, 64); err == nil {
+			meter := rpc.SqfootToSqMeter(f)
+			if s := strconv.FormatFloat(meter, 'f', 0, 64); s != "" {
+				surface_entry.SetText(s)
+			}
+		}
+	})
+
+	surface_cont := container.NewAdaptiveGrid(2, surface_entry, container.NewAdaptiveGrid(2, meter_foot_button, meter_foot_entry))
 
 	style_entry := widget.NewEntry()
 	style_entry.SetPlaceHolder("Style:")
@@ -1543,14 +1557,29 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 	photo_entry4 := widget.NewEntry()
 	photo_entry5 := widget.NewEntry()
 	photo_entry6 := widget.NewEntry()
+	photo_entry7 := widget.NewEntry()
+	photo_entry8 := widget.NewEntry()
+	photo_entry9 := widget.NewEntry()
 	photo_entry1.SetPlaceHolder("Photo #1:")
 	photo_entry2.SetPlaceHolder("Photo #2:")
 	photo_entry3.SetPlaceHolder("Photo #3:")
 	photo_entry4.SetPlaceHolder("Photo #4:")
 	photo_entry5.SetPlaceHolder("Photo #5:")
 	photo_entry6.SetPlaceHolder("Photo #6:")
+	photo_entry7.SetPlaceHolder("Photo #7:")
+	photo_entry8.SetPlaceHolder("Photo #8:")
+	photo_entry9.SetPlaceHolder("Photo #9:")
 
-	photo_entry_cont := container.NewVBox(photo_entry1, photo_entry2, photo_entry3, photo_entry4, photo_entry5, photo_entry6)
+	photo_entry_cont := container.NewVBox(
+		photo_entry1,
+		photo_entry2,
+		photo_entry3,
+		photo_entry4,
+		photo_entry5,
+		photo_entry6,
+		photo_entry7,
+		photo_entry8,
+		photo_entry9)
 
 	prop_descp_entry := widget.NewMultiLineEntry()
 	prop_descp_entry.SetPlaceHolder("Description:")
@@ -1577,7 +1606,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 	max_stay_cont := container.NewVBox(max_stay_entry)
 
 	metadata_label_arr = []string{
-		"Sq Footage",
+		fmt.Sprintf("Surface (m%s)", squared_symbol),
 		"Property Style",
 		"Bedrooms",
 		"Max Guests",
@@ -1607,7 +1636,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 	}
 
 	metadata_entry_arr = []*fyne.Container{
-		sq_foot_cont,
+		surface_cont,
 		style_cont,
 		num_bedrooms_cont,
 		num_guests_cont,

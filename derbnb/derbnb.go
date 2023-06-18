@@ -550,7 +550,7 @@ func getInfo(scid string) (info string) {
 		if owner != nil && price != nil && dep != nil {
 			location := makeLocationString(scid)
 			data := getMetadata(scid)
-			data_string := fmt.Sprintf("Sq feet: %d\n\nStyle: %s\n\nBedrooms: %d\n\nMax guests: %d\n\nDescription: %s\n\nCleaning Fee: %d\n\nMinimum Stay: %d\n\nMaximum Stay: %d", data.Squarefootage, data.Style, data.NumberOfBedrooms, data.MaxNumberOfGuests, data.Description, data.CleaningFee, data.MinimumStay, data.MaximumStay)
+			data_string := fmt.Sprintf("Sq Meters: %d\n\nStyle: %s\n\nBedrooms: %d\n\nMax guests: %d\n\nDescription: %s\n\nCleaning Fee: %d\n\nMinimum Stay: %d\n\nMaximum Stay: %d", data.Surface, data.Style, data.NumberOfBedrooms, data.MaxNumberOfGuests, data.Description, data.CleaningFee, data.MinimumStay, data.MaximumStay)
 			current_price = price[0]
 			current_deposit = dep[0]
 			info = fmt.Sprintf("Location: %s\n\nPrice: %s Dero per night\n\nDamage Deposit: %s Dero\n\nOwner: %s\n\n%s\n\n", location, walletapi.FormatMoney(price[0]), walletapi.FormatMoney(dep[0]), owner[0], data_string) + makeAmenityInfo(data)
