@@ -5,7 +5,7 @@ go 1.20
 require (
 	fyne.io/fyne/v2 v2.3.1
 	fyne.io/x/fyne v0.0.0-20230411205836-1ca0ead20763
-	github.com/civilware/Gnomon v0.0.0-20230617141749-4c4e0d641417
+	github.com/civilware/Gnomon v0.0.0-20230619163338-731c1d13a5e8
 	github.com/deroproject/derohe v0.0.0-20230604143809-765b2db1f482
 	github.com/fyne-io/terminal v0.0.0-20230223114940-c76e408adbd3
 	github.com/superoo7/go-gecko v1.0.0
