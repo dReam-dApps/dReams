@@ -11,40 +11,52 @@ import (
 	dero "github.com/deroproject/derohe/rpc"
 )
 
+type check_in_window struct {
+	Start float64 `json:"Start"`
+	End   float64 `json:"End"`
+}
+
 type property_data struct {
 	Surface           int             `json:"surface"`
 	Style             string          `json:"style"`
-	NumberOfBedrooms  int             `json:"number-of-bedrooms"`
+	NumberOfBedrooms  int             `json:"bedrooms"`
 	Beds              int             `json:"beds"`
-	MaxNumberOfGuests int             `json:"max-number-of-guests"`
+	MaxNumberOfGuests int             `json:"guests"`
 	Photos            []string        `json:"photos"`
 	Description       string          `json:"description"`
-	CleaningFee       int             `json:"cleaning-fee"`
-	MinimumStay       int             `json:"minimum-stay"`
-	MaximumStay       int             `json:"maximum-stay"`
-	CheckInWindow     available_dates `json:"check-in"`
-	CheckOut          int             `json:"check-out"`
-	XCord             int             `json:"x-cord"`
-	YCord             int             `json:"y-cord"`
+	CleaningFee       int             `json:"cleaningFee"`
+	MinimumStay       int             `json:"minStay"`
+	MaximumStay       int             `json:"maxStay"`
+	Name              string          `json:"name"`
+	Share             string          `json:"share"`
+	Rules             string          `json:"rules"`
+	NumberOfBathrooms int             `json:"bathrooms"`
+	Pets              bool            `json:"pets"`
+	WeeklyDiscount    float64         `json:"weeklyDiscount"`
+	MonthlyDiscount   float64         `json:"monthlyDiscount"`
+	CheckInWindow     check_in_window `json:"checkIn"`
+	CheckOut          float64         `json:"checkOut"`
+	XCord             float64         `json:"xCord"`
+	YCord             float64         `json:"yCord"`
 	Amenities         struct {
 		Wifi             bool `json:"wifi"`
 		TV               bool `json:"tv"`
 		Kitchen          bool `json:"kitchen"`
 		Washer           bool `json:"washer"`
 		Parking          bool `json:"parking"`
-		AirConditioner   bool `json:"air-conditioner"`
+		AirConditioner   bool `json:"airConditioner"`
 		Workspace        bool `json:"workspace"`
 		Pool             bool `json:"pool"`
-		HotTub           bool `json:"hot-tub"`
+		HotTub           bool `json:"hotTub"`
 		BBQ              bool `json:"bbq"`
-		OutdoorDining    bool `json:"outdoor-dining"`
-		FirePit          bool `json:"fire-pit"`
-		GamesRoom        bool `json:"games-room"`
-		ExerciseEquip    bool `json:"exercise-equip"`
-		LakeAccess       bool `json:"lake-access"`
-		BeachAccess      bool `json:"beach-access"`
-		SmokeAlarm       bool `json:"smoke-alarm"`
-		FireExtinguisher bool `json:"fire-extinguisher"`
+		OutdoorDining    bool `json:"outdoorDining"`
+		FirePit          bool `json:"firePit"`
+		GamesRoom        bool `json:"gamesRoom"`
+		ExerciseEquip    bool `json:"exercise"`
+		LakeAccess       bool `json:"lake"`
+		BeachAccess      bool `json:"beach"`
+		SmokeAlarm       bool `json:"smokeAlarm"`
+		FireExtinguisher bool `json:"fireExtinguisher"`
 	} `json:"amenities"`
 	// Driveway              bool     `json:"driveway"`
 	// DistanceToCasino      string   `json:"distance-to-casino"`

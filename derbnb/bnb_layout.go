@@ -572,7 +572,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 				case 0:
 					metadata.Surface = rpc.StringToInt(cont.Objects[0].(*dwidget.DeroAmts).Text)
 				case 1:
-					metadata.Style = cont.Objects[0].(*widget.Entry).Text
+					metadata.Style = cont.Objects[0].(*widget.Select).Selected
 				case 2:
 					metadata.NumberOfBedrooms = rpc.StringToInt(cont.Objects[0].(*dwidget.DeroAmts).Text)
 				case 3:
@@ -592,40 +592,50 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 				case 8:
 					metadata.MaximumStay = rpc.StringToInt(cont.Objects[0].(*dwidget.DeroAmts).Text)
 				case 9:
-					metadata.Amenities.Wifi = amenityValue(cont.Objects[0].(*widget.RadioGroup).Selected)
+					metadata.Name = cont.Objects[0].(*widget.Entry).Text
 				case 10:
-					metadata.Amenities.TV = amenityValue(cont.Objects[0].(*widget.RadioGroup).Selected)
+					metadata.Share = cont.Objects[0].(*widget.Select).Selected
 				case 11:
-					metadata.Amenities.Kitchen = amenityValue(cont.Objects[0].(*widget.RadioGroup).Selected)
+					metadata.Rules = cont.Objects[0].(*widget.Entry).Text
 				case 12:
-					metadata.Amenities.Washer = amenityValue(cont.Objects[0].(*widget.RadioGroup).Selected)
+					metadata.NumberOfBathrooms = rpc.StringToInt(cont.Objects[0].(*dwidget.DeroAmts).Text)
 				case 13:
-					metadata.Amenities.Parking = amenityValue(cont.Objects[0].(*widget.RadioGroup).Selected)
+					metadata.Pets = amenityValue(cont.Objects[0].(*widget.RadioGroup).Selected)
 				case 14:
-					metadata.Amenities.AirConditioner = amenityValue(cont.Objects[0].(*widget.RadioGroup).Selected)
+					metadata.Amenities.Wifi = amenityValue(cont.Objects[0].(*widget.RadioGroup).Selected)
 				case 15:
-					metadata.Amenities.Workspace = amenityValue(cont.Objects[0].(*widget.RadioGroup).Selected)
+					metadata.Amenities.TV = amenityValue(cont.Objects[0].(*widget.RadioGroup).Selected)
 				case 16:
-					metadata.Amenities.Pool = amenityValue(cont.Objects[0].(*widget.RadioGroup).Selected)
+					metadata.Amenities.Kitchen = amenityValue(cont.Objects[0].(*widget.RadioGroup).Selected)
 				case 17:
-					metadata.Amenities.HotTub = amenityValue(cont.Objects[0].(*widget.RadioGroup).Selected)
+					metadata.Amenities.Washer = amenityValue(cont.Objects[0].(*widget.RadioGroup).Selected)
 				case 18:
-					metadata.Amenities.BBQ = amenityValue(cont.Objects[0].(*widget.RadioGroup).Selected)
+					metadata.Amenities.Parking = amenityValue(cont.Objects[0].(*widget.RadioGroup).Selected)
 				case 19:
-					metadata.Amenities.OutdoorDining = amenityValue(cont.Objects[0].(*widget.RadioGroup).Selected)
+					metadata.Amenities.AirConditioner = amenityValue(cont.Objects[0].(*widget.RadioGroup).Selected)
 				case 20:
-					metadata.Amenities.FirePit = amenityValue(cont.Objects[0].(*widget.RadioGroup).Selected)
+					metadata.Amenities.Workspace = amenityValue(cont.Objects[0].(*widget.RadioGroup).Selected)
 				case 21:
-					metadata.Amenities.GamesRoom = amenityValue(cont.Objects[0].(*widget.RadioGroup).Selected)
+					metadata.Amenities.Pool = amenityValue(cont.Objects[0].(*widget.RadioGroup).Selected)
 				case 22:
-					metadata.Amenities.ExerciseEquip = amenityValue(cont.Objects[0].(*widget.RadioGroup).Selected)
+					metadata.Amenities.HotTub = amenityValue(cont.Objects[0].(*widget.RadioGroup).Selected)
 				case 23:
-					metadata.Amenities.LakeAccess = amenityValue(cont.Objects[0].(*widget.RadioGroup).Selected)
+					metadata.Amenities.BBQ = amenityValue(cont.Objects[0].(*widget.RadioGroup).Selected)
 				case 24:
-					metadata.Amenities.BeachAccess = amenityValue(cont.Objects[0].(*widget.RadioGroup).Selected)
+					metadata.Amenities.OutdoorDining = amenityValue(cont.Objects[0].(*widget.RadioGroup).Selected)
 				case 25:
-					metadata.Amenities.SmokeAlarm = amenityValue(cont.Objects[0].(*widget.RadioGroup).Selected)
+					metadata.Amenities.FirePit = amenityValue(cont.Objects[0].(*widget.RadioGroup).Selected)
 				case 26:
+					metadata.Amenities.GamesRoom = amenityValue(cont.Objects[0].(*widget.RadioGroup).Selected)
+				case 27:
+					metadata.Amenities.ExerciseEquip = amenityValue(cont.Objects[0].(*widget.RadioGroup).Selected)
+				case 28:
+					metadata.Amenities.LakeAccess = amenityValue(cont.Objects[0].(*widget.RadioGroup).Selected)
+				case 29:
+					metadata.Amenities.BeachAccess = amenityValue(cont.Objects[0].(*widget.RadioGroup).Selected)
+				case 30:
+					metadata.Amenities.SmokeAlarm = amenityValue(cont.Objects[0].(*widget.RadioGroup).Selected)
+				case 31:
 					metadata.Amenities.FireExtinguisher = amenityValue(cont.Objects[0].(*widget.RadioGroup).Selected)
 				default:
 
@@ -1534,9 +1544,25 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 
 	surface_cont := container.NewAdaptiveGrid(2, surface_entry, container.NewAdaptiveGrid(2, meter_foot_button, meter_foot_entry))
 
-	style_entry := widget.NewEntry()
-	style_entry.SetPlaceHolder("Style:")
-	style_entry.Validator = validation.NewRegexp(`^\w{1,}`, "String required")
+	styleOpts := []string{
+		"House",
+		"Apartment",
+		"Penthouse",
+		"Duplex",
+		"Studio apartment/loft",
+		"Boat",
+		"Camper",
+		"Container",
+		"Earth home",
+		"Farm",
+		"Hotel",
+		"Houseboat",
+		"Tent",
+		"Tree house",
+	}
+
+	style_entry := widget.NewSelect(styleOpts, nil)
+	style_entry.PlaceHolder = "Style:"
 	style_cont := container.NewVBox(style_entry)
 
 	num_bedrooms_entry := dwidget.DeroAmtEntry("", 1, 0)
@@ -1605,6 +1631,33 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 	max_stay_entry.Validator = validation.NewRegexp(`^[^0]\d{0,}$`, "Int required")
 	max_stay_cont := container.NewVBox(max_stay_entry)
 
+	prop_name_entry := widget.NewEntry()
+	prop_name_entry.SetPlaceHolder("Property name:")
+	prop_name_entry.Validator = validation.NewRegexp(`^\w{1,}`, "String required")
+	prop_name_cont := container.NewVBox(prop_name_entry)
+
+	shareOpts := []string{"Entire place", "A room", "A shared room"}
+	prop_share_entry := widget.NewSelect(shareOpts, nil)
+	prop_share_entry.PlaceHolder = "Style:"
+	prop_share_cont := container.NewVBox(prop_share_entry)
+
+	prop_rules_entry := widget.NewMultiLineEntry()
+	prop_rules_entry.SetPlaceHolder("Property rules:")
+	prop_rules_entry.Validator = validation.NewRegexp(`^\w{1,}`, "String required")
+	prop_rules_cont := container.NewVBox(prop_rules_entry)
+
+	bathrooms_entry := dwidget.DeroAmtEntry("", 1, 0)
+	bathrooms_entry.SetPlaceHolder("Bathrooms:")
+	bathrooms_entry.AllowFloat = false
+	bathrooms_entry.Validator = validation.NewRegexp(`^[^0]\d{0,}$`, "Int required")
+	bathrooms_cont := container.NewVBox(bathrooms_entry)
+
+	petOpts := []string{"No", "Yes"}
+	pet_radio := widget.NewRadioGroup(petOpts, nil)
+	pet_radio.Horizontal = true
+	pet_radio.SetSelected("No")
+	pet_cont := container.NewVBox(pet_radio)
+
 	metadata_label_arr = []string{
 		fmt.Sprintf("Surface (m%s)", squared_symbol),
 		"Property Style",
@@ -1615,6 +1668,11 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 		"Cleaning Fee",
 		"Minimum Stay",
 		"Maximum Stay",
+		"Name",
+		"Share",
+		"Rules",
+		"Bathrooms",
+		"Pets",
 		"Wifi",
 		"TV",
 		"Kitchen",
@@ -1645,6 +1703,11 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 		cleaning_fee_cont,
 		min_stay_cont,
 		max_stay_cont,
+		prop_name_cont,
+		prop_share_cont,
+		prop_rules_cont,
+		bathrooms_cont,
+		pet_cont,
 	}
 
 	for i := 0; i < 18; i++ {
