@@ -3,6 +3,7 @@ package menu
 import (
 	"log"
 	"os"
+	"path/filepath"
 	"strconv"
 	"sync"
 
@@ -257,6 +258,17 @@ func (g *gnomon) ControlPanel(w fyne.Window) *fyne.Container {
 	fast.Horizontal = true
 	fast.SetSelected(strconv.FormatBool(g.Fast))
 
+	trim := widget.NewRadioGroup([]string{"true", "false"}, func(s string) {
+		if b, err := strconv.ParseBool(s); err == nil {
+			g.Trim = b
+
+			return
+		}
+
+		g.Trim = true
+	})
+	trim.Horizontal = true
+
 	para := widget.NewSelect([]string{"1", "2", "3", "4", "5"}, func(s string) {
 		if i, err := strconv.ParseInt(s, 10, 64); err == nil {
 			g.Para = int(i)
@@ -276,7 +288,7 @@ func (g *gnomon) ControlPanel(w fyne.Window) *fyne.Container {
 	delete_db := widget.NewButton("Delete DB", func() {
 		dialog.NewConfirm("Delete DB", "This will delete your current Gnomon DB", func(b bool) {
 			if b {
-				os.RemoveAll("gnomondb")
+				os.RemoveAll(filepath.Clean("gnomondb"))
 			}
 		}, w).Show()
 	})
@@ -284,6 +296,7 @@ func (g *gnomon) ControlPanel(w fyne.Window) *fyne.Container {
 	gnomes_form := []*widget.FormItem{}
 	gnomes_form = append(gnomes_form, widget.NewFormItem("DB Type", db))
 	gnomes_form = append(gnomes_form, widget.NewFormItem("Fastsync", fast))
+	gnomes_form = append(gnomes_form, widget.NewFormItem("Pruned Index", trim))
 	gnomes_form = append(gnomes_form, widget.NewFormItem("Parallel Blocks", para))
 
 	return container.NewBorder(nil, container.NewCenter(delete_db), nil, nil, widget.NewForm(gnomes_form...))

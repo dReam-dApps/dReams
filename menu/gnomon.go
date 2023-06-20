@@ -222,10 +222,10 @@ func StartGnomon(tag, dbtype string, filters []string, upper, lower int, custom 
 				}
 
 				if contracts >= lower {
-					go custom()
+					custom()
 					break
 				}
-				time.Sleep(1 * time.Second)
+				time.Sleep(time.Second)
 				i++
 				if i == 60 {
 					Gnomes.Trim = false

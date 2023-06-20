@@ -489,10 +489,24 @@ func placeWall() *container.Split {
 	connect_tabs.OnSelected = func(ti *container.TabItem) {
 		if ti.Text == "Gnomon" {
 			if rpc.Daemon.IsConnected() || menu.Gnomes.IsInitialized() {
-				dialog.NewInformation("Gnomon Running", "Shut down Gnomon to make changes", dReams.Window).Show()
+				if menu.Gnomes.Start || menu.Gnomes.IsScanning() {
+					dialog.NewInformation("Gnomon Syncing", "Please wait", dReams.Window).Show()
+				} else {
+					dialog.NewConfirm("Gnomon Running", "Shut down Gnomon to make changes", func(b bool) {
+						if b {
+							daemon_cont.Content.(*widget.SelectEntry).SetText("")
+							time.Sleep(time.Second)
+						}
+					}, dReams.Window).Show()
+				}
+
 				connect_tabs.DisableIndex(1)
 
+				return
 			}
+
+			connect_tabs.Selected().Content.(*fyne.Container).Objects[0].(*widget.Form).Items[2].Widget.(*widget.RadioGroup).SetSelected("true")
+			menu.Gnomes.Trim = true
 
 			return
 		}
