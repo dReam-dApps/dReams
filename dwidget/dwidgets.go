@@ -2,6 +2,7 @@ package dwidget
 
 import (
 	"fmt"
+	"image/color"
 	"strconv"
 	"strings"
 
@@ -258,4 +259,18 @@ func (d *DeroRpcEntries) AddDaemonOptions(new_opts []string) {
 	current := d.default_daemon
 	d.Daemon.SetOptions(append(current, new_opts...))
 	d.Daemon.Refresh()
+}
+
+// Top label background used on dApp tabs
+func LabelColor(c *fyne.Container) *fyne.Container {
+	var alpha *canvas.Rectangle
+	if bundle.AppColor == color.White {
+		alpha = canvas.NewRectangle(color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0x33})
+	} else {
+		alpha = canvas.NewRectangle(color.RGBA{0, 0, 0, 150})
+	}
+
+	cont := container.New(layout.NewMaxLayout(), alpha, c)
+
+	return cont
 }

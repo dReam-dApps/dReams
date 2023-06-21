@@ -60,7 +60,6 @@ var Round holderoValues
 var Bacc baccValues
 var Signal signals
 var Predict predictionValues
-var Tarot tarotValues
 
 func (d *daemon) Connected(b bool) {
 	d.Lock()
@@ -1071,74 +1070,6 @@ func FetchSportsFinal(scid string) (finals []string) {
 	}
 
 	return
-}
-
-// Get Tarot SC data
-func FetchTarotSC() {
-	if Daemon.IsConnected() {
-		rpcClientD, ctx, cancel := SetDaemonClient(Daemon.Rpc)
-		defer cancel()
-
-		var result *rpc.GetSC_Result
-		params := rpc.GetSC_Params{
-			SCID:      TarotSCID,
-			Code:      false,
-			Variables: true,
-		}
-
-		if err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params); err != nil {
-			log.Println("[FetchTarotSC]", err)
-			return
-		}
-
-		Reading_jv := result.VariableStringKeys["readings:"]
-		if Reading_jv != nil {
-			Display.Readings = fmt.Sprint(Reading_jv)
-		}
-	}
-}
-
-// Find Tarot reading on SC
-func FetchTarotReading(tx string) {
-	if Daemon.IsConnected() && len(tx) == 64 {
-		rpcClientD, ctx, cancel := SetDaemonClient(Daemon.Rpc)
-		defer cancel()
-
-		var result *rpc.GetSC_Result
-		params := rpc.GetSC_Params{
-			SCID:      TarotSCID,
-			Code:      false,
-			Variables: true,
-		}
-
-		err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params)
-		if err != nil {
-			log.Println("[FetchTarotReading]", err)
-			return
-		}
-
-		Reading_jv := result.VariableStringKeys["readings:"]
-		if Reading_jv != nil {
-			Display_jv := result.VariableStringKeys["Display"]
-			start := IntType(Reading_jv) - IntType(Display_jv)
-			i := start
-			for i < start+45 {
-				h := "-readingTXID:"
-				w := strconv.Itoa(i)
-				TXID_jv := result.VariableStringKeys[w+h]
-
-				if TXID_jv != nil {
-					if fmt.Sprint(TXID_jv) == tx {
-						Tarot.Found = true
-						Tarot.Card1 = findTarotCard(result.VariableStringKeys[w+"-card1:"])
-						Tarot.Card2 = findTarotCard(result.VariableStringKeys[w+"-card2:"])
-						Tarot.Card3 = findTarotCard(result.VariableStringKeys[w+"-card3:"])
-					}
-				}
-				i++
-			}
-		}
-	}
 }
 
 // Get difficulty from a daemon

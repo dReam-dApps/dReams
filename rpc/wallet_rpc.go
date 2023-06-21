@@ -2208,48 +2208,6 @@ func UploadNFAContract(code string) (tx string) {
 	return txid.TXID
 }
 
-// Get Iluma Tarot reading from SC
-//   - num defines one or three card draw
-func TarotReading(num int) {
-	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
-	defer cancel()
-
-	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "Draw"}
-	arg2 := rpc.Argument{Name: "num", DataType: "U", Value: num}
-	args := rpc.Arguments{arg1, arg2}
-	txid := rpc.Transfer_Result{}
-
-	t1 := rpc.Transfer{
-		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
-		Amount:      0,
-		Burn:        IlumaFee,
-	}
-
-	t := []rpc.Transfer{t1}
-	fee := GasEstimate(TarotSCID, "[TarotReading]", args, t, LowLimitFee)
-	params := &rpc.Transfer_Params{
-		Transfers: t,
-		SC_ID:     TarotSCID,
-		SC_RPC:    args,
-		Ringsize:  2,
-		Fees:      fee,
-	}
-
-	if err := rpcClientW.CallFor(ctx, &txid, "transfer", params); err != nil {
-		log.Println("[TarotReading]", err)
-		return
-	}
-
-	Tarot.Num = num
-	Tarot.Last = txid.TXID
-	Tarot.Notified = false
-
-	log.Println("[TarotReading] Reading TX:", txid)
-	AddLog("Tarot Reading TX: " + txid.TXID)
-
-	Tarot.CHeight = Wallet.Height
-}
-
 // Send Dero asset to destination address with option to send asset SCID as message to destination as payload
 func SendAsset(scid, dest string, payload bool) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)

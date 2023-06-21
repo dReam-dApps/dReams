@@ -130,6 +130,7 @@ func init() {
 	rpc.InitBalances()
 
 	holdero.InitTableSettings()
+	tarot.InitTarot()
 
 	dReams.os = runtime.GOOS
 	prediction.SetPrintColors(dReams.os)
@@ -193,7 +194,7 @@ func notification(title, content string, g int) *fyne.Notification {
 	case 1:
 		rpc.Bacc.Notified = true
 	case 2:
-		rpc.Tarot.Notified = true
+		tarot.Iluma.Value.Notified = true
 	default:
 	}
 
@@ -574,8 +575,13 @@ func fetch(quit, done chan struct{}) {
 
 					// Tarot
 					if menu.Control.Dapp_list["Iluma"] {
-						rpc.FetchTarotSC()
-						TarotRefresh()
+						tarot.FetchTarotSC()
+						tarot.TarotRefresh(&T)
+						if tarot.Iluma.Value.Found && !tarot.Iluma.Value.Notified {
+							if !isWindows() {
+								dReams.App.SendNotification(notification("dReams - Iluma", "Your Reading has Arrived", 2))
+							}
+						}
 					}
 
 					// Betting
@@ -841,44 +847,6 @@ func SportsRefresh(tab bool) {
 	}
 }
 
-// Refresh all Tarot objects
-func TarotRefresh() {
-	T.LeftLabel.SetText("Total Readings: " + rpc.Display.Readings + "      Click your card for Iluma reading")
-	T.RightLabel.SetText("dReams Balance: " + rpc.DisplayBalance("dReams") + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Display.Wallet_height)
-
-	if !rpc.Tarot.Display {
-		rpc.FetchTarotReading(rpc.Tarot.Last)
-		tarot.Iluma.Box.Refresh()
-		if rpc.Tarot.Found {
-			rpc.Tarot.Display = true
-			tarot.Iluma.Label.SetText("")
-			if rpc.Tarot.Num == 3 {
-				tarot.Iluma.Card1.Objects[1] = TarotCard(rpc.Tarot.Card1)
-				tarot.Iluma.Card2.Objects[1] = TarotCard(rpc.Tarot.Card2)
-				tarot.Iluma.Card3.Objects[1] = TarotCard(rpc.Tarot.Card3)
-			} else {
-				tarot.Iluma.Card1.Objects[1] = TarotCard(0)
-				tarot.Iluma.Card2.Objects[1] = TarotCard(rpc.Tarot.Card1)
-				tarot.Iluma.Card3.Objects[1] = TarotCard(0)
-			}
-			tarot.TarotBuffer(false)
-			tarot.Iluma.Box.Refresh()
-		}
-	}
-
-	if rpc.Wallet.Height > rpc.Tarot.CHeight+3 {
-		tarot.TarotBuffer(false)
-	}
-
-	T.DApp.Refresh()
-
-	if rpc.Tarot.Found && !rpc.Tarot.Notified {
-		if !isWindows() {
-			dReams.App.SendNotification(notification("dReams - Iluma", "Your Reading has Arrived", 2))
-		}
-	}
-}
-
 // Refresh Gnomon height display
 func refreshGnomonDisplay(index_height, c int) {
 	if c == 1 {
@@ -1049,7 +1017,7 @@ func MainTab(ti *container.TabItem) {
 		dReams.predict = false
 		dReams.sports = false
 		dReams.tarot = true
-		if rpc.Tarot.Display {
+		if tarot.Iluma.Value.Display {
 			tarot.TarotBuffer(false)
 		}
 	}
@@ -1098,18 +1066,6 @@ func PredictTab(ti *container.TabItem) {
 	switch ti.Text {
 	case "Contracts":
 		go menu.PopulatePredictions(nil)
-	default:
-	}
-}
-
-// Switch triggered when Tarot tab changes
-func TarotTab(ti *container.TabItem) {
-	switch ti.Text {
-	case "Iluma":
-		tarot.Iluma.Actions.Hide()
-	case "Reading":
-		tarot.Iluma.Actions.Show()
-
 	default:
 	}
 }

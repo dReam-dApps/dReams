@@ -344,7 +344,7 @@ func place() *fyne.Container {
 
 	T.LeftLabel = widget.NewLabel("")
 	T.RightLabel = widget.NewLabel("")
-	T.LeftLabel.SetText("Total Readings: " + rpc.Display.Readings + "      Click your card for Iluma reading")
+	T.LeftLabel.SetText("Total Readings: " + tarot.Iluma.Value.Readings + "      Click your card for Iluma reading")
 	T.RightLabel.SetText("dReams Balance: " + rpc.DisplayBalance("dReams") + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Display.Wallet_height)
 
 	prediction.Sports.Info = widget.NewLabel("SCID:\n\n" + prediction.Sports.Contract + "\n")
@@ -428,7 +428,7 @@ func place() *fyne.Container {
 	}
 
 	if menu.Control.Dapp_list["Iluma"] {
-		tabs.Append(container.NewTabItem("Iluma", placeTarot()))
+		tabs.Append(container.NewTabItem("Iluma", tarot.LayoutAllItems(&T)))
 	}
 
 	if menu.Control.Dapp_list["DerBnb"] {
@@ -1027,93 +1027,4 @@ func placeSports() *fyne.Container {
 		sports_box)
 
 	return S.DApp
-}
-
-// dReams Tarot tab layout
-func placeTarot() fyne.CanvasObject {
-	search_entry := widget.NewEntry()
-	search_entry.SetPlaceHolder("TXID:")
-	search_button := widget.NewButton("    Search   ", func() {
-		txid := search_entry.Text
-		if len(txid) == 64 {
-			signer := rpc.VerifySigner(search_entry.Text)
-			if signer {
-				rpc.Tarot.Display = true
-				tarot.Iluma.Label.SetText("")
-				rpc.FetchTarotReading(txid)
-				if rpc.Tarot.Card2 != 0 && rpc.Tarot.Card3 != 0 {
-					tarot.Iluma.Card1.Objects[1] = TarotCard(rpc.Tarot.Card1)
-					tarot.Iluma.Card2.Objects[1] = TarotCard(rpc.Tarot.Card2)
-					tarot.Iluma.Card3.Objects[1] = TarotCard(rpc.Tarot.Card3)
-					rpc.Tarot.Num = 3
-				} else {
-					tarot.Iluma.Card1.Objects[1] = TarotCard(0)
-					tarot.Iluma.Card2.Objects[1] = TarotCard(rpc.Tarot.Card1)
-					tarot.Iluma.Card3.Objects[1] = TarotCard(0)
-					rpc.Tarot.Num = 1
-				}
-				tarot.Iluma.Box.Refresh()
-			} else {
-				log.Println("[Iluma] This is not your reading")
-			}
-		}
-	})
-
-	tarot_label := container.NewHBox(T.LeftLabel, layout.NewSpacer(), T.RightLabel)
-
-	T.DApp = container.NewBorder(
-		labelColorBlack(tarot_label),
-		nil,
-		nil,
-		nil,
-		tarot.TarotCardBox())
-
-	reset := tarot.Iluma.Card2
-
-	tarot.Iluma.Draw1 = widget.NewButton("Draw One", func() {
-		if !tarot.Iluma.Open {
-			tarot.Iluma.Draw1.Hide()
-			tarot.Iluma.Draw3.Hide()
-			tarot.Iluma.Card2 = *tarot.TarotConfirm(1, reset)
-		}
-	})
-
-	tarot.Iluma.Draw3 = widget.NewButton("Draw Three", func() {
-		if !tarot.Iluma.Open {
-			tarot.Iluma.Draw1.Hide()
-			tarot.Iluma.Draw3.Hide()
-			tarot.Iluma.Card2 = *tarot.TarotConfirm(3, reset)
-		}
-	})
-
-	tarot.Iluma.Draw1.Hide()
-	tarot.Iluma.Draw3.Hide()
-
-	draw_cont := container.NewAdaptiveGrid(5,
-		layout.NewSpacer(),
-		layout.NewSpacer(),
-		tarot.Iluma.Draw1,
-		tarot.Iluma.Draw3,
-		layout.NewSpacer())
-
-	tarot.Iluma.Search = container.NewBorder(nil, nil, nil, search_button, search_entry)
-
-	tarot.Iluma.Actions = container.NewVBox(
-		layout.NewSpacer(),
-		container.NewAdaptiveGrid(2, draw_cont, tarot.Iluma.Search))
-
-	tarot.Iluma.Search.Hide()
-	tarot.Iluma.Actions.Hide()
-
-	tarot_tabs := container.NewAppTabs(
-		container.NewTabItem("Iluma", tarot.PlaceIluma()),
-		container.NewTabItem("Reading", T.DApp))
-
-	tarot_tabs.OnSelected = func(ti *container.TabItem) {
-		TarotTab(ti)
-	}
-
-	tarot_tabs.SetTabLocation(container.TabLocationBottom)
-
-	return container.NewMax(tarot_tabs, tarot.Iluma.Actions)
 }

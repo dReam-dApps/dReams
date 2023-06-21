@@ -1,12 +1,9 @@
 package rpc
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"log"
-	"strconv"
 	"time"
 )
 
@@ -68,8 +65,6 @@ type displayStrings struct {
 	S_end   string
 	TeamA   string
 	TeamB   string
-
-	Readings string
 
 	Balance       map[string]string
 	Wallet_height string
@@ -173,18 +168,6 @@ type baccValues struct {
 	MaxBet   float64
 	AssetID  string
 	Contract string
-	Last     string
-	Found    bool
-	Display  bool
-	Notified bool
-}
-
-type tarotValues struct {
-	Card1    int
-	Card2    int
-	Card3    int
-	CHeight  int
-	Num      int
 	Last     string
 	Found    bool
 	Display  bool
@@ -1039,20 +1022,4 @@ func winningHand(e interface{}) {
 			getHands(StringToInt(Display.Seats))
 		}()
 	}
-}
-
-// Find Tarot card from hash value
-func findTarotCard(hash interface{}) int {
-	if hash != nil {
-		for i := 1; i < 79; i++ {
-			finder := strconv.Itoa(i)
-			card := sha256.Sum256([]byte(finder))
-			str := hex.EncodeToString(card[:])
-
-			if str == fmt.Sprint(hash) {
-				return i
-			}
-		}
-	}
-	return 0
 }
