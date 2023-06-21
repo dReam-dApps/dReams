@@ -398,7 +398,7 @@ func roundResults(fr, m string) string {
 				x = 1
 			}
 		} else {
-			if holdero.CoinDecimal(split[0]) == 8 {
+			if menu.CoinDecimal(split[0]) == 8 {
 				x = 100000000
 			} else {
 				x = 100
@@ -432,7 +432,7 @@ func roundResults(fr, m string) string {
 
 				}
 			} else {
-				if holdero.CoinDecimal(split[0]) == 8 {
+				if menu.CoinDecimal(split[0]) == 8 {
 					fStr = fmt.Sprintf("%.8f", final/x)
 				} else {
 					fStr = fmt.Sprintf("%.2f", final/x)
@@ -524,7 +524,7 @@ func GetPrediction(scid string) (info string) {
 								p_mark = fmt.Sprintf("%d", mark[0])
 							}
 						} else {
-							if holdero.CoinDecimal(pre) == 8 {
+							if menu.CoinDecimal(pre) == 8 {
 								p_mark = fmt.Sprintf("%.8f", float64(mark[0])/100000000)
 							} else {
 								p_mark = fmt.Sprintf("%.2f", float64(mark[0])/100)
@@ -565,7 +565,7 @@ func GetPrediction(scid string) (info string) {
 							p_mark = fmt.Sprintf("%d", mark[0])
 						}
 					} else {
-						if holdero.CoinDecimal(split[0]) == 8 {
+						if menu.CoinDecimal(split[0]) == 8 {
 							p_mark = fmt.Sprintf("%.8f", float64(mark[0])/100000000)
 						} else {
 							p_mark = fmt.Sprintf("%.2f", float64(mark[0])/100)

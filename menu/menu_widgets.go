@@ -7,15 +7,14 @@ import (
 	"image/color"
 	"log"
 	"math"
-	"sort"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
+	dreams "github.com/SixofClubsss/dReams"
 	"github.com/SixofClubsss/dReams/bundle"
 	"github.com/SixofClubsss/dReams/dwidget"
-	"github.com/SixofClubsss/dReams/holdero"
 	"github.com/SixofClubsss/dReams/rpc"
 
 	"fyne.io/fyne/v2"
@@ -28,15 +27,12 @@ import (
 )
 
 type menuObjects struct {
-	list_open         bool
+	List_open         bool
 	send_open         bool
 	msg_open          bool
 	Daemon_config     string
 	Viewing_asset     string
 	Dapp_list         map[string]bool
-	Holdero_tables    []string
-	Holdero_favorites []string
-	Holdero_owned     []string
 	Predict_contracts []string
 	Predict_favorites []string
 	Predict_owned     []string
@@ -54,55 +50,22 @@ type menuObjects struct {
 	Send_asset        *widget.Button
 	Claim_button      *widget.Button
 	List_button       *widget.Button
-	daemon_check      *widget.Check
-	holdero_check     *widget.Check
+	Daemon_check      *widget.Check
 	Predict_check     *widget.Check
 	P_contract        *widget.SelectEntry
 	Sports_check      *widget.Check
 	S_contract        *widget.SelectEntry
 	Wallet_ind        *fyne.Animation
 	Daemon_ind        *fyne.Animation
-	Poker_ind         *fyne.Animation
 	Service_ind       *fyne.Animation
 	sync.Mutex
-}
-
-type ownerObjects struct {
-	blind_amount uint64
-	ante_amount  uint64
-	chips        *widget.RadioGroup
-	timeout      *widget.Button
-	owners_left  *fyne.Container
-	owners_mid   *fyne.Container
-}
-
-type holderoObjects struct {
-	contract_input *widget.SelectEntry
-	Table_list     *widget.List
-	Favorite_list  *widget.List
-	Owned_list     *widget.List
-	Holdero_unlock *widget.Button
-	Holdero_new    *widget.Button
-	Stats_box      fyne.Container
-	owner          ownerObjects
-}
-type tableStats struct {
-	Name    *canvas.Text
-	Desc    *canvas.Text
-	Version *canvas.Text
-	Last    *canvas.Text
-	Seats   *canvas.Text
-	Open    *canvas.Text
-	Image   canvas.Image
 }
 type exit struct {
 	Signal bool
 	sync.RWMutex
 }
 
-var Poker holderoObjects
 var Control menuObjects
-var Stats tableStats
 var Exit exit
 
 // Check for app closing signal
@@ -121,108 +84,6 @@ func CloseAppSignal(value bool) {
 	Exit.Unlock()
 }
 
-// Connection check for main process
-func CheckConnection() {
-	if rpc.Daemon.IsConnected() {
-		Control.daemon_check.SetChecked(true)
-		DisableIndexControls(false)
-	} else {
-		Control.daemon_check.SetChecked(false)
-		if Control.Dapp_list["dSports and dPredictions"] {
-			Control.Predict_check.SetChecked(false)
-			Control.Sports_check.SetChecked(false)
-		}
-
-		rpc.Signal.Contract = false
-		clearContractLists()
-		if Control.Dapp_list["Holdero"] {
-			Control.holdero_check.SetChecked(false)
-			disableOwnerControls(true)
-		}
-
-		if Control.Dapp_list["Baccarat"] {
-			disableBaccActions(true)
-		}
-
-		disableActions(true)
-		DisableIndexControls(true)
-	}
-
-	if rpc.Wallet.IsConnected() {
-		disableActions(false)
-	} else {
-		rpc.Signal.Contract = false
-		clearContractLists()
-		if Control.Dapp_list["Holdero"] {
-			Control.holdero_check.SetChecked(false)
-			disableOwnerControls(true)
-		}
-
-		if Control.Dapp_list["Baccarat"] {
-			disableBaccActions(true)
-		}
-
-		disableActions(true)
-		Disconnected()
-		Gnomes.Checked(false)
-	}
-
-	if Control.Dapp_list["Holdero"] {
-		if rpc.Signal.Contract {
-			Control.holdero_check.SetChecked(true)
-		} else {
-			Control.holdero_check.SetChecked(false)
-			disableOwnerControls(true)
-			rpc.Signal.Sit = true
-		}
-	}
-}
-
-// Hidden object, controls Gnomon start and stop based on daemon connection
-func DaemonConnectedBox() fyne.Widget {
-	Control.daemon_check = widget.NewCheck("", func(b bool) {
-		if !Gnomes.IsInitialized() && !Gnomes.Start {
-			go startLabel()
-			filters := searchFilters()
-			StartGnomon("dReams", Gnomes.DBType, filters, 3960, 490, g45Index)
-			rpc.FetchFees()
-			if Control.Dapp_list["Holdero"] {
-				Poker.contract_input.CursorColumn = 1
-				Poker.contract_input.Refresh()
-			}
-
-			if Control.Dapp_list["dSports and dPredictions"] {
-				Control.P_contract.CursorColumn = 1
-				Control.P_contract.Refresh()
-				Control.S_contract.CursorColumn = 1
-				Control.S_contract.Refresh()
-			}
-		}
-
-		if !b {
-			go StopLabel()
-			Gnomes.Stop("dReams")
-			go SleepLabel()
-		}
-	})
-	Control.daemon_check.Disable()
-	Control.daemon_check.Hide()
-
-	return Control.daemon_check
-}
-
-// Check box for Holdero SCID connection status
-func HolderoContractConnectedBox() fyne.Widget {
-	Control.holdero_check = widget.NewCheck("", func(b bool) {
-		if !b {
-			disableOwnerControls(true)
-		}
-	})
-	Control.holdero_check.Disable()
-
-	return Control.holdero_check
-}
-
 // Daemon rpc entry object with default options
 //   - Bound to rpc.Daemon.Rpc
 func DaemonRpcEntry() fyne.Widget {
@@ -239,156 +100,6 @@ func DaemonRpcEntry() fyne.Widget {
 	return entry
 }
 
-// Wallet rpc entry object
-//   - Bound to rpc.Wallet.Rpc
-//   - Changes reset wallet connection and call CheckConnection()
-func WalletRpcEntry() fyne.Widget {
-	options := []string{"", "127.0.0.1:10103"}
-	entry := widget.NewSelectEntry(options)
-	entry.PlaceHolder = "Wallet RPC: "
-	entry.OnCursorChanged = func() {
-		if rpc.Wallet.IsConnected() {
-			rpc.Wallet.Address = ""
-			rpc.Display.Wallet_height = "0"
-			rpc.Wallet.Height = 0
-			rpc.Wallet.Connected(false)
-			go CheckConnection()
-		}
-	}
-
-	this := binding.BindString(&rpc.Wallet.Rpc)
-	entry.Bind(this)
-
-	return entry
-}
-
-// Authentication entry object
-//   - Bound to rpc.Wallet.UserPass
-//   - Changes call rpc.GetAddress() and CheckConnection()
-func UserPassEntry() fyne.Widget {
-	entry := widget.NewPasswordEntry()
-	entry.PlaceHolder = "user:pass"
-	entry.OnCursorChanged = func() {
-		if rpc.Wallet.IsConnected() {
-			rpc.GetAddress("dReams")
-			go CheckConnection()
-		}
-	}
-
-	a := binding.BindString(&rpc.Wallet.UserPass)
-	entry.Bind(a)
-
-	return entry
-}
-
-// Holdero SCID entry
-//   - Bound to rpc.Round.Contract
-//   - Entry text set on list selection
-//   - Changes clear table and check if current entry is valid table
-func HolderoContractEntry() fyne.Widget {
-	var wait bool
-	Poker.contract_input = widget.NewSelectEntry(nil)
-	options := []string{""}
-	Poker.contract_input.SetOptions(options)
-	Poker.contract_input.PlaceHolder = "Holdero Contract Address: "
-	Poker.contract_input.OnCursorChanged = func() {
-		if rpc.Daemon.IsConnected() && !wait {
-			wait = true
-			text := Poker.contract_input.Text
-			holdero.ClearShared()
-			if len(text) == 64 {
-				if CheckTableOwner(text) {
-					disableOwnerControls(false)
-					if checkTableVersion(text) >= 110 {
-						Poker.owner.chips.Show()
-						Poker.owner.timeout.Show()
-						Poker.owner.owners_mid.Show()
-					} else {
-						Poker.owner.chips.Hide()
-						Poker.owner.timeout.Hide()
-						Poker.owner.owners_mid.Hide()
-					}
-				} else {
-					disableOwnerControls(true)
-				}
-
-				if rpc.Wallet.IsConnected() && CheckHolderoContract(text) {
-					holdero.Table.Tournament.Show()
-				} else {
-					holdero.Table.Tournament.Hide()
-				}
-			} else {
-				rpc.Signal.Contract = false
-				Control.holdero_check.SetChecked(false)
-				holdero.Table.Tournament.Hide()
-			}
-			wait = false
-		}
-	}
-
-	this := binding.BindString(&rpc.Round.Contract)
-	Poker.contract_input.Bind(this)
-
-	return Poker.contract_input
-}
-
-// Connect button object for rpc
-//   - Pressed calls rpc.Ping(), rpc.GetAddress(), CheckConnection(),
-//     checks for Holdero key and clears names for population
-func RpcConnectButton() fyne.Widget {
-	var wait bool
-	button := widget.NewButton("Connect", func() {
-		go func() {
-			if !wait {
-				wait = true
-				rpc.Ping()
-				rpc.GetAddress("dReams")
-				CheckConnection()
-				if Control.Dapp_list["Holdero"] {
-					Poker.contract_input.CursorColumn = 1
-					Poker.contract_input.Refresh()
-					if len(rpc.Wallet.Address) == 66 {
-						rpc.CheckExistingKey()
-						Control.Names.ClearSelected()
-						Control.Names.Options = []string{}
-						Control.Names.Refresh()
-						Control.Names.Options = append(Control.Names.Options, rpc.Wallet.Address[0:12])
-						if Control.Names.Options != nil {
-							Control.Names.SetSelectedIndex(0)
-						}
-					}
-				}
-
-				if Control.Dapp_list["dSports and dPredictions"] {
-					Control.P_contract.CursorColumn = 1
-					Control.P_contract.Refresh()
-					Control.S_contract.CursorColumn = 1
-					Control.S_contract.Refresh()
-				}
-				wait = false
-			}
-		}()
-	})
-
-	return button
-}
-
-// Routine when Holdero SCID is clicked
-func setHolderoControls(str string) (item string) {
-	split := strings.Split(str, "   ")
-	if len(split) >= 3 {
-		trimmed := strings.Trim(split[2], " ")
-		if len(trimmed) == 64 {
-			item = str
-			Poker.contract_input.SetText(trimmed)
-			go GetTableStats(trimmed, true)
-			rpc.Times.Kick_block = rpc.Wallet.Height
-		}
-	}
-
-	return
-}
-
 // Display SCID rating from dReams SCID rating system
 func DisplayRating(i uint64) fyne.Resource {
 	if i > 250000 {
@@ -402,73 +113,6 @@ func DisplayRating(i uint64) fyne.Resource {
 	} else {
 		return nil
 	}
-}
-
-// Public Holdero table listings object
-func TableListings(tab *container.AppTabs) fyne.CanvasObject {
-	Poker.Table_list = widget.NewList(
-		func() int {
-			return len(Control.Holdero_tables)
-		},
-		func() fyne.CanvasObject {
-			return container.NewHBox(canvas.NewImageFromImage(nil), widget.NewLabel(""))
-		},
-		func(i widget.ListItemID, o fyne.CanvasObject) {
-			o.(*fyne.Container).Objects[1].(*widget.Label).SetText(Control.Holdero_tables[i])
-			if Control.Holdero_tables[i][0:2] != "  " {
-				var key string
-				split := strings.Split(Control.Holdero_tables[i], "   ")
-				if len(split) >= 3 {
-					trimmed := strings.Trim(split[2], " ")
-					if len(trimmed) == 64 {
-						key = trimmed
-					}
-				}
-
-				badge := canvas.NewImageFromResource(DisplayRating(Control.Contract_rating[key]))
-				badge.SetMinSize(fyne.NewSize(35, 35))
-				o.(*fyne.Container).Objects[0] = badge
-			}
-		})
-
-	var item string
-
-	Poker.Table_list.OnSelected = func(id widget.ListItemID) {
-		if id != 0 && Connected() {
-			go func() {
-				item = setHolderoControls(Control.Holdero_tables[id])
-				Poker.Favorite_list.UnselectAll()
-				Poker.Owned_list.UnselectAll()
-			}()
-		}
-	}
-
-	save_favorite := widget.NewButton("Favorite", func() {
-		Control.Holdero_favorites = append(Control.Holdero_favorites, item)
-		sort.Strings(Control.Holdero_favorites)
-	})
-
-	rate_contract := widget.NewButton("Rate", func() {
-		if len(rpc.Round.Contract) == 64 {
-			if !CheckTableOwner(rpc.Round.Contract) {
-				reset := tab.Selected().Content
-				tab.Selected().Content = RateConfirm(rpc.Round.Contract, tab, reset)
-				tab.Selected().Content.Refresh()
-
-			} else {
-				log.Println("[dReams] You own this contract")
-			}
-		}
-	})
-
-	tables_cont := container.NewBorder(
-		nil,
-		container.NewBorder(nil, nil, save_favorite, rate_contract, layout.NewSpacer()),
-		nil,
-		nil,
-		Poker.Table_list)
-
-	return tables_cont
 }
 
 // Confirmation for a SCID rating
@@ -536,83 +180,12 @@ func RateConfirm(scid string, tab *container.AppTabs, reset fyne.CanvasObject) f
 
 }
 
-// Favorite Holdero tables object
-func HolderoFavorites() fyne.CanvasObject {
-	Poker.Favorite_list = widget.NewList(
-		func() int {
-			return len(Control.Holdero_favorites)
-		},
-		func() fyne.CanvasObject {
-			return widget.NewLabel("")
-		},
-		func(i widget.ListItemID, o fyne.CanvasObject) {
-			o.(*widget.Label).SetText(Control.Holdero_favorites[i])
-		})
-
-	var item string
-
-	Poker.Favorite_list.OnSelected = func(id widget.ListItemID) {
-		if Connected() {
-			item = setHolderoControls(Control.Holdero_favorites[id])
-			Poker.Table_list.UnselectAll()
-			Poker.Owned_list.UnselectAll()
-		}
-	}
-
-	remove := widget.NewButton("Remove", func() {
-		if len(Control.Holdero_favorites) > 0 {
-			Poker.Favorite_list.UnselectAll()
-			for i := range Control.Holdero_favorites {
-				if Control.Holdero_favorites[i] == item {
-					copy(Control.Holdero_favorites[i:], Control.Holdero_favorites[i+1:])
-					Control.Holdero_favorites[len(Control.Holdero_favorites)-1] = ""
-					Control.Holdero_favorites = Control.Holdero_favorites[:len(Control.Holdero_favorites)-1]
-					break
-				}
-			}
-		}
-		Poker.Favorite_list.Refresh()
-		sort.Strings(Control.Holdero_favorites)
-	})
-
-	cont := container.NewBorder(
-		nil,
-		container.NewBorder(nil, nil, nil, remove, layout.NewSpacer()),
-		nil,
-		nil,
-		Poker.Favorite_list)
-
-	return cont
-}
-
-// Owned Holdero tables object
-func MyTables() fyne.CanvasObject {
-	Poker.Owned_list = widget.NewList(
-		func() int {
-			return len(Control.Holdero_owned)
-		},
-		func() fyne.CanvasObject {
-			return widget.NewLabel("")
-		},
-		func(i widget.ListItemID, o fyne.CanvasObject) {
-			o.(*widget.Label).SetText(Control.Holdero_owned[i])
-		})
-
-	Poker.Owned_list.OnSelected = func(id widget.ListItemID) {
-		if Connected() {
-			setHolderoControls(Control.Holdero_owned[id])
-			Poker.Table_list.UnselectAll()
-			Poker.Favorite_list.UnselectAll()
-		}
-	}
-
-	return Poker.Owned_list
-}
+var Username string
 
 // Holdero player name entry
 func NameEntry() fyne.CanvasObject {
 	Control.Names = widget.NewSelect([]string{}, func(s string) {
-		holdero.Poker_name = s
+		Username = s
 	})
 
 	Control.Names.PlaceHolder = "Name:"
@@ -624,348 +197,6 @@ func NameEntry() fyne.CanvasObject {
 func roundFloat(val float64, precision uint) float64 {
 	ratio := math.Pow(10, float64(precision))
 	return math.Round(val*ratio) / ratio
-}
-
-// Holdero owner control objects, left section
-func OwnersBoxLeft(obj []fyne.CanvasObject, tabs *container.AppTabs) fyne.CanvasObject {
-	players := []string{"Players", "Close Table", "2 Players", "3 Players", "4 Players", "5 Players", "6 Players"}
-	player_select := widget.NewSelect(players, func(s string) {})
-	player_select.SetSelectedIndex(0)
-
-	blinds_entry := dwidget.DeroAmtEntry("Big Blind: ", 0.1, 1)
-	blinds_entry.SetPlaceHolder("Dero:")
-	blinds_entry.SetText("Big Blind: 0.0")
-	blinds_entry.Validator = validation.NewRegexp(`^(Big Blind: )\d{1,}\.\d{0,1}$|^(Big Blind: )\d{1,}$`, "Int or float required")
-	blinds_entry.OnChanged = func(s string) {
-		if blinds_entry.Validate() != nil {
-			blinds_entry.SetText("Big Blind: 0.0")
-			Poker.owner.blind_amount = 0
-		} else {
-			trimmed := strings.Trim(s, "Biglnd: ")
-			if f, err := strconv.ParseFloat(trimmed, 64); err == nil {
-				if uint64(f*100000)%10000 == 0 {
-					blinds_entry.SetText(blinds_entry.Prefix + strconv.FormatFloat(roundFloat(f, 1), 'f', int(blinds_entry.Decimal), 64))
-					Poker.owner.blind_amount = uint64(roundFloat(f*100000, 1))
-				} else {
-					blinds_entry.SetText(blinds_entry.Prefix + strconv.FormatFloat(roundFloat(f, 1), 'f', int(blinds_entry.Decimal), 64))
-				}
-			}
-		}
-	}
-
-	ante_entry := dwidget.DeroAmtEntry("Ante: ", 0.1, 1)
-	ante_entry.SetPlaceHolder("Ante:")
-	ante_entry.SetText("Ante: 0.0")
-	ante_entry.Validator = validation.NewRegexp(`^(Ante: )\d{1,}\.\d{0,1}$|^(Ante: )\d{1,}$`, "Int or float required")
-	ante_entry.OnChanged = func(s string) {
-		if ante_entry.Validate() != nil {
-			ante_entry.SetText("Ante: 0.0")
-			Poker.owner.ante_amount = 0
-		} else {
-			trimmed := strings.Trim(s, ante_entry.Prefix)
-			if f, err := strconv.ParseFloat(trimmed, 64); err == nil {
-				if uint64(f*100000)%10000 == 0 {
-					ante_entry.SetText(ante_entry.Prefix + strconv.FormatFloat(roundFloat(f, 1), 'f', int(ante_entry.Decimal), 64))
-					Poker.owner.ante_amount = uint64(roundFloat(f*100000, 1))
-				} else {
-					ante_entry.SetText(ante_entry.Prefix + strconv.FormatFloat(roundFloat(f, 1), 'f', int(ante_entry.Decimal), 64))
-				}
-			}
-		}
-	}
-
-	options := []string{"DERO", "ASSET"}
-	Poker.owner.chips = widget.NewRadioGroup(options, nil)
-	Poker.owner.chips.SetSelected("DERO")
-	Poker.owner.chips.Horizontal = true
-	Poker.owner.chips.OnChanged = func(s string) {
-		if s == "ASSET" {
-			blinds_entry.Increment = 1
-			blinds_entry.Decimal = 0
-			blinds_entry.SetText("0")
-			blinds_entry.Refresh()
-
-			ante_entry.Increment = 1
-			ante_entry.Decimal = 0
-			ante_entry.SetText("0")
-			ante_entry.Refresh()
-		} else {
-			blinds_entry.Increment = 0.1
-			blinds_entry.Decimal = 1
-			blinds_entry.Refresh()
-
-			ante_entry.Increment = 0.1
-			ante_entry.Decimal = 1
-			ante_entry.Refresh()
-		}
-	}
-
-	set_button := widget.NewButton("Set Table", func() {
-		bb := Poker.owner.blind_amount
-		sb := Poker.owner.blind_amount / 2
-		ante := Poker.owner.ante_amount
-		if holdero.Poker_name != "" {
-			rpc.SetTable(player_select.SelectedIndex(), bb, sb, ante, Poker.owner.chips.Selected, holdero.Poker_name, holdero.Settings.AvatarUrl)
-		}
-	})
-
-	clean_entry := dwidget.DeroAmtEntry("Clean: ", 1, 0)
-	clean_entry.AllowFloat = false
-	clean_entry.SetPlaceHolder("Atomic:")
-	clean_entry.SetText("Clean: 0")
-	clean_entry.Validator = validation.NewRegexp(`^(Clean: )\d{1,}`, "Int required")
-	clean_entry.OnChanged = func(s string) {
-		if clean_entry.Validate() != nil {
-			clean_entry.SetText("Clean: 0")
-		}
-	}
-
-	clean_button := widget.NewButton("Clean Table", func() {
-		trimmed := strings.Trim(clean_entry.Text, "Clean: ")
-		c, err := strconv.Atoi(trimmed)
-		if err == nil {
-			rpc.CleanTable(uint64(c))
-		} else {
-			log.Println("[dReams] Invalid Clean Amount")
-		}
-	})
-
-	Poker.owner.timeout = widget.NewButton("Timeout", func() {
-		obj[1] = TimeOutConfirm(obj, tabs)
-		obj[1].Refresh()
-	})
-
-	force := widget.NewButton("Force Start", func() {
-		rpc.ForceStat()
-	})
-
-	players_items := container.NewAdaptiveGrid(2, player_select, layout.NewSpacer())
-	blind_items := container.NewAdaptiveGrid(2, blinds_entry, Poker.owner.chips)
-	ante_items := container.NewAdaptiveGrid(2, ante_entry, set_button)
-	clean_items := container.NewAdaptiveGrid(2, clean_entry, clean_button)
-	time_items := container.NewAdaptiveGrid(2, Poker.owner.timeout, force)
-
-	Poker.owner.owners_left = container.NewVBox(players_items, blind_items, ante_items, clean_items, time_items)
-	Poker.owner.owners_left.Hide()
-
-	return Poker.owner.owners_left
-}
-
-// Holdero owner control objects, middle section
-func OwnersBoxMid() fyne.CanvasObject {
-	kick_label := widget.NewLabel("      Auto Kick after")
-	k_times := []string{"Off", "2m", "5m"}
-	auto_remove := widget.NewSelect(k_times, func(s string) {
-		switch s {
-		case "Off":
-			rpc.Times.Kick = 0
-		case "2m":
-			rpc.Times.Kick = 120
-		case "5m":
-			rpc.Times.Kick = 300
-		default:
-			rpc.Times.Kick = 0
-		}
-	})
-	auto_remove.PlaceHolder = "Kick after"
-
-	pay_label := widget.NewLabel("      Payout Delay")
-	p_times := []string{"30s", "60s"}
-	delay := widget.NewSelect(p_times, func(s string) {
-		switch s {
-		case "30s":
-			rpc.Times.Delay = 30
-		case "60s":
-			rpc.Times.Delay = 60
-		default:
-			rpc.Times.Delay = 30
-		}
-	})
-	delay.PlaceHolder = "Payout delay"
-
-	kick := container.NewVBox(layout.NewSpacer(), kick_label, auto_remove)
-	pay := container.NewVBox(layout.NewSpacer(), pay_label, delay)
-
-	Poker.owner.owners_mid = container.NewAdaptiveGrid(2, kick, pay)
-	Poker.owner.owners_mid.Hide()
-
-	return Poker.owner.owners_mid
-}
-
-// Holdero table icon image with frame
-func TableIcon(r fyne.Resource) *fyne.Container {
-	Stats.Image.SetMinSize(fyne.NewSize(100, 100))
-	Stats.Image.Resize(fyne.NewSize(96, 96))
-	Stats.Image.Move(fyne.NewPos(8, 3))
-
-	frame := canvas.NewImageFromResource(r)
-	frame.Resize(fyne.NewSize(100, 100))
-	frame.Move(fyne.NewPos(5, 0))
-
-	cont := container.NewWithoutLayout(&Stats.Image, frame)
-
-	return cont
-}
-
-// Holdero table stats display objects
-func TableStats() fyne.CanvasObject {
-	Stats.Name = canvas.NewText(" Name: ", bundle.TextColor)
-	Stats.Desc = canvas.NewText(" Description: ", bundle.TextColor)
-	Stats.Version = canvas.NewText(" Table Version: ", bundle.TextColor)
-	Stats.Last = canvas.NewText(" Last Move: ", bundle.TextColor)
-	Stats.Seats = canvas.NewText(" Table Closed ", bundle.TextColor)
-
-	Stats.Name.TextSize = 18
-	Stats.Desc.TextSize = 18
-	Stats.Version.TextSize = 18
-	Stats.Last.TextSize = 18
-	Stats.Seats.TextSize = 18
-
-	Poker.Stats_box = *container.NewVBox(Stats.Name, Stats.Desc, Stats.Version, Stats.Last, Stats.Seats, TableIcon(nil))
-
-	return &Poker.Stats_box
-}
-
-// Confirmation of manual Holdero timeout
-func TimeOutConfirm(obj []fyne.CanvasObject, reset *container.AppTabs) fyne.CanvasObject {
-	var confirm_display = widget.NewLabel("")
-	confirm_display.Wrapping = fyne.TextWrapWord
-	confirm_display.Alignment = fyne.TextAlignCenter
-
-	confirm_display.SetText("Confirm Time Out on Current Player")
-
-	cancel_button := widget.NewButton("Cancel", func() {
-		obj[1] = reset
-		obj[1].Refresh()
-	})
-	confirm_button := widget.NewButton("Confirm", func() {
-		rpc.TimeOut()
-		obj[1] = reset
-		obj[1].Refresh()
-	})
-
-	display := container.NewVBox(layout.NewSpacer(), confirm_display, layout.NewSpacer())
-	options := container.NewAdaptiveGrid(2, confirm_button, cancel_button)
-	content := container.NewBorder(nil, options, nil, nil, display)
-
-	return container.NewMax(bundle.Alpha120, content)
-}
-
-// Confirmation for Holdero contract installs
-func HolderoMenuConfirm(c int, obj []fyne.CanvasObject, tabs *container.AppTabs) fyne.CanvasObject {
-	gas_fee := 0.3
-	unlock_fee := float64(rpc.UnlockFee) / 100000
-	var text string
-	switch c {
-	case 1:
-		Poker.Holdero_unlock.Hide()
-		text = `You are about to unlock and install your first Holdero Table
-		
-To help support the project, there is a ` + fmt.Sprintf("%.5f", unlock_fee) + ` DERO donation attached to preform this action
-
-Unlocking a Holdero table gives you unlimited access to table uploads and all base level owner features
-
-Total transaction will be ` + fmt.Sprintf("%0.5f", unlock_fee+gas_fee) + ` DERO (0.30000 gas fee for contract install)
-
-
-Select a public or private table
-
-Public will show up in indexed list of tables
-
-Private will not show up in the list
-
-All standard tables can use dReams or DERO
-
-
-HGC holders can choose to install a HGC table
-
-Public table that uses HGC or DERO`
-	case 2:
-		Poker.Holdero_new.Hide()
-		text = `You are about to install a new Holdero table
-
-Gas fee to install new table is 0.30000 DERO
-
-
-Select a public or private table
-
-Public will show up in indexed list of tables
-
-Private will not show up in the list
-
-All standard tables can use dReams or DERO
-
-
-HGC holders can choose to install a HGC table
-
-Public table that uses HGC or DERO`
-	}
-
-	label := widget.NewLabel(text)
-	label.Wrapping = fyne.TextWrapWord
-	label.Alignment = fyne.TextAlignCenter
-
-	var choice *widget.Select
-	confirm_button := widget.NewButton("Confirm", func() {
-		if choice.SelectedIndex() < 3 && choice.SelectedIndex() >= 0 {
-			rpc.UploadHolderoContract(choice.SelectedIndex())
-		}
-
-		if c == 2 {
-			Poker.Holdero_new.Show()
-		}
-
-		obj[1] = tabs
-		obj[1].Refresh()
-	})
-
-	options := []string{"Public", "Private"}
-	if hgc := rpc.TokenBalance(rpc.HgcSCID); hgc > 0 {
-		options = append(options, "HGC")
-	}
-
-	choice = widget.NewSelect(options, func(s string) {
-		if s == "Public" || s == "Private" || s == "HGC" {
-			confirm_button.Show()
-		} else {
-			confirm_button.Hide()
-		}
-	})
-
-	cancel_button := widget.NewButton("Cancel", func() {
-		switch c {
-		case 1:
-			Poker.Holdero_unlock.Show()
-		case 2:
-			Poker.Holdero_new.Show()
-		default:
-
-		}
-
-		obj[1] = tabs
-		obj[1].Refresh()
-	})
-
-	confirm_button.Hide()
-
-	left := container.NewVBox(confirm_button)
-	right := container.NewVBox(cancel_button)
-	buttons := container.NewAdaptiveGrid(2, left, right)
-	actions := container.NewVBox(choice, buttons)
-	info_box := container.NewVBox(layout.NewSpacer(), label, layout.NewSpacer())
-
-	content := container.NewBorder(nil, actions, nil, nil, info_box)
-
-	go func() {
-		for rpc.IsReady() {
-			time.Sleep(time.Second)
-		}
-
-		obj[1] = tabs
-		obj[1].Refresh()
-	}()
-
-	return container.NewMax(content)
 }
 
 // Confirmation for dPrediction contract installs
@@ -1362,14 +593,14 @@ func menuAssetImg(img *canvas.Image, res fyne.Resource) fyne.CanvasObject {
 // NFA listing menu
 //   - Pass resources for menu window to match main
 func listMenu(window_icon fyne.Resource) {
-	Control.list_open = true
+	Control.List_open = true
 	aw := fyne.CurrentApp().NewWindow("List NFA")
 	aw.Resize(fyne.NewSize(330, 700))
 	aw.SetIcon(window_icon)
 	Control.List_button.Hide()
 	Control.Send_asset.Hide()
 	aw.SetCloseIntercept(func() {
-		Control.list_open = false
+		Control.List_open = false
 		if rpc.Wallet.IsConnected() {
 			Control.Send_asset.Show()
 			if isNfa(Control.Viewing_asset) {
@@ -1494,7 +725,7 @@ func listMenu(window_icon fyne.Resource) {
 
 				confirm_button := widget.NewButton("Confirm", func() {
 					rpc.SetNFAListing(listing_asset, listing.Selected, charAddr.Text, d, s, cp)
-					Control.list_open = false
+					Control.List_open = false
 					if rpc.Wallet.IsConnected() {
 						Control.Send_asset.Show()
 						if isNfa(Control.Viewing_asset) {
@@ -1532,7 +763,7 @@ func listMenu(window_icon fyne.Resource) {
 				aw_content.Refresh()
 			}
 		}
-		Control.list_open = false
+		Control.List_open = false
 		aw.Close()
 	}()
 
@@ -1634,6 +865,23 @@ func IntroTree() fyne.CanvasObject {
 	return max
 }
 
+// Used for placing coin decimal, default returns 2 decimal place
+func CoinDecimal(ticker string) int {
+	split := strings.Split(ticker, "-")
+	if len(split) == 2 {
+		switch split[1] {
+		case "BTC":
+			return 8
+		case "DERO":
+			return 5
+		default:
+			return 2
+		}
+	}
+
+	return 2
+}
+
 func CreateSwapContainer(pair string) (*dwidget.DeroAmts, *fyne.Container) {
 	split := strings.Split(pair, "-")
 	if len(split) != 2 {
@@ -1656,7 +904,7 @@ func CreateSwapContainer(pair string) (*dwidget.DeroAmts, *fyne.Container) {
 	swap2_label := canvas.NewText(split[1], bundle.TextColor)
 	swap2_label.Alignment = fyne.TextAlignCenter
 	swap2_label.TextSize = 18
-	swap2_entry := dwidget.DeroAmtEntry("", incr, uint(holdero.CoinDecimal(split[0])))
+	swap2_entry := dwidget.DeroAmtEntry("", incr, uint(CoinDecimal(split[0])))
 	swap2_entry.SetText("0")
 	swap2_entry.Disable()
 
@@ -1670,7 +918,7 @@ func CreateSwapContainer(pair string) (*dwidget.DeroAmts, *fyne.Container) {
 	swap1_label := canvas.NewText(split[0], bundle.TextColor)
 	swap1_label.Alignment = fyne.TextAlignCenter
 	swap1_label.TextSize = 18
-	swap1_entry := dwidget.DeroAmtEntry("", incr, uint(holdero.CoinDecimal(split[0])))
+	swap1_entry := dwidget.DeroAmtEntry("", incr, uint(CoinDecimal(split[0])))
 	swap1_entry.SetText("0")
 	swap1_entry.Validator = validation.NewRegexp(`^\d{1,}\.\d{1,5}$|^[^0.]\d{0,}$`, "Int or float required")
 	swap1_entry.OnChanged = func(s string) {
@@ -1706,8 +954,8 @@ func CreateSwapContainer(pair string) (*dwidget.DeroAmts, *fyne.Container) {
 func BackgroundRast(tag string) *canvas.Raster {
 	var err error
 	var img image.Image
-	if holdero.Settings.ThemeImg.Resource != nil {
-		if img, _, err = image.Decode(bytes.NewReader(holdero.Settings.ThemeImg.Resource.Content())); err == nil {
+	if dreams.Theme.Img.Resource != nil {
+		if img, _, err = image.Decode(bytes.NewReader(dreams.Theme.Img.Resource.Content())); err == nil {
 			return canvas.NewRasterFromImage(img)
 		}
 

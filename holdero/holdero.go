@@ -9,49 +9,65 @@ import (
 	"log"
 	"math"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
 
+	dreams "github.com/SixofClubsss/dReams"
 	"github.com/SixofClubsss/dReams/bundle"
 	"github.com/SixofClubsss/dReams/dwidget"
+	"github.com/SixofClubsss/dReams/menu"
 	"github.com/SixofClubsss/dReams/rpc"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/data/validation"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 )
 
-type settings struct {
-	Faces      string
-	Backs      string
-	Theme      string
-	Avatar     string
-	FaceUrl    string
-	BackUrl    string
-	AvatarUrl  string
-	ThemeUrl   string
-	Shared     bool
-	Auto_check bool
-	Auto_deal  bool
+type holderoObjects struct {
+	Contract_entry *widget.SelectEntry
+	Table_list     *widget.List
+	Favorite_list  *widget.List
+	Owned_list     *widget.List
+	Holdero_unlock *widget.Button
+	Holdero_new    *widget.Button
+	Stats_box      fyne.Container
+	Indicator      *fyne.Animation
+	owner          struct {
+		blind_amount uint64
+		ante_amount  uint64
+		chips        *widget.RadioGroup
+		timeout      *widget.Button
+		owners_left  *fyne.Container
+		owners_mid   *fyne.Container
+	}
+}
 
+type settings struct {
+	Tables        []string
+	Favorites     []string
+	Owned         []string
+	Avatar        string
+	AvatarUrl     string
+	Synced        bool
+	Shared        bool
+	Auto_check    bool
+	Auto_deal     bool
 	P1_avatar_url string
 	P2_avatar_url string
 	P3_avatar_url string
 	P4_avatar_url string
 	P5_avatar_url string
 	P6_avatar_url string
-
-	FaceSelect   *widget.Select
-	BackSelect   *widget.Select
-	ThemeSelect  *widget.Select
-	AvatarSelect *widget.Select
-	Tools        *widget.Button
-	SharedOn     *widget.RadioGroup
-	ThemeImg     canvas.Image
+	Check         *widget.Check
+	AvatarSelect  *widget.Select
+	Tools         *widget.Button
+	SharedOn      *widget.RadioGroup
 }
 
 type tableObjects struct {
@@ -63,38 +79,243 @@ type tableObjects struct {
 	Tournament *widget.Button
 	BetEntry   *dwidget.DeroAmts
 	Warning    *fyne.Container
+	Stats      struct {
+		Name    *canvas.Text
+		Desc    *canvas.Text
+		Version *canvas.Text
+		Last    *canvas.Text
+		Seats   *canvas.Text
+		Open    *canvas.Text
+		Image   canvas.Image
+	}
 }
 
+var Poker holderoObjects
 var Table tableObjects
 var Settings settings
-var Poker_name string
 
-func InitTableSettings() {
-	rpc.Signal.Startup = true
+func InitValues() {
 	rpc.Bacc.Display = true
-	rpc.Times.Delay = 30
-	rpc.Times.Kick = 0
-	rpc.Odds.Run = false
-	Settings.Faces = "light/"
-	Settings.Backs = "back1.png"
+	Times.Delay = 30
+	Times.Kick = 0
+	Odds.Run = false
+	Faces.Name = "light/"
+	Backs.Name = "back1.png"
 	Settings.Avatar = "None"
-	Settings.FaceUrl = ""
-	Settings.BackUrl = ""
+	Faces.URL = ""
+	Backs.URL = ""
 	Settings.AvatarUrl = ""
 	Settings.Auto_deal = false
 	Settings.Auto_check = false
+	Signal.Sit = true
 	autoBetDefault()
 }
 
-// Get current working directory path for prefix
-func GetDir() string {
-	pre, err := os.Getwd()
-	if err != nil {
-		log.Println("[GetDir]", err)
-		return ""
+// Holdero SCID entry
+//   - Bound to rpc.Round.Contract
+//   - Entry text set on list selection
+//   - Changes clear table and check if current entry is valid table
+func holderoContractEntry() fyne.Widget {
+	var wait bool
+	Poker.Contract_entry = widget.NewSelectEntry(nil)
+	options := []string{""}
+	Poker.Contract_entry.SetOptions(options)
+	Poker.Contract_entry.PlaceHolder = "Holdero Contract Address: "
+	Poker.Contract_entry.OnCursorChanged = func() {
+		if rpc.Daemon.IsConnected() && !wait {
+			wait = true
+			text := Poker.Contract_entry.Text
+			clearShared()
+			if len(text) == 64 {
+				if checkTableOwner(text) {
+					DisableOwnerControls(false)
+					if checkTableVersion(text) >= 110 {
+						Poker.owner.chips.Show()
+						Poker.owner.timeout.Show()
+						Poker.owner.owners_mid.Show()
+					} else {
+						Poker.owner.chips.Hide()
+						Poker.owner.timeout.Hide()
+						Poker.owner.owners_mid.Hide()
+					}
+				} else {
+					DisableOwnerControls(true)
+				}
+
+				if rpc.Wallet.IsConnected() && checkHolderoContract(text) {
+					Table.Tournament.Show()
+				} else {
+					Table.Tournament.Hide()
+				}
+			} else {
+				Signal.Contract = false
+				Settings.Check.SetChecked(false)
+				Table.Tournament.Hide()
+			}
+			wait = false
+		}
 	}
 
-	return pre
+	this := binding.BindString(&Round.Contract)
+	Poker.Contract_entry.Bind(this)
+
+	return Poker.Contract_entry
+}
+
+// Routine when Holdero SCID is clicked
+func setHolderoControls(str string) (item string) {
+	split := strings.Split(str, "   ")
+	if len(split) >= 3 {
+		trimmed := strings.Trim(split[2], " ")
+		if len(trimmed) == 64 {
+			item = str
+			Poker.Contract_entry.SetText(trimmed)
+			go getTableStats(trimmed, true)
+			Times.Kick_block = rpc.Wallet.Height
+		}
+	}
+
+	return
+}
+
+// Public Holdero table listings object
+func tableListings(tab *container.AppTabs) fyne.CanvasObject {
+	Poker.Table_list = widget.NewList(
+		func() int {
+			return len(Settings.Tables)
+		},
+		func() fyne.CanvasObject {
+			return container.NewHBox(canvas.NewImageFromImage(nil), widget.NewLabel(""))
+		},
+		func(i widget.ListItemID, o fyne.CanvasObject) {
+			o.(*fyne.Container).Objects[1].(*widget.Label).SetText(Settings.Tables[i])
+			if Settings.Tables[i][0:2] != "  " {
+				var key string
+				split := strings.Split(Settings.Tables[i], "   ")
+				if len(split) >= 3 {
+					trimmed := strings.Trim(split[2], " ")
+					if len(trimmed) == 64 {
+						key = trimmed
+					}
+				}
+
+				badge := canvas.NewImageFromResource(menu.DisplayRating(menu.Control.Contract_rating[key]))
+				badge.SetMinSize(fyne.NewSize(35, 35))
+				o.(*fyne.Container).Objects[0] = badge
+			}
+		})
+
+	var item string
+
+	Poker.Table_list.OnSelected = func(id widget.ListItemID) {
+		if id != 0 && menu.Connected() {
+			go func() {
+				item = setHolderoControls(Settings.Tables[id])
+				Poker.Favorite_list.UnselectAll()
+				Poker.Owned_list.UnselectAll()
+			}()
+		}
+	}
+
+	save_favorite := widget.NewButton("Favorite", func() {
+		Settings.Favorites = append(Settings.Favorites, item)
+		sort.Strings(Settings.Favorites)
+	})
+
+	rate_contract := widget.NewButton("Rate", func() {
+		if len(Round.Contract) == 64 {
+			if !checkTableOwner(Round.Contract) {
+				reset := tab.Selected().Content
+				tab.Selected().Content = menu.RateConfirm(Round.Contract, tab, reset)
+				tab.Selected().Content.Refresh()
+
+			} else {
+				log.Println("[dReams] You own this contract")
+			}
+		}
+	})
+
+	tables_cont := container.NewBorder(
+		nil,
+		container.NewBorder(nil, nil, save_favorite, rate_contract, layout.NewSpacer()),
+		nil,
+		nil,
+		Poker.Table_list)
+
+	return tables_cont
+}
+
+// Favorite Holdero tables object
+func holderoFavorites() fyne.CanvasObject {
+	Poker.Favorite_list = widget.NewList(
+		func() int {
+			return len(Settings.Favorites)
+		},
+		func() fyne.CanvasObject {
+			return widget.NewLabel("")
+		},
+		func(i widget.ListItemID, o fyne.CanvasObject) {
+			o.(*widget.Label).SetText(Settings.Favorites[i])
+		})
+
+	var item string
+
+	Poker.Favorite_list.OnSelected = func(id widget.ListItemID) {
+		if menu.Connected() {
+			item = setHolderoControls(Settings.Favorites[id])
+			Poker.Table_list.UnselectAll()
+			Poker.Owned_list.UnselectAll()
+		}
+	}
+
+	remove := widget.NewButton("Remove", func() {
+		if len(Settings.Favorites) > 0 {
+			Poker.Favorite_list.UnselectAll()
+			for i := range Settings.Favorites {
+				if Settings.Favorites[i] == item {
+					copy(Settings.Favorites[i:], Settings.Favorites[i+1:])
+					Settings.Favorites[len(Settings.Favorites)-1] = ""
+					Settings.Favorites = Settings.Favorites[:len(Settings.Favorites)-1]
+					break
+				}
+			}
+		}
+		Poker.Favorite_list.Refresh()
+		sort.Strings(Settings.Favorites)
+	})
+
+	cont := container.NewBorder(
+		nil,
+		container.NewBorder(nil, nil, nil, remove, layout.NewSpacer()),
+		nil,
+		nil,
+		Poker.Favorite_list)
+
+	return cont
+}
+
+// Owned Holdero tables object
+func myTables() fyne.CanvasObject {
+	Poker.Owned_list = widget.NewList(
+		func() int {
+			return len(Settings.Owned)
+		},
+		func() fyne.CanvasObject {
+			return widget.NewLabel("")
+		},
+		func(i widget.ListItemID, o fyne.CanvasObject) {
+			o.(*widget.Label).SetText(Settings.Owned[i])
+		})
+
+	Poker.Owned_list.OnSelected = func(id widget.ListItemID) {
+		if menu.Connected() {
+			setHolderoControls(Settings.Owned[id])
+			Poker.Table_list.UnselectAll()
+			Poker.Favorite_list.UnselectAll()
+		}
+	}
+
+	return Poker.Owned_list
 }
 
 // Table owner name and avatar objects
@@ -105,27 +326,27 @@ func Player1_label(a, f, t fyne.Resource) fyne.CanvasObject {
 	var avatar fyne.CanvasObject
 	var frame fyne.CanvasObject
 	var out fyne.CanvasObject
-	if rpc.Signal.In1 {
-		if rpc.Round.Turn == 1 {
-			name = canvas.NewText(rpc.Round.P1_name, color.RGBA{105, 90, 205, 210})
+	if Signal.In1 {
+		if Round.Turn == 1 {
+			name = canvas.NewText(Round.P1_name, color.RGBA{105, 90, 205, 210})
 		} else {
-			name = canvas.NewText(rpc.Round.P1_name, color.White)
+			name = canvas.NewText(Round.P1_name, color.White)
 		}
 	} else {
 		name = canvas.NewRectangle(color.RGBA{0, 0, 0, 0})
 	}
 
-	if a != nil && rpc.Signal.In1 {
-		if rpc.Round.P1_url != "" {
+	if a != nil && Signal.In1 {
+		if Round.P1_url != "" {
 			avatar = &Shared.P1_avatar
-			if rpc.Round.Turn == 1 {
+			if Round.Turn == 1 {
 				frame = canvas.NewImageFromResource(t)
 			} else {
 				frame = canvas.NewImageFromResource(f)
 			}
 		} else {
 			avatar = canvas.NewImageFromResource(a)
-			if rpc.Round.Turn == 1 {
+			if Round.Turn == 1 {
 				frame = canvas.NewImageFromResource(t)
 			} else {
 				frame = canvas.NewImageFromResource(f)
@@ -136,7 +357,7 @@ func Player1_label(a, f, t fyne.Resource) fyne.CanvasObject {
 		frame = canvas.NewRectangle(color.RGBA{0, 0, 0, 0})
 	}
 
-	if rpc.Signal.Out1 {
+	if Signal.Out1 {
 		out = canvas.NewText("Sitting out", color.White)
 		out.Resize(fyne.NewSize(100, 25))
 		out.Move(fyne.NewPos(253, 45))
@@ -163,27 +384,27 @@ func Player2_label(a, f, t fyne.Resource) fyne.CanvasObject {
 	var name fyne.CanvasObject
 	var avatar fyne.CanvasObject
 	var frame fyne.CanvasObject
-	if rpc.Signal.In2 {
-		if rpc.Round.Turn == 2 {
-			name = canvas.NewText(rpc.Round.P2_name, color.RGBA{105, 90, 205, 210})
+	if Signal.In2 {
+		if Round.Turn == 2 {
+			name = canvas.NewText(Round.P2_name, color.RGBA{105, 90, 205, 210})
 		} else {
-			name = canvas.NewText(rpc.Round.P2_name, color.White)
+			name = canvas.NewText(Round.P2_name, color.White)
 		}
 	} else {
 		name = canvas.NewRectangle(color.RGBA{0, 0, 0, 0})
 	}
 
-	if a != nil && rpc.Signal.In2 {
-		if rpc.Round.P2_url != "" {
+	if a != nil && Signal.In2 {
+		if Round.P2_url != "" {
 			avatar = &Shared.P2_avatar
-			if rpc.Round.Turn == 2 {
+			if Round.Turn == 2 {
 				frame = canvas.NewImageFromResource(t)
 			} else {
 				frame = canvas.NewImageFromResource(f)
 			}
 		} else {
 			avatar = canvas.NewImageFromResource(a)
-			if rpc.Round.Turn == 2 {
+			if Round.Turn == 2 {
 				frame = canvas.NewImageFromResource(t)
 			} else {
 				frame = canvas.NewImageFromResource(f)
@@ -213,27 +434,27 @@ func Player3_label(a, f, t fyne.Resource) fyne.CanvasObject {
 	var name fyne.CanvasObject
 	var avatar fyne.CanvasObject
 	var frame fyne.CanvasObject
-	if rpc.Signal.In3 {
-		if rpc.Round.Turn == 3 {
-			name = canvas.NewText(rpc.Round.P3_name, color.RGBA{105, 90, 205, 210})
+	if Signal.In3 {
+		if Round.Turn == 3 {
+			name = canvas.NewText(Round.P3_name, color.RGBA{105, 90, 205, 210})
 		} else {
-			name = canvas.NewText(rpc.Round.P3_name, color.White)
+			name = canvas.NewText(Round.P3_name, color.White)
 		}
 	} else {
 		name = canvas.NewRectangle(color.RGBA{0, 0, 0, 0})
 	}
 
-	if a != nil && rpc.Signal.In3 {
-		if rpc.Round.P3_url != "" {
+	if a != nil && Signal.In3 {
+		if Round.P3_url != "" {
 			avatar = &Shared.P3_avatar
-			if rpc.Round.Turn == 3 {
+			if Round.Turn == 3 {
 				frame = canvas.NewImageFromResource(t)
 			} else {
 				frame = canvas.NewImageFromResource(f)
 			}
 		} else {
 			avatar = canvas.NewImageFromResource(a)
-			if rpc.Round.Turn == 3 {
+			if Round.Turn == 3 {
 				frame = canvas.NewImageFromResource(t)
 			} else {
 				frame = canvas.NewImageFromResource(f)
@@ -263,27 +484,27 @@ func Player4_label(a, f, t fyne.Resource) fyne.CanvasObject {
 	var name fyne.CanvasObject
 	var avatar fyne.CanvasObject
 	var frame fyne.CanvasObject
-	if rpc.Signal.In4 {
-		if rpc.Round.Turn == 4 {
-			name = canvas.NewText(rpc.Round.P4_name, color.RGBA{105, 90, 205, 210})
+	if Signal.In4 {
+		if Round.Turn == 4 {
+			name = canvas.NewText(Round.P4_name, color.RGBA{105, 90, 205, 210})
 		} else {
-			name = canvas.NewText(rpc.Round.P4_name, color.White)
+			name = canvas.NewText(Round.P4_name, color.White)
 		}
 	} else {
 		name = canvas.NewRectangle(color.RGBA{0, 0, 0, 0})
 	}
 
-	if a != nil && rpc.Signal.In4 {
-		if rpc.Round.P4_url != "" {
+	if a != nil && Signal.In4 {
+		if Round.P4_url != "" {
 			avatar = &Shared.P4_avatar
-			if rpc.Round.Turn == 4 {
+			if Round.Turn == 4 {
 				frame = canvas.NewImageFromResource(t)
 			} else {
 				frame = canvas.NewImageFromResource(f)
 			}
 		} else {
 			avatar = canvas.NewImageFromResource(a)
-			if rpc.Round.Turn == 4 {
+			if Round.Turn == 4 {
 				frame = canvas.NewImageFromResource(t)
 			} else {
 				frame = canvas.NewImageFromResource(f)
@@ -313,27 +534,27 @@ func Player5_label(a, f, t fyne.Resource) fyne.CanvasObject {
 	var name fyne.CanvasObject
 	var avatar fyne.CanvasObject
 	var frame fyne.CanvasObject
-	if rpc.Signal.In5 {
-		if rpc.Round.Turn == 5 {
-			name = canvas.NewText(rpc.Round.P5_name, color.RGBA{105, 90, 205, 210})
+	if Signal.In5 {
+		if Round.Turn == 5 {
+			name = canvas.NewText(Round.P5_name, color.RGBA{105, 90, 205, 210})
 		} else {
-			name = canvas.NewText(rpc.Round.P5_name, color.White)
+			name = canvas.NewText(Round.P5_name, color.White)
 		}
 	} else {
 		name = canvas.NewRectangle(color.RGBA{0, 0, 0, 0})
 	}
 
-	if a != nil && rpc.Signal.In5 {
-		if rpc.Round.P5_url != "" {
+	if a != nil && Signal.In5 {
+		if Round.P5_url != "" {
 			avatar = &Shared.P5_avatar
-			if rpc.Round.Turn == 5 {
+			if Round.Turn == 5 {
 				frame = canvas.NewImageFromResource(t)
 			} else {
 				frame = canvas.NewImageFromResource(f)
 			}
 		} else {
 			avatar = canvas.NewImageFromResource(a)
-			if rpc.Round.Turn == 5 {
+			if Round.Turn == 5 {
 				frame = canvas.NewImageFromResource(t)
 			} else {
 				frame = canvas.NewImageFromResource(f)
@@ -363,27 +584,27 @@ func Player6_label(a, f, t fyne.Resource) fyne.CanvasObject {
 	var name fyne.CanvasObject
 	var avatar fyne.CanvasObject
 	var frame fyne.CanvasObject
-	if rpc.Signal.In6 {
-		if rpc.Round.Turn == 6 {
-			name = canvas.NewText(rpc.Round.P6_name, color.RGBA{105, 90, 205, 210})
+	if Signal.In6 {
+		if Round.Turn == 6 {
+			name = canvas.NewText(Round.P6_name, color.RGBA{105, 90, 205, 210})
 		} else {
-			name = canvas.NewText(rpc.Round.P6_name, color.White)
+			name = canvas.NewText(Round.P6_name, color.White)
 		}
 	} else {
 		name = canvas.NewRectangle(color.RGBA{0, 0, 0, 0})
 	}
 
-	if a != nil && rpc.Signal.In6 {
-		if rpc.Round.P6_url != "" {
+	if a != nil && Signal.In6 {
+		if Round.P6_url != "" {
 			avatar = &Shared.P6_avatar
-			if rpc.Round.Turn == 6 {
+			if Round.Turn == 6 {
 				frame = canvas.NewImageFromResource(t)
 			} else {
 				frame = canvas.NewImageFromResource(f)
 			}
 		} else {
 			avatar = canvas.NewImageFromResource(a)
-			if rpc.Round.Turn == 6 {
+			if Round.Turn == 6 {
 				frame = canvas.NewImageFromResource(t)
 			} else {
 				frame = canvas.NewImageFromResource(f)
@@ -416,7 +637,7 @@ func HolderoTable(img fyne.Resource) fyne.CanvasObject {
 }
 
 // Holdero object buffer when action triggered
-func HolderoButtonBuffer() {
+func ActionBuffer() {
 	Table.Sit.Hide()
 	Table.Leave.Hide()
 	Table.Deal.Hide()
@@ -424,15 +645,15 @@ func HolderoButtonBuffer() {
 	Table.Check.Hide()
 	Table.BetEntry.Hide()
 	Table.Warning.Hide()
-	rpc.Display.Res = ""
-	rpc.Signal.Clicked = true
-	rpc.Signal.CHeight = rpc.Wallet.Height
+	Display.Res = ""
+	Signal.Clicked = true
+	Signal.CHeight = rpc.Wallet.Height
 }
 
 // Checking for current player names at connected Holdero table
 //   - If name exists, prompt user to select new name
-func CheckNames(seats string) bool {
-	if rpc.Round.ID == 1 {
+func checkNames(seats string) bool {
+	if Round.ID == 1 {
 		return true
 	}
 
@@ -440,31 +661,31 @@ func CheckNames(seats string) bool {
 
 	switch seats {
 	case "2":
-		if Poker_name == rpc.Round.P1_name {
+		if menu.Username == Round.P1_name {
 			log.Println(err)
 			return false
 		}
 		return true
 	case "3":
-		if Poker_name == rpc.Round.P1_name || Poker_name == rpc.Round.P2_name || Poker_name == rpc.Round.P3_name {
+		if menu.Username == Round.P1_name || menu.Username == Round.P2_name || menu.Username == Round.P3_name {
 			log.Println(err)
 			return false
 		}
 		return true
 	case "4":
-		if Poker_name == rpc.Round.P1_name || Poker_name == rpc.Round.P2_name || Poker_name == rpc.Round.P3_name || Poker_name == rpc.Round.P4_name {
+		if menu.Username == Round.P1_name || menu.Username == Round.P2_name || menu.Username == Round.P3_name || menu.Username == Round.P4_name {
 			log.Println(err)
 			return false
 		}
 		return true
 	case "5":
-		if Poker_name == rpc.Round.P1_name || Poker_name == rpc.Round.P2_name || Poker_name == rpc.Round.P3_name || Poker_name == rpc.Round.P4_name || Poker_name == rpc.Round.P5_name {
+		if menu.Username == Round.P1_name || menu.Username == Round.P2_name || menu.Username == Round.P3_name || menu.Username == Round.P4_name || menu.Username == Round.P5_name {
 			log.Println(err)
 			return false
 		}
 		return true
 	case "6":
-		if Poker_name == rpc.Round.P1_name || Poker_name == rpc.Round.P2_name || Poker_name == rpc.Round.P3_name || Poker_name == rpc.Round.P4_name || Poker_name == rpc.Round.P5_name || Poker_name == rpc.Round.P6_name {
+		if menu.Username == Round.P1_name || menu.Username == Round.P2_name || menu.Username == Round.P3_name || menu.Username == Round.P4_name || menu.Username == Round.P5_name || menu.Username == Round.P6_name {
 			log.Println(err)
 			return false
 		}
@@ -477,10 +698,10 @@ func CheckNames(seats string) bool {
 // Holdero player sit down button to join current table
 func SitButton() fyne.Widget {
 	Table.Sit = widget.NewButton("Sit Down", func() {
-		if Poker_name != "" {
-			if CheckNames(rpc.Display.Seats) {
-				rpc.SitDown(Poker_name, Settings.AvatarUrl)
-				HolderoButtonBuffer()
+		if menu.Username != "" {
+			if checkNames(Display.Seats) {
+				SitDown(menu.Username, Settings.AvatarUrl)
+				ActionBuffer()
 			}
 		} else {
 			log.Println("[Holdero] Pick a name")
@@ -495,8 +716,8 @@ func SitButton() fyne.Widget {
 // Holdero player leave button to leave current table seat
 func LeaveButton() fyne.Widget {
 	Table.Leave = widget.NewButton("Leave", func() {
-		rpc.Leave()
-		HolderoButtonBuffer()
+		Leave()
+		ActionBuffer()
 	})
 
 	Table.Leave.Hide()
@@ -507,8 +728,8 @@ func LeaveButton() fyne.Widget {
 // Holdero player deal hand button
 func DealHandButton() fyne.Widget {
 	Table.Deal = widget.NewButton("Deal Hand", func() {
-		if tx := rpc.DealHand(); tx != "" {
-			HolderoButtonBuffer()
+		if tx := DealHand(); tx != "" {
+			ActionBuffer()
 		}
 	})
 
@@ -529,31 +750,31 @@ func BetAmount() fyne.CanvasObject {
 	Table.BetEntry.Validator = validation.NewRegexp(`^\d{1,}\.\d{1,5}$|^[^0.]\d{0,}$`, "Int or float required")
 	Table.BetEntry.OnChanged = func(s string) {
 		if f, err := strconv.ParseFloat(s, 64); err == nil {
-			if rpc.Signal.PlacedBet {
-				Table.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.Raised)/100000, 'f', int(Table.BetEntry.Decimal), 64))
+			if Signal.PlacedBet {
+				Table.BetEntry.SetText(strconv.FormatFloat(float64(Round.Raised)/100000, 'f', int(Table.BetEntry.Decimal), 64))
 				if Table.BetEntry.Validate() != nil {
-					Table.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.Raised)/100000, 'f', int(Table.BetEntry.Decimal), 64))
+					Table.BetEntry.SetText(strconv.FormatFloat(float64(Round.Raised)/100000, 'f', int(Table.BetEntry.Decimal), 64))
 				}
 			} else {
 
-				if rpc.Round.Wager > 0 {
-					if rpc.Round.Raised > 0 {
-						if rpc.Signal.PlacedBet {
-							Table.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.Raised)/100000, 'f', int(Table.BetEntry.Decimal), 64))
+				if Round.Wager > 0 {
+					if Round.Raised > 0 {
+						if Signal.PlacedBet {
+							Table.BetEntry.SetText(strconv.FormatFloat(float64(Round.Raised)/100000, 'f', int(Table.BetEntry.Decimal), 64))
 						} else {
-							Table.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.Wager)/100000, 'f', int(Table.BetEntry.Decimal), 64))
+							Table.BetEntry.SetText(strconv.FormatFloat(float64(Round.Wager)/100000, 'f', int(Table.BetEntry.Decimal), 64))
 						}
 						if Table.BetEntry.Validate() != nil {
-							if rpc.Signal.PlacedBet {
-								Table.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.Raised)/100000, 'f', int(Table.BetEntry.Decimal), 64))
+							if Signal.PlacedBet {
+								Table.BetEntry.SetText(strconv.FormatFloat(float64(Round.Raised)/100000, 'f', int(Table.BetEntry.Decimal), 64))
 							} else {
-								Table.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.Wager)/100000, 'f', int(Table.BetEntry.Decimal), 64))
+								Table.BetEntry.SetText(strconv.FormatFloat(float64(Round.Wager)/100000, 'f', int(Table.BetEntry.Decimal), 64))
 							}
 						}
 					} else {
 
-						if f < float64(rpc.Round.Wager)/100000 {
-							Table.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.Wager)/100000, 'f', int(Table.BetEntry.Decimal), 64))
+						if f < float64(Round.Wager)/100000 {
+							Table.BetEntry.SetText(strconv.FormatFloat(float64(Round.Wager)/100000, 'f', int(Table.BetEntry.Decimal), 64))
 						}
 
 						if Table.BetEntry.Validate() != nil {
@@ -575,22 +796,22 @@ func BetAmount() fyne.CanvasObject {
 							Table.BetEntry.SetText(strconv.FormatFloat(roundFloat(f, 1), 'f', int(Table.BetEntry.Decimal), 64))
 						}
 
-						if rpc.Round.Ante > 0 {
-							if f < float64(rpc.Round.Ante)/100000 {
-								Table.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.Ante)/100000, 'f', int(Table.BetEntry.Decimal), 64))
+						if Round.Ante > 0 {
+							if f < float64(Round.Ante)/100000 {
+								Table.BetEntry.SetText(strconv.FormatFloat(float64(Round.Ante)/100000, 'f', int(Table.BetEntry.Decimal), 64))
 							}
 
 							if Table.BetEntry.Validate() != nil {
-								Table.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.Ante)/100000, 'f', int(Table.BetEntry.Decimal), 64))
+								Table.BetEntry.SetText(strconv.FormatFloat(float64(Round.Ante)/100000, 'f', int(Table.BetEntry.Decimal), 64))
 							}
 
 						} else {
-							if f < float64(rpc.Round.BB)/100000 {
-								Table.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.BB)/100000, 'f', int(Table.BetEntry.Decimal), 64))
+							if f < float64(Round.BB)/100000 {
+								Table.BetEntry.SetText(strconv.FormatFloat(float64(Round.BB)/100000, 'f', int(Table.BetEntry.Decimal), 64))
 							}
 
 							if Table.BetEntry.Validate() != nil {
-								Table.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.BB)/100000, 'f', int(Table.BetEntry.Decimal), 64))
+								Table.BetEntry.SetText(strconv.FormatFloat(float64(Round.BB)/100000, 'f', int(Table.BetEntry.Decimal), 64))
 							}
 						}
 					}
@@ -598,10 +819,10 @@ func BetAmount() fyne.CanvasObject {
 			}
 		} else {
 			log.Println("[BetAmount]", err)
-			if rpc.Round.Ante == 0 {
-				Table.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.BB)/100000, 'f', int(Table.BetEntry.Decimal), 64))
+			if Round.Ante == 0 {
+				Table.BetEntry.SetText(strconv.FormatFloat(float64(Round.BB)/100000, 'f', int(Table.BetEntry.Decimal), 64))
 			} else {
-				Table.BetEntry.SetText(strconv.FormatFloat(float64(rpc.Round.Ante)/100000, 'f', int(Table.BetEntry.Decimal), 64))
+				Table.BetEntry.SetText(strconv.FormatFloat(float64(Round.Ante)/100000, 'f', int(Table.BetEntry.Decimal), 64))
 			}
 		}
 	}
@@ -625,9 +846,9 @@ func roundFloat(val float64, precision uint) float64 {
 func BetButton() fyne.Widget {
 	Table.Bet = widget.NewButton("Bet", func() {
 		if Table.BetEntry.Validate() == nil {
-			if tx := rpc.Bet(Table.BetEntry.Text); tx != "" {
-				rpc.Signal.Bet = true
-				HolderoButtonBuffer()
+			if tx := Bet(Table.BetEntry.Text); tx != "" {
+				Signal.Bet = true
+				ActionBuffer()
 			}
 		}
 	})
@@ -640,9 +861,9 @@ func BetButton() fyne.Widget {
 // Holdero check and fold button
 func CheckButton() fyne.Widget {
 	Table.Check = widget.NewButton("Check", func() {
-		if tx := rpc.Check(); tx != "" {
-			rpc.Signal.Bet = true
-			HolderoButtonBuffer()
+		if tx := Check(); tx != "" {
+			Signal.Bet = true
+			ActionBuffer()
 		}
 	})
 
@@ -697,26 +918,26 @@ func TimeOutWarning() *fyne.Container {
 
 // Set default params for auto bet functions
 func autoBetDefault() {
-	rpc.Odds.Bot.Risk[2] = 21
-	rpc.Odds.Bot.Risk[1] = 9
-	rpc.Odds.Bot.Risk[0] = 3
-	rpc.Odds.Bot.Bet[2] = 6
-	rpc.Odds.Bot.Bet[1] = 3
-	rpc.Odds.Bot.Bet[0] = 1
-	rpc.Odds.Bot.Luck = 0
-	rpc.Odds.Bot.Slow = 4
-	rpc.Odds.Bot.Aggr = 1
-	rpc.Odds.Bot.Max = 10
-	rpc.Odds.Bot.Random[0] = 0
-	rpc.Odds.Bot.Random[1] = 0
+	Odds.Bot.Risk[2] = 21
+	Odds.Bot.Risk[1] = 9
+	Odds.Bot.Risk[0] = 3
+	Odds.Bot.Bet[2] = 6
+	Odds.Bot.Bet[1] = 3
+	Odds.Bot.Bet[0] = 1
+	Odds.Bot.Luck = 0
+	Odds.Bot.Slow = 4
+	Odds.Bot.Aggr = 1
+	Odds.Bot.Max = 10
+	Odds.Bot.Random[0] = 0
+	Odds.Bot.Random[1] = 0
 }
 
 // Setting current auto bet random option when menu opened
 func setRandomOpts(opts *widget.RadioGroup) {
-	if rpc.Odds.Bot.Random[0] == 0 {
+	if Odds.Bot.Random[0] == 0 {
 		opts.Disable()
 	} else {
-		switch rpc.Odds.Bot.Random[1] {
+		switch Odds.Bot.Random[1] {
 		case 1:
 			opts.SetSelected("Risk")
 		case 2:
@@ -742,182 +963,182 @@ func holderoTools(deal, check *widget.Check, button *widget.Button) {
 		bm.Close()
 	})
 
-	rpc.Stats = ReadSavedStats()
+	Stats = readSavedStats()
 	config_opts := []string{}
-	for i := range rpc.Stats.Bots {
-		config_opts = append(config_opts, rpc.Stats.Bots[i].Name)
+	for i := range Stats.Bots {
+		config_opts = append(config_opts, Stats.Bots[i].Name)
 	}
 
 	entry := widget.NewSelectEntry(config_opts)
 	entry.SetPlaceHolder("Default")
-	entry.SetText(rpc.Odds.Bot.Name)
+	entry.SetText(Odds.Bot.Name)
 
 	curr := " Dero"
 	max_bet := float64(100)
-	if rpc.Round.Asset {
+	if Round.Asset {
 		curr = " Tokens"
 		max_bet = 2500
 	}
 
-	mb_label := widget.NewLabel("Max Bet: " + fmt.Sprintf("%.0f", rpc.Odds.Bot.Max) + curr)
+	mb_label := widget.NewLabel("Max Bet: " + fmt.Sprintf("%.0f", Odds.Bot.Max) + curr)
 	mb_slider := widget.NewSlider(1, max_bet)
-	mb_slider.SetValue(rpc.Odds.Bot.Max)
+	mb_slider.SetValue(Odds.Bot.Max)
 	mb_slider.OnChanged = func(f float64) {
 		go func() {
-			min := float64(rpc.MinBet()) / 100000
+			min := float64(MinBet()) / 100000
 			if min == 0 {
 				min = 0.1
 			}
 
-			if f < (min*rpc.Odds.Bot.Bet[2])*rpc.Odds.Bot.Aggr {
-				rpc.Odds.Bot.Max = (min*rpc.Odds.Bot.Bet[2])*rpc.Odds.Bot.Aggr + 3
-				mb_slider.SetValue(rpc.Odds.Bot.Max)
-				mb_label.SetText("Max Bet: " + fmt.Sprintf("%.0f", rpc.Odds.Bot.Max) + curr)
+			if f < (min*Odds.Bot.Bet[2])*Odds.Bot.Aggr {
+				Odds.Bot.Max = (min*Odds.Bot.Bet[2])*Odds.Bot.Aggr + 3
+				mb_slider.SetValue(Odds.Bot.Max)
+				mb_label.SetText("Max Bet: " + fmt.Sprintf("%.0f", Odds.Bot.Max) + curr)
 			} else {
-				rpc.Odds.Bot.Max = f
+				Odds.Bot.Max = f
 				mb_label.SetText("Max Bet: " + fmt.Sprintf("%.0f", f) + curr)
 			}
 		}()
 	}
 
-	rh_label := widget.NewLabel("Risk High: " + fmt.Sprintf("%.0f", rpc.Odds.Bot.Risk[2]) + "%")
+	rh_label := widget.NewLabel("Risk High: " + fmt.Sprintf("%.0f", Odds.Bot.Risk[2]) + "%")
 	rh_slider := widget.NewSlider(1, 90)
-	rh_slider.SetValue(rpc.Odds.Bot.Risk[2])
+	rh_slider.SetValue(Odds.Bot.Risk[2])
 	rh_slider.OnChanged = func(f float64) {
 		go func() {
-			if f < rpc.Odds.Bot.Risk[1] {
-				rpc.Odds.Bot.Risk[2] = rpc.Odds.Bot.Risk[1] + 1
-				rh_slider.SetValue(rpc.Odds.Bot.Risk[2])
+			if f < Odds.Bot.Risk[1] {
+				Odds.Bot.Risk[2] = Odds.Bot.Risk[1] + 1
+				rh_slider.SetValue(Odds.Bot.Risk[2])
 			} else {
-				rpc.Odds.Bot.Risk[2] = f
+				Odds.Bot.Risk[2] = f
 			}
 
-			rh_label.SetText("Risk High: " + fmt.Sprintf("%.0f", rpc.Odds.Bot.Risk[2]) + "%")
+			rh_label.SetText("Risk High: " + fmt.Sprintf("%.0f", Odds.Bot.Risk[2]) + "%")
 		}()
 	}
 
-	rm_label := widget.NewLabel("Risk Medium: " + fmt.Sprintf("%.0f", rpc.Odds.Bot.Risk[1]) + "%")
+	rm_label := widget.NewLabel("Risk Medium: " + fmt.Sprintf("%.0f", Odds.Bot.Risk[1]) + "%")
 	rm_slider := widget.NewSlider(1, 89)
-	rm_slider.SetValue(rpc.Odds.Bot.Risk[1])
+	rm_slider.SetValue(Odds.Bot.Risk[1])
 	rm_slider.OnChanged = func(f float64) {
 		go func() {
-			rpc.Odds.Bot.Risk[1] = f
-			if f <= rpc.Odds.Bot.Risk[0] {
-				rpc.Odds.Bot.Risk[1] = rpc.Odds.Bot.Risk[0] + 1
-				rm_slider.SetValue(rpc.Odds.Bot.Risk[1])
+			Odds.Bot.Risk[1] = f
+			if f <= Odds.Bot.Risk[0] {
+				Odds.Bot.Risk[1] = Odds.Bot.Risk[0] + 1
+				rm_slider.SetValue(Odds.Bot.Risk[1])
 			}
 
-			if f >= rpc.Odds.Bot.Risk[2] {
-				rpc.Odds.Bot.Risk[2] = f + 1
-				rh_slider.SetValue(rpc.Odds.Bot.Risk[2])
+			if f >= Odds.Bot.Risk[2] {
+				Odds.Bot.Risk[2] = f + 1
+				rh_slider.SetValue(Odds.Bot.Risk[2])
 			}
 
-			rm_label.SetText("Risk Medium: " + fmt.Sprintf("%.0f", rpc.Odds.Bot.Risk[1]) + "%")
+			rm_label.SetText("Risk Medium: " + fmt.Sprintf("%.0f", Odds.Bot.Risk[1]) + "%")
 		}()
 	}
 
-	rl_label := widget.NewLabel("Risk Low: " + fmt.Sprintf("%.0f", rpc.Odds.Bot.Risk[0]) + "%")
+	rl_label := widget.NewLabel("Risk Low: " + fmt.Sprintf("%.0f", Odds.Bot.Risk[0]) + "%")
 	rl_slider := widget.NewSlider(1, 88)
-	rl_slider.SetValue(rpc.Odds.Bot.Risk[0])
+	rl_slider.SetValue(Odds.Bot.Risk[0])
 	rl_slider.OnChanged = func(f float64) {
 		go func() {
-			if rpc.Odds.Bot.Risk[1] <= f {
+			if Odds.Bot.Risk[1] <= f {
 				rm_slider.SetValue(f + 1)
 			}
 
-			rpc.Odds.Bot.Risk[0] = f
-			rl_label.SetText("Risk Low: " + fmt.Sprintf("%.0f", rpc.Odds.Bot.Risk[0]) + "%")
+			Odds.Bot.Risk[0] = f
+			rl_label.SetText("Risk Low: " + fmt.Sprintf("%.0f", Odds.Bot.Risk[0]) + "%")
 		}()
 	}
 
-	bh_label := widget.NewLabel("Bet High: " + fmt.Sprintf("%.0f", rpc.Odds.Bot.Bet[2]) + "x")
+	bh_label := widget.NewLabel("Bet High: " + fmt.Sprintf("%.0f", Odds.Bot.Bet[2]) + "x")
 	bh_slider := widget.NewSlider(1, 100)
-	bh_slider.SetValue(rpc.Odds.Bot.Bet[2])
+	bh_slider.SetValue(Odds.Bot.Bet[2])
 	bh_slider.OnChanged = func(f float64) {
 		go func() {
-			if f < rpc.Odds.Bot.Bet[1] {
-				rpc.Odds.Bot.Bet[2] = rpc.Odds.Bot.Bet[1] + 1
-				bh_slider.SetValue(rpc.Odds.Bot.Bet[2])
+			if f < Odds.Bot.Bet[1] {
+				Odds.Bot.Bet[2] = Odds.Bot.Bet[1] + 1
+				bh_slider.SetValue(Odds.Bot.Bet[2])
 			} else {
-				rpc.Odds.Bot.Bet[2] = f
+				Odds.Bot.Bet[2] = f
 			}
 
-			min := float64(rpc.MinBet()) / 100000
+			min := float64(MinBet()) / 100000
 			if min == 0 {
 				min = 0.1
 			}
 
-			if rpc.Odds.Bot.Max < (min*rpc.Odds.Bot.Bet[2])*rpc.Odds.Bot.Aggr {
-				rpc.Odds.Bot.Max = (min * rpc.Odds.Bot.Bet[2]) * rpc.Odds.Bot.Aggr
-				mb_slider.SetValue(rpc.Odds.Bot.Max)
+			if Odds.Bot.Max < (min*Odds.Bot.Bet[2])*Odds.Bot.Aggr {
+				Odds.Bot.Max = (min * Odds.Bot.Bet[2]) * Odds.Bot.Aggr
+				mb_slider.SetValue(Odds.Bot.Max)
 			}
 
-			bh_label.SetText("Bet High: " + fmt.Sprintf("%.0f", rpc.Odds.Bot.Bet[2]) + "x")
+			bh_label.SetText("Bet High: " + fmt.Sprintf("%.0f", Odds.Bot.Bet[2]) + "x")
 		}()
 	}
 
-	bm_label := widget.NewLabel("Bet Medium: " + fmt.Sprintf("%.0f", rpc.Odds.Bot.Bet[1]) + "x")
+	bm_label := widget.NewLabel("Bet Medium: " + fmt.Sprintf("%.0f", Odds.Bot.Bet[1]) + "x")
 	bm_slider := widget.NewSlider(1, 99)
-	bm_slider.SetValue(rpc.Odds.Bot.Bet[1])
+	bm_slider.SetValue(Odds.Bot.Bet[1])
 	bm_slider.OnChanged = func(f float64) {
 		go func() {
-			rpc.Odds.Bot.Bet[1] = f
-			if f <= rpc.Odds.Bot.Bet[0] {
-				rpc.Odds.Bot.Bet[1] = rpc.Odds.Bot.Bet[0] + 1
-				bm_slider.SetValue(rpc.Odds.Bot.Bet[1])
+			Odds.Bot.Bet[1] = f
+			if f <= Odds.Bot.Bet[0] {
+				Odds.Bot.Bet[1] = Odds.Bot.Bet[0] + 1
+				bm_slider.SetValue(Odds.Bot.Bet[1])
 			}
 
-			if f >= rpc.Odds.Bot.Bet[2] {
-				rpc.Odds.Bot.Bet[2] = f + 1
-				bh_slider.SetValue(rpc.Odds.Bot.Bet[2])
+			if f >= Odds.Bot.Bet[2] {
+				Odds.Bot.Bet[2] = f + 1
+				bh_slider.SetValue(Odds.Bot.Bet[2])
 			}
 
-			bm_label.SetText("Bet Medium: " + fmt.Sprintf("%.0f", rpc.Odds.Bot.Bet[1]) + "x")
+			bm_label.SetText("Bet Medium: " + fmt.Sprintf("%.0f", Odds.Bot.Bet[1]) + "x")
 		}()
 	}
 
-	bl_label := widget.NewLabel("Bet Low: " + fmt.Sprintf("%.0f", rpc.Odds.Bot.Bet[0]) + "x")
+	bl_label := widget.NewLabel("Bet Low: " + fmt.Sprintf("%.0f", Odds.Bot.Bet[0]) + "x")
 	bl_slider := widget.NewSlider(1, 98)
-	bl_slider.SetValue(rpc.Odds.Bot.Bet[0])
+	bl_slider.SetValue(Odds.Bot.Bet[0])
 	bl_slider.OnChanged = func(f float64) {
 		go func() {
-			if rpc.Odds.Bot.Bet[1] <= f {
+			if Odds.Bot.Bet[1] <= f {
 				bm_slider.SetValue(f + 1)
 			}
 
-			rpc.Odds.Bot.Bet[0] = f
-			bl_label.SetText("Bet Low: " + fmt.Sprintf("%.0f", rpc.Odds.Bot.Bet[0]) + "x")
+			Odds.Bot.Bet[0] = f
+			bl_label.SetText("Bet Low: " + fmt.Sprintf("%.0f", Odds.Bot.Bet[0]) + "x")
 		}()
 	}
 
-	luck_label := widget.NewLabel("Luck: " + fmt.Sprintf("%.2f", rpc.Odds.Bot.Luck))
+	luck_label := widget.NewLabel("Luck: " + fmt.Sprintf("%.2f", Odds.Bot.Luck))
 	luck_slider := widget.NewSlider(0, 10)
 	luck_slider.Step = 0.25
-	luck_slider.SetValue(rpc.Odds.Bot.Luck)
+	luck_slider.SetValue(Odds.Bot.Luck)
 	luck_slider.OnChanged = func(f float64) {
 		go func() {
-			rpc.Odds.Bot.Luck = f
+			Odds.Bot.Luck = f
 			luck_label.SetText("Luck: " + fmt.Sprintf("%.2f", f))
 		}()
 	}
 
 	random_label := widget.NewLabel("Randomize: Off")
-	if rpc.Odds.Bot.Random[0] == 0 {
+	if Odds.Bot.Random[0] == 0 {
 		random_label.SetText("Randomize: Off")
 	} else {
-		random_label.SetText("Randomize: " + fmt.Sprintf("%.2f", rpc.Odds.Bot.Random[0]))
+		random_label.SetText("Randomize: " + fmt.Sprintf("%.2f", Odds.Bot.Random[0]))
 	}
 
 	random_opts := widget.NewRadioGroup([]string{"Risk", "Bet", "Both"}, func(s string) {
 		switch s {
 		case "Risk":
-			rpc.Odds.Bot.Random[1] = 1
+			Odds.Bot.Random[1] = 1
 		case "Bet":
-			rpc.Odds.Bot.Random[1] = 2
+			Odds.Bot.Random[1] = 2
 		case "Both":
-			rpc.Odds.Bot.Random[1] = 3
+			Odds.Bot.Random[1] = 3
 		default:
-			rpc.Odds.Bot.Random[1] = 0
+			Odds.Bot.Random[1] = 0
 		}
 	})
 
@@ -925,16 +1146,16 @@ func holderoTools(deal, check *widget.Check, button *widget.Button) {
 
 	random_slider := widget.NewSlider(0, 10)
 	random_slider.Step = 0.25
-	random_slider.SetValue(rpc.Odds.Bot.Random[0])
+	random_slider.SetValue(Odds.Bot.Random[0])
 	random_slider.OnChanged = func(f float64) {
 		go func() {
-			rpc.Odds.Bot.Random[0] = f
+			Odds.Bot.Random[0] = f
 			if f >= 0.5 {
 				random_label.SetText("Randomize: " + fmt.Sprintf("%.2f", f))
 				random_opts.Enable()
 			} else {
-				rpc.Odds.Bot.Random[0] = 0
-				rpc.Odds.Bot.Random[1] = 0
+				Odds.Bot.Random[0] = 0
+				Odds.Bot.Random[1] = 0
 				random_label.SetText("Randomize: Off")
 				random_opts.SetSelected("")
 				random_opts.Disable()
@@ -942,30 +1163,30 @@ func holderoTools(deal, check *widget.Check, button *widget.Button) {
 		}()
 	}
 
-	slow_label := widget.NewLabel("Slowplay: " + fmt.Sprintf("%.0f", rpc.Odds.Bot.Slow))
+	slow_label := widget.NewLabel("Slowplay: " + fmt.Sprintf("%.0f", Odds.Bot.Slow))
 	slow_slider := widget.NewSlider(1, 5)
-	slow_slider.SetValue(rpc.Odds.Bot.Slow)
+	slow_slider.SetValue(Odds.Bot.Slow)
 	slow_slider.OnChanged = func(f float64) {
 		go func() {
-			rpc.Odds.Bot.Slow = f
+			Odds.Bot.Slow = f
 			slow_label.SetText("Slowplay: " + fmt.Sprintf("%.0f", f))
 		}()
 	}
 
-	aggr_label := widget.NewLabel("Aggression: " + fmt.Sprintf("%.0f", rpc.Odds.Bot.Aggr))
+	aggr_label := widget.NewLabel("Aggression: " + fmt.Sprintf("%.0f", Odds.Bot.Aggr))
 	aggr_slider := widget.NewSlider(1, 5)
-	aggr_slider.SetValue(rpc.Odds.Bot.Aggr)
+	aggr_slider.SetValue(Odds.Bot.Aggr)
 	aggr_slider.OnChanged = func(f float64) {
 		go func() {
-			rpc.Odds.Bot.Aggr = f
-			min := float64(rpc.MinBet()) / 100000
+			Odds.Bot.Aggr = f
+			min := float64(MinBet()) / 100000
 			if min == 0 {
 				min = 0.1
 			}
 
-			if rpc.Odds.Bot.Max < (min*rpc.Odds.Bot.Bet[2])*rpc.Odds.Bot.Aggr {
-				rpc.Odds.Bot.Max = (min * rpc.Odds.Bot.Bet[2]) * rpc.Odds.Bot.Aggr
-				mb_slider.SetValue(rpc.Odds.Bot.Max)
+			if Odds.Bot.Max < (min*Odds.Bot.Bet[2])*Odds.Bot.Aggr {
+				Odds.Bot.Max = (min * Odds.Bot.Bet[2]) * Odds.Bot.Aggr
+				mb_slider.SetValue(Odds.Bot.Max)
 			}
 
 			aggr_label.SetText("Aggression: " + fmt.Sprintf("%.0f", f))
@@ -974,12 +1195,12 @@ func holderoTools(deal, check *widget.Check, button *widget.Button) {
 
 	rem := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "delete"), func() {
 		if entry.Text != "" {
-			var new []rpc.Bot_config
-			for i := range rpc.Stats.Bots {
-				if rpc.Stats.Bots[i].Name == entry.Text {
+			var new []Bot_config
+			for i := range Stats.Bots {
+				if Stats.Bots[i].Name == entry.Text {
 					log.Println("[dReams] Deleting bot config")
 					if i > 0 {
-						new = append(rpc.Stats.Bots[0:i], rpc.Stats.Bots[i+1:]...)
+						new = append(Stats.Bots[0:i], Stats.Bots[i+1:]...)
 						config_opts = append(config_opts[0:i], config_opts[i+1:]...)
 						break
 					} else {
@@ -987,7 +1208,7 @@ func holderoTools(deal, check *widget.Check, button *widget.Button) {
 							new = nil
 							config_opts = []string{}
 						} else {
-							new = rpc.Stats.Bots[1:]
+							new = Stats.Bots[1:]
 							config_opts = append(config_opts[1:2], config_opts[2:]...)
 						}
 						break
@@ -995,8 +1216,8 @@ func holderoTools(deal, check *widget.Check, button *widget.Button) {
 				}
 			}
 
-			rpc.Stats.Bots = new
-			rpc.WriteHolderoStats(rpc.Stats)
+			Stats.Bots = new
+			WriteHolderoStats(Stats)
 			entry.SetOptions(config_opts)
 			entry.SetText("")
 		}
@@ -1004,35 +1225,35 @@ func holderoTools(deal, check *widget.Check, button *widget.Button) {
 
 	reset := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "viewRefresh"), func() {
 		autoBetDefault()
-		mb_slider.SetValue(rpc.Odds.Bot.Max)
-		rh_slider.SetValue(rpc.Odds.Bot.Risk[2])
-		rm_slider.SetValue(rpc.Odds.Bot.Risk[1])
-		rl_slider.SetValue(rpc.Odds.Bot.Risk[0])
-		bh_slider.SetValue(rpc.Odds.Bot.Bet[2])
-		bm_slider.SetValue(rpc.Odds.Bot.Bet[1])
-		bl_slider.SetValue(rpc.Odds.Bot.Bet[0])
-		luck_slider.SetValue(rpc.Odds.Bot.Luck)
-		random_slider.SetValue(rpc.Odds.Bot.Random[0])
-		slow_slider.SetValue(rpc.Odds.Bot.Slow)
-		aggr_slider.SetValue(rpc.Odds.Bot.Aggr)
+		mb_slider.SetValue(Odds.Bot.Max)
+		rh_slider.SetValue(Odds.Bot.Risk[2])
+		rm_slider.SetValue(Odds.Bot.Risk[1])
+		rl_slider.SetValue(Odds.Bot.Risk[0])
+		bh_slider.SetValue(Odds.Bot.Bet[2])
+		bm_slider.SetValue(Odds.Bot.Bet[1])
+		bl_slider.SetValue(Odds.Bot.Bet[0])
+		luck_slider.SetValue(Odds.Bot.Luck)
+		random_slider.SetValue(Odds.Bot.Random[0])
+		slow_slider.SetValue(Odds.Bot.Slow)
+		aggr_slider.SetValue(Odds.Bot.Aggr)
 		random_opts.SetSelected("")
 		entry.SetText("")
-		rpc.Odds.Bot.Name = ""
+		Odds.Bot.Name = ""
 	})
 
 	save := widget.NewButton("Save", func() {
 		if entry.Text != "" {
 			var ex bool
-			for i := range rpc.Stats.Bots {
-				if entry.Text == rpc.Stats.Bots[i].Name {
+			for i := range Stats.Bots {
+				if entry.Text == Stats.Bots[i].Name {
 					ex = true
 					log.Println("[dReams] Bot config name exists")
 				}
 			}
 
 			if !ex {
-				rpc.Stats.Bots = append(rpc.Stats.Bots, rpc.Odds.Bot)
-				if rpc.WriteHolderoStats(rpc.Stats) {
+				Stats.Bots = append(Stats.Bots, Odds.Bot)
+				if WriteHolderoStats(Stats) {
 					config_opts = append(config_opts, entry.Text)
 					entry.SetOptions(config_opts)
 					log.Println("[dReams] Saved bot config")
@@ -1043,23 +1264,23 @@ func holderoTools(deal, check *widget.Check, button *widget.Button) {
 
 	entry.OnChanged = func(s string) {
 		if s != "" {
-			rpc.Odds.Bot.Name = entry.Text
+			Odds.Bot.Name = entry.Text
 			for i := range config_opts {
 				if s == config_opts[i] {
-					for r := range rpc.Stats.Bots {
-						if rpc.Stats.Bots[r].Name == config_opts[i] {
-							rpc.SetBotConfig(rpc.Stats.Bots[r])
-							mb_slider.SetValue(rpc.Odds.Bot.Max)
-							rh_slider.SetValue(rpc.Odds.Bot.Risk[2])
-							rm_slider.SetValue(rpc.Odds.Bot.Risk[1])
-							rl_slider.SetValue(rpc.Odds.Bot.Risk[0])
-							bh_slider.SetValue(rpc.Odds.Bot.Bet[2])
-							bm_slider.SetValue(rpc.Odds.Bot.Bet[1])
-							bl_slider.SetValue(rpc.Odds.Bot.Bet[0])
-							luck_slider.SetValue(rpc.Odds.Bot.Luck)
-							random_slider.SetValue(rpc.Odds.Bot.Random[0])
-							slow_slider.SetValue(rpc.Odds.Bot.Slow)
-							aggr_slider.SetValue(rpc.Odds.Bot.Aggr)
+					for r := range Stats.Bots {
+						if Stats.Bots[r].Name == config_opts[i] {
+							SetBotConfig(Stats.Bots[r])
+							mb_slider.SetValue(Odds.Bot.Max)
+							rh_slider.SetValue(Odds.Bot.Risk[2])
+							rm_slider.SetValue(Odds.Bot.Risk[1])
+							rl_slider.SetValue(Odds.Bot.Risk[0])
+							bh_slider.SetValue(Odds.Bot.Bet[2])
+							bm_slider.SetValue(Odds.Bot.Bet[1])
+							bl_slider.SetValue(Odds.Bot.Bet[0])
+							luck_slider.SetValue(Odds.Bot.Luck)
+							random_slider.SetValue(Odds.Bot.Random[0])
+							slow_slider.SetValue(Odds.Bot.Slow)
+							aggr_slider.SetValue(Odds.Bot.Aggr)
 							setRandomOpts(random_opts)
 						}
 					}
@@ -1070,14 +1291,14 @@ func holderoTools(deal, check *widget.Check, button *widget.Button) {
 
 	enable := widget.NewCheck("Auto Bet Enabled", func(b bool) {
 		if b {
-			rpc.Odds.Run = true
+			Odds.Run = true
 			if check.Checked {
 				check.SetChecked(false)
 			}
 			check.Disable()
 			deal.SetChecked(true)
 		} else {
-			rpc.Odds.Run = false
+			Odds.Run = false
 			check.Enable()
 			if deal.Checked {
 				deal.SetChecked(false)
@@ -1085,7 +1306,7 @@ func holderoTools(deal, check *widget.Check, button *widget.Button) {
 		}
 	})
 
-	if rpc.Odds.Run {
+	if Odds.Run {
 		enable.SetChecked(true)
 	}
 
@@ -1112,12 +1333,12 @@ func holderoTools(deal, check *widget.Check, button *widget.Button) {
 			entry,
 			config_buttons))
 
-	rpc.Odds.Label = widget.NewLabel("")
-	rpc.Odds.Label.Wrapping = fyne.TextWrapWord
-	scroll := container.NewVScroll(rpc.Odds.Label)
+	Odds.Label = widget.NewLabel("")
+	Odds.Label.Wrapping = fyne.TextWrapWord
+	scroll := container.NewVScroll(Odds.Label)
 	odds_button := widget.NewButton("Odds", func() {
-		odds, future := rpc.MakeOdds()
-		rpc.BetLogic(odds, future, false)
+		odds, future := MakeOdds()
+		BetLogic(odds, future, false)
 	})
 
 	r_box := container.NewVBox(
@@ -1157,16 +1378,16 @@ func holderoTools(deal, check *widget.Check, button *widget.Button) {
 	tabs.OnSelected = func(ti *container.TabItem) {
 		switch ti.Text {
 		case "Stats":
-			stats_label.SetText("Total Player Stats\n\nWins: " + strconv.Itoa(rpc.Stats.Player.Win) + "\n\nLost: " + strconv.Itoa(rpc.Stats.Player.Lost) +
-				"\n\nFolded: " + strconv.Itoa(rpc.Stats.Player.Fold) + "\n\nPush: " + strconv.Itoa(rpc.Stats.Player.Push) +
-				"\n\nWagered: " + fmt.Sprintf("%.5f", rpc.Stats.Player.Wagered) + "\n\nEarnings: " + fmt.Sprintf("%.5f", rpc.Stats.Player.Earnings))
+			stats_label.SetText("Total Player Stats\n\nWins: " + strconv.Itoa(Stats.Player.Win) + "\n\nLost: " + strconv.Itoa(Stats.Player.Lost) +
+				"\n\nFolded: " + strconv.Itoa(Stats.Player.Fold) + "\n\nPush: " + strconv.Itoa(Stats.Player.Push) +
+				"\n\nWagered: " + fmt.Sprintf("%.5f", Stats.Player.Wagered) + "\n\nEarnings: " + fmt.Sprintf("%.5f", Stats.Player.Earnings))
 
-			if rpc.Odds.Bot.Name != "" {
-				for i := range rpc.Stats.Bots {
-					if rpc.Odds.Bot.Name == rpc.Stats.Bots[i].Name {
-						stats_label.SetText(stats_label.Text + "\n\n\nBot Stats\n\nBot: " + rpc.Odds.Bot.Name + "\n\nWins: " + strconv.Itoa(rpc.Stats.Bots[i].Stats.Win) +
-							"\n\nLost: " + strconv.Itoa(rpc.Stats.Bots[i].Stats.Lost) + "\n\nFolded: " + strconv.Itoa(rpc.Stats.Bots[i].Stats.Fold) + "\n\nPush: " + strconv.Itoa(rpc.Stats.Bots[i].Stats.Push) +
-							"\n\nWagered: " + fmt.Sprintf("%.5f", rpc.Stats.Bots[i].Stats.Wagered) + "\n\nEarnings: " + fmt.Sprintf("%.5f", rpc.Stats.Bots[i].Stats.Earnings))
+			if Odds.Bot.Name != "" {
+				for i := range Stats.Bots {
+					if Odds.Bot.Name == Stats.Bots[i].Name {
+						stats_label.SetText(stats_label.Text + "\n\n\nBot Stats\n\nBot: " + Odds.Bot.Name + "\n\nWins: " + strconv.Itoa(Stats.Bots[i].Stats.Win) +
+							"\n\nLost: " + strconv.Itoa(Stats.Bots[i].Stats.Lost) + "\n\nFolded: " + strconv.Itoa(Stats.Bots[i].Stats.Fold) + "\n\nPush: " + strconv.Itoa(Stats.Bots[i].Stats.Push) +
+							"\n\nWagered: " + fmt.Sprintf("%.5f", Stats.Bots[i].Stats.Wagered) + "\n\nEarnings: " + fmt.Sprintf("%.5f", Stats.Bots[i].Stats.Earnings))
 					}
 				}
 			}
@@ -1185,7 +1406,7 @@ func holderoTools(deal, check *widget.Check, button *widget.Button) {
 	var err error
 	var img image.Image
 	var rast *canvas.Raster
-	if img, _, err = image.Decode(bytes.NewReader(Settings.ThemeImg.Resource.Content())); err != nil {
+	if img, _, err = image.Decode(bytes.NewReader(dreams.Theme.Img.Resource.Content())); err != nil {
 		if img, _, err = image.Decode(bytes.NewReader(bundle.ResourceBackgroundPng.Content())); err != nil {
 			log.Printf("[holderoTools] Fallback %s\n", err)
 			source := image.Rect(2, 2, 4, 4)
@@ -1207,11 +1428,11 @@ func holderoTools(deal, check *widget.Check, button *widget.Button) {
 }
 
 func DisableHolderoTools() {
-	rpc.Odds.Enabled = false
+	Odds.Enabled = false
 	Settings.Tools.Hide()
-	if len(Settings.BackSelect.Options) > 2 || len(Settings.FaceSelect.Options) > 2 {
+	if len(Backs.Select.Options) > 2 || len(Faces.Select.Options) > 2 {
 		cards := false
-		for _, f := range Settings.FaceSelect.Options {
+		for _, f := range Faces.Select.Options {
 			asset := strings.Trim(f, "0123456789")
 			switch asset {
 			case "AZYPC":
@@ -1228,7 +1449,7 @@ func DisableHolderoTools() {
 		}
 
 		if !cards {
-			for _, b := range Settings.BackSelect.Options {
+			for _, b := range Backs.Select.Options {
 				asset := strings.Trim(b, "0123456789")
 				switch asset {
 				case "AZYPCB":
@@ -1246,20 +1467,20 @@ func DisableHolderoTools() {
 		}
 
 		if cards {
-			rpc.Odds.Enabled = true
+			Odds.Enabled = true
 			Settings.Tools.Show()
-			if !FileExists("config/stats.json", "dReams") {
-				rpc.WriteHolderoStats(rpc.Stats)
+			if !dreams.FileExists("config/stats.json", "dReams") {
+				WriteHolderoStats(Stats)
 				log.Println("[dReams] Created stats.json")
 			} else {
-				rpc.Stats = ReadSavedStats()
+				Stats = readSavedStats()
 			}
 		}
 	}
 }
 
 // Reading saved Holdero stats from config file
-func ReadSavedStats() (saved rpc.Player_stats) {
+func readSavedStats() (saved Player_stats) {
 	file, err := os.ReadFile("config/stats.json")
 
 	if err != nil {

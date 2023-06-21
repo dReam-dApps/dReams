@@ -1,11 +1,12 @@
 package main
 
 import (
+	"log"
 	"runtime"
 	"time"
 
+	dreams "github.com/SixofClubsss/dReams"
 	"github.com/SixofClubsss/dReams/bundle"
-	"github.com/SixofClubsss/dReams/holdero"
 	"github.com/SixofClubsss/dReams/menu"
 	"github.com/SixofClubsss/dReams/rpc"
 
@@ -24,29 +25,7 @@ const (
 	App_Name   = "dReams"
 )
 
-type dReamsObjects struct {
-	App        fyne.App
-	Window     fyne.Window
-	background *fyne.Container
-	os         string
-	configure  bool
-	menu       bool
-	holdero    bool
-	bacc       bool
-	predict    bool
-	sports     bool
-	tarot      bool
-	cli        bool
-	quit       chan struct{}
-	menu_tabs  struct {
-		wallet    bool
-		contracts bool
-		assets    bool
-		market    bool
-	}
-}
-
-var dReams dReamsObjects
+var dReams dreams.DreamsObject
 
 func main() {
 	n := runtime.NumCPU()
@@ -62,7 +41,6 @@ func main() {
 	dReams.Window.SetFixedSize(false)
 	dReams.Window.SetIcon(bundle.ResourceDReamsIconPng)
 	dReams.Window.SetMaster()
-	dReams.quit = make(chan struct{})
 	done := make(chan struct{})
 
 	dReams.Window.SetCloseIntercept(func() {
@@ -71,31 +49,35 @@ func main() {
 		serviceRunning()
 		go menu.StopLabel()
 		menu.Gnomes.Stop("dReams")
-		dReams.quit <- struct{}{}
-		menu.StopIndicators()
+		dReams.StopProcess()
+		menu.StopIndicators(indicators)
 		time.Sleep(time.Second)
 		dReams.Window.Close()
 	})
 
-	dReams.menu = true
+	dReams.Menu = true
 
-	holdero.Settings.ThemeImg = *canvas.NewImageFromResource(bundle.ResourceBackgroundPng)
-	dReams.background = container.NewMax(&holdero.Settings.ThemeImg)
+	dreams.Theme.Img = *canvas.NewImageFromResource(bundle.ResourceBackgroundPng)
+	dReams.Background = container.NewMax(&dreams.Theme.Img)
 
-	if len(menu.Control.Dapp_list) == 0 {
+	dapps := len(menu.Control.Dapp_list)
+	if dapps == 0 {
 		go func() {
 			time.Sleep(300 * time.Millisecond)
 			dReams.Window.SetContent(
 				container.New(layout.NewMaxLayout(),
-					dReams.background,
+					dReams.Background,
 					introScreen()))
 		}()
 	} else {
 		go func() {
+			// put back
+			//dReams.SetChannels(dapps)
+			dReams.SetChannels(2)
 			time.Sleep(750 * time.Millisecond)
 			dReams.Window.SetContent(
 				container.New(layout.NewMaxLayout(),
-					dReams.background,
+					dReams.Background,
 					place()))
 
 		}()
@@ -105,7 +87,8 @@ func main() {
 		dReams.App.(desktop.App).SetSystemTrayIcon(bundle.ResourceCardSharkTrayPng)
 	}
 
-	go fetch(dReams.quit, done)
+	go fetch(dReams, done)
 	dReams.Window.ShowAndRun()
 	<-done
+	log.Println("[dReams] Closed")
 }

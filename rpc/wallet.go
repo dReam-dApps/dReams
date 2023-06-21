@@ -12,7 +12,7 @@ import (
 
 type wallet struct {
 	UserPass   string
-	idHash     string
+	IdHash     string
 	Rpc        string
 	Address    string
 	ClientKey  string

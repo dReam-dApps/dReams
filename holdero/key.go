@@ -1,4 +1,4 @@
-package rpc
+package holdero
 
 import (
 	"crypto/aes"
@@ -11,13 +11,15 @@ import (
 	"log"
 	"os"
 	"strconv"
+
+	"github.com/SixofClubsss/dReams/rpc"
 )
 
 // Gets local cards with local key
 func Card(hash string) int {
 	for i := 1; i < 53; i++ {
 		finder := strconv.Itoa(i)
-		add := Wallet.ClientKey + finder + Round.SC_seed
+		add := rpc.Wallet.ClientKey + finder + Round.SC_seed
 		card := sha256.Sum256([]byte(add))
 		str := hex.EncodeToString(card[:])
 
@@ -34,10 +36,10 @@ func GenerateKey() string {
 	random, _ := rand.Prime(rand.Reader, 128)
 	shasum := sha256.Sum256([]byte(random.String()))
 	str := hex.EncodeToString(shasum[:])
-	Wallet.KeyLock = true
-	EncryptFile([]byte(str), "config/.key", Wallet.UserPass, Wallet.Address)
+	rpc.Wallet.KeyLock = true
+	EncryptFile([]byte(str), "config/.key", rpc.Wallet.UserPass, rpc.Wallet.Address)
 	log.Println("[Holdero] Round Key: ", str)
-	AddLog("Round Key: " + str)
+	rpc.AddLog("Round Key: " + str)
 
 	return str
 }
@@ -119,15 +121,15 @@ func DecryptFile(filename, pass, add string) []byte {
 // Check if Holdero key exists and decrypt
 func CheckExistingKey() {
 	if _, err := os.Stat("config/.key"); err == nil {
-		key := DecryptFile("config/.key", Wallet.UserPass, Wallet.Address)
+		key := DecryptFile("config/.key", rpc.Wallet.UserPass, rpc.Wallet.Address)
 		if key != nil {
-			Wallet.ClientKey = string(key)
-			Wallet.KeyLock = true
+			rpc.Wallet.ClientKey = string(key)
+			rpc.Wallet.KeyLock = true
 			return
 		}
 	}
 
 	shasum := sha256.Sum256([]byte("nil"))
 	str := hex.EncodeToString(shasum[:])
-	Wallet.ClientKey = str
+	rpc.Wallet.ClientKey = str
 }

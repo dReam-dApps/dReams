@@ -13,16 +13,17 @@ import (
 	"syscall"
 	"time"
 
+	dreams "github.com/SixofClubsss/dReams"
+	"github.com/SixofClubsss/dReams/bundle"
+	"github.com/SixofClubsss/dReams/menu"
+	"github.com/SixofClubsss/dReams/rpc"
+	"github.com/deroproject/derohe/walletapi"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
-	"github.com/SixofClubsss/dReams/bundle"
-	"github.com/SixofClubsss/dReams/holdero"
-	"github.com/SixofClubsss/dReams/menu"
-	"github.com/SixofClubsss/dReams/rpc"
-	"github.com/deroproject/derohe/walletapi"
 )
 
 const (
@@ -113,8 +114,8 @@ func StartApp() {
 
 	menu.Gnomes.Fast = true
 
-	holdero.Settings.ThemeImg = *canvas.NewImageFromResource(nil)
-	background = container.NewMax(&holdero.Settings.ThemeImg)
+	dreams.Theme.Img = *canvas.NewImageFromResource(nil)
+	background = container.NewMax(&dreams.Theme.Img)
 
 	go fetch(quit, done)
 	go func() {

@@ -3,191 +3,133 @@ package holdero
 import (
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log"
 	"math"
-	"os"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/SixofClubsss/dReams/bundle"
+	dreams "github.com/SixofClubsss/dReams"
+	"github.com/SixofClubsss/dReams/menu"
 	"github.com/SixofClubsss/dReams/rpc"
 	dero "github.com/deroproject/derohe/rpc"
 
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 )
 
-// dReams card face selection object for all games
+var Faces dreams.AssetSelect
+var Backs dreams.AssetSelect
+
+// Holdero card face selection object
 //   - Sets shared face url on selected
 //   - If deck is not present locally, it is downloaded
 func FaceSelect() fyne.Widget {
 	options := []string{"Light", "Dark"}
-	Settings.FaceSelect = widget.NewSelect(options, func(s string) {
-		switch Settings.FaceSelect.SelectedIndex() {
+	Faces.Select = widget.NewSelect(options, func(s string) {
+		switch Faces.Select.SelectedIndex() {
 		case -1:
-			Settings.Faces = "light/"
+			Faces.Name = "light/"
 		case 0:
-			Settings.Faces = "light/"
+			Faces.Name = "light/"
 		case 1:
-			Settings.Faces = "dark/"
+			Faces.Name = "dark/"
 		default:
-			Settings.Faces = s
+			Faces.Name = s
 		}
 
 		check := strings.Trim(s, "0123456789")
 		if check == "AZYPC" {
-			Settings.FaceUrl = "https://raw.githubusercontent.com/Azylem/" + s + "/main/" + s + ".zip?raw=true"
-			dir := GetDir()
-			face := dir + "/cards/" + Settings.Faces + "/card1.png"
-			if !FileExists(face, "dReams") {
-				log.Println("[dReams] Downloading " + Settings.FaceUrl)
-				go GetZipDeck(Settings.Faces, Settings.FaceUrl)
+			Faces.URL = "https://raw.githubusercontent.com/Azylem/" + s + "/main/" + s + ".zip?raw=true"
+			dir := dreams.GetDir()
+			face := dir + "/cards/" + Faces.Name + "/card1.png"
+			if !dreams.FileExists(face, "dReams") {
+				log.Println("[dReams] Downloading " + Faces.URL)
+				go GetZipDeck(Faces.Name, Faces.URL)
 			}
 		} else if check == "SIXPC" {
-			Settings.FaceUrl = "https://raw.githubusercontent.com/SixofClubsss/" + s + "/main/" + s + ".zip?raw=true"
-			dir := GetDir()
-			face := dir + "/cards/" + Settings.Faces + "/card1.png"
-			if !FileExists(face, "dReams") {
-				log.Println("[dReams] Downloading " + Settings.FaceUrl)
-				go GetZipDeck(Settings.Faces, Settings.FaceUrl)
+			Faces.URL = "https://raw.githubusercontent.com/SixofClubsss/" + s + "/main/" + s + ".zip?raw=true"
+			dir := dreams.GetDir()
+			face := dir + "/cards/" + Faces.Name + "/card1.png"
+			if !dreams.FileExists(face, "dReams") {
+				log.Println("[dReams] Downloading " + Faces.URL)
+				go GetZipDeck(Faces.Name, Faces.URL)
 			}
 		} else if check == "High-Strangeness" {
-			Settings.FaceUrl = "https://raw.githubusercontent.com/High-Strangeness/High-Strangeness/main/HS_Deck/HS_Deck.zip?raw=true"
-			dir := GetDir()
-			face := dir + "/cards/" + Settings.Faces + "/card1.png"
-			if !FileExists(face, "dReams") {
-				log.Println("[dReams] Downloading " + Settings.FaceUrl)
-				go GetZipDeck(Settings.Faces, Settings.FaceUrl)
+			Faces.URL = "https://raw.githubusercontent.com/High-Strangeness/High-Strangeness/main/HS_Deck/HS_Deck.zip?raw=true"
+			dir := dreams.GetDir()
+			face := dir + "/cards/" + Faces.Name + "/card1.png"
+			if !dreams.FileExists(face, "dReams") {
+				log.Println("[dReams] Downloading " + Faces.URL)
+				go GetZipDeck(Faces.Name, Faces.URL)
 			}
 		} else {
-			Settings.FaceUrl = ""
+			Faces.URL = ""
 		}
 	})
 
-	Settings.FaceSelect.SetSelectedIndex(0)
-	Settings.FaceSelect.PlaceHolder = "Faces"
+	Faces.Select.SetSelectedIndex(0)
+	Faces.Select.PlaceHolder = "Faces"
 
-	return Settings.FaceSelect
+	return Faces.Select
 }
 
-// dReams card back selection object for all games
+// Holdero card back selection object for all games
 //   - Sets shared back url on selected
 //   - If back is not present locally, it is downloaded
 func BackSelect() fyne.Widget {
 	options := []string{"Light", "Dark"}
-	Settings.BackSelect = widget.NewSelect(options, func(s string) {
-		switch Settings.BackSelect.SelectedIndex() {
+	Backs.Select = widget.NewSelect(options, func(s string) {
+		switch Backs.Select.SelectedIndex() {
 		case -1:
-			Settings.Backs = "back1.png"
+			Backs.Name = "back1.png"
 		case 0:
-			Settings.Backs = "back1.png"
+			Backs.Name = "back1.png"
 		case 1:
-			Settings.Backs = "back2.png"
+			Backs.Name = "back2.png"
 		default:
-			Settings.Backs = s
+			Backs.Name = s
 		}
 
 		go func() {
 			check := strings.Trim(s, "0123456789")
 			if check == "AZYPCB" {
-				Settings.BackUrl = "https://raw.githubusercontent.com/Azylem/" + s + "/main/" + s + ".png"
-				dir := GetDir()
+				Backs.URL = "https://raw.githubusercontent.com/Azylem/" + s + "/main/" + s + ".png"
+				dir := dreams.GetDir()
 				file := dir + "/cards/backs/" + s + ".png"
-				if !FileExists(file, "dReams") {
-					log.Println("[dReams] Downloading " + Settings.BackUrl)
-					downloadFileLocal("cards/backs/"+Settings.Backs+".png", Settings.BackUrl)
+				if !dreams.FileExists(file, "dReams") {
+					log.Println("[dReams] Downloading " + Backs.URL)
+					downloadFileLocal("cards/backs/"+Backs.Name+".png", Backs.URL)
 				}
 			} else if check == "SIXPCB" {
-				Settings.BackUrl = "https://raw.githubusercontent.com/SixofClubsss/" + s + "/main/" + s + ".png"
-				dir := GetDir()
+				Backs.URL = "https://raw.githubusercontent.com/SixofClubsss/" + s + "/main/" + s + ".png"
+				dir := dreams.GetDir()
 				back := dir + "/cards/backs/" + s + ".png"
-				if !FileExists(back, "dReams") {
-					log.Println("[dReams] Downloading " + Settings.BackUrl)
-					downloadFileLocal("cards/backs/"+Settings.Backs+".png", Settings.BackUrl)
+				if !dreams.FileExists(back, "dReams") {
+					log.Println("[dReams] Downloading " + Backs.URL)
+					downloadFileLocal("cards/backs/"+Backs.Name+".png", Backs.URL)
 				}
 			} else if check == "High-Strangeness" {
-				Settings.BackUrl = "https://raw.githubusercontent.com/High-Strangeness/" + s + "/main/HS_Back/HS_Back.png"
-				dir := GetDir()
+				Backs.URL = "https://raw.githubusercontent.com/High-Strangeness/" + s + "/main/HS_Back/HS_Backs.png"
+				dir := dreams.GetDir()
 				back := dir + "/cards/backs/" + s + ".png"
-				if !FileExists(back, "dReams") {
-					log.Println("[dReams] Downloading " + Settings.BackUrl)
-					downloadFileLocal("cards/backs/"+Settings.Backs+".png", Settings.BackUrl)
+				if !dreams.FileExists(back, "dReams") {
+					log.Println("[dReams] Downloading " + Backs.URL)
+					downloadFileLocal("cards/backs/"+Backs.Name+".png", Backs.URL)
 				}
 			} else {
-				Settings.BackUrl = ""
+				Backs.URL = ""
 			}
 		}()
 	})
 
-	Settings.BackSelect.SetSelectedIndex(0)
-	Settings.BackSelect.PlaceHolder = "Backs"
+	Backs.Select.SetSelectedIndex(0)
+	Backs.Select.PlaceHolder = "Backs"
 
-	return Settings.BackSelect
-}
-
-// dReams app theme selection object
-//   - If image is not present locally, it is downloaded
-func ThemeSelect() fyne.Widget {
-	options := []string{"Main", "Legacy"}
-	Settings.ThemeSelect = widget.NewSelect(options, func(s string) {
-		switch Settings.ThemeSelect.SelectedIndex() {
-		case -1:
-			Settings.Theme = "Main"
-		case 0:
-			Settings.Theme = "Main"
-		case 1:
-			Settings.Theme = "Legacy"
-		default:
-			Settings.Theme = s
-		}
-		go func() {
-			check := strings.Trim(s, "0123456789")
-			if check == "AZYDS" {
-				dir := GetDir()
-				file := dir + "/cards/" + s + "/" + s + ".png"
-				if FileExists(file, "dReams") {
-					Settings.ThemeImg = *canvas.NewImageFromFile(file)
-				} else {
-					Settings.ThemeUrl = "https://raw.githubusercontent.com/Azylem/" + s + "/main/" + s + ".png"
-					log.Println("[dReams] Downloading", Settings.ThemeUrl)
-					Settings.ThemeImg, _ = DownloadFile(Settings.ThemeUrl, s)
-				}
-			} else if check == "SIXART" {
-				dir := GetDir()
-				file := dir + "/cards/" + s + "/" + s + ".png"
-				if FileExists(file, "dReams") {
-					Settings.ThemeImg = *canvas.NewImageFromFile(file)
-				} else {
-					Settings.ThemeUrl = "https://raw.githubusercontent.com/SixofClubsss/SIXART/main/" + s + "/" + s + ".png"
-					log.Println("[dReams] Downloading", Settings.ThemeUrl)
-					Settings.ThemeImg, _ = DownloadFile(Settings.ThemeUrl, s)
-				}
-			} else if check == "HSTheme" {
-				dir := GetDir()
-				file := dir + "/cards/" + s + "/" + s + ".png"
-				if FileExists(file, "dReams") {
-					Settings.ThemeImg = *canvas.NewImageFromFile(file)
-				} else {
-					Settings.ThemeUrl = "https://raw.githubusercontent.com/High-Strangeness/High-Strangeness/main/" + s + "/" + s + ".png"
-					log.Println("[dReams] Downloading", Settings.ThemeUrl)
-					Settings.ThemeImg, _ = DownloadFile(Settings.ThemeUrl, s)
-				}
-			} else if s == "Main" {
-				Settings.ThemeImg = *canvas.NewImageFromResource(bundle.ResourceBackgroundPng)
-			} else if s == "Legacy" {
-				Settings.ThemeImg = *canvas.NewImageFromResource(bundle.ResourceLegacyBackgroundPng)
-			}
-		}()
-	})
-	Settings.ThemeSelect.PlaceHolder = "Theme"
-
-	return Settings.ThemeSelect
+	return Backs.Select
 }
 
 // dReams app avatar selection object
@@ -262,7 +204,7 @@ func getAgentNumber(scid string) int {
 		}
 
 		data := result.VariableStringKeys["metadata"]
-		var agent Agent
+		var agent dreams.Agent
 
 		hx, _ := hex.DecodeString(data.(string))
 		if err := json.Unmarshal(hx, &agent); err == nil {
@@ -273,63 +215,48 @@ func getAgentNumber(scid string) int {
 	return 1200
 }
 
-// Check if path to file exists
-//   - tag for log print
-func FileExists(path, tag string) bool {
-	if _, err := os.Stat(path); err == nil {
-		return true
-
-	} else if errors.Is(err, os.ErrNotExist) {
-		log.Printf("[%s] %s Not Found\n", tag, path)
-
-		return false
-	}
-
-	return false
-}
-
 // Holdero shared cards toggle object
 //   - Do not send a blank url
 //   - If cards are not present locally, it is downloaded
 func SharedDecks() fyne.Widget {
 	options := []string{"Shared Decks"}
 	Settings.SharedOn = widget.NewRadioGroup(options, func(string) {
-		if Settings.Shared || ((len(rpc.Round.Face) < 3 || len(rpc.Round.Back) < 3) && rpc.Round.ID != 1) {
+		if Settings.Shared || ((len(Round.Face) < 3 || len(Round.Back) < 3) && Round.ID != 1) {
 			log.Println("[Holdero] Shared Decks Off")
 			Settings.Shared = false
-			Settings.FaceSelect.Enable()
-			Settings.BackSelect.Enable()
+			Faces.Select.Enable()
+			Backs.Select.Enable()
 		} else {
 			log.Println("[Holdero] Shared Decks On")
 			Settings.Shared = true
-			if rpc.Round.ID == 1 {
-				if Settings.Faces != "" && Settings.FaceUrl != "" && Settings.Backs != "" && Settings.BackUrl != "" {
-					rpc.SharedDeckUrl(Settings.Faces, Settings.FaceUrl, Settings.Backs, Settings.BackUrl)
-					dir := GetDir()
-					back := "/cards/backs/" + Settings.Backs + ".png"
-					face := "/cards/" + Settings.Faces + "/card1.png"
+			if Round.ID == 1 {
+				if Faces.Name != "" && Faces.URL != "" && Backs.Name != "" && Backs.URL != "" {
+					SharedDeckUrl(Faces.Name, Faces.URL, Backs.Name, Backs.URL)
+					dir := dreams.GetDir()
+					back := "/cards/backs/" + Backs.Name + ".png"
+					face := "/cards/" + Faces.Name + "/card1.png"
 
-					if !FileExists(dir+face, "dReams") {
-						go GetZipDeck(Settings.Faces, Settings.FaceUrl)
+					if !dreams.FileExists(dir+face, "dReams") {
+						go GetZipDeck(Faces.Name, Faces.URL)
 					}
 
-					if !FileExists(dir+back, "dReams") {
-						downloadFileLocal("cards/backs/"+Settings.Backs+".png", Settings.BackUrl)
+					if !dreams.FileExists(dir+back, "dReams") {
+						downloadFileLocal("cards/backs/"+Backs.Name+".png", Backs.URL)
 					}
 				}
 			} else {
-				Settings.FaceSelect.Disable()
-				Settings.BackSelect.Disable()
-				dir := GetDir()
-				back := "/cards/backs/" + rpc.Round.Back + ".png"
-				face := "/cards/" + rpc.Round.Face + "/card1.png"
+				Faces.Select.Disable()
+				Backs.Select.Disable()
+				dir := dreams.GetDir()
+				back := "/cards/backs/" + Round.Back + ".png"
+				face := "/cards/" + Round.Face + "/card1.png"
 
-				if !FileExists(dir+face, "dReams") {
-					go GetZipDeck(rpc.Round.Face, rpc.Round.F_url)
+				if !dreams.FileExists(dir+face, "dReams") {
+					go GetZipDeck(Round.Face, Round.F_url)
 				}
 
-				if !FileExists(dir+back, "dReams") {
-					downloadFileLocal("cards/backs/"+rpc.Round.Back+".png", rpc.Round.B_url)
+				if !dreams.FileExists(dir+back, "dReams") {
+					downloadFileLocal("cards/backs/"+Round.Back+".png", Round.B_url)
 				}
 			}
 		}
@@ -427,7 +354,7 @@ func tourneyConfirm(obj []fyne.CanvasObject, tabs *container.AppTabs) fyne.Canva
 	label.Alignment = fyne.TextAlignCenter
 
 	confirm_button := widget.NewButton("Confirm", func() {
-		rpc.TourneyDeposit(bal, Poker_name)
+		rpc.TourneyDeposit(bal, menu.Username)
 		obj[1] = tabs
 		obj[1].Refresh()
 

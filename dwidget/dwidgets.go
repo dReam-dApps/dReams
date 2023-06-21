@@ -270,7 +270,5 @@ func LabelColor(c *fyne.Container) *fyne.Container {
 		alpha = canvas.NewRectangle(color.RGBA{0, 0, 0, 150})
 	}
 
-	cont := container.New(layout.NewMaxLayout(), alpha, c)
-
-	return cont
+	return container.New(layout.NewMaxLayout(), alpha, c)
 }

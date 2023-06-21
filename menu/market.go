@@ -7,14 +7,12 @@ import (
 	"image/color"
 	"log"
 	"runtime"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/SixofClubsss/dReams/bundle"
 	"github.com/SixofClubsss/dReams/dwidget"
-	"github.com/SixofClubsss/dReams/holdero"
 	"github.com/SixofClubsss/dReams/rpc"
 
 	"fyne.io/fyne/v2"
@@ -841,62 +839,25 @@ func PlaceMarket() *container.Split {
 	return menu_box
 }
 
-// Recheck owned assets button
-//   - tag for log print
-//   - pass recheck for desired check
-func RecheckButton(tag string, recheck func()) fyne.CanvasObject {
-	button := widget.NewButton("Check Assets", func() {
-		if !Gnomes.Wait {
-			log.Printf("[%s] Rechecking Assets\n", tag)
-			go recheck()
-		}
-	})
-
-	return button
-}
-
-// dReams recheck owned assets routine
-func RecheckDreamsAssets() {
-	Gnomes.Wait = true
-	Assets.Assets = []string{}
-	CheckDreamsNFAs(false, nil)
-	CheckDreamsG45s(false, nil)
-	if Control.Dapp_list["Holdero"] {
-		if rpc.Wallet.IsConnected() {
-			Control.Names.Options = []string{rpc.Wallet.Address[0:12]}
-			CheckWalletNames(rpc.Wallet.Address)
-		}
-	}
-	sort.Strings(Assets.Assets)
-	Assets.Asset_list.UnselectAll()
-	Assets.Asset_list.Refresh()
-	Gnomes.Wait = false
-}
-
 // Owned asset tab layout
 //   - tag for log print
 //   - games enables dReams asset selects
 //   - recheck for RecheckButton() func
 //   - menu resources for side menus
 //   - w for main window dialog
-func PlaceAssets(tag string, games bool, recheck func(), menu_icon fyne.Resource, w fyne.Window) *container.Split {
+func PlaceAssets(tag string, assets []fyne.Widget, menu_icon fyne.Resource, w fyne.Window) *container.Split {
 	items_box := container.NewAdaptiveGrid(2)
 
-	if games {
-		games_cont := container.NewVBox(
-			holdero.FaceSelect(),
-			holdero.BackSelect(),
-			holdero.ThemeSelect(),
-			holdero.AvatarSelect(Assets.Asset_map),
-			holdero.SharedDecks(),
-			RecheckButton(tag, recheck),
-			layout.NewSpacer())
-
-		cont := container.NewHScroll(games_cont)
-		cont.SetMinSize(fyne.NewSize(290, 35.1875))
-
-		items_box.Add(cont)
+	asset_selects := container.NewVBox()
+	for _, sel := range assets {
+		asset_selects.Add(sel)
 	}
+	asset_selects.Add(layout.NewSpacer())
+
+	cont := container.NewHScroll(asset_selects)
+	cont.SetMinSize(fyne.NewSize(290, 35.1875))
+
+	items_box.Add(cont)
 
 	items_box.Add(container.NewAdaptiveGrid(1, AssetStats()))
 

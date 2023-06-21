@@ -1,4 +1,4 @@
-package rpc
+package holdero
 
 import (
 	"crypto/sha256"
@@ -6,6 +6,8 @@ import (
 	"sort"
 	"strconv"
 	"time"
+
+	"github.com/SixofClubsss/dReams/rpc"
 )
 
 type ranker struct {
@@ -808,7 +810,7 @@ func payWinningHand(w int, r *ranker) {
 				for retry < 4 {
 					tx := PayOut(winner)
 					time.Sleep(time.Second)
-					retry += ConfirmTxRetry(tx, "Holdero", 36)
+					retry += rpc.ConfirmTxRetry(tx, "Holdero", 36)
 				}
 			}()
 		}
@@ -1154,7 +1156,7 @@ func compareAll(r *ranker) (end_res string) {
 						for retry < 4 {
 							tx := PayoutSplit(*r, Round.F1, Round.F2, Round.F3, Round.F4, Round.F5, Round.F6)
 							time.Sleep(time.Second)
-							retry += ConfirmTxRetry(tx, "Holdero", 36)
+							retry += rpc.ConfirmTxRetry(tx, "Holdero", 36)
 						}
 					}()
 				}
@@ -1164,7 +1166,7 @@ func compareAll(r *ranker) (end_res string) {
 
 	if !Round.Printed {
 		Round.Printed = true
-		AddLog(end_res)
+		rpc.AddLog(end_res)
 	}
 
 	return end_res

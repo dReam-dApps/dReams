@@ -1083,7 +1083,7 @@ func ownerConfirmAction(i int, p float64, window fyne.Window, reset fyne.CanvasO
 		p_dep = fmt.Sprintf("%.5f", p_dep_f)
 	}
 	var price string
-	if holdero.CoinDecimal(pre) == 8 {
+	if menu.CoinDecimal(pre) == 8 {
 		price = fmt.Sprintf("%.8f", p/100000000)
 	} else {
 		price = fmt.Sprintf("%.2f", p/100)
@@ -1147,7 +1147,7 @@ func ownerConfirmAction(i int, p float64, window fyne.Window, reset fyne.CanvasO
 					fn = "Node: "
 					mark = p_mark
 				} else {
-					if holdero.CoinDecimal(pre) == 8 || holdero.CoinDecimal(p_pre) == 8 {
+					if menu.CoinDecimal(pre) == 8 || menu.CoinDecimal(p_pre) == 8 {
 						if f, err := strconv.ParseFloat(p_mark, 32); err == nil { /// eight decimal place for btc
 							x := f / 100000000
 							mark = fmt.Sprintf("%.8f", x)

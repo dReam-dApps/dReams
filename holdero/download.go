@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/SixofClubsss/dReams/rpc"
+	dreams "github.com/SixofClubsss/dReams"
 
 	"fyne.io/fyne/v2/canvas"
 )
@@ -34,30 +34,30 @@ type sharedCards struct {
 var Shared sharedCards
 
 // Clear Holdero card values when player changes table
-func ClearShared() {
-	rpc.Round.Winning_hand = []int{}
-	rpc.Display.Res = ""
-	rpc.Round.First_try = true
-	rpc.Round.AssetID = ""
-	rpc.Round.P1_url = ""
-	rpc.Round.P2_url = ""
-	rpc.Round.P3_url = ""
-	rpc.Round.P4_url = ""
-	rpc.Round.P5_url = ""
-	rpc.Round.P6_url = ""
-	rpc.Round.P1_name = ""
-	rpc.Round.P2_name = ""
-	rpc.Round.P3_name = ""
-	rpc.Round.P4_name = ""
-	rpc.Round.P5_name = ""
-	rpc.Round.P6_name = ""
-	rpc.Round.Bettor = ""
-	rpc.Round.Raiser = ""
-	rpc.Round.Last = 0
-	rpc.Signal.Reveal = false
-	rpc.Signal.Out1 = false
-	rpc.Signal.Odds = false
-	rpc.Odds.Bot.Name = ""
+func clearShared() {
+	Round.Winning_hand = []int{}
+	Display.Res = ""
+	Round.First_try = true
+	Round.AssetID = ""
+	Round.P1_url = ""
+	Round.P2_url = ""
+	Round.P3_url = ""
+	Round.P4_url = ""
+	Round.P5_url = ""
+	Round.P6_url = ""
+	Round.P1_name = ""
+	Round.P2_name = ""
+	Round.P3_name = ""
+	Round.P4_name = ""
+	Round.P5_name = ""
+	Round.P6_name = ""
+	Round.Bettor = ""
+	Round.Raiser = ""
+	Round.Last = 0
+	Signal.Reveal = false
+	Signal.Out1 = false
+	Signal.Odds = false
+	Odds.Bot.Name = ""
 	autoBetDefault()
 	Shared.GotP1 = false
 	Shared.GotP2 = false
@@ -75,25 +75,10 @@ func ClearShared() {
 
 // Gets shared card urls from connected table
 func GetUrls(face, back string) {
-	if rpc.Round.ID != 1 {
-		Settings.FaceUrl = face
-		Settings.BackUrl = back
+	if Round.ID != 1 {
+		Faces.URL = face
+		Backs.URL = back
 	}
-}
-
-// Download image file from url and return as canvas image
-func DownloadFile(Url, fileName string) (canvas.Image, error) {
-	response, err := http.Get(Url)
-	if err != nil {
-		return *canvas.NewImageFromImage(nil), err
-	}
-	defer response.Body.Close()
-
-	if response.StatusCode != 200 {
-		return *canvas.NewImageFromImage(nil), fmt.Errorf("received %d response code", response.StatusCode)
-	}
-
-	return *canvas.NewImageFromReader(response.Body, fileName), nil
 }
 
 // Single shot control for displaying shared player avatars
@@ -101,9 +86,9 @@ func DownloadFile(Url, fileName string) (canvas.Image, error) {
 func ShowAvatar(tab bool) {
 	if tab {
 		var err error
-		if rpc.Round.P1_url != "" {
+		if Round.P1_url != "" {
 			if !Shared.GotP1 {
-				if Shared.P1_avatar, err = DownloadFile(rpc.Round.P1_url, "P1"); err == nil {
+				if Shared.P1_avatar, err = dreams.DownloadFile(Round.P1_url, "P1"); err == nil {
 					Shared.GotP1 = true
 				}
 			}
@@ -111,9 +96,9 @@ func ShowAvatar(tab bool) {
 			Shared.GotP1 = false
 		}
 
-		if rpc.Round.P2_url != "" {
+		if Round.P2_url != "" {
 			if !Shared.GotP2 {
-				if Shared.P2_avatar, err = DownloadFile(rpc.Round.P2_url, "P2"); err == nil {
+				if Shared.P2_avatar, err = dreams.DownloadFile(Round.P2_url, "P2"); err == nil {
 					Shared.GotP2 = true
 				}
 			}
@@ -121,9 +106,9 @@ func ShowAvatar(tab bool) {
 			Shared.GotP2 = false
 		}
 
-		if rpc.Round.P3_url != "" {
+		if Round.P3_url != "" {
 			if !Shared.GotP3 {
-				if Shared.P3_avatar, err = DownloadFile(rpc.Round.P3_url, "P3"); err == nil {
+				if Shared.P3_avatar, err = dreams.DownloadFile(Round.P3_url, "P3"); err == nil {
 					Shared.GotP3 = true
 				}
 			}
@@ -131,9 +116,9 @@ func ShowAvatar(tab bool) {
 			Shared.GotP3 = false
 		}
 
-		if rpc.Round.P4_url != "" {
+		if Round.P4_url != "" {
 			if !Shared.GotP4 {
-				if Shared.P4_avatar, err = DownloadFile(rpc.Round.P4_url, "P4"); err == nil {
+				if Shared.P4_avatar, err = dreams.DownloadFile(Round.P4_url, "P4"); err == nil {
 					Shared.GotP4 = true
 				}
 			}
@@ -141,9 +126,9 @@ func ShowAvatar(tab bool) {
 			Shared.GotP4 = false
 		}
 
-		if rpc.Round.P5_url != "" {
+		if Round.P5_url != "" {
 			if !Shared.GotP5 {
-				if Shared.P5_avatar, err = DownloadFile(rpc.Round.P5_url, "P5"); err == nil {
+				if Shared.P5_avatar, err = dreams.DownloadFile(Round.P5_url, "P5"); err == nil {
 					Shared.GotP5 = true
 				}
 			}
@@ -151,9 +136,9 @@ func ShowAvatar(tab bool) {
 			Shared.GotP5 = false
 		}
 
-		if rpc.Round.P6_url != "" {
+		if Round.P6_url != "" {
 			if !Shared.GotP6 {
-				if Shared.P6_avatar, err = DownloadFile(rpc.Round.P6_url, "P6"); err == nil {
+				if Shared.P6_avatar, err = dreams.DownloadFile(Round.P6_url, "P6"); err == nil {
 					Shared.GotP6 = true
 				}
 			}

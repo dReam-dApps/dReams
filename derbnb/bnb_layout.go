@@ -10,6 +10,12 @@ import (
 	"strings"
 	"time"
 
+	dreams "github.com/SixofClubsss/dReams"
+	"github.com/SixofClubsss/dReams/bundle"
+	"github.com/SixofClubsss/dReams/dwidget"
+	"github.com/SixofClubsss/dReams/menu"
+	"github.com/SixofClubsss/dReams/rpc"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
@@ -18,11 +24,6 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 	xwidget "fyne.io/x/fyne/widget"
-	"github.com/SixofClubsss/dReams/bundle"
-	"github.com/SixofClubsss/dReams/dwidget"
-	"github.com/SixofClubsss/dReams/holdero"
-	"github.com/SixofClubsss/dReams/menu"
-	"github.com/SixofClubsss/dReams/rpc"
 )
 
 type available_dates struct {
@@ -81,7 +82,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 				if count < len(property_photos.data[viewing_scid])-1 {
 					count++
 					if url := propertyImageSource(property_photos.data[viewing_scid][count]); url != "" {
-						if image, err := holdero.DownloadFile(url, url); err == nil {
+						if image, err := dreams.DownloadFile(url, url); err == nil {
 							image_box.Objects[0] = &image
 							image_box.Refresh()
 						} else {
@@ -91,7 +92,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 				} else {
 					count = 0
 					if url := propertyImageSource(property_photos.data[viewing_scid][count]); url != "" {
-						if image, err := holdero.DownloadFile(url, url); err == nil {
+						if image, err := dreams.DownloadFile(url, url); err == nil {
 							image_box.Objects[0] = &image
 							image_box.Refresh()
 						} else {
@@ -113,7 +114,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 				if count > 0 {
 					count--
 					if url := propertyImageSource(property_photos.data[viewing_scid][count]); url != "" {
-						if image, err := holdero.DownloadFile(url, url); err == nil {
+						if image, err := dreams.DownloadFile(url, url); err == nil {
 							image_box.Objects[0] = &image
 							image_box.Refresh()
 						} else {
@@ -123,7 +124,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 				} else {
 					count = len(property_photos.data[viewing_scid]) - 1
 					if url := propertyImageSource(property_photos.data[viewing_scid][count]); url != "" {
-						if image, err := holdero.DownloadFile(url, url); err == nil {
+						if image, err := dreams.DownloadFile(url, url); err == nil {
 							image_box.Objects[0] = &image
 							image_box.Refresh()
 						} else {
@@ -887,7 +888,7 @@ func LayoutAllItems(imported bool, w fyne.Window, background *fyne.Container) fy
 				listing_label.SetText(getInfo(scid))
 				if property_photos.data[scid] != nil {
 					if url := propertyImageSource(property_photos.data[scid][0]); url != "" {
-						if image, err := holdero.DownloadFile(url, url); err == nil {
+						if image, err := dreams.DownloadFile(url, url); err == nil {
 							image_box.Objects[0] = &image
 							image_box.Refresh()
 						} else {

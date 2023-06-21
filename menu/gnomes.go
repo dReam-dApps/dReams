@@ -7,13 +7,14 @@ import (
 	"strconv"
 	"sync"
 
+	"github.com/civilware/Gnomon/indexer"
+	"github.com/civilware/Gnomon/structures"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
 	xwidget "fyne.io/x/fyne/widget"
-	"github.com/civilware/Gnomon/indexer"
-	"github.com/civilware/Gnomon/structures"
 )
 
 type gnomon struct {

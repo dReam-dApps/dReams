@@ -3,11 +3,11 @@ package tarot
 import (
 	_ "embed"
 	"fmt"
-	"image/color"
 	"log"
 	"math/rand"
+	"time"
 
-	"github.com/SixofClubsss/dReams/bundle"
+	dreams "github.com/SixofClubsss/dReams"
 	"github.com/SixofClubsss/dReams/dwidget"
 	"github.com/SixofClubsss/dReams/rpc"
 
@@ -19,18 +19,6 @@ import (
 )
 
 type tarot struct {
-	Value struct {
-		Card1    int
-		Card2    int
-		Card3    int
-		CHeight  int
-		Num      int
-		Last     string
-		Readings string
-		Found    bool
-		Display  bool
-		Notified bool
-	}
 	Card1   fyne.Container
 	Card2   fyne.Container
 	Card3   fyne.Container
@@ -42,6 +30,18 @@ type tarot struct {
 	Label   *widget.Label
 	Box     *fyne.Container
 	Open    bool
+	Value   struct {
+		Card1    int
+		Card2    int
+		Card3    int
+		CHeight  int
+		Num      int
+		Last     string
+		Readings string
+		Found    bool
+		Display  bool
+		Notified bool
+	}
 }
 
 //go:embed iluma/iluma.txt
@@ -49,18 +49,39 @@ var iluma_intro string
 
 var Iluma tarot
 
-func InitTarot() {
+func InitValues() {
 	Iluma.Value.Display = true
 }
 
+// Main Tarot process
+func fetch(t *dwidget.DreamsItems, d dreams.DreamsObject) {
+	time.Sleep(3 * time.Second)
+	for {
+		select {
+		case <-d.Receive():
+			FetchTarotSC()
+			tarotRefresh(t)
+			if Iluma.Value.Found && !Iluma.Value.Notified {
+				if !d.IsWindows() {
+					Iluma.Value.Notified = d.Notification("dReams - Iluma", "Your Reading has Arrived")
+				}
+			}
+			d.WorkDone()
+		case <-d.CloseDapp():
+			log.Println("[Iluma] Closed")
+			return
+		}
+	}
+}
+
 // Tarot object buffer when action triggered
-func TarotBuffer(d bool) {
+func ActionBuffer(d bool) {
 	if d {
-		Iluma.Card1.Objects[1] = canvas.NewImageFromResource(ResourceIluma81Png)
+		Iluma.Card1.Objects[1] = canvas.NewImageFromResource(resourceIluma81Png)
 		Iluma.Card1.Refresh()
-		Iluma.Card2.Objects[1] = canvas.NewImageFromResource(ResourceIluma81Png)
+		Iluma.Card2.Objects[1] = canvas.NewImageFromResource(resourceIluma81Png)
 		Iluma.Card2.Refresh()
-		Iluma.Card3.Objects[1] = canvas.NewImageFromResource(ResourceIluma81Png)
+		Iluma.Card3.Objects[1] = canvas.NewImageFromResource(resourceIluma81Png)
 		Iluma.Card3.Refresh()
 		Iluma.Draw1.Hide()
 		Iluma.Draw3.Hide()
@@ -83,98 +104,40 @@ func TarotBuffer(d bool) {
 	Iluma.Draw3.Refresh()
 }
 
-// Clickable Tarot card objects
-func TarotCardBox() fyne.CanvasObject {
-	Iluma.Label = widget.NewLabel("")
-	Iluma.Label.Alignment = fyne.TextAlignCenter
-	one := widget.NewButton("", func() {
-		if Iluma.Value.Num == 3 && !Iluma.Open && Iluma.Value.Card1 > 0 {
-			c := Iluma.Value.Card1
-			reset := Iluma.Card1
-			Iluma.Card1 = *IlumaDialog(1, TarotDescription(c), reset)
-		}
-	})
+// Refresh all Tarot objects
+func tarotRefresh(t *dwidget.DreamsItems) {
+	t.LeftLabel.SetText("Total Readings: " + Iluma.Value.Readings + "      Click your card for Iluma reading")
+	t.RightLabel.SetText("dReams Balance: " + rpc.DisplayBalance("dReams") + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Display.Wallet_height)
 
-	card_back := canvas.NewImageFromResource(ResourceIluma81Png)
-
-	Iluma.Card1 = *container.NewMax(one, card_back)
-	pad1 := container.NewBorder(nil, nil, TarotPadding(), TarotPadding(), &Iluma.Card1)
-
-	two := widget.NewButton("", func() {
-		if !Iluma.Open {
-			reset := Iluma.Card2
-			if Iluma.Value.Num == 3 && Iluma.Value.Card2 > 0 {
-				c := Iluma.Value.Card2
-				Iluma.Card2 = *IlumaDialog(2, TarotDescription(c), reset)
+	if !Iluma.Value.Display {
+		FetchReading(Iluma.Value.Last)
+		Iluma.Box.Refresh()
+		if Iluma.Value.Found {
+			Iluma.Value.Display = true
+			Iluma.Label.SetText("")
+			if Iluma.Value.Num == 3 {
+				Iluma.Card1.Objects[1] = DisplayCard(Iluma.Value.Card1)
+				Iluma.Card2.Objects[1] = DisplayCard(Iluma.Value.Card2)
+				Iluma.Card3.Objects[1] = DisplayCard(Iluma.Value.Card3)
+			} else {
+				Iluma.Card1.Objects[1] = DisplayCard(0)
+				Iluma.Card2.Objects[1] = DisplayCard(Iluma.Value.Card1)
+				Iluma.Card3.Objects[1] = DisplayCard(0)
 			}
-
-			if Iluma.Value.Num == 1 && Iluma.Value.Card1 > 0 {
-				c := Iluma.Value.Card1
-				Iluma.Card2 = *IlumaDialog(2, TarotDescription(c), reset)
-			}
+			ActionBuffer(false)
+			Iluma.Box.Refresh()
 		}
-	})
-
-	Iluma.Card2 = *container.NewMax(two, card_back)
-	pad2 := container.NewBorder(nil, nil, TarotPadding(), TarotPadding(), &Iluma.Card2)
-
-	three := widget.NewButton("", func() {
-		if Iluma.Value.Num == 3 && !Iluma.Open && Iluma.Value.Card3 > 0 {
-			c := Iluma.Value.Card3
-			reset := Iluma.Card3
-			Iluma.Card3 = *IlumaDialog(3, TarotDescription(c), reset)
-		}
-	})
-
-	one.Importance = widget.LowImportance
-	two.Importance = widget.LowImportance
-	three.Importance = widget.LowImportance
-
-	Iluma.Card3 = *container.NewMax(three, card_back)
-	pad3 := container.NewBorder(nil, nil, TarotPadding(), TarotPadding(), &Iluma.Card3)
-
-	actions := container.NewAdaptiveGrid(3,
-		layout.NewSpacer(),
-		Iluma.Label,
-		layout.NewSpacer())
-
-	Iluma.Box = container.NewAdaptiveGrid(3,
-		pad1,
-		pad2,
-		pad3)
-
-	pad := container.NewBorder(
-		nil,
-		nil,
-		layout.NewSpacer(),
-		layout.NewSpacer(),
-		Iluma.Box)
-
-	alpha := canvas.NewRectangle(color.RGBA{0, 0, 0, 150})
-	if bundle.AppColor == color.White {
-		alpha = canvas.NewRectangle(color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0x55})
 	}
 
-	box := container.NewBorder(
-		nil,
-		actions,
-		nil,
-		nil,
-		pad)
+	if rpc.Wallet.Height > Iluma.Value.CHeight+3 {
+		ActionBuffer(false)
+	}
 
-	return container.NewMax(alpha, box)
-}
-
-// Padding section for Tarot card layouts
-func TarotPadding() fyne.CanvasObject {
-	pad := container.NewHScroll(layout.NewSpacer())
-	pad.SetMinSize(fyne.NewSize(40, 0))
-
-	return pad
+	t.DApp.Refresh()
 }
 
 // Display random text when Tarot cards are drawn
-func TarotDrawText() (text string) {
+func drawText() (text string) {
 	i := rand.Intn(6-1) + 1
 
 	switch i {
@@ -194,44 +157,12 @@ func TarotDrawText() (text string) {
 
 	}
 
-	return text
-}
-
-// Refresh all Tarot objects
-func TarotRefresh(t *dwidget.DreamsItems) {
-	t.LeftLabel.SetText("Total Readings: " + Iluma.Value.Readings + "      Click your card for Iluma reading")
-	t.RightLabel.SetText("dReams Balance: " + rpc.DisplayBalance("dReams") + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Display.Wallet_height)
-
-	if !Iluma.Value.Display {
-		FetchReading(Iluma.Value.Last)
-		Iluma.Box.Refresh()
-		if Iluma.Value.Found {
-			Iluma.Value.Display = true
-			Iluma.Label.SetText("")
-			if Iluma.Value.Num == 3 {
-				Iluma.Card1.Objects[1] = TarotCard(Iluma.Value.Card1)
-				Iluma.Card2.Objects[1] = TarotCard(Iluma.Value.Card2)
-				Iluma.Card3.Objects[1] = TarotCard(Iluma.Value.Card3)
-			} else {
-				Iluma.Card1.Objects[1] = TarotCard(0)
-				Iluma.Card2.Objects[1] = TarotCard(Iluma.Value.Card1)
-				Iluma.Card3.Objects[1] = TarotCard(0)
-			}
-			TarotBuffer(false)
-			Iluma.Box.Refresh()
-		}
-	}
-
-	if rpc.Wallet.Height > Iluma.Value.CHeight+3 {
-		TarotBuffer(false)
-	}
-
-	t.DApp.Refresh()
+	return
 }
 
 // Confirm Tarot draw of one or three cards
 //   - i defines 1 or 3 card draw
-func TarotConfirm(i int, reset fyne.Container) *fyne.Container {
+func drawConfirm(i int, reset fyne.Container) *fyne.Container {
 	label := widget.NewLabel("")
 	if i == 3 {
 		label.SetText(fmt.Sprintf("You are about to draw three cards\n\nReading fee is %.5f Dero\n\nConfirm", float64(rpc.IlumaFee)/100000))
@@ -247,17 +178,17 @@ func TarotConfirm(i int, reset fyne.Container) *fyne.Container {
 		Iluma.Card2.Refresh()
 
 		if i == 3 {
-			TarotBuffer(true)
+			ActionBuffer(true)
 			Iluma.Value.Found = false
 			Iluma.Value.Display = false
 			DrawReading(3)
-			Iluma.Label.SetText(TarotDrawText())
+			Iluma.Label.SetText(drawText())
 		} else {
-			TarotBuffer(true)
+			ActionBuffer(true)
 			Iluma.Value.Found = false
 			Iluma.Value.Display = false
 			DrawReading(1)
-			Iluma.Label.SetText(TarotDrawText())
+			Iluma.Label.SetText(drawText())
 		}
 
 		Iluma.Open = false
@@ -290,7 +221,7 @@ func TarotConfirm(i int, reset fyne.Container) *fyne.Container {
 //   - card is which card button pressed
 //   - text is Iluma reading description
 //   - Pass container to reset to
-func IlumaDialog(card int, text string, reset fyne.Container) *fyne.Container {
+func ilumaDialog(card int, text string, reset fyne.Container) *fyne.Container {
 	label := widget.NewLabel(text)
 	label.Wrapping = fyne.TextWrapWord
 
@@ -321,321 +252,167 @@ func IlumaDialog(card int, text string, reset fyne.Container) *fyne.Container {
 	return container.NewMax(reset_button, scroll)
 }
 
-// Iluma tab objects, intro description and image scroll
-func placeIluma() *fyne.Container {
-	var first, second, third bool
-	var display int
-	img := canvas.NewImageFromResource(ResourceIluma82Png)
-	intro := widget.NewLabel(iluma_intro)
-	scroll := container.NewScroll(intro)
-
-	alpha := canvas.NewRectangle(color.RGBA{0, 0, 0, 120})
-	if bundle.AppColor == color.White {
-		alpha = canvas.NewRectangle(color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0x55})
-	}
-
-	cont := container.NewGridWithColumns(2, scroll, img)
-
-	scroll.OnScrolled = func(p fyne.Position) {
-		if p.Y <= 400 {
-			second = false
-			third = false
-			display = 1
-		} else if p.Y >= 400 && p.Y <= 800 {
-			first = false
-			third = false
-			display = 2
-		} else if p.Y >= 800 {
-			first = false
-			second = false
-			display = 3
-		}
-
-		switch display {
-		case 1:
-			if !first {
-				cont.Objects[1] = canvas.NewImageFromResource(ResourceIluma82Png)
-				cont.Refresh()
-				first = true
-			}
-		case 2:
-			if !second {
-				cont.Objects[1] = canvas.NewImageFromResource(ResourceIluma80Png)
-				cont.Refresh()
-				second = true
-			}
-		case 3:
-			if !third {
-				cont.Objects[1] = canvas.NewImageFromResource(ResourceIluma83Png)
-				cont.Refresh()
-				third = true
-			}
-		default:
-
-		}
-	}
-
-	return container.NewMax(alpha, cont)
-
-}
-
-// Layout all objects for Iluma Tarot dApp
-func LayoutAllItems(t *dwidget.DreamsItems) fyne.CanvasObject {
-	search_entry := widget.NewEntry()
-	search_entry.SetPlaceHolder("TXID:")
-	search_button := widget.NewButton("    Search   ", func() {
-		txid := search_entry.Text
-		if len(txid) == 64 {
-			signer := rpc.VerifySigner(search_entry.Text)
-			if signer {
-				Iluma.Value.Display = true
-				Iluma.Label.SetText("")
-				FetchReading(txid)
-				if Iluma.Value.Card2 != 0 && Iluma.Value.Card3 != 0 {
-					Iluma.Card1.Objects[1] = TarotCard(Iluma.Value.Card1)
-					Iluma.Card2.Objects[1] = TarotCard(Iluma.Value.Card2)
-					Iluma.Card3.Objects[1] = TarotCard(Iluma.Value.Card3)
-					Iluma.Value.Num = 3
-				} else {
-					Iluma.Card1.Objects[1] = TarotCard(0)
-					Iluma.Card2.Objects[1] = TarotCard(Iluma.Value.Card1)
-					Iluma.Card3.Objects[1] = TarotCard(0)
-					Iluma.Value.Num = 1
-				}
-				Iluma.Box.Refresh()
-			} else {
-				log.Println("[Iluma] This is not your reading")
-			}
-		}
-	})
-
-	tarot_label := container.NewHBox(t.LeftLabel, layout.NewSpacer(), t.RightLabel)
-
-	t.DApp = container.NewBorder(
-		dwidget.LabelColor(tarot_label),
-		nil,
-		nil,
-		nil,
-		TarotCardBox())
-
-	reset := Iluma.Card2
-
-	Iluma.Draw1 = widget.NewButton("Draw One", func() {
-		if !Iluma.Open {
-			Iluma.Draw1.Hide()
-			Iluma.Draw3.Hide()
-			Iluma.Card2 = *TarotConfirm(1, reset)
-		}
-	})
-
-	Iluma.Draw3 = widget.NewButton("Draw Three", func() {
-		if !Iluma.Open {
-			Iluma.Draw1.Hide()
-			Iluma.Draw3.Hide()
-			Iluma.Card2 = *TarotConfirm(3, reset)
-		}
-	})
-
-	Iluma.Draw1.Hide()
-	Iluma.Draw3.Hide()
-
-	draw_cont := container.NewAdaptiveGrid(5,
-		layout.NewSpacer(),
-		layout.NewSpacer(),
-		Iluma.Draw1,
-		Iluma.Draw3,
-		layout.NewSpacer())
-
-	Iluma.Search = container.NewBorder(nil, nil, nil, search_button, search_entry)
-
-	Iluma.Actions = container.NewVBox(
-		layout.NewSpacer(),
-		container.NewAdaptiveGrid(2, draw_cont, Iluma.Search))
-
-	Iluma.Search.Hide()
-	Iluma.Actions.Hide()
-
-	tarot_tabs := container.NewAppTabs(
-		container.NewTabItem("Iluma", placeIluma()),
-		container.NewTabItem("Reading", t.DApp))
-
-	tarot_tabs.OnSelected = func(ti *container.TabItem) {
-		switch ti.Text {
-		case "Iluma":
-			Iluma.Actions.Hide()
-		case "Reading":
-			Iluma.Actions.Show()
-		default:
-
-		}
-	}
-
-	tarot_tabs.SetTabLocation(container.TabLocationBottom)
-
-	return container.NewMax(tarot_tabs, Iluma.Actions)
-}
-
 // Switch for Iluma Tarot card image
-func TarotCard(c int) *canvas.Image {
+func DisplayCard(c int) *canvas.Image {
 	switch c {
 	case 1:
-		return canvas.NewImageFromResource(ResourceIluma1Jpg)
+		return canvas.NewImageFromResource(resourceIluma1Jpg)
 	case 2:
-		return canvas.NewImageFromResource(ResourceIluma2Jpg)
+		return canvas.NewImageFromResource(resourceIluma2Jpg)
 	case 3:
-		return canvas.NewImageFromResource(ResourceIluma3Jpg)
+		return canvas.NewImageFromResource(resourceIluma3Jpg)
 	case 4:
-		return canvas.NewImageFromResource(ResourceIluma4Jpg)
+		return canvas.NewImageFromResource(resourceIluma4Jpg)
 	case 5:
-		return canvas.NewImageFromResource(ResourceIluma5Jpg)
+		return canvas.NewImageFromResource(resourceIluma5Jpg)
 	case 6:
-		return canvas.NewImageFromResource(ResourceIluma6Jpg)
+		return canvas.NewImageFromResource(resourceIluma6Jpg)
 	case 7:
-		return canvas.NewImageFromResource(ResourceIluma7Jpg)
+		return canvas.NewImageFromResource(resourceIluma7Jpg)
 	case 8:
-		return canvas.NewImageFromResource(ResourceIluma8Jpg)
+		return canvas.NewImageFromResource(resourceIluma8Jpg)
 	case 9:
-		return canvas.NewImageFromResource(ResourceIluma9Jpg)
+		return canvas.NewImageFromResource(resourceIluma9Jpg)
 	case 10:
-		return canvas.NewImageFromResource(ResourceIluma10Jpg)
+		return canvas.NewImageFromResource(resourceIluma10Jpg)
 	case 11:
-		return canvas.NewImageFromResource(ResourceIluma11Jpg)
+		return canvas.NewImageFromResource(resourceIluma11Jpg)
 	case 12:
-		return canvas.NewImageFromResource(ResourceIluma12Jpg)
+		return canvas.NewImageFromResource(resourceIluma12Jpg)
 	case 13:
-		return canvas.NewImageFromResource(ResourceIluma13Jpg)
+		return canvas.NewImageFromResource(resourceIluma13Jpg)
 	case 14:
-		return canvas.NewImageFromResource(ResourceIluma14Jpg)
+		return canvas.NewImageFromResource(resourceIluma14Jpg)
 	case 15:
-		return canvas.NewImageFromResource(ResourceIluma15Jpg)
+		return canvas.NewImageFromResource(resourceIluma15Jpg)
 	case 16:
-		return canvas.NewImageFromResource(ResourceIluma16Jpg)
+		return canvas.NewImageFromResource(resourceIluma16Jpg)
 	case 17:
-		return canvas.NewImageFromResource(ResourceIluma17Jpg)
+		return canvas.NewImageFromResource(resourceIluma17Jpg)
 	case 18:
-		return canvas.NewImageFromResource(ResourceIluma18Jpg)
+		return canvas.NewImageFromResource(resourceIluma18Jpg)
 	case 19:
-		return canvas.NewImageFromResource(ResourceIluma19Jpg)
+		return canvas.NewImageFromResource(resourceIluma19Jpg)
 	case 20:
-		return canvas.NewImageFromResource(ResourceIluma20Jpg)
+		return canvas.NewImageFromResource(resourceIluma20Jpg)
 	case 21:
-		return canvas.NewImageFromResource(ResourceIluma21Jpg)
+		return canvas.NewImageFromResource(resourceIluma21Jpg)
 	case 22:
-		return canvas.NewImageFromResource(ResourceIluma22Jpg)
+		return canvas.NewImageFromResource(resourceIluma22Jpg)
 	case 23:
-		return canvas.NewImageFromResource(ResourceIluma23Jpg)
+		return canvas.NewImageFromResource(resourceIluma23Jpg)
 	case 24:
-		return canvas.NewImageFromResource(ResourceIluma24Jpg)
+		return canvas.NewImageFromResource(resourceIluma24Jpg)
 	case 25:
-		return canvas.NewImageFromResource(ResourceIluma25Jpg)
+		return canvas.NewImageFromResource(resourceIluma25Jpg)
 	case 26:
-		return canvas.NewImageFromResource(ResourceIluma26Jpg)
+		return canvas.NewImageFromResource(resourceIluma26Jpg)
 	case 27:
-		return canvas.NewImageFromResource(ResourceIluma27Jpg)
+		return canvas.NewImageFromResource(resourceIluma27Jpg)
 	case 28:
-		return canvas.NewImageFromResource(ResourceIluma28Jpg)
+		return canvas.NewImageFromResource(resourceIluma28Jpg)
 	case 29:
-		return canvas.NewImageFromResource(ResourceIluma29Jpg)
+		return canvas.NewImageFromResource(resourceIluma29Jpg)
 	case 30:
-		return canvas.NewImageFromResource(ResourceIluma30Jpg)
+		return canvas.NewImageFromResource(resourceIluma30Jpg)
 	case 31:
-		return canvas.NewImageFromResource(ResourceIluma31Jpg)
+		return canvas.NewImageFromResource(resourceIluma31Jpg)
 	case 32:
-		return canvas.NewImageFromResource(ResourceIluma32Jpg)
+		return canvas.NewImageFromResource(resourceIluma32Jpg)
 	case 33:
-		return canvas.NewImageFromResource(ResourceIluma33Jpg)
+		return canvas.NewImageFromResource(resourceIluma33Jpg)
 	case 34:
-		return canvas.NewImageFromResource(ResourceIluma34Jpg)
+		return canvas.NewImageFromResource(resourceIluma34Jpg)
 	case 35:
-		return canvas.NewImageFromResource(ResourceIluma35Jpg)
+		return canvas.NewImageFromResource(resourceIluma35Jpg)
 	case 36:
-		return canvas.NewImageFromResource(ResourceIluma36Jpg)
+		return canvas.NewImageFromResource(resourceIluma36Jpg)
 	case 37:
-		return canvas.NewImageFromResource(ResourceIluma37Jpg)
+		return canvas.NewImageFromResource(resourceIluma37Jpg)
 	case 38:
-		return canvas.NewImageFromResource(ResourceIluma38Jpg)
+		return canvas.NewImageFromResource(resourceIluma38Jpg)
 	case 39:
-		return canvas.NewImageFromResource(ResourceIluma39Jpg)
+		return canvas.NewImageFromResource(resourceIluma39Jpg)
 	case 40:
-		return canvas.NewImageFromResource(ResourceIluma40Jpg)
+		return canvas.NewImageFromResource(resourceIluma40Jpg)
 	case 41:
-		return canvas.NewImageFromResource(ResourceIluma41Jpg)
+		return canvas.NewImageFromResource(resourceIluma41Jpg)
 	case 42:
-		return canvas.NewImageFromResource(ResourceIluma42Jpg)
+		return canvas.NewImageFromResource(resourceIluma42Jpg)
 	case 43:
-		return canvas.NewImageFromResource(ResourceIluma43Jpg)
+		return canvas.NewImageFromResource(resourceIluma43Jpg)
 	case 44:
-		return canvas.NewImageFromResource(ResourceIluma44Jpg)
+		return canvas.NewImageFromResource(resourceIluma44Jpg)
 	case 45:
-		return canvas.NewImageFromResource(ResourceIluma45Jpg)
+		return canvas.NewImageFromResource(resourceIluma45Jpg)
 	case 46:
-		return canvas.NewImageFromResource(ResourceIluma46Jpg)
+		return canvas.NewImageFromResource(resourceIluma46Jpg)
 	case 47:
-		return canvas.NewImageFromResource(ResourceIluma47Jpg)
+		return canvas.NewImageFromResource(resourceIluma47Jpg)
 	case 48:
-		return canvas.NewImageFromResource(ResourceIluma48Jpg)
+		return canvas.NewImageFromResource(resourceIluma48Jpg)
 	case 49:
-		return canvas.NewImageFromResource(ResourceIluma49Jpg)
+		return canvas.NewImageFromResource(resourceIluma49Jpg)
 	case 50:
-		return canvas.NewImageFromResource(ResourceIluma50Jpg)
+		return canvas.NewImageFromResource(resourceIluma50Jpg)
 	case 51:
-		return canvas.NewImageFromResource(ResourceIluma51Jpg)
+		return canvas.NewImageFromResource(resourceIluma51Jpg)
 	case 52:
-		return canvas.NewImageFromResource(ResourceIluma52Jpg)
+		return canvas.NewImageFromResource(resourceIluma52Jpg)
 	case 53:
-		return canvas.NewImageFromResource(ResourceIluma53Jpg)
+		return canvas.NewImageFromResource(resourceIluma53Jpg)
 	case 54:
-		return canvas.NewImageFromResource(ResourceIluma54Jpg)
+		return canvas.NewImageFromResource(resourceIluma54Jpg)
 	case 55:
-		return canvas.NewImageFromResource(ResourceIluma55Jpg)
+		return canvas.NewImageFromResource(resourceIluma55Jpg)
 	case 56:
-		return canvas.NewImageFromResource(ResourceIluma56Jpg)
+		return canvas.NewImageFromResource(resourceIluma56Jpg)
 	case 57:
-		return canvas.NewImageFromResource(ResourceIluma57Jpg)
+		return canvas.NewImageFromResource(resourceIluma57Jpg)
 	case 58:
-		return canvas.NewImageFromResource(ResourceIluma58Jpg)
+		return canvas.NewImageFromResource(resourceIluma58Jpg)
 	case 59:
-		return canvas.NewImageFromResource(ResourceIluma59Jpg)
+		return canvas.NewImageFromResource(resourceIluma59Jpg)
 	case 60:
-		return canvas.NewImageFromResource(ResourceIluma60Jpg)
+		return canvas.NewImageFromResource(resourceIluma60Jpg)
 	case 61:
-		return canvas.NewImageFromResource(ResourceIluma61Jpg)
+		return canvas.NewImageFromResource(resourceIluma61Jpg)
 	case 62:
-		return canvas.NewImageFromResource(ResourceIluma62Jpg)
+		return canvas.NewImageFromResource(resourceIluma62Jpg)
 	case 63:
-		return canvas.NewImageFromResource(ResourceIluma63Jpg)
+		return canvas.NewImageFromResource(resourceIluma63Jpg)
 	case 64:
-		return canvas.NewImageFromResource(ResourceIluma64Jpg)
+		return canvas.NewImageFromResource(resourceIluma64Jpg)
 	case 65:
-		return canvas.NewImageFromResource(ResourceIluma65Jpg)
+		return canvas.NewImageFromResource(resourceIluma65Jpg)
 	case 66:
-		return canvas.NewImageFromResource(ResourceIluma66Jpg)
+		return canvas.NewImageFromResource(resourceIluma66Jpg)
 	case 67:
-		return canvas.NewImageFromResource(ResourceIluma67Jpg)
+		return canvas.NewImageFromResource(resourceIluma67Jpg)
 	case 68:
-		return canvas.NewImageFromResource(ResourceIluma68Jpg)
+		return canvas.NewImageFromResource(resourceIluma68Jpg)
 	case 69:
-		return canvas.NewImageFromResource(ResourceIluma69Jpg)
+		return canvas.NewImageFromResource(resourceIluma69Jpg)
 	case 70:
-		return canvas.NewImageFromResource(ResourceIluma70Jpg)
+		return canvas.NewImageFromResource(resourceIluma70Jpg)
 	case 71:
-		return canvas.NewImageFromResource(ResourceIluma71Jpg)
+		return canvas.NewImageFromResource(resourceIluma71Jpg)
 	case 72:
-		return canvas.NewImageFromResource(ResourceIluma72Jpg)
+		return canvas.NewImageFromResource(resourceIluma72Jpg)
 	case 73:
-		return canvas.NewImageFromResource(ResourceIluma73Jpg)
+		return canvas.NewImageFromResource(resourceIluma73Jpg)
 	case 74:
-		return canvas.NewImageFromResource(ResourceIluma74Jpg)
+		return canvas.NewImageFromResource(resourceIluma74Jpg)
 	case 75:
-		return canvas.NewImageFromResource(ResourceIluma75Jpg)
+		return canvas.NewImageFromResource(resourceIluma75Jpg)
 	case 76:
-		return canvas.NewImageFromResource(ResourceIluma76Jpg)
+		return canvas.NewImageFromResource(resourceIluma76Jpg)
 	case 77:
-		return canvas.NewImageFromResource(ResourceIluma77Jpg)
+		return canvas.NewImageFromResource(resourceIluma77Jpg)
 	case 78:
-		return canvas.NewImageFromResource(ResourceIluma78Jpg)
+		return canvas.NewImageFromResource(resourceIluma78Jpg)
 	default:
-		return canvas.NewImageFromResource(ResourceIluma81Png)
+		return canvas.NewImageFromResource(resourceIluma81Png)
 	}
 }
 
@@ -874,7 +651,7 @@ var tarot_txt77 string
 var tarot_txt78 string
 
 // Iluma description text switch
-func TarotDescription(c int) string {
+func ilumaDescription(c int) string {
 	switch c {
 	case 1:
 		return tarot_txt1

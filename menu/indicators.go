@@ -14,15 +14,15 @@ import (
 	xwidget "fyne.io/x/fyne/widget"
 )
 
+type DreamsIndicator struct {
+	Img       *canvas.Image
+	Rect      *canvas.Rectangle
+	Animation *fyne.Animation
+}
+
 // Menu label when Gnomon starting
 func startLabel() {
 	Assets.Gnomes_sync.Text = (" Starting Gnomon")
-	Assets.Gnomes_sync.Refresh()
-}
-
-// Menu label when Gnomon scans wallet
-func checkLabel() {
-	Assets.Gnomes_sync.Text = (" Checking for Assets")
 	Assets.Gnomes_sync.Refresh()
 }
 
@@ -41,7 +41,7 @@ func SleepLabel() {
 }
 
 // dReams app status indicators for wallet, daemon, Gnomon and services
-func StartDreamsIndicators() fyne.CanvasObject {
+func StartDreamsIndicators(add []DreamsIndicator) fyne.CanvasObject {
 	purple := color.RGBA{105, 90, 205, 210}
 	blue := color.RGBA{31, 150, 200, 210}
 	alpha := color.RGBA{0, 0, 0, 0}
@@ -144,32 +144,16 @@ func StartDreamsIndicators() fyne.CanvasObject {
 		container.NewMax(d_rect, container.NewCenter(d)),
 		container.NewMax(w_rect, container.NewCenter(w)))
 
-	pbot := canvas.NewImageFromResource(bundle.ResourcePokerBotIconPng)
-	pbot.SetMinSize(fyne.NewSize(30, 30))
-	p_rect := canvas.NewRectangle(alpha)
-	p_rect.SetMinSize(fyne.NewSize(36, 36))
-
 	dService := canvas.NewImageFromResource(bundle.ResourceDReamServiceIconPng)
 	dService.SetMinSize(fyne.NewSize(30, 30))
 	s_rect := canvas.NewRectangle(alpha)
 	s_rect.SetMinSize(fyne.NewSize(36, 36))
 
-	service_box := container.NewHBox(
-		container.NewMax(p_rect, container.NewCenter(pbot)),
-		container.NewMax(s_rect, container.NewCenter(dService)))
+	additional_inds := container.NewHBox(container.NewMax(s_rect, container.NewCenter(dService)))
 
-	Control.Poker_ind = canvas.NewColorRGBAAnimation(purple, blue,
-		time.Second*3, func(c color.Color) {
-			if rpc.Odds.Run {
-				p_rect.FillColor = c
-				pbot.Show()
-				canvas.Refresh(p_rect)
-			} else {
-				p_rect.FillColor = alpha
-				pbot.Hide()
-				canvas.Refresh(p_rect)
-			}
-		})
+	for _, ind := range add {
+		additional_inds.Add(container.NewMax(ind.Rect, container.NewCenter(ind.Img)))
+	}
 
 	Control.Service_ind = canvas.NewColorRGBAAnimation(purple, blue,
 		time.Second*3, func(c color.Color) {
@@ -184,13 +168,10 @@ func StartDreamsIndicators() fyne.CanvasObject {
 			}
 		})
 
-	Control.Poker_ind.RepeatCount = fyne.AnimationRepeatForever
-	Control.Poker_ind.AutoReverse = true
-
 	Control.Service_ind.RepeatCount = fyne.AnimationRepeatForever
 	Control.Service_ind.AutoReverse = true
 
-	top_box := container.NewHBox(layout.NewSpacer(), service_box, connect_box, container.NewMax(g_full, sync_box, Gnomes.Icon_ind))
+	top_box := container.NewHBox(layout.NewSpacer(), additional_inds, connect_box, container.NewMax(g_full, sync_box, Gnomes.Icon_ind))
 	place := container.NewVBox(top_box, layout.NewSpacer())
 
 	go func() {
@@ -199,7 +180,9 @@ func StartDreamsIndicators() fyne.CanvasObject {
 		Gnomes.Icon_ind.Start()
 		Control.Daemon_ind.Start()
 		Control.Wallet_ind.Start()
-		Control.Poker_ind.Start()
+		for _, ind := range add {
+			ind.Animation.Start()
+		}
 		Control.Service_ind.Start()
 	}()
 
@@ -325,13 +308,13 @@ func StartIndicators() fyne.CanvasObject {
 }
 
 // Stop dReams app status indicators
-func StopIndicators() {
+func StopIndicators(these []DreamsIndicator) {
 	Gnomes.Sync_ind.Stop()
 	Gnomes.Full_ind.Stop()
 	Control.Daemon_ind.Stop()
 	Control.Wallet_ind.Stop()
-	if Control.Poker_ind != nil {
-		Control.Poker_ind.Stop()
+	for _, ind := range these {
+		ind.Animation.Stop()
 	}
 	if Control.Service_ind != nil {
 		Control.Service_ind.Stop()

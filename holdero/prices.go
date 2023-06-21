@@ -7,9 +7,9 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
+	"github.com/SixofClubsss/dReams/menu"
 	coingecko "github.com/superoo7/go-gecko/v3"
 )
 
@@ -38,23 +38,6 @@ type kuFeed struct {
 	} `json:"data"`
 }
 
-// Used for placing coin decimal, default returns 2 decimal place
-func CoinDecimal(ticker string) int {
-	split := strings.Split(ticker, "-")
-	if len(split) == 2 {
-		switch split[1] {
-		case "BTC":
-			return 8
-		case "DERO":
-			return 5
-		default:
-			return 2
-		}
-	}
-
-	return 2
-}
-
 // Main price fetch, returns float and display values
 //   - Average from 3 feeds, if not take average from 2, if not TO value takes priority spot
 func GetPrice(coin string) (price float64, display string) {
@@ -65,7 +48,7 @@ func GetPrice(coin string) (price float64, display string) {
 	priceK := getKucoin(coin)
 	priceG := getGeko(coin)
 
-	if CoinDecimal(coin) == 8 {
+	if menu.CoinDecimal(coin) == 8 {
 		if tf, err := strconv.ParseFloat(priceT, 64); err == nil {
 			t = tf * 100000000
 		}
@@ -110,7 +93,7 @@ func GetPrice(coin string) (price float64, display string) {
 		log.Println("[dReams] Error getting price feed")
 	}
 
-	if CoinDecimal(coin) == 8 {
+	if menu.CoinDecimal(coin) == 8 {
 		display = fmt.Sprintf("%.8f", price/100000000)
 	} else {
 		display = fmt.Sprintf("%.2f", price/100)

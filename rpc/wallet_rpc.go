@@ -7,23 +7,21 @@ import (
 	"encoding/base64"
 	"encoding/binary"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"log"
 	"os"
-	"sort"
-	"strconv"
 	"strings"
 	"time"
+
+	"github.com/deroproject/derohe/cryptography/crypto"
+	"github.com/deroproject/derohe/rpc"
+	"github.com/deroproject/derohe/walletapi"
+	"github.com/ybbus/jsonrpc/v3"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
-	"github.com/deroproject/derohe/cryptography/crypto"
-	"github.com/deroproject/derohe/rpc"
-	"github.com/deroproject/derohe/walletapi"
-	"github.com/ybbus/jsonrpc/v3"
 )
 
 // Add entry to Wallet.LogEntry session log
@@ -65,11 +63,14 @@ func SessionLog() *fyne.Container {
 func InitBalances() {
 	Wallet.TokenBal = make(map[string]uint64)
 	Display.Balance = make(map[string]string)
+	SCIDs = make(map[string]string)
+	SCIDs["dReams"] = DreamsSCID
+	SCIDs["HGC"] = HgcSCID
+	SCIDs["TRVL"] = TrvlSCID
 	Display.Balance["Dero"] = "0"
 	Display.Balance["dReams"] = "0"
 	Display.Balance["HGC"] = "0"
 	Display.Balance["TRVL"] = "0"
-	Signal.Sit = true
 }
 
 // Set wallet rpc client with auth, context and 5 sec cancel
@@ -126,7 +127,7 @@ func GetAddress(tag string) {
 		Wallet.Address = result.Address
 		id := []byte(result.Address)
 		hash := sha256.Sum256(id)
-		Wallet.idHash = hex.EncodeToString(hash[:])
+		Wallet.IdHash = hex.EncodeToString(hash[:])
 	} else {
 		Wallet.Connected(false)
 	}
@@ -183,7 +184,7 @@ func TokenBalance(scid string) uint64 {
 }
 
 // Get Dero balance and all tokens used on dReams platform
-func GetDreamsBalances() {
+func GetDreamsBalances(assets map[string]string) {
 	Wallet.MuB.Lock()
 	defer Wallet.MuB.Unlock()
 
@@ -192,22 +193,10 @@ func GetDreamsBalances() {
 		Wallet.Balance = bal
 		Display.Balance["Dero"] = FromAtomic(bal, 5)
 
-		dReam_bal := TokenBalance(DreamsSCID)
-		Display.Balance["dReams"] = FromAtomic(dReam_bal, 5)
-		Wallet.TokenBal["dReams"] = dReam_bal
-
-		trvl_bal := TokenBalance(TrvlSCID)
-		Display.Balance["TRVL"] = strconv.Itoa(int(trvl_bal))
-		Wallet.TokenBal["TRVL"] = trvl_bal
-
-		hgc_bal := TokenBalance(HgcSCID)
-		Display.Balance["HGC"] = FromAtomic(hgc_bal, 5)
-		Wallet.TokenBal["HGC"] = hgc_bal
-
-		if Round.Tourney {
-			tourney_bal := TokenBalance(TourneySCID)
-			Display.Balance["Tournament"] = FromAtomic(tourney_bal, 5)
-			Wallet.TokenBal["Tournament"] = tourney_bal
+		for name, sc := range assets {
+			token_bal := TokenBalance(sc)
+			Display.Balance[name] = FromAtomic(token_bal, 5)
+			Wallet.TokenBal[name] = token_bal
 		}
 
 		return
@@ -215,14 +204,10 @@ func GetDreamsBalances() {
 
 	Display.Balance["Dero"] = "0"
 	Wallet.Balance = 0
-	Display.Balance["dReams"] = "0"
-	Wallet.TokenBal["dReams"] = 0
-	Display.Balance["TRVL"] = "0"
-	Wallet.TokenBal["TRVL"] = 0
-	Display.Balance["HGC"] = "0"
-	Wallet.TokenBal["HGC"] = 0
-	Display.Balance["Tournament"] = "0"
-	Wallet.TokenBal["Tournament"] = 0
+	for name := range assets {
+		Display.Balance[name] = "0"
+		Wallet.TokenBal[name] = 0
+	}
 }
 
 // Return Display.Balance string of name
@@ -234,8 +219,8 @@ func DisplayBalance(name string) string {
 }
 
 // Return asset transfer to SCID from Round.AssetID
-func GetAssetSCIDforTransfer(amt uint64) (transfer rpc.Transfer) {
-	switch Round.AssetID {
+func GetAssetSCIDforTransfer(amt uint64, assetId string) (transfer rpc.Transfer) {
+	switch assetId {
 	case DreamsSCID:
 		transfer = rpc.Transfer{
 			SCID:        crypto.HashHexToHash(DreamsSCID),
@@ -324,642 +309,6 @@ func GetWalletHeight(tag string) {
 
 		Wallet.Height = int(result.Height)
 		Display.Wallet_height = fmt.Sprint(result.Height)
-	}
-}
-
-// Submit playerId, name, avatar and sit at Holdero table
-//   - name and av are for name and avatar in player id string
-func SitDown(name, av string) {
-	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
-	defer cancel()
-
-	var player playerId
-	player.Id = Wallet.idHash
-	player.Name = name
-	player.Avatar = av
-
-	mar, _ := json.Marshal(player)
-	hx := hex.EncodeToString(mar)
-
-	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "PlayerEntry"}
-	arg2 := rpc.Argument{Name: "address", DataType: "S", Value: hx}
-	args := rpc.Arguments{arg1, arg2}
-	txid := rpc.Transfer_Result{}
-
-	t1 := rpc.Transfer{
-		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
-		Amount:      0,
-		Burn:        0,
-	}
-
-	t := []rpc.Transfer{t1}
-	fee := GasEstimate(Round.Contract, "[Holdero]", args, t, HighLimitFee)
-	params := &rpc.Transfer_Params{
-		Transfers: t,
-		SC_ID:     Round.Contract,
-		SC_RPC:    args,
-		Ringsize:  2,
-		Fees:      fee,
-	}
-
-	if err := rpcClientW.CallFor(ctx, &txid, "transfer", params); err != nil {
-		log.Println("[SitDown]", err)
-		return
-	}
-
-	log.Println("[Holdero] Sit Down TX:", txid)
-	AddLog("Sit Down TX: " + txid.TXID)
-}
-
-// Leave Holdero seat on players turn
-func Leave() {
-	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
-	defer cancel()
-
-	checkoutId := StringToInt(Display.PlayerId)
-	singleNameClear(checkoutId)
-	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "PlayerLeave"}
-	arg2 := rpc.Argument{Name: "id", DataType: "U", Value: checkoutId}
-	args := rpc.Arguments{arg1, arg2}
-	txid := rpc.Transfer_Result{}
-
-	t1 := rpc.Transfer{
-		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
-		Amount:      0,
-		Burn:        0,
-	}
-
-	t := []rpc.Transfer{t1}
-	fee := GasEstimate(Round.Contract, "[Holdero]", args, t, LowLimitFee)
-	params := &rpc.Transfer_Params{
-		Transfers: t,
-		SC_ID:     Round.Contract,
-		SC_RPC:    args,
-		Ringsize:  2,
-		Fees:      fee,
-	}
-
-	if err := rpcClientW.CallFor(ctx, &txid, "transfer", params); err != nil {
-		log.Println("[Leave]", err)
-		return
-	}
-
-	log.Println("[Holdero] Leave TX:", txid)
-	AddLog("Leave Down TX: " + txid.TXID)
-}
-
-// Owner table settings for Holdero
-//   - seats defines max players at table
-//   - bb, sb and ante define big blind, small blind and antes. Ante can be 0
-//   - chips defines if tables is using Dero or assets
-//   - name and av are for name and avatar in owners id string
-func SetTable(seats int, bb, sb, ante uint64, chips, name, av string) {
-	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
-	defer cancel()
-
-	var player playerId
-	player.Id = Wallet.idHash
-	player.Name = name
-	player.Avatar = av
-
-	mar, _ := json.Marshal(player)
-	hx := hex.EncodeToString(mar)
-
-	var args rpc.Arguments
-	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "SetTable"}
-	arg2 := rpc.Argument{Name: "seats", DataType: "U", Value: seats}
-	arg3 := rpc.Argument{Name: "bigBlind", DataType: "U", Value: bb}
-	arg4 := rpc.Argument{Name: "smallBlind", DataType: "U", Value: sb}
-	arg5 := rpc.Argument{Name: "ante", DataType: "U", Value: ante}
-	arg6 := rpc.Argument{Name: "address", DataType: "S", Value: hx}
-	txid := rpc.Transfer_Result{}
-
-	if Round.Version < 110 {
-		args = rpc.Arguments{arg1, arg2, arg3, arg4, arg5, arg6}
-	} else if Round.Version == 110 {
-		arg7 := rpc.Argument{Name: "chips", DataType: "S", Value: chips}
-		args = rpc.Arguments{arg1, arg2, arg3, arg4, arg5, arg6, arg7}
-	}
-
-	t1 := rpc.Transfer{
-		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
-		Amount:      0,
-		Burn:        0,
-	}
-
-	t := []rpc.Transfer{t1}
-	fee := GasEstimate(Round.Contract, "[Holdero]", args, t, HighLimitFee)
-	params := &rpc.Transfer_Params{
-		Transfers: t,
-		SC_ID:     Round.Contract,
-		SC_RPC:    args,
-		Ringsize:  2,
-		Fees:      fee,
-	}
-
-	if err := rpcClientW.CallFor(ctx, &txid, "transfer", params); err != nil {
-		log.Println("[SetTable]", err)
-		return
-	}
-
-	log.Println("[Holdero] Set Table TX:", txid)
-	AddLog("Set Table TX: " + txid.TXID)
-}
-
-// Submit blinds/ante to deal Holdero hand
-func DealHand() (tx string) {
-	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
-	defer cancel()
-
-	if !Wallet.KeyLock {
-		Wallet.ClientKey = GenerateKey()
-	}
-
-	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "DealHand"}
-	arg2 := rpc.Argument{Name: "pcSeed", DataType: "H", Value: Wallet.ClientKey}
-	args := rpc.Arguments{arg1, arg2}
-	txid := rpc.Transfer_Result{}
-
-	var amount uint64
-
-	if Round.Pot == 0 {
-		amount = Round.Ante + Round.SB
-	} else if Round.Pot == Round.SB || Round.Pot == Round.Ante+Round.SB {
-		amount = Round.Ante + Round.BB
-	} else {
-		amount = Round.Ante
-	}
-
-	t := []rpc.Transfer{}
-	if Round.Asset {
-		t1 := rpc.Transfer{
-			Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
-			Amount:      500,
-			Burn:        0,
-		}
-
-		if Round.Tourney {
-			t2 := rpc.Transfer{
-				SCID:        crypto.HashHexToHash(TourneySCID),
-				Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
-				Burn:        amount,
-			}
-			t = append(t, t1, t2)
-		} else {
-			t2 := GetAssetSCIDforTransfer(amount)
-			if t2.Destination == "" {
-				log.Println("[DealHand] Error getting asset SCID for transfer")
-				return
-			}
-			t = append(t, t1, t2)
-		}
-	} else {
-		t1 := rpc.Transfer{
-			Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
-			Amount:      500,
-			Burn:        amount,
-		}
-		t = append(t, t1)
-	}
-
-	fee := GasEstimate(Round.Contract, "[Holdero]", args, t, LowLimitFee)
-	params := &rpc.Transfer_Params{
-		Transfers: t,
-		SC_ID:     Round.Contract,
-		SC_RPC:    args,
-		Ringsize:  2,
-		Fees:      fee,
-	}
-
-	if err := rpcClientW.CallFor(ctx, &txid, "transfer", params); err != nil {
-		log.Println("[DealHand]", err)
-		return
-	}
-
-	Display.Res = ""
-	log.Println("[Holdero] Deal TX:", txid)
-	updateStatsWager(float64(amount) / 100000)
-	AddLog("Deal TX: " + txid.TXID)
-
-	return txid.TXID
-}
-
-// Make Holdero bet
-func Bet(amt string) (tx string) {
-	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
-	defer cancel()
-
-	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "Bet"}
-	args := rpc.Arguments{arg1}
-	txid := rpc.Transfer_Result{}
-
-	var t1 rpc.Transfer
-	if Round.Asset {
-		if Round.Tourney {
-			t1 = rpc.Transfer{
-				SCID:        crypto.HashHexToHash(TourneySCID),
-				Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
-				Burn:        ToAtomic(amt, 1),
-			}
-		} else {
-			t1 = GetAssetSCIDforTransfer(ToAtomic(amt, 1))
-			if t1.Destination == "" {
-				log.Println("[Bet] Error getting asset SCID for transfer")
-				return
-			}
-		}
-	} else {
-		t1 = rpc.Transfer{
-			Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
-			Amount:      0,
-			Burn:        ToAtomic(amt, 1),
-		}
-	}
-
-	t := []rpc.Transfer{t1}
-	fee := GasEstimate(Round.Contract, "[Holdero]", args, t, LowLimitFee)
-	params := &rpc.Transfer_Params{
-		Transfers: t,
-		SC_ID:     Round.Contract,
-		SC_RPC:    args,
-		Ringsize:  2,
-		Fees:      fee,
-	}
-
-	if err := rpcClientW.CallFor(ctx, &txid, "transfer", params); err != nil {
-		log.Println("[Bet]", err)
-		return
-	}
-
-	if f, err := strconv.ParseFloat(amt, 64); err == nil {
-		updateStatsWager(f)
-	}
-
-	Display.Res = ""
-	Signal.PlacedBet = true
-	log.Println("[Holdero] Bet TX:", txid)
-	AddLog("Bet TX: " + txid.TXID)
-
-	return txid.TXID
-}
-
-// Holdero check and fold
-func Check() (tx string) {
-	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
-	defer cancel()
-
-	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "Bet"}
-	args := rpc.Arguments{arg1}
-	txid := rpc.Transfer_Result{}
-
-	var t1 rpc.Transfer
-	if !Round.Asset {
-		t1 = rpc.Transfer{
-			Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
-			Amount:      0,
-			Burn:        0,
-		}
-	} else {
-		if Round.Tourney {
-			t1 = rpc.Transfer{
-				SCID:        crypto.HashHexToHash(TourneySCID),
-				Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
-				Burn:        0,
-			}
-		} else {
-			t1 = GetAssetSCIDforTransfer(0)
-			if t1.Destination == "" {
-				log.Println("[Check] Error getting asset SCID for transfer")
-				return
-			}
-		}
-	}
-
-	t := []rpc.Transfer{t1}
-	fee := GasEstimate(Round.Contract, "[Holdero]", args, t, LowLimitFee)
-	params := &rpc.Transfer_Params{
-		Transfers: t,
-		SC_ID:     Round.Contract,
-		SC_RPC:    args,
-		Ringsize:  2,
-		Fees:      fee,
-	}
-
-	if err := rpcClientW.CallFor(ctx, &txid, "transfer", params); err != nil {
-		log.Println("[Check]", err)
-		return
-	}
-
-	Display.Res = ""
-	log.Println("[Holdero] Check/Fold TX:", txid)
-	AddLog("Check/Fold TX: " + txid.TXID)
-
-	return txid.TXID
-}
-
-// Holdero single winner payout
-//   - w defines which player the pot is going to
-func PayOut(w string) string {
-	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
-	defer cancel()
-
-	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "Winner"}
-	arg2 := rpc.Argument{Name: "whoWon", DataType: "S", Value: w}
-	args := rpc.Arguments{arg1, arg2}
-	txid := rpc.Transfer_Result{}
-
-	t1 := rpc.Transfer{
-		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
-		Amount:      0,
-		Burn:        0,
-	}
-
-	t := []rpc.Transfer{t1}
-	fee := GasEstimate(Round.Contract, "[Holdero]", args, t, LowLimitFee)
-	params := &rpc.Transfer_Params{
-		Transfers: t,
-		SC_ID:     Round.Contract,
-		SC_RPC:    args,
-		Ringsize:  2,
-		Fees:      fee,
-	}
-
-	if err := rpcClientW.CallFor(ctx, &txid, "transfer", params); err != nil {
-		log.Println("[PayOut]", err)
-		return ""
-	}
-
-	log.Println("[Holdero] Payout TX:", txid)
-	AddLog("Holdero Payout TX: " + txid.TXID)
-
-	return txid.TXID
-}
-
-// Holdero split winners payout
-//   - Pass in ranker from hand and folded bools to determine split
-func PayoutSplit(r ranker, f1, f2, f3, f4, f5, f6 bool) string {
-	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
-	defer cancel()
-
-	ways := 0
-	splitWinners := [6]string{"Zero", "Zero", "Zero", "Zero", "Zero", "Zero"}
-
-	if r.p1HighCardArr[0] > 0 && !f1 {
-		ways = 1
-		splitWinners[0] = "Player1"
-	}
-
-	if r.p2HighCardArr[0] > 0 && !f2 {
-		ways++
-		splitWinners[1] = "Player2"
-	}
-
-	if r.p3HighCardArr[0] > 0 && !f3 {
-		ways++
-		splitWinners[2] = "Player3"
-	}
-
-	if r.p4HighCardArr[0] > 0 && !f4 {
-		ways++
-		splitWinners[3] = "Player4"
-	}
-
-	if r.p5HighCardArr[0] > 0 && !f5 {
-		ways++
-		splitWinners[4] = "Player5"
-	}
-
-	if r.p6HighCardArr[0] > 0 && !f6 {
-		ways++
-		splitWinners[5] = "Player6"
-	}
-
-	sort.Strings(splitWinners[:])
-
-	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "SplitWinner"}
-	arg2 := rpc.Argument{Name: "div", DataType: "U", Value: ways}
-	arg3 := rpc.Argument{Name: "split1", DataType: "S", Value: splitWinners[0]}
-	arg4 := rpc.Argument{Name: "split2", DataType: "S", Value: splitWinners[1]}
-	arg5 := rpc.Argument{Name: "split3", DataType: "S", Value: splitWinners[2]}
-	arg6 := rpc.Argument{Name: "split4", DataType: "S", Value: splitWinners[3]}
-	arg7 := rpc.Argument{Name: "split5", DataType: "S", Value: splitWinners[4]}
-	arg8 := rpc.Argument{Name: "split6", DataType: "S", Value: splitWinners[5]}
-
-	args := rpc.Arguments{arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8}
-	txid := rpc.Transfer_Result{}
-
-	t1 := rpc.Transfer{
-		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
-		Amount:      0,
-		Burn:        0,
-	}
-
-	t := []rpc.Transfer{t1}
-	fee := GasEstimate(Round.Contract, "[Holdero]", args, t, LowLimitFee)
-	params := &rpc.Transfer_Params{
-		Transfers: t,
-		SC_ID:     Round.Contract,
-		SC_RPC:    args,
-		Ringsize:  2,
-		Fees:      fee,
-	}
-
-	if err := rpcClientW.CallFor(ctx, &txid, "transfer", params); err != nil {
-		log.Println("[PayoutSplit]", err)
-		return ""
-	}
-
-	log.Println("[Holdero] Split Winner TX:", txid)
-	AddLog("Split Winner TX: " + txid.TXID)
-
-	return txid.TXID
-}
-
-// Reveal Holdero hand key for showdown
-func RevealKey(key string) {
-	time.Sleep(6 * time.Second)
-	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
-	defer cancel()
-
-	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "RevealKey"}
-	arg2 := rpc.Argument{Name: "pcSeed", DataType: "H", Value: key}
-	args := rpc.Arguments{arg1, arg2}
-	txid := rpc.Transfer_Result{}
-
-	t1 := rpc.Transfer{
-		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
-		Amount:      0,
-		Burn:        0,
-	}
-
-	t := []rpc.Transfer{t1}
-	fee := GasEstimate(Round.Contract, "[Holdero]", args, t, LowLimitFee)
-	params := &rpc.Transfer_Params{
-		Transfers: t,
-		SC_ID:     Round.Contract,
-		SC_RPC:    args,
-		Ringsize:  2,
-		Fees:      fee,
-	}
-
-	if err := rpcClientW.CallFor(ctx, &txid, "transfer", params); err != nil {
-		log.Println("[RevealKey]", err)
-		return
-	}
-
-	Display.Res = ""
-	log.Println("[Holdero] Reveal TX:", txid)
-	AddLog("Reveal TX: " + txid.TXID)
-}
-
-// Owner can shuffle deck for Holdero, clean above 0 can retrieve balance
-func CleanTable(amt uint64) {
-	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
-	defer cancel()
-
-	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "CleanTable"}
-	arg2 := rpc.Argument{Name: "amount", DataType: "U", Value: amt}
-	args := rpc.Arguments{arg1, arg2}
-	txid := rpc.Transfer_Result{}
-
-	t1 := rpc.Transfer{
-		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
-		Amount:      0,
-		Burn:        0,
-	}
-
-	t := []rpc.Transfer{t1}
-	fee := GasEstimate(Round.Contract, "[Holdero]", args, t, LowLimitFee)
-	params := &rpc.Transfer_Params{
-		Transfers: t,
-		SC_ID:     Round.Contract,
-		SC_RPC:    args,
-		Ringsize:  2,
-		Fees:      fee,
-	}
-
-	if err := rpcClientW.CallFor(ctx, &txid, "transfer", params); err != nil {
-		log.Println("[CleanTable]", err)
-		return
-	}
-
-	log.Println("[Holdero] Clean Table TX:", txid)
-	AddLog("Clean Table TX: " + txid.TXID)
-}
-
-// Owner can timeout a player at Holdero table
-func TimeOut() {
-	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
-	defer cancel()
-
-	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "TimeOut"}
-	args := rpc.Arguments{arg1}
-	txid := rpc.Transfer_Result{}
-
-	t1 := rpc.Transfer{
-		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
-		Amount:      0,
-		Burn:        0,
-	}
-
-	t := []rpc.Transfer{t1}
-	fee := GasEstimate(Round.Contract, "[Holdero]", args, t, LowLimitFee)
-	params := &rpc.Transfer_Params{
-		Transfers: t,
-		SC_ID:     Round.Contract,
-		SC_RPC:    args,
-		Ringsize:  2,
-		Fees:      fee,
-	}
-
-	if err := rpcClientW.CallFor(ctx, &txid, "transfer", params); err != nil {
-		log.Println("[TimeOut]", err)
-		return
-	}
-
-	log.Println("[Holdero] Timeout TX:", txid)
-	AddLog("Timeout TX: " + txid.TXID)
-}
-
-// Owner can force start a Holdero table with empty seats
-func ForceStat() {
-	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
-	defer cancel()
-
-	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "ForceStart"}
-	args := rpc.Arguments{arg1}
-	txid := rpc.Transfer_Result{}
-
-	t1 := rpc.Transfer{
-		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
-		Amount:      0,
-		Burn:        0,
-	}
-
-	t := []rpc.Transfer{t1}
-	fee := GasEstimate(Round.Contract, "[Holdero]", args, t, LowLimitFee)
-	params := &rpc.Transfer_Params{
-		Transfers: t,
-		SC_ID:     Round.Contract,
-		SC_RPC:    args,
-		Ringsize:  2,
-		Fees:      fee,
-	}
-
-	if err := rpcClientW.CallFor(ctx, &txid, "transfer", params); err != nil {
-		log.Println("[ForceStart]", err)
-		return
-	}
-
-	log.Println("[Holdero] Force Start TX:", txid)
-	AddLog("Force Start TX: " + txid.TXID)
-}
-
-// Share asset url at Holdero table
-//   - face and back are the names of assets
-//   - faceUrl and backUrl are the Urls for those assets
-func SharedDeckUrl(face, faceUrl, back, backUrl string) {
-	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
-	defer cancel()
-
-	var cards CardSpecs
-	if face != "" && back != "" {
-		cards.Faces.Name = face
-		cards.Faces.Url = faceUrl
-		cards.Backs.Name = back
-		cards.Backs.Url = backUrl
-	}
-
-	if mar, err := json.Marshal(cards); err == nil {
-		arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "Deck"}
-		arg2 := rpc.Argument{Name: "face", DataType: "S", Value: string(mar)}
-		arg3 := rpc.Argument{Name: "back", DataType: "S", Value: "nil"}
-		args := rpc.Arguments{arg1, arg2, arg3}
-		txid := rpc.Transfer_Result{}
-
-		t1 := rpc.Transfer{
-			Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
-			Amount:      0,
-			Burn:        0,
-		}
-
-		t := []rpc.Transfer{t1}
-		fee := GasEstimate(Round.Contract, "[Holdero]", args, t, LowLimitFee)
-		params := &rpc.Transfer_Params{
-			Transfers: t,
-			SC_ID:     Round.Contract,
-			SC_RPC:    args,
-			Ringsize:  2,
-			Fees:      fee,
-		}
-
-		if err := rpcClientW.CallFor(ctx, &txid, "transfer", params); err != nil {
-			log.Println("[SharedDeckUrl]", err)
-			return
-		}
-
-		log.Println("[Holdero] Shared TX:", txid)
-		AddLog("Shared TX: " + txid.TXID)
 	}
 }
 

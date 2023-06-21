@@ -11,6 +11,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/SixofClubsss/dReams/bundle"
+	"github.com/SixofClubsss/dReams/dwidget"
+	"github.com/SixofClubsss/dReams/rpc"
+	"github.com/deroproject/derohe/walletapi"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
@@ -19,10 +24,6 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/storage"
 	"fyne.io/fyne/v2/widget"
-	"github.com/SixofClubsss/dReams/bundle"
-	"github.com/SixofClubsss/dReams/dwidget"
-	"github.com/SixofClubsss/dReams/rpc"
-	"github.com/deroproject/derohe/walletapi"
 )
 
 //go:embed ART-NFA-MS1.bas

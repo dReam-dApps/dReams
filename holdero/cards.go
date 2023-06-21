@@ -1,12 +1,11 @@
-package main
+package holdero
 
 import (
 	"math/rand"
 	"time"
 
+	dreams "github.com/SixofClubsss/dReams"
 	"github.com/SixofClubsss/dReams/bundle"
-	"github.com/SixofClubsss/dReams/holdero"
-	"github.com/SixofClubsss/dReams/rpc"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -73,7 +72,7 @@ func Flop_1(c int) fyne.CanvasObject {
 	Cards.Flop1.Resize(size)
 	Cards.Flop1.Move(pos)
 
-	for _, i := range rpc.Round.Winning_hand {
+	for _, i := range Round.Winning_hand {
 		if c == i {
 			highlight := canvas.NewRectangle(bundle.Highlight)
 			highlight.Resize(size)
@@ -94,7 +93,7 @@ func Flop_2(c int) fyne.CanvasObject {
 	Cards.Flop2.Resize(size)
 	Cards.Flop2.Move(pos)
 
-	for _, i := range rpc.Round.Winning_hand {
+	for _, i := range Round.Winning_hand {
 		if c == i {
 			highlight := canvas.NewRectangle(bundle.Highlight)
 			highlight.Resize(size)
@@ -115,7 +114,7 @@ func Flop_3(c int) fyne.CanvasObject {
 	Cards.Flop3.Resize(size)
 	Cards.Flop3.Move(pos)
 
-	for _, i := range rpc.Round.Winning_hand {
+	for _, i := range Round.Winning_hand {
 		if c == i {
 			highlight := canvas.NewRectangle(bundle.Highlight)
 			highlight.Resize(size)
@@ -136,7 +135,7 @@ func Turn(c int) fyne.CanvasObject {
 	Cards.Turn.Resize(size)
 	Cards.Turn.Move(pos)
 
-	for _, i := range rpc.Round.Winning_hand {
+	for _, i := range Round.Winning_hand {
 		if c == i {
 			highlight := canvas.NewRectangle(bundle.Highlight)
 			highlight.Resize(size)
@@ -157,7 +156,7 @@ func River(c int) fyne.CanvasObject {
 	Cards.River.Resize(size)
 	Cards.River.Move(pos)
 
-	for _, i := range rpc.Round.Winning_hand {
+	for _, i := range Round.Winning_hand {
 		if c == i {
 			highlight := canvas.NewRectangle(bundle.Highlight)
 			highlight.Resize(size)
@@ -178,7 +177,7 @@ func P1_a(c int) fyne.CanvasObject {
 	Cards.P1a.Resize(size)
 	Cards.P1a.Move(pos)
 
-	for _, i := range rpc.Round.Winning_hand {
+	for _, i := range Round.Winning_hand {
 		if c == i {
 			highlight := canvas.NewRectangle(bundle.Highlight)
 			highlight.Resize(size)
@@ -199,7 +198,7 @@ func P1_b(c int) fyne.CanvasObject {
 	Cards.P1b.Resize(size)
 	Cards.P1b.Move(pos)
 
-	for _, i := range rpc.Round.Winning_hand {
+	for _, i := range Round.Winning_hand {
 		if c == i {
 			highlight := canvas.NewRectangle(bundle.Highlight)
 			highlight.Resize(size)
@@ -220,7 +219,7 @@ func P2_a(c int) fyne.CanvasObject {
 	Cards.P2a.Resize(size)
 	Cards.P2a.Move(pos)
 
-	for _, i := range rpc.Round.Winning_hand {
+	for _, i := range Round.Winning_hand {
 		if c == i {
 			highlight := canvas.NewRectangle(bundle.Highlight)
 			highlight.Resize(size)
@@ -241,7 +240,7 @@ func P2_b(c int) fyne.CanvasObject {
 	Cards.P2b.Resize(size)
 	Cards.P2b.Move(pos)
 
-	for _, i := range rpc.Round.Winning_hand {
+	for _, i := range Round.Winning_hand {
 		if c == i {
 			highlight := canvas.NewRectangle(bundle.Highlight)
 			highlight.Resize(size)
@@ -262,7 +261,7 @@ func P3_a(c int) fyne.CanvasObject {
 	Cards.P3a.Resize(size)
 	Cards.P3a.Move(pos)
 
-	for _, i := range rpc.Round.Winning_hand {
+	for _, i := range Round.Winning_hand {
 		if c == i {
 			highlight := canvas.NewRectangle(bundle.Highlight)
 			highlight.Resize(size)
@@ -284,7 +283,7 @@ func P3_b(c int) fyne.CanvasObject {
 	Cards.P3b.Resize(size)
 	Cards.P3b.Move(pos)
 
-	for _, i := range rpc.Round.Winning_hand {
+	for _, i := range Round.Winning_hand {
 		if c == i {
 			highlight := canvas.NewRectangle(bundle.Highlight)
 			highlight.Resize(size)
@@ -305,7 +304,7 @@ func P4_a(c int) fyne.CanvasObject {
 	Cards.P4a.Resize(size)
 	Cards.P4a.Move(pos)
 
-	for _, i := range rpc.Round.Winning_hand {
+	for _, i := range Round.Winning_hand {
 		if c == i {
 			highlight := canvas.NewRectangle(bundle.Highlight)
 			highlight.Resize(size)
@@ -326,7 +325,7 @@ func P4_b(c int) fyne.CanvasObject {
 	Cards.P4b.Resize(size)
 	Cards.P4b.Move(pos)
 
-	for _, i := range rpc.Round.Winning_hand {
+	for _, i := range Round.Winning_hand {
 		if c == i {
 			highlight := canvas.NewRectangle(bundle.Highlight)
 			highlight.Resize(size)
@@ -347,7 +346,7 @@ func P5_a(c int) fyne.CanvasObject {
 	Cards.P5a.Resize(size)
 	Cards.P5a.Move(pos)
 
-	for _, i := range rpc.Round.Winning_hand {
+	for _, i := range Round.Winning_hand {
 		if c == i {
 			highlight := canvas.NewRectangle(bundle.Highlight)
 			highlight.Resize(size)
@@ -368,7 +367,7 @@ func P5_b(c int) fyne.CanvasObject {
 	Cards.P5b.Resize(size)
 	Cards.P5b.Move(pos)
 
-	for _, i := range rpc.Round.Winning_hand {
+	for _, i := range Round.Winning_hand {
 		if c == i {
 			highlight := canvas.NewRectangle(bundle.Highlight)
 			highlight.Resize(size)
@@ -389,7 +388,7 @@ func P6_a(c int) fyne.CanvasObject {
 	Cards.P6a.Resize(size)
 	Cards.P6a.Move(pos)
 
-	for _, i := range rpc.Round.Winning_hand {
+	for _, i := range Round.Winning_hand {
 		if c == i {
 			highlight := canvas.NewRectangle(bundle.Highlight)
 			highlight.Resize(size)
@@ -410,7 +409,7 @@ func P6_b(c int) fyne.CanvasObject {
 	Cards.P6b.Resize(size)
 	Cards.P6b.Move(pos)
 
-	for _, i := range rpc.Round.Winning_hand {
+	for _, i := range Round.Winning_hand {
 		if c == i {
 			highlight := canvas.NewRectangle(bundle.Highlight)
 			highlight.Resize(size)
@@ -428,7 +427,7 @@ func P6_b(c int) fyne.CanvasObject {
 func Is_In(hash string, who int, end bool) int {
 	if hash != "" {
 		if end {
-			return rpc.KeyCard(hash, who)
+			return KeyCard(hash, who)
 		} else {
 			return 0
 		}
@@ -440,11 +439,11 @@ func Is_In(hash string, who int, end bool) int {
 // Returns a custom card face image
 //   - face defines which deck to look for
 func CustomCard(c int, face string) *canvas.Image {
-	dir := holdero.GetDir()
+	dir := dreams.GetDir()
 	mid := "/cards/" + face + "/"
 	path := dir + mid + cardEnd(c)
 
-	if holdero.FileExists(path, "dReams") {
+	if dreams.FileExists(path, "dReams") {
 		return canvas.NewImageFromFile(path)
 	}
 
@@ -454,11 +453,11 @@ func CustomCard(c int, face string) *canvas.Image {
 // Returns a custom card back image
 //   - back defines which back to look for
 func CustomBack(back string) *canvas.Image {
-	dir := holdero.GetDir()
+	dir := dreams.GetDir()
 	post := "/cards/backs/" + back + ".png"
 	path := dir + post
 
-	if holdero.FileExists(path, "dReams") {
+	if dreams.FileExists(path, "dReams") {
 		return canvas.NewImageFromFile(path)
 	}
 
@@ -820,15 +819,105 @@ func BaccSuit(card int) int {
 	return suited
 }
 
+// Place Holdero card images
+func placeHolderoCards(w fyne.Window) *fyne.Container {
+	size := w.Content().Size()
+	Cards.Layout = container.NewWithoutLayout(
+		Hole_1(0, size.Width, size.Height),
+		Hole_2(0, size.Width, size.Height),
+		P1_a(Is_In(Round.Cards.P1C1, 1, Signal.End)),
+		P1_b(Is_In(Round.Cards.P1C2, 1, Signal.End)),
+		P2_a(Is_In(Round.Cards.P2C1, 2, Signal.End)),
+		P2_b(Is_In(Round.Cards.P2C2, 2, Signal.End)),
+		P3_a(Is_In(Round.Cards.P3C1, 3, Signal.End)),
+		P3_b(Is_In(Round.Cards.P3C2, 3, Signal.End)),
+		P4_a(Is_In(Round.Cards.P4C1, 4, Signal.End)),
+		P4_b(Is_In(Round.Cards.P4C2, 4, Signal.End)),
+		P5_a(Is_In(Round.Cards.P5C1, 5, Signal.End)),
+		P5_b(Is_In(Round.Cards.P5C2, 5, Signal.End)),
+		P6_a(Is_In(Round.Cards.P6C1, 6, Signal.End)),
+		P6_b(Is_In(Round.Cards.P6C2, 6, Signal.End)),
+		Flop_1(Round.Flop1),
+		Flop_2(Round.Flop2),
+		Flop_3(Round.Flop3),
+		Turn(Round.TurnCard),
+		River(Round.RiverCard))
+
+	return Cards.Layout
+}
+
+// Refresh Holdero card images
+func refreshHolderoCards(l1, l2 string, w fyne.Window) {
+	size := w.Content().Size()
+	Cards.Layout.Objects[0] = Hole_1(Card(l1), size.Width, size.Height)
+	Cards.Layout.Objects[0].Refresh()
+
+	Cards.Layout.Objects[1] = Hole_2(Card(l2), size.Width, size.Height)
+	Cards.Layout.Objects[1].Refresh()
+
+	Cards.Layout.Objects[2] = P1_a(Is_In(Round.Cards.P1C1, 1, Signal.End))
+	Cards.Layout.Objects[2].Refresh()
+
+	Cards.Layout.Objects[3] = P1_b(Is_In(Round.Cards.P1C2, 1, Signal.End))
+	Cards.Layout.Objects[3].Refresh()
+
+	Cards.Layout.Objects[4] = P2_a(Is_In(Round.Cards.P2C1, 2, Signal.End))
+	Cards.Layout.Objects[4].Refresh()
+
+	Cards.Layout.Objects[5] = P2_b(Is_In(Round.Cards.P2C2, 2, Signal.End))
+	Cards.Layout.Objects[5].Refresh()
+
+	Cards.Layout.Objects[6] = P3_a(Is_In(Round.Cards.P3C1, 3, Signal.End))
+	Cards.Layout.Objects[6].Refresh()
+
+	Cards.Layout.Objects[7] = P3_b(Is_In(Round.Cards.P3C2, 3, Signal.End))
+	Cards.Layout.Objects[7].Refresh()
+
+	Cards.Layout.Objects[8] = P4_a(Is_In(Round.Cards.P4C1, 4, Signal.End))
+	Cards.Layout.Objects[8].Refresh()
+
+	Cards.Layout.Objects[9] = P4_b(Is_In(Round.Cards.P4C2, 4, Signal.End))
+	Cards.Layout.Objects[9].Refresh()
+
+	Cards.Layout.Objects[10] = P5_a(Is_In(Round.Cards.P5C1, 5, Signal.End))
+	Cards.Layout.Objects[10].Refresh()
+
+	Cards.Layout.Objects[11] = P5_b(Is_In(Round.Cards.P5C2, 5, Signal.End))
+	Cards.Layout.Objects[11].Refresh()
+
+	Cards.Layout.Objects[12] = P6_a(Is_In(Round.Cards.P6C1, 6, Signal.End))
+	Cards.Layout.Objects[12].Refresh()
+
+	Cards.Layout.Objects[13] = P6_b(Is_In(Round.Cards.P6C2, 6, Signal.End))
+	Cards.Layout.Objects[13].Refresh()
+
+	Cards.Layout.Objects[14] = Flop_1(Round.Flop1)
+	Cards.Layout.Objects[14].Refresh()
+
+	Cards.Layout.Objects[15] = Flop_2(Round.Flop2)
+	Cards.Layout.Objects[15].Refresh()
+
+	Cards.Layout.Objects[16] = Flop_3(Round.Flop3)
+	Cards.Layout.Objects[16].Refresh()
+
+	Cards.Layout.Objects[17] = Turn(Round.TurnCard)
+	Cards.Layout.Objects[17].Refresh()
+
+	Cards.Layout.Objects[18] = River(Round.RiverCard)
+	Cards.Layout.Objects[18].Refresh()
+
+	Cards.Layout.Refresh()
+}
+
 // Main switch used to display playing card images
 func DisplayCard(card int) *canvas.Image {
-	if !holdero.Settings.Shared || rpc.Round.ID == 1 {
+	if !Settings.Shared || Round.ID == 1 {
 		if card == 99 {
 			return canvas.NewImageFromImage(nil)
 		}
 
 		if card > 0 {
-			i := holdero.Settings.FaceSelect.SelectedIndex()
+			i := Faces.Select.SelectedIndex()
 			switch i {
 			case -1:
 				return canvas.NewImageFromResource(DisplayLightCard(card))
@@ -837,11 +926,11 @@ func DisplayCard(card int) *canvas.Image {
 			case 1:
 				return canvas.NewImageFromResource(DisplayDarkCard(card))
 			default:
-				return CustomCard(card, holdero.Settings.Faces)
+				return CustomCard(card, Faces.Name)
 			}
 		}
 
-		i := holdero.Settings.BackSelect.SelectedIndex()
+		i := Backs.Select.SelectedIndex()
 		switch i {
 		case -1:
 			return canvas.NewImageFromResource(bundle.ResourceBack1Png)
@@ -850,16 +939,16 @@ func DisplayCard(card int) *canvas.Image {
 		case 1:
 			return canvas.NewImageFromResource(bundle.ResourceBack2Png)
 		default:
-			return CustomBack(holdero.Settings.Backs)
+			return CustomBack(Backs.Name)
 		}
 
 	} else {
 		if card == 99 {
 			return canvas.NewImageFromImage(nil)
 		} else if card > 0 {
-			return CustomCard(card, rpc.Round.Face)
+			return CustomCard(card, Round.Face)
 		} else {
-			return CustomBack(rpc.Round.Back)
+			return CustomBack(Round.Back)
 		}
 	}
 }

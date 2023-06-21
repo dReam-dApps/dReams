@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"image/color"
 	"log"
@@ -8,10 +9,13 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
+	"sort"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
+	dreams "github.com/SixofClubsss/dReams"
 	"github.com/SixofClubsss/dReams/baccarat"
 	"github.com/SixofClubsss/dReams/bundle"
 	"github.com/SixofClubsss/dReams/holdero"
@@ -25,6 +29,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
@@ -106,7 +111,7 @@ func flags() (version string) {
 		}
 	}
 
-	dReams.cli = cli
+	dReams.Cli = cli
 	menu.Gnomes.Trim = trim
 	menu.Gnomes.Fast = fastsync
 	menu.Gnomes.Para = parallel
@@ -121,19 +126,17 @@ func init() {
 		menu.Control.Daemon_config = saved.Daemon[0]
 	}
 
-	menu.Control.Holdero_favorites = saved.Tables
+	holdero.Settings.Favorites = saved.Tables
 	menu.Control.Predict_favorites = saved.Predict
 	menu.Control.Sports_favorites = saved.Sports
 
 	menu.Market.DreamsFilter = true
 
 	rpc.InitBalances()
+	dAppInit()
 
-	holdero.InitTableSettings()
-	tarot.InitTarot()
-
-	dReams.os = runtime.GOOS
-	prediction.SetPrintColors(dReams.os)
+	dReams.OS = runtime.GOOS
+	prediction.SetPrintColors(dReams.OS)
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
@@ -145,11 +148,17 @@ func init() {
 		serviceRunning()
 		go menu.StopLabel()
 		menu.Gnomes.Stop("dReams")
-		menu.StopIndicators()
+		menu.StopIndicators(indicators)
 		time.Sleep(time.Second)
-		dReams.quit <- struct{}{}
+		dReams.StopProcess()
 		dReams.Window.Close()
 	}()
+}
+
+// Initialize values on start up for dApps used
+func dAppInit() {
+	holdero.InitValues()
+	tarot.InitValues()
 }
 
 // Starts a Fyne terminal in dReams
@@ -180,30 +189,10 @@ func serviceRunning() {
 
 // Terminal start info, ascii art for linux
 func stamp(v string) {
-	if dReams.os == "linux" {
+	if dReams.OS == "linux" {
 		fmt.Println(string(bundle.ResourceStampTxt.StaticContent))
 	}
 	log.Println("[dReams]", v, runtime.GOOS, runtime.GOARCH)
-}
-
-// Notification switch for dApps
-func notification(title, content string, g int) *fyne.Notification {
-	switch g {
-	case 0:
-		rpc.Round.Notified = true
-	case 1:
-		rpc.Bacc.Notified = true
-	case 2:
-		tarot.Iluma.Value.Notified = true
-	default:
-	}
-
-	return &fyne.Notification{Title: title, Content: content}
-}
-
-// Check if runtime os is windows
-func isWindows() bool {
-	return dReams.os == "windows"
 }
 
 // Make system tray with opts
@@ -214,7 +203,7 @@ func systemTray(w fyne.App) bool {
 	if desk, ok := w.(desktop.App); ok {
 		m := fyne.NewMenu("MyApp",
 			fyne.NewMenuItem("Send Message", func() {
-				if !dReams.configure && rpc.Wallet.IsConnected() {
+				if !dReams.Configure && rpc.Wallet.IsConnected() {
 					menu.SendMessageMenu("", bundle.ResourceDReamsIconAltPng)
 				}
 			}),
@@ -225,7 +214,7 @@ func systemTray(w fyne.App) bool {
 			}),
 			fyne.NewMenuItemSeparator(),
 			fyne.NewMenuItem("Reveal Key", func() {
-				go rpc.RevealKey(rpc.Wallet.ClientKey)
+				go holdero.RevealKey(rpc.Wallet.ClientKey)
 			}))
 		desk.SetSystemTrayMenu(m)
 
@@ -264,8 +253,8 @@ func showBaccCards() *fyne.Container {
 	}
 
 	content := *container.NewWithoutLayout(
-		PlayerCards(BaccSuit(rpc.Bacc.P_card1), BaccSuit(rpc.Bacc.P_card2), BaccSuit(drawP)),
-		BankerCards(BaccSuit(rpc.Bacc.B_card1), BaccSuit(rpc.Bacc.B_card2), BaccSuit(drawB)))
+		holdero.PlayerCards(holdero.BaccSuit(rpc.Bacc.P_card1), holdero.BaccSuit(rpc.Bacc.P_card2), holdero.BaccSuit(drawP)),
+		holdero.BankerCards(holdero.BaccSuit(rpc.Bacc.B_card1), holdero.BaccSuit(rpc.Bacc.B_card2), holdero.BaccSuit(drawB)))
 
 	rpc.Bacc.Display = true
 	baccarat.BaccBuffer(false)
@@ -275,172 +264,35 @@ func showBaccCards() *fyne.Container {
 
 func clearBaccCards() *fyne.Container {
 	content := *container.NewWithoutLayout(
-		PlayerCards(99, 99, 99),
-		BankerCards(99, 99, 99))
+		holdero.PlayerCards(99, 99, 99),
+		holdero.BankerCards(99, 99, 99))
 
 	return &content
 }
 
-// Place Holdero card images
-func placeHolderoCards() *fyne.Container {
-	size := dReams.Window.Content().Size()
-	Cards.Layout = container.NewWithoutLayout(
-		Hole_1(0, size.Width, size.Height),
-		Hole_2(0, size.Width, size.Height),
-		P1_a(Is_In(rpc.Round.Cards.P1C1, 1, rpc.Signal.End)),
-		P1_b(Is_In(rpc.Round.Cards.P1C2, 1, rpc.Signal.End)),
-		P2_a(Is_In(rpc.Round.Cards.P2C1, 2, rpc.Signal.End)),
-		P2_b(Is_In(rpc.Round.Cards.P2C2, 2, rpc.Signal.End)),
-		P3_a(Is_In(rpc.Round.Cards.P3C1, 3, rpc.Signal.End)),
-		P3_b(Is_In(rpc.Round.Cards.P3C2, 3, rpc.Signal.End)),
-		P4_a(Is_In(rpc.Round.Cards.P4C1, 4, rpc.Signal.End)),
-		P4_b(Is_In(rpc.Round.Cards.P4C2, 4, rpc.Signal.End)),
-		P5_a(Is_In(rpc.Round.Cards.P5C1, 5, rpc.Signal.End)),
-		P5_b(Is_In(rpc.Round.Cards.P5C2, 5, rpc.Signal.End)),
-		P6_a(Is_In(rpc.Round.Cards.P6C1, 6, rpc.Signal.End)),
-		P6_b(Is_In(rpc.Round.Cards.P6C2, 6, rpc.Signal.End)),
-		Flop_1(rpc.Round.Flop1),
-		Flop_2(rpc.Round.Flop2),
-		Flop_3(rpc.Round.Flop3),
-		Turn(rpc.Round.TurnCard),
-		River(rpc.Round.RiverCard))
-
-	return Cards.Layout
-}
-
-// Refresh Holdero card images
-func refreshHolderoCards(l1, l2 string) {
-	size := dReams.Window.Content().Size()
-	Cards.Layout.Objects[0] = Hole_1(rpc.Card(l1), size.Width, size.Height)
-	Cards.Layout.Objects[0].Refresh()
-
-	Cards.Layout.Objects[1] = Hole_2(rpc.Card(l2), size.Width, size.Height)
-	Cards.Layout.Objects[1].Refresh()
-
-	Cards.Layout.Objects[2] = P1_a(Is_In(rpc.Round.Cards.P1C1, 1, rpc.Signal.End))
-	Cards.Layout.Objects[2].Refresh()
-
-	Cards.Layout.Objects[3] = P1_b(Is_In(rpc.Round.Cards.P1C2, 1, rpc.Signal.End))
-	Cards.Layout.Objects[3].Refresh()
-
-	Cards.Layout.Objects[4] = P2_a(Is_In(rpc.Round.Cards.P2C1, 2, rpc.Signal.End))
-	Cards.Layout.Objects[4].Refresh()
-
-	Cards.Layout.Objects[5] = P2_b(Is_In(rpc.Round.Cards.P2C2, 2, rpc.Signal.End))
-	Cards.Layout.Objects[5].Refresh()
-
-	Cards.Layout.Objects[6] = P3_a(Is_In(rpc.Round.Cards.P3C1, 3, rpc.Signal.End))
-	Cards.Layout.Objects[6].Refresh()
-
-	Cards.Layout.Objects[7] = P3_b(Is_In(rpc.Round.Cards.P3C2, 3, rpc.Signal.End))
-	Cards.Layout.Objects[7].Refresh()
-
-	Cards.Layout.Objects[8] = P4_a(Is_In(rpc.Round.Cards.P4C1, 4, rpc.Signal.End))
-	Cards.Layout.Objects[8].Refresh()
-
-	Cards.Layout.Objects[9] = P4_b(Is_In(rpc.Round.Cards.P4C2, 4, rpc.Signal.End))
-	Cards.Layout.Objects[9].Refresh()
-
-	Cards.Layout.Objects[10] = P5_a(Is_In(rpc.Round.Cards.P5C1, 5, rpc.Signal.End))
-	Cards.Layout.Objects[10].Refresh()
-
-	Cards.Layout.Objects[11] = P5_b(Is_In(rpc.Round.Cards.P5C2, 5, rpc.Signal.End))
-	Cards.Layout.Objects[11].Refresh()
-
-	Cards.Layout.Objects[12] = P6_a(Is_In(rpc.Round.Cards.P6C1, 6, rpc.Signal.End))
-	Cards.Layout.Objects[12].Refresh()
-
-	Cards.Layout.Objects[13] = P6_b(Is_In(rpc.Round.Cards.P6C2, 6, rpc.Signal.End))
-	Cards.Layout.Objects[13].Refresh()
-
-	Cards.Layout.Objects[14] = Flop_1(rpc.Round.Flop1)
-	Cards.Layout.Objects[14].Refresh()
-
-	Cards.Layout.Objects[15] = Flop_2(rpc.Round.Flop2)
-	Cards.Layout.Objects[15].Refresh()
-
-	Cards.Layout.Objects[16] = Flop_3(rpc.Round.Flop3)
-	Cards.Layout.Objects[16].Refresh()
-
-	Cards.Layout.Objects[17] = Turn(rpc.Round.TurnCard)
-	Cards.Layout.Objects[17].Refresh()
-
-	Cards.Layout.Objects[18] = River(rpc.Round.RiverCard)
-	Cards.Layout.Objects[18].Refresh()
-
-	Cards.Layout.Refresh()
-}
-
-// Sets bet amount and current bet readout
-func ifBet(w, r uint64) {
-	if w > 0 && r > 0 && !rpc.Signal.PlacedBet {
-		float := float64(w) / 100000
-		wager := strconv.FormatFloat(float, 'f', 1, 64)
-		holdero.Table.BetEntry.SetText(wager)
-		rpc.Display.Res = rpc.Round.Raiser + " Raised, " + wager + " to Call "
-	} else if w > 0 && !rpc.Signal.PlacedBet {
-		float := float64(w) / 100000
-		wager := strconv.FormatFloat(float, 'f', 1, 64)
-		holdero.Table.BetEntry.SetText(wager)
-		rpc.Display.Res = rpc.Round.Bettor + " Bet " + wager
-	} else if r > 0 && rpc.Signal.PlacedBet {
-		float := float64(r) / 100000
-		raised := strconv.FormatFloat(float, 'f', 1, 64)
-		holdero.Table.BetEntry.SetText(raised)
-		rpc.Display.Res = rpc.Round.Raiser + " Raised, " + raised + " to Call"
-	} else if w == 0 && !rpc.Signal.Bet {
-		var float float64
-		if rpc.Round.Ante == 0 {
-			float = float64(rpc.Round.BB) / 100000
-		} else {
-			float = float64(rpc.Round.Ante) / 100000
-		}
-		this := strconv.FormatFloat(float, 'f', 1, 64)
-		holdero.Table.BetEntry.SetText(this)
-		if !rpc.Signal.Reveal {
-			rpc.Display.Res = "Check or Bet"
-			holdero.Table.BetEntry.Enable()
-		}
-	} else if !rpc.Signal.Deal {
-		rpc.Display.Res = "Deal Hand"
-	}
-
-	holdero.Table.BetEntry.Refresh()
-}
-
-// Single shot triggering ifBet() on players turn
-func singleShot(turn, trigger bool) bool {
-	if turn && !trigger {
-		ifBet(rpc.Round.Wager, rpc.Round.Raised)
-		return true
-	}
-
-	if !turn {
-		return false
-	} else {
-		return turn
-	}
+func gnomonScan(contracts map[string]string) {
+	CheckDreamsG45s(menu.Gnomes.Check, contracts)
+	CheckDreamsNFAs(menu.Gnomes.Check, contracts)
 }
 
 // Main dReams process loop
-func fetch(quit, done chan struct{}) {
+func fetch(d dreams.DreamsObject, done chan struct{}) {
+	rpc.Signal.Startup = true
 	time.Sleep(3 * time.Second)
-	var ticker = time.NewTicker(3 * time.Second)
-	var autoCF, autoD, autoB, trigger bool
-	var skip, delay int
+	ticker := time.NewTicker(3 * time.Second)
 	for {
 		select {
 		case <-ticker.C: // do on interval
-			if !dReams.configure {
+			if !dReams.Configure {
 				rpc.Ping()
 				rpc.EchoWallet("dReams")
-				go rpc.GetDreamsBalances()
+				go rpc.GetDreamsBalances(rpc.SCIDs)
 				rpc.GetWalletHeight("dReams")
 				if !rpc.Signal.Startup {
-					menu.CheckConnection()
+					CheckConnection()
 					menu.GnomonEndPoint()
-					menu.GnomonState(isWindows(), dReams.configure)
-					dReams.background.Refresh()
+					menu.GnomonState(dReams.IsWindows(), dReams.Configure, gnomonScan)
+					dReams.Background.Refresh()
 
 					// Bacc
 					if menu.Control.Dapp_list["Baccarat"] {
@@ -448,157 +300,21 @@ func fetch(quit, done chan struct{}) {
 						BaccRefresh()
 					}
 
-					// Holdero
-					if menu.Control.Dapp_list["Holdero"] {
-						rpc.FetchHolderoSC()
-						if (rpc.Round.Turn == rpc.Round.ID && rpc.Wallet.Height > rpc.Signal.CHeight+4) ||
-							(rpc.Round.Turn != rpc.Round.ID && rpc.Round.ID >= 1) || (!rpc.Signal.My_turn && rpc.Round.ID >= 1) {
-							if rpc.Signal.Clicked {
-								trigger = false
-								autoCF = false
-								autoD = false
-								autoB = false
-								rpc.Signal.Reveal = false
-							}
-							rpc.Signal.Clicked = false
-						}
-
-						if !rpc.Signal.Clicked {
-							if rpc.Round.First_try {
-								rpc.Round.First_try = false
-								delay = 0
-								rpc.Round.Card_delay = false
-								go refreshHolderoPlayers()
-							}
-
-							if rpc.Round.Card_delay {
-								now := time.Now().Unix()
-								delay++
-								if delay >= 17 || now > rpc.Round.Last+60 {
-									delay = 0
-									rpc.Round.Card_delay = false
-								}
-							} else {
-								setHolderoLabel()
-								holdero.GetUrls(rpc.Round.F_url, rpc.Round.B_url)
-								rpc.Called(rpc.Round.Flop, rpc.Round.Wager)
-								trigger = singleShot(rpc.Signal.My_turn, trigger)
-								HolderoRefresh()
-								if holdero.Settings.Auto_check && rpc.Signal.My_turn && !autoCF {
-									if !rpc.Signal.Reveal && !rpc.Signal.End && !rpc.Round.LocalEnd {
-										if rpc.Round.Cards.Local1 != "" {
-											holdero.HolderoButtonBuffer()
-											rpc.Check()
-											H.TopLabel.Text = "Auto Check/Fold Tx Sent"
-											H.TopLabel.Refresh()
-											autoCF = true
-
-											go func() {
-												if !isWindows() {
-													time.Sleep(500 * time.Millisecond)
-													dReams.App.SendNotification(notification("dReams - Holdero", "Auto Check/Fold TX Sent", 9))
-												}
-											}()
-										}
-									}
-								}
-
-								if holdero.Settings.Auto_deal && rpc.Signal.My_turn && !autoD && rpc.GameIsActive() {
-									if !rpc.Signal.Reveal && !rpc.Signal.End && !rpc.Round.LocalEnd {
-										if rpc.Round.Cards.Local1 == "" {
-											autoD = true
-											go func() {
-												time.Sleep(2100 * time.Millisecond)
-												holdero.HolderoButtonBuffer()
-												rpc.DealHand()
-												H.TopLabel.Text = "Auto Deal Tx Sent"
-												H.TopLabel.Refresh()
-
-												if !isWindows() {
-													time.Sleep(300 * time.Millisecond)
-													dReams.App.SendNotification(notification("dReams - Holdero", "Auto Deal TX Sent", 9))
-												}
-											}()
-										}
-									}
-								}
-
-								if rpc.Odds.Run && rpc.Signal.My_turn && !autoB && rpc.GameIsActive() {
-									if !rpc.Signal.Reveal && !rpc.Signal.End && !rpc.Round.LocalEnd {
-										if rpc.Round.Cards.Local1 != "" {
-											autoB = true
-											go func() {
-												time.Sleep(2100 * time.Millisecond)
-												holdero.HolderoButtonBuffer()
-												odds, future := rpc.MakeOdds()
-												rpc.BetLogic(odds, future, true)
-												H.TopLabel.Text = "Auto Bet Tx Sent"
-												H.TopLabel.Refresh()
-
-												if !isWindows() {
-													time.Sleep(300 * time.Millisecond)
-													dReams.App.SendNotification(notification("dReams - Holdero", "Auto Bet TX Sent", 9))
-												}
-											}()
-										}
-									}
-								}
-
-								if rpc.Round.ID > 1 && rpc.Signal.My_turn && !rpc.Signal.End && !rpc.Round.LocalEnd {
-									now := time.Now().Unix()
-									if now > rpc.Round.Last+100 {
-										holdero.Table.Warning.Show()
-									} else {
-										holdero.Table.Warning.Hide()
-									}
-								} else {
-									holdero.Table.Warning.Hide()
-								}
-
-								skip = 0
-							}
-						} else {
-							waitLabel()
-							revealingKey()
-							skip++
-							if skip >= 20 {
-								rpc.Signal.Clicked = false
-								skip = 0
-								trigger = false
-								autoCF = false
-								autoD = false
-								autoB = false
-								rpc.Signal.Reveal = false
-							}
-						}
-					}
-
-					// Tarot
-					if menu.Control.Dapp_list["Iluma"] {
-						tarot.FetchTarotSC()
-						tarot.TarotRefresh(&T)
-						if tarot.Iluma.Value.Found && !tarot.Iluma.Value.Notified {
-							if !isWindows() {
-								dReams.App.SendNotification(notification("dReams - Iluma", "Your Reading has Arrived", 2))
-							}
-						}
-					}
-
 					// Betting
 					if menu.Control.Dapp_list["dSports and dPredictions"] {
 						if offset%5 == 0 {
-							SportsRefresh(dReams.sports)
+							SportsRefresh(dReams.Sports)
 						}
 
 						S.RightLabel.SetText("dReams Balance: " + rpc.DisplayBalance("dReams") + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Display.Wallet_height)
-						PredictionRefresh(dReams.predict)
+						PredictionRefresh(dReams.Predict)
 					}
 
 					// Menu
-					go MenuRefresh(dReams.menu)
+					go MenuRefresh(dReams.Menu)
 
 					offset++
-					if offset == 21 {
+					if offset >= 21 {
 						offset = 0
 					}
 				}
@@ -610,179 +326,17 @@ func fetch(quit, done chan struct{}) {
 
 					rpc.Signal.Startup = false
 				}
+
+				dReams.SignalChannel()
+
 			}
-		case <-quit: // exit loop
-			log.Println("[dReams] Closing")
+		case <-d.Closing(): // exit loop
+			log.Println("[dReams] Closing...")
 			ticker.Stop()
+			dReams.CloseAllDapps()
+			time.Sleep(time.Second)
 			done <- struct{}{}
 			return
-		}
-	}
-}
-
-// Sets Holdero table info labels
-func setHolderoLabel() {
-	H.TopLabel.Text = rpc.Display.Res
-	H.LeftLabel.SetText("Seats: " + rpc.Display.Seats + "      Pot: " + rpc.Display.Pot + "      Blinds: " + rpc.Display.Blinds + "      Ante: " + rpc.Display.Ante + "      Dealer: " + rpc.Display.Dealer)
-	if rpc.Round.Asset {
-		if rpc.Round.Tourney {
-			H.RightLabel.SetText(rpc.Display.Readout + "      Player ID: " + rpc.Display.PlayerId + "      Chip Balance: " + rpc.DisplayBalance("Tournament") + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Display.Wallet_height)
-		} else {
-			asset_name := rpc.GetAssetSCIDName(rpc.Round.AssetID)
-			H.RightLabel.SetText(rpc.Display.Readout + "      Player ID: " + rpc.Display.PlayerId + "      " + asset_name + " Balance: " + rpc.DisplayBalance(asset_name) + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Display.Wallet_height)
-		}
-	} else {
-		H.RightLabel.SetText(rpc.Display.Readout + "      Player ID: " + rpc.Display.PlayerId + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Display.Wallet_height)
-	}
-
-	if rpc.Signal.Contract {
-		holdero.Settings.SharedOn.Enable()
-	} else {
-		holdero.Settings.SharedOn.Disable()
-	}
-
-	H.TopLabel.Refresh()
-	H.LeftLabel.Refresh()
-	H.RightLabel.Refresh()
-}
-
-// Holdero label for waiting for block
-func waitLabel() {
-	H.TopLabel.Text = ""
-	if rpc.Round.Asset {
-		if rpc.Round.Tourney {
-			H.RightLabel.SetText("Wait for Block" + "      Player ID: " + rpc.Display.PlayerId + "      Chip Balance: " + rpc.DisplayBalance("Tournament") + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Display.Wallet_height)
-		} else {
-			asset_name := rpc.GetAssetSCIDName(rpc.Round.AssetID)
-			H.RightLabel.SetText("Wait for Block" + "      Player ID: " + rpc.Display.PlayerId + "      " + asset_name + " Balance: " + rpc.DisplayBalance(asset_name) + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Display.Wallet_height)
-		}
-
-	} else {
-		H.RightLabel.SetText("Wait for Block" + "      Player ID: " + rpc.Display.PlayerId + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Display.Wallet_height)
-	}
-	H.TopLabel.Refresh()
-	H.RightLabel.Refresh()
-}
-
-// Refresh all Holdero gui objects
-func HolderoRefresh() {
-	go holdero.ShowAvatar(dReams.holdero)
-	go refreshHolderoCards(rpc.Round.Cards.Local1, rpc.Round.Cards.Local2)
-	if !rpc.Signal.Clicked {
-		if rpc.Round.ID == 0 && rpc.Wallet.IsConnected() {
-			if rpc.Signal.Sit {
-				holdero.Table.Sit.Hide()
-			} else {
-				holdero.Table.Sit.Show()
-			}
-			holdero.Table.Leave.Hide()
-			holdero.Table.Deal.Hide()
-			holdero.Table.Check.Hide()
-			holdero.Table.Bet.Hide()
-			holdero.Table.BetEntry.Hide()
-		} else if !rpc.Signal.End && !rpc.Signal.Reveal && rpc.Signal.My_turn && rpc.Wallet.IsConnected() {
-			if rpc.Signal.Sit {
-				holdero.Table.Sit.Hide()
-			} else {
-				holdero.Table.Sit.Show()
-			}
-
-			if rpc.Signal.Leave {
-				holdero.Table.Leave.Hide()
-			} else {
-				holdero.Table.Leave.Show()
-			}
-
-			if rpc.Signal.Deal {
-				holdero.Table.Deal.Hide()
-			} else {
-				holdero.Table.Deal.Show()
-			}
-
-			holdero.Table.Check.SetText(rpc.Display.C_Button)
-			holdero.Table.Bet.SetText(rpc.Display.B_Button)
-			if rpc.Signal.Bet {
-				holdero.Table.Check.Hide()
-				holdero.Table.Bet.Hide()
-				holdero.Table.BetEntry.Hide()
-			} else {
-				holdero.Table.Check.Show()
-				holdero.Table.Bet.Show()
-				holdero.Table.BetEntry.Show()
-			}
-
-			if !rpc.Round.Notified {
-				if !isWindows() {
-					dReams.App.SendNotification(notification("dReams - Holdero", "Your Turn", 0))
-				}
-			}
-		} else {
-			if rpc.Signal.Sit {
-				holdero.Table.Sit.Hide()
-			} else if !rpc.Signal.Sit && rpc.Wallet.IsConnected() {
-				holdero.Table.Sit.Show()
-			}
-			holdero.Table.Leave.Hide()
-			holdero.Table.Deal.Hide()
-			holdero.Table.Check.Hide()
-			holdero.Table.Bet.Hide()
-			holdero.Table.BetEntry.Hide()
-
-			if !rpc.Signal.My_turn && !rpc.Signal.End && !rpc.Round.LocalEnd {
-				rpc.Display.Res = ""
-				rpc.Round.Notified = false
-			}
-		}
-	}
-
-	if dReams.menu_tabs.contracts {
-		if offset%3 == 0 {
-			go menu.GetTableStats(rpc.Round.Contract, false)
-		}
-	}
-
-	go func() {
-		refreshHolderoPlayers()
-		H.DApp.Refresh()
-	}()
-}
-
-// Refresh Holdero player names and avatars
-func refreshHolderoPlayers() {
-	H.Back.Objects[0] = holdero.HolderoTable(bundle.ResourcePokerTablePng)
-	H.Back.Objects[0].Refresh()
-
-	H.Back.Objects[1] = holdero.Player1_label(bundle.ResourceUnknownAvatarPng, bundle.ResourceAvatarFramePng, bundle.ResourceTurnFramePng)
-	H.Back.Objects[1].Refresh()
-
-	H.Back.Objects[2] = holdero.Player2_label(bundle.ResourceUnknownAvatarPng, bundle.ResourceAvatarFramePng, bundle.ResourceTurnFramePng)
-	H.Back.Objects[2].Refresh()
-
-	H.Back.Objects[3] = holdero.Player3_label(bundle.ResourceUnknownAvatarPng, bundle.ResourceAvatarFramePng, bundle.ResourceTurnFramePng)
-	H.Back.Objects[3].Refresh()
-
-	H.Back.Objects[4] = holdero.Player4_label(bundle.ResourceUnknownAvatarPng, bundle.ResourceAvatarFramePng, bundle.ResourceTurnFramePng)
-	H.Back.Objects[4].Refresh()
-
-	H.Back.Objects[5] = holdero.Player5_label(bundle.ResourceUnknownAvatarPng, bundle.ResourceAvatarFramePng, bundle.ResourceTurnFramePng)
-	H.Back.Objects[5].Refresh()
-
-	H.Back.Objects[6] = holdero.Player6_label(bundle.ResourceUnknownAvatarPng, bundle.ResourceAvatarFramePng, bundle.ResourceTurnFramePng)
-	H.Back.Objects[6].Refresh()
-
-	H.Back.Refresh()
-}
-
-// Reveal key notification and display
-func revealingKey() {
-	if rpc.Signal.Reveal && rpc.Signal.My_turn && !rpc.Signal.End {
-		if !rpc.Round.Notified {
-			rpc.Display.Res = "Revealing Key"
-			H.TopLabel.Text = rpc.Display.Res
-			H.TopLabel.Refresh()
-			if !isWindows() {
-				dReams.App.SendNotification(notification("dReams - Holdero", "Revealing Key", 0))
-			}
 		}
 	}
 }
@@ -813,8 +367,8 @@ func BaccRefresh() {
 	B.DApp.Refresh()
 
 	if rpc.Bacc.Found && !rpc.Bacc.Notified {
-		if !isWindows() {
-			dReams.App.SendNotification(notification("dReams - Baccarat", rpc.Display.BaccRes, 1))
+		if !dReams.IsWindows() {
+			rpc.Bacc.Notified = dReams.Notification("dReams - Baccarat", rpc.Display.BaccRes)
 		}
 	}
 }
@@ -929,7 +483,7 @@ func MenuRefresh(tab bool) {
 			go refreshPriceDisplay(true)
 		}
 
-		if dReams.menu_tabs.market && !isWindows() && !menu.ClosingApps() {
+		if dReams.Menu_tabs.Market && !dReams.IsWindows() && !menu.ClosingApps() {
 			menu.FindNfaListings(nil)
 		}
 	}
@@ -949,7 +503,7 @@ func MenuRefresh(tab bool) {
 
 	menu.Assets.Balances.Refresh()
 
-	if !dReams.menu {
+	if !dReams.Menu {
 		menu.Market.Viewing = ""
 		menu.Market.Viewing_coll = ""
 	}
@@ -959,31 +513,31 @@ func MenuRefresh(tab bool) {
 func MainTab(ti *container.TabItem) {
 	switch ti.Text {
 	case "Menu":
-		dReams.menu = true
-		dReams.holdero = false
-		dReams.bacc = false
-		dReams.predict = false
-		dReams.sports = false
-		dReams.tarot = false
-		if rpc.Round.ID == 1 {
-			holdero.Settings.FaceSelect.Enable()
-			holdero.Settings.BackSelect.Enable()
+		dReams.Menu = true
+		dReams.Holdero = false
+		dReams.Bacc = false
+		dReams.Predict = false
+		dReams.Sports = false
+		dReams.Tarot = false
+		if holdero.Round.ID == 1 {
+			holdero.Faces.Select.Enable()
+			holdero.Backs.Select.Enable()
 		}
-		go MenuRefresh(dReams.menu)
+		go MenuRefresh(dReams.Menu)
 	case "Holdero":
-		dReams.menu = false
-		dReams.holdero = true
-		dReams.bacc = false
-		dReams.predict = false
-		dReams.sports = false
-		dReams.tarot = false
+		dReams.Menu = false
+		dReams.Holdero = true
+		dReams.Bacc = false
+		dReams.Predict = false
+		dReams.Sports = false
+		dReams.Tarot = false
 	case "Baccarat":
-		dReams.menu = false
-		dReams.holdero = false
-		dReams.bacc = true
-		dReams.predict = false
-		dReams.sports = false
-		dReams.tarot = false
+		dReams.Menu = false
+		dReams.Holdero = false
+		dReams.Bacc = true
+		dReams.Predict = false
+		dReams.Sports = false
+		dReams.Tarot = false
 		go func() {
 			baccarat.GetBaccTables()
 			BaccRefresh()
@@ -992,33 +546,33 @@ func MainTab(ti *container.TabItem) {
 			}
 		}()
 	case "Predict":
-		dReams.menu = false
-		dReams.holdero = false
-		dReams.bacc = false
-		dReams.predict = true
-		dReams.sports = false
-		dReams.tarot = false
+		dReams.Menu = false
+		dReams.Holdero = false
+		dReams.Bacc = false
+		dReams.Predict = true
+		dReams.Sports = false
+		dReams.Tarot = false
 		go func() {
 			menu.PopulatePredictions(nil)
 		}()
-		PredictionRefresh(dReams.predict)
+		PredictionRefresh(dReams.Predict)
 	case "Sports":
-		dReams.menu = false
-		dReams.holdero = false
-		dReams.bacc = false
-		dReams.predict = false
-		dReams.sports = true
-		dReams.tarot = false
+		dReams.Menu = false
+		dReams.Holdero = false
+		dReams.Bacc = false
+		dReams.Predict = false
+		dReams.Sports = true
+		dReams.Tarot = false
 		go menu.PopulateSports(nil)
 	case "Iluma":
-		dReams.menu = false
-		dReams.holdero = false
-		dReams.bacc = false
-		dReams.predict = false
-		dReams.sports = false
-		dReams.tarot = true
+		dReams.Menu = false
+		dReams.Holdero = false
+		dReams.Bacc = false
+		dReams.Predict = false
+		dReams.Sports = false
+		dReams.Tarot = true
 		if tarot.Iluma.Value.Display {
-			tarot.TarotBuffer(false)
+			tarot.ActionBuffer(false)
 		}
 	}
 }
@@ -1028,36 +582,24 @@ func MenuTab(ti *container.TabItem) {
 	switch ti.Text {
 	case "Wallet":
 		ti.Content.(*container.Split).Leading.(*container.Split).Trailing.Refresh()
-		dReams.menu_tabs.wallet = true
-		dReams.menu_tabs.assets = false
-		dReams.menu_tabs.market = false
+		dReams.Menu_tabs.Wallet = true
+		dReams.Menu_tabs.Assets = false
+		dReams.Menu_tabs.Market = false
 	case "Assets":
-		dReams.menu_tabs.wallet = false
-		dReams.menu_tabs.assets = true
-		dReams.menu_tabs.market = false
+		dReams.Menu_tabs.Wallet = false
+		dReams.Menu_tabs.Assets = true
+		dReams.Menu_tabs.Market = false
 		menu.Control.Viewing_asset = ""
 		menu.Assets.Asset_list.UnselectAll()
 	case "Market":
-		dReams.menu_tabs.wallet = false
-		dReams.menu_tabs.assets = false
-		dReams.menu_tabs.market = true
+		dReams.Menu_tabs.Wallet = false
+		dReams.Menu_tabs.Assets = false
+		dReams.Menu_tabs.Market = true
 		go menu.FindNfaListings(nil)
 		menu.Market.Cancel_button.Hide()
 		menu.Market.Close_button.Hide()
 		menu.Market.Auction_list.Refresh()
 		menu.Market.Buy_list.Refresh()
-	}
-}
-
-// Switch triggered when Holdero contracts tab changes
-func MenuContractTab(ti *container.TabItem) {
-	switch ti.Text {
-	case "Tables":
-		if rpc.Daemon.IsConnected() {
-			go menu.CreateTableList(false, nil)
-		}
-
-	default:
 	}
 }
 
@@ -1088,4 +630,347 @@ func FullScreenSet() fyne.CanvasObject {
 	cont := container.NewHBox(layout.NewSpacer(), layout.NewSpacer(), layout.NewSpacer(), container.NewVBox(button), layout.NewSpacer())
 
 	return cont
+}
+
+// Check wallet for dReams NFAs
+//   - Pass scids from db store, can be nil arg
+//   - Pass false gc for rechecks
+func CheckDreamsNFAs(gc bool, scids map[string]string) {
+	if menu.Gnomes.IsReady() && !gc {
+		menu.Assets.Gnomes_sync.Text = (" Checking for Assets")
+		menu.Assets.Gnomes_sync.Refresh()
+
+		if scids == nil {
+			scids = menu.Gnomes.GetAllOwnersAndSCIDs()
+		}
+		keys := make([]string, len(scids))
+		log.Println("[dReams] Checking NFA Assets")
+		holdero.Faces.Select.Options = []string{}
+		holdero.Backs.Select.Options = []string{}
+		dreams.Theme.Select.Options = []string{}
+		holdero.Settings.AvatarSelect.Options = []string{}
+
+		i := 0
+		for k := range scids {
+			if !rpc.Wallet.IsConnected() || !menu.Gnomes.IsRunning() {
+				break
+			}
+			keys[i] = k
+			checkNFAOwner(keys[i])
+			i++
+		}
+		sort.Strings(holdero.Faces.Select.Options)
+		sort.Strings(holdero.Backs.Select.Options)
+		sort.Strings(dreams.Theme.Select.Options)
+
+		ld := []string{"Light", "Dark"}
+		holdero.Faces.Select.Options = append(ld, holdero.Faces.Select.Options...)
+		holdero.Backs.Select.Options = append(ld, holdero.Backs.Select.Options...)
+		dreams.Theme.Select.Options = append([]string{"Main", "Legacy"}, dreams.Theme.Select.Options...)
+
+		sort.Strings(menu.Assets.Assets)
+		menu.Assets.Asset_list.Refresh()
+		if menu.Control.Dapp_list["Holdero"] {
+			holdero.DisableHolderoTools()
+		}
+	}
+}
+
+// If wallet owns dReams NFA, populate for use in dReams
+//   - See games container in menu.PlaceAssets()
+func checkNFAOwner(scid string) {
+	if menu.Gnomes.IsRunning() {
+		if header, _ := menu.Gnomes.GetSCIDValuesByKey(scid, "nameHdr"); header != nil {
+			owner, _ := menu.Gnomes.GetSCIDValuesByKey(scid, "owner")
+			file, _ := menu.Gnomes.GetSCIDValuesByKey(scid, "fileURL")
+			if owner != nil && file != nil {
+				if owner[0] == rpc.Wallet.Address && menu.ValidNfa(file[0]) {
+					check := strings.Trim(header[0], "0123456789")
+					if check == "AZYDS" || check == "SIXART" {
+						themes := dreams.Theme.Select.Options
+						new_themes := append(themes, header[0])
+						dreams.Theme.Select.Options = new_themes
+						dreams.Theme.Select.Refresh()
+
+						avatars := holdero.Settings.AvatarSelect.Options
+						new_avatar := append(avatars, header[0])
+						holdero.Settings.AvatarSelect.Options = new_avatar
+						holdero.Settings.AvatarSelect.Refresh()
+						menu.Assets.Assets = append(menu.Assets.Assets, header[0]+"   "+scid)
+					} else if check == "AZYPCB" || check == "SIXPCB" {
+						current := holdero.Backs.Select.Options
+						new := append(current, header[0])
+						holdero.Backs.Select.Options = new
+						holdero.Backs.Select.Refresh()
+						menu.Assets.Assets = append(menu.Assets.Assets, header[0]+"   "+scid)
+					} else if check == "AZYPC" || check == "SIXPC" {
+						current := holdero.Faces.Select.Options
+						new := append(current, header[0])
+						holdero.Faces.Select.Options = new
+						holdero.Faces.Select.Refresh()
+						menu.Assets.Assets = append(menu.Assets.Assets, header[0]+"   "+scid)
+					} else if check == "DBC" {
+						current := holdero.Settings.AvatarSelect.Options
+						new := append(current, header[0])
+						holdero.Settings.AvatarSelect.Options = new
+						holdero.Settings.AvatarSelect.Refresh()
+						menu.Assets.Assets = append(menu.Assets.Assets, header[0]+"   "+scid)
+					} else if check == "HighStrangeness" {
+						current_av := holdero.Settings.AvatarSelect.Options
+						new_av := append(current_av, header[0])
+						holdero.Settings.AvatarSelect.Options = new_av
+						holdero.Settings.AvatarSelect.Refresh()
+						menu.Assets.Assets = append(menu.Assets.Assets, header[0]+"   "+scid)
+
+						var have_cards bool
+						for _, face := range holdero.Faces.Select.Options {
+							if face == "High-Strangeness" {
+								have_cards = true
+							}
+						}
+
+						if !have_cards {
+							current_d := holdero.Faces.Select.Options
+							new_d := append(current_d, "High-Strangeness")
+							holdero.Faces.Select.Options = new_d
+							holdero.Faces.Select.Refresh()
+
+							current_b := holdero.Backs.Select.Options
+							new_b := append(current_b, "High-Strangeness")
+							holdero.Backs.Select.Options = new_b
+							holdero.Backs.Select.Refresh()
+						}
+
+						tower := 0
+						switch header[0] {
+						case "HighStrangeness363":
+							tower = 4
+						case "HighStrangeness364":
+							tower = 8
+						case "HighStrangeness365":
+							tower = 12
+						default:
+						}
+
+						var have_theme bool
+						for i := tower; i > 0; i-- {
+							themes := dreams.Theme.Select.Options
+							for _, th := range themes {
+								if th == "HSTheme"+strconv.Itoa(i) {
+									have_theme = true
+								}
+							}
+
+							if !have_theme {
+								new_themes := append(themes, "HSTheme"+strconv.Itoa(i))
+								dreams.Theme.Select.Options = new_themes
+								dreams.Theme.Select.Refresh()
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+// Check if wallet owns in game G45 asset
+//   - Pass g45s from db store, can be nil arg
+//   - Pass false gc for rechecks
+func CheckDreamsG45s(gc bool, g45s map[string]string) {
+	if menu.Gnomes.IsReady() && !gc {
+		if g45s == nil {
+			g45s = menu.Gnomes.GetAllOwnersAndSCIDs()
+		}
+		log.Println("[dReams] Checking G45 Assets")
+
+		for scid := range g45s {
+			if !rpc.Wallet.IsConnected() || !menu.Gnomes.IsRunning() {
+				break
+			}
+
+			if data, _ := menu.Gnomes.GetSCIDValuesByKey(scid, "metadata"); data != nil {
+				owner, _ := menu.Gnomes.GetSCIDValuesByKey(scid, "owner")
+				minter, _ := menu.Gnomes.GetSCIDValuesByKey(scid, "minter")
+				coll, _ := menu.Gnomes.GetSCIDValuesByKey(scid, "collection")
+				if owner != nil && minter != nil && coll != nil {
+					if owner[0] == rpc.Wallet.Address {
+						if minter[0] == dreams.Seals_mint && coll[0] == dreams.Seals_coll {
+							var seal dreams.Seal
+							if err := json.Unmarshal([]byte(data[0]), &seal); err == nil {
+								menu.Assets.Assets = append(menu.Assets.Assets, seal.Name+"   "+scid)
+								current := holdero.Settings.AvatarSelect.Options
+								new := append(current, seal.Name)
+								holdero.Settings.AvatarSelect.Options = new
+								holdero.Settings.AvatarSelect.Refresh()
+							}
+						} else if minter[0] == dreams.ATeam_mint && coll[0] == dreams.ATeam_coll {
+							var agent dreams.Agent
+							if err := json.Unmarshal([]byte(data[0]), &agent); err == nil {
+								menu.Assets.Asset_map[agent.Name] = scid
+								menu.Assets.Assets = append(menu.Assets.Assets, agent.Name+"   "+scid)
+								current := holdero.Settings.AvatarSelect.Options
+								new := append(current, agent.Name)
+								holdero.Settings.AvatarSelect.Options = new
+								holdero.Settings.AvatarSelect.Refresh()
+							}
+						}
+					}
+				}
+			}
+		}
+		sort.Strings(holdero.Settings.AvatarSelect.Options)
+		holdero.Settings.AvatarSelect.Options = append([]string{"None"}, holdero.Settings.AvatarSelect.Options...)
+		menu.Assets.Asset_list.Refresh()
+	}
+}
+
+// Hidden object, controls Gnomon start and stop based on daemon connection
+func DaemonConnectedBox() fyne.Widget {
+	menu.Control.Daemon_check = widget.NewCheck("", func(b bool) {
+		if !menu.Gnomes.IsInitialized() && !menu.Gnomes.Start {
+			//go startLabel()
+			menu.Assets.Gnomes_sync.Text = (" Starting Gnomon")
+			menu.Assets.Gnomes_sync.Refresh()
+			filters := menu.GnomonFilters()
+			menu.StartGnomon("dReams", menu.Gnomes.DBType, filters, 3960, 490, menu.G45Index)
+			rpc.FetchFees()
+			if menu.Control.Dapp_list["Holdero"] {
+				holdero.Poker.Contract_entry.CursorColumn = 1
+				holdero.Poker.Contract_entry.Refresh()
+			}
+
+			if menu.Control.Dapp_list["dSports and dPredictions"] {
+				menu.Control.P_contract.CursorColumn = 1
+				menu.Control.P_contract.Refresh()
+				menu.Control.S_contract.CursorColumn = 1
+				menu.Control.S_contract.Refresh()
+			}
+		}
+
+		if !b {
+			go menu.StopLabel()
+			menu.Gnomes.Stop("dReams")
+			go menu.SleepLabel()
+		}
+	})
+	menu.Control.Daemon_check.Disable()
+	menu.Control.Daemon_check.Hide()
+
+	return menu.Control.Daemon_check
+}
+
+// Wallet rpc entry object
+//   - Bound to rpc.Wallet.Rpc
+//   - Changes reset wallet connection and call CheckConnection()
+func WalletRpcEntry() fyne.Widget {
+	options := []string{"", "127.0.0.1:10103"}
+	entry := widget.NewSelectEntry(options)
+	entry.PlaceHolder = "Wallet RPC: "
+	entry.OnCursorChanged = func() {
+		if rpc.Wallet.IsConnected() {
+			rpc.Wallet.Address = ""
+			rpc.Display.Wallet_height = "0"
+			rpc.Wallet.Height = 0
+			rpc.Wallet.Connected(false)
+			go CheckConnection()
+		}
+	}
+
+	this := binding.BindString(&rpc.Wallet.Rpc)
+	entry.Bind(this)
+
+	return entry
+}
+
+// Authentication entry object
+//   - Bound to rpc.Wallet.UserPass
+//   - Changes call rpc.GetAddress() and CheckConnection()
+func UserPassEntry() fyne.Widget {
+	entry := widget.NewPasswordEntry()
+	entry.PlaceHolder = "user:pass"
+	entry.OnCursorChanged = func() {
+		if rpc.Wallet.IsConnected() {
+			rpc.GetAddress("dReams")
+			go CheckConnection()
+		}
+	}
+
+	a := binding.BindString(&rpc.Wallet.UserPass)
+	entry.Bind(a)
+
+	return entry
+}
+
+// Connect button object for rpc
+//   - Pressed calls rpc.Ping(), rpc.GetAddress(), CheckConnection(),
+//     checks for Holdero key and clears names for population
+func RpcConnectButton() fyne.Widget {
+	var wait bool
+	button := widget.NewButton("Connect", func() {
+		go func() {
+			if !wait {
+				wait = true
+				rpc.Ping()
+				rpc.GetAddress("dReams")
+				CheckConnection()
+				if menu.Control.Dapp_list["Holdero"] {
+					holdero.Poker.Contract_entry.CursorColumn = 1
+					holdero.Poker.Contract_entry.Refresh()
+					if len(rpc.Wallet.Address) == 66 {
+						holdero.CheckExistingKey()
+						menu.Control.Names.ClearSelected()
+						menu.Control.Names.Options = []string{}
+						menu.Control.Names.Refresh()
+						menu.Control.Names.Options = append(menu.Control.Names.Options, rpc.Wallet.Address[0:12])
+						if menu.Control.Names.Options != nil {
+							menu.Control.Names.SetSelectedIndex(0)
+						}
+					}
+				}
+
+				if menu.Control.Dapp_list["dSports and dPredictions"] {
+					menu.Control.P_contract.CursorColumn = 1
+					menu.Control.P_contract.Refresh()
+					menu.Control.S_contract.CursorColumn = 1
+					menu.Control.S_contract.Refresh()
+				}
+				wait = false
+			}
+		}()
+	})
+
+	return button
+}
+
+// dReams recheck owned assets routine
+func RecheckDreamsAssets() {
+	menu.Gnomes.Wait = true
+	menu.Assets.Assets = []string{}
+	CheckDreamsNFAs(false, nil)
+	CheckDreamsG45s(false, nil)
+	if menu.Control.Dapp_list["Holdero"] {
+		if rpc.Wallet.IsConnected() {
+			menu.Control.Names.Options = []string{rpc.Wallet.Address[0:12]}
+			menu.CheckWalletNames(rpc.Wallet.Address)
+		}
+	}
+	sort.Strings(menu.Assets.Assets)
+	menu.Assets.Asset_list.UnselectAll()
+	menu.Assets.Asset_list.Refresh()
+	menu.Gnomes.Wait = false
+}
+
+// Recheck owned assets button
+//   - tag for log print
+//   - pass recheck for desired check
+func RecheckButton(tag string, recheck func()) (button fyne.Widget) {
+	button = widget.NewButton("Check Assets", func() {
+		if !menu.Gnomes.Wait {
+			log.Printf("[%s] Rechecking Assets\n", tag)
+			go recheck()
+		}
+	})
+
+	return
 }

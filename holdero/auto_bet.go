@@ -1,4 +1,4 @@
-package rpc
+package holdero
 
 import (
 	"encoding/json"
@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"fyne.io/fyne/v2/widget"
+	"github.com/SixofClubsss/dReams/rpc"
 )
 
 type holdero_stats struct {
@@ -1091,9 +1092,9 @@ func canRaise() bool {
 // Check if wallet balance is to low to call bet
 func lowBalance(amt float64) bool {
 	if Round.Asset {
-		return amt > float64(Wallet.ReadTokenBalance(GetAssetSCIDName(Round.AssetID)))/100000
+		return amt > float64(rpc.Wallet.ReadTokenBalance(rpc.GetAssetSCIDName(Round.AssetID)))/100000
 	} else {
-		return amt > float64(Wallet.ReadBalance())/100000
+		return amt > float64(rpc.Wallet.ReadBalance())/100000
 	}
 }
 
@@ -1103,7 +1104,7 @@ func lastPosition(id int) bool {
 	ins := []bool{Signal.In1, Signal.In2, Signal.In3, Signal.In4, Signal.In5, Signal.In6}
 	folds := []bool{Round.F1, Round.F2, Round.F3, Round.F4, Round.F5, Round.F6}
 	order := []int{}
-	dealer := StringToInt(Display.Dealer)
+	dealer := rpc.StringToInt(Display.Dealer)
 
 	for i := range ins {
 		if (ins[i] && !folds[i]) || i == dealer-1 {
