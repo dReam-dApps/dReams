@@ -27,37 +27,20 @@ import (
 )
 
 type menuObjects struct {
-	List_open         bool
-	send_open         bool
-	msg_open          bool
-	Daemon_config     string
-	Viewing_asset     string
-	Dapp_list         map[string]bool
-	Predict_contracts []string
-	Predict_favorites []string
-	Predict_owned     []string
-	Sports_contracts  []string
-	Sports_favorites  []string
-	Sports_owned      []string
-	Contract_rating   map[string]uint64
-	Names             *widget.Select
-	Bet_unlock_p      *widget.Button
-	Bet_unlock_s      *widget.Button
-	Bet_new_p         *widget.Button
-	Bet_new_s         *widget.Button
-	Bet_menu_p        *widget.Button
-	Bet_menu_s        *widget.Button
-	Send_asset        *widget.Button
-	Claim_button      *widget.Button
-	List_button       *widget.Button
-	Daemon_check      *widget.Check
-	Predict_check     *widget.Check
-	P_contract        *widget.SelectEntry
-	Sports_check      *widget.Check
-	S_contract        *widget.SelectEntry
-	Wallet_ind        *fyne.Animation
-	Daemon_ind        *fyne.Animation
-	Service_ind       *fyne.Animation
+	List_open       bool
+	send_open       bool
+	msg_open        bool
+	Daemon_config   string
+	Viewing_asset   string
+	Dapp_list       map[string]bool
+	Contract_rating map[string]uint64
+	Names           *widget.Select
+	Send_asset      *widget.Button
+	Claim_button    *widget.Button
+	List_button     *widget.Button
+	Daemon_check    *widget.Check
+	Wallet_ind      *fyne.Animation
+	Daemon_ind      *fyne.Animation
 	sync.Mutex
 }
 type exit struct {
@@ -197,176 +180,6 @@ func NameEntry() fyne.CanvasObject {
 func roundFloat(val float64, precision uint) float64 {
 	ratio := math.Pow(10, float64(precision))
 	return math.Round(val*ratio) / ratio
-}
-
-// Confirmation for dPrediction contract installs
-func BettingMenuConfirmP(c int, obj []fyne.CanvasObject, tabs *container.AppTabs) fyne.CanvasObject {
-	var text string
-	gas_fee := 0.125
-	unlock_fee := float64(rpc.UnlockFee) / 100000
-	switch c {
-	case 1:
-		text = `You are about to unlock and install your first dPrediction contract 
-		
-To help support the project, there is a ` + fmt.Sprintf("%.5f", unlock_fee) + ` DERO donation attached to preform this action
-
-Unlocking dPrediction or dSports gives you unlimited access to bet contract uploads and all base level owner features
-
-Total transaction will be ` + fmt.Sprintf("%0.5f", unlock_fee+gas_fee) + ` DERO (0.12500 gas fee for contract install)
-
-
-Select a public or private contract
-
-Public will show up in indexed list of contracts
-
-Private will not show up in the list`
-	case 2:
-		text = `You are about to install a new dPrediction contract
-
-Gas fee to install contract is 0.12500 DERO
-
-
-Select a public or private contract
-
-Public will show up in indexed list of contracts
-
-Private will not show up in the list`
-	}
-
-	label := widget.NewLabel(text)
-	label.Wrapping = fyne.TextWrapWord
-	label.Alignment = fyne.TextAlignCenter
-
-	var choice *widget.Select
-
-	pre_button := widget.NewButton("Install", func() {
-		if choice.SelectedIndex() < 2 && choice.SelectedIndex() >= 0 {
-			rpc.UploadBetContract(true, choice.SelectedIndex())
-		}
-
-		obj[1] = tabs
-		obj[1].Refresh()
-	})
-
-	pre_button.Hide()
-
-	options := []string{"Public", "Private"}
-	choice = widget.NewSelect(options, func(s string) {
-		if s == "Public" || s == "Private" {
-			pre_button.Show()
-		} else {
-			pre_button.Hide()
-		}
-	})
-
-	cancel_button := widget.NewButton("Cancel", func() {
-		obj[1] = tabs
-		obj[1].Refresh()
-	})
-
-	left := container.NewVBox(pre_button)
-	right := container.NewVBox(cancel_button)
-	buttons := container.NewAdaptiveGrid(3, left, container.NewVBox(layout.NewSpacer()), right)
-	actions := container.NewVBox(choice, buttons)
-	info_box := container.NewVBox(layout.NewSpacer(), label, layout.NewSpacer())
-
-	content := container.NewBorder(nil, actions, nil, nil, info_box)
-
-	go func() {
-		for rpc.IsReady() {
-			time.Sleep(time.Second)
-		}
-
-		obj[1] = tabs
-		obj[1].Refresh()
-	}()
-
-	return container.NewMax(content)
-}
-
-// Confirmation for dSports contract installs
-func BettingMenuConfirmS(c int, obj []fyne.CanvasObject, tabs *container.AppTabs) fyne.CanvasObject {
-	var text string
-	gas_fee := 0.14
-	unlock_fee := float64(rpc.UnlockFee) / 100000
-	switch c {
-	case 1:
-		text = `You are about to unlock and install your first dSports contract
-		
-To help support the project, there is a ` + fmt.Sprintf("%.5f", unlock_fee) + ` DERO donation attached to preform this action
-
-Unlocking dPrediction or dSports gives you unlimited access to bet contract uploads and all base level owner features
-
-Total transaction will be ` + fmt.Sprintf("%0.5f", unlock_fee+gas_fee) + ` DERO (0.14000 gas fee for contract install)
-
-
-Select a public or private contract
-
-Public will show up in indexed list of contracts
-
-Private will not show up in the list`
-	case 2:
-		text = `You are about to install a new dSports contract
-
-Gas fee to install contract is 0.14000 DERO
-
-
-Select a public or private contract
-
-Public will show up in indexed list of contracts
-
-Private will not show up in the list`
-	}
-
-	label := widget.NewLabel(text)
-	label.Wrapping = fyne.TextWrapWord
-	label.Alignment = fyne.TextAlignCenter
-
-	var choice *widget.Select
-
-	sports_button := widget.NewButton("Install", func() {
-		if choice.SelectedIndex() < 2 && choice.SelectedIndex() >= 0 {
-			rpc.UploadBetContract(false, choice.SelectedIndex())
-		}
-
-		obj[1] = tabs
-		obj[1].Refresh()
-	})
-
-	sports_button.Hide()
-
-	options := []string{"Public", "Private"}
-	choice = widget.NewSelect(options, func(s string) {
-		if s == "Public" || s == "Private" {
-			sports_button.Show()
-		} else {
-			sports_button.Hide()
-		}
-	})
-
-	cancel_button := widget.NewButton("Cancel", func() {
-		obj[1] = tabs
-		obj[1].Refresh()
-	})
-
-	left := container.NewVBox(sports_button)
-	right := container.NewVBox(cancel_button)
-	buttons := container.NewAdaptiveGrid(3, left, container.NewVBox(layout.NewSpacer()), right)
-	actions := container.NewVBox(choice, buttons)
-	info_box := container.NewVBox(layout.NewSpacer(), label, layout.NewSpacer())
-
-	content := container.NewBorder(nil, actions, nil, nil, info_box)
-
-	go func() {
-		for rpc.IsReady() {
-			time.Sleep(time.Second)
-		}
-
-		obj[1] = tabs
-		obj[1].Refresh()
-	}()
-
-	return container.NewMax(content)
 }
 
 // Index entry and NFA control objects

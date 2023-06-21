@@ -39,8 +39,8 @@ func WriteDreamsConfig(daemon string, skin color.Gray16) {
 	u.Skin = skin
 	/// put back
 	///u.Tables = Control.Holdero_favorites
-	u.Predict = Control.Predict_favorites
-	u.Sports = Control.Sports_favorites
+	// u.Predict = Control.Predict_favorites
+	// u.Sports = Control.Sports_favorites
 	u.Dapps = Control.Dapp_list
 
 	if u.Daemon != nil {
@@ -138,27 +138,4 @@ func DisableIndexControls(d bool) {
 	Assets.Index_search.Refresh()
 	Assets.Header_box.Refresh()
 	Market.Market_box.Refresh()
-}
-
-// Set objects if bet owner
-func SetBetOwner(owner string) {
-	if Control.Dapp_list["dSports and dPredictions"] {
-		if owner == rpc.Wallet.Address {
-			rpc.Wallet.BetOwner = true
-			Control.Bet_new_p.Show()
-			Control.Bet_new_s.Show()
-			Control.Bet_unlock_p.Hide()
-			Control.Bet_unlock_s.Hide()
-			Control.Bet_menu_p.Show()
-			Control.Bet_menu_s.Show()
-		} else {
-			rpc.Wallet.BetOwner = false
-			Control.Bet_new_p.Hide()
-			Control.Bet_new_s.Hide()
-			Control.Bet_unlock_p.Show()
-			Control.Bet_unlock_s.Show()
-			Control.Bet_menu_p.Hide()
-			Control.Bet_menu_s.Hide()
-		}
-	}
 }

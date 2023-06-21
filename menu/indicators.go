@@ -144,32 +144,10 @@ func StartDreamsIndicators(add []DreamsIndicator) fyne.CanvasObject {
 		container.NewMax(d_rect, container.NewCenter(d)),
 		container.NewMax(w_rect, container.NewCenter(w)))
 
-	dService := canvas.NewImageFromResource(bundle.ResourceDReamServiceIconPng)
-	dService.SetMinSize(fyne.NewSize(30, 30))
-	s_rect := canvas.NewRectangle(alpha)
-	s_rect.SetMinSize(fyne.NewSize(36, 36))
-
-	additional_inds := container.NewHBox(container.NewMax(s_rect, container.NewCenter(dService)))
-
+	additional_inds := container.NewHBox()
 	for _, ind := range add {
 		additional_inds.Add(container.NewMax(ind.Rect, container.NewCenter(ind.Img)))
 	}
-
-	Control.Service_ind = canvas.NewColorRGBAAnimation(purple, blue,
-		time.Second*3, func(c color.Color) {
-			if rpc.Wallet.Service {
-				s_rect.FillColor = c
-				dService.Show()
-				canvas.Refresh(s_rect)
-			} else {
-				s_rect.FillColor = alpha
-				dService.Hide()
-				canvas.Refresh(s_rect)
-			}
-		})
-
-	Control.Service_ind.RepeatCount = fyne.AnimationRepeatForever
-	Control.Service_ind.AutoReverse = true
 
 	top_box := container.NewHBox(layout.NewSpacer(), additional_inds, connect_box, container.NewMax(g_full, sync_box, Gnomes.Icon_ind))
 	place := container.NewVBox(top_box, layout.NewSpacer())
@@ -183,7 +161,6 @@ func StartDreamsIndicators(add []DreamsIndicator) fyne.CanvasObject {
 		for _, ind := range add {
 			ind.Animation.Start()
 		}
-		Control.Service_ind.Start()
 	}()
 
 	return container.NewMax(place)
@@ -315,9 +292,6 @@ func StopIndicators(these []DreamsIndicator) {
 	Control.Wallet_ind.Stop()
 	for _, ind := range these {
 		ind.Animation.Stop()
-	}
-	if Control.Service_ind != nil {
-		Control.Service_ind.Stop()
 	}
 	if Gnomes.Icon_ind != nil {
 		Gnomes.Icon_ind.Stop()

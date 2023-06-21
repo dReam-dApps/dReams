@@ -24,7 +24,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-type psOwnerObjects struct {
+type ownerObjects struct {
 	S_end        *dwidget.DeroAmts
 	S_amt        *dwidget.DeroAmts
 	S_game       *widget.Select
@@ -48,11 +48,12 @@ type psOwnerObjects struct {
 	Run_service  *widget.Button
 	Service_pay  *widget.Check
 	Transactions *widget.Check
+	Synced       bool
 	Payout_on    bool
 	Transact_on  bool
 }
 
-var PS_Control psOwnerObjects
+var Owner ownerObjects
 
 // Check if prediction is for on chain values
 func isOnChainPrediction(s string) bool {
@@ -81,55 +82,55 @@ func onChainPrediction(s string) int {
 //   - Pass side menu window to reset to
 func predictionOpts(window fyne.Window) fyne.CanvasObject {
 	pred := []string{"DERO-BTC", "XMR-BTC", "BTC-USDT", "DERO-USDT", "XMR-USDT", "DERO-Difficulty", "DERO-Block Time", "DERO-Block Number"}
-	PS_Control.P_Name = widget.NewSelectEntry(pred)
-	PS_Control.P_Name.SetPlaceHolder("Name:")
-	PS_Control.P_Name.OnChanged = func(s string) {
+	Owner.P_Name = widget.NewSelectEntry(pred)
+	Owner.P_Name.SetPlaceHolder("Name:")
+	Owner.P_Name.OnChanged = func(s string) {
 		if isOnChainPrediction(s) {
 			opts := []string{rpc.DAEMON_RPC_REMOTE1, rpc.DAEMON_RPC_REMOTE2, rpc.DAEMON_RPC_REMOTE5, rpc.DAEMON_RPC_REMOTE6}
-			PS_Control.P_feed.SetOptions(opts)
-			if PS_Control.P_feed.Text != opts[1] {
-				PS_Control.P_feed.SetText(opts[0])
+			Owner.P_feed.SetOptions(opts)
+			if Owner.P_feed.Text != opts[1] {
+				Owner.P_feed.SetText(opts[0])
 			}
-			PS_Control.P_feed.SetPlaceHolder("Node:")
-			PS_Control.P_feed.Refresh()
+			Owner.P_feed.SetPlaceHolder("Node:")
+			Owner.P_feed.Refresh()
 		} else {
 			opts := []string{"dReams Client"}
-			PS_Control.P_feed.SetOptions(opts)
-			PS_Control.P_feed.SetText(opts[0])
-			PS_Control.P_feed.SetPlaceHolder("Feed:")
-			PS_Control.P_feed.Refresh()
+			Owner.P_feed.SetOptions(opts)
+			Owner.P_feed.SetText(opts[0])
+			Owner.P_feed.SetPlaceHolder("Feed:")
+			Owner.P_feed.Refresh()
 		}
 	}
 
-	PS_Control.P_end = dwidget.DeroAmtEntry("", 1, 0)
-	PS_Control.P_end.SetPlaceHolder("Closes At:")
-	PS_Control.P_end.AllowFloat = false
-	PS_Control.P_end.Validator = validation.NewRegexp(`^\d{10,}$`, "Unix time required")
+	Owner.P_end = dwidget.DeroAmtEntry("", 1, 0)
+	Owner.P_end.SetPlaceHolder("Closes At:")
+	Owner.P_end.AllowFloat = false
+	Owner.P_end.Validator = validation.NewRegexp(`^\d{10,}$`, "Unix time required")
 
-	PS_Control.P_mark = widget.NewEntry()
-	PS_Control.P_mark.SetPlaceHolder("Mark:")
-	PS_Control.P_mark.Validator = validation.NewRegexp(`^\d{1,}$`, "Int required")
+	Owner.P_mark = widget.NewEntry()
+	Owner.P_mark.SetPlaceHolder("Mark:")
+	Owner.P_mark.Validator = validation.NewRegexp(`^\d{1,}$`, "Int required")
 
-	PS_Control.P_amt = dwidget.DeroAmtEntry("", 0.1, 1)
-	PS_Control.P_amt.SetPlaceHolder("Minimum Amount:")
-	PS_Control.P_amt.AllowFloat = true
-	PS_Control.P_amt.Wrapping = fyne.TextTruncate
-	PS_Control.P_amt.Validator = validation.NewRegexp(`^\d{1,}\.\d{1,5}$|^[^0]\d{0,}$`, "Int or float required")
+	Owner.P_amt = dwidget.DeroAmtEntry("", 0.1, 1)
+	Owner.P_amt.SetPlaceHolder("Minimum Amount:")
+	Owner.P_amt.AllowFloat = true
+	Owner.P_amt.Wrapping = fyne.TextTruncate
+	Owner.P_amt.Validator = validation.NewRegexp(`^\d{1,}\.\d{1,5}$|^[^0]\d{0,}$`, "Int or float required")
 
 	feeds := []string{"dReams Client"}
-	PS_Control.P_feed = widget.NewSelectEntry(feeds)
-	PS_Control.P_feed.SetPlaceHolder("Feed:")
+	Owner.P_feed = widget.NewSelectEntry(feeds)
+	Owner.P_feed.SetPlaceHolder("Feed:")
 
-	PS_Control.P_deposit = dwidget.DeroAmtEntry("", 0.1, 1)
-	PS_Control.P_deposit.SetPlaceHolder("Deposit Amount:")
-	PS_Control.P_deposit.AllowFloat = true
-	PS_Control.P_deposit.Wrapping = fyne.TextTruncate
-	PS_Control.P_deposit.Validator = validation.NewRegexp(`^\d{1,}\.\d{1,5}$|^[^0]\d{0,}$`, "Int or float required")
+	Owner.P_deposit = dwidget.DeroAmtEntry("", 0.1, 1)
+	Owner.P_deposit.SetPlaceHolder("Deposit Amount:")
+	Owner.P_deposit.AllowFloat = true
+	Owner.P_deposit.Wrapping = fyne.TextTruncate
+	Owner.P_deposit.Validator = validation.NewRegexp(`^\d{1,}\.\d{1,5}$|^[^0]\d{0,}$`, "Int or float required")
 
 	reset := window.Content().(*fyne.Container).Objects[2]
 
-	PS_Control.P_set = widget.NewButton("Set Prediction", func() {
-		if PS_Control.P_deposit.Validate() == nil && PS_Control.P_amt.Validate() == nil && PS_Control.P_end.Validate() == nil && PS_Control.P_mark.Validate() == nil {
+	Owner.P_set = widget.NewButton("Set Prediction", func() {
+		if Owner.P_deposit.Validate() == nil && Owner.P_amt.Validate() == nil && Owner.P_end.Validate() == nil && Owner.P_mark.Validate() == nil {
 			if len(Predict.Contract) == 64 {
 				window.Content().(*fyne.Container).Objects[2] = ownerConfirmAction(2, 100, window, reset)
 				window.Content().(*fyne.Container).Objects[2].Refresh()
@@ -137,14 +138,14 @@ func predictionOpts(window fyne.Window) fyne.CanvasObject {
 		}
 	})
 
-	PS_Control.P_cancel = widget.NewButton("Cancel", func() {
+	Owner.P_cancel = widget.NewButton("Cancel", func() {
 		window.Content().(*fyne.Container).Objects[2] = ownerConfirmAction(8, 0, window, reset)
 		window.Content().(*fyne.Container).Objects[2].Refresh()
 	})
 
-	PS_Control.P_cancel.Hide()
+	Owner.P_cancel.Hide()
 
-	PS_Control.P_post = widget.NewButton("Post", func() {
+	Owner.P_post = widget.NewButton("Post", func() {
 		go SetPredictionPrices(rpc.Daemon.Connect)
 		var a float64
 		prediction := rpc.Display.Prediction
@@ -173,9 +174,9 @@ func predictionOpts(window fyne.Window) fyne.CanvasObject {
 
 	})
 
-	PS_Control.P_post.Hide()
+	Owner.P_post.Hide()
 
-	PS_Control.P_pay = widget.NewButton("Prediction Payout", func() {
+	Owner.P_pay = widget.NewButton("Prediction Payout", func() {
 		go SetPredictionPrices(rpc.Daemon.Connect)
 		var a float64
 		prediction := rpc.Display.Prediction
@@ -203,24 +204,24 @@ func predictionOpts(window fyne.Window) fyne.CanvasObject {
 		window.Content().(*fyne.Container).Objects[2].Refresh()
 	})
 
-	PS_Control.P_pay.Hide()
+	Owner.P_pay.Hide()
 
 	owner_p := container.NewVBox(
 		humanTimeConvert(),
 		layout.NewSpacer(),
-		PS_Control.P_Name,
-		PS_Control.P_end,
-		PS_Control.P_mark,
-		PS_Control.P_amt,
-		PS_Control.P_feed,
-		PS_Control.P_deposit,
-		PS_Control.P_set,
+		Owner.P_Name,
+		Owner.P_end,
+		Owner.P_mark,
+		Owner.P_amt,
+		Owner.P_feed,
+		Owner.P_deposit,
+		Owner.P_set,
 		layout.NewSpacer(),
-		PS_Control.P_cancel,
+		Owner.P_cancel,
 		layout.NewSpacer(),
-		PS_Control.P_post,
+		Owner.P_post,
 		layout.NewSpacer(),
-		PS_Control.P_pay,
+		Owner.P_pay,
 		layout.NewSpacer(),
 	)
 
@@ -231,7 +232,7 @@ func predictionOpts(window fyne.Window) fyne.CanvasObject {
 //   - Pass side menu window to reset to
 func sportsOpts(window fyne.Window) fyne.CanvasObject {
 	options := []string{}
-	PS_Control.S_game = widget.NewSelect(options, func(s string) {
+	Owner.S_game = widget.NewSelect(options, func(s string) {
 		var date string
 		game := strings.Split(s, "   ")
 		for i := range s {
@@ -240,21 +241,21 @@ func sportsOpts(window fyne.Window) fyne.CanvasObject {
 			}
 		}
 		comp := date[0:4] + date[5:7] + date[8:10]
-		GetGameEnd(comp, game[1], PS_Control.S_league.Text)
+		GetGameEnd(comp, game[1], Owner.S_league.Text)
 	})
-	PS_Control.S_game.PlaceHolder = "Game:"
+	Owner.S_game.PlaceHolder = "Game:"
 
 	leagues := []string{"EPL", "MLS", "NBA", "NFL", "NHL", "MLB", "Bellator", "UFC"}
-	PS_Control.S_league = widget.NewSelectEntry(leagues)
-	PS_Control.S_league.OnChanged = func(s string) {
-		PS_Control.S_game.Options = []string{}
-		PS_Control.S_game.Selected = ""
+	Owner.S_league = widget.NewSelectEntry(leagues)
+	Owner.S_league.OnChanged = func(s string) {
+		Owner.S_game.Options = []string{}
+		Owner.S_game.Selected = ""
 		if s == "Bellator" || s == "UFC" {
-			PS_Control.S_game.PlaceHolder = "Fight:"
+			Owner.S_game.PlaceHolder = "Fight:"
 		} else {
-			PS_Control.S_game.PlaceHolder = "Game:"
+			Owner.S_game.PlaceHolder = "Game:"
 		}
-		PS_Control.S_game.Refresh()
+		Owner.S_game.Refresh()
 		switch s {
 		case "EPL":
 			go GetCurrentWeek("EPL")
@@ -276,35 +277,35 @@ func sportsOpts(window fyne.Window) fyne.CanvasObject {
 
 		}
 
-		PS_Control.S_feed.SetText("dReams Client")
-		PS_Control.S_feed.Refresh()
+		Owner.S_feed.SetText("dReams Client")
+		Owner.S_feed.Refresh()
 	}
-	PS_Control.S_league.SetPlaceHolder("League:")
+	Owner.S_league.SetPlaceHolder("League:")
 
-	PS_Control.S_end = dwidget.DeroAmtEntry("", 1, 0)
-	PS_Control.S_end.SetPlaceHolder("Closes At:")
-	PS_Control.S_end.Validator = validation.NewRegexp(`^\d{10,}$`, "Unix time required")
+	Owner.S_end = dwidget.DeroAmtEntry("", 1, 0)
+	Owner.S_end.SetPlaceHolder("Closes At:")
+	Owner.S_end.Validator = validation.NewRegexp(`^\d{10,}$`, "Unix time required")
 
-	PS_Control.S_amt = dwidget.DeroAmtEntry("", 0.1, 1)
-	PS_Control.S_amt.SetPlaceHolder("Minimum Amount:")
-	PS_Control.S_amt.AllowFloat = true
-	PS_Control.S_amt.Wrapping = fyne.TextTruncate
-	PS_Control.S_amt.Validator = validation.NewRegexp(`^\d{1,}\.\d{1,5}$|^[^0]\d{0,}$`, "Int or float required")
+	Owner.S_amt = dwidget.DeroAmtEntry("", 0.1, 1)
+	Owner.S_amt.SetPlaceHolder("Minimum Amount:")
+	Owner.S_amt.AllowFloat = true
+	Owner.S_amt.Wrapping = fyne.TextTruncate
+	Owner.S_amt.Validator = validation.NewRegexp(`^\d{1,}\.\d{1,5}$|^[^0]\d{0,}$`, "Int or float required")
 
 	feeds := []string{"dReams Client"}
-	PS_Control.S_feed = widget.NewSelectEntry(feeds)
-	PS_Control.S_feed.SetPlaceHolder("Feed:")
+	Owner.S_feed = widget.NewSelectEntry(feeds)
+	Owner.S_feed.SetPlaceHolder("Feed:")
 
-	PS_Control.S_deposit = dwidget.DeroAmtEntry("", 0.1, 1)
-	PS_Control.S_deposit.SetPlaceHolder("Deposit Amount:")
-	PS_Control.S_deposit.AllowFloat = true
-	PS_Control.S_deposit.Wrapping = fyne.TextTruncate
-	PS_Control.S_deposit.Validator = validation.NewRegexp(`^\d{1,}\.\d{1,5}$|^[^0]\d{0,}$`, "Int or float required")
+	Owner.S_deposit = dwidget.DeroAmtEntry("", 0.1, 1)
+	Owner.S_deposit.SetPlaceHolder("Deposit Amount:")
+	Owner.S_deposit.AllowFloat = true
+	Owner.S_deposit.Wrapping = fyne.TextTruncate
+	Owner.S_deposit.Validator = validation.NewRegexp(`^\d{1,}\.\d{1,5}$|^[^0]\d{0,}$`, "Int or float required")
 
 	reset := window.Content().(*fyne.Container).Objects[2]
 
-	PS_Control.S_set = widget.NewButton("Set Game", func() {
-		if PS_Control.S_deposit.Validate() == nil && PS_Control.S_amt.Validate() == nil && PS_Control.S_end.Validate() == nil {
+	Owner.S_set = widget.NewButton("Set Game", func() {
+		if Owner.S_deposit.Validate() == nil && Owner.S_amt.Validate() == nil && Owner.S_end.Validate() == nil {
 			if len(Sports.Contract) == 64 {
 				window.Content().(*fyne.Container).Objects[2] = ownerConfirmAction(1, 100, window, reset)
 				window.Content().(*fyne.Container).Objects[2].Refresh()
@@ -312,15 +313,15 @@ func sportsOpts(window fyne.Window) fyne.CanvasObject {
 		}
 	})
 
-	PS_Control.S_cancel = widget.NewButton("Cancel", func() {
+	Owner.S_cancel = widget.NewButton("Cancel", func() {
 		window.Content().(*fyne.Container).Objects[2] = ownerConfirmAction(9, 0, window, reset)
 		window.Content().(*fyne.Container).Objects[2].Refresh()
 	})
 
-	PS_Control.S_cancel.Hide()
+	Owner.S_cancel.Hide()
 
-	PS_Control.Payout_n = widget.NewSelectEntry([]string{})
-	PS_Control.Payout_n.SetPlaceHolder("Game #")
+	Owner.Payout_n = widget.NewSelectEntry([]string{})
+	Owner.Payout_n.SetPlaceHolder("Game #")
 
 	sports_confirm := widget.NewButton("Sports Payout", func() {
 		if len(Sports.Contract) == 64 {
@@ -332,17 +333,17 @@ func sportsOpts(window fyne.Window) fyne.CanvasObject {
 	sports := container.NewVBox(
 		humanTimeConvert(),
 		layout.NewSpacer(),
-		PS_Control.S_league,
-		PS_Control.S_game,
-		PS_Control.S_end,
-		PS_Control.S_amt,
-		PS_Control.S_feed,
-		PS_Control.S_deposit,
-		PS_Control.S_set,
+		Owner.S_league,
+		Owner.S_game,
+		Owner.S_end,
+		Owner.S_amt,
+		Owner.S_feed,
+		Owner.S_deposit,
+		Owner.S_set,
 		layout.NewSpacer(),
-		PS_Control.S_cancel,
+		Owner.S_cancel,
 		layout.NewSpacer(),
-		PS_Control.Payout_n,
+		Owner.Payout_n,
 		sports_confirm,
 		layout.NewSpacer())
 
@@ -441,35 +442,35 @@ func serviceOpts(window fyne.Window) fyne.CanvasObject {
 		}
 	})
 
-	PS_Control.Service_pay = widget.NewCheck("Payouts", func(b bool) {
+	Owner.Service_pay = widget.NewCheck("Payouts", func(b bool) {
 		if b {
-			PS_Control.Payout_on = true
+			Owner.Payout_on = true
 		} else {
-			PS_Control.Payout_on = false
+			Owner.Payout_on = false
 		}
 	})
 
-	if PS_Control.Payout_on {
-		PS_Control.Service_pay.SetChecked(true)
-		PS_Control.Service_pay.Disable()
+	if Owner.Payout_on {
+		Owner.Service_pay.SetChecked(true)
+		Owner.Service_pay.Disable()
 	}
 
-	PS_Control.Transactions = widget.NewCheck("Transactions", func(b bool) {
+	Owner.Transactions = widget.NewCheck("Transactions", func(b bool) {
 		if b {
-			PS_Control.Transact_on = true
+			Owner.Transact_on = true
 		} else {
-			PS_Control.Transact_on = false
+			Owner.Transact_on = false
 		}
 	})
 
-	if PS_Control.Transact_on {
-		PS_Control.Transactions.SetChecked(true)
-		PS_Control.Transactions.Disable()
+	if Owner.Transact_on {
+		Owner.Transactions.SetChecked(true)
+		Owner.Transactions.Disable()
 	}
 
 	reset := window.Content().(*fyne.Container).Objects[2]
 
-	PS_Control.Run_service = widget.NewButton("Run Service", func() {
+	Owner.Run_service = widget.NewButton("Run Service", func() {
 		if !rpc.Wallet.Service {
 			if entry.Validate() == nil {
 				if !height.Checked {
@@ -479,11 +480,11 @@ func serviceOpts(window fyne.Window) fyne.CanvasObject {
 					}
 				}
 
-				if PS_Control.Service_pay.Checked || PS_Control.Transactions.Checked {
+				if Owner.Service_pay.Checked || Owner.Transactions.Checked {
 					go func() {
 						rpc.Wallet.Service = true
-						PS_Control.Run_service.Hide()
-						window.Content().(*fyne.Container).Objects[2] = serviceRunConfirm(start, PS_Control.Service_pay.Checked, PS_Control.Transactions.Checked, window, reset)
+						Owner.Run_service.Hide()
+						window.Content().(*fyne.Container).Objects[2] = serviceRunConfirm(start, Owner.Service_pay.Checked, Owner.Transactions.Checked, window, reset)
 						window.Content().(*fyne.Container).Objects[2].Refresh()
 					}()
 				} else {
@@ -498,7 +499,7 @@ func serviceOpts(window fyne.Window) fyne.CanvasObject {
 	})
 
 	if rpc.Wallet.Service || Service.Processing {
-		PS_Control.Run_service.Hide()
+		Owner.Run_service.Hide()
 	}
 
 	stop := widget.NewButton("Stop Service", func() {
@@ -523,12 +524,12 @@ func serviceOpts(window fyne.Window) fyne.CanvasObject {
 		layout.NewSpacer(),
 		height,
 		entry,
-		PS_Control.Service_pay,
-		PS_Control.Transactions,
+		Owner.Service_pay,
+		Owner.Transactions,
 		debug,
 		container.NewAdaptiveGrid(2,
 			stop,
-			PS_Control.Run_service,
+			Owner.Run_service,
 		))
 
 	return box
@@ -592,9 +593,9 @@ func updateOpts() fyne.CanvasObject {
 		if new_owner.Validate() == nil {
 			switch sc.Selected {
 			case "Prediction":
-				rpc.AddOwner(Predict.Contract, new_owner.Text)
+				AddOwner(Predict.Contract, new_owner.Text)
 			case "Sports":
-				rpc.AddOwner(Sports.Contract, new_owner.Text)
+				AddOwner(Sports.Contract, new_owner.Text)
 			default:
 				log.Println("[dReams] Select contract")
 			}
@@ -610,9 +611,9 @@ func updateOpts() fyne.CanvasObject {
 	remove_owner := widget.NewButton("Remove Owner", func() {
 		switch sc.Selected {
 		case "Prediction":
-			rpc.RemoveOwner(Predict.Contract, rpc.StringToInt(owner_num.Text))
+			RemoveOwner(Predict.Contract, rpc.StringToInt(owner_num.Text))
 		case "Sports":
-			rpc.RemoveOwner(Sports.Contract, rpc.StringToInt(owner_num.Text))
+			RemoveOwner(Sports.Contract, rpc.StringToInt(owner_num.Text))
 		default:
 			log.Println("[dReams] Select contract")
 		}
@@ -622,10 +623,10 @@ func updateOpts() fyne.CanvasObject {
 		if a.Validate() == nil && b.Validate() == nil && c.Validate() == nil {
 			switch sc.Selected {
 			case "Prediction":
-				rpc.VarUpdate(Predict.Contract, rpc.StringToInt(a.Text), rpc.StringToInt(b.Text), rpc.StringToInt(c.Text), 30, 0)
+				VarUpdate(Predict.Contract, rpc.StringToInt(a.Text), rpc.StringToInt(b.Text), rpc.StringToInt(c.Text), 30, 0)
 			case "Sports":
 				if hl.Validate() == nil {
-					rpc.VarUpdate(Sports.Contract, rpc.StringToInt(a.Text), rpc.StringToInt(b.Text), rpc.StringToInt(c.Text), 30, rpc.StringToInt(hl.Text))
+					VarUpdate(Sports.Contract, rpc.StringToInt(a.Text), rpc.StringToInt(b.Text), rpc.StringToInt(c.Text), 30, rpc.StringToInt(hl.Text))
 				}
 			default:
 				log.Println("[dReams] Select contract")
@@ -675,7 +676,7 @@ func ConfirmAction(i int, teamA, teamB string, obj []fyne.CanvasObject, tabs *co
 		confirm_display.SetText(fmt.Sprintf("SCID:\n\n%s\n\nHigher prediction for %.5f Dero\n\nConfirm", p_scid, amt))
 	case 3:
 		game := Sports.Game_select.Selected
-		val := float64(menu.GetSportsAmt(s_scid, split[0]))
+		val := float64(GetSportsAmt(s_scid, split[0]))
 		var x string
 
 		switch multi {
@@ -690,7 +691,7 @@ func ConfirmAction(i int, teamA, teamB string, obj []fyne.CanvasObject, tabs *co
 		confirm_display.SetText(fmt.Sprintf("SCID:\n\n%s\n\nBetting on Game # %s\n\n%s for %s Dero\n\nConfirm", s_scid, game, teamA, x))
 	case 4:
 		game := Sports.Game_select.Selected
-		val := float64(menu.GetSportsAmt(s_scid, split[0]))
+		val := float64(GetSportsAmt(s_scid, split[0]))
 		var x string
 
 		switch multi {
@@ -716,13 +717,13 @@ func ConfirmAction(i int, teamA, teamB string, obj []fyne.CanvasObject, tabs *co
 	confirm_button := widget.NewButton("Confirm", func() {
 		switch i {
 		case 1:
-			rpc.PredictLower(p_scid, "")
+			PredictLower(p_scid, "")
 		case 2:
-			rpc.PredictHigher(p_scid, "")
+			PredictHigher(p_scid, "")
 		case 3:
-			rpc.PickTeam(s_scid, multi, split[0], menu.GetSportsAmt(s_scid, split[0]), 0)
+			PickTeam(s_scid, multi, split[0], GetSportsAmt(s_scid, split[0]), 0)
 		case 4:
-			rpc.PickTeam(s_scid, multi, split[0], menu.GetSportsAmt(s_scid, split[0]), 1)
+			PickTeam(s_scid, multi, split[0], GetSportsAmt(s_scid, split[0]), 1)
 		default:
 
 		}
@@ -812,26 +813,6 @@ func humanTimeConvert() fyne.CanvasObject {
 	return box
 }
 
-// Owner menu open button for prediction tab
-func OwnerButtonP() fyne.CanvasObject {
-	menu.Control.Bet_menu_p = widget.NewButton("Owner Options", func() {
-		go ownersMenu()
-	})
-	menu.Control.Bet_menu_p.Hide()
-
-	return menu.Control.Bet_menu_p
-}
-
-// Owner menu open button for sports tab
-func OwnerButtonS() fyne.CanvasObject {
-	menu.Control.Bet_menu_s = widget.NewButton("Owner Options", func() {
-		go ownersMenu()
-	})
-	menu.Control.Bet_menu_s.Hide()
-
-	return menu.Control.Bet_menu_s
-}
-
 // Check dPrediction SCID for live status
 func CheckPredictionStatus() {
 	if rpc.Daemon.IsConnected() && menu.Gnomes.IsReady() {
@@ -842,21 +823,21 @@ func CheckPredictionStatus() {
 		if ends != nil && time_a != nil && time_c != nil {
 			now := uint64(time.Now().Unix())
 			if now >= ends[0] && now <= ends[0]+time_a[0] && mark == nil {
-				PS_Control.P_post.Show()
+				Owner.P_post.Show()
 			} else {
-				PS_Control.P_post.Hide()
+				Owner.P_post.Hide()
 			}
 
 			if now >= ends[0]+time_c[0] {
-				PS_Control.P_pay.Show()
+				Owner.P_pay.Show()
 			} else {
-				PS_Control.P_pay.Hide()
+				Owner.P_pay.Hide()
 			}
 		}
 
 		if ends == nil {
-			PS_Control.P_post.Hide()
-			PS_Control.P_pay.Hide()
+			Owner.P_post.Hide()
+			Owner.P_pay.Hide()
 		}
 	}
 }
@@ -872,7 +853,7 @@ func GetActiveGames() {
 		for k := range contracts {
 			keys[i] = k
 			owner, _ := menu.Gnomes.GetSCIDValuesByKey(keys[i], "owner")
-			if (owner != nil && owner[0] == rpc.Wallet.Address) || menu.VerifyBetSigner(keys[i]) {
+			if (owner != nil && owner[0] == rpc.Wallet.Address) || VerifyBetSigner(keys[i]) {
 				if len(keys[i]) == 64 {
 					_, init := menu.Gnomes.GetSCIDValuesByKey(keys[i], "s_init")
 					if init != nil {
@@ -893,7 +874,7 @@ func GetActiveGames() {
 				i++
 			}
 		}
-		PS_Control.Payout_n.SetOptions(options)
+		Owner.Payout_n.SetOptions(options)
 	}
 }
 
@@ -902,12 +883,12 @@ func ownersMenu() {
 	ow := fyne.CurrentApp().NewWindow("Bet Contracts")
 	ow.Resize(fyne.NewSize(330, 700))
 	ow.SetIcon(bundle.ResourceDReamsIconAltPng)
-	menu.Control.Bet_menu_p.Hide()
-	menu.Control.Bet_menu_s.Hide()
+	Predict.Settings.Menu.Hide()
+	Sports.Settings.Menu.Hide()
 	quit := make(chan struct{})
 	ow.SetCloseIntercept(func() {
-		menu.Control.Bet_menu_p.Show()
-		menu.Control.Bet_menu_s.Show()
+		Predict.Settings.Menu.Show()
+		Sports.Settings.Menu.Show()
 		quit <- struct{}{}
 		ow.Close()
 	})
@@ -945,9 +926,9 @@ func ownersMenu() {
 
 			switch owner_tabs.SelectedIndex() {
 			case 0:
-				PS_Control.P_end.SetText(strconv.Itoa(r))
+				Owner.P_end.SetText(strconv.Itoa(r))
 			case 1:
-				PS_Control.S_end.SetText(strconv.Itoa(r))
+				Owner.S_end.SetText(strconv.Itoa(r))
 			}
 		}
 	})
@@ -963,15 +944,15 @@ func ownersMenu() {
 				}
 
 				if rpc.Wallet.Service {
-					PS_Control.Run_service.Hide()
-					PS_Control.Service_pay.Disable()
-					PS_Control.Transactions.Disable()
+					Owner.Run_service.Hide()
+					Owner.Service_pay.Disable()
+					Owner.Transactions.Disable()
 				}
 
 				if !rpc.Wallet.Service && !Service.Processing {
-					PS_Control.Run_service.Show()
-					PS_Control.Service_pay.Enable()
-					PS_Control.Transactions.Enable()
+					Owner.Run_service.Show()
+					Owner.Service_pay.Enable()
+					Owner.Transactions.Enable()
 				}
 
 				CheckPredictionStatus()
@@ -980,27 +961,27 @@ func ownersMenu() {
 				clock.SetText("Unix Time: " + utime)
 				if now.Unix() < rpc.Predict.Buffer {
 					if rpc.Predict.Init {
-						PS_Control.P_set.Hide()
-						PS_Control.P_cancel.Show()
+						Owner.P_set.Hide()
+						Owner.P_cancel.Show()
 					} else {
-						PS_Control.P_set.Show()
-						PS_Control.P_cancel.Hide()
+						Owner.P_set.Show()
+						Owner.P_cancel.Hide()
 					}
 				} else {
-					PS_Control.P_cancel.Hide()
+					Owner.P_cancel.Hide()
 					if rpc.Predict.Init {
-						PS_Control.P_set.Hide()
+						Owner.P_set.Hide()
 					} else {
-						PS_Control.P_set.Show()
+						Owner.P_set.Show()
 					}
 				}
 
 				if Sports.Buffer {
-					PS_Control.S_cancel.Show()
-					PS_Control.S_set.Hide()
+					Owner.S_cancel.Show()
+					Owner.S_set.Hide()
 				} else {
-					PS_Control.S_cancel.Hide()
-					PS_Control.S_set.Show()
+					Owner.S_cancel.Hide()
+					Owner.S_set.Show()
 				}
 			case <-quit:
 				ticker.Stop()
@@ -1040,7 +1021,7 @@ func ownersMenu() {
 		if stored, ok := rpc.FindStringKey(rpc.RatingSCID, "prediction_markets", rpc.Daemon.Rpc).(string); ok {
 			if h, err := hex.DecodeString(stored); err == nil {
 				if err = json.Unmarshal(h, &markets); err == nil {
-					PS_Control.P_Name.SetOptions(markets)
+					Owner.P_Name.SetOptions(markets)
 				}
 			}
 		}
@@ -1049,7 +1030,7 @@ func ownersMenu() {
 		if stored, ok := rpc.FindStringKey(rpc.RatingSCID, "sports_leagues", rpc.Daemon.Rpc).(string); ok {
 			if h, err := hex.DecodeString(stored); err == nil {
 				if err = json.Unmarshal(h, &leagues); err == nil {
-					PS_Control.S_league.SetOptions(leagues)
+					Owner.S_league.SetOptions(leagues)
 				}
 			}
 		}
@@ -1069,16 +1050,16 @@ func ownerConfirmAction(i int, p float64, window fyne.Window, reset fyne.CanvasO
 
 	pre := rpc.Display.Prediction
 	p_scid := Predict.Contract
-	p_pre := PS_Control.P_Name.Text
-	p_amt := PS_Control.P_amt.Text
+	p_pre := Owner.P_Name.Text
+	p_amt := Owner.P_amt.Text
 	if p_amt_f, err := strconv.ParseFloat(p_amt, 64); err == nil {
 		p_amt = fmt.Sprintf("%.5f", p_amt_f)
 	}
-	p_mark := PS_Control.P_mark.Text
-	p_end := PS_Control.P_end.Text
+	p_mark := Owner.P_mark.Text
+	p_end := Owner.P_end.Text
 	p_end_time, _ := rpc.MsToTime(p_end + "000")
-	p_feed := PS_Control.P_feed.Text
-	p_dep := PS_Control.P_deposit.Text
+	p_feed := Owner.P_feed.Text
+	p_dep := Owner.P_deposit.Text
 	if p_dep_f, err := strconv.ParseFloat(p_dep, 64); err == nil {
 		p_dep = fmt.Sprintf("%.5f", p_dep_f)
 	}
@@ -1091,24 +1072,24 @@ func ownerConfirmAction(i int, p float64, window fyne.Window, reset fyne.CanvasO
 
 	var s_game string
 	s_scid := Sports.Contract
-	game_split := strings.Split(PS_Control.S_game.Selected, "   ")
+	game_split := strings.Split(Owner.S_game.Selected, "   ")
 	if len(game_split) > 1 {
 		s_game = game_split[1]
 	} else {
 		s_game = game_split[0]
 	}
 
-	s_league := PS_Control.S_league.Text
-	s_amt := PS_Control.S_amt.Text
+	s_league := Owner.S_league.Text
+	s_amt := Owner.S_amt.Text
 	if s_amt_f, err := strconv.ParseFloat(s_amt, 64); err == nil {
 		s_amt = fmt.Sprintf("%.5f", s_amt_f)
 	}
-	s_end := PS_Control.S_end.Text
+	s_end := Owner.S_end.Text
 	s_end_time, _ := rpc.MsToTime(s_end + "000")
-	s_feed := PS_Control.S_feed.Text
-	n_split := strings.Split(PS_Control.Payout_n.Text, "   ")
+	s_feed := Owner.S_feed.Text
+	n_split := strings.Split(Owner.Payout_n.Text, "   ")
 	s_pay_n := n_split[0]
-	s_dep := PS_Control.S_deposit.Text
+	s_dep := Owner.S_deposit.Text
 	if s_dep_f, err := strconv.ParseFloat(s_dep, 64); err == nil {
 		s_dep = fmt.Sprintf("%.5f", s_dep_f)
 	}
@@ -1121,10 +1102,10 @@ func ownerConfirmAction(i int, p float64, window fyne.Window, reset fyne.CanvasO
 		}
 		if n_split[1] == "Bellator" || n_split[1] == "UFC" {
 			win, team = GetMmaWinner(n_split[2], n_split[1])
-			payout_str = fmt.Sprintf("SCID:\n\n%s\n\nFight: %s\n\nWinner: %s\n\nConfirm", s_scid, PS_Control.Payout_n.Text, team)
+			payout_str = fmt.Sprintf("SCID:\n\n%s\n\nFight: %s\n\nWinner: %s\n\nConfirm", s_scid, Owner.Payout_n.Text, team)
 		} else {
 			win, team, a_score, b_score = GetWinner(n_split[2], n_split[1])
-			payout_str = fmt.Sprintf("SCID:\n\n%s\n\nGame: %s\n\n%s: %s\n%s: %s\n\nWinner: %s\n\nConfirm", s_scid, PS_Control.Payout_n.Text, menu.TrimTeamA(n_split[2]), a_score, menu.TrimTeamB(n_split[2]), b_score, team)
+			payout_str = fmt.Sprintf("SCID:\n\n%s\n\nGame: %s\n\n%s: %s\n%s: %s\n\nWinner: %s\n\nConfirm", s_scid, Owner.Payout_n.Text, TrimTeamA(n_split[2]), a_score, TrimTeamB(n_split[2]), b_score, team)
 		}
 	}
 
@@ -1205,46 +1186,46 @@ func ownerConfirmAction(i int, p float64, window fyne.Window, reset fyne.CanvasO
 	})
 
 	confirm_button := widget.NewButton("Confirm", func() {
-		PS_Control.Payout_n.SetText("")
+		Owner.Payout_n.SetText("")
 		switch i {
 		case 1:
-			rpc.SetSports(rpc.StringToInt(s_end), rpc.ToAtomic(s_amt, 5), rpc.ToAtomic(s_dep, 5), s_scid, s_league, s_game, s_feed)
+			SetSports(rpc.StringToInt(s_end), rpc.ToAtomic(s_amt, 5), rpc.ToAtomic(s_dep, 5), s_scid, s_league, s_game, s_feed)
 		case 2:
 			if onChainPrediction(pre) == 2 || onChainPrediction(p_pre) == 2 { /// decimal of one place for block time
-				rpc.SetPrediction(rpc.StringToInt(p_end), rpc.StringToInt(p_mark)*10000, rpc.ToAtomic(p_amt, 5), rpc.ToAtomic(p_dep, 5), p_scid, p_pre, p_feed)
+				SetPrediction(rpc.StringToInt(p_end), rpc.StringToInt(p_mark)*10000, rpc.ToAtomic(p_amt, 5), rpc.ToAtomic(p_dep, 5), p_scid, p_pre, p_feed)
 			} else {
-				rpc.SetPrediction(rpc.StringToInt(p_end), rpc.StringToInt(p_mark), rpc.ToAtomic(p_amt, 5), rpc.ToAtomic(p_dep, 5), p_scid, p_pre, p_feed)
+				SetPrediction(rpc.StringToInt(p_end), rpc.StringToInt(p_mark), rpc.ToAtomic(p_amt, 5), rpc.ToAtomic(p_dep, 5), p_scid, p_pre, p_feed)
 			}
 		case 3:
-			rpc.EndSports(s_scid, s_pay_n, win)
+			EndSports(s_scid, s_pay_n, win)
 		case 4:
-			rpc.PostPrediction(p_scid, int(p))
+			PostPrediction(p_scid, int(p))
 		case 5:
-			rpc.EndPrediction(p_scid, int(p))
+			EndPrediction(p_scid, int(p))
 		case 6:
 			switch onChainPrediction(pre) {
 			case 1:
-				rpc.PostPrediction(p_scid, int(p))
+				PostPrediction(p_scid, int(p))
 			case 2:
-				rpc.PostPrediction(p_scid, int(p*100000))
+				PostPrediction(p_scid, int(p*100000))
 			case 3:
-				rpc.PostPrediction(p_scid, int(p))
+				PostPrediction(p_scid, int(p))
 			default:
 			}
 		case 7:
 			switch onChainPrediction(pre) {
 			case 1:
-				rpc.EndPrediction(p_scid, int(p))
+				EndPrediction(p_scid, int(p))
 			case 2:
-				rpc.EndPrediction(p_scid, int(p*100000))
+				EndPrediction(p_scid, int(p*100000))
 			case 3:
-				rpc.EndPrediction(p_scid, int(p))
+				EndPrediction(p_scid, int(p))
 			default:
 			}
 		case 8:
-			rpc.CancelInitiatedBet(Predict.Contract, 0)
+			CancelInitiatedBet(Predict.Contract, 0)
 		case 9:
-			rpc.CancelInitiatedBet(Sports.Contract, 1)
+			CancelInitiatedBet(Sports.Contract, 1)
 		default:
 
 		}
@@ -1256,6 +1237,176 @@ func ownerConfirmAction(i int, p float64, window fyne.Window, reset fyne.CanvasO
 	display := container.NewVBox(layout.NewSpacer(), confirm_display, layout.NewSpacer())
 	options := container.NewAdaptiveGrid(2, confirm_button, cancel_button)
 	content := container.NewBorder(nil, options, nil, nil, display)
+
+	return container.NewMax(content)
+}
+
+// Confirmation for dPrediction contract installs
+func newPredictConfirm(c int, obj []fyne.CanvasObject, tabs *container.AppTabs) fyne.CanvasObject {
+	var text string
+	gas_fee := 0.125
+	unlock_fee := float64(rpc.UnlockFee) / 100000
+	switch c {
+	case 1:
+		text = `You are about to unlock and install your first dPrediction contract 
+		
+To help support the project, there is a ` + fmt.Sprintf("%.5f", unlock_fee) + ` DERO donation attached to preform this action
+
+Unlocking dPrediction or dSports gives you unlimited access to bet contract uploads and all base level owner features
+
+Total transaction will be ` + fmt.Sprintf("%0.5f", unlock_fee+gas_fee) + ` DERO (0.12500 gas fee for contract install)
+
+
+Select a public or private contract
+
+Public will show up in indexed list of contracts
+
+Private will not show up in the list`
+	case 2:
+		text = `You are about to install a new dPrediction contract
+
+Gas fee to install contract is 0.12500 DERO
+
+
+Select a public or private contract
+
+Public will show up in indexed list of contracts
+
+Private will not show up in the list`
+	}
+
+	label := widget.NewLabel(text)
+	label.Wrapping = fyne.TextWrapWord
+	label.Alignment = fyne.TextAlignCenter
+
+	var choice *widget.Select
+
+	pre_button := widget.NewButton("Install", func() {
+		if choice.SelectedIndex() < 2 && choice.SelectedIndex() >= 0 {
+			UploadBetContract(true, choice.SelectedIndex())
+		}
+
+		obj[1] = tabs
+		obj[1].Refresh()
+	})
+
+	pre_button.Hide()
+
+	options := []string{"Public", "Private"}
+	choice = widget.NewSelect(options, func(s string) {
+		if s == "Public" || s == "Private" {
+			pre_button.Show()
+		} else {
+			pre_button.Hide()
+		}
+	})
+
+	cancel_button := widget.NewButton("Cancel", func() {
+		obj[1] = tabs
+		obj[1].Refresh()
+	})
+
+	left := container.NewVBox(pre_button)
+	right := container.NewVBox(cancel_button)
+	buttons := container.NewAdaptiveGrid(3, left, container.NewVBox(layout.NewSpacer()), right)
+	actions := container.NewVBox(choice, buttons)
+	info_box := container.NewVBox(layout.NewSpacer(), label, layout.NewSpacer())
+
+	content := container.NewBorder(nil, actions, nil, nil, info_box)
+
+	go func() {
+		for rpc.IsReady() {
+			time.Sleep(time.Second)
+		}
+
+		obj[1] = tabs
+		obj[1].Refresh()
+	}()
+
+	return container.NewMax(content)
+}
+
+// Confirmation for dSports contract installs
+func newSportsConfirm(c int, obj []fyne.CanvasObject, tabs *container.AppTabs) fyne.CanvasObject {
+	var text string
+	gas_fee := 0.14
+	unlock_fee := float64(rpc.UnlockFee) / 100000
+	switch c {
+	case 1:
+		text = `You are about to unlock and install your first dSports contract
+		
+To help support the project, there is a ` + fmt.Sprintf("%.5f", unlock_fee) + ` DERO donation attached to preform this action
+
+Unlocking dPrediction or dSports gives you unlimited access to bet contract uploads and all base level owner features
+
+Total transaction will be ` + fmt.Sprintf("%0.5f", unlock_fee+gas_fee) + ` DERO (0.14000 gas fee for contract install)
+
+
+Select a public or private contract
+
+Public will show up in indexed list of contracts
+
+Private will not show up in the list`
+	case 2:
+		text = `You are about to install a new dSports contract
+
+Gas fee to install contract is 0.14000 DERO
+
+
+Select a public or private contract
+
+Public will show up in indexed list of contracts
+
+Private will not show up in the list`
+	}
+
+	label := widget.NewLabel(text)
+	label.Wrapping = fyne.TextWrapWord
+	label.Alignment = fyne.TextAlignCenter
+
+	var choice *widget.Select
+
+	sports_button := widget.NewButton("Install", func() {
+		if choice.SelectedIndex() < 2 && choice.SelectedIndex() >= 0 {
+			UploadBetContract(false, choice.SelectedIndex())
+		}
+
+		obj[1] = tabs
+		obj[1].Refresh()
+	})
+
+	sports_button.Hide()
+
+	options := []string{"Public", "Private"}
+	choice = widget.NewSelect(options, func(s string) {
+		if s == "Public" || s == "Private" {
+			sports_button.Show()
+		} else {
+			sports_button.Hide()
+		}
+	})
+
+	cancel_button := widget.NewButton("Cancel", func() {
+		obj[1] = tabs
+		obj[1].Refresh()
+	})
+
+	left := container.NewVBox(sports_button)
+	right := container.NewVBox(cancel_button)
+	buttons := container.NewAdaptiveGrid(3, left, container.NewVBox(layout.NewSpacer()), right)
+	actions := container.NewVBox(choice, buttons)
+	info_box := container.NewVBox(layout.NewSpacer(), label, layout.NewSpacer())
+
+	content := container.NewBorder(nil, actions, nil, nil, info_box)
+
+	go func() {
+		for rpc.IsReady() {
+			time.Sleep(time.Second)
+		}
+
+		obj[1] = tabs
+		obj[1].Refresh()
+	}()
 
 	return container.NewMax(content)
 }

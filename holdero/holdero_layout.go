@@ -63,7 +63,7 @@ func placeContract(change_screen *fyne.Container, H *dwidget.DreamsItems, d drea
 			go func() {
 				if len(Round.Contract) == 64 {
 					FetchHolderoSC()
-					d.Menu_tabs.Contracts = false
+					tables_menu = false
 					d.Window.Content().(*fyne.Container).Objects[1].(*fyne.Container).Objects[1].(*container.AppTabs).Selected().Content = change_screen
 					d.Window.Content().(*fyne.Container).Objects[1].(*fyne.Container).Objects[1].(*container.AppTabs).Selected().Content.Refresh()
 					tabs.SelectIndex(0)
@@ -159,13 +159,13 @@ func LayoutAllItems(h *dwidget.DreamsItems, d dreams.DreamsObject) *container.Sp
 	contract_change_screen := widget.NewButton("Tables", nil)
 	contract_change_screen.OnTapped = func() {
 		go func() {
-			d.Menu_tabs.Contracts = true
+			tables_menu = true
 			d.Window.Content().(*fyne.Container).Objects[1].(*fyne.Container).Objects[1].(*container.AppTabs).Selected().Content = contract_objs
 			d.Window.Content().(*fyne.Container).Objects[1].(*fyne.Container).Objects[1].(*container.AppTabs).Selected().Content.Refresh()
 		}()
 	}
 
-	d.Menu_tabs.Contracts = true
+	tables_menu = true
 	holdero_objs = placeHoldero(contract_change_screen, h, d)
 	contract_objs = placeContract(holdero_objs, h, d)
 

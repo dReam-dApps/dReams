@@ -5,13 +5,16 @@ import (
 	"strconv"
 	"time"
 
-	"fyne.io/fyne/v2/container"
 	dreams "github.com/SixofClubsss/dReams"
 	"github.com/SixofClubsss/dReams/bundle"
 	"github.com/SixofClubsss/dReams/dwidget"
 	"github.com/SixofClubsss/dReams/menu"
 	"github.com/SixofClubsss/dReams/rpc"
+
+	"fyne.io/fyne/v2/container"
 )
+
+var tables_menu bool
 
 // Sets bet amount and current bet readout
 func ifBet(w, r uint64) {
@@ -333,7 +336,7 @@ func waitLabel(H *dwidget.DreamsItems) {
 
 // Refresh all Holdero gui objects
 func holderoRefresh(h *dwidget.DreamsItems, d dreams.DreamsObject, offset int) {
-	go ShowAvatar(d.Holdero)
+	go ShowAvatar(d.OnTab("Holdero"))
 	go refreshHolderoCards(Round.Cards.Local1, Round.Cards.Local2, d.Window)
 	if !Signal.Clicked {
 		if Round.ID == 0 && rpc.Wallet.IsConnected() {
@@ -402,13 +405,11 @@ func holderoRefresh(h *dwidget.DreamsItems, d dreams.DreamsObject, offset int) {
 		}
 	}
 
-	// put back
-	if d.Menu_tabs.Contracts {
+	if tables_menu {
 		if offset%3 == 0 {
 			go getTableStats(Round.Contract, false)
 		}
 	}
-	offset++
 
 	go func() {
 		refreshHolderoPlayers(h)

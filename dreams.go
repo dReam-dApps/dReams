@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/SixofClubsss/dReams/bundle"
 
@@ -22,22 +23,12 @@ type DreamsObject struct {
 	OS         string
 	Configure  bool
 	Menu       bool
-	Holdero    bool
-	Bacc       bool
-	Predict    bool
-	Sports     bool
-	Tarot      bool
+	Market     bool
 	Cli        bool
 	quit       chan struct{}
 	done       chan struct{}
 	receive    chan struct{}
 	channels   int
-	Menu_tabs  struct {
-		Wallet    bool
-		Contracts bool
-		Assets    bool
-		Market    bool
-	}
 }
 
 type AssetSelect struct {
@@ -48,7 +39,22 @@ type AssetSelect struct {
 }
 
 var active int
+var tab string
+var mu sync.RWMutex
 var Theme AssetSelect
+
+func (d *DreamsObject) SetTab(name string) {
+	mu.Lock()
+	tab = name
+	mu.Unlock()
+}
+
+func (d *DreamsObject) OnTab(name string) bool {
+	mu.RLock()
+	defer mu.RUnlock()
+
+	return tab == name
+}
 
 func (d *DreamsObject) SetChannels(i int) {
 	d.receive = make(chan struct{})

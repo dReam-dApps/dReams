@@ -80,12 +80,12 @@ func GnomonFilters() (filter []string) {
 	}
 
 	if Control.Dapp_list["dSports and dPredictions"] {
-		predict := rpc.GetPredictCode(0)
+		predict := rpc.GetSCCode(rpc.PredictSCID)
 		if predict != "" {
 			filter = append(filter, predict)
 		}
 
-		sports := rpc.GetSportsCode(0)
+		sports := rpc.GetSCCode(rpc.SportsSCID)
 		if sports != "" {
 			filter = append(filter, sports)
 		}
@@ -301,13 +301,6 @@ func GnomonState(windows, config bool, scan func(map[string]string)) {
 				Gnomes.Synced(true)
 				if !config && rpc.Wallet.IsConnected() && !Gnomes.Check {
 					Gnomes.Scanning(true)
-					if Control.Dapp_list["dSports and dPredictions"] {
-						go CheckBetContractOwners(contracts)
-						if !windows {
-							go PopulateSports(contracts)
-							go PopulatePredictions(contracts)
-						}
-					}
 
 					CheckWalletNames(rpc.Wallet.Address)
 					scan(contracts)
@@ -392,28 +385,6 @@ func CheckAllNFAs(gc bool, scids map[string]string) {
 	}
 }
 
-// Scan all bet contracts to verify if owner
-//   - Pass contracts from db store, can be nil arg
-func CheckBetContractOwners(contracts map[string]string) {
-	if Gnomes.IsReady() && !Gnomes.HasChecked() {
-		if contracts == nil {
-			contracts = Gnomes.GetAllOwnersAndSCIDs()
-		}
-		keys := make([]string, len(contracts))
-
-		i := 0
-		for k := range contracts {
-			keys[i] = k
-			verifyBetContractOwner(keys[i], "p")
-			verifyBetContractOwner(keys[i], "s")
-			if rpc.Wallet.BetOwner {
-				break
-			}
-			i++
-		}
-	}
-}
-
 // Get Gnomon headers of SCID
 func GetSCHeaders(scid string) []string {
 	if Gnomes.IsRunning() {
@@ -430,165 +401,6 @@ func GetSCHeaders(scid string) []string {
 		}
 	}
 	return nil
-}
-
-// Verify if wallet is owner on bet contract
-//   - Passed t defines sports or prediction contract
-func verifyBetContractOwner(scid, t string) {
-	if Gnomes.IsReady() {
-		if dev, _ := Gnomes.GetSCIDValuesByKey(scid, "dev"); dev != nil {
-			owner, _ := Gnomes.GetSCIDValuesByKey(scid, "owner")
-			_, init := Gnomes.GetSCIDValuesByKey(scid, t+"_init")
-
-			if owner != nil && init != nil {
-				if dev[0] == rpc.DevAddress && !rpc.Wallet.BetOwner {
-					SetBetOwner(owner[0])
-				}
-			}
-		}
-	}
-}
-
-// Verify if wallet is a co owner on bet contract
-func VerifyBetSigner(scid string) bool {
-	if Gnomes.IsReady() {
-		for i := 2; i < 10; i++ {
-			if !Gnomes.IsRunning() {
-				break
-			}
-
-			signer_addr, _ := Gnomes.GetSCIDValuesByKey(scid, "co_signer"+strconv.Itoa(i))
-			if signer_addr != nil {
-				if signer_addr[0] == rpc.Wallet.Address {
-					return true
-				}
-			}
-		}
-	}
-
-	return false
-}
-
-// Get info for bet contract by SCID
-//   - Passed t defines sports or prediction contract
-//   - Adding constructed header string to list, owned []string
-func checkBetContract(scid, t string, list, owned []string) ([]string, []string) {
-	if Gnomes.IsReady() {
-		if dev, _ := Gnomes.GetSCIDValuesByKey(scid, "dev"); dev != nil {
-			owner, _ := Gnomes.GetSCIDValuesByKey(scid, "owner")
-			_, init := Gnomes.GetSCIDValuesByKey(scid, t+"_init")
-
-			if owner != nil && init != nil {
-				if dev[0] == rpc.DevAddress {
-					headers := GetSCHeaders(scid)
-					name := "?"
-					desc := "?"
-					var hidden bool
-					_, restrict := Gnomes.GetSCIDValuesByKey(rpc.RatingSCID, "restrict")
-					_, rating := Gnomes.GetSCIDValuesByKey(rpc.RatingSCID, scid)
-
-					if restrict != nil && rating != nil {
-						Control.Lock()
-						Control.Contract_rating[scid] = rating[0]
-						Control.Unlock()
-						if rating[0] <= restrict[0] {
-							hidden = true
-						}
-					}
-
-					if headers != nil {
-						if headers[1] != "" {
-							desc = headers[1]
-						}
-
-						if headers[0] != "" {
-							name = " " + headers[0]
-						}
-
-						if headers[0] == "-" {
-							hidden = true
-						}
-					}
-
-					var co_signer bool
-					if VerifyBetSigner(scid) {
-						co_signer = true
-						if !Gnomes.Import {
-							Control.Bet_menu_p.Show()
-							Control.Bet_menu_s.Show()
-						}
-					}
-
-					if owner[0] == rpc.Wallet.Address || co_signer {
-						owned = append(owned, name+"   "+desc+"   "+scid)
-					}
-
-					if !hidden {
-						list = append(list, name+"   "+desc+"   "+scid)
-					}
-				}
-			}
-		}
-	}
-
-	return list, owned
-}
-
-// Populate all dReams dPrediction contracts
-//   - Pass contracts from db store, can be nil arg
-func PopulatePredictions(contracts map[string]string) {
-	if rpc.Daemon.IsConnected() && Gnomes.IsReady() {
-		list := []string{}
-		owned := []string{}
-		if contracts == nil {
-			contracts = Gnomes.GetAllOwnersAndSCIDs()
-		}
-		keys := make([]string, len(contracts))
-
-		i := 0
-		for k := range contracts {
-			keys[i] = k
-			list, owned = checkBetContract(keys[i], "p", list, owned)
-			i++
-		}
-
-		t := len(list)
-		list = append(list, " Contracts: "+strconv.Itoa(t))
-		sort.Strings(list)
-		Control.Predict_contracts = list
-
-		sort.Strings(owned)
-		Control.Predict_owned = owned
-
-	}
-}
-
-// Populate all dReams dSports contracts
-//   - Pass contracts from db store, can be nil arg
-func PopulateSports(contracts map[string]string) {
-	if rpc.Daemon.IsConnected() && Gnomes.IsReady() {
-		list := []string{}
-		owned := []string{}
-		if contracts == nil {
-			contracts = Gnomes.GetAllOwnersAndSCIDs()
-		}
-		keys := make([]string, len(contracts))
-
-		i := 0
-		for k := range contracts {
-			keys[i] = k
-			list, owned = checkBetContract(keys[i], "s", list, owned)
-			i++
-		}
-
-		t := len(list)
-		list = append(list, " Contracts: "+strconv.Itoa(t))
-		sort.Strings(list)
-		Control.Sports_contracts = list
-
-		sort.Strings(owned)
-		Control.Sports_owned = owned
-	}
 }
 
 // Check if SCID is a NFA
@@ -741,82 +553,6 @@ func CheckWalletNames(value string) {
 		sort.Strings(names)
 		Control.Names.Options = append(Control.Names.Options, names...)
 	}
-}
-
-// Check if dPrediction is live on SCID
-func CheckActivePrediction(scid string) bool {
-	if len(scid) == 64 && Gnomes.IsReady() {
-		_, ends := Gnomes.GetSCIDValuesByKey(scid, "p_end_at")
-		_, buff := Gnomes.GetSCIDValuesByKey(scid, "buffer")
-		if ends != nil && buff != nil {
-			now := time.Now().Unix()
-			if now < int64(ends[0]) && now > int64(buff[0]) {
-				return true
-			}
-		}
-	}
-	return false
-}
-
-// Check for live dSports on SCID
-func CheckActiveGames(scid string) bool {
-	if Gnomes.IsReady() {
-		_, played := Gnomes.GetSCIDValuesByKey(scid, "s_played")
-		_, init := Gnomes.GetSCIDValuesByKey(scid, "s_init")
-
-		if played != nil && init != nil {
-			return played[0] == init[0]
-		}
-	}
-
-	return true
-}
-
-func GetSportsAmt(scid, n string) uint64 {
-	_, amt := Gnomes.GetSCIDValuesByKey(scid, "s_amount_"+n)
-	if amt != nil {
-		return amt[0]
-	} else {
-		return 0
-	}
-}
-
-// Get current dSports game teams
-func GetSportsTeams(scid, n string) (string, string) {
-	game, _ := Gnomes.GetSCIDValuesByKey(scid, "game_"+n)
-
-	if game != nil {
-		team_a := TrimTeamA(game[0])
-		team_b := TrimTeamB(game[0])
-
-		if team_a != "" && team_b != "" {
-			return team_a, team_b
-		}
-	}
-
-	return "Team A", "Team B"
-}
-
-// Parse dSports game string into team A string
-func TrimTeamA(s string) string {
-	split := strings.Split(s, "--")
-
-	if len(split) == 2 {
-		return split[0]
-	}
-
-	return ""
-
-}
-
-// Parse dSports game string into team B string
-func TrimTeamB(s string) string {
-	split := strings.Split(s, "--")
-
-	if len(split) == 2 {
-		return split[1]
-	}
-	return ""
 }
 
 // Trim input string to specified len

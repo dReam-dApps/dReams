@@ -108,7 +108,7 @@ func introScreen() *fyne.Container {
 
 		// put back
 		//dReams.SetChannels(len(menu.Control.Dapp_list))
-		dReams.SetChannels(3)
+		dReams.SetChannels(4)
 		log.Println("[dReams] Loading dApps")
 		go func() {
 			dReams.App.Settings().SetTheme(bundle.DeroTheme(bundle.AppColor))
@@ -189,7 +189,7 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 		menu.Control.Dapp_list = enabled_dapps
 		// put back
 		//dReams.SetChannels(len(menu.Control.Dapp_list))
-		dReams.SetChannels(3)
+		dReams.SetChannels(4)
 		log.Println("[dReams] Loading dApps")
 		menu.CloseAppSignal(true)
 		menu.Gnomes.Checked(false)
@@ -421,8 +421,9 @@ func place() *fyne.Container {
 	}
 
 	if menu.Control.Dapp_list["dSports and dPredictions"] {
-		tabs.Append(container.NewTabItem("Predict", placePredict()))
-		tabs.Append(container.NewTabItem("Sports", placeSports()))
+		tabs.Append(container.NewTabItem("Predict", prediction.LayoutPredictItems(&P, dReams)))
+		tabs.Append(container.NewTabItem("Sports", prediction.LayoutSportsItems(&S, &P, dReams)))
+		indicators = append(indicators, prediction.ServiceIndicator())
 	}
 
 	if menu.Control.Dapp_list["Iluma"] {
@@ -447,7 +448,7 @@ func place() *fyne.Container {
 	alpha_box.Objects = append(alpha_box.Objects, menu.StartDreamsIndicators(indicators))
 
 	tabs.OnSelected = func(ti *container.TabItem) {
-		MainTab(ti)
+		dReams.SetTab(ti.Text)
 		if ti.Text == "Menu" {
 			menu_bottom.Show()
 			menu_tabs.Items[0].Content.(*container.Split).Leading.(*container.Split).Leading.Refresh()
@@ -607,282 +608,4 @@ func placeSwap() *container.Split {
 	full.SetOffset(0.66)
 
 	return full
-}
-
-// dReams dPrediction tab layout
-func placePredict() *fyne.Container {
-	predict_info := container.NewVBox(prediction.Predict.Info, prediction.Predict.Prices)
-	predict_scroll := container.NewScroll(predict_info)
-	predict_scroll.SetMinSize(fyne.NewSize(540, 500))
-
-	check_box := container.NewVBox(prediction.PredictConnectedBox())
-
-	contract_scroll := container.NewHScroll(prediction.PredictionContractEntry())
-	contract_scroll.SetMinSize(fyne.NewSize(600, 35.1875))
-	contract_cont := container.NewHBox(contract_scroll, check_box)
-
-	prediction.Predict.Higher = widget.NewButton("Higher", nil)
-	prediction.Predict.Higher.Hide()
-
-	prediction.Predict.Lower = widget.NewButton("Lower", nil)
-	prediction.Predict.Lower.Hide()
-
-	prediction.Predict.Prediction_box = container.NewVBox(prediction.Predict.Higher, prediction.Predict.Lower)
-	prediction.Predict.Prediction_box.Hide()
-
-	predict_content := container.NewVBox(
-		contract_cont,
-		predict_scroll,
-		layout.NewSpacer(),
-		prediction.Predict.Prediction_box)
-
-	menu.Control.Bet_unlock_p = widget.NewButton("Unlock dPrediction Contract", nil)
-	menu.Control.Bet_unlock_p.Hide()
-
-	menu.Control.Bet_new_p = widget.NewButton("New dPrediction Contract", nil)
-	menu.Control.Bet_new_p.Hide()
-
-	unlock_cont := container.NewVBox(menu.Control.Bet_unlock_p, menu.Control.Bet_new_p)
-
-	owner_buttons := container.NewAdaptiveGrid(2, container.NewMax(prediction.OwnerButtonP()), unlock_cont)
-	owned_tab := container.NewBorder(nil, owner_buttons, nil, nil, prediction.PredictionOwned())
-
-	tabs := container.NewAppTabs(
-		container.NewTabItem("Contracts", layout.NewSpacer()),
-		container.NewTabItem("Favorites", prediction.PredictionFavorites()),
-		container.NewTabItem("Owned", owned_tab))
-
-	tabs.SelectIndex(0)
-	tabs.Selected().Content = prediction.PredictionListings(tabs)
-
-	tabs.OnSelected = func(ti *container.TabItem) {
-		PredictTab(ti)
-	}
-
-	max := container.NewMax(bundle.Alpha120, tabs)
-
-	prediction.Predict.Higher.OnTapped = func() {
-		if len(prediction.Predict.Contract) == 64 {
-			max.Objects[1] = prediction.ConfirmAction(2, "", "", max.Objects, tabs)
-			max.Objects[1].Refresh()
-		}
-	}
-
-	prediction.Predict.Lower.OnTapped = func() {
-		if len(prediction.Predict.Contract) == 64 {
-			max.Objects[1] = prediction.ConfirmAction(1, "", "", max.Objects, tabs)
-			max.Objects[1].Refresh()
-		}
-	}
-
-	menu.Control.Bet_unlock_p.OnTapped = func() {
-		max.Objects[1] = menu.BettingMenuConfirmP(1, max.Objects, tabs)
-		max.Objects[1].Refresh()
-	}
-
-	menu.Control.Bet_new_p.OnTapped = func() {
-		max.Objects[1] = menu.BettingMenuConfirmP(2, max.Objects, tabs)
-		max.Objects[1].Refresh()
-	}
-
-	predict_label := container.NewHBox(P.LeftLabel, layout.NewSpacer(), P.RightLabel)
-	predict_box := container.NewHSplit(predict_content, max)
-
-	P.DApp = container.NewVBox(
-		labelColorBlack(predict_label),
-		predict_box)
-
-	go func() {
-		time.Sleep(2 * time.Second)
-		for !menu.ClosingApps() && menu.Control.Dapp_list["dSports and dPredictions"] {
-			if !rpc.Wallet.IsConnected() && !rpc.Signal.Startup {
-				menu.Control.Predict_check.SetChecked(false)
-				menu.Control.Sports_check.SetChecked(false)
-				prediction.DisablePredictions(true)
-				prediction.DisableSports(true)
-			}
-			time.Sleep(time.Second)
-		}
-	}()
-
-	return P.DApp
-}
-
-// dReams dSports tab layout
-func placeSports() *fyne.Container {
-	sports_content := container.NewVBox(prediction.Sports.Info)
-	sports_scroll := container.NewVScroll(sports_content)
-	sports_scroll.SetMinSize(fyne.NewSize(180, 500))
-
-	check_box := container.NewVBox(prediction.SportsConnectedBox())
-
-	contract_scroll := container.NewHScroll(prediction.SportsContractEntry())
-	contract_scroll.SetMinSize(fyne.NewSize(600, 35.1875))
-	contract_cont := container.NewHBox(contract_scroll, check_box)
-
-	prediction.Sports.Game_select = widget.NewSelect(prediction.Sports.Game_options, func(s string) {
-		split := strings.Split(s, "   ")
-		a, b := menu.GetSportsTeams(prediction.Sports.Contract, split[0])
-		if prediction.Sports.Game_select.SelectedIndex() >= 0 {
-			prediction.Sports.Multi.Show()
-			prediction.Sports.ButtonA.Show()
-			prediction.Sports.ButtonB.Show()
-			prediction.Sports.ButtonA.Text = a
-			prediction.Sports.ButtonA.Refresh()
-			prediction.Sports.ButtonB.Text = b
-			prediction.Sports.ButtonB.Refresh()
-		} else {
-			prediction.Sports.Multi.Hide()
-			prediction.Sports.ButtonA.Hide()
-			prediction.Sports.ButtonB.Hide()
-		}
-	})
-
-	prediction.Sports.Game_select.PlaceHolder = "Select Game #"
-	prediction.Sports.Game_select.Hide()
-
-	var Multi_options = []string{"1x", "3x", "5x"}
-	prediction.Sports.Multi = widget.NewRadioGroup(Multi_options, func(s string) {})
-	prediction.Sports.Multi.Horizontal = true
-	prediction.Sports.Multi.Hide()
-
-	prediction.Sports.ButtonA = widget.NewButton("TEAM A", nil)
-	prediction.Sports.ButtonA.Hide()
-
-	prediction.Sports.ButtonB = widget.NewButton("TEAM B", nil)
-	prediction.Sports.ButtonB.Hide()
-
-	sports_multi := container.NewCenter(prediction.Sports.Multi)
-	prediction.Sports.Sports_box = container.NewVBox(
-		sports_multi,
-		prediction.Sports.Game_select,
-		prediction.Sports.ButtonA,
-		prediction.Sports.ButtonB)
-
-	prediction.Sports.Sports_box.Hide()
-
-	sports_left := container.NewVBox(
-		contract_cont,
-		sports_scroll,
-		layout.NewSpacer(),
-		prediction.Sports.Sports_box)
-
-	epl := widget.NewLabel("")
-	epl.Wrapping = fyne.TextWrapWord
-	epl_scroll := container.NewVScroll(epl)
-	mls := widget.NewLabel("")
-	mls.Wrapping = fyne.TextWrapWord
-	mls_scroll := container.NewVScroll(mls)
-	nba := widget.NewLabel("")
-	nba.Wrapping = fyne.TextWrapWord
-	nba_scroll := container.NewVScroll(nba)
-	nfl := widget.NewLabel("")
-	nfl.Wrapping = fyne.TextWrapWord
-	nfl_scroll := container.NewVScroll(nfl)
-	nhl := widget.NewLabel("")
-	nhl.Wrapping = fyne.TextWrapWord
-	nhl_scroll := container.NewVScroll(nhl)
-	mlb := widget.NewLabel("")
-	mlb.Wrapping = fyne.TextWrapWord
-	mlb_scroll := container.NewVScroll(mlb)
-	bellator := widget.NewLabel("")
-	bellator.Wrapping = fyne.TextWrapWord
-	bellator_scroll := container.NewVScroll(bellator)
-	ufc := widget.NewLabel("")
-	ufc.Wrapping = fyne.TextWrapWord
-	ufc_scroll := container.NewVScroll(ufc)
-	score_tabs := container.NewAppTabs(
-		container.NewTabItem("EPL", epl_scroll),
-		container.NewTabItem("MLS", mls_scroll),
-		container.NewTabItem("NBA", nba_scroll),
-		container.NewTabItem("NFL", nfl_scroll),
-		container.NewTabItem("NHL", nhl_scroll),
-		container.NewTabItem("MLB", mlb_scroll),
-		container.NewTabItem("Bellator", bellator_scroll),
-		container.NewTabItem("UFC", ufc_scroll))
-
-	score_tabs.OnSelected = func(ti *container.TabItem) {
-		switch ti.Text {
-		case "EPL":
-			go prediction.GetScores(epl, "EPL")
-		case "MLS":
-			go prediction.GetScores(mls, "MLS")
-		case "NBA":
-			go prediction.GetScores(nba, "NBA")
-		case "NFL":
-			go prediction.GetScores(nfl, "NFL")
-		case "NHL":
-			go prediction.GetScores(nhl, "NHL")
-		case "MLB":
-			go prediction.GetScores(mlb, "MLB")
-		case "Bellator":
-			go prediction.GetMmaResults(bellator, "Bellator")
-		case "UFC":
-			go prediction.GetMmaResults(ufc, "UFC")
-		default:
-		}
-	}
-
-	menu.Control.Bet_unlock_s = widget.NewButton("Unlock dSports Contracts", nil)
-	menu.Control.Bet_unlock_s.Hide()
-
-	menu.Control.Bet_new_s = widget.NewButton("New dSports Contract", nil)
-	menu.Control.Bet_new_s.Hide()
-
-	unlock_cont := container.NewVBox(
-		menu.Control.Bet_unlock_s,
-		menu.Control.Bet_new_s)
-
-	owner_buttons := container.NewAdaptiveGrid(2, container.NewMax(prediction.OwnerButtonS()), unlock_cont)
-	owned_tab := container.NewBorder(nil, owner_buttons, nil, nil, prediction.SportsOwned())
-
-	tabs := container.NewAppTabs(
-		container.NewTabItem("Contracts", layout.NewSpacer()),
-		container.NewTabItem("Favorites", prediction.SportsFavorites()),
-		container.NewTabItem("Owned", owned_tab),
-		container.NewTabItem("Scores", score_tabs),
-		container.NewTabItem("Payouts", prediction.SportsPayouts()))
-
-	tabs.SelectIndex(0)
-	tabs.Selected().Content = prediction.SportsListings(tabs)
-
-	tabs.OnSelected = func(ti *container.TabItem) {
-
-	}
-
-	max := container.NewMax(bundle.Alpha120, tabs)
-
-	prediction.Sports.ButtonA.OnTapped = func() {
-		if len(prediction.Sports.Contract) == 64 {
-			max.Objects[1] = prediction.ConfirmAction(3, prediction.Sports.ButtonA.Text, prediction.Sports.ButtonB.Text, max.Objects, tabs)
-			max.Objects[1].Refresh()
-		}
-	}
-	prediction.Sports.ButtonA.Hide()
-
-	prediction.Sports.ButtonB.OnTapped = func() {
-		if len(prediction.Sports.Contract) == 64 {
-			max.Objects[1] = prediction.ConfirmAction(4, prediction.Sports.ButtonA.Text, prediction.Sports.ButtonB.Text, max.Objects, tabs)
-			max.Objects[1].Refresh()
-		}
-	}
-
-	menu.Control.Bet_unlock_s.OnTapped = func() {
-		max.Objects[1] = menu.BettingMenuConfirmS(1, max.Objects, tabs)
-		max.Objects[1].Refresh()
-	}
-
-	menu.Control.Bet_new_s.OnTapped = func() {
-		max.Objects[1] = menu.BettingMenuConfirmS(2, max.Objects, tabs)
-		max.Objects[1].Refresh()
-	}
-
-	sports_label := container.NewHBox(S.LeftLabel, layout.NewSpacer(), S.RightLabel)
-	sports_box := container.NewHSplit(sports_left, max)
-
-	S.DApp = container.NewVBox(
-		labelColorBlack(sports_label),
-		sports_box)
-
-	return S.DApp
 }

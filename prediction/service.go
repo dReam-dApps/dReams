@@ -5,17 +5,22 @@ import (
 	"crypto/sha1"
 	"encoding/binary"
 	"fmt"
+	"image/color"
 	"log"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/SixofClubsss/dReams/bundle"
 	"github.com/SixofClubsss/dReams/holdero"
 	"github.com/SixofClubsss/dReams/menu"
 	"github.com/SixofClubsss/dReams/rpc"
 	dero "github.com/deroproject/derohe/rpc"
 	"github.com/deroproject/derohe/walletapi"
 	"go.etcd.io/bbolt"
+
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 )
 
 // block height of last payload format change
@@ -37,6 +42,35 @@ type printColors struct {
 
 var Service service
 var PrintColor printColors
+
+func ServiceIndicator() (ind menu.DreamsIndicator) {
+	purple := color.RGBA{105, 90, 205, 210}
+	blue := color.RGBA{31, 150, 200, 210}
+	alpha := &color.RGBA{0, 0, 0, 0}
+
+	ind.Img = canvas.NewImageFromResource(bundle.ResourceDReamServiceIconPng)
+	ind.Img.SetMinSize(fyne.NewSize(30, 30))
+	ind.Rect = canvas.NewRectangle(alpha)
+	ind.Rect.SetMinSize(fyne.NewSize(36, 36))
+
+	ind.Animation = canvas.NewColorRGBAAnimation(purple, blue,
+		time.Second*3, func(c color.Color) {
+			if rpc.Wallet.Service {
+				ind.Rect.FillColor = c
+				ind.Img.Show()
+				canvas.Refresh(ind.Rect)
+			} else {
+				ind.Rect.FillColor = alpha
+				ind.Img.Hide()
+				canvas.Refresh(ind.Rect)
+			}
+		})
+
+	ind.Animation.RepeatCount = fyne.AnimationRepeatForever
+	ind.Animation.AutoReverse = true
+
+	return
+}
 
 // Set up terminal log print colors
 func SetPrintColors(os string) {
@@ -197,8 +231,8 @@ func intgSportsArgs(scid string, print bool) (args [][]dero.Arguments) {
 							league = s_league[0] + "  "
 							game = s_game[0] + "  "
 							end = s_end[0]
-							team_a := menu.TrimTeamA(game)
-							team_b := menu.TrimTeamB(game)
+							team_a := TrimTeamA(game)
+							team_b := TrimTeamB(game)
 
 							if team_a != "" && team_b != "" {
 								a_string = team_a + "  "
@@ -280,14 +314,14 @@ func makeIntegratedAddr(print bool) {
 	service_address := addr.Clone()
 
 	var p_contracts, s_contracts []string
-	for _, sc := range menu.Control.Predict_owned {
+	for _, sc := range Predict.Settings.Owned {
 		split := strings.Split(sc, "   ")
 		if len(split) > 2 {
 			p_contracts = append(p_contracts, split[2])
 		}
 	}
 
-	for _, sc := range menu.Control.Sports_owned {
+	for _, sc := range Sports.Settings.Owned {
 		split := strings.Split(sc, "   ")
 		if len(split) > 2 {
 			s_contracts = append(s_contracts, split[2])
@@ -417,7 +451,7 @@ func DreamService(start uint64, payouts, transfers bool) {
 // Process and queue dPrediction contracts actions for service to complete
 //   - print for debug
 func runPredictionPayouts(print bool) {
-	contracts := menu.Control.Predict_owned
+	contracts := Predict.Settings.Owned
 	var pay_queue, post_queue []string
 	for i := range contracts {
 		if !menu.Gnomes.IsRunning() {
@@ -479,11 +513,11 @@ func runPredictionPayouts(print bool) {
 				sent = true
 				switch onChainPrediction(pre) {
 				case 1:
-					tx = rpc.PostPrediction(sc, int(value))
+					tx = PostPrediction(sc, int(value))
 				case 2:
-					tx = rpc.PostPrediction(sc, int(value*100000))
+					tx = PostPrediction(sc, int(value*100000))
 				case 3:
-					tx = rpc.PostPrediction(sc, int(value))
+					tx = PostPrediction(sc, int(value))
 				default:
 					sent = false
 				}
@@ -496,7 +530,7 @@ func runPredictionPayouts(print bool) {
 			value, _ = holdero.GetPrice(pre)
 			if value > 0 {
 				sent = true
-				tx = rpc.PostPrediction(sc, int(value))
+				tx = PostPrediction(sc, int(value))
 			} else {
 				serviceDebug(print, "[runPredictionPayouts]", "0 price, not posting")
 			}
@@ -536,11 +570,11 @@ func runPredictionPayouts(print bool) {
 				sent = true
 				switch onChainPrediction(pre) {
 				case 1:
-					tx = rpc.EndPrediction(sc, int(amt))
+					tx = EndPrediction(sc, int(amt))
 				case 2:
-					tx = rpc.EndPrediction(sc, int(amt*100000))
+					tx = EndPrediction(sc, int(amt*100000))
 				case 3:
-					tx = rpc.EndPrediction(sc, int(amt))
+					tx = EndPrediction(sc, int(amt))
 				default:
 					sent = false
 				}
@@ -552,7 +586,7 @@ func runPredictionPayouts(print bool) {
 		} else {
 			amt, _ = holdero.GetPrice(pre)
 			if amt > 0 {
-				tx = rpc.EndPrediction(sc, int(amt))
+				tx = EndPrediction(sc, int(amt))
 				sent = true
 			} else {
 				serviceDebug(print, "[runPredictionPayouts]", "0 price, not sending")
@@ -571,7 +605,7 @@ func runPredictionPayouts(print bool) {
 // Process dSpots contracts payouts for service to complete
 //   - print for debug
 func runSportsPayouts(print bool) {
-	contracts := menu.Control.Sports_owned
+	contracts := Sports.Settings.Owned
 	for i := range contracts {
 		if !menu.Gnomes.IsRunning() {
 			return
@@ -612,7 +646,7 @@ func runSportsPayouts(print bool) {
 
 								var tx string
 								if (win != "" && win != "invalid") || (win != "invalid" && winner == "Tie" && end[0]+b_time[0] < uint64(time.Now().Unix())) {
-									tx = rpc.EndSports(split[2], num, win)
+									tx = EndSports(split[2], num, win)
 									sent = true
 								} else {
 									serviceDebug(print, "[runSportsPayouts]", "Could not get winner")
@@ -645,14 +679,14 @@ func processBetTx(start uint64, db *bbolt.DB, print bool) {
 	rpcClient, _, _ := rpc.SetWalletClient(rpc.Wallet.Rpc, rpc.Wallet.UserPass)
 
 	var p_contracts, s_contracts []string
-	for _, sc := range menu.Control.Predict_owned {
+	for _, sc := range Predict.Settings.Owned {
 		split := strings.Split(sc, "   ")
 		if len(split) > 2 {
 			p_contracts = append(p_contracts, split[2])
 		}
 	}
 
-	for _, sc := range menu.Control.Sports_owned {
+	for _, sc := range Sports.Settings.Owned {
 		split := strings.Split(sc, "   ")
 		if len(split) > 2 {
 			s_contracts = append(s_contracts, split[2])
@@ -869,8 +903,8 @@ func processBetTx(start uint64, db *bbolt.DB, print bool) {
 							case "s":
 								serviceDebug(print, "[processBetTx]", "Payload is sports")
 								var team string
-								team_a := menu.TrimTeamA(split[2])
-								team_b := menu.TrimTeamB(split[2])
+								team_a := TrimTeamA(split[2])
+								team_b := TrimTeamB(split[2])
 								if split[3] == team_a {
 									team = "a"
 								} else if split[3] == team_b {
@@ -942,14 +976,14 @@ func processSingleTx(txid string) {
 		rpcClient, _, _ := rpc.SetWalletClient(rpc.Wallet.Rpc, rpc.Wallet.UserPass)
 
 		var p_contracts, s_contracts []string
-		for _, sc := range menu.Control.Predict_owned {
+		for _, sc := range Predict.Settings.Owned {
 			split := strings.Split(sc, "   ")
 			if len(split) > 2 {
 				p_contracts = append(p_contracts, split[2])
 			}
 		}
 
-		for _, sc := range menu.Control.Sports_owned {
+		for _, sc := range Sports.Settings.Owned {
 			split := strings.Split(sc, "   ")
 			if len(split) > 2 {
 				s_contracts = append(s_contracts, split[2])
@@ -1056,7 +1090,7 @@ func processSingleTx(txid string) {
 						game_num = strings.Trim(full_prefix, "s")
 						if rpc.StringToInt(game_num) < 1 {
 							log.Println("[processSingleTx]", e.TXID, "No game number")
-							rpc.ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "No game number", e.TXID)
+							ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "No game number", e.TXID)
 							storeTx("BET", "done", db, e)
 							return
 						}
@@ -1070,14 +1104,14 @@ func processSingleTx(txid string) {
 						_, amt = menu.Gnomes.GetSCIDValuesByKey(scid, "s_amount_"+game_num)
 					default:
 						log.Println("[processSingleTx]", e.TXID, "No prefix")
-						rpc.ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "No prefix", e.TXID)
+						ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "No prefix", e.TXID)
 						storeTx("BET", "done", db, e)
 						return
 					}
 
 					if amt == nil || amt[0] == 0 {
 						log.Println("[processSingleTx]", e.TXID, "amount is nil")
-						rpc.ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "Void", e.TXID)
+						ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "Void", e.TXID)
 						storeTx("BET", "done", db, e)
 						return
 					}
@@ -1085,7 +1119,7 @@ func processSingleTx(txid string) {
 					value_expected := amt[0]
 					if e.Amount != value_expected {
 						log.Println(nil, fmt.Sprintf("[processSingleTx] user transferred %d, we were expecting %d. so we will refund", e.Amount, value_expected)) // this is an unexpected situation
-						rpc.ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "Wrong Amount", e.TXID)
+						ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "Wrong Amount", e.TXID)
 						storeTx("BET", "done", db, e)
 						return
 					}
@@ -1110,14 +1144,14 @@ func processSingleTx(txid string) {
 								default:
 									sent = true
 									log.Println("[processSingleTx]", e.TXID, "No prediction")
-									rpc.ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "No prediction", e.TXID)
+									ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "No prediction", e.TXID)
 								}
 
 							case "s":
 								log.Println("[processSingleTx] Payload is sports")
 								var team string
-								team_a := menu.TrimTeamA(split[2])
-								team_b := menu.TrimTeamB(split[2])
+								team_a := TrimTeamA(split[2])
+								team_b := TrimTeamB(split[2])
 								if split[3] == team_a {
 									team = "a"
 								} else if split[3] == team_b {
@@ -1136,14 +1170,14 @@ func processSingleTx(txid string) {
 								default:
 									sent = true
 									log.Println("[processSingleTx]", e.TXID, "No team")
-									rpc.ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "No team", e.TXID)
+									ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "No team", e.TXID)
 
 								}
 
 							default:
 								sent = true
 								log.Println("[processSingleTx]", e.TXID, "No prefix")
-								rpc.ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "No prefix", e.TXID)
+								ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "No prefix", e.TXID)
 
 							}
 
@@ -1314,13 +1348,13 @@ func sendToPrediction(pre int, scid, destination_expected string, e dero.Entry) 
 	var tx string
 	now := time.Now().Unix()
 	if now > int64(end[0]) {
-		tx = rpc.ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "Past Deadline", e.TXID)
+		tx = ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "Past Deadline", e.TXID)
 	} else if now < int64(buffer[0]) {
-		tx = rpc.ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "Before Buffer", e.TXID)
+		tx = ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "Before Buffer", e.TXID)
 	} else if played[0] >= limit[0] {
-		tx = rpc.ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "Bet Limit Reached", e.TXID)
+		tx = ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "Bet Limit Reached", e.TXID)
 	} else {
-		tx = rpc.AutoPredict(pre, e.Amount, e.SourcePort, scid, destination_expected, e.TXID)
+		tx = AutoPredict(pre, e.Amount, e.SourcePort, scid, destination_expected, e.TXID)
 	}
 
 	Service.Last_block = rpc.Wallet.Height
@@ -1360,13 +1394,13 @@ func sendToSports(n, abv, team, scid, destination_expected string, e dero.Entry)
 	var tx string
 	now := time.Now().Unix()
 	if now > int64(end[0]) {
-		tx = rpc.ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "Past Deadline", e.TXID)
+		tx = ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "Past Deadline", e.TXID)
 	} else if now < int64(buffer[0]) {
-		tx = rpc.ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "Before Buffer", e.TXID)
+		tx = ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "Before Buffer", e.TXID)
 	} else if played[0] >= limit[0] {
-		tx = rpc.ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "Bet Limit Reached", e.TXID)
+		tx = ServiceRefund(e.Amount, e.SourcePort, scid, destination_expected, "Bet Limit Reached", e.TXID)
 	} else {
-		tx = rpc.AutoBook(e.Amount, pre, e.SourcePort, n, abv, scid, destination_expected, e.TXID)
+		tx = AutoBook(e.Amount, pre, e.SourcePort, n, abv, scid, destination_expected, e.TXID)
 	}
 
 	Service.Last_block = rpc.Wallet.Height
@@ -1386,7 +1420,7 @@ func sendToSports(n, abv, team, scid, destination_expected string, e dero.Entry)
 //   - scid, addr for reply message
 func sendRefund(scid, addr, msg string, e dero.Entry) {
 	waitForBlock()
-	tx := rpc.ServiceRefund(e.Amount, e.SourcePort, scid, addr, msg, e.TXID)
+	tx := ServiceRefund(e.Amount, e.SourcePort, scid, addr, msg, e.TXID)
 	Service.Last_block = rpc.Wallet.Height
 
 	if Service.Debug {

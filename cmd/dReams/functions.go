@@ -127,8 +127,8 @@ func init() {
 	}
 
 	holdero.Settings.Favorites = saved.Tables
-	menu.Control.Predict_favorites = saved.Predict
-	menu.Control.Sports_favorites = saved.Sports
+	prediction.Predict.Settings.Favorites = saved.Predict
+	prediction.Sports.Settings.Favorites = saved.Sports
 
 	menu.Market.DreamsFilter = true
 
@@ -254,16 +254,6 @@ func fetch(d dreams.DreamsObject, done chan struct{}) {
 					menu.GnomonState(dReams.IsWindows(), dReams.Configure, gnomonScan)
 					dReams.Background.Refresh()
 
-					// Betting
-					if menu.Control.Dapp_list["dSports and dPredictions"] {
-						if offset%5 == 0 {
-							SportsRefresh(dReams.Sports)
-						}
-
-						S.RightLabel.SetText("dReams Balance: " + rpc.DisplayBalance("dReams") + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Display.Wallet_height)
-						PredictionRefresh(dReams.Predict)
-					}
-
 					// Menu
 					go MenuRefresh(dReams.Menu)
 
@@ -292,34 +282,6 @@ func fetch(d dreams.DreamsObject, done chan struct{}) {
 			done <- struct{}{}
 			return
 		}
-	}
-}
-
-// Refresh all dPrediction objects
-func PredictionRefresh(tab bool) {
-	if tab {
-		if offset%5 == 0 {
-			go prediction.SetPredictionInfo(prediction.Predict.Contract)
-		}
-
-		if offset == 11 || prediction.Predict.Prices.Text == "" {
-			go prediction.SetPredictionPrices(rpc.Daemon.Connect)
-		}
-
-		P.RightLabel.SetText("dReams Balance: " + rpc.DisplayBalance("dReams") + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Display.Wallet_height)
-
-		if menu.CheckActivePrediction(prediction.Predict.Contract) {
-			go prediction.ShowPredictionControls()
-		} else {
-			prediction.DisablePredictions(true)
-		}
-	}
-}
-
-// Refresh all dSports objects
-func SportsRefresh(tab bool) {
-	if tab {
-		go prediction.SetSportsInfo(prediction.Sports.Contract)
 	}
 }
 
@@ -405,7 +367,7 @@ func MenuRefresh(tab bool) {
 			go refreshPriceDisplay(true)
 		}
 
-		if dReams.Menu_tabs.Market && !dReams.IsWindows() && !menu.ClosingApps() {
+		if dReams.Market && !dReams.IsWindows() && !menu.ClosingApps() {
 			menu.FindNfaListings(nil)
 		}
 	}
@@ -436,11 +398,6 @@ func MainTab(ti *container.TabItem) {
 	switch ti.Text {
 	case "Menu":
 		dReams.Menu = true
-		dReams.Holdero = false
-		dReams.Bacc = false
-		dReams.Predict = false
-		dReams.Sports = false
-		dReams.Tarot = false
 		if holdero.Round.ID == 1 {
 			holdero.Faces.Select.Enable()
 			holdero.Backs.Select.Enable()
@@ -448,18 +405,8 @@ func MainTab(ti *container.TabItem) {
 		go MenuRefresh(dReams.Menu)
 	case "Holdero":
 		dReams.Menu = false
-		dReams.Holdero = true
-		dReams.Bacc = false
-		dReams.Predict = false
-		dReams.Sports = false
-		dReams.Tarot = false
 	case "Baccarat":
 		dReams.Menu = false
-		dReams.Holdero = false
-		dReams.Bacc = true
-		dReams.Predict = false
-		dReams.Sports = false
-		dReams.Tarot = false
 		go func() {
 			baccarat.GetBaccTables()
 			baccarat.BaccRefresh(&B, dReams)
@@ -469,30 +416,15 @@ func MainTab(ti *container.TabItem) {
 		}()
 	case "Predict":
 		dReams.Menu = false
-		dReams.Holdero = false
-		dReams.Bacc = false
-		dReams.Predict = true
-		dReams.Sports = false
-		dReams.Tarot = false
 		go func() {
-			menu.PopulatePredictions(nil)
+			prediction.PopulatePredictions(nil)
+			prediction.PredictionRefresh(&P, dReams)
 		}()
-		PredictionRefresh(dReams.Predict)
 	case "Sports":
 		dReams.Menu = false
-		dReams.Holdero = false
-		dReams.Bacc = false
-		dReams.Predict = false
-		dReams.Sports = true
-		dReams.Tarot = false
-		go menu.PopulateSports(nil)
+		go prediction.PopulateSports(nil)
 	case "Iluma":
 		dReams.Menu = false
-		dReams.Holdero = false
-		dReams.Bacc = false
-		dReams.Predict = false
-		dReams.Sports = false
-		dReams.Tarot = true
 		if tarot.Iluma.Value.Display {
 			tarot.ActionBuffer(false)
 		}
@@ -503,34 +435,19 @@ func MainTab(ti *container.TabItem) {
 func MenuTab(ti *container.TabItem) {
 	switch ti.Text {
 	case "Wallet":
-		ti.Content.(*container.Split).Leading.(*container.Split).Trailing.Refresh()
-		dReams.Menu_tabs.Wallet = true
-		dReams.Menu_tabs.Assets = false
-		dReams.Menu_tabs.Market = false
+		ti.Content.(*container.Split).Leading.(*container.Split).Leading.Refresh()
+		dReams.Market = false
 	case "Assets":
-		dReams.Menu_tabs.Wallet = false
-		dReams.Menu_tabs.Assets = true
-		dReams.Menu_tabs.Market = false
+		dReams.Market = false
 		menu.Control.Viewing_asset = ""
 		menu.Assets.Asset_list.UnselectAll()
 	case "Market":
-		dReams.Menu_tabs.Wallet = false
-		dReams.Menu_tabs.Assets = false
-		dReams.Menu_tabs.Market = true
+		dReams.Market = true
 		go menu.FindNfaListings(nil)
 		menu.Market.Cancel_button.Hide()
 		menu.Market.Close_button.Hide()
 		menu.Market.Auction_list.Refresh()
 		menu.Market.Buy_list.Refresh()
-	}
-}
-
-// Switch triggered when dPrediction tab changes
-func PredictTab(ti *container.TabItem) {
-	switch ti.Text {
-	case "Contracts":
-		go menu.PopulatePredictions(nil)
-	default:
 	}
 }
 
@@ -763,10 +680,10 @@ func DaemonConnectedBox() fyne.Widget {
 			}
 
 			if menu.Control.Dapp_list["dSports and dPredictions"] {
-				menu.Control.P_contract.CursorColumn = 1
-				menu.Control.P_contract.Refresh()
-				menu.Control.S_contract.CursorColumn = 1
-				menu.Control.S_contract.Refresh()
+				prediction.Predict.Settings.Contract_entry.CursorColumn = 1
+				prediction.Predict.Settings.Contract_entry.Refresh()
+				prediction.Sports.Settings.Contract_entry.CursorColumn = 1
+				prediction.Sports.Settings.Contract_entry.Refresh()
 			}
 		}
 
@@ -852,10 +769,10 @@ func RpcConnectButton() fyne.Widget {
 				}
 
 				if menu.Control.Dapp_list["dSports and dPredictions"] {
-					menu.Control.P_contract.CursorColumn = 1
-					menu.Control.P_contract.Refresh()
-					menu.Control.S_contract.CursorColumn = 1
-					menu.Control.S_contract.Refresh()
+					prediction.Predict.Settings.Contract_entry.CursorColumn = 1
+					prediction.Predict.Settings.Contract_entry.Refresh()
+					prediction.Sports.Settings.Contract_entry.CursorColumn = 1
+					prediction.Sports.Settings.Contract_entry.Refresh()
 				}
 				wait = false
 			}

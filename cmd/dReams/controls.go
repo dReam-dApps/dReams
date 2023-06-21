@@ -15,10 +15,6 @@ func CheckConnection() {
 		menu.DisableIndexControls(false)
 	} else {
 		menu.Control.Daemon_check.SetChecked(false)
-		if menu.Control.Dapp_list["dSports and dPredictions"] {
-			menu.Control.Predict_check.SetChecked(false)
-			menu.Control.Sports_check.SetChecked(false)
-		}
 
 		disableActions(true)
 		menu.DisableIndexControls(true)
@@ -63,13 +59,6 @@ func disconnected() {
 
 // Clear all contract lists
 func clearContractLists() {
-	/// put back
-	//holdero.Settings.Tables = []string{}
-	//Control.Predict_contracts = []string{}
-	//Control.Sports_contracts = []string{}
-	//holdero.Settings.Owned = []string{}
-	//Control.Predict_owned = []string{}
-	//Control.Sports_owned = []string{}
 	menu.Market.Auctions = []string{}
 	menu.Market.Buy_now = []string{}
 	menu.Assets.Assets = []string{}
@@ -79,22 +68,6 @@ func clearContractLists() {
 func disableActions(d bool) {
 	if d {
 		menu.Assets.Swap.Hide()
-
-		if menu.Control.Dapp_list["dSports and dPredictions"] {
-			menu.Control.Bet_new_p.Hide()
-			menu.Control.Bet_new_s.Hide()
-			menu.Control.Bet_unlock_p.Hide()
-			menu.Control.Bet_unlock_s.Hide()
-			menu.Control.Bet_menu_p.Hide()
-			menu.Control.Bet_menu_s.Hide()
-			menu.Control.Bet_new_p.Refresh()
-			menu.Control.Bet_new_s.Refresh()
-			menu.Control.Bet_unlock_p.Refresh()
-			menu.Control.Bet_unlock_s.Refresh()
-			menu.Control.Bet_menu_p.Refresh()
-			menu.Control.Bet_menu_s.Refresh()
-		}
-
 	} else {
 		if rpc.Daemon.IsConnected() {
 			menu.Assets.Swap.Show()
