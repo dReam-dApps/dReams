@@ -18,7 +18,7 @@ import (
 func placeContract(change_screen *fyne.Container, H *dwidget.DreamsItems, d dreams.DreamsObject) *container.Split {
 	Settings.Check = widget.NewCheck("", func(b bool) {
 		if !b {
-			DisableOwnerControls(true)
+			disableOwnerControls(true)
 		}
 	})
 	Settings.Check.Disable()

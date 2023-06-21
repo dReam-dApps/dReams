@@ -49,16 +49,24 @@ var iluma_intro string
 
 var Iluma tarot
 
-func InitValues() {
+func initValues() {
 	Iluma.Value.Display = true
 }
 
 // Main Tarot process
 func fetch(t *dwidget.DreamsItems, d dreams.DreamsObject) {
+	initValues()
 	time.Sleep(3 * time.Second)
 	for {
 		select {
 		case <-d.Receive():
+			if !rpc.Wallet.IsConnected() || !rpc.Daemon.IsConnected() {
+				disableActions(true)
+				tarotRefresh(t)
+				d.WorkDone()
+				continue
+			}
+
 			FetchTarotSC()
 			tarotRefresh(t)
 			if Iluma.Value.Found && !Iluma.Value.Notified {
@@ -68,7 +76,7 @@ func fetch(t *dwidget.DreamsItems, d dreams.DreamsObject) {
 			}
 			d.WorkDone()
 		case <-d.CloseDapp():
-			log.Println("[Iluma] Closed")
+			log.Println("[Iluma] Done")
 			return
 		}
 	}
@@ -102,6 +110,22 @@ func ActionBuffer(d bool) {
 
 	Iluma.Draw1.Refresh()
 	Iluma.Draw3.Refresh()
+}
+
+func disableActions(b bool) {
+	if b {
+		Iluma.Draw1.Hide()
+		Iluma.Draw3.Hide()
+		Iluma.Search.Hide()
+	} else {
+		Iluma.Draw1.Show()
+		Iluma.Draw3.Show()
+		Iluma.Search.Show()
+	}
+
+	Iluma.Draw1.Refresh()
+	Iluma.Draw3.Refresh()
+	Iluma.Search.Refresh()
 }
 
 // Refresh all Tarot objects

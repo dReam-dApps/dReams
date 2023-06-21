@@ -94,8 +94,7 @@ var Poker holderoObjects
 var Table tableObjects
 var Settings settings
 
-func InitValues() {
-	rpc.Bacc.Display = true
+func initValues() {
 	Times.Delay = 30
 	Times.Kick = 0
 	Odds.Run = false
@@ -128,7 +127,7 @@ func holderoContractEntry() fyne.Widget {
 			clearShared()
 			if len(text) == 64 {
 				if checkTableOwner(text) {
-					DisableOwnerControls(false)
+					disableOwnerControls(false)
 					if checkTableVersion(text) >= 110 {
 						Poker.owner.chips.Show()
 						Poker.owner.timeout.Show()
@@ -139,7 +138,7 @@ func holderoContractEntry() fyne.Widget {
 						Poker.owner.owners_mid.Hide()
 					}
 				} else {
-					DisableOwnerControls(true)
+					disableOwnerControls(true)
 				}
 
 				if rpc.Wallet.IsConnected() && checkHolderoContract(text) {

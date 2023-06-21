@@ -73,7 +73,7 @@ func GnomonFilters() (filter []string) {
 	}
 
 	if Control.Dapp_list["Baccarat"] {
-		bacc := rpc.GetBaccCode()
+		bacc := rpc.GetSCCode(rpc.BaccSCID)
 		if bacc != "" {
 			filter = append(filter, bacc)
 		}

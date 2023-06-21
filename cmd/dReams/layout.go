@@ -108,7 +108,7 @@ func introScreen() *fyne.Container {
 
 		// put back
 		//dReams.SetChannels(len(menu.Control.Dapp_list))
-		dReams.SetChannels(2)
+		dReams.SetChannels(3)
 		log.Println("[dReams] Loading dApps")
 		go func() {
 			dReams.App.Settings().SetTheme(bundle.DeroTheme(bundle.AppColor))
@@ -186,11 +186,10 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 		rpc.Wallet.Connected(false)
 		rpc.Wallet.Height = 0
 		disconnected()
-		dAppInit()
 		menu.Control.Dapp_list = enabled_dapps
 		// put back
 		//dReams.SetChannels(len(menu.Control.Dapp_list))
-		dReams.SetChannels(2)
+		dReams.SetChannels(3)
 		log.Println("[dReams] Loading dApps")
 		menu.CloseAppSignal(true)
 		menu.Gnomes.Checked(false)
@@ -335,7 +334,7 @@ func place() *fyne.Container {
 
 	B.LeftLabel = widget.NewLabel("")
 	B.RightLabel = widget.NewLabel("")
-	B.LeftLabel.SetText("Total Hands Played: " + rpc.Display.Total_w + "      Player Wins: " + rpc.Display.Player_w + "      Ties: " + rpc.Display.Ties + "      Banker Wins: " + rpc.Display.Banker_w + "      Min Bet is " + rpc.Display.BaccMin + " dReams, Max Bet is " + rpc.Display.BaccMax)
+	B.LeftLabel.SetText("Total Hands Played: " + baccarat.Display.Total_w + "      Player Wins: " + baccarat.Display.Player_w + "      Ties: " + baccarat.Display.Ties + "      Banker Wins: " + baccarat.Display.Banker_w + "      Min Bet is " + baccarat.Display.BaccMin + " dReams, Max Bet is " + baccarat.Display.BaccMax)
 	B.RightLabel.SetText("dReams Balance: " + rpc.DisplayBalance("dReams") + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Display.Wallet_height)
 
 	P.LeftLabel = widget.NewLabel("")
@@ -418,7 +417,7 @@ func place() *fyne.Container {
 	}
 
 	if menu.Control.Dapp_list["Baccarat"] {
-		tabs.Append(container.NewTabItem("Baccarat", placeBacc()))
+		tabs.Append(container.NewTabItem("Baccarat", baccarat.LayoutAllItems(&B, dReams)))
 	}
 
 	if menu.Control.Dapp_list["dSports and dPredictions"] {
@@ -608,26 +607,6 @@ func placeSwap() *container.Split {
 	full.SetOffset(0.66)
 
 	return full
-}
-
-// dReams Baccarat tab layout
-func placeBacc() *fyne.Container {
-	B.Back = *container.NewWithoutLayout(
-		baccarat.BaccTable(bundle.ResourceBaccTablePng),
-		baccarat.BaccResult(rpc.Display.BaccRes))
-
-	B.Front = *clearBaccCards()
-
-	bacc_label := container.NewHBox(B.LeftLabel, layout.NewSpacer(), B.RightLabel)
-
-	B.DApp = container.NewVBox(
-		labelColorBlack(bacc_label),
-		&B.Back,
-		&B.Front,
-		layout.NewSpacer(),
-		baccarat.BaccaratButtons(dReams.Window))
-
-	return B.DApp
 }
 
 // dReams dPrediction tab layout

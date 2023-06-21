@@ -3,11 +3,9 @@ package main
 import (
 	"fyne.io/fyne/v2/canvas"
 	dreams "github.com/SixofClubsss/dReams"
-	"github.com/SixofClubsss/dReams/baccarat"
 	"github.com/SixofClubsss/dReams/holdero"
 	"github.com/SixofClubsss/dReams/menu"
 	"github.com/SixofClubsss/dReams/rpc"
-	"github.com/SixofClubsss/dReams/tarot"
 )
 
 // Connection check for main process
@@ -22,10 +20,6 @@ func CheckConnection() {
 			menu.Control.Sports_check.SetChecked(false)
 		}
 
-		if menu.Control.Dapp_list["Baccarat"] {
-			disableBaccActions(true)
-		}
-
 		disableActions(true)
 		menu.DisableIndexControls(true)
 	}
@@ -35,28 +29,10 @@ func CheckConnection() {
 	} else {
 		holdero.Signal.Contract = false
 		clearContractLists()
-		if menu.Control.Dapp_list["Holdero"] {
-			holdero.Settings.Check.SetChecked(false)
-			holdero.DisableOwnerControls(true)
-		}
-
-		if menu.Control.Dapp_list["Baccarat"] {
-			disableBaccActions(true)
-		}
 
 		disableActions(true)
 		disconnected()
 		menu.Gnomes.Checked(false)
-	}
-
-	if menu.Control.Dapp_list["Holdero"] {
-		if holdero.Signal.Contract {
-			holdero.Settings.Check.SetChecked(true)
-		} else {
-			holdero.Settings.Check.SetChecked(false)
-			holdero.DisableOwnerControls(true)
-			holdero.Signal.Sit = true
-		}
 	}
 }
 
@@ -119,14 +95,6 @@ func disableActions(d bool) {
 			menu.Control.Bet_menu_s.Refresh()
 		}
 
-		if menu.Control.Dapp_list["Iluma"] {
-			tarot.Iluma.Draw1.Hide()
-			tarot.Iluma.Draw3.Hide()
-			tarot.Iluma.Search.Hide()
-			tarot.Iluma.Draw1.Refresh()
-			tarot.Iluma.Draw3.Refresh()
-			tarot.Iluma.Search.Refresh()
-		}
 	} else {
 		if rpc.Daemon.IsConnected() {
 			menu.Assets.Swap.Show()
@@ -134,15 +102,4 @@ func disableActions(d bool) {
 	}
 
 	menu.Assets.Swap.Refresh()
-}
-
-// Disable Baccarat actions
-func disableBaccActions(d bool) {
-	if d {
-		baccarat.Table.Actions.Hide()
-	} else {
-		baccarat.Table.Actions.Show()
-	}
-
-	baccarat.Table.Actions.Refresh()
 }

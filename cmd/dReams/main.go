@@ -73,7 +73,7 @@ func main() {
 		go func() {
 			// put back
 			//dReams.SetChannels(dapps)
-			dReams.SetChannels(2)
+			dReams.SetChannels(3)
 			time.Sleep(750 * time.Millisecond)
 			dReams.Window.SetContent(
 				container.New(layout.NewMaxLayout(),

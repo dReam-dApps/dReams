@@ -133,7 +133,6 @@ func init() {
 	menu.Market.DreamsFilter = true
 
 	rpc.InitBalances()
-	dAppInit()
 
 	dReams.OS = runtime.GOOS
 	prediction.SetPrintColors(dReams.OS)
@@ -153,12 +152,6 @@ func init() {
 		dReams.StopProcess()
 		dReams.Window.Close()
 	}()
-}
-
-// Initialize values on start up for dApps used
-func dAppInit() {
-	holdero.InitValues()
-	tarot.InitValues()
 }
 
 // Starts a Fyne terminal in dReams
@@ -237,39 +230,6 @@ func labelColorBlack(c *fyne.Container) *fyne.Container {
 	return cont
 }
 
-// Place and refresh Baccarat card images
-func showBaccCards() *fyne.Container {
-	var drawP, drawB int
-	if rpc.Bacc.P_card3 == 0 {
-		drawP = 99
-	} else {
-		drawP = rpc.Bacc.P_card3
-	}
-
-	if rpc.Bacc.B_card3 == 0 {
-		drawB = 99
-	} else {
-		drawB = rpc.Bacc.B_card3
-	}
-
-	content := *container.NewWithoutLayout(
-		holdero.PlayerCards(holdero.BaccSuit(rpc.Bacc.P_card1), holdero.BaccSuit(rpc.Bacc.P_card2), holdero.BaccSuit(drawP)),
-		holdero.BankerCards(holdero.BaccSuit(rpc.Bacc.B_card1), holdero.BaccSuit(rpc.Bacc.B_card2), holdero.BaccSuit(drawB)))
-
-	rpc.Bacc.Display = true
-	baccarat.BaccBuffer(false)
-
-	return &content
-}
-
-func clearBaccCards() *fyne.Container {
-	content := *container.NewWithoutLayout(
-		holdero.PlayerCards(99, 99, 99),
-		holdero.BankerCards(99, 99, 99))
-
-	return &content
-}
-
 func gnomonScan(contracts map[string]string) {
 	CheckDreamsG45s(menu.Gnomes.Check, contracts)
 	CheckDreamsNFAs(menu.Gnomes.Check, contracts)
@@ -293,12 +253,6 @@ func fetch(d dreams.DreamsObject, done chan struct{}) {
 					menu.GnomonEndPoint()
 					menu.GnomonState(dReams.IsWindows(), dReams.Configure, gnomonScan)
 					dReams.Background.Refresh()
-
-					// Bacc
-					if menu.Control.Dapp_list["Baccarat"] {
-						rpc.FetchBaccSC()
-						BaccRefresh()
-					}
 
 					// Betting
 					if menu.Control.Dapp_list["dSports and dPredictions"] {
@@ -337,38 +291,6 @@ func fetch(d dreams.DreamsObject, done chan struct{}) {
 			time.Sleep(time.Second)
 			done <- struct{}{}
 			return
-		}
-	}
-}
-
-// Refresh all Baccarat objects
-func BaccRefresh() {
-	asset_name := rpc.GetAssetSCIDName(rpc.Bacc.AssetID)
-	B.LeftLabel.SetText("Total Hands Played: " + rpc.Display.Total_w + "      Player Wins: " + rpc.Display.Player_w + "      Ties: " + rpc.Display.Ties + "      Banker Wins: " + rpc.Display.Banker_w + "      Min Bet is " + rpc.Display.BaccMin + " " + asset_name + ", Max Bet is " + rpc.Display.BaccMax)
-	B.RightLabel.SetText(asset_name + " Balance: " + rpc.DisplayBalance(asset_name) + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Display.Wallet_height)
-
-	if !rpc.Bacc.Display {
-		B.Front.Objects[0] = clearBaccCards()
-		rpc.FetchBaccHand(rpc.Bacc.Last)
-		if rpc.Bacc.Found {
-			B.Front.Objects[0] = showBaccCards()
-		}
-		B.Front.Objects[0].Refresh()
-	}
-
-	if rpc.Wallet.Height > rpc.Bacc.CHeight+3 && !rpc.Bacc.Found {
-		rpc.Display.BaccRes = ""
-		baccarat.BaccBuffer(false)
-	}
-
-	B.Back.Objects[1].(*canvas.Text).Text = rpc.Display.BaccRes
-	B.Back.Objects[1].Refresh()
-
-	B.DApp.Refresh()
-
-	if rpc.Bacc.Found && !rpc.Bacc.Notified {
-		if !dReams.IsWindows() {
-			rpc.Bacc.Notified = dReams.Notification("dReams - Baccarat", rpc.Display.BaccRes)
 		}
 	}
 }
@@ -540,9 +462,9 @@ func MainTab(ti *container.TabItem) {
 		dReams.Tarot = false
 		go func() {
 			baccarat.GetBaccTables()
-			BaccRefresh()
-			if rpc.Wallet.IsConnected() && rpc.Bacc.Display {
-				baccarat.BaccBuffer(false)
+			baccarat.BaccRefresh(&B, dReams)
+			if rpc.Wallet.IsConnected() && baccarat.Bacc.Display {
+				baccarat.ActionBuffer(false)
 			}
 		}()
 	case "Predict":

@@ -442,63 +442,6 @@ func UploadHolderoContract(pub int) {
 	}
 }
 
-// Place Baccarat bet
-//   - amt to bet
-//   - w defines where bet is placed (player, banker or tie)
-func BaccBet(amt, w string) (tx string) {
-	if Bacc.AssetID == "" || len(Bacc.AssetID) != 64 {
-		log.Println("[Baccarat] Asset ID error")
-		return "ID error"
-	}
-
-	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
-	defer cancel()
-
-	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "PlayBaccarat"}
-	arg2 := rpc.Argument{Name: "betOn", DataType: "S", Value: w}
-	args := rpc.Arguments{arg1, arg2}
-	txid := rpc.Transfer_Result{}
-
-	t1 := rpc.Transfer{
-		SCID:        crypto.HashHexToHash(Bacc.AssetID),
-		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
-		Amount:      0,
-		Burn:        ToAtomic(amt, 1),
-	}
-
-	t := []rpc.Transfer{t1}
-	fee := GasEstimate(Bacc.Contract, "[Baccarat]", args, t, LowLimitFee)
-	params := &rpc.Transfer_Params{
-		Transfers: t,
-		SC_ID:     Bacc.Contract,
-		SC_RPC:    args,
-		Ringsize:  2,
-		Fees:      fee,
-	}
-
-	if err := rpcClientW.CallFor(ctx, &txid, "transfer", params); err != nil {
-		log.Println("[BaccBet]", err)
-		return
-	}
-
-	Bacc.Last = txid.TXID
-	Bacc.Notified = false
-	if w == "player" {
-		log.Println("[Baccarat] Player TX:", txid)
-		AddLog("Baccarat Player TX: " + txid.TXID)
-	} else if w == "banker" {
-		log.Println("[Baccarat] Banker TX:", txid)
-		AddLog("Baccarat Banker TX: " + txid.TXID)
-	} else {
-		log.Println("[Baccarat] Tie TX:", txid)
-		AddLog("Baccarat Tie TX: " + txid.TXID)
-	}
-
-	Bacc.CHeight = Wallet.Height
-
-	return txid.TXID
-}
-
 // Place higher prediction to SC
 //   - addr only needed if dReamService is placing prediction
 func PredictHigher(scid, addr string) {

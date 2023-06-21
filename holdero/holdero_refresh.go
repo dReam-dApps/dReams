@@ -65,7 +65,8 @@ func singleShot(turn, trigger bool) bool {
 }
 
 // Main Holdero process
-func fetch(H *dwidget.DreamsItems, d dreams.DreamsObject) {
+func fetch(h *dwidget.DreamsItems, d dreams.DreamsObject) {
+	initValues()
 	time.Sleep(3 * time.Second)
 	var autoCF, autoD, autoB, trigger bool
 	var skip, delay, offset int
@@ -73,13 +74,10 @@ func fetch(H *dwidget.DreamsItems, d dreams.DreamsObject) {
 		select {
 		case <-d.Receive():
 			if !rpc.Wallet.IsConnected() || !rpc.Daemon.IsConnected() {
-				disableActions()
 				Signal.Contract = false
-				Settings.Check.SetChecked(false)
-				DisableOwnerControls(true)
-				Settings.Tables = []string{}
-				Settings.Owned = []string{}
+				disableActions()
 				Settings.Synced = false
+				setHolderoLabel(h)
 				d.WorkDone()
 				continue
 			}
@@ -90,7 +88,14 @@ func fetch(H *dwidget.DreamsItems, d dreams.DreamsObject) {
 				Settings.Synced = true
 			}
 
-			// Holdero
+			if Signal.Contract {
+				Settings.Check.SetChecked(true)
+			} else {
+				Settings.Check.SetChecked(false)
+				disableOwnerControls(true)
+				Signal.Sit = true
+			}
+
 			Poker.Stats_box = *container.NewVBox(Table.Stats.Name, Table.Stats.Desc, Table.Stats.Version, Table.Stats.Last, Table.Stats.Seats, tableIcon(bundle.ResourceAvatarFramePng))
 			Poker.Stats_box.Refresh()
 
@@ -112,7 +117,7 @@ func fetch(H *dwidget.DreamsItems, d dreams.DreamsObject) {
 					Round.First_try = false
 					delay = 0
 					Round.Card_delay = false
-					go refreshHolderoPlayers(H)
+					go refreshHolderoPlayers(h)
 				}
 
 				if Round.Card_delay {
@@ -123,18 +128,19 @@ func fetch(H *dwidget.DreamsItems, d dreams.DreamsObject) {
 						Round.Card_delay = false
 					}
 				} else {
-					setHolderoLabel(H)
+					setHolderoLabel(h)
 					GetUrls(Round.F_url, Round.B_url)
 					Called(Round.Flop, Round.Wager)
 					trigger = singleShot(Signal.My_turn, trigger)
-					holderoRefresh(H, d, offset)
+					holderoRefresh(h, d, offset)
+					// Auto check
 					if Settings.Auto_check && Signal.My_turn && !autoCF {
 						if !Signal.Reveal && !Signal.End && !Round.LocalEnd {
 							if Round.Cards.Local1 != "" {
 								ActionBuffer()
 								Check()
-								H.TopLabel.Text = "Auto Check/Fold Tx Sent"
-								H.TopLabel.Refresh()
+								h.TopLabel.Text = "Auto Check/Fold Tx Sent"
+								h.TopLabel.Refresh()
 								autoCF = true
 
 								go func() {
@@ -147,6 +153,7 @@ func fetch(H *dwidget.DreamsItems, d dreams.DreamsObject) {
 						}
 					}
 
+					// Auto deal
 					if Settings.Auto_deal && Signal.My_turn && !autoD && GameIsActive() {
 						if !Signal.Reveal && !Signal.End && !Round.LocalEnd {
 							if Round.Cards.Local1 == "" {
@@ -155,8 +162,8 @@ func fetch(H *dwidget.DreamsItems, d dreams.DreamsObject) {
 									time.Sleep(2100 * time.Millisecond)
 									ActionBuffer()
 									DealHand()
-									H.TopLabel.Text = "Auto Deal Tx Sent"
-									H.TopLabel.Refresh()
+									h.TopLabel.Text = "Auto Deal Tx Sent"
+									h.TopLabel.Refresh()
 
 									if !d.IsWindows() {
 										time.Sleep(300 * time.Millisecond)
@@ -167,6 +174,7 @@ func fetch(H *dwidget.DreamsItems, d dreams.DreamsObject) {
 						}
 					}
 
+					// Auto bet
 					if Odds.Run && Signal.My_turn && !autoB && GameIsActive() {
 						if !Signal.Reveal && !Signal.End && !Round.LocalEnd {
 							if Round.Cards.Local1 != "" {
@@ -176,8 +184,8 @@ func fetch(H *dwidget.DreamsItems, d dreams.DreamsObject) {
 									ActionBuffer()
 									odds, future := MakeOdds()
 									BetLogic(odds, future, true)
-									H.TopLabel.Text = "Auto Bet Tx Sent"
-									H.TopLabel.Refresh()
+									h.TopLabel.Text = "Auto Bet Tx Sent"
+									h.TopLabel.Refresh()
 
 									if !d.IsWindows() {
 										time.Sleep(300 * time.Millisecond)
@@ -202,10 +210,10 @@ func fetch(H *dwidget.DreamsItems, d dreams.DreamsObject) {
 					skip = 0
 				}
 			} else {
-				waitLabel(H)
-				revealingKey(H, d)
+				waitLabel(h)
+				revealingKey(h, d)
 				skip++
-				if skip >= 20 {
+				if skip >= 25 {
 					Signal.Clicked = false
 					skip = 0
 					trigger = false
@@ -223,7 +231,7 @@ func fetch(H *dwidget.DreamsItems, d dreams.DreamsObject) {
 
 			d.WorkDone()
 		case <-d.CloseDapp():
-			log.Println("[Holdero] Closed")
+			log.Println("[Holdero] Done")
 			return
 		}
 	}
@@ -252,6 +260,11 @@ func Disconnected(b bool) {
 }
 
 func disableActions() {
+	Settings.Check.SetChecked(false)
+	Poker.Contract_entry.SetText("")
+	disableOwnerControls(true)
+	Settings.Tables = []string{}
+	Settings.Owned = []string{}
 	Poker.Holdero_unlock.Hide()
 	Poker.Holdero_new.Hide()
 	Table.Tournament.Hide()
@@ -261,7 +274,7 @@ func disableActions() {
 }
 
 // Disable Holdero owner actions
-func DisableOwnerControls(d bool) {
+func disableOwnerControls(d bool) {
 	if d {
 		Poker.owner.owners_left.Hide()
 		Poker.owner.owners_mid.Hide()
