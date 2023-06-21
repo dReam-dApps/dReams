@@ -428,10 +428,10 @@ func FetchHolderoSC() {
 		V_jv := result.VariableStringKeys["V:"]
 
 		if V_jv != nil {
-			Round.Version = intType(V_jv)
+			Round.Version = IntType(V_jv)
 		}
 
-		if Seats_jv != nil && intType(Seats_jv) > 0 {
+		if Seats_jv != nil && IntType(Seats_jv) > 0 {
 			// Count_jv := result.VariableStringKeys["Counter:"]
 			Ante_jv := result.VariableStringKeys["Ante:"]
 			BigBlind_jv := result.VariableStringKeys["BB:"]
@@ -497,7 +497,7 @@ func FetchHolderoSC() {
 			Last_jv := result.VariableStringKeys["Last"]
 
 			if Last_jv != nil {
-				Round.Last = int64(float64Type(Last_jv))
+				Round.Last = int64(Float64Type(Last_jv))
 			} else {
 				Round.Last = 0
 			}
@@ -542,9 +542,9 @@ func FetchHolderoSC() {
 				}
 			}
 
-			Round.Ante = uint64Type(Ante_jv)
-			Round.BB = uint64Type(BigBlind_jv)
-			Round.SB = uint64Type(SmallBlind_jv)
+			Round.Ante = Uint64Type(Ante_jv)
+			Round.BB = Uint64Type(BigBlind_jv)
+			Round.SB = Uint64Type(SmallBlind_jv)
 			Round.Pot = Pot_jv
 
 			hasFolded(P1F_jv, P2F_jv, P3F_jv, P4F_jv, P5F_jv, P6F_jv)
@@ -581,7 +581,7 @@ func FetchHolderoSC() {
 				if Round.Bettor == "" {
 					Round.Bettor = findBettor(Turn_jv)
 				}
-				Round.Wager = uint64Type(Wager_jv)
+				Round.Wager = Uint64Type(Wager_jv)
 				Display.B_Button = "Call/Raise"
 				Display.C_Button = "Fold"
 			} else {
@@ -593,7 +593,7 @@ func FetchHolderoSC() {
 				if Round.Raiser == "" {
 					Round.Raiser = findBettor(Turn_jv)
 				}
-				Round.Raised = uint64Type(Raised_jv)
+				Round.Raised = Uint64Type(Raised_jv)
 				Display.B_Button = "Call"
 				Display.C_Button = "Fold"
 			} else {
@@ -601,7 +601,7 @@ func FetchHolderoSC() {
 				Round.Raised = 0
 			}
 
-			if Round.ID == intType(Turn_jv)+1 {
+			if Round.ID == IntType(Turn_jv)+1 {
 				Signal.My_turn = true
 			} else if Round.ID == 1 && Turn_jv == Seats_jv {
 				Signal.My_turn = true
@@ -876,7 +876,7 @@ func FetchBaccHand(tx string) {
 		Total_jv := result.VariableStringKeys["TotalHandsPlayed:"]
 		if Total_jv != nil {
 			Display_jv := result.VariableStringKeys["display"]
-			start := intType(Total_jv) - intType(Display_jv)
+			start := IntType(Total_jv) - IntType(Display_jv)
 			i := start
 			for i < start+45 {
 				h := "-Hand#TXID:"
@@ -886,20 +886,20 @@ func FetchBaccHand(tx string) {
 				if TXID_jv != nil {
 					if TXID_jv.(string) == tx {
 						Bacc.Found = true
-						Bacc.P_card1 = intType(result.VariableStringKeys[w+"-Player x:"])
-						Bacc.P_card2 = intType(result.VariableStringKeys[w+"-Player y:"])
-						Bacc.P_card3 = intType(result.VariableStringKeys[w+"-Player z:"])
-						Bacc.B_card1 = intType(result.VariableStringKeys[w+"-Banker x:"])
-						Bacc.B_card2 = intType(result.VariableStringKeys[w+"-Banker y:"])
-						Bacc.B_card3 = intType(result.VariableStringKeys[w+"-Banker z:"])
+						Bacc.P_card1 = IntType(result.VariableStringKeys[w+"-Player x:"])
+						Bacc.P_card2 = IntType(result.VariableStringKeys[w+"-Player y:"])
+						Bacc.P_card3 = IntType(result.VariableStringKeys[w+"-Player z:"])
+						Bacc.B_card1 = IntType(result.VariableStringKeys[w+"-Banker x:"])
+						Bacc.B_card2 = IntType(result.VariableStringKeys[w+"-Banker y:"])
+						Bacc.B_card3 = IntType(result.VariableStringKeys[w+"-Banker z:"])
 						PTotal_jv := result.VariableStringKeys[w+"-Player total:"]
 						BTotal_jv := result.VariableStringKeys[w+"-Banker total:"]
 
-						p := intType(PTotal_jv)
-						b := intType(BTotal_jv)
-						if intType(PTotal_jv) == intType(BTotal_jv) {
+						p := IntType(PTotal_jv)
+						b := IntType(BTotal_jv)
+						if IntType(PTotal_jv) == IntType(BTotal_jv) {
 							Display.BaccRes = fmt.Sprintf("Hand# %s Tie, %d & %d", w, p, b)
-						} else if intType(PTotal_jv) > intType(BTotal_jv) {
+						} else if IntType(PTotal_jv) > IntType(BTotal_jv) {
 							Display.BaccRes = fmt.Sprintf("Hand# %s Player Wins, %d over %d", w, p, b)
 						} else {
 							Display.BaccRes = fmt.Sprintf("Hand# %s Banker Wins, %d over %d", w, b, p)
@@ -1048,7 +1048,7 @@ func FetchSportsFinal(scid string) (finals []string) {
 
 		played := result.VariableStringKeys["s_played"]
 		if played != nil {
-			start := intType(played) - 4
+			start := IntType(played) - 4
 			i := start
 			for {
 				str := fmt.Sprint(i)
@@ -1120,7 +1120,7 @@ func FetchTarotReading(tx string) {
 		Reading_jv := result.VariableStringKeys["readings:"]
 		if Reading_jv != nil {
 			Display_jv := result.VariableStringKeys["Display"]
-			start := intType(Reading_jv) - intType(Display_jv)
+			start := IntType(Reading_jv) - IntType(Display_jv)
 			i := start
 			for i < start+45 {
 				h := "-readingTXID:"

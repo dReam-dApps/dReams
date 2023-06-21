@@ -306,7 +306,7 @@ func singleNameClear(p int) {
 // Returns name of Holdero player who bet
 func findBettor(p interface{}) string {
 	if p != nil {
-		switch float64Type(p) {
+		switch Float64Type(p) {
 		case 0:
 			if Round.P6_name != "" && !Round.F6 {
 				return Round.P6_name
@@ -588,7 +588,7 @@ func tableOpen(seats, full, two, three, four, five, six interface{}) {
 		Signal.Sit = true
 		return
 	}
-	s := intType(seats)
+	s := IntType(seats)
 	if s >= 2 && two == nil && Round.ID != 1 {
 		Signal.Sit = false
 	}
@@ -617,7 +617,7 @@ func tableOpen(seats, full, two, three, four, five, six interface{}) {
 // Gets Holdero community card values
 func getCommCardValues(f1, f2, f3, t, r interface{}) {
 	if f1 != nil {
-		Round.Flop1 = intType(f1)
+		Round.Flop1 = IntType(f1)
 		if !Round.Flop_trigger {
 			Round.Card_delay = true
 		}
@@ -628,19 +628,19 @@ func getCommCardValues(f1, f2, f3, t, r interface{}) {
 	}
 
 	if f2 != nil {
-		Round.Flop2 = intType(f2)
+		Round.Flop2 = IntType(f2)
 	} else {
 		Round.Flop2 = 0
 	}
 
 	if f3 != nil {
-		Round.Flop3 = intType(f3)
+		Round.Flop3 = IntType(f3)
 	} else {
 		Round.Flop3 = 0
 	}
 
 	if t != nil {
-		Round.TurnCard = intType(t)
+		Round.TurnCard = IntType(t)
 		if !Round.Turn_trigger {
 			Round.Card_delay = true
 		}
@@ -651,7 +651,7 @@ func getCommCardValues(f1, f2, f3, t, r interface{}) {
 	}
 
 	if r != nil {
-		Round.RiverCard = intType(r)
+		Round.RiverCard = IntType(r)
 		if !Round.River_trigger {
 			Round.Card_delay = true
 		}
@@ -944,16 +944,16 @@ func allFolded(p1, p2, p3, p4, p5, p6, s interface{}) {
 	var a, b, c, d, e, f int
 	var who string
 	var display string
-	seats := intType(s)
+	seats := IntType(s)
 	if seats >= 2 {
 		if p1 != nil {
-			a = intType(p1)
+			a = IntType(p1)
 		} else {
 			who = "Player1"
 			display = Round.P1_name
 		}
 		if p2 != nil {
-			b = intType(p2)
+			b = IntType(p2)
 		} else {
 			who = "Player2"
 			display = Round.P2_name
@@ -961,7 +961,7 @@ func allFolded(p1, p2, p3, p4, p5, p6, s interface{}) {
 	}
 	if seats >= 3 {
 		if p3 != nil {
-			c = intType(p3)
+			c = IntType(p3)
 		} else {
 			who = "Player3"
 			display = Round.P3_name
@@ -970,7 +970,7 @@ func allFolded(p1, p2, p3, p4, p5, p6, s interface{}) {
 
 	if seats >= 4 {
 		if p4 != nil {
-			d = intType(p4)
+			d = IntType(p4)
 		} else {
 			who = "Player4"
 			display = Round.P4_name
@@ -979,7 +979,7 @@ func allFolded(p1, p2, p3, p4, p5, p6, s interface{}) {
 
 	if seats >= 5 {
 		if p5 != nil {
-			e = intType(p5)
+			e = IntType(p5)
 		} else {
 			who = "Player5"
 			display = Round.P5_name
@@ -988,7 +988,7 @@ func allFolded(p1, p2, p3, p4, p5, p6, s interface{}) {
 
 	if seats >= 6 {
 		if p6 != nil {
-			f = intType(p6)
+			f = IntType(p6)
 		} else {
 			who = "Player6"
 			display = Round.P6_name

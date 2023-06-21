@@ -14,7 +14,7 @@ import (
 )
 
 // Switch to convert interface to int
-func intType(v interface{}) (value int) {
+func IntType(v interface{}) (value int) {
 	switch v := v.(type) {
 	case float64:
 		value = int(v)
@@ -30,7 +30,7 @@ func intType(v interface{}) (value int) {
 }
 
 // Switch to convert interface to uint64
-func uint64Type(v interface{}) (value uint64) {
+func Uint64Type(v interface{}) (value uint64) {
 	switch v := v.(type) {
 	case float64:
 		value = uint64(v)
@@ -46,7 +46,7 @@ func uint64Type(v interface{}) (value uint64) {
 }
 
 // Switch to convert interface to float64
-func float64Type(v interface{}) (value float64) {
+func Float64Type(v interface{}) (value float64) {
 	switch v := v.(type) {
 	case float64:
 		value = v
@@ -75,7 +75,7 @@ func HexToString(h interface{}) string {
 
 // Returns value plus one as string
 func AddOne(v interface{}) string {
-	return strconv.Itoa(intType(v) + 1)
+	return strconv.Itoa(IntType(v) + 1)
 }
 
 // Convert a millisecond string to time.Time
@@ -123,7 +123,7 @@ func StringToUint64(s string) uint64 {
 // Returns uint64 atomic value of v rounding to precision
 func ToAtomic(v interface{}, precision float64) uint64 {
 	ratio := math.Pow(10, precision)
-	rf := math.Round(float64Type(v)*ratio) / ratio
+	rf := math.Round(Float64Type(v)*ratio) / ratio
 
 	return uint64(math.Round(rf * 100000))
 }
@@ -131,7 +131,7 @@ func ToAtomic(v interface{}, precision float64) uint64 {
 // Returns atomic string value of v rounded to precision, walletapi.FormatMoneyPrecision()
 func FromAtomic(v interface{}, precision int) string {
 	decimals := new(big.Float).SetInt64(100000)
-	float_amount, _, _ := big.ParseFloat(fmt.Sprint(float64Type(v)), 10, 0, big.ToZero)
+	float_amount, _, _ := big.ParseFloat(fmt.Sprint(Float64Type(v)), 10, 0, big.ToZero)
 	result := new(big.Float)
 	result.Quo(float_amount, decimals)
 
