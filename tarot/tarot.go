@@ -131,7 +131,7 @@ func disableActions(b bool) {
 // Refresh all Tarot objects
 func tarotRefresh(t *dwidget.DreamsItems) {
 	t.LeftLabel.SetText("Total Readings: " + Iluma.Value.Readings + "      Click your card for Iluma reading")
-	t.RightLabel.SetText("dReams Balance: " + rpc.DisplayBalance("dReams") + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Display.Wallet_height)
+	t.RightLabel.SetText("dReams Balance: " + rpc.DisplayBalance("dReams") + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Wallet.Display.Height)
 
 	if !Iluma.Value.Display {
 		FetchReading(Iluma.Value.Last)

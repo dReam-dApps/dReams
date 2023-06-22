@@ -277,7 +277,7 @@ func clearBaccCards() *fyne.Container {
 func BaccRefresh(b *dwidget.DreamsItems, d dreams.DreamsObject) {
 	asset_name := rpc.GetAssetSCIDName(Bacc.AssetID)
 	b.LeftLabel.SetText("Total Hands Played: " + Display.Total_w + "      Player Wins: " + Display.Player_w + "      Ties: " + Display.Ties + "      Banker Wins: " + Display.Banker_w + "      Min Bet is " + Display.BaccMin + " " + asset_name + ", Max Bet is " + Display.BaccMax)
-	b.RightLabel.SetText(asset_name + " Balance: " + rpc.DisplayBalance(asset_name) + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Display.Wallet_height)
+	b.RightLabel.SetText(asset_name + " Balance: " + rpc.DisplayBalance(asset_name) + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Wallet.Display.Height)
 
 	if !Bacc.Display {
 		b.Front.Objects[0] = clearBaccCards()

@@ -859,7 +859,7 @@ func allFolded(p1, p2, p3, p4, p5, p6, s interface{}) {
 // Payout routine when all Holdero players have folded
 func allFoldedWinner() {
 	if Round.ID == 1 {
-		if Round.LocalEnd && !rpc.Signal.Startup {
+		if Round.LocalEnd && !rpc.Startup {
 			if !Signal.Paid {
 				Signal.Paid = true
 				go func() {
@@ -878,7 +878,7 @@ func allFoldedWinner() {
 
 // If Holdero showdown, trigger the hand ranker routine
 func winningHand(e interface{}) {
-	if e != nil && !rpc.Signal.Startup && !Round.LocalEnd {
+	if e != nil && !rpc.Startup && !Round.LocalEnd {
 		go func() {
 			getHands(rpc.StringToInt(Display.Seats))
 		}()

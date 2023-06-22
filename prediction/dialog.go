@@ -148,17 +148,17 @@ func predictionOpts(window fyne.Window) fyne.CanvasObject {
 	Owner.P_post = widget.NewButton("Post", func() {
 		go SetPredictionPrices(rpc.Daemon.Connect)
 		var a float64
-		prediction := rpc.Display.Prediction
+		prediction := Predict.Prediction
 		if isOnChainPrediction(prediction) {
 			switch onChainPrediction(prediction) {
 			case 1:
-				a = rpc.GetDifficulty(rpc.Display.P_feed)
+				a = rpc.GetDifficulty(Predict.Feed)
 				window.Content().(*fyne.Container).Objects[2] = ownerConfirmAction(6, a, window, reset)
 			case 2:
-				a = rpc.GetBlockTime(rpc.Display.P_feed)
+				a = rpc.GetBlockTime(Predict.Feed)
 				window.Content().(*fyne.Container).Objects[2] = ownerConfirmAction(6, a, window, reset)
 			case 3:
-				d := rpc.DaemonHeight("dReams", rpc.Display.P_feed)
+				d := rpc.DaemonHeight("dReams", Predict.Feed)
 				a = float64(d)
 				window.Content().(*fyne.Container).Objects[2] = ownerConfirmAction(6, a, window, reset)
 			default:
@@ -179,17 +179,17 @@ func predictionOpts(window fyne.Window) fyne.CanvasObject {
 	Owner.P_pay = widget.NewButton("Prediction Payout", func() {
 		go SetPredictionPrices(rpc.Daemon.Connect)
 		var a float64
-		prediction := rpc.Display.Prediction
+		prediction := Predict.Prediction
 		if isOnChainPrediction(prediction) {
 			switch onChainPrediction(prediction) {
 			case 1:
-				a = rpc.GetDifficulty(rpc.Display.P_feed)
+				a = rpc.GetDifficulty(Predict.Feed)
 				window.Content().(*fyne.Container).Objects[2] = ownerConfirmAction(7, a, window, reset)
 			case 2:
-				a = rpc.GetBlockTime(rpc.Display.P_feed)
+				a = rpc.GetBlockTime(Predict.Feed)
 				window.Content().(*fyne.Container).Objects[2] = ownerConfirmAction(7, a, window, reset)
 			case 3:
-				d := rpc.DaemonHeight("dReams", rpc.Display.P_feed)
+				d := rpc.DaemonHeight("dReams", Predict.Feed)
 				a = float64(d)
 				window.Content().(*fyne.Container).Objects[2] = ownerConfirmAction(7, a, window, reset)
 			default:
@@ -667,11 +667,11 @@ func ConfirmAction(i int, teamA, teamB string, obj []fyne.CanvasObject, tabs *co
 
 	switch i {
 	case 1:
-		float := float64(rpc.Predict.Amount)
+		float := float64(Predict.Amount)
 		amt := float / 100000
 		confirm_display.SetText(fmt.Sprintf("SCID:\n\n%s\n\nLower prediction for %.5f Dero\n\nConfirm", p_scid, amt))
 	case 2:
-		float := float64(rpc.Predict.Amount)
+		float := float64(Predict.Amount)
 		amt := float / 100000
 		confirm_display.SetText(fmt.Sprintf("SCID:\n\n%s\n\nHigher prediction for %.5f Dero\n\nConfirm", p_scid, amt))
 	case 3:
@@ -959,8 +959,8 @@ func ownersMenu() {
 				now := time.Now()
 				utime = strconv.Itoa(int(now.Unix()))
 				clock.SetText("Unix Time: " + utime)
-				if now.Unix() < rpc.Predict.Buffer {
-					if rpc.Predict.Init {
+				if now.Unix() < Predict.Buffer {
+					if Predict.Init {
 						Owner.P_set.Hide()
 						Owner.P_cancel.Show()
 					} else {
@@ -969,7 +969,7 @@ func ownersMenu() {
 					}
 				} else {
 					Owner.P_cancel.Hide()
-					if rpc.Predict.Init {
+					if Predict.Init {
 						Owner.P_set.Hide()
 					} else {
 						Owner.P_set.Show()
@@ -1048,7 +1048,7 @@ func ownerConfirmAction(i int, p float64, window fyne.Window, reset fyne.CanvasO
 	confirm_display.Wrapping = fyne.TextWrapWord
 	confirm_display.Alignment = fyne.TextAlignCenter
 
-	pre := rpc.Display.Prediction
+	pre := Predict.Prediction
 	p_scid := Predict.Contract
 	p_pre := Owner.P_Name.Text
 	p_amt := Owner.P_amt.Text
@@ -1154,21 +1154,21 @@ func ownerConfirmAction(i int, p float64, window fyne.Window, reset fyne.CanvasO
 	case 6:
 		switch onChainPrediction(pre) {
 		case 1:
-			confirm_display.SetText("SCID:\n\n" + p_scid + "\n\n" + pre + ": " + fmt.Sprintf("%.0f", p) + "\n\nNode: " + rpc.Display.P_feed + "\n\nConfirm Post")
+			confirm_display.SetText("SCID:\n\n" + p_scid + "\n\n" + pre + ": " + fmt.Sprintf("%.0f", p) + "\n\nNode: " + Predict.Feed + "\n\nConfirm Post")
 		case 2:
-			confirm_display.SetText("SCID:\n\n" + p_scid + "\n\n" + pre + ": " + fmt.Sprintf("%.5f", p) + "\n\nNode: " + rpc.Display.P_feed + "\n\nConfirm Post")
+			confirm_display.SetText("SCID:\n\n" + p_scid + "\n\n" + pre + ": " + fmt.Sprintf("%.5f", p) + "\n\nNode: " + Predict.Feed + "\n\nConfirm Post")
 		case 3:
-			confirm_display.SetText("SCID:\n\n" + p_scid + "\n\n" + pre + ": " + fmt.Sprintf("%.0f", p) + "\n\nNode: " + rpc.Display.P_feed + "\n\nConfirm Post")
+			confirm_display.SetText("SCID:\n\n" + p_scid + "\n\n" + pre + ": " + fmt.Sprintf("%.0f", p) + "\n\nNode: " + Predict.Feed + "\n\nConfirm Post")
 		}
 
 	case 7:
 		switch onChainPrediction(pre) {
 		case 1:
-			confirm_display.SetText("SCID:\n\n" + p_scid + "\n\n" + pre + ": " + fmt.Sprintf("%.0f", p) + "\n\nNode: " + rpc.Display.P_feed + "\n\nConfirm Payout")
+			confirm_display.SetText("SCID:\n\n" + p_scid + "\n\n" + pre + ": " + fmt.Sprintf("%.0f", p) + "\n\nNode: " + Predict.Feed + "\n\nConfirm Payout")
 		case 2:
-			confirm_display.SetText("SCID:\n\n" + p_scid + "\n\n" + pre + ": " + fmt.Sprintf("%.5f", p) + "\n\nNode: " + rpc.Display.P_feed + "\n\nConfirm Payout")
+			confirm_display.SetText("SCID:\n\n" + p_scid + "\n\n" + pre + ": " + fmt.Sprintf("%.5f", p) + "\n\nNode: " + Predict.Feed + "\n\nConfirm Payout")
 		case 3:
-			confirm_display.SetText("SCID:\n\n" + p_scid + "\n\n" + pre + ": " + fmt.Sprintf("%.0f", p) + "\n\nNode: " + rpc.Display.P_feed + "\n\nConfirm Payout")
+			confirm_display.SetText("SCID:\n\n" + p_scid + "\n\n" + pre + ": " + fmt.Sprintf("%.0f", p) + "\n\nNode: " + Predict.Feed + "\n\nConfirm Payout")
 		}
 
 	case 8:

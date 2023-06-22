@@ -1031,7 +1031,7 @@ func RunNFAMarket(tag string, quit, done chan struct{}, connect_box *dwidget.Der
 
 			// Refresh Dero balance and Gnomon endpoint
 			connect_box.RefreshBalance()
-			if !rpc.Signal.Startup {
+			if !rpc.Startup {
 				GnomonEndPoint()
 			}
 
@@ -1086,7 +1086,7 @@ func RunNFAMarket(tag string, quit, done chan struct{}, connect_box *dwidget.Der
 			}
 
 			if rpc.Daemon.IsConnected() {
-				rpc.Signal.Startup = false
+				rpc.Startup = false
 			}
 
 			offset++

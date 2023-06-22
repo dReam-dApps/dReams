@@ -154,7 +154,7 @@ func fetch(quit, done chan struct{}) {
 			rpc.Wallet.GetTokenBalance("TRVL", rpc.TrvlSCID)
 
 			connect_box.RefreshBalance()
-			if !rpc.Signal.Startup {
+			if !rpc.Startup {
 				menu.GnomonEndPoint()
 			}
 
@@ -178,7 +178,7 @@ func fetch(quit, done chan struct{}) {
 			}
 
 			if rpc.Daemon.IsConnected() {
-				rpc.Signal.Startup = false
+				rpc.Startup = false
 			}
 
 		case <-quit: // exit

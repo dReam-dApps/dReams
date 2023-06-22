@@ -248,7 +248,7 @@ func gnomonScan(contracts map[string]string) {
 
 // Main dReams process loop
 func fetch(d dreams.DreamsObject, done chan struct{}) {
-	rpc.Signal.Startup = true
+	rpc.Startup = true
 	time.Sleep(3 * time.Second)
 	ticker := time.NewTicker(3 * time.Second)
 	for {
@@ -259,7 +259,7 @@ func fetch(d dreams.DreamsObject, done chan struct{}) {
 				rpc.EchoWallet("dReams")
 				go rpc.GetDreamsBalances(rpc.SCIDs)
 				rpc.GetWalletHeight("dReams")
-				if !rpc.Signal.Startup {
+				if !rpc.Startup {
 					CheckConnection()
 					menu.GnomonEndPoint()
 					menu.GnomonState(dReams.IsWindows(), dReams.Configure, gnomonScan)
@@ -275,11 +275,11 @@ func fetch(d dreams.DreamsObject, done chan struct{}) {
 				}
 
 				if rpc.Daemon.IsConnected() {
-					if rpc.Signal.Startup {
+					if rpc.Startup {
 						go refreshPriceDisplay(true)
 					}
 
-					rpc.Signal.Startup = false
+					rpc.Startup = false
 				}
 
 				dReams.SignalChannel()
@@ -336,7 +336,7 @@ func refreshDaemonDisplay(c bool) {
 // Refresh menu wallet display
 func refreshWalletDisplay(c bool) {
 	if c {
-		menu.Assets.Wall_height.Text = (" Wallet Height: " + rpc.Display.Wallet_height)
+		menu.Assets.Wall_height.Text = (" Wallet Height: " + rpc.Wallet.Display.Height)
 		menu.Assets.Wall_height.Refresh()
 	} else {
 		menu.Assets.Wall_height.Text = (" Wallet Height: 0")
@@ -720,7 +720,7 @@ func WalletRpcEntry() fyne.Widget {
 	entry.OnCursorChanged = func() {
 		if rpc.Wallet.IsConnected() {
 			rpc.Wallet.Address = ""
-			rpc.Display.Wallet_height = "0"
+			rpc.Wallet.Display.Height = "0"
 			rpc.Wallet.Height = 0
 			rpc.Wallet.Connected(false)
 			go CheckConnection()

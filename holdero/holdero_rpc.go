@@ -263,7 +263,7 @@ func FetchHolderoSC() {
 				getPlayerCardValues(P1C1_jv, P1C2_jv, P2C1_jv, P2C2_jv, P3C1_jv, P3C2_jv, P4C1_jv, P4C2_jv, P5C1_jv, P5C2_jv, P6C1_jv, P6C2_jv)
 			}
 
-			if !rpc.Signal.Startup {
+			if !rpc.Startup {
 				setHolderoName(OneId_jv, TwoId_jv, ThreeId_jv, FourId_jv, FiveId_jv, SixId_jv)
 				setSignals(Pot_jv, P1Out_jv)
 			}

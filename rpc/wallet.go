@@ -28,6 +28,10 @@ type wallet struct {
 	MuB        sync.RWMutex
 	File       *walletapi.Wallet_Disk
 	LogEntry   *widget.Entry
+	Display    struct {
+		Balance map[string]string
+		Height  string
+	}
 }
 
 var Wallet wallet

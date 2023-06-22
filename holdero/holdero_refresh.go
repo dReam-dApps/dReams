@@ -296,13 +296,13 @@ func setHolderoLabel(H *dwidget.DreamsItems) {
 	H.LeftLabel.SetText("Seats: " + Display.Seats + "      Pot: " + Display.Pot + "      Blinds: " + Display.Blinds + "      Ante: " + Display.Ante + "      Dealer: " + Display.Dealer)
 	if Round.Asset {
 		if Round.Tourney {
-			H.RightLabel.SetText(Display.Readout + "      Player ID: " + Display.PlayerId + "      Chip Balance: " + rpc.DisplayBalance("Tournament") + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Display.Wallet_height)
+			H.RightLabel.SetText(Display.Readout + "      Player ID: " + Display.PlayerId + "      Chip Balance: " + rpc.DisplayBalance("Tournament") + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Wallet.Display.Height)
 		} else {
 			asset_name := rpc.GetAssetSCIDName(Round.AssetID)
-			H.RightLabel.SetText(Display.Readout + "      Player ID: " + Display.PlayerId + "      " + asset_name + " Balance: " + rpc.DisplayBalance(asset_name) + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Display.Wallet_height)
+			H.RightLabel.SetText(Display.Readout + "      Player ID: " + Display.PlayerId + "      " + asset_name + " Balance: " + rpc.DisplayBalance(asset_name) + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Wallet.Display.Height)
 		}
 	} else {
-		H.RightLabel.SetText(Display.Readout + "      Player ID: " + Display.PlayerId + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Display.Wallet_height)
+		H.RightLabel.SetText(Display.Readout + "      Player ID: " + Display.PlayerId + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Wallet.Display.Height)
 	}
 
 	if Signal.Contract {
@@ -321,14 +321,14 @@ func waitLabel(H *dwidget.DreamsItems) {
 	H.TopLabel.Text = ""
 	if Round.Asset {
 		if Round.Tourney {
-			H.RightLabel.SetText("Wait for Block" + "      Player ID: " + Display.PlayerId + "      Chip Balance: " + rpc.DisplayBalance("Tournament") + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Display.Wallet_height)
+			H.RightLabel.SetText("Wait for Block" + "      Player ID: " + Display.PlayerId + "      Chip Balance: " + rpc.DisplayBalance("Tournament") + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Wallet.Display.Height)
 		} else {
 			asset_name := rpc.GetAssetSCIDName(Round.AssetID)
-			H.RightLabel.SetText("Wait for Block" + "      Player ID: " + Display.PlayerId + "      " + asset_name + " Balance: " + rpc.DisplayBalance(asset_name) + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Display.Wallet_height)
+			H.RightLabel.SetText("Wait for Block" + "      Player ID: " + Display.PlayerId + "      " + asset_name + " Balance: " + rpc.DisplayBalance(asset_name) + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Wallet.Display.Height)
 		}
 
 	} else {
-		H.RightLabel.SetText("Wait for Block" + "      Player ID: " + Display.PlayerId + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Display.Wallet_height)
+		H.RightLabel.SetText("Wait for Block" + "      Player ID: " + Display.PlayerId + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Wallet.Display.Height)
 	}
 	H.TopLabel.Refresh()
 	H.RightLabel.Refresh()

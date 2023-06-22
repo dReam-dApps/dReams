@@ -330,16 +330,16 @@ func place() *fyne.Container {
 	H.TopLabel = canvas.NewText(holdero.Display.Res, color.White)
 	H.TopLabel.Move(fyne.NewPos(387, 204))
 	H.LeftLabel.SetText("Seats: " + holdero.Display.Seats + "      Pot: " + holdero.Display.Pot + "      Blinds: " + holdero.Display.Blinds + "      Ante: " + holdero.Display.Ante + "      Dealer: " + holdero.Display.Dealer)
-	H.RightLabel.SetText(holdero.Display.Readout + "      Player ID: " + holdero.Display.PlayerId + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Display.Wallet_height)
+	H.RightLabel.SetText(holdero.Display.Readout + "      Player ID: " + holdero.Display.PlayerId + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Wallet.Display.Height)
 
 	B.LeftLabel = widget.NewLabel("")
 	B.RightLabel = widget.NewLabel("")
 	B.LeftLabel.SetText("Total Hands Played: " + baccarat.Display.Total_w + "      Player Wins: " + baccarat.Display.Player_w + "      Ties: " + baccarat.Display.Ties + "      Banker Wins: " + baccarat.Display.Banker_w + "      Min Bet is " + baccarat.Display.BaccMin + " dReams, Max Bet is " + baccarat.Display.BaccMax)
-	B.RightLabel.SetText("dReams Balance: " + rpc.DisplayBalance("dReams") + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Display.Wallet_height)
+	B.RightLabel.SetText("dReams Balance: " + rpc.DisplayBalance("dReams") + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Wallet.Display.Height)
 
 	P.LeftLabel = widget.NewLabel("")
 	P.RightLabel = widget.NewLabel("")
-	P.RightLabel.SetText("dReams Balance: " + rpc.DisplayBalance("dReams") + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Display.Wallet_height)
+	P.RightLabel.SetText("dReams Balance: " + rpc.DisplayBalance("dReams") + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Wallet.Display.Height)
 
 	prediction.Predict.Info = widget.NewLabel("SCID:\n\n" + prediction.Predict.Contract + "\n")
 	prediction.Predict.Info.Wrapping = fyne.TextWrapWord
@@ -347,12 +347,12 @@ func place() *fyne.Container {
 
 	S.LeftLabel = widget.NewLabel("")
 	S.RightLabel = widget.NewLabel("")
-	S.RightLabel.SetText("dReams Balance: " + rpc.DisplayBalance("dReams") + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Display.Wallet_height)
+	S.RightLabel.SetText("dReams Balance: " + rpc.DisplayBalance("dReams") + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Wallet.Display.Height)
 
 	T.LeftLabel = widget.NewLabel("")
 	T.RightLabel = widget.NewLabel("")
 	T.LeftLabel.SetText("Total Readings: " + tarot.Iluma.Value.Readings + "      Click your card for Iluma reading")
-	T.RightLabel.SetText("dReams Balance: " + rpc.DisplayBalance("dReams") + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Display.Wallet_height)
+	T.RightLabel.SetText("dReams Balance: " + rpc.DisplayBalance("dReams") + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Wallet.Display.Height)
 
 	prediction.Sports.Info = widget.NewLabel("SCID:\n\n" + prediction.Sports.Contract + "\n")
 	prediction.Sports.Info.Wrapping = fyne.TextWrapWord
@@ -533,7 +533,7 @@ func placeSwap() *container.Split {
 	select_pair.SetSelectedIndex(0)
 
 	assets := []string{}
-	for asset := range rpc.Display.Balance {
+	for asset := range rpc.Wallet.Display.Balance {
 		assets = append(assets, asset)
 	}
 

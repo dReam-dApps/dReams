@@ -55,16 +55,16 @@ type daemon struct {
 
 var Daemon daemon
 var SCIDs map[string]string
-var Display displayStrings
-var Signal signals
-var Predict predictionValues
+var Startup bool
 
+// Set daemon connection
 func (d *daemon) Connected(b bool) {
 	d.Lock()
 	d.Connect = b
 	d.Unlock()
 }
 
+// Check if daemon is connected
 func (d *daemon) IsConnected() bool {
 	d.RLock()
 	defer d.RUnlock()
@@ -72,6 +72,7 @@ func (d *daemon) IsConnected() bool {
 	return d.Connect
 }
 
+// Check if wallet and daemon rpc are connected
 func IsReady() bool {
 	if Wallet.IsConnected() && Daemon.IsConnected() {
 		return true

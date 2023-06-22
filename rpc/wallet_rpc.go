@@ -61,15 +61,15 @@ func SessionLog() *fyne.Container {
 
 func InitBalances() {
 	Wallet.TokenBal = make(map[string]uint64)
-	Display.Balance = make(map[string]string)
+	Wallet.Display.Balance = make(map[string]string)
 	SCIDs = make(map[string]string)
 	SCIDs["dReams"] = DreamsSCID
 	SCIDs["HGC"] = HgcSCID
 	SCIDs["TRVL"] = TrvlSCID
-	Display.Balance["Dero"] = "0"
-	Display.Balance["dReams"] = "0"
-	Display.Balance["HGC"] = "0"
-	Display.Balance["TRVL"] = "0"
+	Wallet.Display.Balance["Dero"] = "0"
+	Wallet.Display.Balance["dReams"] = "0"
+	Wallet.Display.Balance["HGC"] = "0"
+	Wallet.Display.Balance["TRVL"] = "0"
 }
 
 // Set wallet rpc client with auth, context and 5 sec cancel
@@ -190,21 +190,21 @@ func GetDreamsBalances(assets map[string]string) {
 	if Wallet.IsConnected() {
 		bal := GetBalance()
 		Wallet.Balance = bal
-		Display.Balance["Dero"] = FromAtomic(bal, 5)
+		Wallet.Display.Balance["Dero"] = FromAtomic(bal, 5)
 
 		for name, sc := range assets {
 			token_bal := TokenBalance(sc)
-			Display.Balance[name] = FromAtomic(token_bal, 5)
+			Wallet.Display.Balance[name] = FromAtomic(token_bal, 5)
 			Wallet.TokenBal[name] = token_bal
 		}
 
 		return
 	}
 
-	Display.Balance["Dero"] = "0"
+	Wallet.Display.Balance["Dero"] = "0"
 	Wallet.Balance = 0
 	for name := range assets {
-		Display.Balance[name] = "0"
+		Wallet.Display.Balance[name] = "0"
 		Wallet.TokenBal[name] = 0
 	}
 }
@@ -214,7 +214,7 @@ func DisplayBalance(name string) string {
 	Wallet.MuB.Lock()
 	defer Wallet.MuB.Unlock()
 
-	return Display.Balance[name]
+	return Wallet.Display.Balance[name]
 }
 
 // Return asset transfer to SCID from Round.AssetID
@@ -307,7 +307,7 @@ func GetWalletHeight(tag string) {
 		}
 
 		Wallet.Height = int(result.Height)
-		Display.Wallet_height = fmt.Sprint(result.Height)
+		Wallet.Display.Height = fmt.Sprint(result.Height)
 	}
 }
 

@@ -23,8 +23,12 @@ import (
 )
 
 type predictObjects struct {
+	Init          bool
+	Amount        uint64
+	Buffer        int64
 	Contract      string
-	Leaders_map   map[string]uint64
+	Prediction    string
+	Feed          string
 	Info          *widget.Label
 	Prices        *widget.Label
 	Predict_list  *widget.List
@@ -306,7 +310,7 @@ func PredictionRefresh(p *dwidget.DreamsItems, d dreams.DreamsObject) {
 			go SetPredictionPrices(rpc.Daemon.Connect)
 		}
 
-		p.RightLabel.SetText("dReams Balance: " + rpc.DisplayBalance("dReams") + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Display.Wallet_height)
+		p.RightLabel.SetText("dReams Balance: " + rpc.DisplayBalance("dReams") + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Wallet.Display.Height)
 
 		if CheckActivePrediction(Predict.Contract) {
 			go ShowPredictionControls()
@@ -372,10 +376,10 @@ func P_initResults(p, amt, eA, c, to, u, d, r, f, m string, ta, tb, tc int) (inf
 
 	} else {
 		var live string
-		if now > rpc.Predict.Buffer {
+		if now > Predict.Buffer {
 			live = "\n\nAccepting " + p + " Predictions "
 		} else {
-			left := rpc.Predict.Buffer - now
+			left := Predict.Buffer - now
 			live = "\n\n" + p + "\nBuffer ends in " + strconv.Itoa(int(left)) + " seconds"
 		}
 
@@ -482,7 +486,7 @@ func P_no_initResults(fr, tx, r, m string) (info string) {
 	info = "SCID:\n\n" + Predict.Contract + "\n" + "\nRound Completed\n\nRound Mark: " + m +
 		"\nRound Results: " + roundResults(fr, m) + "\n\nPayout TXID: " + tx + "\n\nRounds Completed: " + r
 
-	rpc.Display.Prediction = ""
+	Predict.Prediction = ""
 
 	return
 }
@@ -555,19 +559,19 @@ func GetPrediction(scid string) (info string) {
 		var pre, p_played, p_final, p_mark string
 		if init != nil {
 			if init[0] == 1 {
-				rpc.Predict.Init = true
+				Predict.Init = true
 
 				if buffer != nil {
-					rpc.Predict.Buffer = int64(buffer[0])
+					Predict.Buffer = int64(buffer[0])
 				}
 
-				rpc.Predict.Amount = amt[0]
+				Predict.Amount = amt[0]
 				if predicting != nil {
 					pre = predicting[0]
 				}
-				rpc.Display.Prediction = pre
+				Predict.Prediction = pre
 
-				p_amt := fmt.Sprint(float64(rpc.Predict.Amount) / 100000)
+				p_amt := fmt.Sprint(float64(Predict.Amount) / 100000)
 
 				p_down := fmt.Sprint(down[0])
 				p_up := fmt.Sprint(up[0])
@@ -578,7 +582,7 @@ func GetPrediction(scid string) (info string) {
 
 				var p_feed string
 				if url != nil {
-					rpc.Display.P_feed = url[0]
+					Predict.Feed = url[0]
 					p_feed = url[0]
 				}
 
@@ -619,7 +623,7 @@ func GetPrediction(scid string) (info string) {
 					p_final = final[0]
 				}
 
-				rpc.Predict.Init = false
+				Predict.Init = false
 				txid := FetchPredictionFinal(scid)
 
 				if mark != nil {

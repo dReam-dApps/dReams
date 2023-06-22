@@ -21,8 +21,8 @@ func fetch(p, s *dwidget.DreamsItems, d dreams.DreamsObject) {
 		case <-d.Receive():
 			if !rpc.Wallet.IsConnected() || !rpc.Daemon.IsConnected() {
 				disableActions()
-				s.RightLabel.SetText("dReams Balance: " + rpc.DisplayBalance("dReams") + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Display.Wallet_height)
-				p.RightLabel.SetText("dReams Balance: " + rpc.DisplayBalance("dReams") + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Display.Wallet_height)
+				s.RightLabel.SetText("dReams Balance: " + rpc.DisplayBalance("dReams") + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Wallet.Display.Height)
+				p.RightLabel.SetText("dReams Balance: " + rpc.DisplayBalance("dReams") + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Wallet.Display.Height)
 				d.WorkDone()
 				continue
 			}
@@ -44,7 +44,7 @@ func fetch(p, s *dwidget.DreamsItems, d dreams.DreamsObject) {
 					go SetSportsInfo(Sports.Contract)
 				}
 			}
-			s.RightLabel.SetText("dReams Balance: " + rpc.DisplayBalance("dReams") + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Display.Wallet_height)
+			s.RightLabel.SetText("dReams Balance: " + rpc.DisplayBalance("dReams") + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Wallet.Display.Height)
 
 			//dPrediction
 			if d.OnTab("Predict") {
@@ -56,7 +56,7 @@ func fetch(p, s *dwidget.DreamsItems, d dreams.DreamsObject) {
 					go SetPredictionPrices(rpc.Daemon.Connect)
 				}
 
-				p.RightLabel.SetText("dReams Balance: " + rpc.DisplayBalance("dReams") + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Display.Wallet_height)
+				p.RightLabel.SetText("dReams Balance: " + rpc.DisplayBalance("dReams") + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Wallet.Display.Height)
 
 				if CheckActivePrediction(Predict.Contract) {
 					go ShowPredictionControls()
