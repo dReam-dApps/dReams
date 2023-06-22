@@ -231,7 +231,7 @@ func RateConfirm(scid string, tab *container.AppTabs, reset fyne.CanvasObject) f
 
 var Username string
 
-// Holdero player name entry
+// Dero wallet name entry
 func NameEntry() fyne.CanvasObject {
 	Control.Names = widget.NewSelect([]string{}, func(s string) {
 		Username = s
@@ -240,12 +240,6 @@ func NameEntry() fyne.CanvasObject {
 	Control.Names.PlaceHolder = "Name:"
 
 	return Control.Names
-}
-
-// Round a float to precision
-func roundFloat(val float64, precision uint) float64 {
-	ratio := math.Pow(10, float64(precision))
-	return math.Round(val*ratio) / ratio
 }
 
 // Index entry and NFA control objects

@@ -701,7 +701,8 @@ func DaemonConnectedBox() fyne.Widget {
 		if !b {
 			go menu.StopLabel()
 			menu.Gnomes.Stop("dReams")
-			go menu.SleepLabel()
+			menu.Assets.Gnomes_sync.Text = (" Gnomon is Sleeping")
+			menu.Assets.Gnomes_sync.Refresh()
 		}
 	})
 	menu.Control.Daemon_check.Disable()
