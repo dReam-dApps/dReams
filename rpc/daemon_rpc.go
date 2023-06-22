@@ -16,26 +16,26 @@ import (
 )
 
 const (
-	DREAMSv      = "0.9.6d"
-	NameSCID     = "0000000000000000000000000000000000000000000000000000000000000001"
-	RatingSCID   = "c66a11ddb22912e92b0a7ab777ed0d343632d9e3c6e8a81452396ca84d2decb6"
-	DreamsSCID   = "ad2e7b37c380cc1aed3a6b27224ddfc92a2d15962ca1f4d35e530dba0f9575a9"
-	HgcSCID      = "e2e45ce26f70cb551951c855e81a12fee0bb6ebe80ef115c3f50f51e119c02f3"
-	TourneySCID  = "c2e1ec16aed6f653aef99a06826b2b6f633349807d01fbb74cc0afb5ff99c3c7"
-	HolderoSCID  = "e3f37573de94560e126a9020c0a5b3dfc7a4f3a4fbbe369fba93fbd219dc5fe9"
-	pHolderoSCID = "896834d57628d3a65076d3f4d84ddc7c5daf3e86b66a47f018abda6068afe2e6"
-	HHolderoSCID = "efe646c48977fd776fee73cdd3df147a2668d3b7d965cdb7a187dda4d23005d8"
-	BaccSCID     = "8289c6109f41cbe1f6d5f27a419db537bf3bf30a25eff285241a36e1ae3e48a4"
-	PredictSCID  = "eaa62b220fa1c411785f43c0c08ec59c761261cb58a0ccedc5b358e5ed2d2c95"
-	PPredictSCID = "e5e49c9a6dc1c0dc8a94429a01bf758e705de49487cbd0b3e3550648d2460cdf"
-	SportsSCID   = "ad11377c29a863523c1cc50a33ca13e861cc146a7c0496da58deaa1973e0a39f"
-	PSportsSCID  = "fffdc4ea6d157880841feab335ab4755edcde4e60fec2fff661009b16f44fa94"
-	TarotSCID    = "a6fc0033327073dd54e448192af929466596fce4d689302e558bc85ea8734a82"
-	DerBnbSCID   = "cfbd566d3678dec6e6dfa3a919feae5306ab12af1485e8bcf9320bd5a122b1d3"
-	TrvlSCID     = "efacf71e7b5f849653bfa49bfb9dcf7ad3d372944aef33f1e6f54dc95890e3ba"
-	GnomonSCID   = "a05395bb0cf77adc850928b0db00eb5ca7a9ccbafd9a38d021c8d299ad5ce1a4"
-	DevAddress   = "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn"
-	ArtAddress   = "dero1qy0khp9s9yw2h0eu20xmy9lth3zp5cacmx3rwt6k45l568d2mmcf6qgcsevzx"
+	DREAMSv    = "0.9.6d"
+	NameSCID   = "0000000000000000000000000000000000000000000000000000000000000001"
+	RatingSCID = "c66a11ddb22912e92b0a7ab777ed0d343632d9e3c6e8a81452396ca84d2decb6"
+	DreamsSCID = "ad2e7b37c380cc1aed3a6b27224ddfc92a2d15962ca1f4d35e530dba0f9575a9"
+	HgcSCID    = "e2e45ce26f70cb551951c855e81a12fee0bb6ebe80ef115c3f50f51e119c02f3"
+	// TourneySCID = "c2e1ec16aed6f653aef99a06826b2b6f633349807d01fbb74cc0afb5ff99c3c7"
+	// HolderoSCID  = "e3f37573de94560e126a9020c0a5b3dfc7a4f3a4fbbe369fba93fbd219dc5fe9"
+	// pHolderoSCID = "896834d57628d3a65076d3f4d84ddc7c5daf3e86b66a47f018abda6068afe2e6"
+	// HHolderoSCID = "efe646c48977fd776fee73cdd3df147a2668d3b7d965cdb7a187dda4d23005d8"
+	BaccSCID = "8289c6109f41cbe1f6d5f27a419db537bf3bf30a25eff285241a36e1ae3e48a4"
+	// PredictSCID  = "eaa62b220fa1c411785f43c0c08ec59c761261cb58a0ccedc5b358e5ed2d2c95"
+	// PPredictSCID = "e5e49c9a6dc1c0dc8a94429a01bf758e705de49487cbd0b3e3550648d2460cdf"
+	// SportsSCID   = "ad11377c29a863523c1cc50a33ca13e861cc146a7c0496da58deaa1973e0a39f"
+	// PSportsSCID  = "fffdc4ea6d157880841feab335ab4755edcde4e60fec2fff661009b16f44fa94"
+	TarotSCID  = "a6fc0033327073dd54e448192af929466596fce4d689302e558bc85ea8734a82"
+	DerBnbSCID = "cfbd566d3678dec6e6dfa3a919feae5306ab12af1485e8bcf9320bd5a122b1d3"
+	TrvlSCID   = "efacf71e7b5f849653bfa49bfb9dcf7ad3d372944aef33f1e6f54dc95890e3ba"
+	GnomonSCID = "a05395bb0cf77adc850928b0db00eb5ca7a9ccbafd9a38d021c8d299ad5ce1a4"
+	DevAddress = "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn"
+	ArtAddress = "dero1qy0khp9s9yw2h0eu20xmy9lth3zp5cacmx3rwt6k45l568d2mmcf6qgcsevzx"
 
 	DAEMON_RPC_DEFAULT = "127.0.0.1:10102"
 	DAEMON_RPC_REMOTE1 = "89.38.99.117:10102"
@@ -401,78 +401,6 @@ func VerifySigner(txid string) bool {
 	}
 
 	return result.Txs[0].Signer == Wallet.Address
-}
-
-// Code for v1.0.0 Holdero SC
-func GetHoldero100Code() string {
-	if Daemon.IsConnected() {
-		rpcClientD, ctx, cancel := SetDaemonClient(Daemon.Rpc)
-		defer cancel()
-
-		var result *rpc.GetSC_Result
-		params := rpc.GetSC_Params{
-			SCID:      "95e69b382044ddc1467e030a80905cf637729612f65624e8d17bf778d4362b8d",
-			Code:      true,
-			Variables: false,
-		}
-
-		if err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params); err != nil {
-			log.Println("[GetHoldero100Code]", err)
-			return ""
-		}
-
-		return result.Code
-
-	}
-
-	return ""
-}
-
-// Code for v1.1.0 Holdero public or private SC
-//   - version defines which type of Holdero contract
-//   - 0 for standard public
-//   - 1 for standard private
-//   - 2 for HGC
-func GetHoldero110Code(version int) string {
-	if Daemon.IsConnected() {
-		rpcClientD, ctx, cancel := SetDaemonClient(Daemon.Rpc)
-		defer cancel()
-
-		var result *rpc.GetSC_Result
-		var params rpc.GetSC_Params
-		switch version {
-		case 0:
-			params = rpc.GetSC_Params{
-				SCID:      HolderoSCID,
-				Code:      true,
-				Variables: false,
-			}
-		case 1:
-			params = rpc.GetSC_Params{
-				SCID:      pHolderoSCID,
-				Code:      true,
-				Variables: false,
-			}
-		case 2:
-			params = rpc.GetSC_Params{
-				SCID:      HHolderoSCID,
-				Code:      true,
-				Variables: false,
-			}
-		default:
-
-		}
-
-		if err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params); err != nil {
-			log.Println("[GetHoldero110Code]", err)
-			return ""
-		}
-
-		return result.Code
-
-	}
-
-	return ""
 }
 
 // Get difficulty from a daemon

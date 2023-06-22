@@ -106,31 +106,6 @@ func fetchBaccSC() {
 	}
 }
 
-// Get Baccarat SC code
-func GetBaccCode() string {
-	if rpc.Daemon.IsConnected() {
-		rpcClientD, ctx, cancel := rpc.SetDaemonClient(rpc.Daemon.Rpc)
-		defer cancel()
-
-		var result *dero.GetSC_Result
-		params := dero.GetSC_Params{
-			SCID:      rpc.BaccSCID,
-			Code:      true,
-			Variables: false,
-		}
-
-		err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params)
-		if err != nil {
-			log.Println("[GetBaccCode]", err)
-			return ""
-		}
-
-		return result.Code
-	}
-
-	return ""
-}
-
 // Find played Baccarat hand
 func FetchBaccHand(tx string) {
 	if rpc.Daemon.IsConnected() && tx != "" {

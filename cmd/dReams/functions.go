@@ -184,7 +184,7 @@ func exitTerminal() {
 
 // Ensure service is shutdown on app close
 func serviceRunning() {
-	rpc.Wallet.Service = false
+	prediction.Service.Init = false
 	for prediction.Service.Processing {
 		log.Println("[dReams] Waiting for service to close")
 		time.Sleep(3 * time.Second)
@@ -682,7 +682,7 @@ func DaemonConnectedBox() fyne.Widget {
 			//go startLabel()
 			menu.Assets.Gnomes_sync.Text = (" Starting Gnomon")
 			menu.Assets.Gnomes_sync.Refresh()
-			filters := menu.GnomonFilters()
+			filters := GnomonFilters()
 			menu.StartGnomon("dReams", menu.Gnomes.DBType, filters, 3960, 490, menu.G45Index)
 			rpc.FetchFees()
 			if menu.Control.Dapp_list["Holdero"] {

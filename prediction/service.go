@@ -28,6 +28,7 @@ const PAYLOAD_FORMAT = uint64(1728000)
 
 type service struct {
 	Dest_port  uint64
+	Init       bool
 	Debug      bool
 	Processing bool
 	Last_block int
@@ -55,7 +56,7 @@ func ServiceIndicator() (ind menu.DreamsIndicator) {
 
 	ind.Animation = canvas.NewColorRGBAAnimation(purple, blue,
 		time.Second*3, func(c color.Color) {
-			if rpc.Wallet.Service {
+			if Service.Init {
 				ind.Rect.FillColor = c
 				ind.Img.Show()
 				canvas.Refresh(ind.Rect)
@@ -409,18 +410,18 @@ func DreamService(start uint64, payouts, transfers bool) {
 		if start > 0 {
 			log.Println("[dReamService] Processing from height", start)
 			for i := 5; i > 0; i-- {
-				if !rpc.Wallet.Service {
+				if !Service.Init {
 					break
 				}
 				log.Println("[dReamService] Starting in", i)
 				time.Sleep(1 * time.Second)
 			}
 
-			if rpc.Wallet.Service {
+			if Service.Init {
 				log.Println("[dReamService] Starting")
 			}
 
-			for rpc.Wallet.Service && rpc.IsReady() {
+			for Service.Init && rpc.IsReady() {
 				Service.Processing = true
 				if transfers {
 					processBetTx(start, db, Service.Debug)
@@ -433,7 +434,7 @@ func DreamService(start uint64, payouts, transfers bool) {
 
 				for i := 0; i < 10; i++ {
 					time.Sleep(1 * time.Second)
-					if !rpc.Wallet.Service || !rpc.IsReady() {
+					if !Service.Init || !rpc.IsReady() {
 						break
 					}
 				}
@@ -445,7 +446,7 @@ func DreamService(start uint64, payouts, transfers bool) {
 		}
 		log.Println("[dReamService] Done")
 	}
-	rpc.Wallet.Service = false
+	Service.Init = false
 }
 
 // Process and queue dPrediction contracts actions for service to complete
@@ -748,7 +749,7 @@ func processBetTx(start uint64, db *bbolt.DB, print bool) {
 	serviceDebug(print, "[processBetTx]", fmt.Sprintf("%d Entries since Height %d", l, start))
 
 	for i, e := range transfers.Entries {
-		if !rpc.Wallet.Service {
+		if !Service.Init {
 			break
 		}
 

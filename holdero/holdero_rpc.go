@@ -14,6 +14,14 @@ import (
 	dero "github.com/deroproject/derohe/rpc"
 )
 
+const (
+	TourneySCID    = "c2e1ec16aed6f653aef99a06826b2b6f633349807d01fbb74cc0afb5ff99c3c7"
+	Holdero100     = "95e69b382044ddc1467e030a80905cf637729612f65624e8d17bf778d4362b8d"
+	HolderoSCID    = "e3f37573de94560e126a9020c0a5b3dfc7a4f3a4fbbe369fba93fbd219dc5fe9"
+	pHolderoSCID   = "896834d57628d3a65076d3f4d84ddc7c5daf3e86b66a47f018abda6068afe2e6"
+	HGCHolderoSCID = "efe646c48977fd776fee73cdd3df147a2668d3b7d965cdb7a187dda4d23005d8"
+)
+
 type displayStrings struct {
 	Seats    string
 	Pot      string
@@ -237,7 +245,7 @@ func FetchHolderoSC() {
 				if Chips_jv != nil {
 					if rpc.HexToString(Chips_jv) == "ASSET" {
 						Round.Asset = true
-						Pot_jv = result.Balances[rpc.TourneySCID]
+						Pot_jv = result.Balances[TourneySCID]
 					} else {
 						Round.Asset = false
 						Round.AssetID = ""
@@ -575,7 +583,7 @@ func DealHand() (tx string) {
 
 		if Round.Tourney {
 			t2 := dero.Transfer{
-				SCID:        crypto.HashHexToHash(rpc.TourneySCID),
+				SCID:        crypto.HashHexToHash(TourneySCID),
 				Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
 				Burn:        amount,
 			}
@@ -632,7 +640,7 @@ func Bet(amt string) (tx string) {
 	if Round.Asset {
 		if Round.Tourney {
 			t1 = dero.Transfer{
-				SCID:        crypto.HashHexToHash(rpc.TourneySCID),
+				SCID:        crypto.HashHexToHash(TourneySCID),
 				Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
 				Burn:        rpc.ToAtomic(amt, 1),
 			}
@@ -697,7 +705,7 @@ func Check() (tx string) {
 	} else {
 		if Round.Tourney {
 			t1 = dero.Transfer{
-				SCID:        crypto.HashHexToHash(rpc.TourneySCID),
+				SCID:        crypto.HashHexToHash(TourneySCID),
 				Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
 				Burn:        0,
 			}
@@ -1035,5 +1043,152 @@ func SharedDeckUrl(face, faceUrl, back, backUrl string) {
 
 		log.Println("[Holdero] Shared TX:", txid)
 		rpc.AddLog("Shared TX: " + txid.TXID)
+	}
+}
+
+// Deposit tournament chip bal with name to leader board SC
+func TourneyDeposit(bal uint64, name string) {
+	if bal > 0 {
+		rpcClientW, ctx, cancel := rpc.SetWalletClient(rpc.Wallet.Rpc, rpc.Wallet.UserPass)
+		defer cancel()
+
+		arg1 := dero.Argument{Name: "entrypoint", DataType: "S", Value: "Deposit"}
+		arg2 := dero.Argument{Name: "name", DataType: "S", Value: name}
+		args := dero.Arguments{arg1, arg2}
+		txid := dero.Transfer_Result{}
+
+		t1 := dero.Transfer{
+			SCID:        crypto.HashHexToHash(TourneySCID),
+			Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
+			Amount:      0,
+			Burn:        bal,
+		}
+
+		t := []dero.Transfer{t1}
+		fee := rpc.GasEstimate(TourneySCID, "[Holdero]", args, t, rpc.LowLimitFee)
+		params := &dero.Transfer_Params{
+			Transfers: t,
+			SC_ID:     TourneySCID,
+			SC_RPC:    args,
+			Ringsize:  2,
+			Fees:      fee,
+		}
+
+		if err := rpcClientW.CallFor(ctx, &txid, "transfer", params); err != nil {
+			log.Println("[TourneyDeposit]", err)
+			return
+		}
+
+		log.Println("[Holdero] Tournament Deposit TX:", txid)
+		rpc.AddLog("Tournament Deposit TX: " + txid.TXID)
+
+	} else {
+		log.Println("[Holdero] No Tournament Chips")
+	}
+}
+
+// Code latest SC code for Holdero public or private SC
+//   - version defines which type of Holdero contract
+//   - 0 for standard public
+//   - 1 for standard private
+//   - 2 for HGC
+func GetHolderoCode(version int) string {
+	if rpc.Daemon.IsConnected() {
+		rpcClientD, ctx, cancel := rpc.SetDaemonClient(rpc.Daemon.Rpc)
+		defer cancel()
+
+		var result *dero.GetSC_Result
+		var params dero.GetSC_Params
+		switch version {
+		case 0:
+			params = dero.GetSC_Params{
+				SCID:      HolderoSCID,
+				Code:      true,
+				Variables: false,
+			}
+		case 1:
+			params = dero.GetSC_Params{
+				SCID:      pHolderoSCID,
+				Code:      true,
+				Variables: false,
+			}
+		case 2:
+			params = dero.GetSC_Params{
+				SCID:      HGCHolderoSCID,
+				Code:      true,
+				Variables: false,
+			}
+		default:
+
+		}
+
+		if err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params); err != nil {
+			log.Println("[GetHoldero110Code]", err)
+			return ""
+		}
+
+		return result.Code
+
+	}
+
+	return ""
+}
+
+var unlockFee = uint64(300000)
+
+// Contract unlock transfer
+func OwnerT3(o bool) (t *dero.Transfer) {
+	if o {
+		t = &dero.Transfer{
+			Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
+			Amount:      0,
+		}
+	} else {
+		if fee, ok := rpc.FindStringKey(rpc.RatingSCID, "ContractUnlock", rpc.Daemon.Rpc).(float64); ok {
+			unlockFee = uint64(fee)
+		} else {
+			log.Println("[FetchFees] Could not get current contract unlock fee, using default")
+		}
+
+		t = &dero.Transfer{
+			Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
+			Amount:      unlockFee,
+		}
+	}
+
+	return
+}
+
+// Install new Holdero SC
+//   - pub defines public or private SC
+func uploadHolderoContract(pub int) {
+	if rpc.IsReady() {
+		rpcClientW, ctx, cancel := rpc.SetWalletClient(rpc.Wallet.Rpc, rpc.Wallet.UserPass)
+		defer cancel()
+
+		code := GetHolderoCode(pub)
+		if code == "" {
+			log.Println("[uploadHolderoContract] Could not get SC code")
+			return
+		}
+
+		args := dero.Arguments{}
+		txid := dero.Transfer_Result{}
+
+		params := &dero.Transfer_Params{
+			Transfers: []dero.Transfer{*OwnerT3(Poker.table_owner)},
+			SC_Code:   code,
+			SC_Value:  0,
+			SC_RPC:    args,
+			Ringsize:  2,
+		}
+
+		if err := rpcClientW.CallFor(ctx, &txid, "transfer", params); err != nil {
+			log.Println("[uploadHolderoContract]", err)
+			return
+		}
+
+		log.Println("[Holdero] Upload TX:", txid)
+		rpc.AddLog("Holdero Upload TX:" + txid.TXID)
 	}
 }

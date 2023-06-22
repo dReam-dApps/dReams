@@ -50,76 +50,8 @@ const (
     999 RETURN 1
 End Function`
 
-	g45_search_filter = `STORE("type", "G45-NFT")`
+	G45_search_filter = `STORE("type", "G45-NFT")`
 )
-
-// dReams search filters for Gnomon index
-func GnomonFilters() (filter []string) {
-	if Control.Dapp_list["Holdero"] {
-		holdero110 := rpc.GetHoldero110Code(0)
-		if holdero110 != "" {
-			filter = append(filter, holdero110)
-		}
-
-		holdero100 := rpc.GetHoldero100Code()
-		if holdero100 != "" {
-			filter = append(filter, holdero100)
-		}
-
-		holderoHGC := rpc.GetHoldero110Code(2)
-		if holderoHGC != "" {
-			filter = append(filter, holderoHGC)
-		}
-	}
-
-	if Control.Dapp_list["Baccarat"] {
-		bacc := rpc.GetSCCode(rpc.BaccSCID)
-		if bacc != "" {
-			filter = append(filter, bacc)
-		}
-	}
-
-	if Control.Dapp_list["dSports and dPredictions"] {
-		predict := rpc.GetSCCode(rpc.PredictSCID)
-		if predict != "" {
-			filter = append(filter, predict)
-		}
-
-		sports := rpc.GetSCCode(rpc.SportsSCID)
-		if sports != "" {
-			filter = append(filter, sports)
-		}
-	}
-
-	gnomon := rpc.GetGnomonCode()
-	if gnomon != "" {
-		filter = append(filter, gnomon)
-	}
-
-	names := rpc.GetNameServiceCode()
-	if names != "" {
-		filter = append(filter, names)
-	}
-
-	ratings := rpc.GetSCCode(rpc.RatingSCID)
-	if ratings != "" {
-		filter = append(filter, ratings)
-	}
-
-	if Control.Dapp_list["DerBnb"] {
-		bnb := rpc.GetSCCode(rpc.DerBnbSCID)
-		if bnb != "" {
-			filter = append(filter, bnb)
-		}
-	}
-
-	filter = append(filter, NFA_SEARCH_FILTER)
-	if !Gnomes.Trim {
-		filter = append(filter, g45_search_filter)
-	}
-
-	return
-}
 
 // Manually add SCID to Gnomon index
 func manualIndex(scid []string) {

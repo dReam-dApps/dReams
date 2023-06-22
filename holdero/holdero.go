@@ -37,6 +37,7 @@ type holderoObjects struct {
 	Holdero_unlock *widget.Button
 	Holdero_new    *widget.Button
 	Stats_box      fyne.Container
+	table_owner    bool
 	owner          struct {
 		blind_amount uint64
 		ante_amount  uint64

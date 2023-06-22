@@ -78,6 +78,11 @@ func fetch(p, s *dwidget.DreamsItems, d dreams.DreamsObject) {
 	}
 }
 
+func Disconnected() {
+	Service.Init = false
+	Predict.owner = false
+}
+
 func disableActions() {
 	Predict.Settings.New.Hide()
 	Sports.Settings.New.Hide()
@@ -104,9 +109,9 @@ func disableActions() {
 }
 
 // Set objects if bet owner
-func SetBetOwner(owner string) {
+func setBetOwner(owner string) {
 	if owner == rpc.Wallet.Address {
-		rpc.Wallet.BetOwner = true
+		Predict.owner = true
 		Predict.Settings.New.Show()
 		Sports.Settings.New.Show()
 		Predict.Settings.Unlock.Hide()
@@ -114,7 +119,7 @@ func SetBetOwner(owner string) {
 		Predict.Settings.Menu.Show()
 		Sports.Settings.Menu.Show()
 	} else {
-		rpc.Wallet.BetOwner = false
+		Predict.owner = false
 		Predict.Settings.New.Hide()
 		Sports.Settings.New.Hide()
 		Predict.Settings.Unlock.Show()
@@ -138,7 +143,7 @@ func CheckBetContractOwners(contracts map[string]string) {
 			keys[i] = k
 			verifyBetContractOwner(keys[i], "p")
 			verifyBetContractOwner(keys[i], "s")
-			if rpc.Wallet.BetOwner {
+			if Predict.owner {
 				break
 			}
 			i++
@@ -155,8 +160,8 @@ func verifyBetContractOwner(scid, t string) {
 			_, init := menu.Gnomes.GetSCIDValuesByKey(scid, t+"_init")
 
 			if owner != nil && init != nil {
-				if dev[0] == rpc.DevAddress && !rpc.Wallet.BetOwner {
-					SetBetOwner(owner[0])
+				if dev[0] == rpc.DevAddress && !Predict.owner {
+					setBetOwner(owner[0])
 				}
 			}
 		}

@@ -259,6 +259,7 @@ func Disconnected(b bool) {
 		Backs.Select.Refresh()
 		Settings.AvatarSelect.Refresh()
 		DisableHolderoTools()
+		Poker.table_owner = false
 	}
 }
 

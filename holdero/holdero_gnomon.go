@@ -115,7 +115,7 @@ func createTableList() {
 							Poker.Holdero_unlock.Hide()
 							Poker.Holdero_new.Show()
 							owner = true
-							rpc.Wallet.PokerOwner = true
+							Poker.table_owner = true
 						}
 					}
 				}
@@ -125,7 +125,7 @@ func createTableList() {
 		if !owner {
 			Poker.Holdero_unlock.Show()
 			Poker.Holdero_new.Hide()
-			rpc.Wallet.PokerOwner = false
+			Poker.table_owner = false
 		}
 
 		t := len(list)

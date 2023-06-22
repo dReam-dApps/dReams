@@ -24,6 +24,7 @@ import (
 
 type predictObjects struct {
 	Init          bool
+	owner         bool
 	Amount        uint64
 	Buffer        int64
 	Contract      string

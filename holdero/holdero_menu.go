@@ -332,7 +332,7 @@ Public table that uses HGC or DERO`
 	var choice *widget.Select
 	confirm_button := widget.NewButton("Confirm", func() {
 		if choice.SelectedIndex() < 3 && choice.SelectedIndex() >= 0 {
-			rpc.UploadHolderoContract(choice.SelectedIndex())
+			uploadHolderoContract(choice.SelectedIndex())
 		}
 
 		if c == 2 {

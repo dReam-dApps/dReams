@@ -344,7 +344,7 @@ func DreamsConfirm(c, amt float64, obj *fyne.Container, reset fyne.CanvasObject)
 // Holdero tournament chip deposit confirmation
 //   - Pass main window obj and tabs to reset to
 func tourneyConfirm(obj []fyne.CanvasObject, tabs *container.AppTabs) fyne.CanvasObject {
-	bal := rpc.TokenBalance(rpc.TourneySCID)
+	bal := rpc.TokenBalance(TourneySCID)
 	balance := float64(bal) / 100000
 	a := fmt.Sprint(strconv.FormatFloat(balance, 'f', 2, 64))
 	text := fmt.Sprintf("You are about to deposit %s Tournament Chips into leader board contract\n\nConfirm", a)
@@ -354,7 +354,7 @@ func tourneyConfirm(obj []fyne.CanvasObject, tabs *container.AppTabs) fyne.Canva
 	label.Alignment = fyne.TextAlignCenter
 
 	confirm_button := widget.NewButton("Confirm", func() {
-		rpc.TourneyDeposit(bal, menu.Username)
+		TourneyDeposit(bal, menu.Username)
 		obj[1] = tabs
 		obj[1].Refresh()
 

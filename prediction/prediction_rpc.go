@@ -5,9 +5,17 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/SixofClubsss/dReams/holdero"
 	"github.com/SixofClubsss/dReams/rpc"
 	dero "github.com/deroproject/derohe/rpc"
 	"github.com/deroproject/derohe/walletapi"
+)
+
+const (
+	PredictSCID  = "eaa62b220fa1c411785f43c0c08ec59c761261cb58a0ccedc5b358e5ed2d2c95"
+	PPredictSCID = "e5e49c9a6dc1c0dc8a94429a01bf758e705de49487cbd0b3e3550648d2460cdf"
+	SportsSCID   = "ad11377c29a863523c1cc50a33ca13e861cc146a7c0496da58deaa1973e0a39f"
+	PSportsSCID  = "fffdc4ea6d157880841feab335ab4755edcde4e60fec2fff661009b16f44fa94"
 )
 
 // Place higher prediction to SC
@@ -793,13 +801,13 @@ func GetPredictCode(pub int) string {
 		var params dero.GetSC_Params
 		if pub == 1 {
 			params = dero.GetSC_Params{
-				SCID:      rpc.PPredictSCID,
+				SCID:      PPredictSCID,
 				Code:      true,
 				Variables: false,
 			}
 		} else {
 			params = dero.GetSC_Params{
-				SCID:      rpc.PredictSCID,
+				SCID:      PredictSCID,
 				Code:      true,
 				Variables: false,
 			}
@@ -826,13 +834,13 @@ func GetSportsCode(pub int) string {
 		var params dero.GetSC_Params
 		if pub == 1 {
 			params = dero.GetSC_Params{
-				SCID:      rpc.PSportsSCID,
+				SCID:      PSportsSCID,
 				Code:      true,
 				Variables: false,
 			}
 		} else {
 			params = dero.GetSC_Params{
-				SCID:      rpc.SportsSCID,
+				SCID:      SportsSCID,
 				Code:      true,
 				Variables: false,
 			}
@@ -924,7 +932,7 @@ func UploadBetContract(c bool, pub int) {
 		txid := dero.Transfer_Result{}
 
 		params := &dero.Transfer_Params{
-			Transfers: []dero.Transfer{*rpc.OwnerT3(rpc.Wallet.BetOwner)},
+			Transfers: []dero.Transfer{*holdero.OwnerT3(Predict.owner)},
 			SC_Code:   code,
 			SC_Value:  0,
 			SC_RPC:    args,

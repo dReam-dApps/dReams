@@ -11,24 +11,21 @@ import (
 )
 
 type wallet struct {
-	UserPass   string
-	IdHash     string
-	Rpc        string
-	Address    string
-	ClientKey  string
-	Balance    uint64
-	TokenBal   map[string]uint64
-	Height     int
-	Connect    bool
-	PokerOwner bool
-	BetOwner   bool
-	KeyLock    bool
-	Service    bool
-	MuC        sync.RWMutex
-	MuB        sync.RWMutex
-	File       *walletapi.Wallet_Disk
-	LogEntry   *widget.Entry
-	Display    struct {
+	UserPass  string
+	IdHash    string
+	Rpc       string
+	Address   string
+	ClientKey string
+	Balance   uint64
+	TokenBal  map[string]uint64
+	Height    int
+	Connect   bool
+	KeyLock   bool
+	MuC       sync.RWMutex
+	MuB       sync.RWMutex
+	File      *walletapi.Wallet_Disk
+	LogEntry  *widget.Entry
+	Display   struct {
 		Balance map[string]string
 		Height  string
 	}
@@ -36,6 +33,7 @@ type wallet struct {
 
 var Wallet wallet
 
+// Check if wallet is connected
 func (w *wallet) IsConnected() bool {
 	w.MuC.RLock()
 	defer w.MuC.RUnlock()
@@ -43,6 +41,7 @@ func (w *wallet) IsConnected() bool {
 	return w.Connect
 }
 
+// Set wallet connection
 func (w *wallet) Connected(b bool) {
 	w.MuC.Lock()
 	w.Connect = b

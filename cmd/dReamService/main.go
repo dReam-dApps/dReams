@@ -105,7 +105,7 @@ func flags() (version string) {
 		}
 	}
 
-	rpc.Wallet.Service = true
+	prediction.Service.Init = true
 	menu.Gnomes.Trim = true
 	enable_transfers = transfers
 	prediction.Service.Debug = debug
@@ -124,7 +124,7 @@ func init() {
 		fmt.Println()
 		menu.Gnomes.Stop("dReamService")
 		rpc.Wallet.Connected(false)
-		rpc.Wallet.Service = false
+		prediction.Service.Init = false
 		for prediction.Service.Processing {
 			log.Println("[dReamService] Waiting for service to close")
 			time.Sleep(3 * time.Second)
@@ -158,12 +158,12 @@ func main() {
 
 	// Set up Gnomon search filters
 	filter := []string{}
-	predict := rpc.GetPredictCode(0)
+	predict := prediction.GetPredictCode(0)
 	if predict != "" {
 		filter = append(filter, predict)
 	}
 
-	sports := rpc.GetSportsCode(0)
+	sports := prediction.GetSportsCode(0)
 	if sports != "" {
 		filter = append(filter, sports)
 	}
@@ -209,8 +209,8 @@ func main() {
 	time.Sleep(time.Second)
 
 	// Populate SCID of connected wallet
-	menu.PopulatePredictions(nil)
-	menu.PopulateSports(nil)
+	prediction.PopulatePredictions(nil)
+	prediction.PopulateSports(nil)
 
 	// Set added print text
 	add := ""

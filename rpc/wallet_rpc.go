@@ -252,47 +252,6 @@ func GetAssetSCIDName(scid string) string {
 	}
 }
 
-// Deposit tournament chip bal with name to leader board SC
-func TourneyDeposit(bal uint64, name string) {
-	if bal > 0 {
-		rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
-		defer cancel()
-
-		arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "Deposit"}
-		arg2 := rpc.Argument{Name: "name", DataType: "S", Value: name}
-		args := rpc.Arguments{arg1, arg2}
-		txid := rpc.Transfer_Result{}
-
-		t1 := rpc.Transfer{
-			SCID:        crypto.HashHexToHash(TourneySCID),
-			Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
-			Amount:      0,
-			Burn:        bal,
-		}
-
-		t := []rpc.Transfer{t1}
-		fee := GasEstimate(TourneySCID, "[Holdero]", args, t, LowLimitFee)
-		params := &rpc.Transfer_Params{
-			Transfers: t,
-			SC_ID:     TourneySCID,
-			SC_RPC:    args,
-			Ringsize:  2,
-			Fees:      fee,
-		}
-
-		if err := rpcClientW.CallFor(ctx, &txid, "transfer", params); err != nil {
-			log.Println("[TourneyDeposit]", err)
-			return
-		}
-
-		log.Println("[Holdero] Tournament Deposit TX:", txid)
-		AddLog("Tournament Deposit TX: " + txid.TXID)
-
-	} else {
-		log.Println("[Holdero] No Tournament Chips")
-	}
-}
-
 // Gets Dero wallet height
 //   - tag for log print
 func GetWalletHeight(tag string) {
@@ -388,58 +347,6 @@ var MintingFee = uint64(500)
 var IlumaFee = uint64(9000)
 var LowLimitFee = uint64(1320)
 var HighLimitFee = uint64(10000)
-
-// Contract unlock transfer
-func OwnerT3(o bool) (t *rpc.Transfer) {
-	if o {
-		t = &rpc.Transfer{
-			Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
-			Amount:      0,
-		}
-	} else {
-		t = &rpc.Transfer{
-			Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
-			Amount:      UnlockFee,
-		}
-	}
-
-	return
-}
-
-// Install new Holdero SC
-//   - pub defines public or private SC
-func UploadHolderoContract(pub int) {
-	if IsReady() {
-		rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
-		defer cancel()
-
-		code := GetHoldero110Code(pub)
-		if code == "" {
-			log.Println("[UploadHolderoContract] Could not get SC code")
-			return
-		}
-
-		args := rpc.Arguments{}
-		txid := rpc.Transfer_Result{}
-
-		params := &rpc.Transfer_Params{
-			Transfers: []rpc.Transfer{*OwnerT3(Wallet.PokerOwner)},
-			SC_Code:   code,
-			SC_Value:  0,
-			SC_RPC:    args,
-			Ringsize:  2,
-			Fees:      30000,
-		}
-
-		if err := rpcClientW.CallFor(ctx, &txid, "transfer", params); err != nil {
-			log.Println("[UploadHolderoContract]", err)
-			return
-		}
-
-		log.Println("[Holdero] Upload TX:", txid)
-		AddLog("Holdero Upload TX:" + txid.TXID)
-	}
-}
 
 // Rate a SC with dReams rating system. Ratings are weight based on transactions Dero amount
 //   - amt of Dero for rating
