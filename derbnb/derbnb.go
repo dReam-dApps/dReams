@@ -89,7 +89,7 @@ func StartApp() {
 	a := app.New()
 	a.Settings().SetTheme(bundle.DeroTheme(config.Skin))
 	w := a.NewWindow("DerBnb Desktop")
-	w.SetIcon(bundle.ResourceDerbnbIconPng)
+	w.SetIcon(ResourceDerbnbIconPng)
 	w.Resize(fyne.NewSize(1200, 800))
 	w.SetMaster()
 	quit := make(chan struct{})

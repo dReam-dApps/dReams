@@ -346,7 +346,7 @@ func LayoutAllItems(imported bool, d dreams.DreamsObject) fyne.CanvasObject {
 	confirm_action_label.Wrapping = fyne.TextWrapWord
 	confirm_action_label.Alignment = fyne.TextAlignCenter
 
-	derbnb_gif, _ := xwidget.NewAnimatedGifFromResource(bundle.ResourceDerbnbGifGif)
+	derbnb_gif, _ := xwidget.NewAnimatedGifFromResource(ResourceDerbnbGif)
 	derbnb_gif.SetMinSize(fyne.NewSize(100, 100))
 
 	// DerBnb SC deposit/withdraw entry and container

@@ -2,7 +2,6 @@ package baccarat
 
 import (
 	dreams "github.com/SixofClubsss/dReams"
-	"github.com/SixofClubsss/dReams/bundle"
 	"github.com/SixofClubsss/dReams/dwidget"
 
 	"fyne.io/fyne/v2"
@@ -13,7 +12,7 @@ import (
 // Baccarat tab layout
 func LayoutAllItems(b *dwidget.DreamsItems, d dreams.DreamsObject) *fyne.Container {
 	b.Back = *container.NewWithoutLayout(
-		BaccTable(bundle.ResourceBaccTablePng),
+		BaccTable(resourceBaccTablePng),
 		baccResult(Display.BaccRes))
 
 	b.Front = *clearBaccCards()

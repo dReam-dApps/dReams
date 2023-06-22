@@ -83,7 +83,7 @@ func main() {
 	}
 
 	if systemTray(dReams.App) {
-		dReams.App.(desktop.App).SetSystemTrayIcon(bundle.ResourceCardSharkTrayPng)
+		dReams.App.(desktop.App).SetSystemTrayIcon(bundle.ResourceTrayIconPng)
 	}
 
 	go fetch(dReams, done)

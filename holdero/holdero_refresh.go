@@ -420,25 +420,25 @@ func holderoRefresh(h *dwidget.DreamsItems, d dreams.DreamsObject, offset int) {
 
 // Refresh Holdero player names and avatars
 func refreshHolderoPlayers(H *dwidget.DreamsItems) {
-	H.Back.Objects[0] = HolderoTable(bundle.ResourcePokerTablePng)
+	H.Back.Objects[0] = HolderoTable(ResourcePokerTablePng)
 	H.Back.Objects[0].Refresh()
 
-	H.Back.Objects[1] = Player1_label(bundle.ResourceUnknownAvatarPng, bundle.ResourceAvatarFramePng, bundle.ResourceTurnFramePng)
+	H.Back.Objects[1] = Player1_label(ResourceUnknownAvatarPng, bundle.ResourceAvatarFramePng, ResourceTurnFramePng)
 	H.Back.Objects[1].Refresh()
 
-	H.Back.Objects[2] = Player2_label(bundle.ResourceUnknownAvatarPng, bundle.ResourceAvatarFramePng, bundle.ResourceTurnFramePng)
+	H.Back.Objects[2] = Player2_label(ResourceUnknownAvatarPng, bundle.ResourceAvatarFramePng, ResourceTurnFramePng)
 	H.Back.Objects[2].Refresh()
 
-	H.Back.Objects[3] = Player3_label(bundle.ResourceUnknownAvatarPng, bundle.ResourceAvatarFramePng, bundle.ResourceTurnFramePng)
+	H.Back.Objects[3] = Player3_label(ResourceUnknownAvatarPng, bundle.ResourceAvatarFramePng, ResourceTurnFramePng)
 	H.Back.Objects[3].Refresh()
 
-	H.Back.Objects[4] = Player4_label(bundle.ResourceUnknownAvatarPng, bundle.ResourceAvatarFramePng, bundle.ResourceTurnFramePng)
+	H.Back.Objects[4] = Player4_label(ResourceUnknownAvatarPng, bundle.ResourceAvatarFramePng, ResourceTurnFramePng)
 	H.Back.Objects[4].Refresh()
 
-	H.Back.Objects[5] = Player5_label(bundle.ResourceUnknownAvatarPng, bundle.ResourceAvatarFramePng, bundle.ResourceTurnFramePng)
+	H.Back.Objects[5] = Player5_label(ResourceUnknownAvatarPng, bundle.ResourceAvatarFramePng, ResourceTurnFramePng)
 	H.Back.Objects[5].Refresh()
 
-	H.Back.Objects[6] = Player6_label(bundle.ResourceUnknownAvatarPng, bundle.ResourceAvatarFramePng, bundle.ResourceTurnFramePng)
+	H.Back.Objects[6] = Player6_label(ResourceUnknownAvatarPng, bundle.ResourceAvatarFramePng, ResourceTurnFramePng)
 	H.Back.Objects[6].Refresh()
 
 	H.Back.Refresh()

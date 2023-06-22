@@ -116,7 +116,7 @@ func placeContract(change_screen *fyne.Container, H *dwidget.DreamsItems, d drea
 // Holdero tab layout
 func placeHoldero(change_screen *widget.Button, h *dwidget.DreamsItems, d dreams.DreamsObject) *fyne.Container {
 	h.Back = *container.NewWithoutLayout(
-		HolderoTable(bundle.ResourcePokerTablePng),
+		HolderoTable(ResourcePokerTablePng),
 		Player1_label(nil, nil, nil),
 		Player2_label(nil, nil, nil),
 		Player3_label(nil, nil, nil),
