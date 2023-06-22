@@ -8,7 +8,6 @@ import (
 	dreams "github.com/SixofClubsss/dReams"
 	"github.com/SixofClubsss/dReams/bundle"
 	"github.com/SixofClubsss/dReams/menu"
-	"github.com/SixofClubsss/dReams/rpc"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -45,7 +44,7 @@ func main() {
 
 	dReams.Window.SetCloseIntercept(func() {
 		menu.CloseAppSignal(true)
-		menu.WriteDreamsConfig(rpc.Daemon.Rpc, bundle.AppColor)
+		menu.WriteDreamsConfig(save())
 		serviceRunning()
 		go menu.StopLabel()
 		menu.Gnomes.Stop("dReams")

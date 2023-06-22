@@ -40,8 +40,8 @@ const (
 	DAEMON_RPC_DEFAULT = "127.0.0.1:10102"
 	DAEMON_RPC_REMOTE1 = "89.38.99.117:10102"
 	DAEMON_RPC_REMOTE2 = "publicrpc1.dero.io:10102"
-	// DAEMON_RPC_REMOTE3 = "dero-node.mysrv.cloud:10102"
-	// DAEMON_RPC_REMOTE4 = "derostats.io:10102"
+	DAEMON_RPC_REMOTE3 = "dero-node.mysrv.cloud:10102"
+	DAEMON_RPC_REMOTE4 = "derostats.io:10102"
 	DAEMON_RPC_REMOTE5 = "85.17.52.28:11012"
 	DAEMON_RPC_REMOTE6 = "node.derofoundation.org:11012"
 )

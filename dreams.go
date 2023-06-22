@@ -3,6 +3,7 @@ package dreams
 import (
 	"errors"
 	"fmt"
+	"image/color"
 	"log"
 	"net/http"
 	"os"
@@ -15,6 +16,16 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/widget"
 )
+
+type DreamSave struct {
+	Skin    color.Gray16 `json:"skin"`
+	Daemon  []string     `json:"daemon"`
+	Tables  []string     `json:"tables"`
+	Predict []string     `json:"predict"`
+	Sports  []string     `json:"sports"`
+
+	Dapps map[string]bool `json:"dapps"`
+}
 
 type DreamsObject struct {
 	App        fyne.App

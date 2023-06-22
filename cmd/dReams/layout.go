@@ -431,7 +431,7 @@ func place() *fyne.Container {
 	}
 
 	if menu.Control.Dapp_list["DerBnb"] {
-		tabs.Append(container.NewTabItem("DerBnb", derbnb.LayoutAllItems(true, dReams.Window, dReams.Background)))
+		tabs.Append(container.NewTabItem("DerBnb", derbnb.LayoutAllItems(true, dReams)))
 	}
 
 	if dReams.Cli {

@@ -8,14 +8,16 @@ import (
 	"syscall"
 	"time"
 
-	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/app"
-	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/layout"
+	dreams "github.com/SixofClubsss/dReams"
 	"github.com/SixofClubsss/dReams/bundle"
 	"github.com/SixofClubsss/dReams/dwidget"
 	"github.com/SixofClubsss/dReams/menu"
 	"github.com/SixofClubsss/dReams/rpc"
+
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/layout"
 )
 
 // dApp to run NFA market with full wallet controls from dReams packages
@@ -36,7 +38,11 @@ func main() {
 	quit := make(chan struct{})
 	done := make(chan struct{})
 	w.SetCloseIntercept(func() {
-		menu.WriteDreamsConfig(rpc.Daemon.Rpc, config.Skin)
+		menu.WriteDreamsConfig(
+			dreams.DreamSave{
+				Skin:   config.Skin,
+				Daemon: []string{rpc.Daemon.Rpc},
+			})
 		menu.Gnomes.Stop(app_tag)
 		quit <- struct{}{}
 		if rpc.Wallet.File != nil {
@@ -74,7 +80,11 @@ func main() {
 	go func() {
 		<-c
 		fmt.Println()
-		menu.WriteDreamsConfig(rpc.Daemon.Rpc, config.Skin)
+		menu.WriteDreamsConfig(
+			dreams.DreamSave{
+				Skin:   config.Skin,
+				Daemon: []string{rpc.Daemon.Rpc},
+			})
 		menu.Gnomes.Stop(app_tag)
 		rpc.Wallet.Connected(false)
 		quit <- struct{}{}

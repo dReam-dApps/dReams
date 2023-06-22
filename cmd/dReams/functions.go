@@ -142,7 +142,7 @@ func init() {
 	go func() {
 		<-c
 		menu.CloseAppSignal(true)
-		menu.WriteDreamsConfig(rpc.Daemon.Rpc, bundle.AppColor)
+		menu.WriteDreamsConfig(save())
 		fmt.Println()
 		serviceRunning()
 		go menu.StopLabel()
@@ -152,6 +152,17 @@ func init() {
 		dReams.StopProcess()
 		dReams.Window.Close()
 	}()
+}
+
+func save() dreams.DreamSave {
+	return dreams.DreamSave{
+		Skin:    bundle.AppColor,
+		Daemon:  []string{rpc.Daemon.Rpc},
+		Tables:  holdero.Settings.Favorites,
+		Predict: prediction.Predict.Settings.Favorites,
+		Sports:  prediction.Sports.Settings.Favorites,
+		Dapps:   menu.Control.Dapp_list,
+	}
 }
 
 // Starts a Fyne terminal in dReams

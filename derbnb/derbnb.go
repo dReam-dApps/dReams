@@ -95,7 +95,11 @@ func StartApp() {
 	quit := make(chan struct{})
 	done := make(chan struct{})
 	w.SetCloseIntercept(func() {
-		menu.WriteDreamsConfig(rpc.Daemon.Rpc, config.Skin)
+		menu.WriteDreamsConfig(
+			dreams.DreamSave{
+				Skin:   config.Skin,
+				Daemon: []string{rpc.Daemon.Rpc},
+			})
 		menu.Gnomes.Stop("DerBnb")
 		quit <- struct{}{}
 		w.Close()
@@ -106,7 +110,11 @@ func StartApp() {
 	go func() {
 		<-c
 		fmt.Println()
-		menu.WriteDreamsConfig(rpc.Daemon.Rpc, config.Skin)
+		menu.WriteDreamsConfig(
+			dreams.DreamSave{
+				Skin:   config.Skin,
+				Daemon: []string{rpc.Daemon.Rpc},
+			})
 		menu.Gnomes.Stop("DerBnb")
 		quit <- struct{}{}
 		w.Close()
@@ -115,12 +123,15 @@ func StartApp() {
 	menu.Gnomes.Fast = true
 
 	dreams.Theme.Img = *canvas.NewImageFromResource(nil)
-	background = container.NewMax(&dreams.Theme.Img)
+	d := dreams.DreamsObject{
+		Window:     w,
+		Background: container.NewMax(&dreams.Theme.Img),
+	}
 
 	go fetch(quit, done)
 	go func() {
 		time.Sleep(450 * time.Millisecond)
-		w.SetContent(container.New(layout.NewMaxLayout(), background, LayoutAllItems(false, w, background)))
+		w.SetContent(container.New(layout.NewMaxLayout(), d.Background, LayoutAllItems(false, d)))
 	}()
 	w.ShowAndRun()
 	<-done
