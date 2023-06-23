@@ -76,8 +76,8 @@ func clearShared() {
 // Gets shared card urls from connected table
 func GetUrls(face, back string) {
 	if Round.ID != 1 {
-		Faces.URL = face
-		Backs.URL = back
+		Settings.faces.URL = face
+		Settings.backs.URL = back
 	}
 }
 

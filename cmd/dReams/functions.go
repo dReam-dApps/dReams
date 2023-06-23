@@ -133,7 +133,6 @@ func init() {
 	rpc.InitBalances()
 
 	dReams.OS = runtime.GOOS
-	prediction.SetPrintColors(dReams.OS)
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
@@ -226,8 +225,8 @@ func systemTray(w fyne.App) bool {
 }
 
 func gnomonScan(contracts map[string]string) {
-	CheckDreamsG45s(menu.Gnomes.Check, contracts)
 	CheckDreamsNFAs(menu.Gnomes.Check, contracts)
+	CheckDreamsG45s(menu.Gnomes.Check, contracts)
 }
 
 // Main dReams process loop
@@ -246,10 +245,9 @@ func fetch(done chan struct{}) {
 				if !rpc.Startup {
 					CheckConnection()
 					menu.GnomonEndPoint()
-					menu.GnomonState(dReams.IsWindows(), dReams.Configure, gnomonScan)
+					menu.GnomonState(dReams.Configure, gnomonScan)
 					dReams.Background.Refresh()
 
-					// Menu
 					go MenuRefresh(dReams.Menu)
 
 					offset++
@@ -367,6 +365,20 @@ func MenuRefresh(tab bool) {
 		}
 	}
 
+	menu.Assets.Stats_box = *container.NewVBox(menu.Assets.Collection, menu.Assets.Name, menu.IconImg(bundle.ResourceAvatarFramePng))
+	menu.Assets.Stats_box.Refresh()
+
+	// Update live market info
+	if len(menu.Market.Viewing) == 64 && rpc.Wallet.IsConnected() {
+		if menu.Market.Tab == "Buy" {
+			menu.GetBuyNowDetails(menu.Market.Viewing)
+			go menu.RefreshNfaImages()
+		} else {
+			menu.GetAuctionDetails(menu.Market.Viewing)
+			go menu.RefreshNfaImages()
+		}
+	}
+
 	if rpc.Daemon.IsConnected() {
 		go refreshDaemonDisplay(true)
 	} else {
@@ -393,10 +405,7 @@ func MainTab(ti *container.TabItem) {
 	switch ti.Text {
 	case "Menu":
 		dReams.Menu = true
-		if holdero.Round.ID == 1 {
-			holdero.Faces.Select.Enable()
-			holdero.Backs.Select.Enable()
-		}
+		holdero.Settings.EnableCardSelects()
 		go MenuRefresh(dReams.Menu)
 	case "Holdero":
 		dReams.Menu = false
@@ -479,10 +488,8 @@ func CheckDreamsNFAs(gc bool, scids map[string]string) {
 		}
 		keys := make([]string, len(scids))
 		log.Println("[dReams] Checking NFA Assets")
-		holdero.Faces.Select.Options = []string{}
-		holdero.Backs.Select.Options = []string{}
 		dreams.Theme.Select.Options = []string{}
-		holdero.Settings.AvatarSelect.Options = []string{}
+		holdero.Settings.ClearAssets()
 
 		i := 0
 		for k := range scids {
@@ -493,15 +500,10 @@ func CheckDreamsNFAs(gc bool, scids map[string]string) {
 			checkNFAOwner(keys[i])
 			i++
 		}
-		sort.Strings(holdero.Faces.Select.Options)
-		sort.Strings(holdero.Backs.Select.Options)
+
+		holdero.Settings.SortCardAsset()
 		sort.Strings(dreams.Theme.Select.Options)
-
-		ld := []string{"Light", "Dark"}
-		holdero.Faces.Select.Options = append(ld, holdero.Faces.Select.Options...)
-		holdero.Backs.Select.Options = append(ld, holdero.Backs.Select.Options...)
 		dreams.Theme.Select.Options = append([]string{"Main", "Legacy"}, dreams.Theme.Select.Options...)
-
 		sort.Strings(menu.Assets.Assets)
 		menu.Assets.Asset_list.Refresh()
 		if menu.Control.Dapp_list["Holdero"] {
@@ -511,7 +513,7 @@ func CheckDreamsNFAs(gc bool, scids map[string]string) {
 }
 
 // If wallet owns dReams NFA, populate for use in dReams
-//   - See games container in menu.PlaceAssets()
+//   - See asset_selects container in menu.PlaceAssets()
 func checkNFAOwner(scid string) {
 	if menu.Gnomes.IsRunning() {
 		if header, _ := menu.Gnomes.GetSCIDValuesByKey(scid, "nameHdr"); header != nil {
@@ -521,58 +523,32 @@ func checkNFAOwner(scid string) {
 				if owner[0] == rpc.Wallet.Address && menu.ValidNfa(file[0]) {
 					check := strings.Trim(header[0], "0123456789")
 					if check == "AZYDS" || check == "SIXART" {
-						themes := dreams.Theme.Select.Options
-						new_themes := append(themes, header[0])
-						dreams.Theme.Select.Options = new_themes
-						dreams.Theme.Select.Refresh()
-
-						avatars := holdero.Settings.AvatarSelect.Options
-						new_avatar := append(avatars, header[0])
-						holdero.Settings.AvatarSelect.Options = new_avatar
-						holdero.Settings.AvatarSelect.Refresh()
-						menu.Assets.Assets = append(menu.Assets.Assets, header[0]+"   "+scid)
+						dreams.Theme.Add(header[0], owner[0])
+						holdero.Settings.AddAvatar(header[0], owner[0])
+						menu.Assets.Add(header[0], scid)
 					} else if check == "AZYPCB" || check == "SIXPCB" {
-						current := holdero.Backs.Select.Options
-						new := append(current, header[0])
-						holdero.Backs.Select.Options = new
-						holdero.Backs.Select.Refresh()
-						menu.Assets.Assets = append(menu.Assets.Assets, header[0]+"   "+scid)
+						holdero.Settings.AddBacks(header[0], owner[0])
+						menu.Assets.Add(header[0], scid)
 					} else if check == "AZYPC" || check == "SIXPC" {
-						current := holdero.Faces.Select.Options
-						new := append(current, header[0])
-						holdero.Faces.Select.Options = new
-						holdero.Faces.Select.Refresh()
-						menu.Assets.Assets = append(menu.Assets.Assets, header[0]+"   "+scid)
+						holdero.Settings.AddFaces(header[0], owner[0])
+						menu.Assets.Add(header[0], scid)
 					} else if check == "DBC" {
-						current := holdero.Settings.AvatarSelect.Options
-						new := append(current, header[0])
-						holdero.Settings.AvatarSelect.Options = new
-						holdero.Settings.AvatarSelect.Refresh()
-						menu.Assets.Assets = append(menu.Assets.Assets, header[0]+"   "+scid)
+						holdero.Settings.AddAvatar(header[0], owner[0])
+						menu.Assets.Add(header[0], scid)
 					} else if check == "HighStrangeness" {
-						current_av := holdero.Settings.AvatarSelect.Options
-						new_av := append(current_av, header[0])
-						holdero.Settings.AvatarSelect.Options = new_av
-						holdero.Settings.AvatarSelect.Refresh()
-						menu.Assets.Assets = append(menu.Assets.Assets, header[0]+"   "+scid)
+						holdero.Settings.AddAvatar(header[0], owner[0])
+						menu.Assets.Add(header[0], scid)
 
 						var have_cards bool
-						for _, face := range holdero.Faces.Select.Options {
+						for _, face := range holdero.Settings.CurrentFaces() {
 							if face == "High-Strangeness" {
 								have_cards = true
 							}
 						}
 
 						if !have_cards {
-							current_d := holdero.Faces.Select.Options
-							new_d := append(current_d, "High-Strangeness")
-							holdero.Faces.Select.Options = new_d
-							holdero.Faces.Select.Refresh()
-
-							current_b := holdero.Backs.Select.Options
-							new_b := append(current_b, "High-Strangeness")
-							holdero.Backs.Select.Options = new_b
-							holdero.Backs.Select.Refresh()
+							holdero.Settings.AddFaces("High-Strangeness", owner[0])
+							holdero.Settings.AddBacks("High-Strangeness", owner[0])
 						}
 
 						tower := 0
@@ -632,29 +608,22 @@ func CheckDreamsG45s(gc bool, g45s map[string]string) {
 						if minter[0] == dreams.Seals_mint && coll[0] == dreams.Seals_coll {
 							var seal dreams.Seal
 							if err := json.Unmarshal([]byte(data[0]), &seal); err == nil {
-								menu.Assets.Assets = append(menu.Assets.Assets, seal.Name+"   "+scid)
-								current := holdero.Settings.AvatarSelect.Options
-								new := append(current, seal.Name)
-								holdero.Settings.AvatarSelect.Options = new
-								holdero.Settings.AvatarSelect.Refresh()
+								menu.Assets.Add(seal.Name, scid)
+								holdero.Settings.AddAvatar(seal.Name, owner[0])
 							}
 						} else if minter[0] == dreams.ATeam_mint && coll[0] == dreams.ATeam_coll {
 							var agent dreams.Agent
 							if err := json.Unmarshal([]byte(data[0]), &agent); err == nil {
 								menu.Assets.Asset_map[agent.Name] = scid
-								menu.Assets.Assets = append(menu.Assets.Assets, agent.Name+"   "+scid)
-								current := holdero.Settings.AvatarSelect.Options
-								new := append(current, agent.Name)
-								holdero.Settings.AvatarSelect.Options = new
-								holdero.Settings.AvatarSelect.Refresh()
+								menu.Assets.Add(agent.Name, scid)
+								holdero.Settings.AddAvatar(agent.Name, owner[0])
 							}
 						}
 					}
 				}
 			}
 		}
-		sort.Strings(holdero.Settings.AvatarSelect.Options)
-		holdero.Settings.AvatarSelect.Options = append([]string{"None"}, holdero.Settings.AvatarSelect.Options...)
+		holdero.Settings.SortAvatarAsset()
 		menu.Assets.Asset_list.Refresh()
 	}
 }

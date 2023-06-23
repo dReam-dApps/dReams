@@ -11,6 +11,7 @@ import (
 	"sync"
 
 	"github.com/SixofClubsss/dReams/bundle"
+	"github.com/SixofClubsss/dReams/rpc"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -201,7 +202,7 @@ func ThemeSelect() fyne.Widget {
 			check := strings.Trim(s, "0123456789")
 			if check == "AZYDS" {
 				dir := GetDir()
-				file := dir + "/cards/" + s + "/" + s + ".png"
+				file := dir + "/assets/" + s + "/" + s + ".png"
 				if FileExists(file, "dReams") {
 					Theme.Img = *canvas.NewImageFromFile(file)
 				} else {
@@ -211,7 +212,7 @@ func ThemeSelect() fyne.Widget {
 				}
 			} else if check == "SIXART" {
 				dir := GetDir()
-				file := dir + "/cards/" + s + "/" + s + ".png"
+				file := dir + "/assets/" + s + "/" + s + ".png"
 				if FileExists(file, "dReams") {
 					Theme.Img = *canvas.NewImageFromFile(file)
 				} else {
@@ -221,7 +222,7 @@ func ThemeSelect() fyne.Widget {
 				}
 			} else if check == "HSTheme" {
 				dir := GetDir()
-				file := dir + "/cards/" + s + "/" + s + ".png"
+				file := dir + "/assets/" + s + "/" + s + ".png"
 				if FileExists(file, "dReams") {
 					Theme.Img = *canvas.NewImageFromFile(file)
 				} else {
@@ -239,4 +240,13 @@ func ThemeSelect() fyne.Widget {
 	Theme.Select.PlaceHolder = "Theme"
 
 	return Theme.Select
+}
+
+func (a *AssetSelect) Add(add, check string) {
+	if check == rpc.Wallet.Address {
+		opts := a.Select.Options
+		new_opts := append(opts, add)
+		a.Select.Options = new_opts
+		a.Select.Refresh()
+	}
 }

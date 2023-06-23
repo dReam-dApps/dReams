@@ -85,13 +85,15 @@ func CheckConnection() {
 	} else {
 		menu.Control.Daemon_check.SetChecked(false)
 		disableActions(true)
+		disconnected()
 		menu.DisableIndexControls(true)
 	}
 
 	if rpc.Wallet.IsConnected() {
-		disableActions(false)
+		if rpc.Daemon.IsConnected() {
+			disableActions(false)
+		}
 	} else {
-		clearContractLists()
 		disableActions(true)
 		disconnected()
 		menu.Gnomes.Checked(false)
@@ -100,6 +102,8 @@ func CheckConnection() {
 
 // Do when disconnected
 func disconnected() {
+	menu.Market.Auctions = []string{}
+	menu.Market.Buy_now = []string{}
 	holdero.Disconnected(menu.Control.Dapp_list["Holdero"])
 	prediction.Disconnected()
 	rpc.Wallet.Address = ""
@@ -121,21 +125,12 @@ func disconnected() {
 	menu.AuctionInfo()
 }
 
-// Clear all contract lists
-func clearContractLists() {
-	menu.Market.Auctions = []string{}
-	menu.Market.Buy_now = []string{}
-	menu.Assets.Assets = []string{}
-}
-
 // Disable actions requiring connection
 func disableActions(d bool) {
 	if d {
 		menu.Assets.Swap.Hide()
 	} else {
-		if rpc.Daemon.IsConnected() {
-			menu.Assets.Swap.Show()
-		}
+		menu.Assets.Swap.Show()
 	}
 
 	menu.Assets.Swap.Refresh()

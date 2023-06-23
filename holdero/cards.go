@@ -917,7 +917,7 @@ func DisplayCard(card int) *canvas.Image {
 		}
 
 		if card > 0 {
-			i := Faces.Select.SelectedIndex()
+			i := Settings.faces.Select.SelectedIndex()
 			switch i {
 			case -1:
 				return canvas.NewImageFromResource(DisplayLightCard(card))
@@ -926,11 +926,11 @@ func DisplayCard(card int) *canvas.Image {
 			case 1:
 				return canvas.NewImageFromResource(DisplayDarkCard(card))
 			default:
-				return CustomCard(card, Faces.Name)
+				return CustomCard(card, Settings.faces.Name)
 			}
 		}
 
-		i := Backs.Select.SelectedIndex()
+		i := Settings.backs.Select.SelectedIndex()
 		switch i {
 		case -1:
 			return canvas.NewImageFromResource(ResourceBack1Png)
@@ -939,7 +939,7 @@ func DisplayCard(card int) *canvas.Image {
 		case 1:
 			return canvas.NewImageFromResource(ResourceBack2Png)
 		default:
-			return CustomBack(Backs.Name)
+			return CustomBack(Settings.backs.Name)
 		}
 
 	} else {

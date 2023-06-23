@@ -12,8 +12,8 @@ import (
 
 // Main process for dSports and dPrediction
 func fetch(p, s *dreams.DreamsItems, d dreams.DreamsObject) {
-	//initValues()
 	var offset int
+	SetPrintColors(d.OS)
 	time.Sleep(3 * time.Second)
 	for {
 		select {
@@ -81,6 +81,7 @@ func fetch(p, s *dreams.DreamsItems, d dreams.DreamsObject) {
 func Disconnected() {
 	Service.Init = false
 	Predict.owner = false
+	Owner.Synced = true
 }
 
 func disableActions() {

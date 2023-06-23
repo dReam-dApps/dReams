@@ -65,8 +65,10 @@ type settings struct {
 	P5_avatar_url string
 	P6_avatar_url string
 	Check         *widget.Check
-	AvatarSelect  *widget.Select
-	Tools         *widget.Button
+	avatars       dreams.AssetSelect
+	faces         dreams.AssetSelect
+	backs         dreams.AssetSelect
+	tools         *widget.Button
 	SharedOn      *widget.RadioGroup
 }
 
@@ -94,15 +96,73 @@ var Poker holderoObjects
 var Table tableObjects
 var Settings settings
 
+func (s *settings) EnableCardSelects() {
+	if Round.ID == 1 {
+		s.faces.Select.Enable()
+		s.backs.Select.Enable()
+	}
+}
+
+func (s *settings) ClearAssets() {
+	s.faces.Select.Options = []string{}
+	s.backs.Select.Options = []string{}
+	s.avatars.Select.Options = []string{}
+}
+
+func (s *settings) SortCardAsset() {
+	sort.Strings(s.faces.Select.Options)
+	sort.Strings(s.backs.Select.Options)
+
+	ld := []string{"Light", "Dark"}
+	s.faces.Select.Options = append(ld, s.faces.Select.Options...)
+	s.backs.Select.Options = append(ld, s.backs.Select.Options...)
+}
+
+func (s *settings) SortAvatarAsset() {
+	sort.Strings(s.avatars.Select.Options)
+	s.avatars.Select.Options = append([]string{"None"}, s.avatars.Select.Options...)
+}
+
+func (s *settings) AddAvatar(add, check string) {
+	if check == rpc.Wallet.Address {
+		avatars := s.avatars.Select.Options
+		new_avatar := append(avatars, add)
+		s.avatars.Select.Options = new_avatar
+		s.avatars.Select.Refresh()
+	}
+}
+
+func (s *settings) AddFaces(add, check string) {
+	if check == rpc.Wallet.Address {
+		current := s.faces.Select.Options
+		new := append(current, add)
+		s.faces.Select.Options = new
+		s.faces.Select.Refresh()
+	}
+}
+
+func (s *settings) CurrentFaces() []string {
+	return Settings.faces.Select.Options
+}
+
+func (s *settings) AddBacks(add, check string) {
+	if check == rpc.Wallet.Address {
+		current := s.backs.Select.Options
+		new := append(current, add)
+		s.backs.Select.Options = new
+		s.backs.Select.Refresh()
+	}
+}
+
 func initValues() {
 	Times.Delay = 30
 	Times.Kick = 0
 	Odds.Run = false
-	Faces.Name = "light/"
-	Backs.Name = "back1.png"
+	Settings.faces.Name = "light/"
+	Settings.backs.Name = "back1.png"
 	Settings.Avatar = "None"
-	Faces.URL = ""
-	Backs.URL = ""
+	Settings.faces.URL = ""
+	Settings.backs.URL = ""
 	Settings.AvatarUrl = ""
 	Settings.Auto_deal = false
 	Settings.Auto_check = false
@@ -891,13 +951,13 @@ func AutoOptions() fyne.CanvasObject {
 
 	checks := container.NewVBox(deal, cf)
 
-	Settings.Tools = widget.NewButton("Tools", func() {
-		go holderoTools(deal, cf, Settings.Tools)
+	Settings.tools = widget.NewButton("Tools", func() {
+		go holderoTools(deal, cf, Settings.tools)
 	})
 
 	DisableHolderoTools()
 
-	auto := container.NewVBox(checks, Settings.Tools)
+	auto := container.NewVBox(checks, Settings.tools)
 
 	return auto
 }
@@ -1428,10 +1488,10 @@ func holderoTools(deal, check *widget.Check, button *widget.Button) {
 
 func DisableHolderoTools() {
 	Odds.Enabled = false
-	Settings.Tools.Hide()
-	if len(Backs.Select.Options) > 2 || len(Faces.Select.Options) > 2 {
+	Settings.tools.Hide()
+	if len(Settings.backs.Select.Options) > 2 || len(Settings.faces.Select.Options) > 2 {
 		cards := false
-		for _, f := range Faces.Select.Options {
+		for _, f := range Settings.faces.Select.Options {
 			asset := strings.Trim(f, "0123456789")
 			switch asset {
 			case "AZYPC":
@@ -1448,7 +1508,7 @@ func DisableHolderoTools() {
 		}
 
 		if !cards {
-			for _, b := range Backs.Select.Options {
+			for _, b := range Settings.backs.Select.Options {
 				asset := strings.Trim(b, "0123456789")
 				switch asset {
 				case "AZYPCB":
@@ -1467,7 +1527,7 @@ func DisableHolderoTools() {
 
 		if cards {
 			Odds.Enabled = true
-			Settings.Tools.Show()
+			Settings.tools.Show()
 			if !dreams.FileExists("config/stats.json", "dReams") {
 				WriteHolderoStats(Stats)
 				log.Println("[dReams] Created stats.json")

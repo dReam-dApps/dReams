@@ -13,7 +13,6 @@ import (
 	"time"
 
 	dreams "github.com/SixofClubsss/dReams"
-	"github.com/SixofClubsss/dReams/bundle"
 	"github.com/SixofClubsss/dReams/rpc"
 
 	"github.com/civilware/Gnomon/indexer"
@@ -21,7 +20,6 @@ import (
 	"github.com/civilware/Gnomon/structures"
 
 	"fyne.io/fyne/v2/canvas"
-	"fyne.io/fyne/v2/container"
 )
 
 const (
@@ -224,7 +222,7 @@ func GnomonScan(config bool) bool {
 // Gnomon will scan connected wallet on start up, then ensure sync
 //   - Hold out checking if dReams is in configure
 //   - windows disables certain initial sync routines from running on windows os
-func GnomonState(windows, config bool, scan func(map[string]string)) {
+func GnomonState(config bool, scan func(map[string]string)) {
 	if rpc.Daemon.IsConnected() && Gnomes.IsRunning() {
 		contracts := Gnomes.IndexContains()
 		if Gnomes.HasIndex(2) && !Gnomes.Trim {
@@ -236,29 +234,13 @@ func GnomonState(windows, config bool, scan func(map[string]string)) {
 
 					CheckWalletNames(rpc.Wallet.Address)
 					scan(contracts)
+					FindNfaListings(contracts)
 
-					if !windows {
-						FindNfaListings(contracts)
-					}
 					Gnomes.Checked(true)
 					Gnomes.Scanning(false)
 				}
 			} else {
 				Gnomes.Synced(false)
-			}
-		}
-
-		Assets.Stats_box = *container.NewVBox(Assets.Collection, Assets.Name, IconImg(bundle.ResourceAvatarFramePng))
-		Assets.Stats_box.Refresh()
-
-		// Update live market info
-		if len(Market.Viewing) == 64 && rpc.Wallet.IsConnected() {
-			if Market.Tab == "Buy" {
-				GetBuyNowDetails(Market.Viewing)
-				go RefreshNfaImages()
-			} else {
-				GetAuctionDetails(Market.Viewing)
-				go RefreshNfaImages()
 			}
 		}
 	}

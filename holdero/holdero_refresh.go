@@ -245,19 +245,20 @@ func Disconnected(b bool) {
 		Round.ID = 0
 		Display.PlayerId = ""
 		Odds.Run = false
-		Faces.Select.Options = []string{"Light", "Dark"}
-		Backs.Select.Options = []string{"Light", "Dark"}
-		Settings.AvatarSelect.Options = []string{"None"}
-		Faces.URL = ""
-		Backs.URL = ""
+		Settings.faces.Select.Options = []string{"Light", "Dark"}
+		Settings.backs.Select.Options = []string{"Light", "Dark"}
+		Settings.avatars.Select.Options = []string{"None"}
+		Settings.faces.URL = ""
+		Settings.backs.URL = ""
 		Settings.AvatarUrl = ""
-		Faces.Select.SetSelectedIndex(0)
-		Backs.Select.SetSelectedIndex(0)
-		Settings.AvatarSelect.SetSelectedIndex(0)
-		Faces.Select.Refresh()
-		Backs.Select.Refresh()
-		Settings.AvatarSelect.Refresh()
+		Settings.faces.Select.SetSelectedIndex(0)
+		Settings.backs.Select.SetSelectedIndex(0)
+		Settings.avatars.Select.SetSelectedIndex(0)
+		Settings.faces.Select.Refresh()
+		Settings.backs.Select.Refresh()
+		Settings.avatars.Select.Refresh()
 		DisableHolderoTools()
+		Settings.Synced = false
 		Poker.table_owner = false
 	}
 }

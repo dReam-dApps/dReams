@@ -91,6 +91,10 @@ type assetObjects struct {
 var Assets assetObjects
 var Market marketObjects
 
+func (a *assetObjects) Add(name, scid string) {
+	a.Assets = append(a.Assets, name+"   "+scid)
+}
+
 // NFA market amount entry
 func MarketEntry() fyne.CanvasObject {
 	Market.Entry = dwidget.DeroAmtEntry("", 0.1, 1)
