@@ -43,7 +43,7 @@ type tarot struct {
 	}
 }
 
-//go:embed iluma/iluma.txt
+//go:embed text/iluma.txt
 var iluma_intro string
 
 var Iluma tarot
@@ -439,238 +439,238 @@ func DisplayCard(c int) *canvas.Image {
 	}
 }
 
-//go:embed iluma/1.txt
+//go:embed text/1.txt
 var tarot_txt1 string
 
-//go:embed iluma/2.txt
+//go:embed text/2.txt
 var tarot_txt2 string
 
-//go:embed iluma/3.txt
+//go:embed text/3.txt
 var tarot_txt3 string
 
-//go:embed iluma/4.txt
+//go:embed text/4.txt
 var tarot_txt4 string
 
-//go:embed iluma/5.txt
+//go:embed text/5.txt
 var tarot_txt5 string
 
-//go:embed iluma/6.txt
+//go:embed text/6.txt
 var tarot_txt6 string
 
-//go:embed iluma/7.txt
+//go:embed text/7.txt
 var tarot_txt7 string
 
-//go:embed iluma/8.txt
+//go:embed text/8.txt
 var tarot_txt8 string
 
-//go:embed iluma/9.txt
+//go:embed text/9.txt
 var tarot_txt9 string
 
-//go:embed iluma/10.txt
+//go:embed text/10.txt
 var tarot_txt10 string
 
-//go:embed iluma/11.txt
+//go:embed text/11.txt
 var tarot_txt11 string
 
-//go:embed iluma/12.txt
+//go:embed text/12.txt
 var tarot_txt12 string
 
-//go:embed iluma/13.txt
+//go:embed text/13.txt
 var tarot_txt13 string
 
-//go:embed iluma/14.txt
+//go:embed text/14.txt
 var tarot_txt14 string
 
-//go:embed iluma/15.txt
+//go:embed text/15.txt
 var tarot_txt15 string
 
-//go:embed iluma/16.txt
+//go:embed text/16.txt
 var tarot_txt16 string
 
-//go:embed iluma/17.txt
+//go:embed text/17.txt
 var tarot_txt17 string
 
-//go:embed iluma/18.txt
+//go:embed text/18.txt
 var tarot_txt18 string
 
-//go:embed iluma/19.txt
+//go:embed text/19.txt
 var tarot_txt19 string
 
-//go:embed iluma/20.txt
+//go:embed text/20.txt
 var tarot_txt20 string
 
-//go:embed iluma/21.txt
+//go:embed text/21.txt
 var tarot_txt21 string
 
-//go:embed iluma/22.txt
+//go:embed text/22.txt
 var tarot_txt22 string
 
-//go:embed iluma/23.txt
+//go:embed text/23.txt
 var tarot_txt23 string
 
-//go:embed iluma/24.txt
+//go:embed text/24.txt
 var tarot_txt24 string
 
-//go:embed iluma/25.txt
+//go:embed text/25.txt
 var tarot_txt25 string
 
-//go:embed iluma/26.txt
+//go:embed text/26.txt
 var tarot_txt26 string
 
-//go:embed iluma/27.txt
+//go:embed text/27.txt
 var tarot_txt27 string
 
-//go:embed iluma/28.txt
+//go:embed text/28.txt
 var tarot_txt28 string
 
-//go:embed iluma/29.txt
+//go:embed text/29.txt
 var tarot_txt29 string
 
-//go:embed iluma/30.txt
+//go:embed text/30.txt
 var tarot_txt30 string
 
-//go:embed iluma/31.txt
+//go:embed text/31.txt
 var tarot_txt31 string
 
-//go:embed iluma/32.txt
+//go:embed text/32.txt
 var tarot_txt32 string
 
-//go:embed iluma/33.txt
+//go:embed text/33.txt
 var tarot_txt33 string
 
-//go:embed iluma/34.txt
+//go:embed text/34.txt
 var tarot_txt34 string
 
-//go:embed iluma/35.txt
+//go:embed text/35.txt
 var tarot_txt35 string
 
-//go:embed iluma/36.txt
+//go:embed text/36.txt
 var tarot_txt36 string
 
-//go:embed iluma/37.txt
+//go:embed text/37.txt
 var tarot_txt37 string
 
-//go:embed iluma/38.txt
+//go:embed text/38.txt
 var tarot_txt38 string
 
-//go:embed iluma/39.txt
+//go:embed text/39.txt
 var tarot_txt39 string
 
-//go:embed iluma/40.txt
+//go:embed text/40.txt
 var tarot_txt40 string
 
-//go:embed iluma/41.txt
+//go:embed text/41.txt
 var tarot_txt41 string
 
-//go:embed iluma/42.txt
+//go:embed text/42.txt
 var tarot_txt42 string
 
-//go:embed iluma/43.txt
+//go:embed text/43.txt
 var tarot_txt43 string
 
-//go:embed iluma/44.txt
+//go:embed text/44.txt
 var tarot_txt44 string
 
-//go:embed iluma/45.txt
+//go:embed text/45.txt
 var tarot_txt45 string
 
-//go:embed iluma/46.txt
+//go:embed text/46.txt
 var tarot_txt46 string
 
-//go:embed iluma/47.txt
+//go:embed text/47.txt
 var tarot_txt47 string
 
-//go:embed iluma/48.txt
+//go:embed text/48.txt
 var tarot_txt48 string
 
-//go:embed iluma/49.txt
+//go:embed text/49.txt
 var tarot_txt49 string
 
-//go:embed iluma/50.txt
+//go:embed text/50.txt
 var tarot_txt50 string
 
-//go:embed iluma/51.txt
+//go:embed text/51.txt
 var tarot_txt51 string
 
-//go:embed iluma/52.txt
+//go:embed text/52.txt
 var tarot_txt52 string
 
-//go:embed iluma/53.txt
+//go:embed text/53.txt
 var tarot_txt53 string
 
-//go:embed iluma/54.txt
+//go:embed text/54.txt
 var tarot_txt54 string
 
-//go:embed iluma/55.txt
+//go:embed text/55.txt
 var tarot_txt55 string
 
-//go:embed iluma/56.txt
+//go:embed text/56.txt
 var tarot_txt56 string
 
-//go:embed iluma/57.txt
+//go:embed text/57.txt
 var tarot_txt57 string
 
-//go:embed iluma/58.txt
+//go:embed text/58.txt
 var tarot_txt58 string
 
-//go:embed iluma/59.txt
+//go:embed text/59.txt
 var tarot_txt59 string
 
-//go:embed iluma/60.txt
+//go:embed text/60.txt
 var tarot_txt60 string
 
-//go:embed iluma/61.txt
+//go:embed text/61.txt
 var tarot_txt61 string
 
-//go:embed iluma/62.txt
+//go:embed text/62.txt
 var tarot_txt62 string
 
-//go:embed iluma/63.txt
+//go:embed text/63.txt
 var tarot_txt63 string
 
-//go:embed iluma/64.txt
+//go:embed text/64.txt
 var tarot_txt64 string
 
-//go:embed iluma/65.txt
+//go:embed text/65.txt
 var tarot_txt65 string
 
-//go:embed iluma/66.txt
+//go:embed text/66.txt
 var tarot_txt66 string
 
-//go:embed iluma/67.txt
+//go:embed text/67.txt
 var tarot_txt67 string
 
-//go:embed iluma/68.txt
+//go:embed text/68.txt
 var tarot_txt68 string
 
-//go:embed iluma/69.txt
+//go:embed text/69.txt
 var tarot_txt69 string
 
-//go:embed iluma/70.txt
+//go:embed text/70.txt
 var tarot_txt70 string
 
-//go:embed iluma/71.txt
+//go:embed text/71.txt
 var tarot_txt71 string
 
-//go:embed iluma/72.txt
+//go:embed text/72.txt
 var tarot_txt72 string
 
-//go:embed iluma/73.txt
+//go:embed text/73.txt
 var tarot_txt73 string
 
-//go:embed iluma/74.txt
+//go:embed text/74.txt
 var tarot_txt74 string
 
-//go:embed iluma/75.txt
+//go:embed text/75.txt
 var tarot_txt75 string
 
-//go:embed iluma/76.txt
+//go:embed text/76.txt
 var tarot_txt76 string
 
-//go:embed iluma/77.txt
+//go:embed text/77.txt
 var tarot_txt77 string
 
-//go:embed iluma/78.txt
+//go:embed text/78.txt
 var tarot_txt78 string
 
 // Iluma description text switch
