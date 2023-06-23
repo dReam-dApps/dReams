@@ -177,7 +177,7 @@ func fetch(h *dreams.DreamsItems, d dreams.DreamsObject) {
 					}
 
 					// Auto bet
-					if Odds.Run && Signal.My_turn && !autoB && GameIsActive() {
+					if Odds.IsRunning() && Signal.My_turn && !autoB && GameIsActive() {
 						if !Signal.Reveal && !Signal.End && !Round.LocalEnd {
 							if Round.Cards.Local1 != "" {
 								autoB = true
@@ -244,7 +244,7 @@ func Disconnected(b bool) {
 	if b {
 		Round.ID = 0
 		Display.PlayerId = ""
-		Odds.Run = false
+		Odds.Stop()
 		Settings.faces.Select.Options = []string{"Light", "Dark"}
 		Settings.backs.Select.Options = []string{"Light", "Dark"}
 		Settings.avatars.Select.Options = []string{"None"}

@@ -33,7 +33,7 @@ func HolderoIndicator() (ind menu.DreamsIndicator) {
 
 	ind.Animation = canvas.NewColorRGBAAnimation(purple, blue,
 		time.Second*3, func(c color.Color) {
-			if Odds.Run {
+			if Odds.IsRunning() {
 				ind.Rect.FillColor = c
 				ind.Img.Show()
 				canvas.Refresh(ind.Rect)

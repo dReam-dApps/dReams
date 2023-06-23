@@ -105,7 +105,7 @@ func flags() (version string) {
 		}
 	}
 
-	prediction.Service.Init = true
+	prediction.Service.Start()
 	menu.Gnomes.Trim = true
 	enable_transfers = transfers
 	prediction.Service.Debug = debug
@@ -124,8 +124,8 @@ func init() {
 		fmt.Println()
 		menu.Gnomes.Stop("dReamService")
 		rpc.Wallet.Connected(false)
-		prediction.Service.Init = false
-		for prediction.Service.Processing {
+		prediction.Service.Stop()
+		for prediction.Service.IsProcessing() {
 			log.Println("[dReamService] Waiting for service to close")
 			time.Sleep(3 * time.Second)
 		}

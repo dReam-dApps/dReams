@@ -363,7 +363,7 @@ func serviceOpts(window fyne.Window) fyne.CanvasObject {
 	txid.Validator = validation.NewRegexp(`^\w{64,64}$`, "Invalid TXID")
 
 	process := widget.NewButton("Process Tx", func() {
-		if !Service.Processing && !Service.Init {
+		if !Service.IsProcessing() && !Service.IsRunning() {
 			if txid.Validate() == nil {
 				processSingleTx(txid.Text)
 			}
@@ -373,7 +373,7 @@ func serviceOpts(window fyne.Window) fyne.CanvasObject {
 	})
 
 	delete := widget.NewButton("Delete Tx", func() {
-		if !Service.Processing && !Service.Init {
+		if !Service.IsProcessing() && !Service.IsRunning() {
 			if txid.Validate() == nil {
 				e := rpc.GetWalletTx(txid.Text)
 				if e != nil {
@@ -389,7 +389,7 @@ func serviceOpts(window fyne.Window) fyne.CanvasObject {
 	})
 
 	store := widget.NewButton("Store Tx", func() {
-		if !Service.Processing && !Service.Init {
+		if !Service.IsProcessing() && !Service.IsRunning() {
 			if txid.Validate() == nil {
 				e := rpc.GetWalletTx(txid.Text)
 				if e != nil {
@@ -432,7 +432,7 @@ func serviceOpts(window fyne.Window) fyne.CanvasObject {
 	})
 
 	view := widget.NewButton("View Tx History", func() {
-		if !Service.Processing && !Service.Init {
+		if !Service.IsProcessing() && !Service.IsRunning() {
 			if !height.Checked {
 				start = uint64(rpc.StringToInt(entry.Text))
 			}
@@ -471,7 +471,7 @@ func serviceOpts(window fyne.Window) fyne.CanvasObject {
 	reset := window.Content().(*fyne.Container).Objects[2]
 
 	Owner.Run_service = widget.NewButton("Run Service", func() {
-		if !Service.Init {
+		if !Service.IsRunning() {
 			if entry.Validate() == nil {
 				if !height.Checked {
 					start = uint64(rpc.StringToInt(entry.Text))
@@ -482,7 +482,7 @@ func serviceOpts(window fyne.Window) fyne.CanvasObject {
 
 				if Owner.Service_pay.Checked || Owner.Transactions.Checked {
 					go func() {
-						Service.Init = true
+						Service.Start()
 						Owner.Run_service.Hide()
 						window.Content().(*fyne.Container).Objects[2] = serviceRunConfirm(start, Owner.Service_pay.Checked, Owner.Transactions.Checked, window, reset)
 						window.Content().(*fyne.Container).Objects[2].Refresh()
@@ -498,15 +498,15 @@ func serviceOpts(window fyne.Window) fyne.CanvasObject {
 		}
 	})
 
-	if Service.Init || Service.Processing {
+	if Service.IsRunning() || Service.IsProcessing() {
 		Owner.Run_service.Hide()
 	}
 
 	stop := widget.NewButton("Stop Service", func() {
-		if Service.Init {
+		if Service.IsRunning() {
 			log.Println("[dReams] Stopping service")
 		}
-		Service.Init = false
+		Service.Stop()
 
 	})
 
@@ -774,7 +774,7 @@ func serviceRunConfirm(start uint64, payout, transfers bool, window fyne.Window,
 	confirm_display.Alignment = fyne.TextAlignCenter
 
 	cancel_button := widget.NewButton("Cancel", func() {
-		Service.Init = false
+		Service.Stop()
 		window.Content().(*fyne.Container).Objects[2] = reset
 		window.Content().(*fyne.Container).Objects[2].Refresh()
 	})
@@ -943,13 +943,13 @@ func ownersMenu() {
 					ow.Close()
 				}
 
-				if Service.Init {
+				if Service.IsRunning() {
 					Owner.Run_service.Hide()
 					Owner.Service_pay.Disable()
 					Owner.Transactions.Disable()
 				}
 
-				if !Service.Init && !Service.Processing {
+				if !Service.IsRunning() && !Service.IsProcessing() {
 					Owner.Run_service.Show()
 					Owner.Service_pay.Enable()
 					Owner.Transactions.Enable()

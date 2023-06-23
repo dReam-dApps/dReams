@@ -45,7 +45,7 @@ func main() {
 	dReams.Window.SetCloseIntercept(func() {
 		menu.CloseAppSignal(true)
 		menu.WriteDreamsConfig(save())
-		serviceRunning()
+		dappCloseCheck()
 		go menu.StopLabel()
 		menu.Gnomes.Stop("dReams")
 		dReams.StopProcess()

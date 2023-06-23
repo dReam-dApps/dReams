@@ -135,7 +135,7 @@ func init() {
 		menu.CloseAppSignal(true)
 		menu.WriteDreamsConfig(save())
 		fmt.Println()
-		serviceRunning()
+		dappCloseCheck()
 		go menu.StopLabel()
 		menu.Gnomes.Stop("dReams")
 		menu.StopIndicators(indicators)
@@ -171,15 +171,6 @@ func startTerminal() *terminal.Terminal {
 func exitTerminal() {
 	if cli != nil {
 		cli.Exit()
-	}
-}
-
-// Ensure service is shutdown on app close
-func serviceRunning() {
-	prediction.Service.Init = false
-	for prediction.Service.Processing {
-		log.Println("[dReams] Waiting for service to close")
-		time.Sleep(3 * time.Second)
 	}
 }
 
@@ -801,4 +792,8 @@ func recheckButton(tag string, recheck func()) (button fyne.Widget) {
 	})
 
 	return
+}
+
+func dappCloseCheck() {
+	prediction.Service.IsStopped()
 }

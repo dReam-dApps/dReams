@@ -9,6 +9,7 @@ import (
 	"log"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/SixofClubsss/dReams/holdero"
@@ -31,6 +32,7 @@ type service struct {
 	Debug      bool
 	Processing bool
 	Last_block int
+	sync.RWMutex
 }
 
 type printColors struct {
@@ -43,6 +45,56 @@ type printColors struct {
 var Service service
 var PrintColor printColors
 
+// Start dService
+func (s *service) Start() {
+	s.Lock()
+	s.Init = true
+	s.Unlock()
+}
+
+// Start dService
+func (s *service) Stop() {
+	s.Lock()
+	s.Init = false
+	s.Unlock()
+}
+
+// Check if dService is running
+func (s *service) IsRunning() bool {
+	s.RLock()
+	defer s.RUnlock()
+
+	return s.Init
+}
+
+// Set dService processing value
+func (s *service) SetProcessing(b bool) {
+	s.Lock()
+	s.Processing = false
+	s.Unlock()
+}
+
+// Check if dService is currently processing
+func (s *service) IsProcessing() bool {
+	s.RLock()
+	defer s.RUnlock()
+
+	return s.Processing
+}
+
+// Ensure dService is shutdown on app close
+func (s *service) IsStopped() {
+	s.Lock()
+	defer s.Unlock()
+
+	s.Init = false
+	for s.Processing {
+		log.Println("[dPrediction] Waiting for service to close")
+		time.Sleep(3 * time.Second)
+	}
+}
+
+// Ui indictor when dService is running
 func ServiceIndicator() (ind menu.DreamsIndicator) {
 	purple := color.RGBA{105, 90, 205, 210}
 	blue := color.RGBA{31, 150, 200, 210}
@@ -55,7 +107,7 @@ func ServiceIndicator() (ind menu.DreamsIndicator) {
 
 	ind.Animation = canvas.NewColorRGBAAnimation(purple, blue,
 		time.Second*3, func(c color.Color) {
-			if Service.Init {
+			if Service.IsRunning() {
 				ind.Rect.FillColor = c
 				ind.Img.Show()
 				canvas.Refresh(ind.Rect)
@@ -409,19 +461,19 @@ func DreamService(start uint64, payouts, transfers bool) {
 		if start > 0 {
 			log.Println("[dReamService] Processing from height", start)
 			for i := 5; i > 0; i-- {
-				if !Service.Init {
+				if !Service.IsRunning() {
 					break
 				}
 				log.Println("[dReamService] Starting in", i)
 				time.Sleep(1 * time.Second)
 			}
 
-			if Service.Init {
+			if Service.IsRunning() {
 				log.Println("[dReamService] Starting")
 			}
 
-			for Service.Init && rpc.IsReady() {
-				Service.Processing = true
+			for Service.IsRunning() && rpc.IsReady() {
+				Service.SetProcessing(true)
 				if transfers {
 					processBetTx(start, db, Service.Debug)
 				}
@@ -433,19 +485,19 @@ func DreamService(start uint64, payouts, transfers bool) {
 
 				for i := 0; i < 10; i++ {
 					time.Sleep(1 * time.Second)
-					if !Service.Init || !rpc.IsReady() {
+					if !Service.IsRunning() || !rpc.IsReady() {
 						break
 					}
 				}
 			}
-			Service.Processing = false
+			Service.SetProcessing(false)
 			log.Println("[dReamService] Shutting down")
 		} else {
 			log.Println("[dReamService] Not starting from 0 height")
 		}
 		log.Println("[dReamService] Done")
 	}
-	Service.Init = false
+	Service.Stop()
 }
 
 // Process and queue dPrediction contracts actions for service to complete
@@ -748,7 +800,7 @@ func processBetTx(start uint64, db *bbolt.DB, print bool) {
 	serviceDebug(print, "[processBetTx]", fmt.Sprintf("%d Entries since Height %d", l, start))
 
 	for i, e := range transfers.Entries {
-		if !Service.Init {
+		if !Service.IsRunning() {
 			break
 		}
 

@@ -60,17 +60,46 @@ type AssetSelect struct {
 	Select *widget.Select
 }
 
-var active int
+type counter struct {
+	i int
+	sync.RWMutex
+}
+
 var tab string
+var count counter
 var mu sync.RWMutex
 var Theme AssetSelect
 
+// Add to active channel count
+func (c *counter) plus() {
+	c.Lock()
+	c.i++
+	c.Unlock()
+}
+
+// Subtract from active channel count
+func (c *counter) minus() {
+	c.Lock()
+	c.i--
+	c.Unlock()
+}
+
+// Check active channel count
+func (c *counter) active() int {
+	c.RLock()
+	defer c.RUnlock()
+
+	return c.i
+}
+
+// Set what tab main windows is on
 func (d *DreamsObject) SetTab(name string) {
 	mu.Lock()
 	tab = name
 	mu.Unlock()
 }
 
+// Check what tab main windows is on
 func (d *DreamsObject) OnTab(name string) bool {
 	mu.RLock()
 	defer mu.RUnlock()
@@ -78,6 +107,7 @@ func (d *DreamsObject) OnTab(name string) bool {
 	return tab == name
 }
 
+// Initialize channels
 func (d *DreamsObject) SetChannels(i int) {
 	d.receive = make(chan struct{})
 	d.done = make(chan struct{})
@@ -85,25 +115,30 @@ func (d *DreamsObject) SetChannels(i int) {
 	d.channels = i
 }
 
+// Signal all available channels when we are ready for them to work
 func (d *DreamsObject) SignalChannel() {
-	for active < d.channels {
-		active++
+	for count.active() < d.channels {
+		count.plus()
 		d.receive <- struct{}{}
 	}
 }
 
+// Receive signal for work
 func (d *DreamsObject) Receive() <-chan struct{} {
 	return d.receive
 }
 
+// Signal back to counter when work is done
 func (d *DreamsObject) WorkDone() {
-	active--
+	count.minus()
 }
 
+// Close signal for a dApp
 func (d *DreamsObject) CloseDapp() <-chan struct{} {
 	return d.done
 }
 
+// Send close signal to all active dApp channels
 func (d *DreamsObject) CloseAllDapps() {
 	ch := 0
 	for ch < d.channels {
@@ -112,26 +147,18 @@ func (d *DreamsObject) CloseAllDapps() {
 	}
 }
 
+// Stop the main dReams process
 func (d *DreamsObject) StopProcess() {
 	d.quit <- struct{}{}
 }
 
+// Close signal for dReams
 func (d *DreamsObject) Closing() <-chan struct{} {
 	return d.quit
 }
 
-// Notification switch for dApps
+// Notification pop up for dReams app
 func (d *DreamsObject) Notification(title, content string) bool {
-	// switch g {
-	// case 0:
-	// 	holdero.Round.Notified = true
-	// case 1:
-	// 	rpc.Bacc.Notified = true
-	// case 2:
-	// 	tarot.Iluma.Value.Notified = true
-	// default:
-	// }
-
 	d.App.SendNotification(&fyne.Notification{Title: title, Content: content})
 
 	return true

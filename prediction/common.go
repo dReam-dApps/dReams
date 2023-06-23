@@ -86,7 +86,7 @@ func fetch(p, s *dreams.DreamsItems, d dreams.DreamsObject) {
 }
 
 func Disconnected() {
-	Service.Init = false
+	Service.Stop()
 	Predict.owner = false
 	Owner.Synced = true
 }

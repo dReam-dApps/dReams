@@ -172,7 +172,7 @@ func (s *settings) AddBacks(add, check string) {
 func initValues() {
 	Times.Delay = 30
 	Times.Kick = 0
-	Odds.Run = false
+	Odds.Stop()
 	Settings.faces.Name = "light/"
 	Settings.backs.Name = "back1.png"
 	Settings.Avatar = "None"
@@ -1365,14 +1365,14 @@ func holderoTools(deal, check *widget.Check, button *widget.Button) {
 
 	enable := widget.NewCheck("Auto Bet Enabled", func(b bool) {
 		if b {
-			Odds.Run = true
+			Odds.Start()
 			if check.Checked {
 				check.SetChecked(false)
 			}
 			check.Disable()
 			deal.SetChecked(true)
 		} else {
-			Odds.Run = false
+			Odds.Stop()
 			check.Enable()
 			if deal.Checked {
 				deal.SetChecked(false)
@@ -1380,7 +1380,7 @@ func holderoTools(deal, check *widget.Check, button *widget.Button) {
 		}
 	})
 
-	if Odds.Run {
+	if Odds.IsRunning() {
 		enable.SetChecked(true)
 	}
 

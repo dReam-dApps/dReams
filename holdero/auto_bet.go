@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"os"
 	"sort"
+	"sync"
 	"time"
 
 	"fyne.io/fyne/v2/widget"
@@ -35,6 +36,7 @@ type bet_data struct {
 	Run       bool
 	Bot       Bot_config
 	Label     *widget.Label
+	sync.RWMutex
 }
 
 type Bot_config struct {
@@ -56,6 +58,28 @@ type Player_stats struct {
 
 var Stats Player_stats
 var Odds bet_data
+
+// Start Holdero bot
+func (b *bet_data) Start() {
+	b.Lock()
+	b.Run = true
+	b.Unlock()
+}
+
+// Stop Holdero bot
+func (b *bet_data) Stop() {
+	b.Lock()
+	b.Run = false
+	b.Unlock()
+}
+
+// Check if Holdero bot is running
+func (b *bet_data) IsRunning() bool {
+	b.RLock()
+	defer b.RUnlock()
+
+	return b.Run
+}
 
 func rPool(p int, n []int, c []int, cc [][]int) [][]int {
 	if len(n) == 0 || p <= 0 {
@@ -1476,7 +1500,7 @@ func updateStatsWins(amt uint64, player string, fold bool) {
 		if "Player"+Display.PlayerId == player {
 			Stats.Player.Win++
 			Stats.Player.Earnings = Stats.Player.Earnings + float64(amt)/100000
-			if Odds.Bot.Name != "" && Odds.Run {
+			if Odds.Bot.Name != "" && Odds.IsRunning() {
 				for i := range Stats.Bots {
 					if Odds.Bot.Name == Stats.Bots[i].Name {
 						Stats.Bots[i].Stats.Win++
@@ -1512,7 +1536,7 @@ func updateStatsWins(amt uint64, player string, fold bool) {
 func updateStatsWager(amt float64) {
 	if Odds.Enabled {
 		Stats.Player.Wagered = Stats.Player.Wagered + amt
-		if Odds.Bot.Name != "" && Odds.Run {
+		if Odds.Bot.Name != "" && Odds.IsRunning() {
 			for i := range Stats.Bots {
 				if Odds.Bot.Name == Stats.Bots[i].Name {
 					Stats.Bots[i].Stats.Wagered = Stats.Bots[i].Stats.Wagered + amt
@@ -1597,7 +1621,7 @@ func updateStatsPush(r ranker, amt uint64, f1, f2, f3, f4, f5, f6 bool) {
 		if in {
 			Stats.Player.Push++
 			Stats.Player.Earnings = Stats.Player.Earnings + float64(amt)/100000/ways
-			if Odds.Bot.Name != "" && Odds.Run {
+			if Odds.Bot.Name != "" && Odds.IsRunning() {
 				for i := range Stats.Bots {
 					if Odds.Bot.Name == Stats.Bots[i].Name {
 						Stats.Bots[i].Stats.Push++
