@@ -96,6 +96,21 @@ var Poker holderoObjects
 var Table tableObjects
 var Settings settings
 
+func OnConnected() {
+	Poker.Contract_entry.CursorColumn = 1
+	Poker.Contract_entry.Refresh()
+	if len(rpc.Wallet.Address) == 66 {
+		CheckExistingKey()
+		menu.Control.Names.ClearSelected()
+		menu.Control.Names.Options = []string{}
+		menu.Control.Names.Refresh()
+		menu.Control.Names.Options = append(menu.Control.Names.Options, rpc.Wallet.Address[0:12])
+		if menu.Control.Names.Options != nil {
+			menu.Control.Names.SetSelectedIndex(0)
+		}
+	}
+}
+
 func (s *settings) EnableCardSelects() {
 	if Round.ID == 1 {
 		s.faces.Select.Enable()

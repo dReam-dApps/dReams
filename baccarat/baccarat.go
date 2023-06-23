@@ -33,6 +33,15 @@ func initValues() {
 	Bacc.Display = true
 }
 
+// Function for when Baccarat tab is selected
+func OnTabSelected(b *dreams.DreamsItems, d dreams.DreamsObject) {
+	GetBaccTables()
+	BaccRefresh(b, d)
+	if rpc.Wallet.IsConnected() && Bacc.Display {
+		ActionBuffer(false)
+	}
+}
+
 // Main Baccarat process
 func fetch(b *dreams.DreamsItems, d dreams.DreamsObject) {
 	initValues()

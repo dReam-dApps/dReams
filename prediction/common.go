@@ -10,6 +10,13 @@ import (
 	"github.com/SixofClubsss/dReams/rpc"
 )
 
+func OnConnected() {
+	Predict.Settings.Contract_entry.CursorColumn = 1
+	Predict.Settings.Contract_entry.Refresh()
+	Sports.Settings.Contract_entry.CursorColumn = 1
+	Sports.Settings.Contract_entry.Refresh()
+}
+
 // Main process for dSports and dPrediction
 func fetch(p, s *dreams.DreamsItems, d dreams.DreamsObject) {
 	var offset int

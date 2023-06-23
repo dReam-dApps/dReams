@@ -54,8 +54,7 @@ func main() {
 		dReams.Window.Close()
 	})
 
-	dReams.Menu = true
-
+	dReams.SetTab("Menu")
 	dreams.Theme.Img = *canvas.NewImageFromResource(bundle.ResourceBackgroundPng)
 	dReams.Background = container.NewMax(&dreams.Theme.Img)
 

@@ -45,7 +45,6 @@ type DreamsObject struct {
 	Background *fyne.Container
 	OS         string
 	Configure  bool
-	Menu       bool
 	Market     bool
 	Cli        bool
 	quit       chan struct{}

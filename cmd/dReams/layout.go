@@ -362,7 +362,7 @@ func place() *fyne.Container {
 		dreams.ThemeSelect(),
 		holdero.AvatarSelect(menu.Assets.Asset_map),
 		holdero.SharedDecks(),
-		RecheckButton("dReams", RecheckDreamsAssets),
+		recheckButton("dReams", recheckDreamsAssets),
 	}
 	// dReams menu tabs
 	menu_tabs := container.NewAppTabs(
@@ -372,8 +372,22 @@ func place() *fyne.Container {
 		container.NewTabItem("Market", menu.PlaceMarket()))
 
 	menu_tabs.OnSelected = func(ti *container.TabItem) {
-		MenuTab(ti)
-		if ti.Text == "dApps" {
+		switch ti.Text {
+		case "Wallet":
+			ti.Content.(*container.Split).Leading.(*container.Split).Leading.Refresh()
+			dReams.Market = false
+		case "Assets":
+			dReams.Market = false
+			menu.Control.Viewing_asset = ""
+			menu.Assets.Asset_list.UnselectAll()
+		case "Market":
+			dReams.Market = true
+			go menu.FindNfaListings(nil)
+			menu.Market.Cancel_button.Hide()
+			menu.Market.Close_button.Hide()
+			menu.Market.Auction_list.Refresh()
+			menu.Market.Buy_list.Refresh()
+		case "dApps":
 			if menu.Gnomes.IsScanning() {
 				menu_tabs.SelectIndex(0)
 			} else {
@@ -437,15 +451,34 @@ func place() *fyne.Container {
 
 	tabs.Append(container.NewTabItem("Log", rpc.SessionLog()))
 
+	var fs_button *widget.Button
+	fs_button = widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "viewFullScreen"), func() {
+		if dReams.Window.FullScreen() {
+			fs_button.Icon = fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "viewFullScreen")
+			dReams.Window.SetFullScreen(false)
+		} else {
+			fs_button.Icon = fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "viewRestore")
+			dReams.Window.SetFullScreen(true)
+		}
+	})
+
+	fs_button.Importance = widget.LowImportance
+
 	alpha_box := container.NewMax(top_bar, menu_bottom_bar, tarot_bottom_bar, bundle.Alpha150)
 	if dReams.OS != "darwin" {
-		alpha_box.Objects = append(alpha_box.Objects, FullScreenSet())
+		alpha_box.Objects = append(alpha_box.Objects, container.NewHBox(layout.NewSpacer(), layout.NewSpacer(), layout.NewSpacer(), container.NewVBox(fs_button), layout.NewSpacer()))
 	}
 	alpha_box.Objects = append(alpha_box.Objects, menu.StartDreamsIndicators(indicators))
 
 	tabs.OnSelected = func(ti *container.TabItem) {
 		dReams.SetTab(ti.Text)
+		switch ti.Text {
+		case "Baccarat":
+			baccarat.OnTabSelected(&B, dReams)
+		}
+
 		if ti.Text == "Menu" {
+			holdero.Settings.EnableCardSelects()
 			menu_bottom.Show()
 			menu_tabs.Items[0].Content.(*container.Split).Leading.(*container.Split).Leading.Refresh()
 		} else {
@@ -471,13 +504,13 @@ func placeWall() *container.Split {
 
 	user_input_cont := container.NewVBox(
 		daemon_cont,
-		WalletRpcEntry(),
-		UserPassEntry(),
-		RpcConnectButton(),
+		walletRpcEntry(),
+		userPassEntry(),
+		rpcConnectButton(),
 		layout.NewSpacer(),
 		menu.MenuDisplay())
 
-	daemon_check_cont := container.NewVBox(DaemonConnectedBox())
+	daemon_check_cont := container.NewVBox(daemonConnectedBox())
 
 	user_input_box := container.NewHBox(user_input_cont, daemon_check_cont)
 	connect_tabs := container.NewAppTabs(

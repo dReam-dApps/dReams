@@ -15,27 +15,21 @@ import (
 	"time"
 
 	dreams "github.com/SixofClubsss/dReams"
-	"github.com/SixofClubsss/dReams/baccarat"
 	"github.com/SixofClubsss/dReams/bundle"
 	"github.com/SixofClubsss/dReams/holdero"
 	"github.com/SixofClubsss/dReams/menu"
 	"github.com/SixofClubsss/dReams/prediction"
 	"github.com/SixofClubsss/dReams/rpc"
-	"github.com/SixofClubsss/dReams/tarot"
 	"github.com/docopt/docopt-go"
 	"github.com/fyne-io/terminal"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/driver/desktop"
-	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 )
-
-type Notification struct {
-	Title, Content string
-}
 
 var cli *terminal.Terminal
 var command_line string = `dReams
@@ -151,6 +145,7 @@ func init() {
 	}()
 }
 
+// Build save struct for local preferences
 func save() dreams.DreamSave {
 	return dreams.DreamSave{
 		Skin:    bundle.AppColor,
@@ -224,9 +219,10 @@ func systemTray(w fyne.App) bool {
 	return false
 }
 
+// This is what we want to scan wallet for when Gnomon is synced
 func gnomonScan(contracts map[string]string) {
-	CheckDreamsNFAs(menu.Gnomes.Check, contracts)
-	CheckDreamsG45s(menu.Gnomes.Check, contracts)
+	checkDreamsNFAs(menu.Gnomes.Check, contracts)
+	checkDreamsG45s(menu.Gnomes.Check, contracts)
 }
 
 // Main dReams process loop
@@ -243,12 +239,12 @@ func fetch(done chan struct{}) {
 				go rpc.GetDreamsBalances(rpc.SCIDs)
 				rpc.GetWalletHeight("dReams")
 				if !rpc.Startup {
-					CheckConnection()
+					checkConnection()
 					menu.GnomonEndPoint()
 					menu.GnomonState(dReams.Configure, gnomonScan)
 					dReams.Background.Refresh()
 
-					go MenuRefresh(dReams.Menu)
+					go menuRefresh()
 
 					offset++
 					if offset >= 21 {
@@ -339,8 +335,8 @@ func refreshPriceDisplay(c bool) {
 }
 
 // Refresh all menu gui objects
-func MenuRefresh(tab bool) {
-	if tab && menu.Gnomes.IsInitialized() {
+func menuRefresh() {
+	if dReams.OnTab("Menu") && menu.Gnomes.IsInitialized() {
 		index := menu.Gnomes.Indexer.LastIndexedHeight
 		if index < menu.Gnomes.Indexer.ChainHeight-4 || !menu.Gnomes.HasIndex(2) {
 			menu.Assets.Gnomes_sync.Text = (" Gnomon Syncing...")
@@ -394,91 +390,16 @@ func MenuRefresh(tab bool) {
 
 	menu.Assets.Balances.Refresh()
 
-	if !dReams.Menu {
+	if !dReams.OnTab("Menu") {
 		menu.Market.Viewing = ""
 		menu.Market.Viewing_coll = ""
 	}
 }
 
-// Switch triggered when main tab changes
-func MainTab(ti *container.TabItem) {
-	switch ti.Text {
-	case "Menu":
-		dReams.Menu = true
-		holdero.Settings.EnableCardSelects()
-		go MenuRefresh(dReams.Menu)
-	case "Holdero":
-		dReams.Menu = false
-	case "Baccarat":
-		dReams.Menu = false
-		go func() {
-			baccarat.GetBaccTables()
-			baccarat.BaccRefresh(&B, dReams)
-			if rpc.Wallet.IsConnected() && baccarat.Bacc.Display {
-				baccarat.ActionBuffer(false)
-			}
-		}()
-	case "Predict":
-		dReams.Menu = false
-		go func() {
-			prediction.PopulatePredictions(nil)
-			prediction.PredictionRefresh(&P, dReams)
-		}()
-	case "Sports":
-		dReams.Menu = false
-		go prediction.PopulateSports(nil)
-	case "Iluma":
-		dReams.Menu = false
-		if tarot.Iluma.Value.Display {
-			tarot.ActionBuffer(false)
-		}
-	}
-}
-
-// Switch triggered when menu tab changes
-func MenuTab(ti *container.TabItem) {
-	switch ti.Text {
-	case "Wallet":
-		ti.Content.(*container.Split).Leading.(*container.Split).Leading.Refresh()
-		dReams.Market = false
-	case "Assets":
-		dReams.Market = false
-		menu.Control.Viewing_asset = ""
-		menu.Assets.Asset_list.UnselectAll()
-	case "Market":
-		dReams.Market = true
-		go menu.FindNfaListings(nil)
-		menu.Market.Cancel_button.Hide()
-		menu.Market.Close_button.Hide()
-		menu.Market.Auction_list.Refresh()
-		menu.Market.Buy_list.Refresh()
-	}
-}
-
-// Set and revert main window full screen mode
-func FullScreenSet() fyne.CanvasObject {
-	var button *widget.Button
-	button = widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "viewFullScreen"), func() {
-		if dReams.Window.FullScreen() {
-			button.Icon = fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "viewFullScreen")
-			dReams.Window.SetFullScreen(false)
-		} else {
-			button.Icon = fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "viewRestore")
-			dReams.Window.SetFullScreen(true)
-		}
-	})
-
-	button.Importance = widget.LowImportance
-
-	cont := container.NewHBox(layout.NewSpacer(), layout.NewSpacer(), layout.NewSpacer(), container.NewVBox(button), layout.NewSpacer())
-
-	return cont
-}
-
 // Check wallet for dReams NFAs
 //   - Pass scids from db store, can be nil arg
 //   - Pass false gc for rechecks
-func CheckDreamsNFAs(gc bool, scids map[string]string) {
+func checkDreamsNFAs(gc bool, scids map[string]string) {
 	if menu.Gnomes.IsReady() && !gc {
 		menu.Assets.Gnomes_sync.Text = (" Checking for Assets")
 		menu.Assets.Gnomes_sync.Refresh()
@@ -587,7 +508,7 @@ func checkNFAOwner(scid string) {
 // Check if wallet owns in game G45 asset
 //   - Pass g45s from db store, can be nil arg
 //   - Pass false gc for rechecks
-func CheckDreamsG45s(gc bool, g45s map[string]string) {
+func checkDreamsG45s(gc bool, g45s map[string]string) {
 	if menu.Gnomes.IsReady() && !gc {
 		if g45s == nil {
 			g45s = menu.Gnomes.GetAllOwnersAndSCIDs()
@@ -628,26 +549,145 @@ func CheckDreamsG45s(gc bool, g45s map[string]string) {
 	}
 }
 
+// Connection check for main process
+func checkConnection() {
+	if rpc.Daemon.IsConnected() {
+		menu.Control.Daemon_check.SetChecked(true)
+		menu.DisableIndexControls(false)
+	} else {
+		menu.Control.Daemon_check.SetChecked(false)
+		disableActions(true)
+		disconnected()
+		menu.DisableIndexControls(true)
+	}
+
+	if rpc.Wallet.IsConnected() {
+		if rpc.Daemon.IsConnected() {
+			disableActions(false)
+		}
+	} else {
+		disableActions(true)
+		disconnected()
+		menu.Gnomes.Checked(false)
+	}
+}
+
+// Do when disconnected
+func disconnected() {
+	menu.Market.Auctions = []string{}
+	menu.Market.Buy_now = []string{}
+	holdero.Disconnected(menu.Control.Dapp_list["Holdero"])
+	prediction.Disconnected()
+	rpc.Wallet.Address = ""
+	dreams.Theme.Select.Options = []string{"Main", "Legacy"}
+	dreams.Theme.Select.Refresh()
+	menu.Assets.Assets = []string{}
+	menu.Assets.Name.Text = (" Name:")
+	menu.Assets.Name.Refresh()
+	menu.Assets.Collection.Text = (" Collection:")
+	menu.Assets.Collection.Refresh()
+	menu.Assets.Icon = *canvas.NewImageFromImage(nil)
+	menu.Market.Auction_list.UnselectAll()
+	menu.Market.Buy_list.UnselectAll()
+	menu.Market.Icon = *canvas.NewImageFromImage(nil)
+	menu.Market.Cover = *canvas.NewImageFromImage(nil)
+	menu.Market.Viewing = ""
+	menu.Market.Viewing_coll = ""
+	menu.ResetAuctionInfo()
+	menu.AuctionInfo()
+}
+
+// Disable actions requiring connection
+func disableActions(d bool) {
+	if d {
+		menu.Assets.Swap.Hide()
+	} else {
+		menu.Assets.Swap.Show()
+	}
+
+	menu.Assets.Swap.Refresh()
+}
+
+// dReams search filters for Gnomon index
+func gnomonFilters() (filter []string) {
+	if menu.Control.Dapp_list["Holdero"] {
+		holdero110 := rpc.GetSCCode(holdero.HolderoSCID)
+		if holdero110 != "" {
+			filter = append(filter, holdero110)
+		}
+
+		holdero100 := rpc.GetSCCode(holdero.Holdero100)
+		if holdero100 != "" {
+			filter = append(filter, holdero100)
+		}
+
+		holderoHGC := rpc.GetSCCode(holdero.HGCHolderoSCID)
+		if holderoHGC != "" {
+			filter = append(filter, holderoHGC)
+		}
+	}
+
+	if menu.Control.Dapp_list["Baccarat"] {
+		bacc := rpc.GetSCCode(rpc.BaccSCID)
+		if bacc != "" {
+			filter = append(filter, bacc)
+		}
+	}
+
+	if menu.Control.Dapp_list["dSports and dPredictions"] {
+		predict := rpc.GetSCCode(prediction.PredictSCID)
+		if predict != "" {
+			filter = append(filter, predict)
+		}
+
+		sports := rpc.GetSCCode(prediction.SportsSCID)
+		if sports != "" {
+			filter = append(filter, sports)
+		}
+	}
+
+	gnomon := rpc.GetGnomonCode()
+	if gnomon != "" {
+		filter = append(filter, gnomon)
+	}
+
+	names := rpc.GetNameServiceCode()
+	if names != "" {
+		filter = append(filter, names)
+	}
+
+	ratings := rpc.GetSCCode(rpc.RatingSCID)
+	if ratings != "" {
+		filter = append(filter, ratings)
+	}
+
+	if menu.Control.Dapp_list["DerBnb"] {
+		bnb := rpc.GetSCCode(rpc.DerBnbSCID)
+		if bnb != "" {
+			filter = append(filter, bnb)
+		}
+	}
+
+	filter = append(filter, menu.NFA_SEARCH_FILTER)
+	if !menu.Gnomes.Trim {
+		filter = append(filter, menu.G45_search_filter)
+	}
+
+	return
+}
+
 // Hidden object, controls Gnomon start and stop based on daemon connection
-func DaemonConnectedBox() fyne.Widget {
+func daemonConnectedBox() fyne.Widget {
 	menu.Control.Daemon_check = widget.NewCheck("", func(b bool) {
 		if !menu.Gnomes.IsInitialized() && !menu.Gnomes.Start {
-			//go startLabel()
 			menu.Assets.Gnomes_sync.Text = (" Starting Gnomon")
 			menu.Assets.Gnomes_sync.Refresh()
-			filters := GnomonFilters()
+			filters := gnomonFilters()
 			menu.StartGnomon("dReams", menu.Gnomes.DBType, filters, 3960, 490, menu.G45Index)
 			rpc.FetchFees()
-			if menu.Control.Dapp_list["Holdero"] {
-				holdero.Poker.Contract_entry.CursorColumn = 1
-				holdero.Poker.Contract_entry.Refresh()
-			}
 
 			if menu.Control.Dapp_list["dSports and dPredictions"] {
-				prediction.Predict.Settings.Contract_entry.CursorColumn = 1
-				prediction.Predict.Settings.Contract_entry.Refresh()
-				prediction.Sports.Settings.Contract_entry.CursorColumn = 1
-				prediction.Sports.Settings.Contract_entry.Refresh()
+				prediction.OnConnected()
 			}
 		}
 
@@ -666,8 +706,8 @@ func DaemonConnectedBox() fyne.Widget {
 
 // Wallet rpc entry object
 //   - Bound to rpc.Wallet.Rpc
-//   - Changes reset wallet connection and call CheckConnection()
-func WalletRpcEntry() fyne.Widget {
+//   - Changes reset wallet connection and call checkConnection()
+func walletRpcEntry() fyne.Widget {
 	options := []string{"", "127.0.0.1:10103"}
 	entry := widget.NewSelectEntry(options)
 	entry.PlaceHolder = "Wallet RPC: "
@@ -677,39 +717,37 @@ func WalletRpcEntry() fyne.Widget {
 			rpc.Wallet.Display.Height = "0"
 			rpc.Wallet.Height = 0
 			rpc.Wallet.Connected(false)
-			go CheckConnection()
+			go checkConnection()
 		}
 	}
 
-	this := binding.BindString(&rpc.Wallet.Rpc)
-	entry.Bind(this)
+	entry.Bind(binding.BindString(&rpc.Wallet.Rpc))
 
 	return entry
 }
 
 // Authentication entry object
 //   - Bound to rpc.Wallet.UserPass
-//   - Changes call rpc.GetAddress() and CheckConnection()
-func UserPassEntry() fyne.Widget {
+//   - Changes call rpc.GetAddress() and checkConnection()
+func userPassEntry() fyne.Widget {
 	entry := widget.NewPasswordEntry()
 	entry.PlaceHolder = "user:pass"
 	entry.OnCursorChanged = func() {
 		if rpc.Wallet.IsConnected() {
 			rpc.GetAddress("dReams")
-			go CheckConnection()
+			go checkConnection()
 		}
 	}
 
-	a := binding.BindString(&rpc.Wallet.UserPass)
-	entry.Bind(a)
+	entry.Bind(binding.BindString(&rpc.Wallet.UserPass))
 
 	return entry
 }
 
 // Connect button object for rpc
-//   - Pressed calls rpc.Ping(), rpc.GetAddress(), CheckConnection(),
-//     checks for Holdero key and clears names for population
-func RpcConnectButton() fyne.Widget {
+//   - Pressed calls rpc.Ping(), rpc.GetAddress(), checkConnection(),
+//   - dapp.OnConnected() funcs get called here
+func rpcConnectButton() fyne.Widget {
 	var wait bool
 	button := widget.NewButton("Connect", func() {
 		go func() {
@@ -717,27 +755,13 @@ func RpcConnectButton() fyne.Widget {
 				wait = true
 				rpc.Ping()
 				rpc.GetAddress("dReams")
-				CheckConnection()
+				checkConnection()
 				if menu.Control.Dapp_list["Holdero"] {
-					holdero.Poker.Contract_entry.CursorColumn = 1
-					holdero.Poker.Contract_entry.Refresh()
-					if len(rpc.Wallet.Address) == 66 {
-						holdero.CheckExistingKey()
-						menu.Control.Names.ClearSelected()
-						menu.Control.Names.Options = []string{}
-						menu.Control.Names.Refresh()
-						menu.Control.Names.Options = append(menu.Control.Names.Options, rpc.Wallet.Address[0:12])
-						if menu.Control.Names.Options != nil {
-							menu.Control.Names.SetSelectedIndex(0)
-						}
-					}
+					holdero.OnConnected()
 				}
 
 				if menu.Control.Dapp_list["dSports and dPredictions"] {
-					prediction.Predict.Settings.Contract_entry.CursorColumn = 1
-					prediction.Predict.Settings.Contract_entry.Refresh()
-					prediction.Sports.Settings.Contract_entry.CursorColumn = 1
-					prediction.Sports.Settings.Contract_entry.Refresh()
+					prediction.OnConnected()
 				}
 				wait = false
 			}
@@ -748,11 +772,11 @@ func RpcConnectButton() fyne.Widget {
 }
 
 // dReams recheck owned assets routine
-func RecheckDreamsAssets() {
+func recheckDreamsAssets() {
 	menu.Gnomes.Wait = true
 	menu.Assets.Assets = []string{}
-	CheckDreamsNFAs(false, nil)
-	CheckDreamsG45s(false, nil)
+	checkDreamsNFAs(false, nil)
+	checkDreamsG45s(false, nil)
 	if menu.Control.Dapp_list["Holdero"] {
 		if rpc.Wallet.IsConnected() {
 			menu.Control.Names.Options = []string{rpc.Wallet.Address[0:12]}
@@ -768,7 +792,7 @@ func RecheckDreamsAssets() {
 // Recheck owned assets button
 //   - tag for log print
 //   - pass recheck for desired check
-func RecheckButton(tag string, recheck func()) (button fyne.Widget) {
+func recheckButton(tag string, recheck func()) (button fyne.Widget) {
 	button = widget.NewButton("Check Assets", func() {
 		if !menu.Gnomes.Wait {
 			log.Printf("[%s] Rechecking Assets\n", tag)
