@@ -6,13 +6,12 @@ import (
 	"time"
 
 	dreams "github.com/SixofClubsss/dReams"
-	"github.com/SixofClubsss/dReams/dwidget"
 	"github.com/SixofClubsss/dReams/menu"
 	"github.com/SixofClubsss/dReams/rpc"
 )
 
 // Main process for dSports and dPrediction
-func fetch(p, s *dwidget.DreamsItems, d dreams.DreamsObject) {
+func fetch(p, s *dreams.DreamsItems, d dreams.DreamsObject) {
 	//initValues()
 	var offset int
 	time.Sleep(3 * time.Second)

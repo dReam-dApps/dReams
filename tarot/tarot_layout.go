@@ -17,7 +17,7 @@ import (
 )
 
 // Layout all objects for Iluma Tarot dApp
-func LayoutAllItems(t *dwidget.DreamsItems, d dreams.DreamsObject) fyne.CanvasObject {
+func LayoutAllItems(t *dreams.DreamsItems, d dreams.DreamsObject) fyne.CanvasObject {
 	search_entry := widget.NewEntry()
 	search_entry.SetPlaceHolder("TXID:")
 	search_button := widget.NewButton("    Search   ", func() {

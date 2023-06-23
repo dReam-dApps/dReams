@@ -10,7 +10,7 @@ import (
 )
 
 // Baccarat tab layout
-func LayoutAllItems(b *dwidget.DreamsItems, d dreams.DreamsObject) *fyne.Container {
+func LayoutAllItems(b *dreams.DreamsItems, d dreams.DreamsObject) *fyne.Container {
 	b.Back = *container.NewWithoutLayout(
 		BaccTable(resourceBaccTablePng),
 		baccResult(Display.BaccRes))

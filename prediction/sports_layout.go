@@ -14,7 +14,7 @@ import (
 )
 
 // dSports tab layout
-func LayoutSportsItems(s, p *dwidget.DreamsItems, d dreams.DreamsObject) *fyne.Container {
+func LayoutSportsItems(s, p *dreams.DreamsItems, d dreams.DreamsObject) *fyne.Container {
 	sports_content := container.NewVBox(Sports.Info)
 	sports_scroll := container.NewVScroll(sports_content)
 	sports_scroll.SetMinSize(fyne.NewSize(180, 500))

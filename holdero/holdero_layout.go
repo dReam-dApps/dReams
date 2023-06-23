@@ -15,7 +15,7 @@ import (
 )
 
 // Holdero tables menu tab layout
-func placeContract(change_screen *fyne.Container, H *dwidget.DreamsItems, d dreams.DreamsObject) *container.Split {
+func placeContract(change_screen *fyne.Container, h *dreams.DreamsItems, d dreams.DreamsObject) *container.Split {
 	Settings.Check = widget.NewCheck("", func(b bool) {
 		if !b {
 			disableOwnerControls(true)
@@ -69,7 +69,7 @@ func placeContract(change_screen *fyne.Container, H *dwidget.DreamsItems, d drea
 					tabs.SelectIndex(0)
 					now := time.Now().Unix()
 					if now > Round.Last+33 {
-						holderoRefresh(H, d, 0)
+						holderoRefresh(h, d, 0)
 					}
 				} else {
 					tabs.SelectIndex(0)
@@ -114,7 +114,7 @@ func placeContract(change_screen *fyne.Container, H *dwidget.DreamsItems, d drea
 }
 
 // Holdero tab layout
-func placeHoldero(change_screen *widget.Button, h *dwidget.DreamsItems, d dreams.DreamsObject) *fyne.Container {
+func placeHoldero(change_screen *widget.Button, h *dreams.DreamsItems, d dreams.DreamsObject) *fyne.Container {
 	h.Back = *container.NewWithoutLayout(
 		HolderoTable(ResourcePokerTablePng),
 		Player1_label(nil, nil, nil),
@@ -153,7 +153,7 @@ func placeHoldero(change_screen *widget.Button, h *dwidget.DreamsItems, d dreams
 }
 
 // Layout all objects for Holdero dApp
-func LayoutAllItems(h *dwidget.DreamsItems, d dreams.DreamsObject) *container.Split {
+func LayoutAllItems(h *dreams.DreamsItems, d dreams.DreamsObject) *container.Split {
 	var holdero_objs *fyne.Container
 	var contract_objs *container.Split
 	contract_change_screen := widget.NewButton("Tables", nil)

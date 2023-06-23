@@ -34,7 +34,7 @@ func initValues() {
 }
 
 // Main Baccarat process
-func fetch(b *dwidget.DreamsItems, d dreams.DreamsObject) {
+func fetch(b *dreams.DreamsItems, d dreams.DreamsObject) {
 	initValues()
 	time.Sleep(3 * time.Second)
 	for {
@@ -274,7 +274,7 @@ func clearBaccCards() *fyne.Container {
 }
 
 // Refresh all Baccarat objects
-func BaccRefresh(b *dwidget.DreamsItems, d dreams.DreamsObject) {
+func BaccRefresh(b *dreams.DreamsItems, d dreams.DreamsObject) {
 	asset_name := rpc.GetAssetSCIDName(Bacc.AssetID)
 	b.LeftLabel.SetText("Total Hands Played: " + Display.Total_w + "      Player Wins: " + Display.Player_w + "      Ties: " + Display.Ties + "      Banker Wins: " + Display.Banker_w + "      Min Bet is " + Display.BaccMin + " " + asset_name + ", Max Bet is " + Display.BaccMax)
 	b.RightLabel.SetText(asset_name + " Balance: " + rpc.DisplayBalance(asset_name) + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Wallet.Display.Height)

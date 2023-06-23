@@ -31,11 +31,11 @@ import (
 	xwidget "fyne.io/x/fyne/widget"
 )
 
-var H dwidget.DreamsItems
-var B dwidget.DreamsItems
-var P dwidget.DreamsItems
-var S dwidget.DreamsItems
-var T dwidget.DreamsItems
+var H dreams.DreamsItems
+var B dreams.DreamsItems
+var P dreams.DreamsItems
+var S dreams.DreamsItems
+var T dreams.DreamsItems
 var indicators []menu.DreamsIndicator
 
 // If dReams has not been initialized, show this screen

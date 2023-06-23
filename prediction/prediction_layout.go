@@ -12,7 +12,7 @@ import (
 )
 
 // dPrediction tab layout
-func LayoutPredictItems(p *dwidget.DreamsItems, d dreams.DreamsObject) *fyne.Container {
+func LayoutPredictItems(p *dreams.DreamsItems, d dreams.DreamsObject) *fyne.Container {
 	predict_info := container.NewVBox(Predict.Info, Predict.Prices)
 	predict_scroll := container.NewScroll(predict_info)
 	predict_scroll.SetMinSize(fyne.NewSize(540, 500))

@@ -17,6 +17,17 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
+type DreamsItems struct {
+	LeftLabel  *widget.Label
+	RightLabel *widget.Label
+	TopLabel   *canvas.Text
+
+	Back    fyne.Container
+	Front   fyne.Container
+	Actions fyne.Container
+	DApp    *fyne.Container
+}
+
 type DreamSave struct {
 	Skin    color.Gray16 `json:"skin"`
 	Daemon  []string     `json:"daemon"`

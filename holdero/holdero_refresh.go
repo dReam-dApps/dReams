@@ -7,7 +7,6 @@ import (
 
 	dreams "github.com/SixofClubsss/dReams"
 	"github.com/SixofClubsss/dReams/bundle"
-	"github.com/SixofClubsss/dReams/dwidget"
 	"github.com/SixofClubsss/dReams/menu"
 	"github.com/SixofClubsss/dReams/rpc"
 
@@ -68,7 +67,7 @@ func singleShot(turn, trigger bool) bool {
 }
 
 // Main Holdero process
-func fetch(h *dwidget.DreamsItems, d dreams.DreamsObject) {
+func fetch(h *dreams.DreamsItems, d dreams.DreamsObject) {
 	initValues()
 	time.Sleep(3 * time.Second)
 	var autoCF, autoD, autoB, trigger bool
@@ -292,7 +291,7 @@ func disableOwnerControls(d bool) {
 }
 
 // Sets Holdero table info labels
-func setHolderoLabel(H *dwidget.DreamsItems) {
+func setHolderoLabel(H *dreams.DreamsItems) {
 	H.TopLabel.Text = Display.Res
 	H.LeftLabel.SetText("Seats: " + Display.Seats + "      Pot: " + Display.Pot + "      Blinds: " + Display.Blinds + "      Ante: " + Display.Ante + "      Dealer: " + Display.Dealer)
 	if Round.Asset {
@@ -318,7 +317,7 @@ func setHolderoLabel(H *dwidget.DreamsItems) {
 }
 
 // Holdero label for waiting for block
-func waitLabel(H *dwidget.DreamsItems) {
+func waitLabel(H *dreams.DreamsItems) {
 	H.TopLabel.Text = ""
 	if Round.Asset {
 		if Round.Tourney {
@@ -336,7 +335,7 @@ func waitLabel(H *dwidget.DreamsItems) {
 }
 
 // Refresh all Holdero gui objects
-func holderoRefresh(h *dwidget.DreamsItems, d dreams.DreamsObject, offset int) {
+func holderoRefresh(h *dreams.DreamsItems, d dreams.DreamsObject, offset int) {
 	go ShowAvatar(d.OnTab("Holdero"))
 	go refreshHolderoCards(Round.Cards.Local1, Round.Cards.Local2, d.Window)
 	if !Signal.Clicked {
@@ -419,7 +418,7 @@ func holderoRefresh(h *dwidget.DreamsItems, d dreams.DreamsObject, offset int) {
 }
 
 // Refresh Holdero player names and avatars
-func refreshHolderoPlayers(H *dwidget.DreamsItems) {
+func refreshHolderoPlayers(H *dreams.DreamsItems) {
 	H.Back.Objects[0] = HolderoTable(ResourcePokerTablePng)
 	H.Back.Objects[0].Refresh()
 
@@ -445,7 +444,7 @@ func refreshHolderoPlayers(H *dwidget.DreamsItems) {
 }
 
 // Reveal key notification and display
-func revealingKey(H *dwidget.DreamsItems, d dreams.DreamsObject) {
+func revealingKey(H *dreams.DreamsItems, d dreams.DreamsObject) {
 	if Signal.Reveal && Signal.My_turn && !Signal.End {
 		if !Round.Notified {
 			Display.Res = "Revealing Key"

@@ -8,7 +8,6 @@ import (
 	"time"
 
 	dreams "github.com/SixofClubsss/dReams"
-	"github.com/SixofClubsss/dReams/dwidget"
 	"github.com/SixofClubsss/dReams/rpc"
 
 	"fyne.io/fyne/v2"
@@ -54,7 +53,7 @@ func initValues() {
 }
 
 // Main Tarot process
-func fetch(t *dwidget.DreamsItems, d dreams.DreamsObject) {
+func fetch(t *dreams.DreamsItems, d dreams.DreamsObject) {
 	initValues()
 	time.Sleep(3 * time.Second)
 	for {
@@ -129,7 +128,7 @@ func disableActions(b bool) {
 }
 
 // Refresh all Tarot objects
-func tarotRefresh(t *dwidget.DreamsItems) {
+func tarotRefresh(t *dreams.DreamsItems) {
 	t.LeftLabel.SetText("Total Readings: " + Iluma.Value.Readings + "      Click your card for Iluma reading")
 	t.RightLabel.SetText("dReams Balance: " + rpc.DisplayBalance("dReams") + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Wallet.Display.Height)
 
