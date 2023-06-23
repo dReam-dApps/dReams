@@ -10,6 +10,7 @@ import (
 	"github.com/SixofClubsss/dReams/rpc"
 )
 
+// Do this when first connected
 func OnConnected() {
 	Predict.Settings.Contract_entry.CursorColumn = 1
 	Predict.Settings.Contract_entry.Refresh()
@@ -85,12 +86,14 @@ func fetch(p, s *dreams.DreamsItems, d dreams.DreamsObject) {
 	}
 }
 
+// Do this when disconnected
 func Disconnected() {
 	Service.Stop()
 	Predict.owner = false
 	Owner.Synced = true
 }
 
+// Disable sports and prediction actions
 func disableActions() {
 	Predict.Settings.New.Hide()
 	Sports.Settings.New.Hide()

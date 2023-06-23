@@ -19,7 +19,7 @@ const (
 )
 
 // Place higher prediction to SC
-//   - addr only needed if dReamService is placing prediction
+//   - addr only needed if dService is placing prediction
 func PredictHigher(scid, addr string) {
 	rpcClientW, ctx, cancel := rpc.SetWalletClient(rpc.Wallet.Rpc, rpc.Wallet.UserPass)
 	defer cancel()
@@ -58,7 +58,7 @@ func PredictHigher(scid, addr string) {
 }
 
 // Place lower prediction to SC
-//   - addr only needed if dReamService is placing prediction
+//   - addr only needed if dService is placing prediction
 func PredictLower(scid, addr string) {
 	rpcClientW, ctx, cancel := rpc.SetWalletClient(rpc.Wallet.Rpc, rpc.Wallet.UserPass)
 	defer cancel()
@@ -96,7 +96,7 @@ func PredictLower(scid, addr string) {
 	rpc.AddLog("Prediction TX: " + txid.TXID)
 }
 
-// dReamService prediction place by received tx
+// dService prediction place by received tx
 //   - amt to send
 //   - p is what prediction
 //   - addr of placed bet and to send reply message
@@ -155,7 +155,7 @@ func AutoPredict(p int, amt, src uint64, scid, addr, pre_tx string) (tx string) 
 	return txid.TXID
 }
 
-// dReamService refund if bet void
+// dService refund if bet void
 //   - amt to send
 //   - addr to send refund to
 //   - src, msg and refund_tx used in reply message
@@ -197,7 +197,7 @@ func ServiceRefund(amt, src uint64, scid, addr, msg, refund_tx string) (tx strin
 	return txid.TXID
 }
 
-// dReamService sports book by received tx
+// dService sports book by received tx
 //   - amt to send
 //   - pre is what team
 //   - n is the game number

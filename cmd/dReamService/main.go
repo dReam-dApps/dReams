@@ -18,12 +18,12 @@ import (
 // Run dReamsService process from dReams prediction package
 
 var enable_transfers bool
-var command_line string = `dReamService
-App to run dReamService as a single process from dReams package, powered by Gnomon.
+var command_line string = `dService
+App to run dService as a single process, powered by Gnomon and dReams.
 
 Usage:
-  dReamService [options]
-  dReamService -h | --help
+  dService [options]
+  dService -h | --help
 
 Options:
   -h --help                      Show this screen.
@@ -35,7 +35,7 @@ Options:
   --fastsync=<true>	         Gnomon option,  true/false value to define loading at chain height on start up.
   --num-parallel-blocks=<5>      Gnomon option,  defines the number of parallel blocks to index.`
 
-// Set opts when starting dReamService
+// Set opts when starting dService
 func flags() (version string) {
 	version = rpc.DREAMSv
 	arguments, err := docopt.ParseArgs(command_line, nil, version)
@@ -122,14 +122,14 @@ func init() {
 	go func() {
 		<-c
 		fmt.Println()
-		menu.Gnomes.Stop("dReamService")
+		menu.Gnomes.Stop("dService")
 		rpc.Wallet.Connected(false)
 		prediction.Service.Stop()
 		for prediction.Service.IsProcessing() {
-			log.Println("[dReamService] Waiting for service to close")
+			log.Println("[dService] Waiting for service to close")
 			time.Sleep(3 * time.Second)
 		}
-		log.Println("[dReamService] Closing")
+		log.Println("[dService] Closing")
 		os.Exit(0)
 	}()
 }
@@ -139,21 +139,21 @@ func main() {
 	runtime.GOMAXPROCS(n)
 
 	v := flags()
-	log.Println("[dReamService]", v, runtime.GOOS, runtime.GOARCH)
+	log.Println("[dService]", v, runtime.GOOS, runtime.GOARCH)
 
 	// Check for daemon connection
 	rpc.Ping()
 	if !rpc.Daemon.Connect {
-		log.Fatalf("[dReamService] Daemon %s not connected\n", rpc.Daemon.Rpc)
+		log.Fatalf("[dService] Daemon %s not connected\n", rpc.Daemon.Rpc)
 	}
 
 	// Check for wallet connection
-	rpc.GetAddress("dReamService")
+	rpc.GetAddress("dService")
 	if !rpc.Wallet.Connect {
 		os.Exit(1)
 	}
 
-	// Start dReamService from last payload format height at minimum
+	// Start dService from last payload format height at minimum
 	height := prediction.PAYLOAD_FORMAT
 
 	// Set up Gnomon search filters
@@ -172,7 +172,7 @@ func main() {
 	menu.Control.Contract_rating = make(map[string]uint64)
 
 	// Start Gnomon with search filters
-	go menu.StartGnomon("dReamService", "gravdb", filter, 0, 0, nil)
+	go menu.StartGnomon("dService", "gravdb", filter, 0, 0, nil)
 
 	// Routine for checking daemon, wallet connection and Gnomon sync
 	go func() {
@@ -180,11 +180,11 @@ func main() {
 			time.Sleep(time.Second)
 		}
 
-		log.Println("[dReamService] Starting when Gnomon is synced")
+		log.Println("[dService] Starting when Gnomon is synced")
 		height = uint64(menu.Gnomes.Indexer.ChainHeight)
 		for menu.Gnomes.IsRunning() && rpc.IsReady() {
 			rpc.Ping()
-			rpc.EchoWallet("dReamService")
+			rpc.EchoWallet("dService")
 			menu.Gnomes.IndexContains()
 			if menu.Gnomes.Indexer.LastIndexedHeight >= menu.Gnomes.Indexer.ChainHeight-3 && menu.Gnomes.HasIndex(9) {
 				menu.Gnomes.Synced(true)
@@ -193,7 +193,7 @@ func main() {
 				if !menu.Gnomes.Start && menu.Gnomes.IsInitialized() {
 					diff := menu.Gnomes.Indexer.ChainHeight - menu.Gnomes.Indexer.LastIndexedHeight
 					if diff > 3 && prediction.Service.Debug {
-						log.Printf("[dReamService] Gnomon has %d blocks to go\n", diff)
+						log.Printf("[dService] Gnomon has %d blocks to go\n", diff)
 					}
 				}
 			}
@@ -218,7 +218,7 @@ func main() {
 		add = "and transactions"
 	}
 
-	// Start dReamService
-	log.Printf("[dReamService] Processing payouts %s\n", add)
-	prediction.DreamService(height, true, enable_transfers)
+	// Start dService
+	log.Printf("[dService] Processing payouts %s\n", add)
+	prediction.RunService(height, true, enable_transfers)
 }

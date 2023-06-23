@@ -350,7 +350,7 @@ func sportsOpts(window fyne.Window) fyne.CanvasObject {
 	return sports
 }
 
-// dReamService control objects for side menu
+// dService control objects for side menu
 //   - Pass side menu window to reset to
 func serviceOpts(window fyne.Window) fyne.CanvasObject {
 	get_addr := widget.NewButton("Integrated Address", func() {
@@ -780,7 +780,7 @@ func serviceRunConfirm(start uint64, payout, transfers bool, window fyne.Window,
 	})
 
 	confirm_button := widget.NewButton("Confirm", func() {
-		go DreamService(start, payout, transfers)
+		go RunService(start, payout, transfers)
 		window.Content().(*fyne.Container).Objects[2] = reset
 		window.Content().(*fyne.Container).Objects[2].Refresh()
 	})

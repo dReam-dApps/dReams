@@ -432,14 +432,14 @@ func makeIntegratedAddr(print bool) {
 	}
 }
 
-// Main dReamService routine
+// Main dService routine
 //   - start defines service starting height
 //   - payouts, transfers for service params
-func DreamService(start uint64, payouts, transfers bool) {
+func RunService(start uint64, payouts, transfers bool) {
 	if rpc.IsReady() {
 		db := boltDB()
 		if db == nil {
-			log.Println("[dReamService] Closing")
+			log.Println("[dService] Closing")
 			return
 		}
 		defer db.Close()
@@ -450,26 +450,26 @@ func DreamService(start uint64, payouts, transfers bool) {
 		})
 
 		if err != nil {
-			log.Printf("[dReamService] err creating bucket. err %s\n", err)
+			log.Printf("[dService] err creating bucket. err %s\n", err)
 			return
 		}
 
 		if start == 0 {
-			start = rpc.DaemonHeight("dReamService", rpc.Daemon.Rpc)
+			start = rpc.DaemonHeight("dService", rpc.Daemon.Rpc)
 		}
 
 		if start > 0 {
-			log.Println("[dReamService] Processing from height", start)
+			log.Println("[dService] Processing from height", start)
 			for i := 5; i > 0; i-- {
 				if !Service.IsRunning() {
 					break
 				}
-				log.Println("[dReamService] Starting in", i)
+				log.Println("[dService] Starting in", i)
 				time.Sleep(1 * time.Second)
 			}
 
 			if Service.IsRunning() {
-				log.Println("[dReamService] Starting")
+				log.Println("[dService] Starting")
 			}
 
 			for Service.IsRunning() && rpc.IsReady() {
@@ -491,11 +491,11 @@ func DreamService(start uint64, payouts, transfers bool) {
 				}
 			}
 			Service.SetProcessing(false)
-			log.Println("[dReamService] Shutting down")
+			log.Println("[dService] Shutting down")
 		} else {
-			log.Println("[dReamService] Not starting from 0 height")
+			log.Println("[dService] Not starting from 0 height")
 		}
-		log.Println("[dReamService] Done")
+		log.Println("[dService] Done")
 	}
 	Service.Stop()
 }
@@ -555,7 +555,7 @@ func runPredictionPayouts(print bool) {
 			case 2:
 				value = rpc.GetBlockTime(Predict.Feed)
 			case 3:
-				d := rpc.DaemonHeight("dReamService", Predict.Feed)
+				d := rpc.DaemonHeight("dService", Predict.Feed)
 				value = float64(d)
 			default:
 
@@ -611,7 +611,7 @@ func runPredictionPayouts(print bool) {
 			case 2:
 				amt = rpc.GetBlockTime(Predict.Feed)
 			case 3:
-				d := rpc.DaemonHeight("dReamService", Predict.Feed)
+				d := rpc.DaemonHeight("dService", Predict.Feed)
 				amt = float64(d)
 			default:
 				sent = false
@@ -1021,7 +1021,7 @@ func processSingleTx(txid string) {
 		})
 
 		if err != nil {
-			log.Printf("[dReamService] err creating bucket. err %s\n", err)
+			log.Printf("[dService] err creating bucket. err %s\n", err)
 			return
 		}
 
@@ -1266,7 +1266,7 @@ func viewProcessedTx(start uint64) {
 		})
 
 		if err != nil {
-			log.Printf("[dReamService] err creating bucket. err %s\n", err)
+			log.Printf("[dService] err creating bucket. err %s\n", err)
 			return
 		}
 
@@ -1344,19 +1344,19 @@ func viewProcessedTx(start uint64) {
 	}
 }
 
-// Create a new bbolt.DB for dReamService
+// Create a new bbolt.DB for dService
 func boltDB() *bbolt.DB {
-	db_name := fmt.Sprintf("config/dReamService_%s.bbolt.db", rpc.Wallet.Address)
+	db_name := fmt.Sprintf("config/dService_%s.bbolt.db", rpc.Wallet.Address)
 	db, err := bbolt.Open(db_name, 0600, nil)
 	if err != nil {
-		log.Printf("[dReamService] could not open db err:%s\n", err)
+		log.Printf("[dService] could not open db err:%s\n", err)
 		return nil
 	}
 
 	return db
 }
 
-// Store Dero transaction in local dReamService db by TXID
+// Store Dero transaction in local dService db by TXID
 func storeTx(bucket, value string, db *bbolt.DB, e dero.Entry) {
 	err := db.Update(func(tx *bbolt.Tx) error {
 		b := tx.Bucket([]byte(bucket))
@@ -1370,7 +1370,7 @@ func storeTx(bucket, value string, db *bbolt.DB, e dero.Entry) {
 	}
 }
 
-// Delete Dero transaction in local dReamService db by TXID
+// Delete Dero transaction in local dService db by TXID
 func deleteTx(bucket string, db *bbolt.DB, e dero.Entry) {
 	err := db.Update(func(tx *bbolt.Tx) error {
 		b := tx.Bucket([]byte(bucket))
@@ -1483,7 +1483,7 @@ func sendRefund(scid, addr, msg string, e dero.Entry) {
 	rpc.ConfirmTx(tx, "sendRefund", 36)
 }
 
-// Pause dReamService if last tx was within 3 blocks
+// Pause dService if last tx was within 3 blocks
 func waitForBlock() {
 	i := 0
 	if Service.Debug && rpc.Wallet.Height < Service.Last_block+3 {
