@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"image/color"
 	"log"
 	"net/url"
 	"os"
@@ -27,7 +26,6 @@ import (
 	"github.com/fyne-io/terminal"
 
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/driver/desktop"
@@ -227,27 +225,13 @@ func systemTray(w fyne.App) bool {
 	return false
 }
 
-// Top label background used on dApp tabs
-func labelColorBlack(c *fyne.Container) *fyne.Container {
-	var alpha *canvas.Rectangle
-	if bundle.AppColor == color.White {
-		alpha = canvas.NewRectangle(color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0x33})
-	} else {
-		alpha = canvas.NewRectangle(color.RGBA{0, 0, 0, 150})
-	}
-
-	cont := container.New(layout.NewMaxLayout(), alpha, c)
-
-	return cont
-}
-
 func gnomonScan(contracts map[string]string) {
 	CheckDreamsG45s(menu.Gnomes.Check, contracts)
 	CheckDreamsNFAs(menu.Gnomes.Check, contracts)
 }
 
 // Main dReams process loop
-func fetch(d dreams.DreamsObject, done chan struct{}) {
+func fetch(done chan struct{}) {
 	rpc.Startup = true
 	time.Sleep(3 * time.Second)
 	ticker := time.NewTicker(3 * time.Second)
@@ -285,7 +269,7 @@ func fetch(d dreams.DreamsObject, done chan struct{}) {
 				dReams.SignalChannel()
 
 			}
-		case <-d.Closing(): // exit loop
+		case <-dReams.Closing(): // exit loop
 			log.Println("[dReams] Closing...")
 			ticker.Stop()
 			dReams.CloseAllDapps()

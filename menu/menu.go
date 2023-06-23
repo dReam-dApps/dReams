@@ -69,6 +69,17 @@ func CloseAppSignal(value bool) {
 	Exit.Unlock()
 }
 
+// Returns how many dApps are enabled
+func EnabledDapps() (enabled int) {
+	for _, b := range Control.Dapp_list {
+		if b {
+			enabled++
+		}
+	}
+
+	return
+}
+
 // Save dReams config.json file for platform wide dApp use
 func WriteDreamsConfig(u dreams.DreamSave) {
 	if u.Daemon != nil && u.Daemon[0] == "" {

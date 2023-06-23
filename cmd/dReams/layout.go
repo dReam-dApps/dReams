@@ -106,9 +106,7 @@ func introScreen() *fyne.Container {
 			menu.Control.Dapp_list[name] = true
 		}
 
-		// put back
-		//dReams.SetChannels(len(menu.Control.Dapp_list))
-		dReams.SetChannels(4)
+		dReams.SetChannels(menu.EnabledDapps())
 		log.Println("[dReams] Loading dApps")
 		go func() {
 			dReams.App.Settings().SetTheme(bundle.DeroTheme(bundle.AppColor))
@@ -187,9 +185,7 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 		rpc.Wallet.Height = 0
 		disconnected()
 		menu.Control.Dapp_list = enabled_dapps
-		// put back
-		//dReams.SetChannels(len(menu.Control.Dapp_list))
-		dReams.SetChannels(4)
+		dReams.SetChannels(menu.EnabledDapps())
 		log.Println("[dReams] Loading dApps")
 		menu.CloseAppSignal(true)
 		menu.Gnomes.Checked(false)

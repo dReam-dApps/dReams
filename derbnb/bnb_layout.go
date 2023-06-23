@@ -240,23 +240,34 @@ func LayoutAllItems(imported bool, d dreams.DreamsObject) fyne.CanvasObject {
 	// confirmation screen vars
 	var confirm_stamp uint64
 	var viewing_address, confirm_dates string
+	var viewingValidators func()
+	var profileValidators func()
 
 	// profile tab layout
 	scid_entry := widget.NewEntry()
 	scid_entry.SetPlaceHolder("SCID:")
 	scid_entry.Validator = validation.NewRegexp(`^\w{64,64}$`, "SCID Not Valid")
+	scid_entry.OnChanged = func(s string) {
+		profileValidators()
+	}
 
 	// price per night entry
 	price_entry := dwidget.DeroAmtEntry("", 0.1, 5)
 	price_entry.SetPlaceHolder("Price:     ")
 	price_entry.AllowFloat = true
 	price_entry.Validator = validation.NewRegexp(`^\d{1,}\.\d{1,5}$|^[^0]\d{0,}$`, "Float required")
+	price_entry.OnChanged = func(s string) {
+		profileValidators()
+	}
 
 	// damage deposit entry
 	deposit_entry := dwidget.DeroAmtEntry("", 0.1, 5)
 	deposit_entry.AllowFloat = true
 	deposit_entry.SetPlaceHolder("Damage deposit:")
 	deposit_entry.Validator = validation.NewRegexp(`^\d{1,}\.\d{1,5}$|^[^0]\d{0,}$`, "Float required")
+	deposit_entry.OnChanged = func(s string) {
+		profileValidators()
+	}
 
 	// damage deposit release objects
 	release_entry := dwidget.DeroAmtEntry("", 0.1, 5)
@@ -884,6 +895,9 @@ func LayoutAllItems(imported bool, d dreams.DreamsObject) fyne.CanvasObject {
 				count = 0
 				getImages(scid)
 				request_button.Show()
+				if len(viewing_scid) != 64 {
+					request_button.Hide()
+				}
 				property_photos.RLock()
 				listing_label.SetText(getInfo(scid))
 				if property_photos.data[scid] != nil {
@@ -1830,116 +1844,171 @@ func LayoutAllItems(imported bool, d dreams.DreamsObject) fyne.CanvasObject {
 
 	property_photos.data = make(map[string][]string)
 
-	// Use menu.Exit_signal to kill routine of dApp
+	// Two routines, if imported exit with dreams.CloseDapp()
 	go func() {
-		i := 0
-		time.Sleep(2 * time.Second)
-		for !menu.ClosingApps() {
-			if !rpc.Wallet.IsConnected() || !rpc.Daemon.IsConnected() {
-				list_button.Hide()
-				remove_button.Hide()
-				confirm_request_button.Hide()
-				cancel_request_button.Hide()
-				release_button.Hide()
-				rate_renter_button.Hide()
-				change_price_button.Hide()
+		time.Sleep(3 * time.Second)
+		if imported {
+			for {
+				select {
+				case <-d.Receive():
+					if !rpc.Wallet.IsConnected() || !rpc.Daemon.IsConnected() {
+						list_button.Hide()
+						remove_button.Hide()
+						confirm_request_button.Hide()
+						cancel_request_button.Hide()
+						release_button.Hide()
+						rate_renter_button.Hide()
+						change_price_button.Hide()
 
-				cancel_booking_button.Hide()
-				rate_booking_button.Hide()
-				send_message.Hide()
+						cancel_booking_button.Hide()
+						rate_booking_button.Hide()
+						send_message.Hide()
 
-				change_dates.Hide()
-				property_add_info.Hide()
+						change_dates.Hide()
+						property_add_info.Hide()
 
-				trvl_button.Hide()
-				request_button.Hide()
-				mint_prop.Hide()
+						trvl_button.Hide()
+						request_button.Hide()
+						mint_prop.Hide()
 
-				image_box.Objects[0] = &image
-				image_box.Refresh()
+						image_box.Objects[0] = &image
+						image_box.Refresh()
 
-				listing_label.SetText("")
-			} else {
+						listing_label.SetText("")
+						d.WorkDone()
+						continue
+					}
+
+					trvl_button.Show()
+					mint_prop.Show()
+
+					go GetProperties()
+					profileValidators()
+					viewingValidators()
+
+					d.WorkDone()
+				case <-d.CloseDapp():
+					log.Println("[DerBnb] Done")
+					return
+				}
+			}
+		} else {
+			i := 0
+			for !menu.ClosingApps() {
+				if !rpc.Wallet.IsConnected() || !rpc.Daemon.IsConnected() {
+					list_button.Hide()
+					remove_button.Hide()
+					confirm_request_button.Hide()
+					cancel_request_button.Hide()
+					release_button.Hide()
+					rate_renter_button.Hide()
+					change_price_button.Hide()
+
+					cancel_booking_button.Hide()
+					rate_booking_button.Hide()
+					send_message.Hide()
+
+					change_dates.Hide()
+					property_add_info.Hide()
+
+					trvl_button.Hide()
+					request_button.Hide()
+					mint_prop.Hide()
+
+					image_box.Objects[0] = &image
+					image_box.Refresh()
+
+					listing_label.SetText("")
+					continue
+				}
+
 				trvl_button.Show()
 				mint_prop.Show()
-			}
 
-			if imported && i == 3 {
-				i = 0
-				GetProperties()
-			}
+				if imported && i == 3 {
+					i = 0
+					GetProperties()
+				}
 
-			if scid_entry.Validate() == nil && rpc.Wallet.IsConnected() {
-				if haveProperty(scid_entry.Text) {
-					change_dates.Show()
-					remove_button.Show()
-					set_location_button.Hide()
-					list_button.Hide()
-					if price_entry.Validate() == nil && deposit_entry.Validate() == nil {
-						change_price_button.Show()
-					} else {
-						change_price_button.Hide()
-					}
+				profileValidators()
+				viewingValidators()
+
+				i++
+
+				time.Sleep(time.Second)
+			}
+		}
+	}()
+
+	viewingValidators = func() {
+		if len(viewing_scid) != 64 {
+			request_button.Hide()
+			image_box.Objects[0] = canvas.NewImageFromImage(nil)
+			image_box.Refresh()
+		}
+	}
+
+	profileValidators = func() {
+		if scid_entry.Validate() == nil && rpc.Wallet.IsConnected() {
+			if haveProperty(scid_entry.Text) {
+				change_dates.Show()
+				remove_button.Show()
+				set_location_button.Hide()
+				list_button.Hide()
+				if price_entry.Validate() == nil && deposit_entry.Validate() == nil {
+					change_price_button.Show()
 				} else {
-					go func() {
-						remove_button.Hide()
-						change_dates.Hide()
-						change_price_button.Hide()
-						set_location_button.Hide()
-						if checkAssetContract(scid_entry.Text) == TOKEN_CONTRACT {
-							if rpc.TokenBalance(scid_entry.Text) == 1 {
-								if city, country := getLocation(scid_entry.Text); city == "" && country == "" {
-									set_location_button.Show()
-								} else {
-									property_add_info.Show()
-									if price_entry.Validate() == nil && deposit_entry.Validate() == nil {
-										list_button.Show()
-									}
+					change_price_button.Hide()
+				}
+			} else {
+				go func() {
+					remove_button.Hide()
+					change_dates.Hide()
+					change_price_button.Hide()
+					set_location_button.Hide()
+					if checkAssetContract(scid_entry.Text) == TOKEN_CONTRACT {
+						if rpc.TokenBalance(scid_entry.Text) == 1 {
+							if city, country := getLocation(scid_entry.Text); city == "" && country == "" {
+								set_location_button.Show()
+							} else {
+								property_add_info.Show()
+								if price_entry.Validate() == nil && deposit_entry.Validate() == nil {
+									list_button.Show()
 								}
 							}
 						}
-					}()
-				}
-			} else {
-				list_button.Hide()
-				remove_button.Hide()
-				confirm_request_button.Hide()
-				cancel_request_button.Hide()
-				release_button.Hide()
-				change_price_button.Hide()
-				change_dates.Hide()
-				property_add_info.Hide()
-				set_location_button.Hide()
+					}
+				}()
 			}
+		} else {
+			list_button.Hide()
+			remove_button.Hide()
+			confirm_request_button.Hide()
+			cancel_request_button.Hide()
+			release_button.Hide()
+			change_price_button.Hide()
+			change_dates.Hide()
+			property_add_info.Hide()
+			set_location_button.Hide()
+		}
 
-			if price_entry.Validate() == nil && deposit_entry.Validate() == nil {
-				if scid_entry.Validate() == nil && rpc.Wallet.IsConnected() {
-					if !haveProperty(scid_entry.Text) {
-						list_button.Show()
-					} else {
-						if checkAssetContract(scid_entry.Text) == TOKEN_CONTRACT {
-							if getOwnerAddress(scid_entry.Text) == rpc.Wallet.Address {
-								change_price_button.Show()
-							}
+		if price_entry.Validate() == nil && deposit_entry.Validate() == nil {
+			if scid_entry.Validate() == nil && rpc.Wallet.IsConnected() {
+				if !haveProperty(scid_entry.Text) {
+					list_button.Show()
+				} else {
+					if checkAssetContract(scid_entry.Text) == TOKEN_CONTRACT {
+						if getOwnerAddress(scid_entry.Text) == rpc.Wallet.Address {
+							change_price_button.Show()
 						}
 					}
 				}
-			} else {
-				list_button.Hide()
-				change_price_button.Hide()
 			}
-
-			if len(viewing_scid) != 64 {
-				request_button.Hide()
-				image_box.Objects[0] = canvas.NewImageFromImage(nil)
-				image_box.Refresh()
-			}
-
-			i++
-
-			time.Sleep(time.Second)
+		} else {
+			list_button.Hide()
+			change_price_button.Hide()
 		}
-	}()
+	}
 
 	return max
 }

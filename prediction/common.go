@@ -21,6 +21,7 @@ func fetch(p, s *dwidget.DreamsItems, d dreams.DreamsObject) {
 		case <-d.Receive():
 			if !rpc.Wallet.IsConnected() || !rpc.Daemon.IsConnected() {
 				disableActions()
+				Owner.Synced = false
 				s.RightLabel.SetText("dReams Balance: " + rpc.DisplayBalance("dReams") + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Wallet.Display.Height)
 				p.RightLabel.SetText("dReams Balance: " + rpc.DisplayBalance("dReams") + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Wallet.Display.Height)
 				d.WorkDone()
@@ -28,7 +29,7 @@ func fetch(p, s *dwidget.DreamsItems, d dreams.DreamsObject) {
 			}
 
 			if !Owner.Synced && menu.GnomonScan(d.Configure) {
-				log.Println("[dSports and dPredictions] Syncing")
+				log.Println("[dPrediction] Syncing")
 				contracts := menu.Gnomes.IndexContains()
 				go CheckBetContractOwners(contracts)
 				if !d.IsWindows() {
@@ -72,7 +73,7 @@ func fetch(p, s *dwidget.DreamsItems, d dreams.DreamsObject) {
 
 			d.WorkDone()
 		case <-d.CloseDapp():
-			log.Println("[dSports and dPredictions] Done")
+			log.Println("[dPrediction] Done")
 			return
 		}
 	}

@@ -59,9 +59,10 @@ func main() {
 	dreams.Theme.Img = *canvas.NewImageFromResource(bundle.ResourceBackgroundPng)
 	dReams.Background = container.NewMax(&dreams.Theme.Img)
 
-	dapps := len(menu.Control.Dapp_list)
+	dapps := menu.EnabledDapps()
 	if dapps == 0 {
 		go func() {
+			dReams.SetChannels(0)
 			time.Sleep(300 * time.Millisecond)
 			dReams.Window.SetContent(
 				container.New(layout.NewMaxLayout(),
@@ -70,9 +71,7 @@ func main() {
 		}()
 	} else {
 		go func() {
-			// put back
-			//dReams.SetChannels(dapps)
-			dReams.SetChannels(4)
+			dReams.SetChannels(dapps)
 			time.Sleep(750 * time.Millisecond)
 			dReams.Window.SetContent(
 				container.New(layout.NewMaxLayout(),
@@ -86,7 +85,7 @@ func main() {
 		dReams.App.(desktop.App).SetSystemTrayIcon(bundle.ResourceTrayIconPng)
 	}
 
-	go fetch(dReams, done)
+	go fetch(done)
 	dReams.Window.ShowAndRun()
 	<-done
 	log.Println("[dReams] Closed")
