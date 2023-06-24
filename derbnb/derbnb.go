@@ -13,10 +13,10 @@ import (
 	"syscall"
 	"time"
 
-	dreams "github.com/SixofClubsss/dReams"
-	"github.com/SixofClubsss/dReams/bundle"
-	"github.com/SixofClubsss/dReams/menu"
-	"github.com/SixofClubsss/dReams/rpc"
+	dreams "github.com/dReam-dApps/dReams"
+	"github.com/dReam-dApps/dReams/bundle"
+	"github.com/dReam-dApps/dReams/menu"
+	"github.com/dReam-dApps/dReams/rpc"
 	"github.com/deroproject/derohe/walletapi"
 
 	"fyne.io/fyne/v2"

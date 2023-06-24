@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	dreams "github.com/SixofClubsss/dReams"
+	dreams "github.com/dReam-dApps/dReams"
 
 	"fyne.io/fyne/v2/canvas"
 )

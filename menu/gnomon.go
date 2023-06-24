@@ -12,8 +12,8 @@ import (
 	"strings"
 	"time"
 
-	dreams "github.com/SixofClubsss/dReams"
-	"github.com/SixofClubsss/dReams/rpc"
+	dreams "github.com/dReam-dApps/dReams"
+	"github.com/dReam-dApps/dReams/rpc"
 
 	"github.com/civilware/Gnomon/indexer"
 	"github.com/civilware/Gnomon/storage"

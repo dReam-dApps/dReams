@@ -1,8 +1,8 @@
 package baccarat
 
 import (
-	dreams "github.com/SixofClubsss/dReams"
-	"github.com/SixofClubsss/dReams/dwidget"
+	dreams "github.com/dReam-dApps/dReams"
+	"github.com/dReam-dApps/dReams/dwidget"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"

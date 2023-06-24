@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/SixofClubsss/dReams/menu"
+	"github.com/dReam-dApps/dReams/menu"
 	coingecko "github.com/superoo7/go-gecko/v3"
 )
 

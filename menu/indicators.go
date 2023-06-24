@@ -4,8 +4,8 @@ import (
 	"image/color"
 	"time"
 
-	"github.com/SixofClubsss/dReams/bundle"
-	"github.com/SixofClubsss/dReams/rpc"
+	"github.com/dReam-dApps/dReams/bundle"
+	"github.com/dReam-dApps/dReams/rpc"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"

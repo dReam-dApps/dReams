@@ -11,9 +11,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/SixofClubsss/dReams/bundle"
-	"github.com/SixofClubsss/dReams/dwidget"
-	"github.com/SixofClubsss/dReams/rpc"
+	"github.com/dReam-dApps/dReams/bundle"
+	"github.com/dReam-dApps/dReams/dwidget"
+	"github.com/dReam-dApps/dReams/rpc"
 	"github.com/deroproject/derohe/walletapi"
 
 	"fyne.io/fyne/v2"

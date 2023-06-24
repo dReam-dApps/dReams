@@ -7,8 +7,8 @@ import (
 	"math/rand"
 	"time"
 
-	dreams "github.com/SixofClubsss/dReams"
-	"github.com/SixofClubsss/dReams/rpc"
+	dreams "github.com/dReam-dApps/dReams"
+	"github.com/dReam-dApps/dReams/rpc"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"

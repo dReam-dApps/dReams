@@ -12,9 +12,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/SixofClubsss/dReams/holdero"
-	"github.com/SixofClubsss/dReams/menu"
-	"github.com/SixofClubsss/dReams/rpc"
+	"github.com/dReam-dApps/dReams/holdero"
+	"github.com/dReam-dApps/dReams/menu"
+	"github.com/dReam-dApps/dReams/rpc"
 	dero "github.com/deroproject/derohe/rpc"
 	"github.com/deroproject/derohe/walletapi"
 	"go.etcd.io/bbolt"

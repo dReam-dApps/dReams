@@ -5,9 +5,9 @@ import (
 	"strconv"
 	"time"
 
-	dreams "github.com/SixofClubsss/dReams"
-	"github.com/SixofClubsss/dReams/menu"
-	"github.com/SixofClubsss/dReams/rpc"
+	dreams "github.com/dReam-dApps/dReams"
+	"github.com/dReam-dApps/dReams/menu"
+	"github.com/dReam-dApps/dReams/rpc"
 )
 
 // Do this when first connected

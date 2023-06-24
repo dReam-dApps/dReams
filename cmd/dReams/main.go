@@ -5,9 +5,9 @@ import (
 	"runtime"
 	"time"
 
-	dreams "github.com/SixofClubsss/dReams"
-	"github.com/SixofClubsss/dReams/bundle"
-	"github.com/SixofClubsss/dReams/menu"
+	dreams "github.com/dReam-dApps/dReams"
+	"github.com/dReam-dApps/dReams/bundle"
+	"github.com/dReam-dApps/dReams/menu"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"

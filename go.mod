@@ -1,4 +1,4 @@
-module github.com/SixofClubsss/dReams
+module github.com/dReam-dApps/dReams
 
 go 1.20
 

@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/SixofClubsss/dReams/rpc"
+	"github.com/dReam-dApps/dReams/rpc"
 	"github.com/deroproject/derohe/cryptography/crypto"
 	dero "github.com/deroproject/derohe/rpc"
 )

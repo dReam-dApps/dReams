@@ -14,12 +14,12 @@ import (
 	"syscall"
 	"time"
 
-	dreams "github.com/SixofClubsss/dReams"
-	"github.com/SixofClubsss/dReams/bundle"
-	"github.com/SixofClubsss/dReams/holdero"
-	"github.com/SixofClubsss/dReams/menu"
-	"github.com/SixofClubsss/dReams/prediction"
-	"github.com/SixofClubsss/dReams/rpc"
+	dreams "github.com/dReam-dApps/dReams"
+	"github.com/dReam-dApps/dReams/bundle"
+	"github.com/dReam-dApps/dReams/holdero"
+	"github.com/dReam-dApps/dReams/menu"
+	"github.com/dReam-dApps/dReams/prediction"
+	"github.com/dReam-dApps/dReams/rpc"
 	"github.com/docopt/docopt-go"
 	"github.com/fyne-io/terminal"
 

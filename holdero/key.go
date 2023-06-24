@@ -12,7 +12,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/SixofClubsss/dReams/rpc"
+	"github.com/dReam-dApps/dReams/rpc"
 )
 
 // Gets local cards with local key

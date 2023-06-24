@@ -6,7 +6,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/SixofClubsss/dReams/rpc"
+	"github.com/dReam-dApps/dReams/rpc"
 )
 
 type times struct {

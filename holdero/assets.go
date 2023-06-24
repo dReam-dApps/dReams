@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
-	dreams "github.com/SixofClubsss/dReams"
-	"github.com/SixofClubsss/dReams/menu"
-	"github.com/SixofClubsss/dReams/rpc"
+	dreams "github.com/dReam-dApps/dReams"
+	"github.com/dReam-dApps/dReams/menu"
+	"github.com/dReam-dApps/dReams/rpc"
 	dero "github.com/deroproject/derohe/rpc"
 
 	"fyne.io/fyne/v2"
@@ -48,7 +48,7 @@ func FaceSelect() fyne.Widget {
 				go GetZipDeck(Settings.faces.Name, Settings.faces.URL)
 			}
 		} else if check == "SIXPC" {
-			Settings.faces.URL = "https://raw.githubusercontent.com/SixofClubsss/" + s + "/main/" + s + ".zip?raw=true"
+			Settings.faces.URL = "https://raw.githubusercontent.com/dReam-dApps/" + s + "/main/" + s + ".zip?raw=true"
 			dir := dreams.GetDir()
 			face := dir + "/cards/" + Settings.faces.Name + "/card1.png"
 			if !dreams.FileExists(face, "Holdero") {
@@ -102,7 +102,7 @@ func BackSelect() fyne.Widget {
 					downloadFileLocal("cards/backs/"+Settings.backs.Name+".png", Settings.backs.URL)
 				}
 			} else if check == "SIXPCB" {
-				Settings.backs.URL = "https://raw.githubusercontent.com/SixofClubsss/" + s + "/main/" + s + ".png"
+				Settings.backs.URL = "https://raw.githubusercontent.com/dReam-dApps/" + s + "/main/" + s + ".png"
 				dir := dreams.GetDir()
 				back := dir + "/cards/backs/" + s + ".png"
 				if !dreams.FileExists(back, "Holdero") {
@@ -152,7 +152,7 @@ func AvatarSelect(asset_map map[string]string) fyne.Widget {
 		} else if check == "AZYDS" {
 			Settings.AvatarUrl = "https://raw.githubusercontent.com/Azylem/" + s + "/main/" + s + "-IC.png"
 		} else if check == "SIXART" {
-			Settings.AvatarUrl = "https://raw.githubusercontent.com/SixofClubsss/SIXART/main/" + s + "/" + s + "-IC.png"
+			Settings.AvatarUrl = "https://raw.githubusercontent.com/dReam-dApps/SIXART/main/" + s + "/" + s + "-IC.png"
 		} else if check == "Dero Seals" {
 			seal := strings.Trim(s, "Dero Sals#")
 			Settings.AvatarUrl = "https://ipfs.io/ipfs/QmP3HnzWpiaBA6ZE8c3dy5ExeG7hnYjSqkNfVbeVW5iEp6/low/" + seal + ".jpg"

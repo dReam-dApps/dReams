@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"fyne.io/fyne/v2/canvas"
-	dreams "github.com/SixofClubsss/dReams"
-	"github.com/SixofClubsss/dReams/menu"
-	"github.com/SixofClubsss/dReams/rpc"
+	dreams "github.com/dReam-dApps/dReams"
+	"github.com/dReam-dApps/dReams/menu"
+	"github.com/dReam-dApps/dReams/rpc"
 )
 
 // Check if wallet owns Holdero table

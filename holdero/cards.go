@@ -4,8 +4,8 @@ import (
 	"math/rand"
 	"time"
 
-	dreams "github.com/SixofClubsss/dReams"
-	"github.com/SixofClubsss/dReams/bundle"
+	dreams "github.com/dReam-dApps/dReams"
+	"github.com/dReam-dApps/dReams/bundle"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"

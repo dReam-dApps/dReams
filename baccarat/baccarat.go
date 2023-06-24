@@ -8,10 +8,10 @@ import (
 	"strconv"
 	"time"
 
-	dreams "github.com/SixofClubsss/dReams"
-	"github.com/SixofClubsss/dReams/dwidget"
-	"github.com/SixofClubsss/dReams/holdero"
-	"github.com/SixofClubsss/dReams/rpc"
+	dreams "github.com/dReam-dApps/dReams"
+	"github.com/dReam-dApps/dReams/dwidget"
+	"github.com/dReam-dApps/dReams/holdero"
+	"github.com/dReam-dApps/dReams/rpc"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"

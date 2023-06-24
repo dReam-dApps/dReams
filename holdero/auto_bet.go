@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"fyne.io/fyne/v2/widget"
-	"github.com/SixofClubsss/dReams/rpc"
+	"github.com/dReam-dApps/dReams/rpc"
 )
 
 type holdero_stats struct {

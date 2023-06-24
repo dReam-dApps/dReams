@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/SixofClubsss/dReams/rpc"
+	"github.com/dReam-dApps/dReams/rpc"
 )
 
 type ranker struct {

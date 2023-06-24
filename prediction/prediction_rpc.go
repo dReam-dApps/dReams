@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/SixofClubsss/dReams/holdero"
-	"github.com/SixofClubsss/dReams/rpc"
+	"github.com/dReam-dApps/dReams/holdero"
+	"github.com/dReam-dApps/dReams/rpc"
 	dero "github.com/deroproject/derohe/rpc"
 	"github.com/deroproject/derohe/walletapi"
 )
