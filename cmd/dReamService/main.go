@@ -9,8 +9,8 @@ import (
 	"syscall"
 	"time"
 
+	prediction "github.com/SixofClubsss/dPrediction"
 	"github.com/dReam-dApps/dReams/menu"
-	"github.com/dReam-dApps/dReams/prediction"
 	"github.com/dReam-dApps/dReams/rpc"
 	"github.com/docopt/docopt-go"
 )

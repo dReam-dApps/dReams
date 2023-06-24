@@ -12,7 +12,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/dReam-dApps/dReams/holdero"
+	holdero "github.com/SixofClubsss/Holdero"
 	"github.com/dReam-dApps/dReams/menu"
 	"github.com/dReam-dApps/dReams/rpc"
 	dero "github.com/deroproject/derohe/rpc"

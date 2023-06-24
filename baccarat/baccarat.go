@@ -8,9 +8,9 @@ import (
 	"strconv"
 	"time"
 
+	holdero "github.com/SixofClubsss/Holdero"
 	dreams "github.com/dReam-dApps/dReams"
 	"github.com/dReam-dApps/dReams/dwidget"
-	"github.com/dReam-dApps/dReams/holdero"
 	"github.com/dReam-dApps/dReams/rpc"
 
 	"fyne.io/fyne/v2"

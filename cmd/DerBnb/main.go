@@ -1,6 +1,6 @@
 package main
 
-import "github.com/dReam-dApps/dReams/derbnb"
+import derbnb "github.com/SixofClubsss/derbnbDesktop"
 
 // Run DerBnb property rental app
 

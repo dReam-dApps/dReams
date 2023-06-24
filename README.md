@@ -1,7 +1,7 @@
 # dReams
 Interact with a variety of different products and services on [Dero's](https://dero.io) decentralized application platform. 
 
-![dReamTablesFooter](https://user-images.githubusercontent.com/84689659/170848755-d2cb4933-df2b-46f9-80e6-4349621871a3.png)
+![dReamsFooter](https://raw.githubusercontent.com/SixofClubsss/dreamdappsite/main/assets/dReamerUp.png)
 
 1. [Project](#project) 
 2. [dApps](#dapps) 
@@ -24,7 +24,7 @@ As a application
 As a repository
 > dReams serves as a source for building Dero applications. Written in [Go](https://go.dev/) and using the [Fyne toolkit](https://fyne.io/), the dReams repository is constructed into packages with function imports for many different Dero necessities. 
 
-Download the latest [release](https://github.com/SixofClubsss/dReams/releases) to use dReams or build from source.
+Download the latest [release](https://github.com/dReam-dApps/dReams/releases) or [build from source](#build) to use dReams.
 ### dApps
 All dApps are ran on chain in a decentralized manner. dReams and packages are interfaces to interact with these on chain services. With the main dReams application, users can access the dApps below from one place. 
 - **Holdero**

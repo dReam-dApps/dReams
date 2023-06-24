@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
+	holdero "github.com/SixofClubsss/Holdero"
 	dreams "github.com/dReam-dApps/dReams"
-	"github.com/dReam-dApps/dReams/holdero"
 	"github.com/dReam-dApps/dReams/menu"
 	"github.com/dReam-dApps/dReams/rpc"
 

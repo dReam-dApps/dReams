@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
+	holdero "github.com/SixofClubsss/Holdero"
 	"github.com/dReam-dApps/dReams/bundle"
 	"github.com/dReam-dApps/dReams/dwidget"
-	"github.com/dReam-dApps/dReams/holdero"
 	"github.com/dReam-dApps/dReams/menu"
 	"github.com/dReam-dApps/dReams/rpc"
 
