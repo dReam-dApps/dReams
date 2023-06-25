@@ -725,8 +725,24 @@ func listMenu(window_icon fyne.Resource) {
 	aw.Show()
 }
 
+type IntroText struct {
+	name    string
+	content []string
+}
+
+func MakeMenuIntro(items map[string][]string) (entries []IntroText) {
+	var menu_entry IntroText
+	for name, e := range items {
+		menu_entry.name = name
+		menu_entry.content = e
+		entries = append(entries, menu_entry)
+	}
+
+	return
+}
+
 // Menu instruction tree
-func IntroTree() fyne.CanvasObject {
+func IntroTree(intros []IntroText) fyne.CanvasObject {
 	list := map[string][]string{
 		"":                        {"Welcome to dReams"},
 		"Welcome to dReams":       {"Get Started", "dApps", "Assets", "Market"},
@@ -735,31 +751,40 @@ func IntroTree() fyne.CanvasObject {
 		"FAQ":                     {"Can't connect", "How to resync Gnomon db", "Can't see any tables, contracts or market info", "How to see terminal log"},
 		"Can't connect":           {"Using a local daemon will yield the best results", "If you are using a remote daemon, try changing daemons", "Any connection errors can be found in terminal log"},
 		"How to resync Gnomon db": {"Shut down dReams", "Find and delete the Gnomon db folder that is in your dReams directory", "Restart dReams and connect to resync db", "Any sync errors can be found in terminal log"},
-		"Can't see any tables, contracts or market info": {"Make sure daemon, wallet and Gnomon indicators are lit up solid", "If you've added new dApps to your dReams, a Gnomon resync will add them to your index", "Look in the asset tab for number of indexed SCIDs", "If indexed SCIDs is less than 4000 your db is not fully synced", "Try resyncing", "Any errors can be found in terminal log"},
-		"How to see terminal log":                        {"Windows", "Mac", "Linux"},
-		"Windows":                                        {"Open powershell or command prompt", "Navigate to dReams directory", `Start dReams using       .\dReams-windows-amd64.exe`},
-		"Mac":                                            {"Open a terminal", "Navigate to dReams directory", `Start dReams using       ./dReams-macos-amd64`},
-		"Linux":                                          {"Open a terminal", "Navigate to dReams directory", `Start dReams using       ./dReams-linux-amd64`},
-		"Daemon":                                         {"Using local daemon will give best performance while using dReams", "Remote daemon options are available in drop down if a local daemon is not available", "Enter daemon address and the D light in top right will light up if connection is successful", "Once daemon is connected Gnomon will start up, the Gnomon indicator light will have a stripe in middle"},
-		"Wallet":                                         {"Set up and register a Dero wallet", "Your wallet will need to be running rpc server", "Using cli, start your wallet with flags --rpc-server --rpc-login=user:pass", "With Engram, turn on cyberdeck to start rpc server", "In dReams enter your wallet rpc address and rpc user:pass", "Press connect and the W light in top right will light up if connection is successful", "Once wallet is connected and Gnomon is running, Gnomon will sync with wallet", "The Gnomon indicator will turn solid when this is complete, everything is now connected"},
 
-		"dApps":                 {"Holdero", "Baccarat", "Predictions", "Sports", "dReam Service", "Tarot", "DerBnb", "Contract Ratings"},
-		"Holdero":               {"Multiplayer Texas Hold'em style on chain poker", "No limit, single raise game. Table owners choose game params", "Six players max at a table", "No side pots, must call or fold", "Standard tables can be public or private, and can use Dero or dReam Tokens", "dReam Tools", "Tournament tables can be set up to use any Token", "View table listings or launch your own Holdero contract in the owned tab"},
-		"dReam Tools":           {"A suite of tools for Holdero, unlocked with ownership of a AZY or SIX playing card assets", "Odds calculator", "Bot player with 12 customizable parameters", "Track playing stats for user and bot players"},
-		"Baccarat":              {"A popular table game, where closest to 9 wins", "Bet on player, banker or tie as the winning outcome", "Select table with bottom left drop down to choose currency"},
-		"Predictions":           {"Prediction contracts are for binary based predictions, (higher/lower, yes/no)", "How predictions works", "Current Markets", "dReams Client aggregated price feed", "View active prediction contracts in predictions tab or launch your own prediction contract in the owned tab"},
-		"How predictions works": {"P2P predictions", "Variable time limits allowing for different prediction set ups, each contract runs one prediction at a time", "Click a contract from the list to view it", "Closes at, is when the contract will stop accepting predictions", "Mark (price or value you are predicting on) can be set on prediction initialization or it can given live", "Posted with in, is the acceptable time frame to post the live Mark", "If Mark is not posted, prediction is voided and you will be refunded", "Payout after, is when the Final price is posted and compared to the mark to determine winners", "If the final price is not posted with in refund time frame, prediction is void and you will be refunded"},
-		"Current Markets":       {"DERO-BTC", "XMR-BTC", "BTC-USDT", "DERO-USDT", "XMR-USDT", "DERO-Difficulty", "DERO-Block Time", "DERO-Block Number"},
-		"Sports":                {"Sports contracts are for sports wagers", "How sports works", "Current Leagues", "Live game scores, and game schedules", "View active sports contracts in sports tab or launch your own sports contract in the owned tab"},
-		"How sports works":      {"P2P betting", "Variable time limits, one contract can run multiple games at the same time", "Click a contract from the list to view it", "Any active games on the contract will populate, you can pick which game you'd like to play from the drop down", "Closes at, is when the contracts stops accepting picks", "Default payout time after close is 4hr, this is when winner will be posted from client feed", "Default refund time is 8hr after close, meaning if winner is not provided past that time you will be refunded", "A Tie refunds pot to all all participants"},
-		"Current Leagues":       {"EPL", "MLS", "FIFA", "NBA", "NFL", "NHL", "MLB", "Bellator", "UFC"},
-		"dReam Service":         {"dReam Service is unlocked for all betting contract owners", "Full automation of contract posts and payouts", "Integrated address service allows bets to be placed through a Dero transaction to sent to service", "Multiple owners can be added to contracts and multiple service wallets can be ran on one contract", "Stand alone cli app available for streamlined use"},
-		"Tarot":                 {"On chain Tarot readings", "Iluma cards and readings created by Kalina Lux"},
-		"DerBnb":                {"A property rental platform", "Users can mint properties as contracts and list for rentals", "Property owners can choose rates, damage deposits and availability dates", "Dero messaging helps owners and renters facilitate the final details of rental privately", "Rating system for properties"},
-		"Contract Ratings":      {"dReams has a public rating store on chain for multiplayer contracts", "Players can rate other contracts positively or negatively", "Four rating tiers, tier two being the starting tier for all contracts", "Each rating transaction is weight based by its Dero value", "Contracts that fall below tier one will no longer populate in the public index"},
-		"Assets":                {"View any owned assets held in wallet", "Put owned assets up for auction or for sale", "Send assets privately to another wallet", "Indexer, add custom contracts to your index and search current index db"},
-		"Market":                {"View any in game assets up for auction or sale", "Bid on or buy assets", "Cancel or close out any existing listings"},
+		"Can't see any tables, contracts or market info": {"Make sure daemon, wallet and Gnomon indicators are lit up solid", "If you've added new dApps to your dReams, a Gnomon resync will add them to your index", "Look in the asset tab for number of indexed SCIDs", "If indexed SCIDs is less than 4000 your db is not fully synced", "Try resyncing", "Any errors can be found in terminal log"},
+
+		"How to see terminal log": {"Windows", "Mac", "Linux"},
+		"Windows":                 {"Open powershell or command prompt", "Navigate to dReams directory", `Start dReams using       .\dReams-windows-amd64.exe`},
+		"Mac":                     {"Open a terminal", "Navigate to dReams directory", `Start dReams using       ./dReams-macos-amd64`},
+		"Linux":                   {"Open a terminal", "Navigate to dReams directory", `Start dReams using       ./dReams-linux-amd64`},
+		"Daemon":                  {"Using local daemon will give best performance while using dReams", "Remote daemon options are available in drop down if a local daemon is not available", "Enter daemon address and the D light in top right will light up if connection is successful", "Once daemon is connected Gnomon will start up, the Gnomon indicator light will have a stripe in middle"},
+		"Wallet":                  {"Set up and register a Dero wallet", "Your wallet will need to be running rpc server", "Using cli, start your wallet with flags --rpc-server --rpc-login=user:pass", "With Engram, turn on cyberdeck to start rpc server", "In dReams enter your wallet rpc address and rpc user:pass", "Press connect and the W light in top right will light up if connection is successful", "Once wallet is connected and Gnomon is running, Gnomon will sync with wallet", "The Gnomon indicator will turn solid when this is complete, everything is now connected"},
+
+		"dApps": {"Holdero", "Baccarat", "Predictions", "Sports", "dService", "Tarot", "DerBnb", "Contract Ratings"},
 	}
+
+	for i := range intros {
+		list[intros[i].name] = intros[i].content
+	}
+
+	list["Contract Ratings"] = []string{
+		"dReams has a public rating store on chain for multiplayer contracts",
+		"Players can rate other contracts positively or negatively",
+		"Four rating tiers, tier two being the starting tier for all contracts",
+		"Each rating transaction is weight based by its Dero value",
+		"Contracts that fall below tier one will no longer populate in the public index"}
+
+	list["Assets"] = []string{
+		"View any owned assets held in wallet",
+		"Put owned assets up for auction or for sale",
+		"Send assets privately to another wallet",
+		"Indexer, add custom contracts to your index and search current index db"}
+
+	list["Market"] = []string{
+		"View any in game assets up for auction or sale",
+		"Bid on or buy assets",
+		"Cancel or close out any existing listings"}
 
 	tree := widget.NewTreeWithStrings(list)
 

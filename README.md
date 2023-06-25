@@ -38,7 +38,7 @@ All dApps are ran on chain in a decentralized manner. dReams and packages are in
 - **dSports and dPrediction**
 	- P2P betting and predictions
 	- Deployable contracts
-	- dReam Service 
+	- dService 
 - **Iluma**
 	- Tarot readings
 	- Custom cards and artwork
@@ -66,7 +66,7 @@ All dApps are ran on chain in a decentralized manner. dReams and packages are in
 - Clone repo and build with:
 
 ```
-git clone https://github.com/SixofClubsss/dReams.git
+git clone https://github.com/dReam-dApps/dReams.git
 cd dReams
 cd cmd/dReams
 go build .
@@ -86,7 +86,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/SixofClubsss/dReams/rpc"
+	"github.com/dReam-dApps/dReams/rpc"
 )
 
 // dReams rpc connection example
@@ -143,8 +143,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/SixofClubsss/dReams/menu"
-	"github.com/SixofClubsss/dReams/rpc"
+	"github.com/dReam-dApps/dReams/menu"
+	"github.com/dReam-dApps/dReams/rpc"
 )
 
 // dReams menu StartGnomon() example
@@ -199,9 +199,9 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 
-	"github.com/SixofClubsss/dReams/dwidget"
-	"github.com/SixofClubsss/dReams/menu"
-	"github.com/SixofClubsss/dReams/rpc"
+	"github.com/dReam-dApps/dReams/dwidget"
+	"github.com/dReam-dApps/dReams/menu"
+	"github.com/dReam-dApps/dReams/rpc"
 )
 
 // dReams dwidget VerticalEntries() example
@@ -260,7 +260,7 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
-	"github.com/SixofClubsss/dReams/bundle"
+	"github.com/dReam-dApps/dReams/bundle"
 )
 
 // Name my app
@@ -328,5 +328,5 @@ func main() {
 ### Licensing
 
 dReams platform and packages are free and open source. 
-The source code is published under the [MIT](https://github.com/SixofClubsss/dReams/blob/main/LICENSE) License. 
+The source code is published under the [MIT](https://github.com/dReam-dApps/dReams/blob/main/LICENSE) License. 
 Copyright © 2023 dReam dApps 

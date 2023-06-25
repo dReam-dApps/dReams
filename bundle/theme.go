@@ -22,6 +22,33 @@ var AppColor color.Gray16
 var purple = color.RGBA{105, 90, 205, 210}
 var blue = color.RGBA{31, 150, 200, 210}
 
+func NewAlpha120() (alpha *canvas.Rectangle) {
+	alpha = canvas.NewRectangle(color.RGBA{0, 0, 0, 120})
+	if AppColor == color.White {
+		alpha = canvas.NewRectangle(color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0x55})
+	}
+
+	return
+}
+
+func NewAlpha150() (alpha *canvas.Rectangle) {
+	alpha = canvas.NewRectangle(color.RGBA{0, 0, 0, 150})
+	if AppColor == color.White {
+		alpha = canvas.NewRectangle(color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0xaa})
+	}
+
+	return
+}
+
+func NewAlpha180() (alpha *canvas.Rectangle) {
+	alpha = canvas.NewRectangle(color.RGBA{0, 0, 0, 180})
+	if AppColor == color.White {
+		alpha = canvas.NewRectangle(color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0x99})
+	}
+
+	return
+}
+
 func DeroTheme(skin color.Gray16) fyne.Theme {
 	if skin == color.White {
 		Highlight = color.NRGBA{R: 0x96, G: 0x5a, B: 0xcd, A: 0x45}

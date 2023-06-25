@@ -31,11 +31,6 @@ import (
 	xwidget "fyne.io/x/fyne/widget"
 )
 
-var H dreams.DreamsItems
-var B dreams.DreamsItems
-var P dreams.DreamsItems
-var S dreams.DreamsItems
-var T dreams.DreamsItems
 var indicators []menu.DreamsIndicator
 
 // If dReams has not been initialized, show this screen
@@ -65,11 +60,7 @@ func introScreen() *fyne.Container {
 		max.Objects[1].(*fyne.Container).Objects[6].Refresh()
 		max.Objects[1].(*fyne.Container).Objects[9].(*canvas.Text).Color = bundle.TextColor
 		max.Objects[1].(*fyne.Container).Objects[9].Refresh()
-		if bundle.AppColor == color.White {
-			max.Objects[0] = canvas.NewRectangle(color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0x99})
-		} else {
-			max.Objects[0] = canvas.NewRectangle(color.RGBA{0, 0, 0, 180})
-		}
+		max.Objects[0] = bundle.NewAlpha180()
 		max.Objects[0].Refresh()
 	})
 
@@ -311,48 +302,11 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 		layout.NewSpacer(),
 		container.NewAdaptiveGrid(2, container.NewMax(load_button), back_button))
 
-	alpha := canvas.NewRectangle(color.RGBA{0, 0, 0, 180})
-	if bundle.AppColor == color.White {
-		alpha = canvas.NewRectangle(color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0x99})
-	}
-
-	return container.NewMax(alpha, intro)
+	return container.NewMax(bundle.NewAlpha180(), intro)
 }
 
 // Main dReams layout
 func place() *fyne.Container {
-	H.LeftLabel = widget.NewLabel("")
-	H.RightLabel = widget.NewLabel("")
-	H.TopLabel = canvas.NewText(holdero.Display.Res, color.White)
-	H.TopLabel.Move(fyne.NewPos(387, 204))
-	H.LeftLabel.SetText("Seats: " + holdero.Display.Seats + "      Pot: " + holdero.Display.Pot + "      Blinds: " + holdero.Display.Blinds + "      Ante: " + holdero.Display.Ante + "      Dealer: " + holdero.Display.Dealer)
-	H.RightLabel.SetText(holdero.Display.Readout + "      Player ID: " + holdero.Display.PlayerId + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Wallet.Display.Height)
-
-	B.LeftLabel = widget.NewLabel("")
-	B.RightLabel = widget.NewLabel("")
-	B.LeftLabel.SetText("Total Hands Played: " + baccarat.Display.Total_w + "      Player Wins: " + baccarat.Display.Player_w + "      Ties: " + baccarat.Display.Ties + "      Banker Wins: " + baccarat.Display.Banker_w + "      Min Bet is " + baccarat.Display.BaccMin + " dReams, Max Bet is " + baccarat.Display.BaccMax)
-	B.RightLabel.SetText("dReams Balance: " + rpc.DisplayBalance("dReams") + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Wallet.Display.Height)
-
-	P.LeftLabel = widget.NewLabel("")
-	P.RightLabel = widget.NewLabel("")
-	P.RightLabel.SetText("dReams Balance: " + rpc.DisplayBalance("dReams") + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Wallet.Display.Height)
-
-	prediction.Predict.Info = widget.NewLabel("SCID:\n\n" + prediction.Predict.Contract + "\n")
-	prediction.Predict.Info.Wrapping = fyne.TextWrapWord
-	prediction.Predict.Prices = widget.NewLabel("")
-
-	S.LeftLabel = widget.NewLabel("")
-	S.RightLabel = widget.NewLabel("")
-	S.RightLabel.SetText("dReams Balance: " + rpc.DisplayBalance("dReams") + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Wallet.Display.Height)
-
-	T.LeftLabel = widget.NewLabel("")
-	T.RightLabel = widget.NewLabel("")
-	T.LeftLabel.SetText("Total Readings: " + tarot.Iluma.Value.Readings + "      Click your card for Iluma reading")
-	T.RightLabel.SetText("dReams Balance: " + rpc.DisplayBalance("dReams") + "      Dero Balance: " + rpc.DisplayBalance("Dero") + "      Height: " + rpc.Wallet.Display.Height)
-
-	prediction.Sports.Info = widget.NewLabel("SCID:\n\n" + prediction.Sports.Contract + "\n")
-	prediction.Sports.Info.Wrapping = fyne.TextWrapWord
-
 	menu.Control.Contract_rating = make(map[string]uint64)
 	menu.Assets.Asset_map = make(map[string]string)
 
@@ -364,9 +318,17 @@ func place() *fyne.Container {
 		holdero.SharedDecks(),
 		recheckButton("dReams", recheckDreamsAssets),
 	}
+
+	var intros []menu.IntroText
+	intros = append(intros, menu.MakeMenuIntro(holdero.DreamsMenuIntro())...)
+	intros = append(intros, menu.MakeMenuIntro(baccarat.DreamsMenuIntro())...)
+	intros = append(intros, menu.MakeMenuIntro(prediction.DreamsMenuIntro())...)
+	intros = append(intros, menu.MakeMenuIntro(tarot.DreamsMenuIntro())...)
+	intros = append(intros, menu.MakeMenuIntro(derbnb.DreamsMenuIntro())...)
+
 	// dReams menu tabs
 	menu_tabs := container.NewAppTabs(
-		container.NewTabItem("Wallet", placeWall()),
+		container.NewTabItem("Wallet", placeWall(intros)),
 		container.NewTabItem("dApps", layout.NewSpacer()),
 		container.NewTabItem("Assets", menu.PlaceAssets("dReams", asset_selects, bundle.ResourceDReamsIconAltPng, dReams.Window)),
 		container.NewTabItem("Market", menu.PlaceMarket()))
@@ -422,22 +384,22 @@ func place() *fyne.Container {
 	tabs := container.NewAppTabs(container.NewTabItem("Menu", menu_tabs))
 
 	if menu.Control.Dapp_list["Holdero"] {
-		tabs.Append(container.NewTabItem("Holdero", holdero.LayoutAllItems(&H, dReams)))
+		tabs.Append(container.NewTabItem("Holdero", holdero.LayoutAllItems(dReams)))
 		indicators = append(indicators, holdero.HolderoIndicator())
 	}
 
 	if menu.Control.Dapp_list["Baccarat"] {
-		tabs.Append(container.NewTabItem("Baccarat", baccarat.LayoutAllItems(&B, dReams)))
+		tabs.Append(container.NewTabItem("Baccarat", baccarat.LayoutAllItems(dReams)))
 	}
 
 	if menu.Control.Dapp_list["dSports and dPredictions"] {
-		tabs.Append(container.NewTabItem("Predict", prediction.LayoutPredictItems(&P, dReams)))
-		tabs.Append(container.NewTabItem("Sports", prediction.LayoutSportsItems(&S, &P, dReams)))
+		tabs.Append(container.NewTabItem("Predict", prediction.LayoutPredictItems(dReams)))
+		tabs.Append(container.NewTabItem("Sports", prediction.LayoutSportsItems(dReams)))
 		indicators = append(indicators, prediction.ServiceIndicator())
 	}
 
 	if menu.Control.Dapp_list["Iluma"] {
-		tabs.Append(container.NewTabItem("Iluma", tarot.LayoutAllItems(&T, dReams)))
+		tabs.Append(container.NewTabItem("Iluma", tarot.LayoutAllItems(dReams)))
 	}
 
 	if menu.Control.Dapp_list["DerBnb"] {
@@ -474,7 +436,7 @@ func place() *fyne.Container {
 		dReams.SetTab(ti.Text)
 		switch ti.Text {
 		case "Baccarat":
-			baccarat.OnTabSelected(&B, dReams)
+			baccarat.OnTabSelected(dReams)
 		}
 
 		if ti.Text == "Menu" {
@@ -498,7 +460,7 @@ func place() *fyne.Container {
 }
 
 // dReams wallet layout
-func placeWall() *container.Split {
+func placeWall(intros []menu.IntroText) *container.Split {
 	daemon_cont := container.NewHScroll(menu.DaemonRpcEntry())
 	daemon_cont.SetMinSize(fyne.NewSize(340, 35.1875))
 
@@ -545,7 +507,7 @@ func placeWall() *container.Split {
 		connect_tabs.EnableIndex(1)
 	}
 
-	menu_top := container.NewHSplit(container.NewMax(bundle.Alpha120, menu.IntroTree()), connect_tabs)
+	menu_top := container.NewHSplit(container.NewMax(bundle.Alpha120, menu.IntroTree(intros)), connect_tabs)
 	menu_top.SetOffset(0.66)
 
 	menu_bottom := container.NewAdaptiveGrid(1, placeSwap())
@@ -625,15 +587,10 @@ func placeSwap() *container.Split {
 		menu.Assets.Swap.Refresh()
 	}
 
-	alpha := canvas.NewRectangle(color.RGBA{0, 0, 0, 120})
-	if bundle.AppColor == color.White {
-		alpha = canvas.NewRectangle(color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0x55})
-	}
-
 	swap_tabs = container.NewAppTabs(container.NewTabItem("Swap", container.NewCenter(menu.Assets.Swap)))
 	max.Add(swap_tabs)
 
-	full := container.NewHSplit(container.NewMax(alpha, balance_tabs), max)
+	full := container.NewHSplit(container.NewMax(bundle.NewAlpha120(), balance_tabs), max)
 	full.SetOffset(0.66)
 
 	return full
