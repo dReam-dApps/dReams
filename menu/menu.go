@@ -248,9 +248,9 @@ func NameEntry() fyne.CanvasObject {
 		Username = s
 	})
 
-	Control.Names.PlaceHolder = "Name:"
+	Control.Names.PlaceHolder = "Wallet names:"
 
-	return Control.Names
+	return container.NewHBox(layout.NewSpacer(), Control.Names)
 }
 
 // Index entry and NFA control objects

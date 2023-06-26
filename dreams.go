@@ -9,6 +9,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/dReam-dApps/dReams/bundle"
 	"github.com/dReam-dApps/dReams/rpc"
@@ -144,6 +145,10 @@ func (d *DreamsObject) CloseAllDapps() {
 	for ch < d.channels {
 		ch++
 		d.done <- struct{}{}
+	}
+
+	for count.active() > 0 {
+		time.Sleep(time.Second)
 	}
 }
 

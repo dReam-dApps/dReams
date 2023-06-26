@@ -46,7 +46,12 @@ func introScreen() *fyne.Container {
 	skin_title.Alignment = fyne.TextAlignCenter
 	skin_title.TextSize = 18
 
-	skins := widget.NewRadioGroup([]string{"Dark", "Light"}, func(s string) {
+	skins := widget.NewRadioGroup([]string{"Dark", "Light"}, nil)
+	skins.SetSelected("Dark")
+	skins.Horizontal = true
+	skins.Required = true
+
+	skins.OnChanged = func(s string) {
 		if s == "Light" {
 			bundle.AppColor = color.White
 		} else {
@@ -62,10 +67,7 @@ func introScreen() *fyne.Container {
 		max.Objects[1].(*fyne.Container).Objects[9].Refresh()
 		max.Objects[0] = bundle.NewAlpha180()
 		max.Objects[0].Refresh()
-	})
-
-	skins.Horizontal = true
-	skins.Required = true
+	}
 
 	dapp_title := canvas.NewText("Choose dApps to add to your dReams", bundle.TextColor)
 	dapp_title.Alignment = fyne.TextAlignCenter
@@ -86,7 +88,13 @@ func introScreen() *fyne.Container {
 	gnomon_gif, _ := xwidget.NewAnimatedGifFromResource(bundle.ResourceGnomonGifGif)
 	gnomon_gif.SetMinSize(fyne.NewSize(100, 100))
 
+	var wait bool
 	start_button := widget.NewButton("Start dReams", func() {
+		if wait {
+			return
+		}
+
+		wait = true
 		menu.Control.Dapp_list = make(map[string]bool)
 
 		for _, name := range dApps {
@@ -102,9 +110,10 @@ func introScreen() *fyne.Container {
 		go func() {
 			dReams.App.Settings().SetTheme(bundle.DeroTheme(bundle.AppColor))
 			dReams.Window.SetContent(
-				container.New(layout.NewMaxLayout(),
+				container.NewMax(
 					dReams.Background,
 					place()))
+			wait = false
 		}()
 	})
 
@@ -170,8 +179,16 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 		}
 	}
 
+	var wait bool
 	var current_skin, skin_choice color.Gray16
 	load_button := widget.NewButton("Load Changes", func() {
+		if wait {
+			return
+		}
+
+		wait = true
+		log.Println("[dReams] Closing dApps")
+		dReams.CloseAllDapps()
 		rpc.Wallet.Connected(false)
 		rpc.Wallet.Height = 0
 		disconnected()
@@ -188,6 +205,7 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 			dReams.App.Settings().SetTheme(bundle.DeroTheme(bundle.AppColor))
 			dReams.Window.Content().(*fyne.Container).Objects[1] = place()
 			dReams.Window.Content().(*fyne.Container).Objects[1].Refresh()
+			wait = false
 		}()
 	})
 
@@ -541,7 +559,8 @@ func placeSwap() *container.Split {
 			o.(*widget.Label).SetText(assets[i] + fmt.Sprintf(": %s", rpc.DisplayBalance(assets[i])))
 		})
 
-	balance_tabs := container.NewAppTabs(container.NewTabItem("Balances", menu.Assets.Balances))
+	balance_tabs := container.NewAppTabs(
+		container.NewTabItem("Balances", container.NewBorder(nil, menu.NameEntry(), nil, nil, menu.Assets.Balances)))
 
 	var swap_entry *dwidget.DeroAmts
 	var swap_boxes *fyne.Container
