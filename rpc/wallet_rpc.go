@@ -51,10 +51,11 @@ func SessionLog() *fyne.Container {
 	})
 	button.Importance = widget.LowImportance
 
+	pad := layout.NewSpacer()
 	cont := container.NewMax(Wallet.LogEntry)
 	vbox := container.NewVBox(
 		layout.NewSpacer(),
-		container.NewBorder(nil, layout.NewSpacer(), nil, button, layout.NewSpacer()))
+		container.NewHBox(pad, container.NewBorder(pad, pad, pad, pad, button)))
 
 	return container.NewMax(cont, vbox)
 }

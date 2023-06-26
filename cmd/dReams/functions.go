@@ -637,12 +637,12 @@ func gnomonFilters() (filter []string) {
 		}
 	}
 
-	gnomon := rpc.GetGnomonCode()
+	gnomon := rpc.GetSCCode(rpc.GnomonSCID)
 	if gnomon != "" {
 		filter = append(filter, gnomon)
 	}
 
-	names := rpc.GetNameServiceCode()
+	names := rpc.GetSCCode(rpc.NameSCID)
 	if names != "" {
 		filter = append(filter, names)
 	}

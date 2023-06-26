@@ -121,19 +121,18 @@ func DaemonHeight(tag, ep string) uint64 {
 	return result.Height
 }
 
-// SC call gas estimate, 1320 Deri max
+// SC call gas estimate
 //   - tag for log print
 //   - Pass args and transfers for call
+//   - If result is > max + 120, then returns max + 120
 func GasEstimate(scid, tag string, args rpc.Arguments, t []rpc.Transfer, max uint64) uint64 {
 	rpcClientD, ctx, cancel := SetDaemonClient(Daemon.Rpc)
 	defer cancel()
 
 	var result *rpc.GasEstimate_Result
-
 	arg1 := rpc.Argument{Name: "SC_ACTION", DataType: "U", Value: 0}
 	arg2 := rpc.Argument{Name: "SC_ID", DataType: "H", Value: scid}
-	args = append(args, arg1)
-	args = append(args, arg2)
+	args = append(args, arg1, arg2)
 	params := rpc.GasEstimate_Params{
 		Transfers: t,
 		SC_Value:  0,
@@ -178,7 +177,7 @@ func FindStringKey(scid, key, daemon string) interface{} {
 }
 
 // Get list of dReams dApps from contract store
-//   - Uses remote daemon if no Daemon.Connect
+//   - Uses remote daemon if not connected
 func FetchDapps() (dApps []string) {
 	dApps = []string{"Holdero", "Baccarat", "dSports and dPredictions", "Iluma", "DerBnb"}
 	var daemon string
@@ -266,52 +265,6 @@ func GetSCCode(scid string) string {
 
 		if err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params); err != nil {
 			log.Println("[GetSCCode]", err)
-			return ""
-		}
-
-		return result.Code
-	}
-	return ""
-}
-
-// Get name service SC code
-func GetNameServiceCode() string {
-	if Daemon.IsConnected() {
-		rpcClientD, ctx, cancel := SetDaemonClient(Daemon.Rpc)
-		defer cancel()
-
-		var result *rpc.GetSC_Result
-		params := rpc.GetSC_Params{
-			SCID:      NameSCID,
-			Code:      true,
-			Variables: false,
-		}
-
-		if err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params); err != nil {
-			log.Println("[GetNameServiceCode]", err)
-			return ""
-		}
-
-		return result.Code
-	}
-	return ""
-}
-
-// Get Gnomon SC code
-func GetGnomonCode() string {
-	if Daemon.IsConnected() {
-		rpcClientD, ctx, cancel := SetDaemonClient(Daemon.Rpc)
-		defer cancel()
-
-		var result *rpc.GetSC_Result
-		params := rpc.GetSC_Params{
-			SCID:      GnomonSCID,
-			Code:      true,
-			Variables: false,
-		}
-
-		if err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params); err != nil {
-			log.Println("[GetGnomonCode]", err)
 			return ""
 		}
 
