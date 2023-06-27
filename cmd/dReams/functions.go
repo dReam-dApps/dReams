@@ -321,7 +321,7 @@ func refreshWalletDisplay(c bool) {
 // Refresh current Dero-USDT price
 func refreshPriceDisplay(c bool) {
 	if c && rpc.Daemon.IsConnected() {
-		_, price := menu.GetPrice("DERO-USDT")
+		_, price := menu.GetPrice("DERO-USDT", "dReams")
 		menu.Assets.Dero_price.Text = (" Dero Price: $" + price)
 		menu.Assets.Dero_price.Refresh()
 	} else {

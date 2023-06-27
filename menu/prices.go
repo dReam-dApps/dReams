@@ -39,7 +39,7 @@ type kuFeed struct {
 
 // Main price fetch, returns float and display string
 //   - Average from 3 feeds, if not take average from 2, if not TO value takes priority spot
-func GetPrice(coin string) (price float64, display string) {
+func GetPrice(coin, tag string) (price float64, display string) {
 	var t float64
 	var k float64
 	var g float64
@@ -89,7 +89,7 @@ func GetPrice(coin string) (price float64, display string) {
 		price = g
 	} else {
 		price = 0
-		log.Println("[dReams] Error getting price feed")
+		log.Printf("[%s] Error getting price feed\n", tag)
 	}
 
 	if CoinDecimal(coin) == 8 {
