@@ -402,26 +402,26 @@ func place() *fyne.Container {
 	tabs := container.NewAppTabs(container.NewTabItem("Menu", menu_tabs))
 
 	if menu.Control.Dapp_list["Holdero"] {
-		tabs.Append(container.NewTabItem("Holdero", holdero.LayoutAllItems(dReams)))
+		tabs.Append(container.NewTabItem("Holdero", holdero.LayoutAllItems(&dReams)))
 		indicators = append(indicators, holdero.HolderoIndicator())
 	}
 
 	if menu.Control.Dapp_list["Baccarat"] {
-		tabs.Append(container.NewTabItem("Baccarat", baccarat.LayoutAllItems(dReams)))
+		tabs.Append(container.NewTabItem("Baccarat", baccarat.LayoutAllItems(&dReams)))
 	}
 
 	if menu.Control.Dapp_list["dSports and dPredictions"] {
-		tabs.Append(container.NewTabItem("Predict", prediction.LayoutPredictItems(dReams)))
-		tabs.Append(container.NewTabItem("Sports", prediction.LayoutSportsItems(dReams)))
+		tabs.Append(container.NewTabItem("Predict", prediction.LayoutPredictItems(&dReams)))
+		tabs.Append(container.NewTabItem("Sports", prediction.LayoutSportsItems(&dReams)))
 		indicators = append(indicators, prediction.ServiceIndicator())
 	}
 
 	if menu.Control.Dapp_list["Iluma"] {
-		tabs.Append(container.NewTabItem("Iluma", tarot.LayoutAllItems(dReams)))
+		tabs.Append(container.NewTabItem("Iluma", tarot.LayoutAllItems(&dReams)))
 	}
 
 	if menu.Control.Dapp_list["DerBnb"] {
-		tabs.Append(container.NewTabItem("DerBnb", derbnb.LayoutAllItems(true, dReams)))
+		tabs.Append(container.NewTabItem("DerBnb", derbnb.LayoutAllItems(true, &dReams)))
 	}
 
 	if cli.enabled {
@@ -454,7 +454,7 @@ func place() *fyne.Container {
 		dReams.SetTab(ti.Text)
 		switch ti.Text {
 		case "Baccarat":
-			baccarat.OnTabSelected(dReams)
+			baccarat.OnTabSelected(&dReams)
 		}
 
 		if ti.Text == "Menu" {

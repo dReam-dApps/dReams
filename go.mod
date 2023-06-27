@@ -5,14 +5,15 @@ go 1.20
 require (
 	fyne.io/fyne/v2 v2.3.1
 	fyne.io/x/fyne v0.0.0-20230411205836-1ca0ead20763
-	github.com/SixofClubsss/Baccarat v0.0.0-20230625085006-1cfd01a518bb
-	github.com/SixofClubsss/Holdero v0.0.0-20230625085408-f0ad72079fcb
-	github.com/SixofClubsss/Iluma v0.0.0-20230625082539-9e08e18c6113
-	github.com/SixofClubsss/dPrediction v0.0.0-20230625085945-f7a08e32cd45
-	github.com/SixofClubsss/derbnbDesktop v0.0.0-20230625090530-2f797fa088ce
+	github.com/SixofClubsss/Baccarat v0.0.0-20230627184837-cd11db13249f
+	github.com/SixofClubsss/Holdero v0.0.0-20230627185742-df359af5483d
+	github.com/SixofClubsss/Iluma v0.0.0-20230627185842-d139ad9d0d5c
+	github.com/SixofClubsss/dPrediction v0.0.0-20230627185554-7f74ec7a07ed
+	github.com/SixofClubsss/derbnbDesktop v0.0.0-20230627185421-29bb98051125
 	github.com/civilware/Gnomon v0.0.0-20230623143540-9e690b99277a
 	github.com/deroproject/derohe v0.0.0-20230604143809-765b2db1f482
 	github.com/fyne-io/terminal v0.0.0-20230223114940-c76e408adbd3
+	github.com/superoo7/go-gecko v1.0.0
 	github.com/ybbus/jsonrpc/v3 v3.1.4
 )
 
@@ -56,7 +57,6 @@ require (
 	github.com/srwiley/oksvg v0.0.0-20220731023508-a61f04f16b76 // indirect
 	github.com/srwiley/rasterx v0.0.0-20210519020934-456a8d69b780 // indirect
 	github.com/stretchr/testify v1.8.4 // indirect
-	github.com/superoo7/go-gecko v1.0.0 // indirect
 	github.com/tevino/abool v1.2.0 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/yuin/goldmark v1.4.13 // indirect
