@@ -36,7 +36,7 @@ var indicators []menu.DreamsIndicator
 // If dReams has not been initialized, show this screen
 //   - User selects dApps and skin to load
 func introScreen() *fyne.Container {
-	dReams.Configure = true
+	dReams.Configure(true)
 	title := canvas.NewText("Welcome to dReams", bundle.TextColor)
 	title.Alignment = fyne.TextAlignCenter
 	title.TextSize = 18
@@ -151,7 +151,7 @@ func introScreen() *fyne.Container {
 // Select dApps to add or remove from dReams
 //   - User can change current dApps and skin
 func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
-	dReams.Configure = true
+	dReams.Configure(true)
 	config_title := canvas.NewText("Configure your dReams", bundle.TextColor)
 	config_title.Alignment = fyne.TextAlignCenter
 	config_title.TextSize = 18
@@ -163,7 +163,7 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 	gnomon_gif.SetMinSize(fyne.NewSize(100, 100))
 
 	back_button := widget.NewButton("Back", func() {
-		dReams.Configure = false
+		dReams.Configure(false)
 		gnomon_gif.Stop()
 		menu.RestartGif(menu.Gnomes.Icon_ind)
 		go func() {
@@ -355,13 +355,13 @@ func place() *fyne.Container {
 		switch ti.Text {
 		case "Wallet":
 			ti.Content.(*container.Split).Leading.(*container.Split).Leading.Refresh()
-			dReams.Market = false
+			dReams.SetSubTab("Wallet")
 		case "Assets":
-			dReams.Market = false
+			dReams.SetSubTab("Assets")
 			menu.Control.Viewing_asset = ""
 			menu.Assets.Asset_list.UnselectAll()
 		case "Market":
-			dReams.Market = true
+			dReams.SetSubTab("Market")
 			go menu.FindNfaListings(nil)
 			menu.Market.Cancel_button.Hide()
 			menu.Market.Close_button.Hide()
@@ -424,7 +424,7 @@ func place() *fyne.Container {
 		tabs.Append(container.NewTabItem("DerBnb", derbnb.LayoutAllItems(true, dReams)))
 	}
 
-	if dReams.Cli {
+	if cli.enabled {
 		exitTerminal()
 		tabs.Append(container.NewTabItem("Cli", startTerminal()))
 	}
@@ -445,7 +445,7 @@ func place() *fyne.Container {
 	fs_button.Importance = widget.LowImportance
 
 	alpha_box := container.NewMax(top_bar, menu_bottom_bar, tarot_bottom_bar, bundle.Alpha150)
-	if dReams.OS != "darwin" {
+	if dReams.OS() != "darwin" {
 		alpha_box.Objects = append(alpha_box.Objects, container.NewHBox(layout.NewSpacer(), layout.NewSpacer(), layout.NewSpacer(), container.NewVBox(fs_button), layout.NewSpacer()))
 	}
 	alpha_box.Objects = append(alpha_box.Objects, menu.StartDreamsIndicators(indicators))
@@ -472,7 +472,7 @@ func place() *fyne.Container {
 		}
 	}
 
-	dReams.Configure = false
+	dReams.Configure(false)
 
 	return container.NewMax(alpha_box, tabs)
 }

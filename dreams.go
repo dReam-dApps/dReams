@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -44,10 +45,10 @@ type DreamsObject struct {
 	App        fyne.App
 	Window     fyne.Window
 	Background *fyne.Container
-	OS         string
-	Configure  bool
-	Market     bool
-	Cli        bool
+	os         string
+	configure  bool
+	tab        string
+	subTab     string
 	quit       chan struct{}
 	done       chan struct{}
 	receive    chan struct{}
@@ -66,7 +67,6 @@ type counter struct {
 	sync.RWMutex
 }
 
-var tab string
 var count counter
 var mu sync.RWMutex
 var Theme AssetSelect
@@ -93,10 +93,35 @@ func (c *counter) active() int {
 	return c.i
 }
 
+// Set what OS is being used
+func (d *DreamsObject) SetOS() {
+	d.os = runtime.GOOS
+}
+
+// Check what OS is set
+func (d *DreamsObject) OS() string {
+	return d.os
+}
+
+// Set dReams configure bool
+func (d *DreamsObject) Configure(b bool) {
+	mu.Lock()
+	d.configure = b
+	mu.Unlock()
+}
+
+// Check if dReams is configuring
+func (d *DreamsObject) IsConfiguring() bool {
+	mu.RLock()
+	defer mu.RUnlock()
+
+	return d.configure
+}
+
 // Set what tab main windows is on
 func (d *DreamsObject) SetTab(name string) {
 	mu.Lock()
-	tab = name
+	d.tab = name
 	mu.Unlock()
 }
 
@@ -105,7 +130,22 @@ func (d *DreamsObject) OnTab(name string) bool {
 	mu.RLock()
 	defer mu.RUnlock()
 
-	return tab == name
+	return d.tab == name
+}
+
+// Set what sub tab is being viewed
+func (d *DreamsObject) SetSubTab(name string) {
+	mu.Lock()
+	d.subTab = name
+	mu.Unlock()
+}
+
+// Check what sub tab is being viewed
+func (d *DreamsObject) OnSubTab(name string) bool {
+	mu.RLock()
+	defer mu.RUnlock()
+
+	return d.subTab == name
 }
 
 // Initialize channels
@@ -171,7 +211,7 @@ func (d *DreamsObject) Notification(title, content string) bool {
 
 // Check if runtime os is windows
 func (d *DreamsObject) IsWindows() bool {
-	return d.OS == "windows"
+	return d.os == "windows"
 }
 
 // Get current working directory path for prefix

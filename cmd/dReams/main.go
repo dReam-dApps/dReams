@@ -39,7 +39,6 @@ func main() {
 	dReams.Window.Resize(fyne.NewSize(MIN_WIDTH, MIN_HEIGHT))
 	dReams.Window.SetFixedSize(false)
 	dReams.Window.SetIcon(bundle.ResourceDReamsIconPng)
-	dReams.Window.SetMaster()
 	done := make(chan struct{})
 
 	dReams.Window.SetCloseIntercept(func() {

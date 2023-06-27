@@ -31,7 +31,12 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-var cli *terminal.Terminal
+type cliApp struct {
+	term    *terminal.Terminal
+	enabled bool
+}
+
+var cli cliApp
 var command_line string = `dReams
 Platform for Dero dApps, powered by Gnomon.
 
@@ -96,14 +101,14 @@ func flags() (version string) {
 		}
 	}
 
-	cli := false
+	cli_enabled := false
 	if arguments["--cli"] != nil {
 		if arguments["--cli"].(string) == "true" {
-			cli = true
+			cli_enabled = true
 		}
 	}
 
-	dReams.Cli = cli
+	cli.enabled = cli_enabled
 	menu.Gnomes.Trim = trim
 	menu.Gnomes.Fast = fastsync
 	menu.Gnomes.Para = parallel
@@ -126,7 +131,7 @@ func init() {
 
 	rpc.InitBalances()
 
-	dReams.OS = runtime.GOOS
+	dReams.SetOS()
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
@@ -159,24 +164,24 @@ func save() dreams.DreamSave {
 
 // Starts a Fyne terminal in dReams
 func startTerminal() *terminal.Terminal {
-	cli = terminal.New()
+	cli.term = terminal.New()
 	go func() {
-		_ = cli.RunLocalShell()
+		_ = cli.term.RunLocalShell()
 	}()
 
-	return cli
+	return cli.term
 }
 
 // Exit running dReams terminal
 func exitTerminal() {
-	if cli != nil {
-		cli.Exit()
+	if cli.term != nil {
+		cli.term.Exit()
 	}
 }
 
 // Terminal start info, ascii art for linux
 func stamp(v string) {
-	if dReams.OS == "linux" {
+	if dReams.OS() == "linux" {
 		fmt.Println(string(bundle.ResourceStampTxt.StaticContent))
 	}
 	log.Println("[dReams]", v, runtime.GOOS, runtime.GOARCH)
@@ -190,7 +195,7 @@ func systemTray(w fyne.App) bool {
 	if desk, ok := w.(desktop.App); ok {
 		m := fyne.NewMenu("MyApp",
 			fyne.NewMenuItem("Send Message", func() {
-				if !dReams.Configure && rpc.Wallet.IsConnected() {
+				if !dReams.IsConfiguring() && rpc.Wallet.IsConnected() {
 					menu.SendMessageMenu("", bundle.ResourceDReamsIconAltPng)
 				}
 			}),
@@ -224,7 +229,7 @@ func fetch(done chan struct{}) {
 	for {
 		select {
 		case <-ticker.C: // do on interval
-			if !dReams.Configure {
+			if !dReams.IsConfiguring() {
 				rpc.Ping()
 				rpc.EchoWallet("dReams")
 				go rpc.GetDreamsBalances(rpc.SCIDs)
@@ -232,7 +237,7 @@ func fetch(done chan struct{}) {
 				if !rpc.Startup {
 					checkConnection()
 					menu.GnomonEndPoint()
-					menu.GnomonState(dReams.Configure, gnomonScan)
+					menu.GnomonState(dReams.IsConfiguring(), gnomonScan)
 					dReams.Background.Refresh()
 
 					go menuRefresh()
@@ -347,7 +352,7 @@ func menuRefresh() {
 			go refreshPriceDisplay(true)
 		}
 
-		if dReams.Market && !dReams.IsWindows() && !menu.ClosingApps() {
+		if dReams.OnSubTab("Market") && !dReams.IsWindows() && !menu.ClosingApps() {
 			menu.FindNfaListings(nil)
 		}
 	}
