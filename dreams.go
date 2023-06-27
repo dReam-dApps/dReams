@@ -44,14 +44,20 @@ type DreamsObject struct {
 	App        fyne.App
 	Window     fyne.Window
 	Background *fyne.Container
-	OS         string
-	Configure  bool
 	Market     bool
 	Cli        bool
-	quit       chan struct{}
-	done       chan struct{}
-	receive    chan struct{}
+	Signal     Channels
 	channels   int
+	quit       chan struct{}
+}
+
+type Channels struct {
+	os        string
+	tab       string
+	configure bool
+	done      chan struct{}
+	receive   chan struct{}
+	sync.RWMutex
 }
 
 type AssetSelect struct {
@@ -66,9 +72,7 @@ type counter struct {
 	sync.RWMutex
 }
 
-var tab string
 var count counter
-var mu sync.RWMutex
 var Theme AssetSelect
 
 // Add to active channel count
@@ -93,25 +97,29 @@ func (c *counter) active() int {
 	return c.i
 }
 
-// Set what tab main windows is on
-func (d *DreamsObject) SetTab(name string) {
-	mu.Lock()
-	tab = name
-	mu.Unlock()
+// Set configure bool
+func (d *DreamsObject) Configure(b bool) {
+	d.Signal.Lock()
+	d.Signal.configure = b
+	d.Signal.Unlock()
 }
 
-// Check what tab main windows is on
-func (d *DreamsObject) OnTab(name string) bool {
-	mu.RLock()
-	defer mu.RUnlock()
+// Set what OS is being used
+func (d *DreamsObject) SetOS(name string) {
+	d.Signal.os = name
+}
 
-	return tab == name
+// Set what tab main windows is on
+func (d *DreamsObject) SetTab(name string) {
+	d.Signal.Lock()
+	d.Signal.tab = name
+	d.Signal.Unlock()
 }
 
 // Initialize channels
 func (d *DreamsObject) SetChannels(i int) {
-	d.receive = make(chan struct{})
-	d.done = make(chan struct{})
+	d.Signal.receive = make(chan struct{})
+	d.Signal.done = make(chan struct{})
 	d.quit = make(chan struct{})
 	d.channels = i
 }
@@ -120,23 +128,8 @@ func (d *DreamsObject) SetChannels(i int) {
 func (d *DreamsObject) SignalChannel() {
 	for count.active() < d.channels {
 		count.plus()
-		d.receive <- struct{}{}
+		d.Signal.receive <- struct{}{}
 	}
-}
-
-// Receive signal for work
-func (d *DreamsObject) Receive() <-chan struct{} {
-	return d.receive
-}
-
-// Signal back to counter when work is done
-func (d *DreamsObject) WorkDone() {
-	count.minus()
-}
-
-// Close signal for a dApp
-func (d *DreamsObject) CloseDapp() <-chan struct{} {
-	return d.done
 }
 
 // Send close signal to all active dApp channels
@@ -144,7 +137,7 @@ func (d *DreamsObject) CloseAllDapps() {
 	ch := 0
 	for ch < d.channels {
 		ch++
-		d.done <- struct{}{}
+		d.Signal.done <- struct{}{}
 	}
 
 	for count.active() > 0 {
@@ -162,16 +155,52 @@ func (d *DreamsObject) Closing() <-chan struct{} {
 	return d.quit
 }
 
+// Check if dReams is configuring
+func (ch *Channels) IsConfiguring() bool {
+	ch.RLock()
+	defer ch.RUnlock()
+
+	return ch.configure
+}
+
+// Receive signal for work
+func (ch *Channels) Receive() <-chan struct{} {
+	return ch.receive
+}
+
+// Signal back to counter when work is done
+func (ch *Channels) WorkDone() {
+	count.minus()
+}
+
+// Close signal for a dApp
+func (ch *Channels) CloseDapp() <-chan struct{} {
+	return ch.done
+}
+
+// Check what tab main windows is on
+func (ch *Channels) OnTab(name string) bool {
+	ch.RLock()
+	defer ch.RUnlock()
+
+	return ch.tab == name
+}
+
 // Notification pop up for dReams app
-func (d *DreamsObject) Notification(title, content string) bool {
-	d.App.SendNotification(&fyne.Notification{Title: title, Content: content})
+func (ch *Channels) Notification(title, content string) bool {
+	fyne.CurrentApp().SendNotification(&fyne.Notification{Title: title, Content: content})
 
 	return true
 }
 
+// Check what OS is set
+func (ch *Channels) OS() string {
+	return ch.os
+}
+
 // Check if runtime os is windows
-func (d *DreamsObject) IsWindows() bool {
-	return d.OS == "windows"
+func (ch *Channels) IsWindows() bool {
+	return ch.os == "windows"
 }
 
 // Get current working directory path for prefix
