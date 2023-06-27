@@ -6,10 +6,10 @@ require (
 	fyne.io/fyne/v2 v2.3.1
 	fyne.io/x/fyne v0.0.0-20230411205836-1ca0ead20763
 	github.com/SixofClubsss/Baccarat v0.0.0-20230625085006-1cfd01a518bb
-	github.com/SixofClubsss/Holdero v0.0.0-20230626233911-22db59cacd68
+	github.com/SixofClubsss/Holdero v0.0.0-20230625085408-f0ad72079fcb
 	github.com/SixofClubsss/Iluma v0.0.0-20230625082539-9e08e18c6113
 	github.com/SixofClubsss/dPrediction v0.0.0-20230625085945-f7a08e32cd45
-	github.com/SixofClubsss/derbnbDesktop v0.0.0-20230626183258-3dfbb5078524
+	github.com/SixofClubsss/derbnbDesktop v0.0.0-20230625090530-2f797fa088ce
 	github.com/civilware/Gnomon v0.0.0-20230623143540-9e690b99277a
 	github.com/deroproject/derohe v0.0.0-20230604143809-765b2db1f482
 	github.com/fyne-io/terminal v0.0.0-20230223114940-c76e408adbd3

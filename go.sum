@@ -70,8 +70,6 @@ github.com/SixofClubsss/Holdero v0.0.0-20230624044919-c2ddcf827126 h1:j7k2l80Z7F
 github.com/SixofClubsss/Holdero v0.0.0-20230624044919-c2ddcf827126/go.mod h1:+/19s6T2Z5Q9wp/6RgBNblY8Od/s0B5sD3uZWO8eGMs=
 github.com/SixofClubsss/Holdero v0.0.0-20230625085408-f0ad72079fcb h1:ao4bfABeajAZEv1SspHnx10yUrreZL0i+DSXPuu3oo4=
 github.com/SixofClubsss/Holdero v0.0.0-20230625085408-f0ad72079fcb/go.mod h1:+/19s6T2Z5Q9wp/6RgBNblY8Od/s0B5sD3uZWO8eGMs=
-github.com/SixofClubsss/Holdero v0.0.0-20230626233911-22db59cacd68 h1:XB/WbQnn/utaBWx8BJhkNrwGJZxGWwycuBUU5oo2FZw=
-github.com/SixofClubsss/Holdero v0.0.0-20230626233911-22db59cacd68/go.mod h1:+/19s6T2Z5Q9wp/6RgBNblY8Od/s0B5sD3uZWO8eGMs=
 github.com/SixofClubsss/Iluma v0.0.0-20230624051907-4ed344726e51 h1:0MRMG0a8+g9WSW9N8GoKLtg3eVR86vTUk/VYim5MKa8=
 github.com/SixofClubsss/Iluma v0.0.0-20230624051907-4ed344726e51/go.mod h1:SX9HsxTAAJXQKh+oWegyL6JNAi5ywSDf6HkP7raqejE=
 github.com/SixofClubsss/Iluma v0.0.0-20230625082539-9e08e18c6113 h1:9FGnkcRHoCw++wqix7/prAWFjIO9RE67yfhAxwwbTRs=
@@ -84,8 +82,6 @@ github.com/SixofClubsss/derbnbDesktop v0.0.0-20230624045809-5621f70b8b4a h1:UU7f
 github.com/SixofClubsss/derbnbDesktop v0.0.0-20230624045809-5621f70b8b4a/go.mod h1:XMXQoFM0t+SgOQVD5rjKw7IZemd+jQ0lGPeKWBt5t1E=
 github.com/SixofClubsss/derbnbDesktop v0.0.0-20230625090530-2f797fa088ce h1:rTTyWK1Z5v6nwTWYopGAGNbFyTvvdSS47HD3RDcrI6s=
 github.com/SixofClubsss/derbnbDesktop v0.0.0-20230625090530-2f797fa088ce/go.mod h1:XMXQoFM0t+SgOQVD5rjKw7IZemd+jQ0lGPeKWBt5t1E=
-github.com/SixofClubsss/derbnbDesktop v0.0.0-20230626183258-3dfbb5078524 h1:aMuHME4ysPmUVUQDHTHpbenqTztvR+66TJbTnXUqEEk=
-github.com/SixofClubsss/derbnbDesktop v0.0.0-20230626183258-3dfbb5078524/go.mod h1:qaZPPiqIpHTHITWo5xlk0AshKevebiLn3ZCM9n+z3Rs=
 github.com/VictoriaMetrics/metrics v1.24.0 h1:ILavebReOjYctAGY5QU2F9X0MYvkcrG3aEn2RKa1Zkw=
 github.com/akavel/rsrc v0.10.2/go.mod h1:uLoCtb9J+EyAqh+26kdrTgmzRBFPGOolLWKpdxkKq+c=
 github.com/antihax/optional v1.0.0/go.mod h1:uupD/76wgC+ih3iEmQUL+0Ugr19nfwCT1kdvxnR2qWY=

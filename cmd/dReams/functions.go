@@ -126,7 +126,7 @@ func init() {
 
 	rpc.InitBalances()
 
-	dReams.SetOS(runtime.GOOS)
+	dReams.OS = runtime.GOOS
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
@@ -176,7 +176,7 @@ func exitTerminal() {
 
 // Terminal start info, ascii art for linux
 func stamp(v string) {
-	if dReams.Signal.OS() == "linux" {
+	if dReams.OS == "linux" {
 		fmt.Println(string(bundle.ResourceStampTxt.StaticContent))
 	}
 	log.Println("[dReams]", v, runtime.GOOS, runtime.GOARCH)
@@ -190,7 +190,7 @@ func systemTray(w fyne.App) bool {
 	if desk, ok := w.(desktop.App); ok {
 		m := fyne.NewMenu("MyApp",
 			fyne.NewMenuItem("Send Message", func() {
-				if !dReams.Signal.IsConfiguring() && rpc.Wallet.IsConnected() {
+				if !dReams.Configure && rpc.Wallet.IsConnected() {
 					menu.SendMessageMenu("", bundle.ResourceDReamsIconAltPng)
 				}
 			}),
@@ -224,7 +224,7 @@ func fetch(done chan struct{}) {
 	for {
 		select {
 		case <-ticker.C: // do on interval
-			if !dReams.Signal.IsConfiguring() {
+			if !dReams.Configure {
 				rpc.Ping()
 				rpc.EchoWallet("dReams")
 				go rpc.GetDreamsBalances(rpc.SCIDs)
@@ -232,7 +232,7 @@ func fetch(done chan struct{}) {
 				if !rpc.Startup {
 					checkConnection()
 					menu.GnomonEndPoint()
-					menu.GnomonState(dReams.Signal.IsConfiguring(), gnomonScan)
+					menu.GnomonState(dReams.Configure, gnomonScan)
 					dReams.Background.Refresh()
 
 					go menuRefresh()
@@ -327,7 +327,7 @@ func refreshPriceDisplay(c bool) {
 
 // Refresh all menu gui objects
 func menuRefresh() {
-	if dReams.Signal.OnTab("Menu") && menu.Gnomes.IsInitialized() {
+	if dReams.OnTab("Menu") && menu.Gnomes.IsInitialized() {
 		index := menu.Gnomes.Indexer.LastIndexedHeight
 		if index < menu.Gnomes.Indexer.ChainHeight-4 || !menu.Gnomes.HasIndex(2) {
 			menu.Assets.Gnomes_sync.Text = (" Gnomon Syncing...")
@@ -347,7 +347,7 @@ func menuRefresh() {
 			go refreshPriceDisplay(true)
 		}
 
-		if dReams.Market && !dReams.Signal.IsWindows() && !menu.ClosingApps() {
+		if dReams.Market && !dReams.IsWindows() && !menu.ClosingApps() {
 			menu.FindNfaListings(nil)
 		}
 	}
@@ -381,7 +381,7 @@ func menuRefresh() {
 
 	menu.Assets.Balances.Refresh()
 
-	if !dReams.Signal.OnTab("Menu") {
+	if !dReams.OnTab("Menu") {
 		menu.Market.Viewing = ""
 		menu.Market.Viewing_coll = ""
 	}
