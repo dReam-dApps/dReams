@@ -43,7 +43,7 @@ type marketObjects struct {
 	Current_bid   *widget.Entry
 	Bid_price     *widget.Entry
 	End_time      *widget.Entry
-	Loading       *canvas.Text
+	Loading       *widget.ProgressBarInfinite
 	Market_button *widget.Button
 	Cancel_button *widget.Button
 	Close_button  *widget.Button
@@ -464,24 +464,17 @@ func NfaImg(img canvas.Image) fyne.CanvasObject {
 	return container.NewCenter(&img)
 }
 
-// Show text while loading market image
-func loadingText() fyne.CanvasObject {
-	Market.Loading = canvas.NewText("Loading", bundle.TextColor)
-	Market.Loading.Alignment = fyne.TextAlignCenter
-	Market.Loading.TextSize = 18
+// Loading bar for NFA cover image
+func loadingBar() fyne.CanvasObject {
+	Market.Loading = widget.NewProgressBarInfinite()
+	spacer := canvas.NewRectangle(color.RGBA{0, 0, 0, 0})
+	spacer.SetMinSize(fyne.NewSize(0, 21))
+	Market.Loading.Start()
 
-	return container.NewMax(Market.Loading)
-}
-
-// Do while market loading text is showing
-func loadingTextLoop() {
-	if len(Market.Loading.Text) < 21 {
-		for i := 0; i < 3; i++ {
-			Market.Loading.Text = Market.Loading.Text + "."
-			Market.Loading.Refresh()
-			time.Sleep(300 * time.Millisecond)
-		}
-	}
+	return container.NewVBox(
+		layout.NewSpacer(),
+		container.NewMax(spacer, Market.Loading, container.NewCenter(canvas.NewText("Loading...", bundle.TextColor))),
+		layout.NewSpacer())
 }
 
 // Clears all market NFA images
@@ -491,7 +484,7 @@ func clearNfaImages() {
 	Market.Details_box.Objects[0].Refresh()
 
 	Market.Cover = *canvas.NewImageFromImage(nil)
-	Market.Details_box.Objects[1] = loadingText()
+	Market.Details_box.Objects[1] = canvas.NewImageFromImage(nil)
 	Market.Details_box.Objects[1].Refresh()
 	Market.Details_box.Refresh()
 }
@@ -607,8 +600,9 @@ func ResetNotListedInfo() {
 func RefreshNfaImages() {
 	if Market.Cover.Resource != nil {
 		Market.Details_box.Objects[1] = NfaImg(Market.Cover)
+		Market.Loading.Stop()
 	} else {
-		go loadingTextLoop()
+		Market.Details_box.Objects[1] = loadingBar()
 	}
 
 	if Market.Icon.Resource != nil {

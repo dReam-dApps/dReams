@@ -53,8 +53,6 @@ Options:
   --num-parallel-blocks=<5>   Gnomon option,  defines the number of parallel blocks to index.
   --dbtype=<boltdb>     Gnomon option,  defines type of database 'gravdb' or 'boltdb'.`
 
-var offset int
-
 // Set opts when starting dReams
 func flags() (version string) {
 	version = rpc.DREAMSv
@@ -224,6 +222,7 @@ func gnomonScan(contracts map[string]string) {
 
 // Main dReams process loop
 func fetch(done chan struct{}) {
+	var offset int
 	rpc.Startup = true
 	time.Sleep(3 * time.Second)
 	ticker := time.NewTicker(3 * time.Second)
@@ -241,7 +240,7 @@ func fetch(done chan struct{}) {
 					menu.GnomonState(dReams.IsConfiguring(), gnomonScan)
 					dReams.Background.Refresh()
 
-					go menuRefresh()
+					go menuRefresh(offset)
 
 					offset++
 					if offset >= 21 {
@@ -332,7 +331,7 @@ func refreshPriceDisplay(c bool) {
 }
 
 // Refresh all menu gui objects
-func menuRefresh() {
+func menuRefresh(offset int) {
 	if dReams.OnTab("Menu") && menu.Gnomes.IsInitialized() {
 		index := menu.Gnomes.Indexer.LastIndexedHeight
 		if index < menu.Gnomes.Indexer.ChainHeight-4 || !menu.Gnomes.HasIndex(2) {
@@ -353,7 +352,7 @@ func menuRefresh() {
 			go refreshPriceDisplay(true)
 		}
 
-		if dReams.OnSubTab("Market") && !dReams.IsWindows() && !menu.ClosingApps() {
+		if offset%3 == 0 && dReams.OnSubTab("Market") && !dReams.IsWindows() && !menu.ClosingApps() {
 			menu.FindNfaListings(nil)
 		}
 	}

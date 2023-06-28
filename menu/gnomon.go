@@ -481,7 +481,7 @@ func TrimStringLen(str string, l int) string {
 // Scan index for any active NFA listings
 //   - Pass assets from db store, can be nil arg
 func FindNfaListings(assets map[string]string) {
-	if Gnomes.IsReady() {
+	if Gnomes.IsReady() && rpc.IsReady() {
 		auction := []string{" Collection,  Name,  Description,  SCID:"}
 		buy_now := []string{" Collection,  Name,  Description,  SCID:"}
 		my_list := []string{" Collection,  Name,  Description,  SCID:"}
