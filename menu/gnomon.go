@@ -488,17 +488,13 @@ func FindNfaListings(assets map[string]string) {
 		if assets == nil {
 			assets = Gnomes.GetAllOwnersAndSCIDs()
 		}
-		keys := make([]string, len(assets))
 
-		i := 0
-		for k := range assets {
+		for sc := range assets {
 			if !Gnomes.IsRunning() {
 				return
 			}
 
-			keys[i] = k
-
-			a, owned, expired := checkNfaAuctionListing(keys[i])
+			a, owned, expired := checkNfaAuctionListing(sc)
 
 			if a != "" && !expired {
 				auction = append(auction, a)
@@ -508,7 +504,7 @@ func FindNfaListings(assets map[string]string) {
 				my_list = append(my_list, a)
 			}
 
-			b, owned, expired := checkNfaBuyListing(keys[i])
+			b, owned, expired := checkNfaBuyListing(sc)
 
 			if b != "" && !expired {
 				buy_now = append(buy_now, b)
@@ -517,8 +513,6 @@ func FindNfaListings(assets map[string]string) {
 			if owned {
 				my_list = append(my_list, b)
 			}
-
-			i++
 		}
 
 		if !Gnomes.IsRunning() {
