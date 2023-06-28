@@ -195,7 +195,7 @@ func GetDreamsBalances(assets map[string]string) {
 
 		for name, sc := range assets {
 			token_bal := TokenBalance(sc)
-			Wallet.Display.Balance[name] = FromAtomic(token_bal, 5)
+			Wallet.Display.Balance[name] = FromAtomic(decimal(name, token_bal))
 			Wallet.TokenBal[name] = token_bal
 		}
 
@@ -784,4 +784,14 @@ func SendMessage(dest, msg string, rings uint64) {
 	}
 
 	log.Println("[SendMessage] Send Message TX:", txid)
+}
+
+// Should put decimal in Wallet.Display
+
+func decimal(name string, bal uint64) (uint64, int) {
+	if name == "TRVL" {
+		return bal * 100000, 0
+	}
+
+	return bal, 5
 }
