@@ -27,6 +27,7 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/data/binding"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/widget"
 )
@@ -676,6 +677,10 @@ func gnomonFilters() (filter []string) {
 func daemonConnectedBox() fyne.Widget {
 	menu.Control.Daemon_check = widget.NewCheck("", func(b bool) {
 		if !menu.Gnomes.IsInitialized() && !menu.Gnomes.Start {
+			if rpc.DaemonVersion() == "3.5.3-139.DEROHE.STARGATE+04042023" {
+				dialog.NewInformation("Daemon Version", "This daemon may conflict with Gnomon sync", dReams.Window).Show()
+			}
+
 			menu.Assets.Gnomes_sync.Text = (" Starting Gnomon")
 			menu.Assets.Gnomes_sync.Refresh()
 			filters := gnomonFilters()

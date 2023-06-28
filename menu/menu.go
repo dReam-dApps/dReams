@@ -147,7 +147,17 @@ func ReadDreamsConfig(tag string) (saved dreams.DreamSave) {
 // Daemon rpc entry object with default options
 //   - Bound to rpc.Daemon.Rpc
 func DaemonRpcEntry() fyne.Widget {
-	options := []string{"", rpc.DAEMON_RPC_DEFAULT, rpc.DAEMON_RPC_REMOTE1, rpc.DAEMON_RPC_REMOTE2, rpc.DAEMON_RPC_REMOTE5, rpc.DAEMON_RPC_REMOTE6}
+	options := []string{
+		"",
+		rpc.DAEMON_RPC_DEFAULT,
+		rpc.DAEMON_RPC_REMOTE1,
+		rpc.DAEMON_RPC_REMOTE2,
+		rpc.DAEMON_RPC_REMOTE3,
+		rpc.DAEMON_RPC_REMOTE4,
+		rpc.DAEMON_RPC_REMOTE5,
+		rpc.DAEMON_RPC_REMOTE6,
+	}
+
 	if Control.Daemon_config != "" {
 		options = append(options, Control.Daemon_config)
 	}

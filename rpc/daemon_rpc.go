@@ -121,6 +121,20 @@ func DaemonHeight(tag, ep string) uint64 {
 	return result.Height
 }
 
+// Get a daemons version
+func DaemonVersion() (version string) {
+	rpcClientD, ctx, cancel := SetDaemonClient(Daemon.Rpc)
+	defer cancel()
+
+	var result *rpc.GetInfo_Result
+	if err := rpcClientD.CallFor(ctx, &result, "DERO.GetInfo"); err != nil {
+		log.Printf("[DaemonVersion] %s\n", err)
+		return
+	}
+
+	return result.Version
+}
+
 // SC call gas estimate
 //   - tag for log print
 //   - Pass args and transfers for call

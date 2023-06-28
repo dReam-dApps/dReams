@@ -10,7 +10,7 @@ require (
 	github.com/SixofClubsss/Iluma v0.0.0-20230627185842-d139ad9d0d5c
 	github.com/SixofClubsss/dPrediction v0.0.0-20230627185554-7f74ec7a07ed
 	github.com/SixofClubsss/derbnbDesktop v0.0.0-20230627185421-29bb98051125
-	github.com/civilware/Gnomon v0.0.0-20230623143540-9e690b99277a
+	github.com/civilware/Gnomon v0.0.0-20230627144738-10ead43c1bb7
 	github.com/deroproject/derohe v0.0.0-20230604143809-765b2db1f482
 	github.com/fyne-io/terminal v0.0.0-20230223114940-c76e408adbd3
 	github.com/superoo7/go-gecko v1.0.0

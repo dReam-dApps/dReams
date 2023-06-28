@@ -144,7 +144,6 @@ func StartGnomon(tag, dbtype string, filters []string, upper, lower int, custom 
 		Gnomes.Initialized(true)
 
 		if Gnomes.Trim {
-			i := 0
 			for {
 				contracts := len(Gnomes.GetAllOwnersAndSCIDs())
 				if contracts >= upper {
@@ -156,9 +155,10 @@ func StartGnomon(tag, dbtype string, filters []string, upper, lower int, custom 
 					custom()
 					break
 				}
+
 				time.Sleep(time.Second)
-				i++
-				if i == 60 {
+
+				if !rpc.Daemon.IsConnected() || ClosingApps() {
 					Gnomes.Trim = false
 					log.Printf("[%s] Could not add all custom SCID for index\n", tag)
 					break
