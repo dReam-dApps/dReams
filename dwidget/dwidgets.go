@@ -27,12 +27,12 @@ type DeroAmts struct {
 // Create new numerical entry with increment change on up or down key stroke
 //   - If entry does not require prefix, pass ""
 //   - Increment and Decimal for entry input control
-func DeroAmtEntry(prefix string, incerm float64, decim uint) *DeroAmts {
+func NewDeroEntry(prefix string, increm float64, decim uint) *DeroAmts {
 	entry := &DeroAmts{}
 	entry.ExtendBaseWidget(entry)
 	entry.AllowFloat = true
 	entry.Prefix = prefix
-	entry.Increment = incerm
+	entry.Increment = increm
 	entry.Decimal = decim
 
 	return entry
@@ -86,13 +86,20 @@ type DeroRpcEntries struct {
 	default_daemon []string
 }
 
-// Horizontal layout with daemon, wallet and user:pass entries
+// Create a horizontal layout container with entries for daemon, wallet and user:pass
 //   - Objects bound to dReams rpc Daemon and Wallet vars with disconnect control
 //   - Balance canvas to display wallet balance
 //   - Button for OnTapped func()
 //   - Offset of 1 puts entries on trailing edge
-func HorizontalEntries(tag string, offset int) *DeroRpcEntries {
-	default_daemon := []string{"", rpc.DAEMON_RPC_DEFAULT, rpc.DAEMON_RPC_REMOTE5, rpc.DAEMON_RPC_REMOTE6}
+func NewHorizontalEntries(tag string, offset int) *DeroRpcEntries {
+	default_daemon := []string{
+		"",
+		rpc.DAEMON_RPC_DEFAULT,
+		rpc.DAEMON_RPC_REMOTE1,
+		rpc.DAEMON_RPC_REMOTE2,
+		rpc.DAEMON_RPC_REMOTE5,
+		rpc.DAEMON_RPC_REMOTE6,
+	}
 	daemon_entry := widget.NewSelectEntry(default_daemon)
 	daemon_entry.SetPlaceHolder("Daemon RPC:")
 	this_daemon := binding.BindString(&rpc.Daemon.Rpc)
@@ -156,13 +163,21 @@ func HorizontalEntries(tag string, offset int) *DeroRpcEntries {
 	return d
 }
 
-// Vertical layout with daemon, wallet and user:pass entries
+// Create a vertical layout container with entries for daemon, wallet and user:pass
 //   - Objects bound to dReams rpc Daemon and Wallet vars with disconnect control
 //   - Balance canvas to display wallet balance
 //   - Button for OnTapped func()
 //   - Offset of 1 puts entries on top edge
-func VerticalEntries(tag string, offset int) *DeroRpcEntries {
-	default_daemon := []string{"", rpc.DAEMON_RPC_DEFAULT, rpc.DAEMON_RPC_REMOTE5, rpc.DAEMON_RPC_REMOTE6}
+func NewVerticalEntries(tag string, offset int) *DeroRpcEntries {
+	default_daemon := []string{
+		"",
+		rpc.DAEMON_RPC_DEFAULT,
+		rpc.DAEMON_RPC_REMOTE1,
+		rpc.DAEMON_RPC_REMOTE2,
+		rpc.DAEMON_RPC_REMOTE5,
+		rpc.DAEMON_RPC_REMOTE6,
+	}
+
 	daemon_entry := widget.NewSelectEntry(default_daemon)
 	daemon_entry.SetPlaceHolder("Daemon RPC:")
 	this_daemon := binding.BindString(&rpc.Daemon.Rpc)

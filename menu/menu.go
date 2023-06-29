@@ -551,12 +551,12 @@ func listMenu(window_icon fyne.Resource) {
 	listing := widget.NewSelect(listing_options, nil)
 	listing.PlaceHolder = "Type:"
 
-	duration := dwidget.DeroAmtEntry("", 1, 0)
+	duration := dwidget.NewDeroEntry("", 1, 0)
 	duration.AllowFloat = false
 	duration.SetPlaceHolder("Duration in Hours:")
 	duration.Validator = validation.NewRegexp(`^[^0]\d{0,2}$`, "Int required")
 
-	start := dwidget.DeroAmtEntry("", 0.1, 1)
+	start := dwidget.NewDeroEntry("", 0.1, 1)
 	start.AllowFloat = true
 	start.SetPlaceHolder("Start Price:")
 	start.Validator = validation.NewRegexp(`^\d{1,}\.\d{1,5}$|^[^0]\d{0,}$`, "Int or float required")
@@ -565,7 +565,7 @@ func listMenu(window_icon fyne.Resource) {
 	charAddr.SetPlaceHolder("Charity Donation Address:")
 	charAddr.Validator = validation.NewRegexp(`^(dero)\w{62}$`, "Int required")
 
-	charPerc := dwidget.DeroAmtEntry("", 1, 0)
+	charPerc := dwidget.NewDeroEntry("", 1, 0)
 	charPerc.AllowFloat = false
 	charPerc.SetPlaceHolder("Charity Donation %:")
 	charPerc.Validator = validation.NewRegexp(`^\d{1,2}$`, "Int required")
@@ -836,7 +836,7 @@ func CoinDecimal(ticker string) int {
 func CreateSwapContainer(pair string) (*dwidget.DeroAmts, *fyne.Container) {
 	split := strings.Split(pair, "-")
 	if len(split) != 2 {
-		return dwidget.DeroAmtEntry("", 0, 0), container.NewMax(widget.NewLabel("Invalid Pair"))
+		return dwidget.NewDeroEntry("", 0, 0), container.NewMax(widget.NewLabel("Invalid Pair"))
 	}
 
 	incr := 0.1
@@ -855,7 +855,7 @@ func CreateSwapContainer(pair string) (*dwidget.DeroAmts, *fyne.Container) {
 	swap2_label := canvas.NewText(split[1], bundle.TextColor)
 	swap2_label.Alignment = fyne.TextAlignCenter
 	swap2_label.TextSize = 18
-	swap2_entry := dwidget.DeroAmtEntry("", incr, uint(CoinDecimal(split[0])))
+	swap2_entry := dwidget.NewDeroEntry("", incr, uint(CoinDecimal(split[0])))
 	swap2_entry.SetText("0")
 	swap2_entry.Disable()
 
@@ -869,7 +869,7 @@ func CreateSwapContainer(pair string) (*dwidget.DeroAmts, *fyne.Container) {
 	swap1_label := canvas.NewText(split[0], bundle.TextColor)
 	swap1_label.Alignment = fyne.TextAlignCenter
 	swap1_label.TextSize = 18
-	swap1_entry := dwidget.DeroAmtEntry("", incr, uint(CoinDecimal(split[0])))
+	swap1_entry := dwidget.NewDeroEntry("", incr, uint(CoinDecimal(split[0])))
 	swap1_entry.SetText("0")
 	swap1_entry.Validator = validation.NewRegexp(`^\d{1,}\.\d{1,5}$|^[^0.]\d{0,}$`, "Int or float required")
 	swap1_entry.OnChanged = func(s string) {

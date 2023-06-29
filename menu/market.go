@@ -97,7 +97,7 @@ func (a *assetObjects) Add(name, scid string) {
 
 // NFA market amount entry
 func MarketEntry() fyne.CanvasObject {
-	Market.Entry = dwidget.DeroAmtEntry("", 0.1, 1)
+	Market.Entry = dwidget.NewDeroEntry("", 0.1, 1)
 	Market.Entry.ExtendBaseWidget(Market.Entry)
 	Market.Entry.SetText("0.0")
 	Market.Entry.PlaceHolder = "Dero:"

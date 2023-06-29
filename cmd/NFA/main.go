@@ -52,7 +52,7 @@ func main() {
 	})
 
 	menu.Gnomes.Fast = true
-	connect_box := dwidget.HorizontalEntries(app_tag, 1)
+	connect_box := dwidget.NewHorizontalEntries(app_tag, 1)
 	connect_box.Button.OnTapped = func() {
 		rpc.GetAddress(app_tag)
 		rpc.Ping()
