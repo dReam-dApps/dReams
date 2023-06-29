@@ -141,6 +141,16 @@ func ReadDreamsConfig(tag string) (saved dreams.DreamSave) {
 	Control.Dapp_list = make(map[string]bool)
 	Control.Dapp_list = saved.Dapps
 
+	Gnomes.DBType = "boltdb"
+	if saved.DBtype == "gravdb" {
+		Gnomes.DBType = saved.DBtype
+	}
+
+	Gnomes.Para = 1
+	if saved.Para > 0 && saved.Para < 6 {
+		Gnomes.Para = saved.Para
+	}
+
 	return
 }
 

@@ -37,6 +37,8 @@ type DreamSave struct {
 	Tables  []string     `json:"tables"`
 	Predict []string     `json:"predict"`
 	Sports  []string     `json:"sports"`
+	DBtype  string       `json:"dbType"`
+	Para    int          `json:"paraBlocks"`
 
 	Dapps map[string]bool `json:"dapps"`
 }

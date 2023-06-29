@@ -495,7 +495,7 @@ func placeWall(intros []menu.IntroText) *container.Split {
 	user_input_box := container.NewHBox(user_input_cont, daemon_check_cont)
 	connect_tabs := container.NewAppTabs(
 		container.NewTabItem("Connect", container.NewCenter(user_input_box)),
-		container.NewTabItem("Gnomon", menu.Gnomes.ControlPanel(dReams.Window)))
+		container.NewTabItem("Gnomon", container.NewCenter(menu.Gnomes.ControlPanel(dReams.Window))))
 
 	connect_tabs.OnSelected = func(ti *container.TabItem) {
 		if ti.Text == "Gnomon" {
@@ -516,7 +516,7 @@ func placeWall(intros []menu.IntroText) *container.Split {
 				return
 			}
 
-			connect_tabs.Selected().Content.(*fyne.Container).Objects[0].(*widget.Form).Items[2].Widget.(*widget.RadioGroup).SetSelected("true")
+			connect_tabs.Selected().Content.(*fyne.Container).Objects[0].(*fyne.Container).Objects[0].(*widget.Form).Items[2].Widget.(*widget.RadioGroup).SetSelected("true")
 			menu.Gnomes.Trim = true
 
 			return

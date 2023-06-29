@@ -46,11 +46,11 @@ Usage:
   dReams -h | --help
 
 Options:
-  -h --help     Show this screen.
+  -h --help             Show this screen.
   --cli=<false>		dReams option, enables cli app tab.
-  --trim=<false>	dReams option, defaults true for minimum index search filters.
-  --fastsync=<false>	Gnomon option,  true/false value to define loading at chain height on start up.
-  --num-parallel-blocks=<5>   Gnomon option,  defines the number of parallel blocks to index.
+  --trim=<true>	dReams option, defaults true for minimum index search filters.
+  --fastsync=<true>	Gnomon option,  true/false value to define loading at chain height on start up.
+  --num-parallel-blocks=<1>   Gnomon option,  defines the number of parallel blocks to index.
   --dbtype=<boltdb>     Gnomon option,  defines type of database 'gravdb' or 'boltdb'.`
 
 // Set opts when starting dReams
@@ -62,56 +62,48 @@ func flags() (version string) {
 		log.Fatalf("Error while parsing arguments: %s\n", err)
 	}
 
-	dbType := "boltdb"
 	if arguments["--dbtype"] != nil {
 		if arguments["--dbtype"] == "gravdb" {
-			dbType = arguments["--dbtype"].(string)
+			menu.Gnomes.DBType = arguments["--dbtype"].(string)
 		}
 	}
 
-	trim := true
+	menu.Gnomes.Trim = true
 	if arguments["--trim"] != nil {
 		if arguments["--trim"].(string) == "false" {
-			trim = false
+			menu.Gnomes.Trim = false
 		}
 	}
 
-	fastsync := true
+	menu.Gnomes.Fast = true
 	if arguments["--fastsync"] != nil {
 		if arguments["--fastsync"].(string) == "false" {
-			fastsync = false
+			menu.Gnomes.Fast = false
 		}
 	}
 
-	parallel := 1
 	if arguments["--num-parallel-blocks"] != nil {
 		s := arguments["--num-parallel-blocks"].(string)
 		switch s {
 		case "2":
-			parallel = 2
+			menu.Gnomes.Para = 2
 		case "3":
-			parallel = 3
+			menu.Gnomes.Para = 3
 		case "4":
-			parallel = 4
+			menu.Gnomes.Para = 4
 		case "5":
-			parallel = 5
+			menu.Gnomes.Para = 5
 		default:
-			parallel = 1
+			menu.Gnomes.Para = 1
 		}
 	}
 
-	cli_enabled := false
+	cli.enabled = false
 	if arguments["--cli"] != nil {
 		if arguments["--cli"].(string) == "true" {
-			cli_enabled = true
+			cli.enabled = true
 		}
 	}
-
-	cli.enabled = cli_enabled
-	menu.Gnomes.Trim = trim
-	menu.Gnomes.Fast = fastsync
-	menu.Gnomes.Para = parallel
-	menu.Gnomes.DBType = dbType
 
 	return
 }
@@ -157,6 +149,8 @@ func save() dreams.DreamSave {
 		Tables:  holdero.Settings.Favorites,
 		Predict: prediction.Predict.Settings.Favorites,
 		Sports:  prediction.Sports.Settings.Favorites,
+		DBtype:  menu.Gnomes.DBType,
+		Para:    menu.Gnomes.Para,
 		Dapps:   menu.Control.Dapp_list,
 	}
 }
