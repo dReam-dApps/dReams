@@ -151,6 +151,7 @@ func save() dreams.DreamSave {
 		Sports:  prediction.Sports.Settings.Favorites,
 		DBtype:  menu.Gnomes.DBType,
 		Para:    menu.Gnomes.Para,
+		Assets:  menu.Control.Enabled_assets,
 		Dapps:   menu.Control.Dapp_list,
 	}
 }
@@ -370,6 +371,7 @@ func menuRefresh(offset int) {
 	} else {
 		go refreshDaemonDisplay(false)
 		go refreshGnomonDisplay(0, 0)
+		go refreshIndexDisplay(false)
 	}
 
 	if rpc.Wallet.IsConnected() {
@@ -516,18 +518,25 @@ func checkDreamsG45s(gc bool, g45s map[string]string) {
 				coll, _ := menu.Gnomes.GetSCIDValuesByKey(scid, "collection")
 				if owner != nil && minter != nil && coll != nil {
 					if owner[0] == rpc.Wallet.Address {
-						if minter[0] == dreams.Seals_mint && coll[0] == dreams.Seals_coll {
-							var seal dreams.Seal
+						if minter[0] == menu.Seals_mint && coll[0] == menu.Seals_coll {
+							var seal menu.Seal
 							if err := json.Unmarshal([]byte(data[0]), &seal); err == nil {
 								menu.Assets.Add(seal.Name, scid)
 								holdero.Settings.AddAvatar(seal.Name, owner[0])
 							}
-						} else if minter[0] == dreams.ATeam_mint && coll[0] == dreams.ATeam_coll {
-							var agent dreams.Agent
+						} else if minter[0] == menu.ATeam_mint && coll[0] == menu.ATeam_coll {
+							var agent menu.Agent
 							if err := json.Unmarshal([]byte(data[0]), &agent); err == nil {
 								menu.Assets.Asset_map[agent.Name] = scid
 								menu.Assets.Add(agent.Name, scid)
 								holdero.Settings.AddAvatar(agent.Name, owner[0])
+							}
+						} else if minter[0] == menu.Degen_mint && coll[0] == menu.Degen_coll {
+							var degen menu.Degen
+							if err := json.Unmarshal([]byte(data[0]), &degen); err == nil {
+								menu.Assets.Asset_map[degen.Name] = scid
+								menu.Assets.Add(degen.Name, scid)
+								holdero.Settings.AddAvatar(degen.Name, owner[0])
 							}
 						}
 					}
@@ -658,10 +667,7 @@ func gnomonFilters() (filter []string) {
 		}
 	}
 
-	filter = append(filter, menu.NFA_SEARCH_FILTER)
-	if !menu.Gnomes.Trim {
-		filter = append(filter, menu.G45_search_filter)
-	}
+	filter = append(filter, menu.ReturnEnabledNFAs(menu.Control.Enabled_assets)...)
 
 	return
 }
@@ -677,7 +683,7 @@ func daemonConnectedBox() fyne.Widget {
 			menu.Assets.Gnomes_sync.Text = (" Starting Gnomon")
 			menu.Assets.Gnomes_sync.Refresh()
 			filters := gnomonFilters()
-			menu.StartGnomon("dReams", menu.Gnomes.DBType, filters, 3960, 490, menu.G45Index)
+			menu.StartGnomon("dReams", menu.Gnomes.DBType, filters, menu.Control.G45_count+menu.Control.NFA_count, menu.Control.NFA_count, menu.G45Index)
 			rpc.FetchFees()
 
 			if menu.Control.Dapp_list["dSports and dPredictions"] {

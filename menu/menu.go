@@ -29,12 +29,16 @@ import (
 )
 
 type menuObjects struct {
+	G45_count       int
+	NFA_count       int
 	List_open       bool
 	send_open       bool
 	msg_open        bool
+	once            bool
 	Daemon_config   string
 	Viewing_asset   string
 	Dapp_list       map[string]bool
+	Enabled_assets  map[string]bool
 	Contract_rating map[string]uint64
 	Names           *widget.Select
 	Send_asset      *widget.Button
@@ -140,6 +144,9 @@ func ReadDreamsConfig(tag string) (saved dreams.DreamSave) {
 	bundle.AppColor = saved.Skin
 	Control.Dapp_list = make(map[string]bool)
 	Control.Dapp_list = saved.Dapps
+
+	Control.Enabled_assets = make(map[string]bool)
+	Control.Enabled_assets = saved.Assets
 
 	Gnomes.DBType = "boltdb"
 	if saved.DBtype == "gravdb" {

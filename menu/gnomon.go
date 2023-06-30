@@ -170,21 +170,18 @@ func StartGnomon(tag, dbtype string, filters []string, upper, lower int, custom 
 	Gnomes.Start = false
 }
 
-// Manually add G45 collection to Gnomon index
+// Manually add G45 collections to Gnomon index
 func G45Index() {
 	log.Println("[dReams] Adding G45 Collections")
 	filters := Gnomes.Indexer.SearchFilter
 	Gnomes.Indexer.SearchFilter = []string{}
 	scidstoadd := make(map[string]*structures.FastSyncImport)
 
-	a := rpc.GetG45Collection(dreams.ATeam_coll)
-	for i := range a {
-		scidstoadd[a[i]] = &structures.FastSyncImport{}
-	}
-
-	s := rpc.GetG45Collection(dreams.Seals_coll)
-	for i := range s {
-		scidstoadd[s[i]] = &structures.FastSyncImport{}
+	for _, c := range ReturnEnabledG45s(Control.Enabled_assets) {
+		g45 := rpc.GetG45Collection(c)
+		for i := range g45 {
+			scidstoadd[g45[i]] = &structures.FastSyncImport{}
+		}
 	}
 
 	err := Gnomes.Indexer.AddSCIDToIndex(scidstoadd)
@@ -212,7 +209,7 @@ func Connected() bool {
 }
 
 func GnomonScan(config bool) bool {
-	if Gnomes.IsSynced() && !config {
+	if Gnomes.IsSynced() && Gnomes.HasChecked() && !config {
 		return true
 	}
 
@@ -384,8 +381,8 @@ func GetOwnedAssetStats(scid string) {
 			minter, _ := Gnomes.GetSCIDValuesByKey(scid, "minter")
 			coll, _ := Gnomes.GetSCIDValuesByKey(scid, "collection")
 			if data != nil && minter != nil && coll != nil {
-				if minter[0] == dreams.Seals_mint && coll[0] == dreams.Seals_coll {
-					var seal dreams.Seal
+				if minter[0] == Seals_mint && coll[0] == Seals_coll {
+					var seal Seal
 					if err := json.Unmarshal([]byte(data[0]), &seal); err == nil {
 						check := strings.Trim(seal.Name, " #0123456789")
 						if check == "Dero Seals" {
@@ -399,8 +396,8 @@ func GetOwnedAssetStats(scid string) {
 							Assets.Icon, _ = dreams.DownloadFile("https://ipfs.io/ipfs/QmP3HnzWpiaBA6ZE8c3dy5ExeG7hnYjSqkNfVbeVW5iEp6/low/"+number+".jpg", seal.Name)
 						}
 					}
-				} else if minter[0] == dreams.ATeam_mint && coll[0] == dreams.ATeam_coll {
-					var agent dreams.Agent
+				} else if minter[0] == ATeam_mint && coll[0] == ATeam_coll {
+					var agent Agent
 					if err := json.Unmarshal([]byte(data[0]), &agent); err == nil {
 						Assets.Name.Text = (" Name: " + agent.Name)
 						Assets.Name.Refresh()
@@ -414,6 +411,18 @@ func GetOwnedAssetStats(scid string) {
 						} else {
 							Assets.Icon, _ = dreams.DownloadFile("https://ipfs.io/ipfs/QmQQyKoE9qDnzybeDCXhyMhwQcPmLaVy3AyYAzzC2zMauW/low/"+number+".jpg", agent.Name)
 						}
+					}
+				} else if minter[0] == Degen_mint && coll[0] == Degen_coll {
+					var degen Degen
+					if err := json.Unmarshal([]byte(data[0]), &degen); err == nil {
+						Assets.Name.Text = (" Name: " + degen.Name)
+						Assets.Name.Refresh()
+
+						Assets.Collection.Text = (" Collection: Dero Degens")
+						Assets.Collection.Refresh()
+
+						number := strconv.Itoa(degen.ID)
+						Assets.Icon, _ = dreams.DownloadFile("https://ipfs.io/ipfs/QmZM6onfiS8yUHFwfVypYnc6t9ZrvmpT43F9HFTou6LJyg/"+number+".png", degen.Name)
 					}
 				}
 			}

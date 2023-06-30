@@ -360,6 +360,7 @@ func place() *fyne.Container {
 			dReams.SetSubTab("Assets")
 			menu.Control.Viewing_asset = ""
 			menu.Assets.Asset_list.UnselectAll()
+			menu_tabs.Selected().Content.(*container.Split).Leading.(*container.Split).Trailing.(*fyne.Container).Objects[1].(*container.AppTabs).SelectIndex(0)
 		case "Market":
 			dReams.SetSubTab("Market")
 			go menu.FindNfaListings(nil)
@@ -517,6 +518,8 @@ func placeWall(intros []menu.IntroText) *container.Split {
 			}
 
 			connect_tabs.Selected().Content.(*fyne.Container).Objects[0].(*fyne.Container).Objects[0].(*widget.Form).Items[2].Widget.(*widget.RadioGroup).SetSelected("true")
+			connect_tabs.Selected().Content.(*fyne.Container).Objects[0].(*fyne.Container).Objects[0].(*widget.Form).Items[2].Widget.(*widget.RadioGroup).Disable()
+			connect_tabs.Selected().Content.(*fyne.Container).Objects[0].(*fyne.Container).Objects[0].(*widget.Form).Items[1].Widget.(*widget.RadioGroup).Disable()
 			menu.Gnomes.Trim = true
 
 			return

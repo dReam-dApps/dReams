@@ -90,6 +90,16 @@ type assetObjects struct {
 
 var Assets assetObjects
 var Market marketObjects
+var dReamsNFAs = []assetCount{
+	{name: "AZYPC", count: 23},
+	{name: "AZYPCB", count: 53},
+	{name: "AZYDS", count: 10},
+	{name: "DBC", count: 8},
+	{name: "SIXPC", count: 9},
+	{name: "SIXPCB", count: 10},
+	{name: "SIXART", count: 17},
+	{name: "HighStrangeness", count: 354},
+}
 
 func (a *assetObjects) Add(name, scid string) {
 	a.Assets = append(a.Assets, name+"   "+scid)
@@ -837,6 +847,153 @@ func PlaceMarket() *container.Split {
 	return menu_box
 }
 
+func ReturnEnabledNFAs(assets map[string]bool) (filters []string) {
+	for name, enabled := range assets {
+		if enabled && isDreamsNfaCollection(name) {
+			filters = append(filters, fmt.Sprintf(`330 STORE("nameHdr", "%s`, name))
+		}
+	}
+
+	return
+}
+
+// Options for enabling NFA collection
+func enableNFAOpts(asset assetCount) (opts *widget.RadioGroup) {
+	onChanged := func(s string) {
+		if s == "Yes" {
+			Control.Lock()
+			Control.Enabled_assets[asset.name] = true
+			Control.NFA_count += asset.count
+			Control.Unlock()
+			return
+		}
+
+		Control.Lock()
+		defer Control.Unlock()
+		Control.Enabled_assets[asset.name] = false
+		if Control.NFA_count >= asset.count {
+			Control.NFA_count -= asset.count
+		}
+	}
+
+	if !Control.once {
+		opts = widget.NewRadioGroup([]string{"Yes", "No"}, nil)
+		opts.Required = true
+		opts.Horizontal = true
+		if Control.Enabled_assets[asset.name] {
+			opts.OnChanged = onChanged
+			opts.SetSelected("Yes")
+		} else {
+			opts.SetSelected("No")
+			opts.OnChanged = onChanged
+		}
+
+		return
+	}
+
+	opts = widget.NewRadioGroup([]string{"Yes", "No"}, nil)
+	opts.Required = true
+	opts.Horizontal = true
+	if Control.Enabled_assets[asset.name] {
+		opts.SetSelected("Yes")
+	} else {
+		opts.SetSelected("No")
+	}
+	opts.OnChanged = onChanged
+
+	return
+}
+
+// Options for enabling G45 collection
+func enableG45Opts(asset assetCount) (opts *widget.RadioGroup) {
+	onChanged := func(s string) {
+		if s == "Yes" {
+			Control.Lock()
+			Control.Enabled_assets[asset.name] = true
+			Control.G45_count += asset.count
+			Control.Unlock()
+			return
+		}
+
+		Control.Lock()
+		defer Control.Unlock()
+		Control.Enabled_assets[asset.name] = false
+		if Control.G45_count >= asset.count {
+			Control.G45_count -= asset.count
+		}
+	}
+
+	if !Control.once {
+		opts = widget.NewRadioGroup([]string{"Yes", "No"}, nil)
+		opts.Required = true
+		opts.Horizontal = true
+		if Control.Enabled_assets[asset.name] {
+			opts.OnChanged = onChanged
+			opts.SetSelected("Yes")
+		} else {
+			opts.SetSelected("No")
+			opts.OnChanged = onChanged
+		}
+
+		return
+	}
+
+	opts = widget.NewRadioGroup([]string{"Yes", "No"}, nil)
+	opts.Required = true
+	opts.Horizontal = true
+	if Control.Enabled_assets[asset.name] {
+		opts.SetSelected("Yes")
+	} else {
+		opts.SetSelected("No")
+	}
+	opts.OnChanged = onChanged
+
+	return
+}
+
+// Enable asset collection objects
+func enabledCollections() fyne.CanvasObject {
+	collection_form := []*widget.FormItem{}
+	enable_all := widget.NewButton("Disable All", nil)
+	enable_all.OnTapped = func() {
+		if enable_all.Text == "Enable All" {
+			for _, item := range collection_form {
+				item.Widget.(*widget.RadioGroup).SetSelected("Yes")
+
+			}
+			enable_all.SetText("Disable All")
+
+			return
+		}
+
+		for _, item := range collection_form {
+			item.Widget.(*widget.RadioGroup).SetSelected("No")
+		}
+		enable_all.SetText("Enable All")
+	}
+
+	for _, asset := range dReamsNFAs {
+		collection_form = append(collection_form, widget.NewFormItem(asset.name, enableNFAOpts(asset)))
+	}
+
+	for _, asset := range dReamsG45s {
+		collection_form = append(collection_form, widget.NewFormItem(asset.name, enableG45Opts(asset)))
+	}
+
+	Control.once = true
+	if Control.NFA_count < 3 {
+		Control.NFA_count = 3
+	}
+
+	return container.NewBorder(
+		nil,
+		container.NewBorder(nil, nil, nil, enable_all, container.NewCenter(canvas.NewText("You will need to delete Gnomon DB and resync for changes to take effect ", bundle.TextColor))),
+		nil,
+		nil,
+		container.NewVScroll(container.NewCenter(widget.NewForm(collection_form...))))
+
+}
+
 // Owned asset tab layout
 //   - tag for log print
 //   - games enables dReams asset selects
@@ -861,11 +1018,20 @@ func PlaceAssets(tag string, assets []fyne.Widget, menu_icon fyne.Resource, w fy
 
 	player_input := container.NewVBox(items_box, layout.NewSpacer())
 
+	enable_opts := enabledCollections()
+
 	tabs := container.NewAppTabs(
-		container.NewTabItem("Owned", AssetList()))
+		container.NewTabItem("Owned", AssetList()),
+		container.NewTabItem("Enabled", enable_opts))
 
 	tabs.OnSelected = func(ti *container.TabItem) {
-
+		if ti.Text == "Enabled" {
+			if Gnomes.IsRunning() {
+				tabs.Selected().Content = container.NewCenter(canvas.NewText("Stop Gnomon to make changes", bundle.TextColor))
+				return
+			}
+			tabs.Selected().Content = enable_opts
+		}
 	}
 
 	scroll_top := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "arrowUp"), func() {

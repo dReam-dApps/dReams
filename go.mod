@@ -5,12 +5,12 @@ go 1.20
 require (
 	fyne.io/fyne/v2 v2.3.1
 	fyne.io/x/fyne v0.0.0-20230411205836-1ca0ead20763
-	github.com/SixofClubsss/Baccarat v0.0.0-20230628021125-c666714d98e0
-	github.com/SixofClubsss/Holdero v0.0.0-20230628030257-1bd983e39430
-	github.com/SixofClubsss/Iluma v0.0.0-20230628031045-070ddb9e4285
-	github.com/SixofClubsss/dPrediction v0.0.0-20230628025958-3db107db8d75
-	github.com/SixofClubsss/derbnbDesktop v0.0.0-20230628021422-0e951f9cb4b9
-	github.com/civilware/Gnomon v0.0.0-20230627144738-10ead43c1bb7
+	github.com/SixofClubsss/Baccarat v0.0.0-20230629044941-9f64704bb3d7
+	github.com/SixofClubsss/Holdero v0.0.0-20230629061739-93ff223cd018
+	github.com/SixofClubsss/Iluma v0.0.0-20230629045925-f7b5a1c2159b
+	github.com/SixofClubsss/dPrediction v0.0.0-20230629045808-c44723ac7afe
+	github.com/SixofClubsss/derbnbDesktop v0.0.0-20230629045316-0481c367e931
+	github.com/civilware/Gnomon v0.0.0-20230629173619-f2809fb61dfc
 	github.com/deroproject/derohe v0.0.0-20230604143809-765b2db1f482
 	github.com/fyne-io/terminal v0.0.0-20230223114940-c76e408adbd3
 	github.com/superoo7/go-gecko v1.0.0

@@ -37,10 +37,13 @@ type DreamSave struct {
 	Tables  []string     `json:"tables"`
 	Predict []string     `json:"predict"`
 	Sports  []string     `json:"sports"`
+	G45s    []string     `json:"g45s"`
+	NFAs    []string     `json:"nfas"`
 	DBtype  string       `json:"dbType"`
 	Para    int          `json:"paraBlocks"`
 
-	Dapps map[string]bool `json:"dapps"`
+	Assets map[string]bool `json:"assets"`
+	Dapps  map[string]bool `json:"dapps"`
 }
 
 type DreamsObject struct {
