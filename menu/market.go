@@ -996,9 +996,8 @@ func enabledCollections() fyne.CanvasObject {
 
 // Owned asset tab layout
 //   - tag for log print
-//   - games enables dReams asset selects
-//   - recheck for RecheckButton() func
-//   - menu resources for side menus
+//   - assets is array of widgets used for asset selections
+//   - menu_icon resources for side menus
 //   - w for main window dialog
 func PlaceAssets(tag string, assets []fyne.Widget, menu_icon fyne.Resource, w fyne.Window) *container.Split {
 	items_box := container.NewAdaptiveGrid(2)
@@ -1021,8 +1020,11 @@ func PlaceAssets(tag string, assets []fyne.Widget, menu_icon fyne.Resource, w fy
 	enable_opts := enabledCollections()
 
 	tabs := container.NewAppTabs(
-		container.NewTabItem("Owned", AssetList()),
-		container.NewTabItem("Enabled", enable_opts))
+		container.NewTabItem("Owned", AssetList()))
+
+	if len(asset_selects.Objects) > 1 {
+		tabs.Append(container.NewTabItem("Enabled", enable_opts))
+	}
 
 	tabs.OnSelected = func(ti *container.TabItem) {
 		if ti.Text == "Enabled" {
@@ -1204,7 +1206,7 @@ func RunNFAMarket(tag string, quit, done chan struct{}, connect_box *dwidget.Der
 				connect_box.Disconnect.SetChecked(true)
 				// Get indexed SCID count
 				Gnomes.IndexContains()
-				if Gnomes.HasIndex(0) {
+				if Gnomes.HasIndex(1) {
 					Gnomes.Checked(true)
 				}
 
