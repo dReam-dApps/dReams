@@ -146,7 +146,9 @@ func ReadDreamsConfig(tag string) (saved dreams.DreamSave) {
 	Control.Dapp_list = saved.Dapps
 
 	Control.Enabled_assets = make(map[string]bool)
-	Control.Enabled_assets = saved.Assets
+	if saved.Assets != nil {
+		Control.Enabled_assets = saved.Assets
+	}
 
 	Gnomes.DBType = "boltdb"
 	if saved.DBtype == "gravdb" {
@@ -790,7 +792,7 @@ func IntroTree(intros []IntroText) fyne.CanvasObject {
 		"Daemon":                  {"Using local daemon will give best performance while using dReams", "Remote daemon options are available in drop down if a local daemon is not available", "Enter daemon address and the D light in top right will light up if connection is successful", "Once daemon is connected Gnomon will start up, the Gnomon indicator light will have a stripe in middle"},
 		"Wallet":                  {"Set up and register a Dero wallet", "Your wallet will need to be running rpc server", "Using cli, start your wallet with flags --rpc-server --rpc-login=user:pass", "With Engram, turn on cyberdeck to start rpc server", "In dReams enter your wallet rpc address and rpc user:pass", "Press connect and the W light in top right will light up if connection is successful", "Once wallet is connected and Gnomon is running, Gnomon will sync with wallet", "The Gnomon indicator will turn solid when this is complete, everything is now connected"},
 
-		"dApps":         {"Loading dApps", "Holdero", "Baccarat", "Predictions", "Sports", "dService", "Tarot", "DerBnb", "Contract Ratings"},
+		"dApps":         {"Loading dApps", "Holdero", "Baccarat", "Predictions", "Sports", "dService", "Iluma", "DerBnb", "Contract Ratings"},
 		"Loading dApps": {"You can add or remove dApps in the dApps tab", "Loading changes will disconnect your wallet", "Gnomon will continue to run, but may need to be resynced to index any new dApps added", "Your dApp preferences will be saved in local config file", "Loading only the dApps you are using will increase Gnomon and dReams performance"},
 	}
 

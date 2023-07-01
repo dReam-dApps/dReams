@@ -5,11 +5,11 @@ go 1.20
 require (
 	fyne.io/fyne/v2 v2.3.1
 	fyne.io/x/fyne v0.0.0-20230411205836-1ca0ead20763
-	github.com/SixofClubsss/Baccarat v0.0.0-20230629044941-9f64704bb3d7
-	github.com/SixofClubsss/Holdero v0.0.0-20230629061739-93ff223cd018
-	github.com/SixofClubsss/Iluma v0.0.0-20230629045925-f7b5a1c2159b
-	github.com/SixofClubsss/dPrediction v0.0.0-20230629045808-c44723ac7afe
-	github.com/SixofClubsss/derbnbDesktop v0.0.0-20230629045316-0481c367e931
+	github.com/SixofClubsss/Baccarat v0.0.0-20230701022956-92edb6d7e8af
+	github.com/SixofClubsss/Holdero v0.0.0-20230701081808-6cf85292a8d6
+	github.com/SixofClubsss/Iluma v0.0.0-20230630193850-88ae09de4c5a
+	github.com/SixofClubsss/dPrediction v0.0.0-20230701023228-8f0e951e4086
+	github.com/SixofClubsss/derbnbDesktop v0.0.0-20230701022708-8bea6ef726d3
 	github.com/civilware/Gnomon v0.0.0-20230629173619-f2809fb61dfc
 	github.com/deroproject/derohe v0.0.0-20230604143809-765b2db1f482
 	github.com/fyne-io/terminal v0.0.0-20230223114940-c76e408adbd3
