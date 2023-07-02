@@ -954,23 +954,18 @@ func enableG45Opts(asset assetCount) (opts *widget.RadioGroup) {
 // Enable asset collection objects
 func enabledCollections() fyne.CanvasObject {
 	collection_form := []*widget.FormItem{}
-	enable_all := widget.NewButton("Disable All", nil)
-	enable_all.OnTapped = func() {
-		if enable_all.Text == "Enable All" {
-			for _, item := range collection_form {
-				item.Widget.(*widget.RadioGroup).SetSelected("Yes")
+	enable_all := widget.NewButton("Enable All", func() {
+		for _, item := range collection_form {
+			item.Widget.(*widget.RadioGroup).SetSelected("Yes")
 
-			}
-			enable_all.SetText("Disable All")
-
-			return
 		}
+	})
 
+	disable_all := widget.NewButton("Disable All", func() {
 		for _, item := range collection_form {
 			item.Widget.(*widget.RadioGroup).SetSelected("No")
 		}
-		enable_all.SetText("Enable All")
-	}
+	})
 
 	for _, asset := range dReamsNFAs {
 		collection_form = append(collection_form, widget.NewFormItem(asset.name, enableNFAOpts(asset)))
@@ -987,7 +982,7 @@ func enabledCollections() fyne.CanvasObject {
 
 	return container.NewBorder(
 		nil,
-		container.NewBorder(nil, nil, nil, enable_all, container.NewCenter(canvas.NewText("You will need to delete Gnomon DB and resync for changes to take effect ", bundle.TextColor))),
+		container.NewBorder(nil, nil, enable_all, disable_all, container.NewCenter(canvas.NewText("You will need to delete Gnomon DB and resync for changes to take effect ", bundle.TextColor))),
 		nil,
 		nil,
 		container.NewVScroll(container.NewCenter(widget.NewForm(collection_form...))))

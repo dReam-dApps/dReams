@@ -127,6 +127,8 @@ func ReadDreamsConfig(tag string) (saved dreams.DreamSave) {
 			config.Close()
 		}
 
+		Control.Enabled_assets = make(map[string]bool)
+
 		return
 	}
 
