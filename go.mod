@@ -6,7 +6,7 @@ require (
 	fyne.io/fyne/v2 v2.3.1
 	fyne.io/x/fyne v0.0.0-20230411205836-1ca0ead20763
 	github.com/SixofClubsss/Baccarat v0.0.0-20230701022956-92edb6d7e8af
-	github.com/SixofClubsss/Holdero v0.0.0-20230701081808-6cf85292a8d6
+	github.com/SixofClubsss/Holdero v0.0.0-20230701210726-409748173e76
 	github.com/SixofClubsss/Iluma v0.0.0-20230630193850-88ae09de4c5a
 	github.com/SixofClubsss/dPrediction v0.0.0-20230701023228-8f0e951e4086
 	github.com/SixofClubsss/derbnbDesktop v0.0.0-20230701022708-8bea6ef726d3
@@ -18,7 +18,7 @@ require (
 )
 
 require (
-	fyne.io/systray v1.10.1-0.20230403195833-7dc3c09283d6 // indirect
+	fyne.io/systray v1.10.1-0.20230602210930-b6a2d6ca2a7b // indirect
 	github.com/ActiveState/termtest/conpty v0.5.0 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78 // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
