@@ -48,7 +48,7 @@ Usage:
 Options:
   -h --help             Show this screen.
   --cli=<false>		dReams option, enables cli app tab.
-  --trim=<true>	dReams option, defaults true for minimum index search filters.
+  --trim=<true>	        dReams option, defaults true for minimum index search filters.
   --fastsync=<true>	Gnomon option,  true/false value to define loading at chain height on start up.
   --num-parallel-blocks=<1>   Gnomon option,  defines the number of parallel blocks to index.
   --dbtype=<boltdb>     Gnomon option,  defines type of database 'gravdb' or 'boltdb'.`
@@ -291,7 +291,7 @@ func refreshIndexDisplay(c bool) {
 
 // Refresh daemon height display
 func refreshDaemonDisplay(c bool) {
-	if c && rpc.Daemon.IsConnected() {
+	if c {
 		dHeight := rpc.DaemonHeight("dReams", rpc.Daemon.Rpc)
 		d := strconv.Itoa(int(dHeight))
 		menu.Assets.Daem_height.Text = (" Daemon Height: " + d)
@@ -395,23 +395,20 @@ func checkDreamsNFAs(gc bool, scids map[string]string) {
 	if menu.Gnomes.IsReady() && !gc {
 		menu.Assets.Gnomes_sync.Text = (" Checking for Assets")
 		menu.Assets.Gnomes_sync.Refresh()
-
 		if scids == nil {
 			scids = menu.Gnomes.GetAllOwnersAndSCIDs()
 		}
-		keys := make([]string, len(scids))
+
 		log.Println("[dReams] Checking NFA Assets")
 		dreams.Theme.Select.Options = []string{}
 		holdero.Settings.ClearAssets()
 
-		i := 0
-		for k := range scids {
+		for sc := range scids {
 			if !rpc.Wallet.IsConnected() || !menu.Gnomes.IsRunning() {
 				break
 			}
-			keys[i] = k
-			checkNFAOwner(keys[i])
-			i++
+
+			checkNFAOwner(sc)
 		}
 
 		holdero.Settings.SortCardAsset()

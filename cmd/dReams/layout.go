@@ -538,6 +538,7 @@ func placeWall(intros []menu.IntroText) *container.Split {
 	return menu_box
 }
 
+// Balance and swap container inside wallet layout
 func placeSwap() *container.Split {
 	pair_opts := []string{"DERO-dReams", "dReams-DERO"}
 	select_pair := widget.NewSelect(pair_opts, nil)

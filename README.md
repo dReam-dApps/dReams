@@ -26,35 +26,35 @@ As a repository
 
 Download the latest [release](https://github.com/dReam-dApps/dReams/releases) or [build from source](#build) to use dReams.
 
-Our [Template](https://github.com/dReam-dApps/Template) can be used to help create new Dero dApps.
+dReams [Template](https://github.com/dReam-dApps/Template) can be used to help create new Dero dApps.
 
 ### dApps
 All dApps are ran on chain in a decentralized manner. dReams and packages are solely interfaces to interact with these on chain services. With the main dReams application, users can access the dApps below from one place.
-- **Holdero**
+- **[Holdero](https://github.com/SixofClubsss/Holdero)**
 	- Multiplayer Texas Hold'em style poker
 	- In game assets 
 	- Deployable contracts
-	- Multiple tokens  supported
+	- Multiple tokens supported
 	- dReam Tools
-- **Baccarat**
+- **[Baccarat](https://github.com/SixofClubsss/Baccarat)**
 	- Single player table game
 	- In game assets
-	- Multiple tokens  supported
-- **dSports and dPrediction**
+	- Multiple tokens supported
+- **[dSports and dPrediction](https://github.com/SixofClubsss/dPrediction)**
 	- P2P betting and predictions
 	- Deployable contracts
 	- dService 
-- **Iluma**
+- **[Iluma](https://github.com/SixofClubsss/Iluma)**
 	- Tarot readings
 	- Custom cards and artwork by Kalina Lux
 	- Querent's companion
-- **DerBnb**
+- **[DerBnb](https://github.com/SixofClubsss/derbnbDesktop)**
 	- Property rental management app
 	- Mint property tokens
 	- Manage rentals and bookings with Dero private messaging
 	- DerBnb profit share
 	- TRVL tokens
-- **NFA Marketplace**
+- **[NFA Marketplace](https://github.com/civilware/artificer-nfa-standard)**
 	- View and manage owned assets
 	- View and manage listings
 	- Search NFAs
@@ -86,7 +86,7 @@ go build .
 ## Packages
 dReams repo is built as packages. With imports from the Dero code base, dReams variable structures are complete with the basics needs for building Dero applications that can run alone, or ones that could be integrated into dReams. 
 
-Our [Template](https://github.com/dReam-dApps/Template) can be used as a UI starting point and you can view our full [Examples](https://github.com/dReam-dApps/Examples) for further references. 
+dReams [Template](https://github.com/dReam-dApps/Template) can be used as a UI starting point and you can view our [Examples](https://github.com/dReam-dApps/Examples) repo for further references. 
 ### rpc
 The rpc package contains all of the basic functionality needed to set up clients, check connectivity and read blockchain and wallet information. There are arbitrary rpc calls which any dApp can make use of such as the NFA calls, `SendMessage()` or `SendAsset()` with optional payload. This example checks for daemon and wallet rpc connectivity.
 ```

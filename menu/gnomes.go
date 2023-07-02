@@ -61,7 +61,7 @@ func (g *gnomon) Writing() bool {
 	case "boltdb":
 		return g.Indexer.BBSBackend.Writing == 1
 	default:
-		return g.Indexer.GravDBBackend.Writing == 1
+		return g.Indexer.BBSBackend.Writing == 1
 	}
 }
 
@@ -81,7 +81,7 @@ func (g *gnomon) Closing() bool {
 	case "boltdb":
 		return g.Indexer.BBSBackend.Closing
 	default:
-		return false
+		return g.Indexer.BBSBackend.Closing
 	}
 }
 
@@ -189,7 +189,7 @@ func (g *gnomon) IsReady() bool {
 }
 
 // Method of Gnomon GetAllOwnersAndSCIDs() where DB type is defined by Indexer.DBType
-//   - Default is gravdb
+//   - Default is boltdb
 func (g *gnomon) GetAllOwnersAndSCIDs() map[string]string {
 	switch g.Indexer.DBType {
 	case "gravdb":
@@ -197,12 +197,12 @@ func (g *gnomon) GetAllOwnersAndSCIDs() map[string]string {
 	case "boltdb":
 		return g.Indexer.BBSBackend.GetAllOwnersAndSCIDs()
 	default:
-		return g.Indexer.GravDBBackend.GetAllOwnersAndSCIDs()
+		return g.Indexer.BBSBackend.GetAllOwnersAndSCIDs()
 	}
 }
 
 // Method of Gnomon GetSCIDValuesByKey() where DB type is defined by Indexer.DBType
-//   - Default is gravdb
+//   - Default is boltdb
 func (g *gnomon) GetSCIDValuesByKey(scid string, key interface{}) (valuesstring []string, valuesuint64 []uint64) {
 	switch g.Indexer.DBType {
 	case "gravdb":
@@ -210,12 +210,12 @@ func (g *gnomon) GetSCIDValuesByKey(scid string, key interface{}) (valuesstring 
 	case "boltdb":
 		return g.Indexer.BBSBackend.GetSCIDValuesByKey(scid, key, g.Indexer.ChainHeight, true)
 	default:
-		return g.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, key, g.Indexer.ChainHeight, true)
+		return g.Indexer.BBSBackend.GetSCIDValuesByKey(scid, key, g.Indexer.ChainHeight, true)
 	}
 }
 
 // Method of Gnomon GetSCIDKeysByValue() where DB type is defined by Indexer.DBType
-//   - Default is gravdb
+//   - Default is boltdb
 func (g *gnomon) GetSCIDKeysByValue(scid string, key interface{}) (valuesstring []string, valuesuint64 []uint64) {
 	switch g.Indexer.DBType {
 	case "gravdb":
@@ -223,12 +223,12 @@ func (g *gnomon) GetSCIDKeysByValue(scid string, key interface{}) (valuesstring 
 	case "boltdb":
 		return g.Indexer.BBSBackend.GetSCIDKeysByValue(scid, key, g.Indexer.ChainHeight, true)
 	default:
-		return g.Indexer.GravDBBackend.GetSCIDKeysByValue(scid, key, g.Indexer.ChainHeight, true)
+		return g.Indexer.BBSBackend.GetSCIDKeysByValue(scid, key, g.Indexer.ChainHeight, true)
 	}
 }
 
 // Method of Gnomon GetAllSCIDVariableDetails() where DB type is defined by Indexer.DBType
-//   - Default is gravdb
+//   - Default is boltdb
 func (g *gnomon) GetAllSCIDVariableDetails(scid string) map[int64][]*structures.SCIDVariable {
 	switch g.Indexer.DBType {
 	case "gravdb":
@@ -236,10 +236,11 @@ func (g *gnomon) GetAllSCIDVariableDetails(scid string) map[int64][]*structures.
 	case "boltdb":
 		return g.Indexer.BBSBackend.GetAllSCIDVariableDetails(scid)
 	default:
-		return g.Indexer.GravDBBackend.GetAllSCIDVariableDetails(scid)
+		return g.Indexer.BBSBackend.GetAllSCIDVariableDetails(scid)
 	}
 }
 
+// UI control panel to set Gnomes vars
 func (g *gnomon) ControlPanel(w fyne.Window) *fyne.Container {
 	db := widget.NewRadioGroup([]string{"boltdb", "gravdb"}, func(s string) {
 		g.DBType = s

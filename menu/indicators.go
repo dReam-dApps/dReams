@@ -29,6 +29,7 @@ func StopLabel() {
 }
 
 // dReams app status indicators for wallet, daemon, Gnomon and services
+//   - Pass further DreamsIndicators to add
 func StartDreamsIndicators(add []DreamsIndicator) fyne.CanvasObject {
 	purple := color.RGBA{105, 90, 205, 210}
 	blue := color.RGBA{31, 150, 200, 210}

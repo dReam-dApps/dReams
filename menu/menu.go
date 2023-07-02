@@ -761,6 +761,7 @@ type IntroText struct {
 	content []string
 }
 
+// Create menu tree items for dApps
 func MakeMenuIntro(items map[string][]string) (entries []IntroText) {
 	var menu_entry IntroText
 	for name, e := range items {

@@ -208,6 +208,7 @@ func Connected() bool {
 	return false
 }
 
+// Gnomon is ready for dApp to preform initial scan
 func GnomonScan(config bool) bool {
 	if Gnomes.IsSynced() && Gnomes.HasChecked() && !config {
 		return true
@@ -218,7 +219,7 @@ func GnomonScan(config bool) bool {
 
 // Gnomon will scan connected wallet on start up, then ensure sync
 //   - Hold out checking if dReams is in configure
-//   - windows disables certain initial sync routines from running on windows os
+//   - Pass scan func for initial Gnomon sync
 func GnomonState(config bool, scan func(map[string]string)) {
 	if rpc.Daemon.IsConnected() && Gnomes.IsRunning() {
 		contracts := Gnomes.IndexContains()
@@ -268,26 +269,22 @@ func CheckAllNFAs(gc bool, scids map[string]string) {
 		if scids == nil {
 			scids = Gnomes.GetAllOwnersAndSCIDs()
 		}
-		keys := make([]string, len(scids))
 
-		i := 0
 		assets := []string{}
-		for k := range scids {
+		for sc := range scids {
 			if !rpc.Wallet.IsConnected() || !Gnomes.IsRunning() {
 				break
 			}
 
-			keys[i] = k
-			if header, _ := Gnomes.GetSCIDValuesByKey(keys[i], "nameHdr"); header != nil {
-				owner, _ := Gnomes.GetSCIDValuesByKey(keys[i], "owner")
-				file, _ := Gnomes.GetSCIDValuesByKey(keys[i], "fileURL")
+			if header, _ := Gnomes.GetSCIDValuesByKey(sc, "nameHdr"); header != nil {
+				owner, _ := Gnomes.GetSCIDValuesByKey(sc, "owner")
+				file, _ := Gnomes.GetSCIDValuesByKey(sc, "fileURL")
 				if owner != nil && file != nil {
 					if owner[0] == rpc.Wallet.Address && ValidNfa(file[0]) {
-						assets = append(assets, header[0]+"   "+keys[i])
+						assets = append(assets, header[0]+"   "+sc)
 					}
 				}
 			}
-			i++
 		}
 
 		sort.Strings(assets)
@@ -704,33 +701,29 @@ func SearchNFAsBy(by int, prefix string) (results []string) {
 	if Gnomes.IsReady() {
 		results = []string{" Collection,  Name,  Description,  SCID:"}
 		assets := Gnomes.GetAllOwnersAndSCIDs()
-		keys := make([]string, len(assets))
 
-		i := 0
-		for k := range assets {
+		for sc := range assets {
 			if !Gnomes.IsReady() {
 				return
 			}
 
-			keys[i] = k
-
-			if file, _ := Gnomes.GetSCIDValuesByKey(keys[i], "fileURL"); file != nil {
+			if file, _ := Gnomes.GetSCIDValuesByKey(sc, "fileURL"); file != nil {
 				if ValidNfa(file[0]) {
-					if name, _ := Gnomes.GetSCIDValuesByKey(keys[i], "nameHdr"); name != nil {
-						coll, _ := Gnomes.GetSCIDValuesByKey(keys[i], "collection")
-						desc, _ := Gnomes.GetSCIDValuesByKey(keys[i], "descrHdr")
+					if name, _ := Gnomes.GetSCIDValuesByKey(sc, "nameHdr"); name != nil {
+						coll, _ := Gnomes.GetSCIDValuesByKey(sc, "collection")
+						desc, _ := Gnomes.GetSCIDValuesByKey(sc, "descrHdr")
 						if coll != nil && desc != nil {
 							switch by {
 							case 0:
 								if strings.HasPrefix(coll[0], prefix) {
 									desc_check := TrimStringLen(desc[0], 66)
-									asset := coll[0] + "   " + name[0] + "   " + desc_check + "   " + keys[i]
+									asset := coll[0] + "   " + name[0] + "   " + desc_check + "   " + sc
 									results = append(results, asset)
 								}
 							case 1:
 								if strings.HasPrefix(name[0], prefix) {
 									desc_check := TrimStringLen(desc[0], 66)
-									asset := coll[0] + "   " + name[0] + "   " + desc_check + "   " + keys[i]
+									asset := coll[0] + "   " + name[0] + "   " + desc_check + "   " + sc
 									results = append(results, asset)
 								}
 							}
@@ -738,8 +731,6 @@ func SearchNFAsBy(by int, prefix string) (results []string) {
 					}
 				}
 			}
-
-			i++
 		}
 
 		sort.Strings(results)

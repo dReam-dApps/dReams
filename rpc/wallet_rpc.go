@@ -60,6 +60,7 @@ func SessionLog() *fyne.Container {
 	return container.NewMax(cont, vbox)
 }
 
+// Initialize balance maps for supported tokens
 func InitBalances() {
 	Wallet.TokenBal = make(map[string]uint64)
 	Wallet.Display.Balance = make(map[string]string)
