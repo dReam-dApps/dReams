@@ -19,45 +19,56 @@ Interact with a variety of different products and services on [Dero's](https://d
 dReams is a open source platform application that houses multiple *desktop* dApps and utilities built on Dero. dReams has two facets to its use. 
 
 As a application
->With a wide array of features from games to blockchain services, dReams is a point of entry into the world of Dero.
+> With a wide array of features from games to blockchain services, dReams is a point of entry into the privacy preserving world of Dero.
 
 As a repository
 > dReams serves as a source for building Dero applications. Written in [Go](https://go.dev/) and using the [Fyne toolkit](https://fyne.io/), the dReams repository is constructed into packages with function imports for many different Dero necessities. 
 
 Download the latest [release](https://github.com/dReam-dApps/dReams/releases) or [build from source](#build) to use dReams.
+
+Our [Template](https://github.com/dReam-dApps/Template) can be used to help create new Dero dApps.
+
 ### dApps
-All dApps are ran on chain in a decentralized manner. dReams and packages are interfaces to interact with these on chain services. With the main dReams application, users can access the dApps below from one place. 
+All dApps are ran on chain in a decentralized manner. dReams and packages are solely interfaces to interact with these on chain services. With the main dReams application, users can access the dApps below from one place.
 - **Holdero**
 	- Multiplayer Texas Hold'em style poker
 	- In game assets 
 	- Deployable contracts
+	- Multiple tokens  supported
 	- dReam Tools
 - **Baccarat**
 	- Single player table game
 	- In game assets
+	- Multiple tokens  supported
 - **dSports and dPrediction**
 	- P2P betting and predictions
 	- Deployable contracts
 	- dService 
 - **Iluma**
 	- Tarot readings
-	- Custom cards and artwork
+	- Custom cards and artwork by Kalina Lux
 	- Querent's companion
 - **DerBnb**
 	- Property rental management app
 	- Mint property tokens
 	- Manage rentals and bookings with Dero private messaging
+	- DerBnb profit share
+	- TRVL tokens
 - **NFA Marketplace**
 	- View and manage owned assets
 	- View and manage listings
+	- Search NFAs
 	- Mint NFAs 
+- **More dApps to come...**
 ### Features
-- [Gnomon](https://github.com/civilware/gnomon) Index with user controls
+- [Gnomon](https://github.com/civilware/gnomon) with UI controls
+- Create customs Gnomon indexes
 - Gnomon header controls
 - Send Dero messages
 - Send Dero assets
 - Deployable contract rating system
 - Dynamic app updates from on chain data
+- Import only the dApps and collections you want to use
 - Shared config files for platform wide use
 
 ### Build
@@ -73,7 +84,9 @@ go build .
 ./dReams
 ```
 ## Packages
-dReams repo is built as packages. With imports from the Dero code base, dReams variable structures are complete with the basics needs for building Dero applications that can run alone, or ones that could be integrated into dReams.
+dReams repo is built as packages. With imports from the Dero code base, dReams variable structures are complete with the basics needs for building Dero applications that can run alone, or ones that could be integrated into dReams. 
+
+Our [Template](https://github.com/dReam-dApps/Template) can be used as a UI starting point and you can view our full [Examples](https://github.com/dReam-dApps/Examples) for further references. 
 ### rpc
 The rpc package contains all of the basic functionality needed to set up clients, check connectivity and read blockchain and wallet information. There are arbitrary rpc calls which any dApp can make use of such as the NFA calls, `SendMessage()` or `SendAsset()` with optional payload. This example checks for daemon and wallet rpc connectivity.
 ```
@@ -204,7 +217,7 @@ import (
 	"github.com/dReam-dApps/dReams/rpc"
 )
 
-// dReams dwidget VerticalEntries() example
+// dReams dwidget NewVerticalEntries() example
 
 // Name my app
 const app_tag = "My_app"
@@ -230,7 +243,7 @@ func main() {
 	})
 
 	// Initialize dwidget connection box
-	connect_box := dwidget.VerticalEntries(app_tag, 1)
+	connect_box := dwidget.NewVerticalEntries(app_tag, 1)
 
 	// When connection button is pressed we will connect to wallet rpc,
 	// and start Gnomon with NFA search filter if it is not running
@@ -321,12 +334,12 @@ func main() {
 ## Donations
 - **Dero Address**: dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn
 
-![DeroDonations](https://user-images.githubusercontent.com/84689659/165414903-44164e7e-4277-44f8-b1fe-8d139f559db1.jpg)
+![DeroDonations](https://raw.githubusercontent.com/SixofClubsss/dreamdappsite/main/assets/DeroDonations.jpg)
 
 ---
 
 ### Licensing
 
-dReams platform and packages are free and open source. 
-The source code is published under the [MIT](https://github.com/dReam-dApps/dReams/blob/main/LICENSE) License. 
-Copyright © 2023 dReam dApps 
+dReams platform and packages are free and open source.    
+The source code is published under the [MIT](https://github.com/dReam-dApps/dReams/blob/main/LICENSE) License.   
+Copyright © 2023 dReam dApps   
