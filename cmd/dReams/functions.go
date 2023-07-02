@@ -766,7 +766,7 @@ func rpcConnectButton() fyne.Widget {
 			}
 
 			if !rpc.Wallet.IsConnected() {
-				dialog.NewInformation("Gnomon Syncing", "Please wait for Gnomon to sync before connecting wallet", dReams.Window).Show()
+				log.Println("[dReams] Syncing, please wait")
 			}
 		}()
 	})
