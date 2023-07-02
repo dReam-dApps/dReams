@@ -572,7 +572,7 @@ func checkConnection() {
 func disconnected() {
 	menu.Market.Auctions = []string{}
 	menu.Market.Buy_now = []string{}
-	holdero.Disconnected()
+	holdero.Disconnected(menu.Control.Dapp_list["Holdero"])
 	prediction.Disconnected()
 	rpc.Wallet.Address = ""
 	dreams.Theme.Select.Options = []string{"Main", "Legacy"}
