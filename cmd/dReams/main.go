@@ -13,6 +13,7 @@ import (
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/layout"
 )
@@ -42,6 +43,10 @@ func main() {
 	done := make(chan struct{})
 
 	dReams.Window.SetCloseIntercept(func() {
+		if menu.Gnomes.Start {
+			dialog.NewInformation("Gnomon Syncing", "Please wait for Gnomon to sync before closing dReams", dReams.Window).Show()
+			return
+		}
 		menu.CloseAppSignal(true)
 		menu.WriteDreamsConfig(save())
 		dappCloseCheck()

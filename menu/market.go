@@ -857,6 +857,15 @@ func ReturnEnabledNFAs(assets map[string]bool) (filters []string) {
 	return
 }
 
+func ReturnAssetCount() (count int) {
+	count = Control.NFA_count + Control.G45_count - 10
+	if count < 2 {
+		count = 2
+	}
+
+	return
+}
+
 // Options for enabling NFA collection
 func enableNFAOpts(asset assetCount) (opts *widget.RadioGroup) {
 	onChanged := func(s string) {

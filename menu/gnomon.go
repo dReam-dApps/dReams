@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -19,6 +20,7 @@ import (
 	"github.com/civilware/Gnomon/storage"
 	"github.com/civilware/Gnomon/structures"
 
+	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 )
 
@@ -172,6 +174,11 @@ func StartGnomon(tag, dbtype string, filters []string, upper, lower int, custom 
 
 // Manually add G45 collections to Gnomon index
 func G45Index() {
+	if Gnomes.DBType == "boltdb" {
+		for Gnomes.Writing() {
+			time.Sleep(time.Second)
+		}
+	}
 	log.Println("[dReams] Adding G45 Collections")
 	filters := Gnomes.Indexer.SearchFilter
 	Gnomes.Indexer.SearchFilter = []string{}
@@ -190,6 +197,12 @@ func G45Index() {
 	}
 	Gnomes.Indexer.SearchFilter = filters
 	Gnomes.Trim = false
+
+	if runtime.GOOS != "windows" {
+		fyne.CurrentApp().SendNotification(&fyne.Notification{
+			Title:   "dReams - Gnomon",
+			Content: "Fast sync completed"})
+	}
 }
 
 // Update Gnomon endpoint to current rpc.Daemon.Rpc value

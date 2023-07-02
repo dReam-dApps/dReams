@@ -329,7 +329,7 @@ func refreshPriceDisplay(c bool) {
 func menuRefresh(offset int) {
 	if dReams.OnTab("Menu") && menu.Gnomes.IsInitialized() {
 		index := menu.Gnomes.Indexer.LastIndexedHeight
-		if index < menu.Gnomes.Indexer.ChainHeight-4 || !menu.Gnomes.HasIndex(2) {
+		if index < menu.Gnomes.Indexer.ChainHeight-4 || !menu.Gnomes.HasIndex(uint64(menu.ReturnAssetCount())) {
 			menu.Assets.Gnomes_sync.Text = (" Gnomon Syncing...")
 			menu.Assets.Gnomes_sync.Refresh()
 		} else {
@@ -761,6 +761,12 @@ func rpcConnectButton() fyne.Widget {
 					prediction.OnConnected()
 				}
 				wait = false
+
+				return
+			}
+
+			if !rpc.Wallet.IsConnected() {
+				dialog.NewInformation("Gnomon Syncing", "Please wait for Gnomon to sync before connecting wallet", dReams.Window).Show()
 			}
 		}()
 	})
