@@ -127,6 +127,7 @@ func ReadDreamsConfig(tag string) (saved dreams.DreamSave) {
 			config.Close()
 		}
 
+		Gnomes.DBType = "boltdb"
 		Control.Enabled_assets = make(map[string]bool)
 
 		return
