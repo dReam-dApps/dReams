@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"runtime"
 	"time"
 
@@ -91,5 +90,5 @@ func main() {
 	go fetch(done)
 	dReams.Window.ShowAndRun()
 	<-done
-	log.Println("[dReams] Closed")
+	logger.Println("[dReams] Closed")
 }

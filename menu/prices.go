@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -89,7 +88,7 @@ func GetPrice(coin, tag string) (price float64, display string) {
 		price = g
 	} else {
 		price = 0
-		log.Printf("[%s] Error getting price feed\n", tag)
+		logger.Errorf("[%s] Error getting price feed\n", tag)
 	}
 
 	if CoinDecimal(coin) == 8 {
@@ -126,7 +125,7 @@ func getOgre(coin string) string {
 	client := &http.Client{Timeout: 10 * time.Second}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		log.Println("[getOgre]", err)
+		logger.Errorln("[getOgre]", err)
 		return ""
 	}
 
@@ -135,7 +134,7 @@ func getOgre(coin string) string {
 	resp, err := client.Do(req)
 
 	if err != nil {
-		log.Println("[getOgre]", err)
+		logger.Errorln("[getOgre]", err)
 		return ""
 	}
 
@@ -143,7 +142,7 @@ func getOgre(coin string) string {
 	b, err := io.ReadAll(resp.Body)
 
 	if err != nil {
-		log.Println("[getOgre]", err)
+		logger.Errorln("[getOgre]", err)
 		return ""
 	}
 
@@ -184,7 +183,7 @@ func getKucoin(coin string) string {
 	client := &http.Client{Timeout: 10 * time.Second}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		log.Println("[getKucoin]", err)
+		logger.Errorln("[getKucoin]", err)
 		return ""
 	}
 
@@ -193,7 +192,7 @@ func getKucoin(coin string) string {
 	resp, err := client.Do(req)
 
 	if err != nil {
-		log.Println("[getKucoin]", err)
+		logger.Errorln("[getKucoin]", err)
 		return ""
 	}
 
@@ -201,7 +200,7 @@ func getKucoin(coin string) string {
 	b, err := io.ReadAll(resp.Body)
 
 	if err != nil {
-		log.Println("[getKucoin]", err)
+		logger.Errorln("[getKucoin]", err)
 		return ""
 	}
 
@@ -243,7 +242,7 @@ func getGeko(coin string) string {
 
 	price, err := CG.SimpleSinglePrice(url, pair)
 	if err != nil {
-		log.Println("[getGeko]", err)
+		logger.Errorln("[getGeko]", err)
 		return ""
 	}
 

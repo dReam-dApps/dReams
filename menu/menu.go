@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"image"
 	"image/color"
-	"log"
 	"math"
 	"os"
 	"strconv"
@@ -96,14 +95,14 @@ func WriteDreamsConfig(u dreams.DreamSave) {
 
 	file, err := os.Create("config/config.json")
 	if err != nil {
-		log.Println("[WriteDreamsConfig]", err)
+		logger.Errorln("[WriteDreamsConfig]", err)
 		return
 	}
 	defer file.Close()
 
 	json, _ := json.MarshalIndent(u, "", " ")
 	if _, err = file.Write(json); err != nil {
-		log.Println("[WriteDreamsConfig]", err)
+		logger.Errorln("[WriteDreamsConfig]", err)
 	}
 }
 
@@ -112,17 +111,17 @@ func WriteDreamsConfig(u dreams.DreamSave) {
 //   - Sets up directory if none exists
 func ReadDreamsConfig(tag string) (saved dreams.DreamSave) {
 	if !dreams.FileExists("config/config.json", tag) {
-		log.Printf("[%s] Creating config directory\n", tag)
+		logger.Printf("[%s] Creating config directory\n", tag)
 		mkdir := os.Mkdir("config", 0755)
 		if mkdir != nil {
-			log.Printf("[%s] %s\n", tag, mkdir)
+			logger.Errorf("[%s] %s\n", tag, mkdir)
 		}
 
 		if config, err := os.Create("config/config.json"); err == nil {
 			var save dreams.DreamSave
 			json, _ := json.MarshalIndent(&save, "", " ")
 			if _, err = config.Write(json); err != nil {
-				log.Println("[WriteDreamsConfig]", err)
+				logger.Errorln("[WriteDreamsConfig]", err)
 			}
 			config.Close()
 		}
@@ -135,12 +134,12 @@ func ReadDreamsConfig(tag string) (saved dreams.DreamSave) {
 
 	file, err := os.ReadFile("config/config.json")
 	if err != nil {
-		log.Println("[ReadDreamsConfig]", err)
+		logger.Errorln("[ReadDreamsConfig]", err)
 		return
 	}
 
 	if err = json.Unmarshal(file, &saved); err != nil {
-		log.Println("[ReadDreamsConfig]", err)
+		logger.Errorln("[ReadDreamsConfig]", err)
 		return
 	}
 
@@ -949,7 +948,7 @@ func BackgroundRast(tag string) *canvas.Raster {
 			return canvas.NewRasterFromImage(img)
 		}
 
-		log.Printf("[%s] Fallback %s\n", tag, err)
+		logger.Warnf("[%s] Fallback %s\n", tag, err)
 	}
 
 	return canvas.NewRasterFromImage(image.Rect(2, 2, 4, 4))

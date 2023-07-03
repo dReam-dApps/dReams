@@ -8,7 +8,6 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
-	"log"
 	"os"
 	"strings"
 	"time"
@@ -40,13 +39,13 @@ func SessionLog() *fyne.Container {
 		if f, err := os.Create(file_name); err == nil {
 			defer f.Close()
 			if _, err = f.WriteString(Wallet.LogEntry.Text); err != nil {
-				log.Println("[saveLog]", err)
+				logger.Errorln("[saveLog]", err)
 				return
 			}
 
-			log.Println("[saveLog] Log File Saved", file_name)
+			logger.Println("[saveLog] Log File Saved", file_name)
 		} else {
-			log.Println("[saveLog]", err)
+			logger.Errorln("[saveLog]", err)
 		}
 	})
 	button.Importance = widget.LowImportance
@@ -98,7 +97,7 @@ func EchoWallet(tag string) {
 		params := []string{"Hello", "World", "!"}
 		if err := rpcClientW.CallFor(ctx, &result, "Echo", params); err != nil {
 			Wallet.Connected(false)
-			log.Printf("[%s] %s\n", tag, err)
+			logger.Errorf("[%s] %s\n", tag, err)
 			return
 		}
 
@@ -117,14 +116,14 @@ func GetAddress(tag string) {
 	var result *rpc.GetAddress_Result
 	if err := rpcClientW.CallFor(ctx, &result, "GetAddress"); err != nil {
 		Wallet.Connected(false)
-		log.Printf("[%s] %s\n", tag, err)
+		logger.Errorf("[%s] %s\n", tag, err)
 		return
 	}
 
 	if (result.Address[0:4] == "dero" || result.Address[0:4] == "deto") && len(result.Address) == 66 {
 		Wallet.Connected(true)
-		log.Printf("[%s] Wallet Connected\n", tag)
-		log.Printf("[%s] Dero Address: %s\n", tag, result.Address)
+		logger.Printf("[%s] Wallet Connected\n", tag)
+		logger.Printf("[%s] Dero Address: %s\n", tag, result.Address)
 		Wallet.Address = result.Address
 		id := []byte(result.Address)
 		hash := sha256.Sum256(id)
@@ -145,7 +144,7 @@ func GetWalletTx(txid string) *rpc.Entry {
 	}
 
 	if err := rpcClientW.CallFor(ctx, &result, "GetTransferbyTXID", params); err != nil {
-		log.Println("[GetWalletTx]", err)
+		logger.Errorln("[GetWalletTx]", err)
 		return nil
 	}
 
@@ -159,7 +158,7 @@ func GetBalance() uint64 {
 
 	var result *rpc.GetBalance_Result
 	if err := rpcClientW.CallFor(ctx, &result, "GetBalance"); err != nil {
-		log.Println("[GetBalance]", err)
+		logger.Errorln("[GetBalance]", err)
 		return 0
 	}
 
@@ -177,7 +176,7 @@ func TokenBalance(scid string) uint64 {
 	}
 
 	if err := rpcClientW.CallFor(ctx, &result, "GetBalance", params); err != nil {
-		log.Println("[TokenBalance]", err)
+		logger.Errorln("[TokenBalance]", err)
 		return 0
 	}
 
@@ -263,7 +262,7 @@ func GetWalletHeight(tag string) {
 
 		var result *rpc.GetHeight_Result
 		if err := rpcClientW.CallFor(ctx, &result, "GetHeight"); err != nil {
-			log.Printf("[%s] %s\n", tag, err)
+			logger.Errorln("[%s] %s\n", tag, err)
 			return
 		}
 
@@ -299,11 +298,11 @@ func GetdReams(amt uint64) {
 	}
 
 	if err := rpcClientW.CallFor(ctx, &txid, "transfer", params); err != nil {
-		log.Println("[GetdReams]", err)
+		logger.Errorln("[GetdReams]", err)
 		return
 	}
 
-	log.Println("[dReams] DERO-dReams", txid)
+	logger.Println("[dReams] DERO-dReams", txid)
 	AddLog("DERO-dReams " + txid.TXID)
 }
 
@@ -335,11 +334,11 @@ func TradedReams(amt uint64) {
 	}
 
 	if err := rpcClientW.CallFor(ctx, &txid, "transfer", params); err != nil {
-		log.Println("[TradedReams]", err)
+		logger.Errorln("[TradedReams]", err)
 		return
 	}
 
-	log.Println("[dReams] dReams-DERO TX:", txid)
+	logger.Println("[dReams] dReams-DERO TX:", txid)
 	AddLog("dReams-DERO TX: " + txid.TXID)
 }
 
@@ -380,11 +379,11 @@ func RateSCID(scid string, amt, pos uint64) {
 	}
 
 	if err := rpcClientW.CallFor(ctx, &txid, "transfer", params); err != nil {
-		log.Println("[RateSCID]", err)
+		logger.Errorln("[RateSCID]", err)
 		return
 	}
 
-	log.Println("[RateSCID] Rate TX:", txid)
+	logger.Println("[RateSCID] Rate TX:", txid)
 	AddLog("Rate TX: " + txid.TXID)
 }
 
@@ -419,11 +418,11 @@ func SetHeaders(name, desc, icon, scid string) {
 		Fees:      fee,
 	}
 	if err := rpcClientW.CallFor(ctx, &txid, "transfer", params); err != nil {
-		log.Println("[SetHeaders]", err)
+		logger.Errorln("[SetHeaders]", err)
 		return
 	}
 
-	log.Println("[SetHeaders] Set Headers TX:", txid)
+	logger.Println("[SetHeaders] Set Headers TX:", txid)
 	AddLog("Set Headers TX: " + txid.TXID)
 }
 
@@ -454,11 +453,11 @@ func ClaimNFA(scid string) {
 	}
 
 	if err := rpcClientW.CallFor(ctx, &txid, "transfer", params); err != nil {
-		log.Println("[ClaimNFA]", err)
+		logger.Errorln("[ClaimNFA]", err)
 		return
 	}
 
-	log.Println("[ClaimNFA] Claim TX:", txid)
+	logger.Println("[ClaimNFA] Claim TX:", txid)
 	AddLog("NFA Claim TX: " + txid.TXID)
 }
 
@@ -489,15 +488,15 @@ func BidBuyNFA(scid, bidor string, amt uint64) {
 	}
 
 	if err := rpcClientW.CallFor(ctx, &txid, "transfer", params); err != nil {
-		log.Println("[BidBuyNFA]", err)
+		logger.Errorln("[BidBuyNFA]", err)
 		return
 	}
 
 	if bidor == "Bid" {
-		log.Println("[BidBuyNFA] NFA Bid TX:", txid)
+		logger.Println("[BidBuyNFA] NFA Bid TX:", txid)
 		AddLog("NFA Bid TX: " + txid.TXID)
 	} else {
-		log.Println("[BidBuyNFA] NFA Buy TX:", txid)
+		logger.Println("[BidBuyNFA] NFA Buy TX:", txid)
 		AddLog("NFA Buy TX: " + txid.TXID)
 	}
 }
@@ -555,11 +554,11 @@ func SetNFAListing(scid, list, char string, dur, amt, perc uint64) {
 	}
 
 	if err := rpcClientW.CallFor(ctx, &txid, "transfer", params); err != nil {
-		log.Println("[SetNFAListing]", err)
+		logger.Errorln("[SetNFAListing]", err)
 		return
 	}
 
-	log.Println("[SetNFAListing] NFA List TX:", txid)
+	logger.Println("[SetNFAListing] NFA List TX:", txid)
 	AddLog("NFA List TX: " + txid.TXID)
 }
 
@@ -590,15 +589,15 @@ func CancelCloseNFA(scid, c string) {
 	}
 
 	if err := rpcClientW.CallFor(ctx, &txid, "transfer", params); err != nil {
-		log.Println("[CancelCloseNFA]", err)
+		logger.Errorln("[CancelCloseNFA]", err)
 		return
 	}
 
 	if c == "CloseListing" {
-		log.Println("[CancelCloseNFA] Close NFA Listing TX:", txid)
+		logger.Println("[CancelCloseNFA] Close NFA Listing TX:", txid)
 		AddLog("NFA Close Listing TX: " + txid.TXID)
 	} else {
-		log.Println("[CancelCloseNFA] Cancel NFA Listing TX:", txid)
+		logger.Println("[CancelCloseNFA] Cancel NFA Listing TX:", txid)
 		AddLog("NFA Cancel Listing TX: " + txid.TXID)
 	}
 }
@@ -623,11 +622,11 @@ func UploadNFAContract(code string) (tx string) {
 	}
 
 	if err := rpcClientW.CallFor(ctx, &txid, "transfer", params); err != nil {
-		log.Println("[UploadNFAContract]", err)
+		logger.Errorln("[UploadNFAContract]", err)
 		return
 	}
 
-	log.Println("[UploadNFAContract] TXID:", txid)
+	logger.Println("[UploadNFAContract] TXID:", txid)
 
 	return txid.TXID
 }
@@ -673,11 +672,11 @@ func SendAsset(scid, dest string, payload bool) {
 	}
 
 	if err := rpcClientW.CallFor(ctx, &txid, "transfer", params); err != nil {
-		log.Println("[SendAsset]", err)
+		logger.Errorln("[SendAsset]", err)
 		return
 	}
 
-	log.Println("[SendAsset] Send Asset TX:", txid)
+	logger.Println("[SendAsset] Send Asset TX:", txid)
 	AddLog("Send Asset TX: " + txid.TXID)
 }
 
@@ -699,17 +698,17 @@ func ConfirmTx(txid, tag string, timeout int) bool {
 				if tx.In_pool {
 					continue
 				} else if !tx.In_pool && tx.Block_Height > 1 && tx.ValidBlock != "" {
-					log.Printf("[%s] TX Confirmed\n", tag)
+					logger.Printf("[%s] TX Confirmed\n", tag)
 					return true
 				} else if !tx.In_pool && tx.Block_Height == 0 && tx.ValidBlock == "" {
-					log.Printf("[%s] TX Failed\n", tag)
+					logger.Warnf("[%s] TX Failed\n", tag)
 					return false
 				}
 			}
 		}
 	}
 
-	log.Printf("[%s] Could Not Confirm TX\n", tag)
+	logger.Errorf("[%s] Could Not Confirm TX\n", tag)
 
 	return false
 }
@@ -732,10 +731,10 @@ func ConfirmTxRetry(txid, tag string, timeout int) (retry int) {
 			if tx.In_pool {
 				continue
 			} else if !tx.In_pool && tx.Block_Height > 1 && tx.ValidBlock != "" {
-				log.Printf("[%s] TX Confirmed\n", tag)
+				logger.Printf("[%s] TX Confirmed\n", tag)
 				return 100
 			} else if !tx.In_pool && tx.Block_Height == 0 && tx.ValidBlock == "" {
-				log.Printf("[%s] TX Failed, Retrying next block\n", tag)
+				logger.Warnf("[%s] TX Failed, Retrying next block\n", tag)
 				time.Sleep(3 * time.Second)
 				for Wallet.Height <= next_block {
 					time.Sleep(3 * time.Second)
@@ -745,7 +744,7 @@ func ConfirmTxRetry(txid, tag string, timeout int) (retry int) {
 		}
 	}
 
-	log.Printf("[%s] Could Not Confirm TX\n", tag)
+	logger.Errorf("[%s] Could Not Confirm TX\n", tag)
 
 	return 2
 }
@@ -780,11 +779,11 @@ func SendMessage(dest, msg string, rings uint64) {
 	}
 
 	if err := rpcClientW.CallFor(ctx, &txid, "transfer", params); err != nil {
-		log.Println("[SendMessage]", err)
+		logger.Errorln("[SendMessage]", err)
 		return
 	}
 
-	log.Println("[SendMessage] Send Message TX:", txid)
+	logger.Println("[SendMessage] Send Message TX:", txid)
 }
 
 // Should put decimal in Wallet.Display

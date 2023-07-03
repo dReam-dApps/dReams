@@ -1,13 +1,14 @@
 package rpc
 
 import (
-	"log"
 	"sync"
 
 	"fyne.io/fyne/v2/widget"
+	"github.com/civilware/Gnomon/structures"
 	"github.com/deroproject/derohe/cryptography/crypto"
 	"github.com/deroproject/derohe/rpc"
 	"github.com/deroproject/derohe/walletapi"
+	"github.com/sirupsen/logrus"
 )
 
 type wallet struct {
@@ -32,6 +33,7 @@ type wallet struct {
 }
 
 var Wallet wallet
+var logger = structures.Logger.WithFields(logrus.Fields{})
 
 // Check if wallet is connected
 func (w *wallet) IsConnected() bool {
@@ -59,7 +61,7 @@ func (w *wallet) GetBalance() {
 
 		var result *rpc.GetBalance_Result
 		if err := rpcClientW.CallFor(ctx, &result, "GetBalance"); err != nil {
-			log.Println("[GetBalance]", err)
+			logger.Errorln("[GetBalance]", err)
 			w.Balance = 0
 			return
 		}
@@ -87,7 +89,7 @@ func (w *wallet) GetTokenBalance(name, scid string) {
 
 		var result *rpc.GetBalance_Result
 		if err := rpcClientW.CallFor(ctx, &result, "GetBalance", params); err != nil {
-			log.Println("[GetTokenBalance]", err)
+			logger.Errorln("[GetTokenBalance]", err)
 			w.TokenBal[name] = 0
 			return
 		}

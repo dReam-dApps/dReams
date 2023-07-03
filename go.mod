@@ -6,13 +6,14 @@ require (
 	fyne.io/fyne/v2 v2.3.1
 	fyne.io/x/fyne v0.0.0-20230411205836-1ca0ead20763
 	github.com/SixofClubsss/Baccarat v0.0.0-20230702073156-c20d2aa7be76
-	github.com/SixofClubsss/Holdero v0.0.0-20230702072037-69a9f9c0434c
-	github.com/SixofClubsss/Iluma v0.0.0-20230702072605-45de548d879a
+	github.com/SixofClubsss/Holdero v0.0.0-20230703191841-1c46cf2d1394
+	github.com/SixofClubsss/Iluma v0.0.0-20230703191335-183cf5de74cc
 	github.com/SixofClubsss/dPrediction v0.0.0-20230703020115-de700f18545b
 	github.com/SixofClubsss/derbnbDesktop v0.0.0-20230703020658-67292a7a0999
-	github.com/civilware/Gnomon v0.0.0-20230629173619-f2809fb61dfc
+	github.com/civilware/Gnomon v0.0.0-20230703202054-c41eb33ce9c3
 	github.com/deroproject/derohe v0.0.0-20230604143809-765b2db1f482
 	github.com/fyne-io/terminal v0.0.0-20230223114940-c76e408adbd3
+	github.com/sirupsen/logrus v1.9.3
 	github.com/superoo7/go-gecko v1.0.0
 	github.com/ybbus/jsonrpc/v3 v3.1.4
 )
@@ -48,6 +49,9 @@ require (
 	github.com/jsummers/gobmp v0.0.0-20151104160322-e2ba15ffa76e // indirect
 	github.com/klauspost/compress v1.15.13 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.2 // indirect
+	github.com/mattn/go-colorable v0.1.13 // indirect
+	github.com/mattn/go-isatty v0.0.16 // indirect
+	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
 	github.com/minio/sha256-simd v1.0.0 // indirect
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
@@ -57,7 +61,11 @@ require (
 	github.com/srwiley/oksvg v0.0.0-20220731023508-a61f04f16b76 // indirect
 	github.com/srwiley/rasterx v0.0.0-20210519020934-456a8d69b780 // indirect
 	github.com/stretchr/testify v1.8.4 // indirect
+	github.com/templexxx/xorsimd v0.4.2 // indirect
 	github.com/tevino/abool v1.2.0 // indirect
+	github.com/tjfoc/gmsm v1.4.1 // indirect
+	github.com/valyala/histogram v1.2.0 // indirect
+	github.com/x-cray/logrus-prefixed-formatter v0.5.2 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/yuin/goldmark v1.4.13 // indirect
 	go.etcd.io/bbolt v1.3.6 // indirect
@@ -70,8 +78,10 @@ require (
 	golang.org/x/net v0.10.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
 	golang.org/x/sys v0.9.0 // indirect
+	golang.org/x/term v0.8.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
+	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	honnef.co/go/js/dom v0.0.0-20210725211120-f030747120f2 // indirect
 	nhooyr.io/websocket v1.8.7 // indirect

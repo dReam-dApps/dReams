@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
 	"sync"
@@ -114,7 +113,7 @@ func DaemonHeight(tag, ep string) uint64 {
 
 	var result *rpc.GetHeight_Result
 	if err := rpcClientD.CallFor(ctx, &result, "DERO.GetHeight"); err != nil {
-		log.Printf("[%s] %s\n", tag, err)
+		logger.Errorf("[%s] %s\n", tag, err)
 		return 0
 	}
 
@@ -128,7 +127,7 @@ func DaemonVersion() (version string) {
 
 	var result *rpc.GetInfo_Result
 	if err := rpcClientD.CallFor(ctx, &result, "DERO.GetInfo"); err != nil {
-		log.Printf("[DaemonVersion] %s\n", err)
+		logger.Errorf("[DaemonVersion] %s\n", err)
 		return
 	}
 
@@ -157,11 +156,11 @@ func GasEstimate(scid, tag string, args rpc.Arguments, t []rpc.Transfer, max uin
 	}
 
 	if err := rpcClientD.CallFor(ctx, &result, "DERO.GetGasEstimate", params); err != nil {
-		log.Println(tag, err)
+		logger.Errorf(tag, err)
 		return 0
 	}
 
-	log.Println(tag+" Gas Fee:", result.GasStorage+120)
+	logger.Println(tag+" Gas Fee:", result.GasStorage+120)
 
 	if result.GasStorage < max {
 		return result.GasStorage + 120
@@ -183,7 +182,7 @@ func FindStringKey(scid, key, daemon string) interface{} {
 	}
 
 	if err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params); err != nil {
-		log.Println("[FindStringKey]", err)
+		logger.Errorln("[FindStringKey]", err)
 		return nil
 	}
 
@@ -216,31 +215,31 @@ func FetchFees() {
 	if fee, ok := FindStringKey(RatingSCID, "ContractUnlock", Daemon.Rpc).(float64); ok {
 		UnlockFee = uint64(fee)
 	} else {
-		log.Println("[FetchFees] Could not get current contract unlock fee, using default")
+		logger.Errorln("[FetchFees] Could not get current contract unlock fee, using default")
 	}
 
 	if fee, ok := FindStringKey(RatingSCID, "ListingFee", Daemon.Rpc).(float64); ok {
 		ListingFee = uint64(fee)
 	} else {
-		log.Println("[FetchFees] Could not get current listing fee, using default")
+		logger.Errorln("[FetchFees] Could not get current listing fee, using default")
 	}
 
 	if fee, ok := FindStringKey(TarotSCID, "Fee", Daemon.Rpc).(float64); ok {
 		IlumaFee = uint64(fee)
 	} else {
-		log.Println("[FetchFees] Could not get current Iluma fee, using default")
+		logger.Errorln("[FetchFees] Could not get current Iluma fee, using default")
 	}
 
 	if fee, ok := FindStringKey(RatingSCID, "LowLimitFee", Daemon.Rpc).(float64); ok {
 		LowLimitFee = uint64(fee)
 	} else {
-		log.Println("[FetchFees] Could not get current low fee limit, using default")
+		logger.Errorln("[FetchFees] Could not get current low fee limit, using default")
 	}
 
 	if fee, ok := FindStringKey(RatingSCID, "HighLimitFee", Daemon.Rpc).(float64); ok {
 		HighLimitFee = uint64(fee)
 	} else {
-		log.Println("[FetchFees] Could not get current high fee limit, using default")
+		logger.Errorln("[FetchFees] Could not get current high fee limit, using default")
 	}
 }
 
@@ -257,7 +256,7 @@ func CheckForIndex(scid string) interface{} {
 	}
 
 	if err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params); err != nil {
-		log.Println("[CheckForIndex]", err)
+		logger.Errorln("[CheckForIndex]", err)
 		return nil
 	}
 
@@ -278,7 +277,7 @@ func GetSCCode(scid string) string {
 		}
 
 		if err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params); err != nil {
-			log.Println("[GetSCCode]", err)
+			logger.Errorln("[GetSCCode]", err)
 			return ""
 		}
 
@@ -300,7 +299,7 @@ func GetG45Collection(scid string) (scids []string) {
 	}
 
 	if err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params); err != nil {
-		log.Println("[GetG45Collection]", err)
+		logger.Errorln("[GetG45Collection]", err)
 		return nil
 	}
 
@@ -313,7 +312,7 @@ func GetG45Collection(scid string) (scids []string) {
 			break
 		} else {
 			if hx, err := hex.DecodeString(fmt.Sprint(asset)); err != nil {
-				log.Println("[GetG45Collection]", err)
+				logger.Errorln("[GetG45Collection]", err)
 				i++
 			} else {
 				split := strings.Split(string(hx), ",")
@@ -341,7 +340,7 @@ func GetDaemonTx(txid string) *rpc.Tx_Related_Info {
 	}
 
 	if err := rpcClientD.CallFor(ctx, &result, "DERO.GetTransaction", params); err != nil {
-		log.Println("[GetDaemonTx]", err)
+		logger.Errorln("[GetDaemonTx]", err)
 		return nil
 	}
 
@@ -363,7 +362,7 @@ func VerifySigner(txid string) bool {
 	}
 
 	if err := rpcClientD.CallFor(ctx, &result, "DERO.GetTransaction", params); err != nil {
-		log.Println("[VerifySigner]", err)
+		logger.Errorln("[VerifySigner]", err)
 		return false
 	}
 
@@ -377,7 +376,7 @@ func GetDifficulty(ep string) float64 {
 
 	var result *rpc.GetInfo_Result
 	if err := rpcClientD.CallFor(ctx, &result, "DERO.GetInfo"); err != nil {
-		log.Println("[GetDifficulty]", err)
+		logger.Errorln("[GetDifficulty]", err)
 		return 0
 	}
 
@@ -391,7 +390,7 @@ func GetBlockTime(ep string) float64 {
 
 	var result *rpc.GetInfo_Result
 	if err := rpcClientD.CallFor(ctx, &result, "DERO.GetInfo"); err != nil {
-		log.Println("[GetBlockTime]", err)
+		logger.Errorln("[GetBlockTime]", err)
 		return 0
 	}
 

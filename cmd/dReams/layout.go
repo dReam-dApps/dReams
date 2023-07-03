@@ -4,7 +4,6 @@ import (
 	_ "embed"
 	"fmt"
 	"image/color"
-	"log"
 	"reflect"
 	"sort"
 	"strconv"
@@ -106,7 +105,7 @@ func introScreen() *fyne.Container {
 		}
 
 		dReams.SetChannels(menu.EnabledDapps())
-		log.Println("[dReams] Loading dApps")
+		logger.Println("[dReams] Loading dApps")
 		go func() {
 			dReams.App.Settings().SetTheme(bundle.DeroTheme(bundle.AppColor))
 			dReams.Window.SetContent(
@@ -187,7 +186,7 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 		}
 
 		wait = true
-		log.Println("[dReams] Closing dApps")
+		logger.Println("[dReams] Closing dApps")
 		dReams.CloseAllDapps()
 		rpc.Wallet.Connected(false)
 		rpc.Wallet.Height = 0
@@ -201,7 +200,7 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 		go func() {
 			time.Sleep(1500 * time.Millisecond)
 			menu.CloseAppSignal(false)
-			log.Println("[dReams] Loading dApps")
+			logger.Println("[dReams] Loading dApps")
 			dReams.App.Settings().SetTheme(bundle.DeroTheme(bundle.AppColor))
 			dReams.Window.Content().(*fyne.Container).Objects[1] = place()
 			dReams.Window.Content().(*fyne.Container).Objects[1].Refresh()

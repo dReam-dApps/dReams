@@ -1,7 +1,6 @@
 package menu
 
 import (
-	"log"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -44,11 +43,11 @@ var Gnomes gnomon
 func (g *gnomon) Stop(tag string) {
 	g.Lock()
 	if g.Init && !g.Closing() {
-		log.Printf("[%s] Putting Gnomon to Sleep\n", tag)
+		logger.Printf("[%s] Putting Gnomon to Sleep\n", tag)
 		g.Indexer.Close()
 		g.Init = false
 		g.Check = false
-		log.Printf("[%s] Gnomon is Sleeping\n", tag)
+		logger.Printf("[%s] Gnomon is Sleeping\n", tag)
 	}
 	g.Unlock()
 }

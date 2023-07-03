@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/url"
 	"os"
 	"os/signal"
@@ -16,12 +15,15 @@ import (
 
 	holdero "github.com/SixofClubsss/Holdero"
 	prediction "github.com/SixofClubsss/dPrediction"
+	"github.com/civilware/Gnomon/indexer"
+	"github.com/civilware/Gnomon/structures"
 	dreams "github.com/dReam-dApps/dReams"
 	"github.com/dReam-dApps/dReams/bundle"
 	"github.com/dReam-dApps/dReams/menu"
 	"github.com/dReam-dApps/dReams/rpc"
 	"github.com/docopt/docopt-go"
 	"github.com/fyne-io/terminal"
+	"github.com/sirupsen/logrus"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -38,6 +40,7 @@ type cliApp struct {
 }
 
 var cli cliApp
+var logger = structures.Logger.WithFields(logrus.Fields{})
 var command_line string = `dReams
 Platform for Dero dApps, powered by Gnomon.
 
@@ -59,7 +62,7 @@ func flags() (version string) {
 	arguments, err := docopt.ParseArgs(command_line, nil, version)
 
 	if err != nil {
-		log.Fatalf("Error while parsing arguments: %s\n", err)
+		logger.Fatalf("Error while parsing arguments: %s\n", err)
 	}
 
 	if arguments["--dbtype"] != nil {
@@ -109,6 +112,9 @@ func flags() (version string) {
 }
 
 func init() {
+	arguments := make(map[string]interface{})
+	arguments["--debug"] = false
+	indexer.InitLog(arguments, os.Stderr)
 	saved := menu.ReadDreamsConfig("dReams")
 	if saved.Daemon != nil {
 		menu.Control.Daemon_config = saved.Daemon[0]
@@ -178,7 +184,7 @@ func stamp(v string) {
 	if dReams.OS() == "linux" {
 		fmt.Println(string(bundle.ResourceStampTxt.StaticContent))
 	}
-	log.Println("[dReams]", v, runtime.GOOS, runtime.GOARCH)
+	logger.Println("[dReams]", v, runtime.GOOS, runtime.GOARCH)
 }
 
 // Make system tray with opts
@@ -255,7 +261,7 @@ func fetch(done chan struct{}) {
 
 			}
 		case <-dReams.Closing(): // exit loop
-			log.Println("[dReams] Closing...")
+			logger.Println("[dReams] Closing...")
 			ticker.Stop()
 			dReams.CloseAllDapps()
 			time.Sleep(time.Second)
@@ -399,7 +405,7 @@ func checkDreamsNFAs(gc bool, scids map[string]string) {
 			scids = menu.Gnomes.GetAllOwnersAndSCIDs()
 		}
 
-		log.Println("[dReams] Checking NFA Assets")
+		logger.Println("[dReams] Checking NFA Assets")
 		dreams.Theme.Select.Options = []string{}
 		holdero.Settings.ClearAssets()
 
@@ -502,7 +508,7 @@ func checkDreamsG45s(gc bool, g45s map[string]string) {
 		if g45s == nil {
 			g45s = menu.Gnomes.GetAllOwnersAndSCIDs()
 		}
-		log.Println("[dReams] Checking G45 Assets")
+		logger.Println("[dReams] Checking G45 Assets")
 
 		for scid := range g45s {
 			if !rpc.Wallet.IsConnected() || !menu.Gnomes.IsRunning() {
@@ -766,7 +772,7 @@ func rpcConnectButton() fyne.Widget {
 			}
 
 			if !rpc.Wallet.IsConnected() {
-				log.Println("[dReams] Syncing, please wait")
+				logger.Warnf("[dReams] Syncing, please wait")
 			}
 		}()
 	})
@@ -798,7 +804,7 @@ func recheckDreamsAssets() {
 func recheckButton(tag string, recheck func()) (button fyne.Widget) {
 	button = widget.NewButton("Check Assets", func() {
 		if !menu.Gnomes.Wait {
-			log.Printf("[%s] Rechecking Assets\n", tag)
+			logger.Printf("[%s] Rechecking Assets\n", tag)
 			go recheck()
 		}
 	})

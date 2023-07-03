@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"image/color"
-	"log"
 	"net/http"
 	"os"
 	"runtime"
@@ -12,8 +11,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/civilware/Gnomon/structures"
 	"github.com/dReam-dApps/dReams/bundle"
 	"github.com/dReam-dApps/dReams/rpc"
+	"github.com/sirupsen/logrus"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -75,6 +76,7 @@ type counter struct {
 var count counter
 var mu sync.RWMutex
 var Theme AssetSelect
+var logger = structures.Logger.WithFields(logrus.Fields{})
 
 // Add to active channel count
 func (c *counter) plus() {
@@ -222,8 +224,8 @@ func (d *DreamsObject) IsWindows() bool {
 // Get current working directory path for prefix
 func GetDir() (dir string) {
 	dir, err := os.Getwd()
-	if err != nil {
-		log.Println("[GetDir]", err)
+	if err == nil {
+		logger.Errorln("[GetDir]", err)
 	}
 
 	return
@@ -236,7 +238,7 @@ func FileExists(path, tag string) bool {
 		return true
 
 	} else if errors.Is(err, os.ErrNotExist) {
-		log.Printf("[%s] %s Not Found\n", tag, path)
+		logger.Errorf("[%s] %s Not Found\n", tag, path)
 
 		return false
 	}
@@ -283,7 +285,7 @@ func ThemeSelect() fyne.Widget {
 					Theme.Img = *canvas.NewImageFromFile(file)
 				} else {
 					Theme.URL = "https://raw.githubusercontent.com/Azylem/" + s + "/main/" + s + ".png"
-					log.Println("[dReams] Downloading", Theme.URL)
+					logger.Println("[dReams] Downloading", Theme.URL)
 					Theme.Img, _ = DownloadFile(Theme.URL, s)
 				}
 			} else if check == "SIXART" {
@@ -293,7 +295,7 @@ func ThemeSelect() fyne.Widget {
 					Theme.Img = *canvas.NewImageFromFile(file)
 				} else {
 					Theme.URL = "https://raw.githubusercontent.com/SixofClubsss/SIXART/main/" + s + "/" + s + ".png"
-					log.Println("[dReams] Downloading", Theme.URL)
+					logger.Println("[dReams] Downloading", Theme.URL)
 					Theme.Img, _ = DownloadFile(Theme.URL, s)
 				}
 			} else if check == "HSTheme" {
@@ -303,7 +305,7 @@ func ThemeSelect() fyne.Widget {
 					Theme.Img = *canvas.NewImageFromFile(file)
 				} else {
 					Theme.URL = "https://raw.githubusercontent.com/High-Strangeness/High-Strangeness/main/" + s + "/" + s + ".png"
-					log.Println("[dReams] Downloading", Theme.URL)
+					logger.Println("[dReams] Downloading", Theme.URL)
 					Theme.Img, _ = DownloadFile(Theme.URL, s)
 				}
 			} else if s == "Main" {

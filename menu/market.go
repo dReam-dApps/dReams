@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"image/color"
-	"log"
 	"runtime"
 	"strconv"
 	"strings"
@@ -1178,7 +1177,7 @@ func setHeaderConfirm(name, desc, icon, scid string, obj []fyne.CanvasObject, re
 //   - quit for exit chan
 //   - connected box for DeroRpcEntries
 func RunNFAMarket(tag string, quit, done chan struct{}, connect_box *dwidget.DeroRpcEntries) {
-	log.Printf("[%s] %s %s %s\n", tag, rpc.DREAMSv, runtime.GOOS, runtime.GOARCH)
+	logger.Printf("[%s] %s %s %s\n", tag, rpc.DREAMSv, runtime.GOOS, runtime.GOARCH)
 	time.Sleep(6 * time.Second)
 	ticker := time.NewTicker(3 * time.Second)
 	offset := 0
@@ -1262,7 +1261,7 @@ func RunNFAMarket(tag string, quit, done chan struct{}, connect_box *dwidget.Der
 			offset++
 
 		case <-quit: // exit
-			log.Printf("[%s] Closing\n", tag)
+			logger.Printf("[%s] Closing\n", tag)
 			if Gnomes.Icon_ind != nil {
 				Gnomes.Icon_ind.Stop()
 			}
@@ -1278,11 +1277,11 @@ func FetchFilters(check string) (filter []string) {
 	if stored, ok := rpc.FindStringKey(rpc.RatingSCID, check, rpc.Daemon.Rpc).(string); ok {
 		if h, err := hex.DecodeString(stored); err == nil {
 			if err = json.Unmarshal(h, &filter); err != nil {
-				log.Println("[FetchFilters]", check, err)
+				logger.Errorln("[FetchFilters]", check, err)
 			}
 		}
 	} else {
-		log.Println("[FetchFilters] Could not get", check)
+		logger.Errorln("[FetchFilters] Could not get", check)
 	}
 
 	return

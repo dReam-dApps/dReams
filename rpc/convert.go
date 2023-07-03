@@ -3,7 +3,6 @@ package rpc
 import (
 	"encoding/hex"
 	"fmt"
-	"log"
 	"math"
 	"math/big"
 	"strconv"
@@ -97,7 +96,7 @@ func StringToInt(s string) int {
 	if s != "" {
 		i, err := strconv.Atoi(s)
 		if err != nil {
-			log.Println("[StringToInt]", err)
+			logger.Errorln("[StringToInt]", err)
 			return 0
 		}
 		return i
@@ -111,7 +110,7 @@ func StringToUint64(s string) uint64 {
 	if s != "" {
 		i, err := strconv.Atoi(s)
 		if err != nil {
-			log.Println("[StringToUint64]", err)
+			logger.Errorln("[StringToUint64]", err)
 			return 0
 		}
 		return uint64(i)

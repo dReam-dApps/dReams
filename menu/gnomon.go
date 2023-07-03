@@ -4,7 +4,6 @@ import (
 	"crypto/sha1"
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -15,6 +14,7 @@ import (
 
 	dreams "github.com/dReam-dApps/dReams"
 	"github.com/dReam-dApps/dReams/rpc"
+	"github.com/sirupsen/logrus"
 
 	"github.com/civilware/Gnomon/indexer"
 	"github.com/civilware/Gnomon/storage"
@@ -53,6 +53,8 @@ End Function`
 	G45_search_filter = `STORE("type", "G45-NFT")`
 )
 
+var logger = structures.Logger.WithFields(logrus.Fields{})
+
 // Manually add SCID to Gnomon index
 func manualIndex(scid []string) {
 	filters := Gnomes.Indexer.SearchFilter
@@ -69,7 +71,7 @@ func manualIndex(scid []string) {
 
 	err := Gnomes.Indexer.AddSCIDToIndex(scidstoadd)
 	if err != nil {
-		log.Printf("Err - %v", err)
+		logger.Errorf("[manualIndex] %v\n", err)
 	}
 	Gnomes.Indexer.SearchFilter = filters
 }
@@ -83,7 +85,7 @@ func GnomonGravDB(dbType, dbPath string) *storage.GravitonStore {
 
 	db, err := storage.NewGravDB(dbPath, "25ms")
 	if err != nil {
-		log.Fatalf("[GnomonGravDB] %s\n", err)
+		logger.Fatalf("[GnomonGravDB] %s\n", err)
 	}
 
 	return db
@@ -100,13 +102,13 @@ func GnomonBoltDB(dbType, dbPath string) *storage.BboltStore {
 	db_name := fmt.Sprintf("gnomondb_bolt_%s_%s.db", "dReams", shasum)
 	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
 		if err := os.MkdirAll(dbPath, 0755); err != nil {
-			log.Fatalf("[GnomonBoltDB] %s\n", err)
+			logger.Fatalf("[GnomonBoltDB] %s\n", err)
 		}
 	}
 
 	db, err := storage.NewBBoltDB(dbPath, filepath.Join(dbPath, db_name))
 	if err != nil {
-		log.Fatalf("%s\n", err)
+		logger.Fatalf("%s\n", err)
 	}
 
 	return db
@@ -122,7 +124,7 @@ func GnomonBoltDB(dbType, dbPath string) *storage.BboltStore {
 //   - upper defines the higher limit when custom indexed SCIDs exist already
 func StartGnomon(tag, dbtype string, filters []string, upper, lower int, custom func()) {
 	Gnomes.Start = true
-	log.Printf("[%s] Starting Gnomon\n", tag)
+	logger.Printf("[%s] Starting Gnomon\n", tag)
 	shasum := fmt.Sprintf("%x", sha1.Sum([]byte("dReams")))
 	db_path := filepath.Join("gnomondb", fmt.Sprintf("%s_%s", "dReams", shasum))
 	bolt_backend := GnomonBoltDB(dbtype, db_path)
@@ -162,7 +164,7 @@ func StartGnomon(tag, dbtype string, filters []string, upper, lower int, custom 
 
 				if !rpc.Daemon.IsConnected() || ClosingApps() {
 					Gnomes.Trim = false
-					log.Printf("[%s] Could not add all custom SCID for index\n", tag)
+					logger.Errorf("[%s] Could not add all custom SCID for index\n", tag)
 					break
 				}
 			}
@@ -179,7 +181,7 @@ func G45Index() {
 			time.Sleep(time.Second)
 		}
 	}
-	log.Println("[dReams] Adding G45 Collections")
+	logger.Println("[dReams] Adding G45 Collections")
 	filters := Gnomes.Indexer.SearchFilter
 	Gnomes.Indexer.SearchFilter = []string{}
 	scidstoadd := make(map[string]*structures.FastSyncImport)
@@ -193,7 +195,7 @@ func G45Index() {
 
 	err := Gnomes.Indexer.AddSCIDToIndex(scidstoadd)
 	if err != nil {
-		log.Printf("Err - %v", err)
+		logger.Errorf("[G45Index] %v\n", err)
 	}
 	Gnomes.Indexer.SearchFilter = filters
 	Gnomes.Trim = false
@@ -264,12 +266,12 @@ func searchIndex(scid string) {
 		all := Gnomes.GetAllOwnersAndSCIDs()
 		for sc := range all {
 			if scid == sc {
-				log.Println("[dReams] " + scid + " Indexed")
+				logger.Println("[dReams] " + scid + " Indexed")
 				found = true
 			}
 		}
 		if !found {
-			log.Println("[dReams] " + scid + " Not Found")
+			logger.Errorln("[dReams] " + scid + " Not Found")
 		}
 	}
 }
