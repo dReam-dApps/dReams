@@ -8,8 +8,8 @@ require (
 	github.com/SixofClubsss/Baccarat v0.0.0-20230702073156-c20d2aa7be76
 	github.com/SixofClubsss/Holdero v0.0.0-20230702072037-69a9f9c0434c
 	github.com/SixofClubsss/Iluma v0.0.0-20230702072605-45de548d879a
-	github.com/SixofClubsss/dPrediction v0.0.0-20230702073316-dee064fe293f
-	github.com/SixofClubsss/derbnbDesktop v0.0.0-20230702072503-b5214075ecfa
+	github.com/SixofClubsss/dPrediction v0.0.0-20230703020115-de700f18545b
+	github.com/SixofClubsss/derbnbDesktop v0.0.0-20230703020658-67292a7a0999
 	github.com/civilware/Gnomon v0.0.0-20230629173619-f2809fb61dfc
 	github.com/deroproject/derohe v0.0.0-20230604143809-765b2db1f482
 	github.com/fyne-io/terminal v0.0.0-20230223114940-c76e408adbd3

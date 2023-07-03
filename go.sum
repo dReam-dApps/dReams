@@ -64,10 +64,10 @@ github.com/SixofClubsss/Holdero v0.0.0-20230702072037-69a9f9c0434c h1:7FJbWDlIku
 github.com/SixofClubsss/Holdero v0.0.0-20230702072037-69a9f9c0434c/go.mod h1:kj5eO1iIZ60bFJxEFAKpd13Fh8M2eU5DwiGAXyYYuds=
 github.com/SixofClubsss/Iluma v0.0.0-20230702072605-45de548d879a h1:YePJImXz4sNpi+6q+5VjAoJDB9lPKTRPlEA0N7D5GLE=
 github.com/SixofClubsss/Iluma v0.0.0-20230702072605-45de548d879a/go.mod h1:7xzIU1Qvu1dlGFt40xyx61bjNoqdMBgTvTsLcmt9IYA=
-github.com/SixofClubsss/dPrediction v0.0.0-20230702073316-dee064fe293f h1:y+J/6+W85FyldnPf7AIx8k0dOubTbwOgoqDBBEK9PKQ=
-github.com/SixofClubsss/dPrediction v0.0.0-20230702073316-dee064fe293f/go.mod h1:r7KUYNyskzoEHmOzRLqadk38swmjflM/9Zuq1/aEadA=
-github.com/SixofClubsss/derbnbDesktop v0.0.0-20230702072503-b5214075ecfa h1:zM3MMQLzpc0hDHv2JrWj4NDSm5iFC1PXBMk0DBuaQp4=
-github.com/SixofClubsss/derbnbDesktop v0.0.0-20230702072503-b5214075ecfa/go.mod h1:laaqaeUk4LkKn5EjA7S95BfGGjkNsvUpLXGg2p8MauA=
+github.com/SixofClubsss/dPrediction v0.0.0-20230703020115-de700f18545b h1:RQYSH3id5vD6fvx+QDZiRtjmjVU0xC42sKXts+h99GI=
+github.com/SixofClubsss/dPrediction v0.0.0-20230703020115-de700f18545b/go.mod h1:1iApHpj05fgpu2pZWhLlt/zzP7QW3TSAwknd4dL+aHA=
+github.com/SixofClubsss/derbnbDesktop v0.0.0-20230703020658-67292a7a0999 h1:SsWSWbQbW7vdpDCQc92CIAE1C2NhX4RJZqNEBj7yNj4=
+github.com/SixofClubsss/derbnbDesktop v0.0.0-20230703020658-67292a7a0999/go.mod h1:dKLTMlyEQTIq5UcCIG7muD5ZmjfzxmpUhV1N8HLddIY=
 github.com/VictoriaMetrics/metrics v1.24.0 h1:ILavebReOjYctAGY5QU2F9X0MYvkcrG3aEn2RKa1Zkw=
 github.com/akavel/rsrc v0.10.2/go.mod h1:uLoCtb9J+EyAqh+26kdrTgmzRBFPGOolLWKpdxkKq+c=
 github.com/antihax/optional v1.0.0/go.mod h1:uupD/76wgC+ih3iEmQUL+0Ugr19nfwCT1kdvxnR2qWY=
