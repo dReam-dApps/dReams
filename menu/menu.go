@@ -783,11 +783,11 @@ func IntroTree(intros []IntroText) fyne.CanvasObject {
 		"Welcome to dReams":       {"Get Started", "dApps", "Assets", "Market"},
 		"Get Started":             {"Visit dero.io for daemon and wallet download info", "Connecting", "FAQ"},
 		"Connecting":              {"Daemon", "Wallet"},
-		"FAQ":                     {"Can't connect", "How to resync Gnomon db", "Can't see any tables, contracts or market info", "How to see terminal log", "Visit dreamdapps.io for further documentation"},
+		"FAQ":                     {"Can't connect", "How to resync Gnomon DB", "Can't see any tables, contracts or market info", "How to see terminal log", "Visit dreamdapps.io for further documentation"},
 		"Can't connect":           {"Using a local daemon will yield the best results", "If you are using a remote daemon, try changing daemons", "Any connection errors can be found in terminal log"},
-		"How to resync Gnomon db": {"Go to Gnomon options in Menu", "If Gnomon is running you will be prompted to shut it down to make changes", "Click the delete DB button", "Reconnect to a daemon to resync", "Any sync errors can be found in terminal log"},
+		"How to resync Gnomon DB": {"Go to Gnomon options in Menu", "If Gnomon is running you will be prompted to shut it down to make changes", "Click the delete DB button", "Reconnect to a daemon to resync", "Any sync errors can be found in terminal log"},
 
-		"Can't see any tables, contracts or market info": {"Make sure daemon, wallet and Gnomon indicators are lit up solid", "If you've added new dApps to your dReams, a Gnomon resync will add them to your index", "Look in the asset tab for number of indexed SCIDs", "If indexed SCIDs is less than 4000 your db is not fully synced", "Try resyncing", "Any errors can be found in terminal log"},
+		"Can't see any tables, contracts or market info": {"Make sure daemon, wallet and Gnomon indicators are lit up solid", "If you've added new dApps to your dReams, a Gnomon resync will add them to your index", "Look in the asset tab for number of indexed SCIDs, it should be above 0", "Make sure your collection or dApp is enabled", "Try resyncing", "Any errors can be found in terminal log"},
 
 		"How to see terminal log": {"Windows", "Mac", "Linux"},
 		"Windows":                 {"Open powershell or command prompt", "Navigate to dReams directory", `Start dReams using       .\dReams-windows-amd64.exe`},
