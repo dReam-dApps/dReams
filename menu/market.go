@@ -202,21 +202,26 @@ func BidBuyConfirm(scid string, amt uint64, b int, obj *container.Split, reset f
 func ConfirmCancelClose(scid string, c int, obj *container.Split, reset fyne.CanvasObject) fyne.CanvasObject {
 	var text, coll, name string
 
-	if Market.Tab == "Buy" {
-		listing, _, _ := checkNfaBuyListing(scid)
-		split := strings.Split(listing, "   ")
-		if len(split) == 4 {
-			coll = split[0]
-			name = split[1]
-		}
-	} else if Market.Tab == "Auction" {
+	list, _ := CheckNFAListingType(scid)
+	switch list {
+	case 1:
 		listing, _, _ := checkNfaAuctionListing(scid)
 		split := strings.Split(listing, "   ")
 		if len(split) == 4 {
 			coll = split[0]
 			name = split[1]
 		}
+	case 2:
+		listing, _, _ := checkNfaBuyListing(scid)
+		split := strings.Split(listing, "   ")
+		if len(split) == 4 {
+			coll = split[0]
+			name = split[1]
+		}
+	default:
+
 	}
+
 	switch c {
 	case 0:
 		text = fmt.Sprintf("Close listing for SCID:\n\n%s\n\nAsset: %s\n\nCollection: %s", scid, name, coll)
@@ -288,6 +293,7 @@ func AuctionListings() fyne.Widget {
 				Market.Viewing = split[3]
 				go GetNfaImages(split[3])
 				go GetAuctionDetails(split[3])
+				Market.Details_box.Objects[1] = loadingBar()
 			}
 		}
 	}
@@ -317,6 +323,7 @@ func BuyNowListings() fyne.Widget {
 				Market.Viewing = split[3]
 				go GetNfaImages(split[3])
 				go GetBuyNowDetails(split[3])
+				Market.Details_box.Objects[1] = loadingBar()
 			}
 		}
 	}
@@ -346,6 +353,7 @@ func MyNFAListings() fyne.Widget {
 				Market.Viewing = split[3]
 				go GetNfaImages(split[3])
 				go GetUnlistedDetails(split[3])
+				Market.Details_box.Objects[1] = loadingBar()
 			}
 		}
 	}
@@ -397,6 +405,8 @@ func SearchNFAs() fyne.CanvasObject {
 					go GetUnlistedDetails(split[3])
 				}
 			}
+
+			Market.Details_box.Objects[1] = loadingBar()
 		}
 	}
 
@@ -609,7 +619,9 @@ func ResetNotListedInfo() {
 func RefreshNfaImages() {
 	if Market.Cover.Resource != nil {
 		Market.Details_box.Objects[1] = NfaImg(Market.Cover)
-		Market.Loading.Stop()
+		if Market.Loading != nil {
+			Market.Loading.Stop()
+		}
 	} else {
 		Market.Details_box.Objects[1] = loadingBar()
 	}

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"os/exec"
 	"os/signal"
 	"runtime"
 	"sort"
@@ -15,7 +16,6 @@ import (
 
 	holdero "github.com/SixofClubsss/Holdero"
 	prediction "github.com/SixofClubsss/dPrediction"
-	"github.com/civilware/Gnomon/indexer"
 	"github.com/civilware/Gnomon/structures"
 	dreams "github.com/dReam-dApps/dReams"
 	"github.com/dReam-dApps/dReams/bundle"
@@ -111,10 +111,26 @@ func flags() (version string) {
 	return
 }
 
+// Enable escape codes for windows Stdout
+func enableEscapeCodes() error {
+	cmd := exec.Command("cmd", "/c", "echo", "ON")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
+
 func init() {
-	arguments := make(map[string]interface{})
-	arguments["--debug"] = false
-	indexer.InitLog(arguments, os.Stdout)
+	dReams.SetOS()
+	if dReams.OS() == "windows" {
+		if err := enableEscapeCodes(); err != nil {
+			menu.InitLogrusLog(false)
+			logger.Warnln("Err enabling escape codes:", err)
+		} else {
+			menu.InitLogrusLog(true)
+		}
+	} else {
+		menu.InitLogrusLog(true)
+	}
 	saved := menu.ReadDreamsConfig("dReams")
 	if saved.Daemon != nil {
 		menu.Control.Daemon_config = saved.Daemon[0]
@@ -127,8 +143,6 @@ func init() {
 	menu.Market.DreamsFilter = true
 
 	rpc.InitBalances()
-
-	dReams.SetOS()
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)

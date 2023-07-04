@@ -15,6 +15,7 @@ require (
 	github.com/fyne-io/terminal v0.0.0-20230223114940-c76e408adbd3
 	github.com/sirupsen/logrus v1.9.3
 	github.com/superoo7/go-gecko v1.0.0
+	github.com/x-cray/logrus-prefixed-formatter v0.5.2
 	github.com/ybbus/jsonrpc/v3 v3.1.4
 )
 
@@ -65,7 +66,6 @@ require (
 	github.com/tevino/abool v1.2.0 // indirect
 	github.com/tjfoc/gmsm v1.4.1 // indirect
 	github.com/valyala/histogram v1.2.0 // indirect
-	github.com/x-cray/logrus-prefixed-formatter v0.5.2 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/yuin/goldmark v1.4.13 // indirect
 	go.etcd.io/bbolt v1.3.6 // indirect

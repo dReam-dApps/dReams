@@ -15,6 +15,7 @@ import (
 	dreams "github.com/dReam-dApps/dReams"
 	"github.com/dReam-dApps/dReams/rpc"
 	"github.com/sirupsen/logrus"
+	prefixed "github.com/x-cray/logrus-prefixed-formatter"
 
 	"github.com/civilware/Gnomon/indexer"
 	"github.com/civilware/Gnomon/storage"
@@ -54,6 +55,20 @@ End Function`
 )
 
 var logger = structures.Logger.WithFields(logrus.Fields{})
+
+func InitLogrusLog(colors bool) {
+	structures.Logger = logrus.Logger{
+		Out:   os.Stdout,
+		Level: 4,
+		Formatter: &prefixed.TextFormatter{
+			ForceColors:     colors,
+			DisableColors:   !colors,
+			TimestampFormat: "01/02/2006 15:04:05",
+			FullTimestamp:   true,
+			ForceFormatting: true,
+		},
+	}
+}
 
 // Manually add SCID to Gnomon index
 func manualIndex(scid []string) {

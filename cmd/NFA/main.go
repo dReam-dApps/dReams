@@ -8,14 +8,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/civilware/Gnomon/indexer"
-	"github.com/civilware/Gnomon/structures"
 	dreams "github.com/dReam-dApps/dReams"
 	"github.com/dReam-dApps/dReams/bundle"
 	"github.com/dReam-dApps/dReams/dwidget"
 	"github.com/dReam-dApps/dReams/menu"
 	"github.com/dReam-dApps/dReams/rpc"
-	"github.com/sirupsen/logrus"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -27,14 +24,10 @@ import (
 
 const app_tag = "NFA Market"
 
-var logger = structures.Logger.WithFields(logrus.Fields{})
-
 func main() {
 	n := runtime.NumCPU()
 	runtime.GOMAXPROCS(n)
-	arguments := make(map[string]interface{})
-	arguments["--debug"] = false
-	indexer.InitLog(arguments, os.Stdout)
+	menu.InitLogrusLog(runtime.GOOS != "windows")
 	config := menu.ReadDreamsConfig(app_tag)
 
 	a := app.New()
