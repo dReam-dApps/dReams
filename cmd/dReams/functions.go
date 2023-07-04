@@ -114,7 +114,7 @@ func flags() (version string) {
 func init() {
 	arguments := make(map[string]interface{})
 	arguments["--debug"] = false
-	indexer.InitLog(arguments, os.Stderr)
+	indexer.InitLog(arguments, os.Stdout)
 	saved := menu.ReadDreamsConfig("dReams")
 	if saved.Daemon != nil {
 		menu.Control.Daemon_config = saved.Daemon[0]

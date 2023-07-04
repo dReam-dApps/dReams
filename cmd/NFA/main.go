@@ -34,7 +34,7 @@ func main() {
 	runtime.GOMAXPROCS(n)
 	arguments := make(map[string]interface{})
 	arguments["--debug"] = false
-	indexer.InitLog(arguments, os.Stderr)
+	indexer.InitLog(arguments, os.Stdout)
 	config := menu.ReadDreamsConfig(app_tag)
 
 	a := app.New()
