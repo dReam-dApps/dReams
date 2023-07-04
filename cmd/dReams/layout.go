@@ -2,42 +2,40 @@ package main
 
 import (
 	_ "embed"
+	"fmt"
 	"image/color"
-	"log"
 	"reflect"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/SixofClubsss/dReams/baccarat"
-	"github.com/SixofClubsss/dReams/bundle"
-	"github.com/SixofClubsss/dReams/derbnb"
-	"github.com/SixofClubsss/dReams/dwidget"
-	"github.com/SixofClubsss/dReams/holdero"
-	"github.com/SixofClubsss/dReams/menu"
-	"github.com/SixofClubsss/dReams/prediction"
-	"github.com/SixofClubsss/dReams/rpc"
-	"github.com/SixofClubsss/dReams/tarot"
+	baccarat "github.com/SixofClubsss/Baccarat"
+	holdero "github.com/SixofClubsss/Holdero"
+	tarot "github.com/SixofClubsss/Iluma"
+	prediction "github.com/SixofClubsss/dPrediction"
+	derbnb "github.com/SixofClubsss/derbnbDesktop"
+	dreams "github.com/dReam-dApps/dReams"
+	"github.com/dReam-dApps/dReams/bundle"
+	"github.com/dReam-dApps/dReams/dwidget"
+	"github.com/dReam-dApps/dReams/menu"
+	"github.com/dReam-dApps/dReams/rpc"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/data/validation"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 	xwidget "fyne.io/x/fyne/widget"
 )
 
-var H dwidget.DreamsItems
-var B dwidget.DreamsItems
-var P dwidget.DreamsItems
-var S dwidget.DreamsItems
-var T dwidget.DreamsItems
+var indicators []menu.DreamsIndicator
 
-// If dReams has not been intialized, show this screen
+// If dReams has not been initialized, show this screen
 //   - User selects dApps and skin to load
 func introScreen() *fyne.Container {
-	dReams.configure = true
+	dReams.Configure(true)
 	title := canvas.NewText("Welcome to dReams", bundle.TextColor)
 	title.Alignment = fyne.TextAlignCenter
 	title.TextSize = 18
@@ -47,7 +45,12 @@ func introScreen() *fyne.Container {
 	skin_title.Alignment = fyne.TextAlignCenter
 	skin_title.TextSize = 18
 
-	skins := widget.NewRadioGroup([]string{"Dark", "Light"}, func(s string) {
+	skins := widget.NewRadioGroup([]string{"Dark", "Light"}, nil)
+	skins.SetSelected("Dark")
+	skins.Horizontal = true
+	skins.Required = true
+
+	skins.OnChanged = func(s string) {
 		if s == "Light" {
 			bundle.AppColor = color.White
 		} else {
@@ -61,16 +64,9 @@ func introScreen() *fyne.Container {
 		max.Objects[1].(*fyne.Container).Objects[6].Refresh()
 		max.Objects[1].(*fyne.Container).Objects[9].(*canvas.Text).Color = bundle.TextColor
 		max.Objects[1].(*fyne.Container).Objects[9].Refresh()
-		if bundle.AppColor == color.White {
-			max.Objects[0] = canvas.NewRectangle(color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0x99})
-		} else {
-			max.Objects[0] = canvas.NewRectangle(color.RGBA{0, 0, 0, 180})
-		}
+		max.Objects[0] = bundle.NewAlpha180()
 		max.Objects[0].Refresh()
-	})
-
-	skins.Horizontal = true
-	skins.Required = true
+	}
 
 	dapp_title := canvas.NewText("Choose dApps to add to your dReams", bundle.TextColor)
 	dapp_title.Alignment = fyne.TextAlignCenter
@@ -91,7 +87,13 @@ func introScreen() *fyne.Container {
 	gnomon_gif, _ := xwidget.NewAnimatedGifFromResource(bundle.ResourceGnomonGifGif)
 	gnomon_gif.SetMinSize(fyne.NewSize(100, 100))
 
+	var wait bool
 	start_button := widget.NewButton("Start dReams", func() {
+		if wait {
+			return
+		}
+
+		wait = true
 		menu.Control.Dapp_list = make(map[string]bool)
 
 		for _, name := range dApps {
@@ -102,13 +104,15 @@ func introScreen() *fyne.Container {
 			menu.Control.Dapp_list[name] = true
 		}
 
-		log.Println("[dReams] Loading dApps")
+		dReams.SetChannels(menu.EnabledDapps())
+		logger.Println("[dReams] Loading dApps")
 		go func() {
 			dReams.App.Settings().SetTheme(bundle.DeroTheme(bundle.AppColor))
 			dReams.Window.SetContent(
-				container.New(layout.NewMaxLayout(),
-					dReams.background,
+				container.NewMax(
+					dReams.Background,
 					place()))
+			wait = false
 		}()
 	})
 
@@ -146,7 +150,7 @@ func introScreen() *fyne.Container {
 // Select dApps to add or remove from dReams
 //   - User can change current dApps and skin
 func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
-	dReams.configure = true
+	dReams.Configure(true)
 	config_title := canvas.NewText("Configure your dReams", bundle.TextColor)
 	config_title.Alignment = fyne.TextAlignCenter
 	config_title.TextSize = 18
@@ -158,8 +162,9 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 	gnomon_gif.SetMinSize(fyne.NewSize(100, 100))
 
 	back_button := widget.NewButton("Back", func() {
-		dReams.configure = false
+		dReams.Configure(false)
 		gnomon_gif.Stop()
+		menu.RestartGif(menu.Gnomes.Icon_ind)
 		go func() {
 			dReams.Window.Content().(*fyne.Container).Objects[1] = reset
 			dReams.Window.Content().(*fyne.Container).Objects[1].Refresh()
@@ -173,24 +178,33 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 		}
 	}
 
+	var wait bool
 	var current_skin, skin_choice color.Gray16
 	load_button := widget.NewButton("Load Changes", func() {
-		rpc.Wallet.Connect = false
+		if wait {
+			return
+		}
+
+		wait = true
+		logger.Println("[dReams] Closing dApps")
+		dReams.CloseAllDapps()
+		rpc.Wallet.Connected(false)
 		rpc.Wallet.Height = 0
-		menu.Disconnected()
-		holdero.InitTableSettings()
+		disconnected()
 		menu.Control.Dapp_list = enabled_dapps
-		log.Println("[dReams] Loading dApps")
+		dReams.SetChannels(menu.EnabledDapps())
 		menu.CloseAppSignal(true)
-		menu.Gnomes.Checked = false
+		menu.Gnomes.Checked(false)
 		bundle.AppColor = skin_choice
 		gnomon_gif.Stop()
 		go func() {
 			time.Sleep(1500 * time.Millisecond)
 			menu.CloseAppSignal(false)
+			logger.Println("[dReams] Loading dApps")
 			dReams.App.Settings().SetTheme(bundle.DeroTheme(bundle.AppColor))
 			dReams.Window.Content().(*fyne.Container).Objects[1] = place()
 			dReams.Window.Content().(*fyne.Container).Objects[1].Refresh()
+			wait = false
 		}()
 	})
 
@@ -305,59 +319,56 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 		layout.NewSpacer(),
 		container.NewAdaptiveGrid(2, container.NewMax(load_button), back_button))
 
-	alpha := canvas.NewRectangle(color.RGBA{0, 0, 0, 180})
-	if bundle.AppColor == color.White {
-		alpha = canvas.NewRectangle(color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0x99})
-	}
-
-	return container.NewMax(alpha, intro)
+	return container.NewMax(bundle.NewAlpha180(), intro)
 }
 
 // Main dReams layout
 func place() *fyne.Container {
-	H.LeftLabel = widget.NewLabel("")
-	H.RightLabel = widget.NewLabel("")
-	H.TopLabel = canvas.NewText(rpc.Display.Res, color.White)
-	H.TopLabel.Move(fyne.NewPos(387, 204))
-	H.LeftLabel.SetText("Seats: " + rpc.Display.Seats + "      Pot: " + rpc.Display.Pot + "      Blinds: " + rpc.Display.Blinds + "      Ante: " + rpc.Display.Ante + "      Dealer: " + rpc.Display.Dealer)
-	H.RightLabel.SetText(rpc.Display.Readout + "      Player ID: " + rpc.Display.PlayerId + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
+	menu.Control.Contract_rating = make(map[string]uint64)
+	menu.Assets.Asset_map = make(map[string]string)
 
-	B.LeftLabel = widget.NewLabel("")
-	B.RightLabel = widget.NewLabel("")
-	B.LeftLabel.SetText("Total Hands Played: " + rpc.Display.Total_w + "      Player Wins: " + rpc.Display.Player_w + "      Ties: " + rpc.Display.Ties + "      Banker Wins: " + rpc.Display.Banker_w + "      Min Bet is " + rpc.Display.BaccMin + " dReams, Max Bet is " + rpc.Display.BaccMax)
-	B.RightLabel.SetText("dReams Balance: " + rpc.Display.Token_balance["dReams"] + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
+	asset_selects := []fyne.Widget{
+		holdero.FaceSelect(),
+		holdero.BackSelect(),
+		dreams.ThemeSelect(),
+		holdero.AvatarSelect(menu.Assets.Asset_map),
+		holdero.SharedDecks(),
+		recheckButton("dReams", recheckDreamsAssets),
+	}
 
-	P.LeftLabel = widget.NewLabel("")
-	P.RightLabel = widget.NewLabel("")
-	P.RightLabel.SetText("dReams Balance: " + rpc.Display.Token_balance["dReams"] + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
-
-	prediction.Predict.Info = widget.NewLabel("SCID:\n\n" + prediction.Predict.Contract + "\n")
-	prediction.Predict.Info.Wrapping = fyne.TextWrapWord
-	prediction.Predict.Prices = widget.NewLabel("")
-
-	S.LeftLabel = widget.NewLabel("")
-	S.RightLabel = widget.NewLabel("")
-	S.RightLabel.SetText("dReams Balance: " + rpc.Display.Token_balance["dReams"] + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
-
-	T.LeftLabel = widget.NewLabel("")
-	T.RightLabel = widget.NewLabel("")
-	T.LeftLabel.SetText("Total Readings: " + rpc.Display.Readings + "      Click your card for Iluma reading")
-	T.RightLabel.SetText("dReams Balance: " + rpc.Display.Token_balance["dReams"] + "      Dero Balance: " + rpc.Display.Dero_balance + "      Height: " + rpc.Display.Wallet_height)
-
-	prediction.Sports.Info = widget.NewLabel("SCID:\n\n" + prediction.Sports.Contract + "\n")
-	prediction.Sports.Info.Wrapping = fyne.TextWrapWord
+	var intros []menu.IntroText
+	intros = append(intros, menu.MakeMenuIntro(holdero.DreamsMenuIntro())...)
+	intros = append(intros, menu.MakeMenuIntro(baccarat.DreamsMenuIntro())...)
+	intros = append(intros, menu.MakeMenuIntro(prediction.DreamsMenuIntro())...)
+	intros = append(intros, menu.MakeMenuIntro(tarot.DreamsMenuIntro())...)
+	intros = append(intros, menu.MakeMenuIntro(derbnb.DreamsMenuIntro())...)
 
 	// dReams menu tabs
 	menu_tabs := container.NewAppTabs(
-		container.NewTabItem("Wallet", placeWall()),
+		container.NewTabItem("Wallet", placeWall(intros)),
 		container.NewTabItem("dApps", layout.NewSpacer()),
-		container.NewTabItem("Assets", menu.PlaceAssets("dReams", true, menu.RecheckDreamsAssets, bundle.ResourceDTGnomonIconPng, bundle.ResourceOwBackgroundPng, dReams.Window)),
+		container.NewTabItem("Assets", menu.PlaceAssets("dReams", asset_selects, bundle.ResourceDReamsIconAltPng, dReams.Window)),
 		container.NewTabItem("Market", menu.PlaceMarket()))
 
 	menu_tabs.OnSelected = func(ti *container.TabItem) {
-		MenuTab(ti)
-		if ti.Text == "dApps" {
-			if menu.Gnomes.Syncing {
+		switch ti.Text {
+		case "Wallet":
+			ti.Content.(*container.Split).Leading.(*container.Split).Leading.Refresh()
+			dReams.SetSubTab("Wallet")
+		case "Assets":
+			dReams.SetSubTab("Assets")
+			menu.Control.Viewing_asset = ""
+			menu.Assets.Asset_list.UnselectAll()
+			menu_tabs.Selected().Content.(*container.Split).Leading.(*container.Split).Trailing.(*fyne.Container).Objects[1].(*container.AppTabs).SelectIndex(0)
+		case "Market":
+			dReams.SetSubTab("Market")
+			go menu.FindNfaListings(nil)
+			menu.Market.Cancel_button.Hide()
+			menu.Market.Close_button.Hide()
+			menu.Market.Auction_list.Refresh()
+			menu.Market.Buy_list.Refresh()
+		case "dApps":
+			if menu.Gnomes.IsScanning() {
 				menu_tabs.SelectIndex(0)
 			} else {
 				go func() {
@@ -388,62 +399,68 @@ func place() *fyne.Container {
 	tarot_bottom_bar := container.NewVBox(layout.NewSpacer(), tarot_bottom_box)
 	tarot_bottom.Hide()
 
-	alpha_box := container.NewMax(top_bar, menu_bottom_bar, tarot_bottom_bar, bundle.Alpha150)
-	if dReams.os != "darwin" {
-		alpha_box.Objects = append(alpha_box.Objects, FullScreenSet())
-	}
-	alpha_box.Objects = append(alpha_box.Objects, menu.StartIndicators())
-
 	tabs := container.NewAppTabs(container.NewTabItem("Menu", menu_tabs))
 
 	if menu.Control.Dapp_list["Holdero"] {
-		var holdero_objs *fyne.Container
-		var contract_objs *container.Split
-		contract_change_screen := widget.NewButton("Contracts", nil)
-		contract_change_screen.OnTapped = func() {
-			go func() {
-				dReams.menu_tabs.contracts = true
-				dReams.Window.Content().(*fyne.Container).Objects[1].(*fyne.Container).Objects[1].(*container.AppTabs).Selected().Content = contract_objs
-				dReams.Window.Content().(*fyne.Container).Objects[1].(*fyne.Container).Objects[1].(*container.AppTabs).Selected().Content.Refresh()
-			}()
-		}
-
-		dReams.menu_tabs.contracts = true
-		holdero_objs = placeHoldero(contract_change_screen)
-		contract_objs = placeContract(holdero_objs)
-
-		tabs.Append(container.NewTabItem("Holdero", contract_objs))
+		tabs.Append(container.NewTabItem("Holdero", holdero.LayoutAllItems(&dReams)))
+		indicators = append(indicators, holdero.HolderoIndicator())
 	}
 
 	if menu.Control.Dapp_list["Baccarat"] {
-		tabs.Append(container.NewTabItem("Baccarat", placeBacc()))
+		tabs.Append(container.NewTabItem("Baccarat", baccarat.LayoutAllItems(&dReams)))
 	}
 
 	if menu.Control.Dapp_list["dSports and dPredictions"] {
-		tabs.Append(container.NewTabItem("Predict", placePredict()))
-		tabs.Append(container.NewTabItem("Sports", placeSports()))
+		tabs.Append(container.NewTabItem("Predict", prediction.LayoutPredictItems(&dReams)))
+		tabs.Append(container.NewTabItem("Sports", prediction.LayoutSportsItems(&dReams)))
+		indicators = append(indicators, prediction.ServiceIndicator())
 	}
 
 	if menu.Control.Dapp_list["Iluma"] {
-		tabs.Append(container.NewTabItem("Iluma", placeTarot()))
+		tabs.Append(container.NewTabItem("Iluma", tarot.LayoutAllItems(&dReams)))
 	}
 
 	if menu.Control.Dapp_list["DerBnb"] {
-		tabs.Append(container.NewTabItem("DerBnb", derbnb.LayoutAllItems(true, dReams.Window, dReams.background)))
+		tabs.Append(container.NewTabItem("DerBnb", derbnb.LayoutAllItems(true, &dReams)))
 	}
 
-	if dReams.cli {
+	if cli.enabled {
 		exitTerminal()
 		tabs.Append(container.NewTabItem("Cli", startTerminal()))
 	}
 
 	tabs.Append(container.NewTabItem("Log", rpc.SessionLog()))
 
+	var fs_button *widget.Button
+	fs_button = widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "viewFullScreen"), func() {
+		if dReams.Window.FullScreen() {
+			fs_button.Icon = fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "viewFullScreen")
+			dReams.Window.SetFullScreen(false)
+		} else {
+			fs_button.Icon = fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "viewRestore")
+			dReams.Window.SetFullScreen(true)
+		}
+	})
+
+	fs_button.Importance = widget.LowImportance
+
+	alpha_box := container.NewMax(top_bar, menu_bottom_bar, tarot_bottom_bar, bundle.Alpha150)
+	if dReams.OS() != "darwin" {
+		alpha_box.Objects = append(alpha_box.Objects, container.NewHBox(layout.NewSpacer(), layout.NewSpacer(), layout.NewSpacer(), container.NewVBox(fs_button), layout.NewSpacer()))
+	}
+	alpha_box.Objects = append(alpha_box.Objects, menu.StartDreamsIndicators(indicators))
+
 	tabs.OnSelected = func(ti *container.TabItem) {
-		MainTab(ti)
+		dReams.SetTab(ti.Text)
+		switch ti.Text {
+		case "Baccarat":
+			baccarat.OnTabSelected(&dReams)
+		}
+
 		if ti.Text == "Menu" {
+			holdero.Settings.EnableCardSelects()
 			menu_bottom.Show()
-			menu_tabs.Items[0].Content.(*container.Split).Leading.(*container.Split).Trailing.Refresh()
+			menu_tabs.Items[0].Content.(*container.Split).Leading.(*container.Split).Leading.Refresh()
 		} else {
 			menu_bottom.Hide()
 		}
@@ -455,590 +472,148 @@ func place() *fyne.Container {
 		}
 	}
 
-	dReams.configure = false
+	dReams.Configure(false)
 
 	return container.NewMax(alpha_box, tabs)
 }
 
 // dReams wallet layout
-func placeWall() *container.Split {
+func placeWall(intros []menu.IntroText) *container.Split {
 	daemon_cont := container.NewHScroll(menu.DaemonRpcEntry())
 	daemon_cont.SetMinSize(fyne.NewSize(340, 35.1875))
 
-	holdero.Swap.DEntry = dwidget.DeroAmtEntry("dReams: ", 1, 0)
-	holdero.Swap.DEntry.PlaceHolder = "dReams:"
-	holdero.Swap.DEntry.Validator = validation.NewRegexp(`^(dReams: )[^0]\d{0,}$`, "Int required")
-	holdero.Swap.DEntry.OnChanged = func(s string) {
-		if holdero.Swap.DEntry.Validate() != nil {
-			holdero.Swap.DEntry.SetText("dReams: 1")
-		}
-	}
-
-	holdero.Swap.DEntry.SetText("dReams: 0")
-	holdero.Swap.DEntry.Hide()
-
-	holdero.Swap.Dreams = widget.NewButton("Get dReams", nil)
-	holdero.Swap.Dreams.Hide()
-
-	holdero.Swap.Dero = widget.NewButton("Get Dero", nil)
-	holdero.Swap.Dero.Hide()
-
-	dReams_items := container.NewVBox(
-		menu.MenuDisplay(),
-		holdero.Swap.DEntry,
-		container.NewAdaptiveGrid(2, holdero.Swap.Dreams, holdero.Swap.Dero))
-
 	user_input_cont := container.NewVBox(
 		daemon_cont,
-		menu.WalletRpcEntry(),
-		menu.UserPassEntry(),
-		menu.RpcConnectButton(),
+		walletRpcEntry(),
+		userPassEntry(),
+		rpcConnectButton(),
 		layout.NewSpacer(),
-		dReams_items)
+		menu.MenuDisplay())
 
-	menu.Control.Contract_rating = make(map[string]uint64)
-	menu.Assets.Asset_map = make(map[string]string)
-
-	daemon_check_cont := container.NewVBox(menu.DaemonConnectedBox())
+	daemon_check_cont := container.NewVBox(daemonConnectedBox())
 
 	user_input_box := container.NewHBox(user_input_cont, daemon_check_cont)
-	menu_top := container.NewHSplit(user_input_box, container.NewMax(bundle.Alpha120, menu.IntroTree()))
+	connect_tabs := container.NewAppTabs(
+		container.NewTabItem("Connect", container.NewCenter(user_input_box)),
+		container.NewTabItem("Gnomon", container.NewCenter(menu.Gnomes.ControlPanel(dReams.Window))))
 
-	holdero.Swap.Dreams.OnTapped = func() {
-		s := strings.Trim(holdero.Swap.DEntry.Text, "dReams: ")
-		amt, err := strconv.Atoi(s)
-		if err == nil && holdero.Swap.DEntry.Validate() == nil {
-			if amt > 0 {
-				menu_top.Trailing.(*fyne.Container).Objects[1] = holdero.DreamsConfirm(1, amt, menu_top, menu.IntroTree())
-				menu_top.Trailing.Refresh()
+	connect_tabs.OnSelected = func(ti *container.TabItem) {
+		if ti.Text == "Gnomon" {
+			if rpc.Daemon.IsConnected() || menu.Gnomes.IsInitialized() {
+				if menu.Gnomes.Start || menu.Gnomes.IsScanning() {
+					dialog.NewInformation("Gnomon Syncing", "Please wait", dReams.Window).Show()
+				} else {
+					dialog.NewConfirm("Gnomon Running", "Shut down Gnomon to make changes", func(b bool) {
+						if b {
+							daemon_cont.Content.(*widget.SelectEntry).SetText("")
+							time.Sleep(time.Second)
+						}
+					}, dReams.Window).Show()
+				}
+
+				connect_tabs.DisableIndex(1)
+
+				return
 			}
+
+			connect_tabs.Selected().Content.(*fyne.Container).Objects[0].(*fyne.Container).Objects[0].(*widget.Form).Items[2].Widget.(*widget.RadioGroup).SetSelected("true")
+			connect_tabs.Selected().Content.(*fyne.Container).Objects[0].(*fyne.Container).Objects[0].(*widget.Form).Items[2].Widget.(*widget.RadioGroup).Disable()
+			connect_tabs.Selected().Content.(*fyne.Container).Objects[0].(*fyne.Container).Objects[0].(*widget.Form).Items[1].Widget.(*widget.RadioGroup).Disable()
+			menu.Gnomes.Trim = true
+
+			return
 		}
+
+		connect_tabs.EnableIndex(1)
 	}
 
-	holdero.Swap.Dero.OnTapped = func() {
-		s := strings.Trim(holdero.Swap.DEntry.Text, "dReams: ")
-		amt, err := strconv.Atoi(s)
-		if err == nil && holdero.Swap.DEntry.Validate() == nil {
-			if amt > 0 {
-				menu_top.Trailing.(*fyne.Container).Objects[1] = holdero.DreamsConfirm(2, amt, menu_top, menu.IntroTree())
-				menu_top.Trailing.Refresh()
-			}
-		}
-	}
+	menu_top := container.NewHSplit(container.NewMax(bundle.Alpha120, menu.IntroTree(intros)), connect_tabs)
+	menu_top.SetOffset(0.66)
 
-	menu_bottom := container.NewAdaptiveGrid(1, layout.NewSpacer())
+	menu_bottom := container.NewAdaptiveGrid(1, placeSwap())
 	menu_box := container.NewVSplit(menu_top, menu_bottom)
-	menu_box.SetOffset(1)
+	menu_box.SetOffset(0.5)
 
 	return menu_box
 }
 
-// Holdero contract tab layout
-func placeContract(change_screen *fyne.Container) *container.Split {
-	check_box := container.NewVBox(menu.HolderoContractConnectedBox())
+// Balance and swap container inside wallet layout
+func placeSwap() *container.Split {
+	pair_opts := []string{"DERO-dReams", "dReams-DERO"}
+	select_pair := widget.NewSelect(pair_opts, nil)
+	select_pair.PlaceHolder = "Pairs"
+	select_pair.SetSelectedIndex(0)
 
-	var tabs *container.AppTabs
-	menu.Poker.Holdero_unlock = widget.NewButton("Unlock Holdero Contract", nil)
-	menu.Poker.Holdero_unlock.Hide()
+	assets := []string{}
+	for asset := range rpc.Wallet.Display.Balance {
+		assets = append(assets, asset)
+	}
 
-	menu.Poker.Holdero_new = widget.NewButton("New Holdero Table", nil)
-	menu.Poker.Holdero_new.Hide()
+	sort.Strings(assets)
 
-	unlock_cont := container.NewVBox(
-		layout.NewSpacer(),
-		menu.Poker.Holdero_unlock,
-		menu.Poker.Holdero_new)
+	menu.Assets.Balances = widget.NewList(
+		func() int {
+			return len(assets)
+		},
+		func() fyne.CanvasObject {
+			return widget.NewLabel("")
+		},
+		func(i widget.ListItemID, o fyne.CanvasObject) {
+			o.(*widget.Label).SetText(assets[i] + fmt.Sprintf(": %s", rpc.DisplayBalance(assets[i])))
+		})
 
-	owner_buttons := container.NewAdaptiveGrid(2, container.NewMax(layout.NewSpacer()), unlock_cont)
-	owned_tab := container.NewBorder(nil, owner_buttons, nil, nil, menu.MyTables())
+	balance_tabs := container.NewAppTabs(
+		container.NewTabItem("Balances", container.NewBorder(nil, menu.NameEntry(), nil, nil, menu.Assets.Balances)))
 
-	tabs = container.NewAppTabs(
-		container.NewTabItem("Tables", layout.NewSpacer()),
-		container.NewTabItem("Favorites", menu.HolderoFavorites()),
-		container.NewTabItem("Owned", owned_tab),
-		container.NewTabItem("View", layout.NewSpacer()))
+	var swap_entry *dwidget.DeroAmts
+	var swap_boxes *fyne.Container
 
-	tabs.SelectIndex(0)
-	tabs.Selected().Content = menu.TableListings(tabs)
+	max := container.NewMax()
+	swap_tabs := container.NewAppTabs()
 
-	tabs.OnSelected = func(ti *container.TabItem) {
-		MenuContractTab(ti)
-		if ti.Text == "View" {
-			go func() {
-				if len(rpc.Round.Contract) == 64 {
-					rpc.FetchHolderoSC()
-					dReams.menu_tabs.contracts = false
-					dReams.Window.Content().(*fyne.Container).Objects[1].(*fyne.Container).Objects[1].(*container.AppTabs).Selected().Content = change_screen
-					dReams.Window.Content().(*fyne.Container).Objects[1].(*fyne.Container).Objects[1].(*container.AppTabs).Selected().Content.Refresh()
-					tabs.SelectIndex(0)
-					now := time.Now().Unix()
-					if now > rpc.Round.Last+33 {
-						HolderoRefresh()
-					}
-				} else {
-					tabs.SelectIndex(0)
+	swap_button := widget.NewButton("Swap", nil)
+	swap_button.OnTapped = func() {
+		switch select_pair.Selected {
+		case "DERO-dReams":
+			f, err := strconv.ParseFloat(swap_entry.Text, 64)
+			if err == nil && swap_entry.Validate() == nil {
+				if amt := (f * 333) * 100000; amt > 0 {
+					max.Objects[0] = holdero.DreamsConfirm(1, amt, max, swap_tabs)
+					max.Refresh()
 				}
-			}()
-		}
-	}
-
-	max := container.NewMax(bundle.Alpha120, tabs)
-
-	menu.Poker.Holdero_unlock.OnTapped = func() {
-		max.Objects[1] = menu.HolderoMenuConfirm(1, max.Objects, tabs)
-		max.Objects[1].Refresh()
-	}
-
-	menu.Poker.Holdero_new.OnTapped = func() {
-		max.Objects[1] = menu.HolderoMenuConfirm(2, max.Objects, tabs)
-		max.Objects[1].Refresh()
-	}
-
-	mid := container.NewVBox(layout.NewSpacer(), container.NewAdaptiveGrid(2, menu.NameEntry(), holdero.TournamentButton(max.Objects, tabs)), menu.OwnersBoxMid())
-
-	menu_bottom := container.NewGridWithColumns(3, menu.OwnersBoxLeft(max.Objects, tabs), mid, layout.NewSpacer())
-
-	contract_cont := container.NewHScroll(menu.HolderoContractEntry())
-	contract_cont.SetMinSize(fyne.NewSize(640, 35.1875))
-
-	asset_items := container.NewAdaptiveGrid(1, container.NewVBox(menu.TableStats()))
-
-	player_input := container.NewVBox(
-		contract_cont,
-		asset_items,
-		layout.NewSpacer())
-
-	player_box := container.NewHBox(player_input, check_box)
-	menu_top := container.NewHSplit(player_box, max)
-
-	menuBox := container.NewVSplit(menu_top, menu_bottom)
-	menuBox.SetOffset(1)
-
-	return menuBox
-}
-
-// dReams Holdero tab layout
-func placeHoldero(change_screen *widget.Button) *fyne.Container {
-	H.Back = *container.NewWithoutLayout(
-		holdero.HolderoTable(bundle.ResourcePokerTablePng),
-		holdero.Player1_label(nil, nil, nil),
-		holdero.Player2_label(nil, nil, nil),
-		holdero.Player3_label(nil, nil, nil),
-		holdero.Player4_label(nil, nil, nil),
-		holdero.Player5_label(nil, nil, nil),
-		holdero.Player6_label(nil, nil, nil),
-		H.TopLabel)
-
-	holdero_label := container.NewHBox(H.LeftLabel, layout.NewSpacer(), H.RightLabel)
-
-	H.Front = *placeHolderoCards()
-
-	H.Actions = *container.NewVBox(
-		layout.NewSpacer(),
-		holdero.SitButton(),
-		holdero.LeaveButton(),
-		holdero.DealHandButton(),
-		holdero.CheckButton(),
-		holdero.BetButton(),
-		holdero.BetAmount())
-
-	options := container.NewVBox(layout.NewSpacer(), holdero.AutoOptions(), change_screen)
-
-	holdero_actions := container.NewHBox(options, layout.NewSpacer(), holdero.TimeOutWarning(), layout.NewSpacer(), layout.NewSpacer(), &H.Actions)
-
-	H.DApp = container.NewVBox(
-		labelColorBlack(holdero_label),
-		&H.Back,
-		&H.Front,
-		layout.NewSpacer(),
-		holdero_actions)
-
-	return H.DApp
-}
-
-// dReams Baccarat tab layout
-func placeBacc() *fyne.Container {
-	B.Back = *container.NewWithoutLayout(
-		baccarat.BaccTable(bundle.ResourceBaccTablePng),
-		baccarat.BaccResult(rpc.Display.BaccRes))
-
-	B.Front = *clearBaccCards()
-
-	bacc_label := container.NewHBox(B.LeftLabel, layout.NewSpacer(), B.RightLabel)
-
-	B.DApp = container.NewVBox(
-		labelColorBlack(bacc_label),
-		&B.Back,
-		&B.Front,
-		layout.NewSpacer(),
-		baccarat.BaccaratButtons(dReams.Window))
-
-	return B.DApp
-}
-
-// dReams dPrediction tab layout
-func placePredict() *fyne.Container {
-	predict_info := container.NewVBox(prediction.Predict.Info, prediction.Predict.Prices)
-	predict_scroll := container.NewScroll(predict_info)
-	predict_scroll.SetMinSize(fyne.NewSize(540, 500))
-
-	check_box := container.NewVBox(prediction.PredictConnectedBox())
-
-	contract_scroll := container.NewHScroll(prediction.PreictionContractEntry())
-	contract_scroll.SetMinSize(fyne.NewSize(600, 35.1875))
-	contract_cont := container.NewHBox(contract_scroll, check_box)
-
-	prediction.Predict.Higher = widget.NewButton("Higher", nil)
-	prediction.Predict.Higher.Hide()
-
-	prediction.Predict.Lower = widget.NewButton("Lower", nil)
-	prediction.Predict.Lower.Hide()
-
-	prediction.Predict.Prediction_box = container.NewVBox(prediction.Predict.Higher, prediction.Predict.Lower)
-	prediction.Predict.Prediction_box.Hide()
-
-	predict_content := container.NewVBox(
-		contract_cont,
-		predict_scroll,
-		layout.NewSpacer(),
-		prediction.Predict.Prediction_box)
-
-	menu.Control.Bet_unlock_p = widget.NewButton("Unlock dPrediction Contract", nil)
-	menu.Control.Bet_unlock_p.Hide()
-
-	menu.Control.Bet_new_p = widget.NewButton("New dPrediction Contract", nil)
-	menu.Control.Bet_new_p.Hide()
-
-	unlock_cont := container.NewVBox(menu.Control.Bet_unlock_p, menu.Control.Bet_new_p)
-
-	owner_buttons := container.NewAdaptiveGrid(2, container.NewMax(prediction.OwnerButtonP()), unlock_cont)
-	owned_tab := container.NewBorder(nil, owner_buttons, nil, nil, prediction.PredictionOwned())
-
-	tabs := container.NewAppTabs(
-		container.NewTabItem("Contracts", layout.NewSpacer()),
-		container.NewTabItem("Favorites", prediction.PredicitionFavorites()),
-		container.NewTabItem("Owned", owned_tab))
-
-	tabs.SelectIndex(0)
-	tabs.Selected().Content = prediction.PredictionListings(tabs)
-
-	tabs.OnSelected = func(ti *container.TabItem) {
-		PredictTab(ti)
-	}
-
-	max := container.NewMax(bundle.Alpha120, tabs)
-
-	prediction.Predict.Higher.OnTapped = func() {
-		if len(prediction.Predict.Contract) == 64 {
-			max.Objects[1] = prediction.ConfirmAction(2, "", "", max.Objects, tabs)
-			max.Objects[1].Refresh()
-		}
-	}
-
-	prediction.Predict.Lower.OnTapped = func() {
-		if len(prediction.Predict.Contract) == 64 {
-			max.Objects[1] = prediction.ConfirmAction(1, "", "", max.Objects, tabs)
-			max.Objects[1].Refresh()
-		}
-	}
-
-	menu.Control.Bet_unlock_p.OnTapped = func() {
-		max.Objects[1] = menu.BettingMenuConfirmP(1, max.Objects, tabs)
-		max.Objects[1].Refresh()
-	}
-
-	menu.Control.Bet_new_p.OnTapped = func() {
-		max.Objects[1] = menu.BettingMenuConfirmP(2, max.Objects, tabs)
-		max.Objects[1].Refresh()
-	}
-
-	predict_label := container.NewHBox(P.LeftLabel, layout.NewSpacer(), P.RightLabel)
-	predict_box := container.NewHSplit(predict_content, max)
-
-	P.DApp = container.NewVBox(
-		labelColorBlack(predict_label),
-		predict_box)
-
-	go func() {
-		time.Sleep(2 * time.Second)
-		for !menu.ClosingApps() && menu.Control.Dapp_list["dSports and dPredictions"] {
-			if !rpc.Wallet.Connect && !rpc.Signal.Startup {
-				menu.Control.Predict_check.SetChecked(false)
-				menu.Control.Sports_check.SetChecked(false)
-				prediction.DisablePreditions(true)
-				prediction.DisableSports(true)
 			}
-			time.Sleep(time.Second)
-		}
-	}()
-
-	return P.DApp
-}
-
-// dReams dSports tab layout
-func placeSports() *fyne.Container {
-	sports_content := container.NewVBox(prediction.Sports.Info)
-	sports_scroll := container.NewVScroll(sports_content)
-	sports_scroll.SetMinSize(fyne.NewSize(180, 500))
-
-	check_box := container.NewVBox(prediction.SportsConnectedBox())
-
-	contract_scroll := container.NewHScroll(prediction.SportsContractEntry())
-	contract_scroll.SetMinSize(fyne.NewSize(600, 35.1875))
-	contract_cont := container.NewHBox(contract_scroll, check_box)
-
-	prediction.Sports.Game_select = widget.NewSelect(prediction.Sports.Game_options, func(s string) {
-		split := strings.Split(s, "   ")
-		a, b := menu.GetSportsTeams(prediction.Sports.Contract, split[0])
-		if prediction.Sports.Game_select.SelectedIndex() >= 0 {
-			prediction.Sports.Multi.Show()
-			prediction.Sports.ButtonA.Show()
-			prediction.Sports.ButtonB.Show()
-			prediction.Sports.ButtonA.Text = a
-			prediction.Sports.ButtonA.Refresh()
-			prediction.Sports.ButtonB.Text = b
-			prediction.Sports.ButtonB.Refresh()
-		} else {
-			prediction.Sports.Multi.Hide()
-			prediction.Sports.ButtonA.Hide()
-			prediction.Sports.ButtonB.Hide()
-		}
-	})
-
-	prediction.Sports.Game_select.PlaceHolder = "Select Game #"
-	prediction.Sports.Game_select.Hide()
-
-	var Multi_options = []string{"1x", "3x", "5x"}
-	prediction.Sports.Multi = widget.NewRadioGroup(Multi_options, func(s string) {})
-	prediction.Sports.Multi.Horizontal = true
-	prediction.Sports.Multi.Hide()
-
-	prediction.Sports.ButtonA = widget.NewButton("TEAM A", nil)
-	prediction.Sports.ButtonA.Hide()
-
-	prediction.Sports.ButtonB = widget.NewButton("TEAM B", nil)
-	prediction.Sports.ButtonB.Hide()
-
-	sports_muli := container.NewCenter(prediction.Sports.Multi)
-	prediction.Sports.Sports_box = container.NewVBox(
-		sports_muli,
-		prediction.Sports.Game_select,
-		prediction.Sports.ButtonA,
-		prediction.Sports.ButtonB)
-
-	prediction.Sports.Sports_box.Hide()
-
-	sports_left := container.NewVBox(
-		contract_cont,
-		sports_scroll,
-		layout.NewSpacer(),
-		prediction.Sports.Sports_box)
-
-	epl := widget.NewLabel("")
-	epl.Wrapping = fyne.TextWrapWord
-	epl_scroll := container.NewVScroll(epl)
-	mls := widget.NewLabel("")
-	mls.Wrapping = fyne.TextWrapWord
-	mls_scroll := container.NewVScroll(mls)
-	nba := widget.NewLabel("")
-	nba.Wrapping = fyne.TextWrapWord
-	nba_scroll := container.NewVScroll(nba)
-	nfl := widget.NewLabel("")
-	nfl.Wrapping = fyne.TextWrapWord
-	nfl_scroll := container.NewVScroll(nfl)
-	nhl := widget.NewLabel("")
-	nhl.Wrapping = fyne.TextWrapWord
-	nhl_scroll := container.NewVScroll(nhl)
-	mlb := widget.NewLabel("")
-	mlb.Wrapping = fyne.TextWrapWord
-	mlb_scroll := container.NewVScroll(mlb)
-	bellator := widget.NewLabel("")
-	bellator.Wrapping = fyne.TextWrapWord
-	bellator_scroll := container.NewVScroll(bellator)
-	ufc := widget.NewLabel("")
-	ufc.Wrapping = fyne.TextWrapWord
-	ufc_scroll := container.NewVScroll(ufc)
-	score_tabs := container.NewAppTabs(
-		container.NewTabItem("EPL", epl_scroll),
-		container.NewTabItem("MLS", mls_scroll),
-		container.NewTabItem("NBA", nba_scroll),
-		container.NewTabItem("NFL", nfl_scroll),
-		container.NewTabItem("NHL", nhl_scroll),
-		container.NewTabItem("MLB", mlb_scroll),
-		container.NewTabItem("Bellator", bellator_scroll),
-		container.NewTabItem("UFC", ufc_scroll))
-
-	score_tabs.OnSelected = func(ti *container.TabItem) {
-		switch ti.Text {
-		case "EPL":
-			go prediction.GetScores(epl, "EPL")
-		case "MLS":
-			go prediction.GetScores(mls, "MLS")
-		case "NBA":
-			go prediction.GetScores(nba, "NBA")
-		case "NFL":
-			go prediction.GetScores(nfl, "NFL")
-		case "NHL":
-			go prediction.GetScores(nhl, "NHL")
-		case "MLB":
-			go prediction.GetScores(mlb, "MLB")
-		case "Bellator":
-			go prediction.GetMmaResults(bellator, "Bellator")
-		case "UFC":
-			go prediction.GetMmaResults(ufc, "UFC")
-		default:
-		}
-	}
-
-	menu.Control.Bet_unlock_s = widget.NewButton("Unlock dSports Contracts", nil)
-	menu.Control.Bet_unlock_s.Hide()
-
-	menu.Control.Bet_new_s = widget.NewButton("New dSports Contract", nil)
-	menu.Control.Bet_new_s.Hide()
-
-	unlock_cont := container.NewVBox(
-		menu.Control.Bet_unlock_s,
-		menu.Control.Bet_new_s)
-
-	owner_buttons := container.NewAdaptiveGrid(2, container.NewMax(prediction.OwnerButtonS()), unlock_cont)
-	owned_tab := container.NewBorder(nil, owner_buttons, nil, nil, prediction.SportsOwned())
-
-	tabs := container.NewAppTabs(
-		container.NewTabItem("Contracts", layout.NewSpacer()),
-		container.NewTabItem("Favorites", prediction.SportsFavorites()),
-		container.NewTabItem("Owned", owned_tab),
-		container.NewTabItem("Scores", score_tabs),
-		container.NewTabItem("Payouts", prediction.SportsPayouts()))
-
-	tabs.SelectIndex(0)
-	tabs.Selected().Content = prediction.SportsListings(tabs)
-
-	tabs.OnSelected = func(ti *container.TabItem) {
-
-	}
-
-	max := container.NewMax(bundle.Alpha120, tabs)
-
-	prediction.Sports.ButtonA.OnTapped = func() {
-		if len(prediction.Sports.Contract) == 64 {
-			max.Objects[1] = prediction.ConfirmAction(3, prediction.Sports.ButtonA.Text, prediction.Sports.ButtonB.Text, max.Objects, tabs)
-			max.Objects[1].Refresh()
-		}
-	}
-	prediction.Sports.ButtonA.Hide()
-
-	prediction.Sports.ButtonB.OnTapped = func() {
-		if len(prediction.Sports.Contract) == 64 {
-			max.Objects[1] = prediction.ConfirmAction(4, prediction.Sports.ButtonA.Text, prediction.Sports.ButtonB.Text, max.Objects, tabs)
-			max.Objects[1].Refresh()
-		}
-	}
-
-	menu.Control.Bet_unlock_s.OnTapped = func() {
-		max.Objects[1] = menu.BettingMenuConfirmS(1, max.Objects, tabs)
-		max.Objects[1].Refresh()
-	}
-
-	menu.Control.Bet_new_s.OnTapped = func() {
-		max.Objects[1] = menu.BettingMenuConfirmS(2, max.Objects, tabs)
-		max.Objects[1].Refresh()
-	}
-
-	sports_label := container.NewHBox(S.LeftLabel, layout.NewSpacer(), S.RightLabel)
-	sports_box := container.NewHSplit(sports_left, max)
-
-	S.DApp = container.NewVBox(
-		labelColorBlack(sports_label),
-		sports_box)
-
-	return S.DApp
-}
-
-// dReams Tarot tab layout
-func placeTarot() fyne.CanvasObject {
-	search_entry := widget.NewEntry()
-	search_entry.SetPlaceHolder("TXID:")
-	search_button := widget.NewButton("    Search   ", func() {
-		txid := search_entry.Text
-		if len(txid) == 64 {
-			signer := rpc.VerifySigner(search_entry.Text)
-			if signer {
-				rpc.Tarot.Display = true
-				tarot.Iluma.Label.SetText("")
-				rpc.FetchTarotReading(txid)
-				if rpc.Tarot.Card2 != 0 && rpc.Tarot.Card3 != 0 {
-					tarot.Iluma.Card1.Objects[1] = TarotCard(rpc.Tarot.Card1)
-					tarot.Iluma.Card2.Objects[1] = TarotCard(rpc.Tarot.Card2)
-					tarot.Iluma.Card3.Objects[1] = TarotCard(rpc.Tarot.Card3)
-					rpc.Tarot.Num = 3
-				} else {
-					tarot.Iluma.Card1.Objects[1] = TarotCard(0)
-					tarot.Iluma.Card2.Objects[1] = TarotCard(rpc.Tarot.Card1)
-					tarot.Iluma.Card3.Objects[1] = TarotCard(0)
-					rpc.Tarot.Num = 1
+		case "dReams-DERO":
+			f, err := strconv.ParseFloat(swap_entry.Text, 64)
+			if err == nil && swap_entry.Validate() == nil {
+				if amt := f * 100000; amt > 0 {
+					max.Objects[0] = holdero.DreamsConfirm(2, amt, max, swap_tabs)
+					max.Refresh()
 				}
-				tarot.Iluma.Box.Refresh()
-			} else {
-				log.Println("[Iluma] This is not your reading")
 			}
 		}
-	})
-
-	tarot_label := container.NewHBox(T.LeftLabel, layout.NewSpacer(), T.RightLabel)
-
-	T.DApp = container.NewBorder(
-		labelColorBlack(tarot_label),
-		nil,
-		nil,
-		nil,
-		tarot.TarotCardBox())
-
-	reset := tarot.Iluma.Card2
-
-	tarot.Iluma.Draw1 = widget.NewButton("Draw One", func() {
-		if !tarot.Iluma.Open {
-			tarot.Iluma.Draw1.Hide()
-			tarot.Iluma.Draw3.Hide()
-			tarot.Iluma.Card2 = tarot.TarotConfirm(1, reset)
-		}
-	})
-
-	tarot.Iluma.Draw3 = widget.NewButton("Draw Three", func() {
-		if !tarot.Iluma.Open {
-			tarot.Iluma.Draw1.Hide()
-			tarot.Iluma.Draw3.Hide()
-			tarot.Iluma.Card2 = tarot.TarotConfirm(3, reset)
-		}
-	})
-
-	tarot.Iluma.Draw1.Hide()
-	tarot.Iluma.Draw3.Hide()
-
-	draw_cont := container.NewAdaptiveGrid(5,
-		layout.NewSpacer(),
-		layout.NewSpacer(),
-		tarot.Iluma.Draw1,
-		tarot.Iluma.Draw3,
-		layout.NewSpacer())
-
-	tarot.Iluma.Search = container.NewBorder(nil, nil, nil, search_button, search_entry)
-
-	tarot.Iluma.Actions = container.NewVBox(
-		layout.NewSpacer(),
-		container.NewAdaptiveGrid(2, draw_cont, tarot.Iluma.Search))
-
-	tarot.Iluma.Search.Hide()
-	tarot.Iluma.Actions.Hide()
-
-	tarot_tabs := container.NewAppTabs(
-		container.NewTabItem("Iluma", tarot.PlaceIluma()),
-		container.NewTabItem("Reading", T.DApp))
-
-	tarot_tabs.OnSelected = func(ti *container.TabItem) {
-		TarotTab(ti)
 	}
 
-	tarot_tabs.SetTabLocation(container.TabLocationBottom)
+	swap_entry, swap_boxes = menu.CreateSwapContainer(select_pair.Selected)
+	menu.Assets.Swap = container.NewBorder(select_pair, swap_button, nil, nil, swap_boxes)
+	menu.Assets.Swap.Hide()
 
-	return container.NewMax(tarot_tabs, tarot.Iluma.Actions)
+	select_pair.OnChanged = func(s string) {
+		split := strings.Split(s, "-")
+		if len(split) != 2 {
+			return
+		}
+
+		swap_entry, swap_boxes = menu.CreateSwapContainer(s)
+
+		menu.Assets.Swap.Objects[0] = swap_boxes
+		menu.Assets.Swap.Refresh()
+	}
+
+	swap_tabs = container.NewAppTabs(container.NewTabItem("Swap", container.NewCenter(menu.Assets.Swap)))
+	max.Add(swap_tabs)
+
+	full := container.NewHSplit(container.NewMax(bundle.NewAlpha120(), balance_tabs), max)
+	full.SetOffset(0.66)
+
+	return full
 }

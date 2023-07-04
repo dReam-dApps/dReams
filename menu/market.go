@@ -5,17 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"image/color"
-	"log"
 	"runtime"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/SixofClubsss/dReams/bundle"
-	"github.com/SixofClubsss/dReams/dwidget"
-	"github.com/SixofClubsss/dReams/holdero"
-	"github.com/SixofClubsss/dReams/rpc"
+	"github.com/dReam-dApps/dReams/bundle"
+	"github.com/dReam-dApps/dReams/dwidget"
+	"github.com/dReam-dApps/dReams/rpc"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -24,6 +21,7 @@ import (
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
+	xwidget "fyne.io/x/fyne/widget"
 )
 
 type marketObjects struct {
@@ -44,12 +42,13 @@ type marketObjects struct {
 	Current_bid   *widget.Entry
 	Bid_price     *widget.Entry
 	End_time      *widget.Entry
-	Loading       *canvas.Text
+	Loading       *widget.ProgressBarInfinite
 	Market_button *widget.Button
 	Cancel_button *widget.Button
 	Close_button  *widget.Button
 	Auction_list  *widget.List
 	Buy_list      *widget.List
+	My_listings   *widget.List
 	Icon          canvas.Image
 	Cover         canvas.Image
 	Details_box   fyne.Container
@@ -62,12 +61,13 @@ type marketObjects struct {
 	Viewing_coll  string
 	Auctions      []string
 	Buy_now       []string
+	My_list       []string
 	Filters       []string
 }
 
 type assetObjects struct {
-	Dreams_bal    *canvas.Text
-	Dero_bal      *canvas.Text
+	Swap          *fyne.Container
+	Balances      *widget.List
 	Dero_price    *canvas.Text
 	Wall_height   *canvas.Text
 	Daem_height   *canvas.Text
@@ -82,7 +82,6 @@ type assetObjects struct {
 	Asset_map     map[string]string
 	Name          *canvas.Text
 	Collection    *canvas.Text
-	Descrption    *canvas.Text
 	Icon          canvas.Image
 	Stats_box     fyne.Container
 	Header_box    fyne.Container
@@ -90,10 +89,24 @@ type assetObjects struct {
 
 var Assets assetObjects
 var Market marketObjects
+var dReamsNFAs = []assetCount{
+	{name: "AZYPC", count: 23},
+	{name: "AZYPCB", count: 53},
+	{name: "AZYDS", count: 10},
+	{name: "DBC", count: 8},
+	{name: "SIXPC", count: 9},
+	{name: "SIXPCB", count: 10},
+	{name: "SIXART", count: 17},
+	{name: "HighStrangeness", count: 354},
+}
+
+func (a *assetObjects) Add(name, scid string) {
+	a.Assets = append(a.Assets, name+"   "+scid)
+}
 
 // NFA market amount entry
 func MarketEntry() fyne.CanvasObject {
-	Market.Entry = dwidget.DeroAmtEntry("", 0.1, 1)
+	Market.Entry = dwidget.NewDeroEntry("", 0.1, 1)
 	Market.Entry.ExtendBaseWidget(Market.Entry)
 	Market.Entry.SetText("0.0")
 	Market.Entry.PlaceHolder = "Dero:"
@@ -117,7 +130,7 @@ func BidBuyConfirm(scid string, amt uint64, b int, obj *container.Split, reset f
 	amt_str := fmt.Sprintf("%.5f", f/100000)
 	switch b {
 	case 0:
-		listing := checkNfaAuctionListing(scid)
+		listing, _, _ := checkNfaAuctionListing(scid)
 		split := strings.Split(listing, "   ")
 		if len(split) == 4 {
 			coll = split[0]
@@ -125,7 +138,7 @@ func BidBuyConfirm(scid string, amt uint64, b int, obj *container.Split, reset f
 		}
 		text = fmt.Sprintf("Bidding on SCID:\n\n%s\n\nAsset: %s\n\nCollection: %s\n\nBid amount: %s Dero\n\nConfirm bid", scid, name, coll, amt_str)
 	case 1:
-		listing := checkNfaBuyListing(scid)
+		listing, _, _ := checkNfaBuyListing(scid)
 		split := strings.Split(listing, "   ")
 		if len(split) == 4 {
 			coll = split[0]
@@ -170,7 +183,7 @@ func BidBuyConfirm(scid string, amt uint64, b int, obj *container.Split, reset f
 	content := container.NewVBox(layout.NewSpacer(), label, layout.NewSpacer(), buttons)
 
 	go func() {
-		for rpc.Wallet.Connect && rpc.Daemon.Connect {
+		for rpc.IsReady() {
 			time.Sleep(time.Second)
 		}
 
@@ -189,21 +202,26 @@ func BidBuyConfirm(scid string, amt uint64, b int, obj *container.Split, reset f
 func ConfirmCancelClose(scid string, c int, obj *container.Split, reset fyne.CanvasObject) fyne.CanvasObject {
 	var text, coll, name string
 
-	if Market.Tab == "Buy" {
-		listing := checkNfaBuyListing(scid)
+	list, _ := CheckNFAListingType(scid)
+	switch list {
+	case 1:
+		listing, _, _ := checkNfaAuctionListing(scid)
 		split := strings.Split(listing, "   ")
 		if len(split) == 4 {
 			coll = split[0]
 			name = split[1]
 		}
-	} else if Market.Tab == "Auction" {
-		listing := checkNfaAuctionListing(scid)
+	case 2:
+		listing, _, _ := checkNfaBuyListing(scid)
 		split := strings.Split(listing, "   ")
 		if len(split) == 4 {
 			coll = split[0]
 			name = split[1]
 		}
+	default:
+
 	}
+
 	switch c {
 	case 0:
 		text = fmt.Sprintf("Close listing for SCID:\n\n%s\n\nAsset: %s\n\nCollection: %s", scid, name, coll)
@@ -275,6 +293,7 @@ func AuctionListings() fyne.Widget {
 				Market.Viewing = split[3]
 				go GetNfaImages(split[3])
 				go GetAuctionDetails(split[3])
+				Market.Details_box.Objects[1] = loadingBar()
 			}
 		}
 	}
@@ -304,11 +323,132 @@ func BuyNowListings() fyne.Widget {
 				Market.Viewing = split[3]
 				go GetNfaImages(split[3])
 				go GetBuyNowDetails(split[3])
+				Market.Details_box.Objects[1] = loadingBar()
 			}
 		}
 	}
 
 	return Market.Buy_list
+}
+
+// NFA listing for connected wallet
+//   - Gets images and details for Market objects on selected
+func MyNFAListings() fyne.Widget {
+	Market.My_listings = widget.NewList(
+		func() int {
+			return len(Market.My_list)
+		},
+		func() fyne.CanvasObject {
+			return widget.NewLabel("")
+		},
+		func(i widget.ListItemID, o fyne.CanvasObject) {
+			o.(*widget.Label).SetText(Market.My_list[i])
+		})
+
+	Market.My_listings.OnSelected = func(id widget.ListItemID) {
+		if id != 0 {
+			split := strings.Split(Market.My_list[id], "   ")
+			if split[3] != Market.Viewing {
+				clearNfaImages()
+				Market.Viewing = split[3]
+				go GetNfaImages(split[3])
+				go GetUnlistedDetails(split[3])
+				Market.Details_box.Objects[1] = loadingBar()
+			}
+		}
+	}
+
+	return Market.My_listings
+}
+
+// Search NFA objects
+func SearchNFAs() fyne.CanvasObject {
+	var dest_addr string
+	search_entry := xwidget.NewCompletionEntry([]string{})
+	search_entry.Wrapping = fyne.TextTruncate
+	search_entry.OnCursorChanged = func() {
+		split := strings.Split(search_entry.Text, "   ")
+		if len(split) > 3 {
+			if split[3] != Market.Viewing {
+				Market.Viewing = split[3]
+				list, addr := CheckNFAListingType(split[3])
+				dest_addr = addr
+				switch list {
+				case 1:
+					Market.Tab = "Auction"
+					Market.Market_button.Text = "Bid"
+					Market.Entry.SetText("0.0")
+					Market.Entry.Enable()
+					ResetAuctionInfo()
+					AuctionInfo()
+					clearNfaImages()
+					go GetNfaImages(split[3])
+					go GetAuctionDetails(split[3])
+				case 2:
+					Market.Tab = "Buy"
+					Market.Market_button.Text = "Buy"
+					Market.Entry.SetText("0.0")
+					Market.Entry.Disable()
+					ResetBuyInfo()
+					BuyNowInfo()
+					clearNfaImages()
+					go GetNfaImages(split[3])
+					go GetBuyNowDetails(split[3])
+				default:
+					Market.Tab = "Buy"
+					Market.Entry.SetText("0.0")
+					Market.Entry.Disable()
+					ResetNotListedInfo()
+					NotListedInfo()
+					clearNfaImages()
+					go GetNfaImages(split[3])
+					go GetUnlistedDetails(split[3])
+				}
+			}
+
+			Market.Details_box.Objects[1] = loadingBar()
+		}
+	}
+
+	search_by := widget.NewRadioGroup([]string{"Collection   ", "Name"}, nil)
+	search_by.Horizontal = true
+	search_by.SetSelected("Collection   ")
+
+	search_button := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "search"), func() {
+		if search_entry.Text != "" && rpc.Wallet.Connect {
+			switch search_by.Selected {
+			case "Collection   ":
+				if results := SearchNFAsBy(0, search_entry.Text); results != nil {
+					search_entry.SetOptions(results)
+					search_entry.ShowCompletion()
+				}
+			case "Name":
+				if results := SearchNFAsBy(1, search_entry.Text); results != nil {
+					search_entry.SetOptions(results)
+					search_entry.ShowCompletion()
+				}
+			}
+		}
+	})
+
+	clear_button := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "searchReplace"), func() {
+		search_entry.SetOptions([]string{" Collection,  Name,  Description,  SCID:"})
+		search_entry.SetText("")
+	})
+
+	show_results := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "arrowDropDown"), func() {
+		search_entry.ShowCompletion()
+	})
+
+	search_cont := container.NewBorder(container.NewCenter(search_by), nil, container.NewHBox(clear_button, show_results), search_button, search_entry)
+
+	message_button := widget.NewButton("Message Owner", func() {
+		if rpc.Wallet.IsConnected() && dest_addr != "" {
+			SendMessageMenu(dest_addr, bundle.ResourceDReamsIconAltPng)
+		}
+	})
+
+	return container.NewBorder(search_cont, message_button, nil, nil, container.NewHBox())
 }
 
 // NFA market icon image with frame
@@ -343,24 +483,17 @@ func NfaImg(img canvas.Image) fyne.CanvasObject {
 	return container.NewCenter(&img)
 }
 
-// Show text while loading market image
-func loadingText() fyne.CanvasObject {
-	Market.Loading = canvas.NewText("Loading", bundle.TextColor)
-	Market.Loading.Alignment = fyne.TextAlignCenter
-	Market.Loading.TextSize = 18
+// Loading bar for NFA cover image
+func loadingBar() fyne.CanvasObject {
+	Market.Loading = widget.NewProgressBarInfinite()
+	spacer := canvas.NewRectangle(color.RGBA{0, 0, 0, 0})
+	spacer.SetMinSize(fyne.NewSize(0, 21))
+	Market.Loading.Start()
 
-	return container.NewMax(Market.Loading)
-}
-
-// Do while market loading text is showing
-func loadingTextLoop() {
-	if len(Market.Loading.Text) < 21 {
-		for i := 0; i < 3; i++ {
-			Market.Loading.Text = Market.Loading.Text + "."
-			Market.Loading.Refresh()
-			time.Sleep(300 * time.Millisecond)
-		}
-	}
+	return container.NewVBox(
+		layout.NewSpacer(),
+		container.NewMax(spacer, Market.Loading, container.NewCenter(canvas.NewText("Loading...", bundle.TextColor))),
+		layout.NewSpacer())
 }
 
 // Clears all market NFA images
@@ -370,7 +503,7 @@ func clearNfaImages() {
 	Market.Details_box.Objects[0].Refresh()
 
 	Market.Cover = *canvas.NewImageFromImage(nil)
-	Market.Details_box.Objects[1] = loadingText()
+	Market.Details_box.Objects[1] = canvas.NewImageFromImage(nil)
 	Market.Details_box.Objects[1].Refresh()
 	Market.Details_box.Refresh()
 }
@@ -442,12 +575,55 @@ func AuctionInfo() fyne.CanvasObject {
 	return &Market.Details_box
 }
 
+// Container for unlisted info objects
+func NotListedInfo() fyne.CanvasObject {
+	unlisted_form := []*widget.FormItem{}
+	unlisted_form = append(unlisted_form, widget.NewFormItem("Name", Market.Name))
+	unlisted_form = append(unlisted_form, widget.NewFormItem("Asset Type", Market.Type))
+	unlisted_form = append(unlisted_form, widget.NewFormItem("Collection", Market.Collection))
+	unlisted_form = append(unlisted_form, widget.NewFormItem("Description", Market.Description))
+	unlisted_form = append(unlisted_form, widget.NewFormItem("Creator", Market.Creator))
+	unlisted_form = append(unlisted_form, widget.NewFormItem("Owner", Market.Owner))
+	unlisted_form = append(unlisted_form, widget.NewFormItem("Artificer %", Market.Art_fee))
+	unlisted_form = append(unlisted_form, widget.NewFormItem("Royalty %", Market.Royalty))
+
+	unlisted_form = append(unlisted_form, widget.NewFormItem("Owner Update", Market.Owner_update))
+
+	Market.Details_box = *container.NewAdaptiveGrid(2,
+		container.NewVBox(container.NewHBox(NfaIcon(bundle.ResourceAvatarFramePng), layout.NewSpacer()), widget.NewForm(unlisted_form...)),
+		NfaImg(Market.Cover))
+
+	Market.Description.Wrapping = fyne.TextWrapWord
+	Market.Details_box.Refresh()
+
+	return &Market.Details_box
+}
+
+// Set unlisted display content to default values
+func ResetNotListedInfo() {
+	Market.Bid_amt = 0
+	clearNfaImages()
+	Market.Name.SetText("Name:")
+	Market.Type.SetText("Asset Type:")
+	Market.Collection.SetText("Collection:")
+	Market.Description.SetText("Description:")
+	Market.Creator.SetText("Creator:")
+	Market.Art_fee.SetText("Artificer:")
+	Market.Royalty.SetText("Royalty:")
+	Market.Owner.SetText("Owner:")
+	Market.Owner_update.SetText("Owner can update:")
+	Market.Details_box.Refresh()
+}
+
 // Refresh Market images
 func RefreshNfaImages() {
 	if Market.Cover.Resource != nil {
 		Market.Details_box.Objects[1] = NfaImg(Market.Cover)
+		if Market.Loading != nil {
+			Market.Loading.Stop()
+		}
 	} else {
-		go loadingTextLoop()
+		Market.Details_box.Objects[1] = loadingBar()
 	}
 
 	if Market.Icon.Resource != nil {
@@ -535,6 +711,7 @@ func MarketTab(ti *container.TabItem) {
 		go FindNfaListings(nil)
 		Market.Tab = "Auction"
 		Market.Auction_list.UnselectAll()
+		Market.My_listings.UnselectAll()
 		Market.Viewing = ""
 		Market.Viewing_coll = ""
 		Market.Market_button.Text = "Bid"
@@ -550,12 +727,36 @@ func MarketTab(ti *container.TabItem) {
 		Market.Viewing = ""
 		Market.Viewing_coll = ""
 		Market.Market_button.Text = "Buy"
+		Market.Entry.SetText("0.0")
 		Market.Entry.Disable()
 		Market.Market_button.Refresh()
-		Market.Details_box.Refresh()
+		ResetBuyInfo()
+		BuyNowInfo()
+	case "My Listings":
+		go FindNfaListings(nil)
+		Market.Tab = "Buy"
+		Market.My_listings.UnselectAll()
+		Market.Viewing = ""
+		Market.Viewing_coll = ""
+		Market.Entry.SetText("0.0")
+		Market.Entry.Disable()
+		ResetBuyInfo()
+		BuyNowInfo()
+	case "Search":
+		Market.Tab = "Buy"
+		Market.Auction_list.UnselectAll()
+		Market.Buy_list.UnselectAll()
+		Market.Viewing = ""
+		Market.Viewing_coll = ""
+		Market.Entry.SetText("0.0")
+		Market.Entry.Disable()
 		ResetBuyInfo()
 		BuyNowInfo()
 	}
+
+	Market.Close_button.Hide()
+	Market.Cancel_button.Hide()
+	Market.Market_button.Hide()
 }
 
 // NFA market layout
@@ -564,7 +765,9 @@ func PlaceMarket() *container.Split {
 
 	tabs := container.NewAppTabs(
 		container.NewTabItem("Auctions", AuctionListings()),
-		container.NewTabItem("Buy Now", BuyNowListings()))
+		container.NewTabItem("Buy Now", BuyNowListings()),
+		container.NewTabItem("My Listings", MyNFAListings()),
+		container.NewTabItem("Search", SearchNFAs()))
 
 	tabs.SetTabLocation(container.TabLocationTop)
 	tabs.OnSelected = func(ti *container.TabItem) {
@@ -613,7 +816,7 @@ func PlaceMarket() *container.Split {
 			text := Market.Market_button.Text
 			Market.Market_button.Hide()
 			if text == "Bid" {
-				amt := ToAtomicFive(Market.Entry.Text)
+				amt := rpc.ToAtomic(Market.Entry.Text, 5)
 				menu_top.Trailing.(*fyne.Container).Objects[1] = BidBuyConfirm(scid, amt, 0, menu_top, container.NewMax(tabs, scroll_cont))
 				menu_top.Trailing.(*fyne.Container).Objects[1].Refresh()
 			} else if text == "Buy" {
@@ -655,72 +858,197 @@ func PlaceMarket() *container.Split {
 	return menu_box
 }
 
-// Recheck owned assets button
-//   - tag for log print
-//   - pass recheck for desired check
-func RecheckButton(tag string, recheck func()) fyne.CanvasObject {
-	button := widget.NewButton("Check Assets", func() {
-		if !Gnomes.Wait {
-			log.Printf("[%s] Rechecking Assets\n", tag)
-			go recheck()
+func ReturnEnabledNFAs(assets map[string]bool) (filters []string) {
+	for name, enabled := range assets {
+		if enabled && isDreamsNfaCollection(name) {
+			filters = append(filters, fmt.Sprintf(`330 STORE("nameHdr", "%s`, name))
+		}
+	}
+
+	return
+}
+
+func ReturnAssetCount() (count int) {
+	count = Control.NFA_count + Control.G45_count - 10
+	if count < 2 {
+		count = 2
+	}
+
+	return
+}
+
+// Options for enabling NFA collection
+func enableNFAOpts(asset assetCount) (opts *widget.RadioGroup) {
+	onChanged := func(s string) {
+		if s == "Yes" {
+			Control.Lock()
+			Control.Enabled_assets[asset.name] = true
+			Control.NFA_count += asset.count
+			Control.Unlock()
+			return
+		}
+
+		Control.Lock()
+		defer Control.Unlock()
+		Control.Enabled_assets[asset.name] = false
+		if Control.NFA_count >= asset.count {
+			Control.NFA_count -= asset.count
+		}
+	}
+
+	if !Control.once {
+		opts = widget.NewRadioGroup([]string{"Yes", "No"}, nil)
+		opts.Required = true
+		opts.Horizontal = true
+		if Control.Enabled_assets[asset.name] {
+			opts.OnChanged = onChanged
+			opts.SetSelected("Yes")
+		} else {
+			opts.SetSelected("No")
+			opts.OnChanged = onChanged
+		}
+
+		return
+	}
+
+	opts = widget.NewRadioGroup([]string{"Yes", "No"}, nil)
+	opts.Required = true
+	opts.Horizontal = true
+	if Control.Enabled_assets[asset.name] {
+		opts.SetSelected("Yes")
+	} else {
+		opts.SetSelected("No")
+	}
+	opts.OnChanged = onChanged
+
+	return
+}
+
+// Options for enabling G45 collection
+func enableG45Opts(asset assetCount) (opts *widget.RadioGroup) {
+	onChanged := func(s string) {
+		if s == "Yes" {
+			Control.Lock()
+			Control.Enabled_assets[asset.name] = true
+			Control.G45_count += asset.count
+			Control.Unlock()
+			return
+		}
+
+		Control.Lock()
+		defer Control.Unlock()
+		Control.Enabled_assets[asset.name] = false
+		if Control.G45_count >= asset.count {
+			Control.G45_count -= asset.count
+		}
+	}
+
+	if !Control.once {
+		opts = widget.NewRadioGroup([]string{"Yes", "No"}, nil)
+		opts.Required = true
+		opts.Horizontal = true
+		if Control.Enabled_assets[asset.name] {
+			opts.OnChanged = onChanged
+			opts.SetSelected("Yes")
+		} else {
+			opts.SetSelected("No")
+			opts.OnChanged = onChanged
+		}
+
+		return
+	}
+
+	opts = widget.NewRadioGroup([]string{"Yes", "No"}, nil)
+	opts.Required = true
+	opts.Horizontal = true
+	if Control.Enabled_assets[asset.name] {
+		opts.SetSelected("Yes")
+	} else {
+		opts.SetSelected("No")
+	}
+	opts.OnChanged = onChanged
+
+	return
+}
+
+// Enable asset collection objects
+func enabledCollections() fyne.CanvasObject {
+	collection_form := []*widget.FormItem{}
+	enable_all := widget.NewButton("Enable All", func() {
+		for _, item := range collection_form {
+			item.Widget.(*widget.RadioGroup).SetSelected("Yes")
+
 		}
 	})
 
-	return button
-}
-
-// dReams recheck owned assets routine
-func RecheckDreamsAssets() {
-	Gnomes.Wait = true
-	Assets.Assets = []string{}
-	CheckDreamsNFAs(false, nil)
-	CheckDreamsG45s(false, nil)
-	if Control.Dapp_list["Holdero"] {
-		if rpc.Wallet.Connect {
-			Control.Names.Options = []string{rpc.Wallet.Address[0:12]}
-			CheckWalletNames(rpc.Wallet.Address)
+	disable_all := widget.NewButton("Disable All", func() {
+		for _, item := range collection_form {
+			item.Widget.(*widget.RadioGroup).SetSelected("No")
 		}
+	})
+
+	for _, asset := range dReamsNFAs {
+		collection_form = append(collection_form, widget.NewFormItem(asset.name, enableNFAOpts(asset)))
 	}
-	sort.Strings(Assets.Assets)
-	Assets.Asset_list.UnselectAll()
-	Assets.Asset_list.Refresh()
-	Gnomes.Wait = false
+
+	for _, asset := range dReamsG45s {
+		collection_form = append(collection_form, widget.NewFormItem(asset.name, enableG45Opts(asset)))
+	}
+
+	Control.once = true
+	if Control.NFA_count < 3 {
+		Control.NFA_count = 3
+	}
+
+	return container.NewBorder(
+		nil,
+		container.NewBorder(nil, nil, enable_all, disable_all, container.NewCenter(canvas.NewText("You will need to delete Gnomon DB and resync for changes to take effect ", bundle.TextColor))),
+		nil,
+		nil,
+		container.NewVScroll(container.NewCenter(widget.NewForm(collection_form...))))
+
 }
 
 // Owned asset tab layout
 //   - tag for log print
-//   - games enables dReams asset selects
-//   - recheck for RecheckButton() func
-//   - menu resources for side menus
+//   - assets is array of widgets used for asset selections
+//   - menu_icon resources for side menus
 //   - w for main window dialog
-func PlaceAssets(tag string, games bool, recheck func(), menu_icon, menu_background fyne.Resource, w fyne.Window) *container.Split {
+func PlaceAssets(tag string, assets []fyne.Widget, menu_icon fyne.Resource, w fyne.Window) *container.Split {
 	items_box := container.NewAdaptiveGrid(2)
 
-	if games {
-		games_cont := container.NewVBox(
-			holdero.FaceSelect(),
-			holdero.BackSelect(),
-			holdero.ThemeSelect(),
-			holdero.AvatarSelect(Assets.Asset_map),
-			holdero.SharedDecks(),
-			RecheckButton(tag, recheck),
-			layout.NewSpacer())
-
-		cont := container.NewHScroll(games_cont)
-		cont.SetMinSize(fyne.NewSize(290, 35.1875))
-
-		items_box.Add(cont)
+	asset_selects := container.NewVBox()
+	for _, sel := range assets {
+		asset_selects.Add(sel)
 	}
+	asset_selects.Add(layout.NewSpacer())
+
+	cont := container.NewHScroll(asset_selects)
+	cont.SetMinSize(fyne.NewSize(290, 35.1875))
+
+	items_box.Add(cont)
 
 	items_box.Add(container.NewAdaptiveGrid(1, AssetStats()))
 
 	player_input := container.NewVBox(items_box, layout.NewSpacer())
 
+	enable_opts := enabledCollections()
+
 	tabs := container.NewAppTabs(
 		container.NewTabItem("Owned", AssetList()))
 
-	tabs.OnSelected = func(ti *container.TabItem) {
+	if len(asset_selects.Objects) > 1 {
+		tabs.Append(container.NewTabItem("Enabled", enable_opts))
+	}
 
+	tabs.OnSelected = func(ti *container.TabItem) {
+		if ti.Text == "Enabled" {
+			if Gnomes.IsRunning() {
+				tabs.Selected().Content = container.NewCenter(canvas.NewText("Stop Gnomon to make changes", bundle.TextColor))
+				return
+			}
+			tabs.Selected().Content = enable_opts
+		}
 	}
 
 	scroll_top := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "arrowUp"), func() {
@@ -766,7 +1094,7 @@ func PlaceAssets(tag string, games bool, recheck func(), menu_icon, menu_backgro
 	player_box := container.NewHBox(player_input)
 
 	menu_top := container.NewHSplit(player_box, max)
-	menu_bottom := container.NewAdaptiveGrid(1, IndexEntry(menu_icon, menu_background))
+	menu_bottom := container.NewAdaptiveGrid(1, IndexEntry(menu_icon))
 
 	menu_box := container.NewVSplit(menu_top, menu_bottom)
 	menu_box.SetOffset(1)
@@ -780,31 +1108,26 @@ func MenuDisplay() fyne.CanvasObject {
 	Assets.Gnomes_height = canvas.NewText(" Gnomon Height: ", bundle.TextColor)
 	Assets.Daem_height = canvas.NewText(" Daemon Height: ", bundle.TextColor)
 	Assets.Wall_height = canvas.NewText(" Wallet Height: ", bundle.TextColor)
-	Assets.Dreams_bal = canvas.NewText(" dReams Balance: ", bundle.TextColor)
-	Assets.Dero_bal = canvas.NewText(" Dero Balance: ", bundle.TextColor)
-	// price := getOgre("DERO-USDT")
 	Assets.Dero_price = canvas.NewText(" Dero Price: $", bundle.TextColor)
 
 	Assets.Gnomes_sync.TextSize = 18
 	Assets.Gnomes_height.TextSize = 18
 	Assets.Daem_height.TextSize = 18
 	Assets.Wall_height.TextSize = 18
-	Assets.Dreams_bal.TextSize = 18
-	Assets.Dero_bal.TextSize = 18
 	Assets.Dero_price.TextSize = 18
-	exLabel := canvas.NewText(" 1 Dero = 333 dReams", bundle.TextColor)
-	exLabel.TextSize = 18
 
-	box := container.NewVBox(
+	Assets.Gnomes_sync.Alignment = fyne.TextAlignCenter
+	Assets.Gnomes_height.Alignment = fyne.TextAlignCenter
+	Assets.Daem_height.Alignment = fyne.TextAlignCenter
+	Assets.Wall_height.Alignment = fyne.TextAlignCenter
+	Assets.Dero_price.Alignment = fyne.TextAlignCenter
+
+	return container.NewVBox(
 		Assets.Gnomes_sync,
 		Assets.Gnomes_height,
 		Assets.Daem_height,
 		Assets.Wall_height,
-		Assets.Dreams_bal,
-		Assets.Dero_bal,
-		Assets.Dero_price, exLabel)
-
-	return box
+		Assets.Dero_price)
 }
 
 // Icon image for Holdero tables and asset viewing
@@ -812,15 +1135,13 @@ func MenuDisplay() fyne.CanvasObject {
 func IconImg(res fyne.Resource) *fyne.Container {
 	Assets.Icon.SetMinSize(fyne.NewSize(100, 100))
 	Assets.Icon.Resize(fyne.NewSize(94, 94))
-	Assets.Icon.Move(fyne.NewPos(8, 3))
+	Assets.Icon.Move(fyne.NewPos(7, 3))
 
 	frame := canvas.NewImageFromResource(res)
 	frame.Resize(fyne.NewSize(100, 100))
-	frame.Move(fyne.NewPos(5, 0))
+	frame.Move(fyne.NewPos(4, 0))
 
-	cont := container.NewWithoutLayout(&Assets.Icon, frame)
-
-	return cont
+	return container.NewWithoutLayout(&Assets.Icon, frame)
 }
 
 // Display for owned asset info
@@ -868,7 +1189,7 @@ func setHeaderConfirm(name, desc, icon, scid string, obj []fyne.CanvasObject, re
 //   - quit for exit chan
 //   - connected box for DeroRpcEntries
 func RunNFAMarket(tag string, quit, done chan struct{}, connect_box *dwidget.DeroRpcEntries) {
-	log.Printf("[%s] %s %s %s\n", tag, rpc.DREAMSv, runtime.GOOS, runtime.GOARCH)
+	logger.Printf("[%s] %s %s %s\n", tag, rpc.DREAMSv, runtime.GOOS, runtime.GOARCH)
 	time.Sleep(6 * time.Second)
 	ticker := time.NewTicker(3 * time.Second)
 	offset := 0
@@ -880,45 +1201,40 @@ func RunNFAMarket(tag string, quit, done chan struct{}, connect_box *dwidget.Der
 			rpc.EchoWallet(tag)
 
 			// Get all NFA listings
-			if !GnomonClosing() && offset%2 == 0 {
+			if Gnomes.IsRunning() && offset%2 == 0 {
 				FindNfaListings(nil)
 				if offset > 19 {
 					offset = 0
 				}
 			}
 
-			rpc.GetBalance()
-			if !rpc.Wallet.Connect {
-				rpc.Wallet.Balance = 0
-			}
+			rpc.Wallet.GetBalance()
 
 			// Refresh Dero balance and Gnomon endpoint
 			connect_box.RefreshBalance()
-			if !rpc.Signal.Startup {
+			if !rpc.Startup {
 				GnomonEndPoint()
 			}
 
 			// If connected daemon connected start looking for Gnomon sync with daemon
-			if rpc.Daemon.Connect && Gnomes.Init && !GnomonClosing() {
+			if rpc.Daemon.IsConnected() && Gnomes.IsRunning() {
 				connect_box.Disconnect.SetChecked(true)
 				// Get indexed SCID count
-				contracts := Gnomes.Indexer.Backend.GetAllOwnersAndSCIDs()
-				Gnomes.SCIDS = uint64(len(contracts))
-				if Gnomes.SCIDS > 0 {
-					Gnomes.Checked = true
+				Gnomes.IndexContains()
+				if Gnomes.HasIndex(1) {
+					Gnomes.Checked(true)
 				}
 
-				height := rpc.DaemonHeight(tag, rpc.Daemon.Rpc)
-				if Gnomes.Indexer.LastIndexedHeight >= int64(height)-3 {
-					Gnomes.Sync = true
+				if Gnomes.Indexer.LastIndexedHeight >= Gnomes.Indexer.ChainHeight-3 {
+					Gnomes.Synced(true)
 				} else {
-					Gnomes.Sync = false
-					Gnomes.Checked = false
+					Gnomes.Synced(false)
+					Gnomes.Checked(false)
 				}
 
 				// Enable index controls and check if wallet is connected
 				go DisableIndexControls(false)
-				if rpc.Wallet.Connect {
+				if rpc.Wallet.IsConnected() {
 					Market.Market_box.Show()
 					Control.Claim_button.Show()
 					// Update live market info
@@ -950,14 +1266,14 @@ func RunNFAMarket(tag string, quit, done chan struct{}, connect_box *dwidget.Der
 				DisableIndexControls(true)
 			}
 
-			if rpc.Daemon.Connect {
-				rpc.Signal.Startup = false
+			if rpc.Daemon.IsConnected() {
+				rpc.Startup = false
 			}
 
 			offset++
 
 		case <-quit: // exit
-			log.Printf("[%s] Closing\n", tag)
+			logger.Printf("[%s] Closing\n", tag)
 			if Gnomes.Icon_ind != nil {
 				Gnomes.Icon_ind.Stop()
 			}
@@ -969,17 +1285,16 @@ func RunNFAMarket(tag string, quit, done chan struct{}, connect_box *dwidget.Der
 }
 
 // Get search filters from on chain store
-func FetchFilters() {
-	check := []string{}
-	if stored, ok := rpc.FindStringKey(rpc.RatingSCID, "market_filter", rpc.Daemon.Rpc).(string); ok {
+func FetchFilters(check string) (filter []string) {
+	if stored, ok := rpc.FindStringKey(rpc.RatingSCID, check, rpc.Daemon.Rpc).(string); ok {
 		if h, err := hex.DecodeString(stored); err == nil {
-			if err = json.Unmarshal(h, &check); err != nil {
-				log.Println("[FetchFilters] Market Filter", err)
-			} else {
-				Market.Filters = check
+			if err = json.Unmarshal(h, &filter); err != nil {
+				logger.Errorln("[FetchFilters]", check, err)
 			}
 		}
 	} else {
-		log.Println("[FetchFilters] Could not get Market Filter")
+		logger.Errorln("[FetchFilters] Could not get", check)
 	}
+
+	return
 }

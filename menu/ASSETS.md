@@ -1,8 +1,5 @@
 # dReams in game NFA Collections
-[dReams NFA Page](https://www.dreamtables.net/nfa)
-
 ---
-![header](https://www.dreamtables.net/assets/NFATitle.png)
 
 This list consists of all current in game [ART-NFA-MS1](https://github.com/civilware/artificer-nfa-standard) assets. 
 
@@ -10,13 +7,14 @@ In app marketplace powered by [Gnomon](https://github.com/civilware/Gnomon).
 
 | Collection | Description | Usage |
 | ----------- | ----------- | ----------- |
-| [DBC](https://github.com/SixofClubsss/dReams/blob/dev/menu/ASSETS.md#dbc) | Death by Cupcake  | Avatars |
-| [AZYDS](https://github.com/SixofClubsss/dReams/blob/dev/menu/ASSETS.md#azyds) | Azylem Deroscapes | Avatars & Themes |
-| [AZYPC](https://github.com/SixofClubsss/dReams/blob/dev/menu/ASSETS.md#azypc) | Azylem Playing Cards | Cards | 
-| [AZYPCB](https://github.com/SixofClubsss/dReams/blob/dev/menu/ASSETS.md#azypcb) | Azylem Playing Card Backs | Cards | 
-| [SIXPC](https://github.com/SixofClubsss/dReams/blob/dev/menu/ASSETS.md#sixpc) | Six Playing Cards | Cards |
-| [SIXPCB](https://github.com/SixofClubsss/dReams/blob/dev/menu/ASSETS.md#sixpcb) | Six Playing Card Backs | Cards |
-| [SIXART](https://github.com/SixofClubsss/dReams/blob/dev/menu/ASSETS.md#sixart) | Six Artworks | Avatars & Themes |
+| [DBC](https://github.com/dReam-dApps/dReams/blob/dev/menu/ASSETS.md#dbc) | Death by Cupcake  | Avatars |
+| [AZYDS](https://github.com/dReam-dApps/dReams/blob/dev/menu/ASSETS.md#azyds) | Azylem Deroscapes | Avatars & Themes |
+| [AZYPC](https://github.com/dReam-dApps/dReams/blob/dev/menu/ASSETS.md#azypc) | Azylem Playing Cards | Cards | 
+| [AZYPCB](https://github.com/dReam-dApps/dReams/blob/dev/menu/ASSETS.md#azypcb) | Azylem Playing Card Backs | Cards | 
+| [SIXPC](https://github.com/dReam-dApps/dReams/blob/dev/menu/ASSETS.md#sixpc) | Six Playing Cards | Cards |
+| [SIXPCB](https://github.com/dReam-dApps/dReams/blob/dev/menu/ASSETS.md#sixpcb) | Six Playing Card Backs | Cards |
+| [SIXART](https://github.com/dReam-dApps/dReams/blob/dev/menu/ASSETS.md#sixart) | Six Artworks | Avatars & Themes |
+| [High-Strangeness](https://github.com/dReam-dApps/dReams/blob/dev/menu/ASSETS.md#high-strangeness) | Mystery and Paranormal | Avatars, Cards & Themes |
 ---
 
 ## Avatars
@@ -164,3 +162,6 @@ In app marketplace powered by [Gnomon](https://github.com/civilware/Gnomon).
 - [SIXPCB0011](https://github.com/SixofClubsss/SIXPCB0011)
 
 ---
+
+### High Strangeness
+[View collection](https://github.com/High-Strangeness/High-Strangeness)

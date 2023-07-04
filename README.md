@@ -1,7 +1,7 @@
 # dReams
 Interact with a variety of different products and services on [Dero's](https://dero.io) decentralized application platform. 
 
-![dReamTablesFooter](https://user-images.githubusercontent.com/84689659/170848755-d2cb4933-df2b-46f9-80e6-4349621871a3.png)
+![dReamsFooter](https://raw.githubusercontent.com/SixofClubsss/dreamdappsite/main/assets/dReamerUp.png)
 
 1. [Project](#project) 
 2. [dApps](#dapps) 
@@ -19,45 +19,56 @@ Interact with a variety of different products and services on [Dero's](https://d
 dReams is a open source platform application that houses multiple *desktop* dApps and utilities built on Dero. dReams has two facets to its use. 
 
 As a application
->With a wide array of features from games to blockchain services, dReams is a point of entry into the world of Dero.
+> With a wide array of features from games to blockchain services, dReams is a point of entry into the privacy preserving world of Dero.
 
 As a repository
 > dReams serves as a source for building Dero applications. Written in [Go](https://go.dev/) and using the [Fyne toolkit](https://fyne.io/), the dReams repository is constructed into packages with function imports for many different Dero necessities. 
 
-Download the latest [release](https://github.com/SixofClubsss/dReams/releases) to use dReams or build from source.
+Download the latest [release](https://github.com/dReam-dApps/dReams/releases) or [build from source](#build) to use dReams.
+
+dReams [Template](https://github.com/dReam-dApps/Template) can be used to help create new Dero dApps.
+
 ### dApps
-All dApps are ran on chain in a decentralized manner. dReams and packages are interfaces to interact with these on chain services. With the main dReams application, users can access the dApps below from one place. 
-- **Holdero**
+All dApps are ran on chain in a decentralized manner. dReams and packages are solely interfaces to interact with these on chain services. With the main dReams application, users can access the dApps below from one place.
+- **[Holdero](https://github.com/SixofClubsss/Holdero)**
 	- Multiplayer Texas Hold'em style poker
 	- In game assets 
 	- Deployable contracts
+	- Multiple tokens supported
 	- dReam Tools
-- **Baccarat**
+- **[Baccarat](https://github.com/SixofClubsss/Baccarat)**
 	- Single player table game
 	- In game assets
-- **dSports and dPrediction**
+	- Multiple tokens supported
+- **[dSports and dPrediction](https://github.com/SixofClubsss/dPrediction)**
 	- P2P betting and predictions
 	- Deployable contracts
-	- dReam Service 
-- **Iluma**
+	- dService 
+- **[Iluma](https://github.com/SixofClubsss/Iluma)**
 	- Tarot readings
-	- Custom cards and artwork
+	- Custom cards and artwork by Kalina Lux
 	- Querent's companion
-- **DerBnb**
+- **[DerBnb](https://github.com/SixofClubsss/derbnbDesktop)**
 	- Property rental management app
 	- Mint property tokens
 	- Manage rentals and bookings with Dero private messaging
-- **NFA Marketplace**
+	- DerBnb profit share
+	- TRVL tokens
+- **[NFA Marketplace](https://github.com/civilware/artificer-nfa-standard)**
 	- View and manage owned assets
 	- View and manage listings
+	- Search NFAs
 	- Mint NFAs 
+- **More dApps to come...**
 ### Features
-- [Gnomon](https://github.com/civilware/gnomon) Index with user controls
+- [Gnomon](https://github.com/civilware/gnomon) with UI controls
+- Create customs Gnomon indexes
 - Gnomon header controls
 - Send Dero messages
 - Send Dero assets
 - Deployable contract rating system
 - Dynamic app updates from on chain data
+- Import only the dApps and collections you want to use
 - Shared config files for platform wide use
 
 ### Build
@@ -66,14 +77,16 @@ All dApps are ran on chain in a decentralized manner. dReams and packages are in
 - Clone repo and build with:
 
 ```
-git clone https://github.com/SixofClubsss/dReams.git
+git clone https://github.com/dReam-dApps/dReams.git
 cd dReams
 cd cmd/dReams
 go build .
 ./dReams
 ```
 ## Packages
-dReams repo is built as packages. With imports from the Dero code base, dReams variable structures are complete with the basics needs for building Dero applications that can run alone, or ones that could be integrated into dReams.
+dReams repo is built as packages. With imports from the Dero code base, dReams variable structures are complete with the basics needs for building Dero applications that can run alone, or ones that could be integrated into dReams. 
+
+dReams [Template](https://github.com/dReam-dApps/Template) can be used as a UI starting point and you can view our [Examples](https://github.com/dReam-dApps/Examples) repo for further references. 
 ### rpc
 The rpc package contains all of the basic functionality needed to set up clients, check connectivity and read blockchain and wallet information. There are arbitrary rpc calls which any dApp can make use of such as the NFA calls, `SendMessage()` or `SendAsset()` with optional payload. This example checks for daemon and wallet rpc connectivity.
 ```
@@ -81,17 +94,20 @@ package main
 
 import (
 	"log"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
-	"github.com/SixofClubsss/dReams/rpc"
+	"github.com/dReam-dApps/dReams/rpc"
 )
 
 // dReams rpc connection example
 
-func main() {
-	// Name my app
-	app_tag := "My_app"
+// Name my app
+const app_tag = "My_app"
 
+func main() {
 	// Initialize rpc addresses to rpc.Daemon and rpc.Wallet vars
 	rpc.Daemon.Rpc = "127.0.0.1:10102"
 	rpc.Wallet.Rpc = "127.0.0.1:10103"
@@ -103,13 +119,26 @@ func main() {
 	// Check for wallet connection and get address
 	rpc.GetAddress(app_tag)
 
-	// Loop will check daemon and wallet connection and
-	// keep running while daemon and wallet are connected
-	for rpc.Daemon.Connect && rpc.Wallet.Connect {
+	// Exit with ctrl-C
+	var exit bool
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-c
+		log.Printf("[%s] Closing\n", app_tag)
+		exit = true
+	}()
+
+	// Loop will check for daemon and wallet connection and
+	// print wallet height and balance. It will keep
+	// running while daemon and wallet are connected or until exit
+	for !exit && rpc.IsReady() {
+		rpc.Wallet.GetBalance()
+		rpc.GetWalletHeight(app_tag)
+		log.Printf("[%s] Height: %d   Dero Balance: %s\n", app_tag, rpc.Wallet.Height, rpc.FromAtomic(rpc.Wallet.Balance, 5))
+		time.Sleep(3 * time.Second)
 		rpc.Ping()
 		rpc.EchoWallet(app_tag)
-		log.Printf("[%s] Running\n", app_tag)
-		time.Sleep(time.Second)
 	}
 
 	log.Printf("[%s] Not connected\n", app_tag)
@@ -122,18 +151,21 @@ package main
 
 import (
 	"log"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
-	"github.com/SixofClubsss/dReams/menu"
-	"github.com/SixofClubsss/dReams/rpc"
+	"github.com/dReam-dApps/dReams/menu"
+	"github.com/dReam-dApps/dReams/rpc"
 )
 
 // dReams menu StartGnomon() example
 
-func main() {
-	// Name my app
-	app_tag := "My_app"
+// Name my app
+const app_tag = "My_app"
 
+func main() {
 	// Initialize Gnomon fast sync
 	menu.Gnomes.Fast = true
 
@@ -145,24 +177,34 @@ func main() {
 	if rpc.Daemon.Connect {
 		// Initialize NFA search filter and start Gnomon
 		filter := []string{menu.NFA_SEARCH_FILTER}
-		menu.StartGnomon(app_tag, filter, 0, 0, nil)
+		menu.StartGnomon(app_tag, "boltdb", filter, 0, 0, nil)
+
+		// Exit with ctrl-C
+		var exit bool
+		c := make(chan os.Signal, 1)
+		signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+		go func() {
+			<-c
+			exit = true
+		}()
 
 		// Gnomon will continue to run if daemon is connected
-		for rpc.Daemon.Connect {
+		for !exit && rpc.Daemon.Connect {
+			contracts := menu.Gnomes.GetAllOwnersAndSCIDs()
+			log.Printf("[%s] Index contains %d contracts\n", app_tag, len(contracts))
+			time.Sleep(3 * time.Second)
 			rpc.Ping()
-			time.Sleep(time.Second)
-			log.Printf("[%s] Index contains %d contracts\n", app_tag, len(menu.Gnomes.Indexer.Backend.GetAllOwnersAndSCIDs()))
 		}
 
 		// Stop Gnomon
-		menu.StopGnomon("My_App")
+		menu.Gnomes.Stop(app_tag)
 	}
 
 	log.Printf("[%s] Done\n", app_tag)
 }
 ```
 ### dwidget
-The dwidget package is a extension to fyne widgets that intends to make creating dApps simpler and quicker with widgets specified for use with Dero. Numerical entries have prefix, increment and decimal control and preconfigured connection boxes can be used that are tied into dReams rpc vars and have default Dero connection addresses populated. There is objects for shutdown control as well as a spot for the dReams indicators, or new ones. This example starts a Fyne gui app using `VerticleEntries()` to start Gnomon when connected.
+The dwidget package is a extension to fyne widgets that intends to make creating dApps simpler and quicker with widgets specified for use with Dero. Numerical entries have prefix, increment and decimal control and pre-configured connection boxes can be used that are tied into dReams rpc vars and have default Dero connection addresses populated. There is objects for shutdown control as well as a spot for the dReams indicators, or new ones. This example starts a Fyne gui app using `VerticalEntries()` to start Gnomon when connected.
 ```
 package main
 
@@ -170,17 +212,17 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 
-	"github.com/SixofClubsss/dReams/dwidget"
-	"github.com/SixofClubsss/dReams/menu"
-	"github.com/SixofClubsss/dReams/rpc"
+	"github.com/dReam-dApps/dReams/dwidget"
+	"github.com/dReam-dApps/dReams/menu"
+	"github.com/dReam-dApps/dReams/rpc"
 )
 
-// dReams dwidget VerticleEntries() example
+// dReams dwidget NewVerticalEntries() example
+
+// Name my app
+const app_tag = "My_app"
 
 func main() {
-	// Name my app
-	app_tag := "My_app"
-
 	// Initialize Gnomon fast sync
 	menu.Gnomes.Fast = true
 
@@ -195,21 +237,21 @@ func main() {
 	// When window closes, stop Gnomon if running
 	w.SetCloseIntercept(func() {
 		if menu.Gnomes.Init {
-			menu.StopGnomon(app_tag)
+			menu.Gnomes.Stop(app_tag)
 		}
 		w.Close()
 	})
 
 	// Initialize dwidget connection box
-	connect_box := dwidget.VerticleEntries(app_tag, 1)
+	connect_box := dwidget.NewVerticalEntries(app_tag, 1)
 
 	// When connection button is pressed we will connect to wallet rpc,
 	// and start Gnomon with NFA search filter if it is not running
 	connect_box.Button.OnTapped = func() {
 		rpc.GetAddress(app_tag)
 		rpc.Ping()
-		if rpc.Daemon.Connect && !menu.Gnomes.Init && !menu.Gnomes.Start {
-			go menu.StartGnomon(app_tag, []string{menu.NFA_SEARCH_FILTER}, 0, 0, nil)
+		if rpc.Daemon.Connect && !menu.Gnomes.IsInitialized() && !menu.Gnomes.Start {
+			go menu.StartGnomon(app_tag, "boltdb", []string{menu.NFA_SEARCH_FILTER}, 0, 0, nil)
 		}
 	}
 
@@ -231,13 +273,13 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
-	"github.com/SixofClubsss/dReams/bundle"
+	"github.com/dReam-dApps/dReams/bundle"
 )
 
-func main() {
-	// Name my app
-	app_tag := "My_app"
+// Name my app
+const app_tag = "My_app"
 
+func main() {
 	// Initialize app color to bundle var
 	bundle.AppColor = color.Black
 
@@ -275,7 +317,7 @@ func main() {
 	cont.Add(container.NewCenter(change_theme))
 
 	// Add a image from bundle package
-	gnomon_img := canvas.NewImageFromResource(bundle.ResourceGnomoniconPng)
+	gnomon_img := canvas.NewImageFromResource(bundle.ResourceGnomonIconPng)
 	gnomon_img.SetMinSize(fyne.NewSize(45, 45))
 	cont.Add(container.NewCenter(gnomon_img))
 
@@ -292,12 +334,12 @@ func main() {
 ## Donations
 - **Dero Address**: dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn
 
-![DeroDonations](https://user-images.githubusercontent.com/84689659/165414903-44164e7e-4277-44f8-b1fe-8d139f559db1.jpg)
+![DeroDonations](https://raw.githubusercontent.com/SixofClubsss/dreamdappsite/main/assets/DeroDonations.jpg)
 
 ---
 
 ### Licensing
 
-dReams platform and packages are free and open source. 
-The source code is published under the [MIT](https://github.com/SixofClubsss/dReams/blob/main/LICENSE) License. 
-Copyright © 2022-2023 dReam Tables 
+dReams platform and packages are free and open source.    
+The source code is published under the [MIT](https://github.com/dReam-dApps/dReams/blob/main/LICENSE) License.   
+Copyright © 2023 dReam dApps   

@@ -5,11 +5,15 @@ import (
 	"errors"
 	"fmt"
 	"image/color"
-	"log"
 	"os"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/dReam-dApps/dReams/bundle"
+	"github.com/dReam-dApps/dReams/dwidget"
+	"github.com/dReam-dApps/dReams/rpc"
+	"github.com/deroproject/derohe/walletapi"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -19,10 +23,6 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/storage"
 	"fyne.io/fyne/v2/widget"
-	"github.com/SixofClubsss/dReams/bundle"
-	"github.com/SixofClubsss/dReams/dwidget"
-	"github.com/SixofClubsss/dReams/rpc"
-	"github.com/deroproject/derohe/walletapi"
 )
 
 //go:embed ART-NFA-MS1.bas
@@ -36,7 +36,7 @@ func HowToMintNFA(button *widget.Button) fyne.CanvasObject {
 		"Get Started":            {"A NFA consists of four main parts: Asset file, Cover Image, Icon image, Dero file sign", "Each NFA is its own self contained marketplace", "This tool automates three areas of NFA installs: File sign, Contract creation, Contract install", "Storage is not provided at this point", "Entries with a * are mutable, meaning they can be updated by creator (or owner) after install", "Gas fees to install a NFA are ~0.20000 Dero", "There is a 0.00500 Dero dev fee for minting a NFA with this tool", "If minting a collection fees will be paid as each contract is installed, a total will be shown before hand", "For further info read the NFA documentation at github.com/civilware/artificer-nfa-standard"},
 		"Single Asset":           {"Disable the Collection check", "Type the name of your asset into the collection entry and click the folder button on right to set up NFA-Creation directory for your single asset", "NFA-Creation Directory", "File sign can be imported from file by clicking the file button to right of check C entry, or follow next step if you require file sign", "Single File Sign", "Fill out the rest of the information for your NFA and when complete the Create Contracts button will show", "Click Create Contract and confirm information, this will populate your bas folder with your asset contract", "Type the name of your asset in name entry and Install Contract will show if contract exists in bas folder", "Click Install Contract and confirm the install address is same as signing address", "NFA is now installed, check your wallet for NFA balance"},
 		"Single File Sign":       {"Enter minting wallet file password and open minting wallet file", "Place asset file into asset folder", "Enter the name of your asset in name entry, select extension to match file", "Click Sign File and confirm information", "Once confirmed, the file check C and file check S will population with your file signs"},
-		"Collection":             {"Collection automation installs assets of same name with incrementing numbers", "Enable the Collection check", "Type the name of your collection into the collection entry and click the folder button on right to set up NFA-Creation directory for your collection", "NFA-Creation Directory", "Enter the starting number and ending number for your collection", "File signs can be done externally and placed into sign folder, or follow next step if you require file signs", "Collection File Signs", "Make sure file signs are in sign directory for contract creation", "Fill out the rest of the information for your NFA colletion and when complete the Create Contracts button will show", "The Asset Number sections are where it will add the incrementing number to your input to make the collection", "The + - buttons on top right can add or remove a increment section from Url paths", "Click Create Contract and confirm information", "Contract creation loop will start and populate your bas folder with your asset contracts, takes about 1 second per contract", "Type the name of your asset in name entry and Install Contract will show if contract exists in bas folder", "Click Install Contract and confirm the install address is same as signing address", "Minting loop will now start and installs one bas contract per block", "For larger collections this could take some time, 120 installs could take around 1 hour to complete", "If 100%, NFA collection is now installed, check your wallet for NFA balances"},
+		"Collection":             {"Collection automation installs assets of same name with incrementing numbers", "Enable the Collection check", "Type the name of your collection into the collection entry and click the folder button on right to set up NFA-Creation directory for your collection", "NFA-Creation Directory", "Enter the starting number and ending number for your collection", "File signs can be done externally and placed into sign folder, or follow next step if you require file signs", "Collection File Signs", "Make sure file signs are in sign directory for contract creation", "Fill out the rest of the information for your NFA collection and when complete the Create Contracts button will show", "The Asset Number sections are where it will add the incrementing number to your input to make the collection", "The + - buttons on top right can add or remove a increment section from Url paths", "Click Create Contract and confirm information", "Contract creation loop will start and populate your bas folder with your asset contracts, takes about 1 second per contract", "Type the name of your asset in name entry and Install Contract will show if contract exists in bas folder", "Click Install Contract and confirm the install address is same as signing address", "Minting loop will now start and installs one bas contract per block", "For larger collections this could take some time, 120 installs could take around 1 hour to complete", "If 100%, NFA collection is now installed, check your wallet for NFA balances"},
 		"Collection File Signs":  {"Enter minting wallet file password and open minting wallet file", "Place numbered asset files into asset folder", "Enter the name of your asset in name entry, select extension to match file", "Click Sign File and confirm information", "This starts a file sign loop of your selected range and stores all signed files in sign directory, takes about 1 second per sign"},
 		"NFA-Creation Directory": {"NFA-Creation directory stores collection and single asset directories", "Inside of your asset or collection directory are five sub directories", "Your main asset files are stored in asset", "Contracts created are stored in bas", "Signed files are stored in sign", "Cover and icon are optional directories at this point and are not used in the install process"},
 	}
@@ -90,12 +90,12 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 	contracts_button := widget.NewButton("Create Contract", nil)
 	install_button := widget.NewButton("Install Contract", nil)
 
-	collection_high_entry := dwidget.DeroAmtEntry("", 1, 0)
+	collection_high_entry := dwidget.NewDeroEntry("", 1, 0)
 	collection_high_entry.SetPlaceHolder("Ending At:")
 	collection_high_entry.AllowFloat = false
 	collection_high_entry.Validator = validation.NewRegexp(`^[^0]\d{0,}$`, "Uint required")
 
-	collection_low_entry := dwidget.DeroAmtEntry("", 1, 0)
+	collection_low_entry := dwidget.NewDeroEntry("", 1, 0)
 	collection_low_entry.SetPlaceHolder("Starting At:")
 	collection_low_entry.AllowFloat = false
 	collection_low_entry.Validator = validation.NewRegexp(`^[^0]\d{0,}$`, "Uint required")
@@ -160,7 +160,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 		read_filesign := dialog.NewFileOpen(func(uc fyne.URIReadCloser, err error) {
 			if err == nil && uc != nil {
 				if sign_data, err := os.ReadFile(uc.URI().Path()); err != nil {
-					log.Printf("[%s] Cannot read input file %s\n", tag, err)
+					logger.Errorf("[%s] Cannot read input file %s\n", tag, err)
 				} else {
 					if string(sign_data[0:35]) == "-----BEGIN DERO SIGNED MESSAGE-----" {
 						split := strings.Split(string(sign_data[0:247]), "\n")
@@ -169,7 +169,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 						checkC_entry.SetText(read_checkC)
 						checkS_entry.SetText(read_checkS)
 					} else {
-						log.Printf("[%s] Not a valid Dero .sign file\n", tag)
+						logger.Errorf("[%s] Not a valid Dero .sign file\n", tag)
 					}
 				}
 			}
@@ -385,12 +385,12 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 		}
 	}
 
-	royalty_entry := dwidget.DeroAmtEntry("", 1, 0)
+	royalty_entry := dwidget.NewDeroEntry("", 1, 0)
 	royalty_entry.AllowFloat = false
 	royalty_entry.SetPlaceHolder("% you will get from each sale:")
 	royalty_entry.Validator = validation.NewRegexp(`^\d{1,2}$`, "Uint required")
 
-	art_entry := dwidget.DeroAmtEntry("", 1, 0)
+	art_entry := dwidget.NewDeroEntry("", 1, 0)
 	art_entry.AllowFloat = false
 	art_entry.SetPlaceHolder("% Artificer will get from each sale:")
 	art_entry.Validator = validation.NewRegexp(`^\d{1,2}$`, "Uint required")
@@ -433,10 +433,10 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 			if err == nil && uc != nil {
 				if rpc.Wallet.File, err = walletapi.Open_Encrypted_Wallet(uc.URI().Path(), wallet_pass_entry.Text); err == nil {
 					if _, err := os.ReadFile(uc.URI().Path()); err != nil {
-						log.Printf("[%s] Cannot read wallet file %s\n", tag, err)
+						logger.Errorf("[%s] Cannot read wallet file %s\n", tag, err)
 					} else {
 						rpc.Wallet.File.SetNetwork(true)
-						log.Printf("[%s] Wallet file found , Wallet is registered: %t\n", tag, rpc.Wallet.File.IsRegistered())
+						logger.Printf("[%s] Wallet file found , Wallet is registered: %t\n", tag, rpc.Wallet.File.IsRegistered())
 						wallet_label.SetText(fmt.Sprintf("Signing address: %s", rpc.Wallet.File.GetAddress().String()))
 						rpc_label.SetText(fmt.Sprintf("Installing address: %s", rpc.Wallet.Address))
 						wallet_file_path = uc.URI().Path()
@@ -446,7 +446,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 						go rpc.Wallet.File.Close_Encrypted_Wallet()
 					}
 				} else {
-					log.Printf("[%s] Wallet %s\n", tag, err)
+					logger.Errorf("[%s] Wallet %s\n", tag, err)
 					error_message := dialog.NewInformation("Wallet", "Invalid password", window)
 					error_message.Resize(fyne.NewSize(300, 150))
 					error_message.Show()
@@ -497,7 +497,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 			var err error
 			if rpc.Wallet.File, err = walletapi.Open_Encrypted_Wallet(wallet_file_path, wallet_pass_entry.Text); err == nil {
 				if _, err := os.ReadFile(wallet_file_path); err != nil {
-					log.Printf("[%s] Cannot read wallet file %s\n", tag, err)
+					logger.Errorf("[%s] Cannot read wallet file %s\n", tag, err)
 					error_message := dialog.NewInformation("Error", "Could not read wallet file", window)
 					error_message.Resize(fyne.NewSize(300, 150))
 					error_message.Show()
@@ -505,7 +505,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 					return
 				}
 			} else {
-				log.Printf("[%s] Wallet %s\n", tag, err)
+				logger.Errorf("[%s] Wallet %s\n", tag, err)
 				error_message := dialog.NewInformation("Wallet", "Invalid password", window)
 				error_message.Resize(fyne.NewSize(300, 150))
 				error_message.Show()
@@ -518,13 +518,13 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 			if collection_enable.Checked {
 				var count, ending_at int
 				if count = rpc.StringToInt(collection_low_entry.Text); count < 1 {
-					log.Printf("[%s] Not starting signs from 0\n", tag)
+					logger.Warnf("[%s] Not starting signs from 0\n", tag)
 					go rpc.Wallet.File.Close_Encrypted_Wallet()
 					return
 				}
 
 				if ending_at = rpc.StringToInt(collection_high_entry.Text); ending_at < count {
-					log.Printf("[%s] Ending is less than starting at\n", tag)
+					logger.Warnf("[%s] Ending is less than starting at\n", tag)
 					go rpc.Wallet.File.Close_Encrypted_Wallet()
 					return
 				}
@@ -549,7 +549,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 							wait_message.Resize(fyne.NewSize(450, 150))
 							wait_message.Show()
 
-							log.Printf("[%s] Starting sign loop\n", tag)
+							logger.Printf("[%s] Starting sign loop\n", tag)
 
 							for wait {
 								i := strconv.Itoa(count)
@@ -558,7 +558,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 								output_file := fmt.Sprintf("NFA-Creation/%s/sign/%s%s%s%s", collection_entry.Text, name_entry.Text, i, ext, ".sign")
 								_, err := os.Stat(output_file)
 								if !os.IsNotExist(err) {
-									log.Printf("[%s] %s exists\n", tag, output_file)
+									logger.Warnf("[%s] %s exists\n", tag, output_file)
 									progress_label.SetText("Error " + output_file + " exists")
 									wait_message.SetDismissText("Close")
 									info := fmt.Sprintf("Check %s", output_file)
@@ -570,7 +570,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 
 								progress_label.SetText(signing_asset)
 								if data, err := os.ReadFile(input_file); err != nil {
-									log.Printf("[%s] Cannot read input file %s\n", tag, err)
+									logger.Errorf("[%s] Cannot read input file %s\n", tag, err)
 									progress_label.SetText("Error " + input_file + " not found")
 									wait_message.SetDismissText("Close")
 									error_message := dialog.NewInformation("Error", input_file+" not found", window)
@@ -578,7 +578,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 									error_message.Show()
 									break
 								} else if err := os.WriteFile(output_file, rpc.Wallet.File.SignData(data), 0600); err != nil {
-									log.Printf("[%s] Cannot write output file %s\n", tag, output_file)
+									logger.Errorf("[%s] Cannot write output file %s\n", tag, output_file)
 									progress_label.SetText("Error writing " + output_file)
 									wait_message.SetDismissText("Close")
 									error_message := dialog.NewInformation("Error", "Could not write "+output_file, window)
@@ -586,7 +586,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 									error_message.Show()
 									break
 								} else {
-									log.Printf("[%s] Successfully signed file, please check %s\n", tag, output_file)
+									logger.Printf("[%s] Successfully signed file, please check %s\n", tag, output_file)
 								}
 
 								time.Sleep(time.Second)
@@ -600,7 +600,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 							}
 
 							wait = false
-							log.Printf("[%s] Sign loop complete\n", tag)
+							logger.Printf("[%s] Sign loop complete\n", tag)
 							go rpc.Wallet.File.Close_Encrypted_Wallet()
 						}()
 					} else {
@@ -618,14 +618,14 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 						input_file := fmt.Sprintf("NFA-Creation/%s/asset/%s%s", collection_entry.Text, name_entry.Text, ext)
 						output_file := fmt.Sprintf("NFA-Creation/%s/sign/%s%s%s", collection_entry.Text, name_entry.Text, ext, ".sign")
 						if data, err := os.ReadFile(input_file); err != nil {
-							log.Printf("[%s] Cannot read input file %s\n", tag, err)
+							logger.Errorf("[%s] Cannot read input file %s\n", tag, err)
 							error_message := dialog.NewInformation("Error", "Could not read file", window)
 							error_message.Resize(fyne.NewSize(300, 150))
 							error_message.Show()
 						} else if err := os.WriteFile(output_file, rpc.Wallet.File.SignData(data), 0600); err != nil {
-							log.Printf("[%s] Cannot write output file %s\n", tag, output_file)
+							logger.Errorf("[%s] Cannot write output file %s\n", tag, output_file)
 						} else {
-							log.Printf("[%s] Successfully signed file. please check %s\n", tag, output_file)
+							logger.Printf("[%s] Successfully signed file. please check %s\n", tag, output_file)
 							if sign_data, err := os.ReadFile(output_file); err == nil {
 								if string(sign_data[0:35]) == "-----BEGIN DERO SIGNED MESSAGE-----" {
 									split := strings.Split(string(sign_data[0:247]), "\n")
@@ -690,7 +690,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 		if collection_enable.Checked {
 			var count, ending_at int
 			if count = rpc.StringToInt(collection_low_entry.Text); count < 1 {
-				log.Printf("[%s] Not starting collection from 0\n", tag)
+				logger.Warnf("[%s] Not starting collection from 0\n", tag)
 				error_message := dialog.NewInformation("Contract Creation", "Not starting collection from 0", window)
 				error_message.Resize(fyne.NewSize(300, 150))
 				error_message.Show()
@@ -698,7 +698,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 			}
 
 			if ending_at = rpc.StringToInt(collection_high_entry.Text); ending_at < count {
-				log.Printf("[%s] Ending is less than starting at\n", tag)
+				logger.Warnf("[%s] Ending is less than starting at\n", tag)
 				error_message := dialog.NewInformation("Contract Creation", "Ending number is less than starting number", window)
 				error_message.Resize(fyne.NewSize(300, 150))
 				error_message.Show()
@@ -725,7 +725,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 						wait_message.Resize(fyne.NewSize(450, 150))
 						wait_message.Show()
 
-						log.Printf("[%s] Starting contract creation loop\n", tag)
+						logger.Printf("[%s] Starting contract creation loop\n", tag)
 
 						for wait && count <= ending_at {
 							incr := strconv.Itoa(count)
@@ -742,7 +742,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 								info_message := dialog.NewInformation("File Exists", info, window)
 								info_message.Resize(fyne.NewSize(300, 150))
 								info_message.Show()
-								log.Printf("[%s] Contract creation loop complete\n", tag)
+								logger.Printf("[%s] Contract creation loop complete\n", tag)
 								return
 							}
 
@@ -767,7 +767,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 									error_message.Resize(fyne.NewSize(300, 150))
 									error_message.Show()
 									os.Remove(full_save_path)
-									log.Printf("[%s] Contract creation loop complete\n", tag)
+									logger.Printf("[%s] Contract creation loop complete\n", tag)
 									return
 								}
 
@@ -775,14 +775,14 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 								full_sign_path := sign_path + "/" + name + ext
 								if data, err := os.ReadFile(full_sign_path); err != nil {
 									wait = false
-									log.Printf("[%s] Cannot read input file %s\n", tag, err)
+									logger.Errorf("[%s] Cannot read input file %s\n", tag, err)
 									progress_label.SetText("Error could not read " + full_sign_path)
 									wait_message.SetDismissText("Close")
 									error_message := dialog.NewInformation("Error", full_sign_path+" not found", window)
 									error_message.Resize(fyne.NewSize(300, 150))
 									error_message.Show()
 									os.Remove(full_save_path)
-									log.Printf("[%s] Contract creation loop complete\n", tag)
+									logger.Printf("[%s] Contract creation loop complete\n", tag)
 									return
 								} else {
 									if string(data[0:35]) == "-----BEGIN DERO SIGNED MESSAGE-----" {
@@ -790,7 +790,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 										checkC = strings.TrimSpace(split[2][3:])
 										checkS = strings.TrimSpace(split[3][3:])
 									} else {
-										log.Printf("[%s] %s not a valid Dero .sign file\n", tag, full_sign_path)
+										logger.Errorf("[%s] %s not a valid Dero .sign file\n", tag, full_sign_path)
 										wait = false
 										progress_label.SetText(full_sign_path + " not a valid Dero .sign file")
 										wait_message.SetDismissText("Close")
@@ -798,14 +798,14 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 										error_message.Resize(fyne.NewSize(300, 150))
 										error_message.Show()
 										os.Remove(full_save_path)
-										log.Printf("[%s] Contract creation loop complete\n", tag)
+										logger.Printf("[%s] Contract creation loop complete\n", tag)
 										return
 									}
 								}
 
 								new_contract := CreateNFAContract(art, royalty, update, name, description, typeHdr, icon, tags, checkC, checkS, file, sign, cover, collection)
 								if _, err := f.WriteString(new_contract); err != nil {
-									log.Printf("[%s] %s\n", tag, err)
+									logger.Errorf("[%s] %s\n", tag, err)
 									wait = false
 									progress_label.SetText(fmt.Sprintf("Error writing %s.bas", name))
 									wait_message.SetDismissText("Close")
@@ -813,22 +813,22 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 									error_message.Resize(fyne.NewSize(300, 150))
 									error_message.Show()
 									os.Remove(full_save_path)
-									log.Printf("[%s] Contract creation loop complete\n", tag)
+									logger.Printf("[%s] Contract creation loop complete\n", tag)
 									return
 								}
 							} else {
-								log.Printf("[%s] %s\n", tag, err)
+								logger.Errorf("[%s] %s\n", tag, err)
 								wait = false
 								progress_label.SetText(fmt.Sprintf("Error creating %s.bas", name))
 								wait_message.SetDismissText("Close")
 								error_message := dialog.NewInformation("Error", fmt.Sprintf("Error creating %s.bas", full_save_path), window)
 								error_message.Resize(fyne.NewSize(300, 150))
 								error_message.Show()
-								log.Printf("[%s] Contract creation loop complete\n", tag)
+								logger.Printf("[%s] Contract creation loop complete\n", tag)
 								return
 							}
 
-							log.Printf("[%s] Saved NFA Contract, please check %s\n", tag, full_save_path)
+							logger.Printf("[%s] Saved NFA Contract, please check %s\n", tag, full_save_path)
 
 							time.Sleep(time.Second)
 							count++
@@ -839,7 +839,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 						wait = false
 						wait_message.SetDismissText("Done")
 						progress_label.SetText("Contracts in " + save_path + "/bas")
-						log.Printf("[%s] Contract creation loop complete\n", tag)
+						logger.Printf("[%s] Contract creation loop complete\n", tag)
 					}()
 				}
 			}, window)
@@ -865,11 +865,11 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 
 						new_contract := CreateNFAContract(art, royalty, update, name, description, typeHdr, icon, tags, checkC, checkS, file, sign, cover, collection)
 						if _, err := f.WriteString(new_contract); err != nil {
-							log.Printf("[%s] %s\n", tag, err)
+							logger.Errorf("[%s] %s\n", tag, err)
 							return
 						}
 					} else {
-						log.Printf("[%s] %s\n", tag, err)
+						logger.Errorf("[%s] %s\n", tag, err)
 						error_message := dialog.NewInformation("Error", fmt.Sprintf("Error creating %s", full_save_path), window)
 						error_message.Resize(fyne.NewSize(300, 150))
 						error_message.Show()
@@ -880,7 +880,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 					create_message.Resize(fyne.NewSize(240, 150))
 					create_message.Show()
 
-					log.Printf("[%s] Saved NFA Contract, please check %s\n", tag, full_save_path)
+					logger.Printf("[%s] Saved NFA Contract, please check %s\n", tag, full_save_path)
 				}
 			}, window)
 
@@ -890,11 +890,11 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 	}
 
 	install_button.OnTapped = func() {
-		if rpc.Wallet.Connect {
+		if rpc.Wallet.IsConnected() {
 			if collection_enable.Checked {
 				var count, ending_at int
 				if count = rpc.StringToInt(collection_low_entry.Text); count < 1 {
-					log.Printf("[%s] Not starting installs from 0\n", tag)
+					logger.Warnf("[%s] Not starting installs from 0\n", tag)
 					error_message := dialog.NewInformation("NFA Install", "Not starting installs from 0", window)
 					error_message.Resize(fyne.NewSize(300, 150))
 					error_message.Show()
@@ -902,7 +902,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 				}
 
 				if ending_at = rpc.StringToInt(collection_high_entry.Text); ending_at < count {
-					log.Printf("[%s] Ending is less than starting at\n", tag)
+					logger.Warnf("[%s] Ending is less than starting at\n", tag)
 					error_message := dialog.NewInformation("NFA Install", "Ending number is less than starting number", window)
 					error_message.Resize(fyne.NewSize(300, 150))
 					error_message.Show()
@@ -946,10 +946,10 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 							wait_message.Resize(fyne.NewSize(450, 150))
 							wait_message.Show()
 
-							log.Printf("[%s] Starting install loop\n", tag)
+							logger.Printf("[%s] Starting install loop\n", tag)
 
-							for count <= ending_at {
-								if !rpc.Wallet.Connect {
+							for wait && count <= ending_at {
+								if !rpc.Wallet.IsConnected() {
 									progress_label.SetText("Error wallet disconnected")
 									wait_message.SetDismissText("Close")
 									error_message := dialog.NewInformation("Error", "Wallet rpc disconnected", window)
@@ -960,10 +960,10 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 
 								input_file := fmt.Sprintf("NFA-Creation/%s/bas/%s%d.bas", collection_entry.Text, name_entry.Text, count)
 								if _, err := os.Stat(input_file); err == nil {
-									log.Printf("[%s] Installing %s\n", tag, input_file)
+									logger.Printf("[%s] Installing %s\n", tag, input_file)
 									progress_label.SetText(fmt.Sprintf("Installing %s", input_file))
 								} else if errors.Is(err, os.ErrNotExist) {
-									log.Printf("[%s] %s not found\n", tag, input_file)
+									logger.Errorf("[%s] %s not found\n", tag, input_file)
 									progress_label.SetText(fmt.Sprintf("Error %s file not found", input_file))
 									wait_message.SetDismissText("Close")
 									error_message := dialog.NewInformation("Error", input_file+" not found", window)
@@ -974,7 +974,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 
 								file, err := os.ReadFile(input_file)
 								if err != nil {
-									log.Printf("[%s] %s\n", tag, err)
+									logger.Errorf("[%s] %s\n", tag, err)
 									progress_label.SetText(fmt.Sprintf("Error reading %s", input_file))
 									wait_message.SetDismissText("Close")
 									error_message := dialog.NewInformation("Error", fmt.Sprintf("Could not read %s", input_file), window)
@@ -998,7 +998,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 									error_message.Show()
 									break
 								} else {
-									log.Printf("[%s] Confirming install TX\n", tag)
+									logger.Printf("[%s] Confirming install TX\n", tag)
 									rpc.ConfirmTx(tx, tag, 45)
 								}
 
@@ -1014,7 +1014,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 							}
 
 							wait = false
-							log.Printf("[%s] Install loop complete\n", tag)
+							logger.Printf("[%s] Install loop complete\n", tag)
 						}()
 					}
 				}, window)
@@ -1026,15 +1026,15 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 					if b {
 						input_file := fmt.Sprintf("NFA-Creation/%s/bas/%s.bas", collection_entry.Text, name_entry.Text)
 						if _, err := os.Stat(input_file); err == nil {
-							log.Printf("[%s] Installing %s\n", tag, input_file)
+							logger.Printf("[%s] Installing %s\n", tag, input_file)
 						} else if errors.Is(err, os.ErrNotExist) {
-							log.Printf("[%s] %s not found\n", tag, input_file)
+							logger.Errorf("[%s] %s not found\n", tag, input_file)
 							return
 						}
 
 						file, err := os.ReadFile(input_file)
 						if err != nil {
-							log.Printf("[%s] %s\n", tag, err)
+							logger.Errorf("[%s] %s\n", tag, err)
 							return
 						}
 
@@ -1178,10 +1178,10 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 				collection_entry.Validator = validation.NewRegexp(`^\w{2,}`, "String required")
 			} else {
 				sign_button.Hide()
-				collection_entry.Validator = validation.NewRegexp(`^\W\D\S$`, "Invliad collection directory")
+				collection_entry.Validator = validation.NewRegexp(`^\W\D\S$`, "Invalid collection directory")
 			}
 
-			if rpc.Wallet.Connect && rpc.Daemon.Connect {
+			if rpc.IsReady() {
 				rpc_label.SetText(fmt.Sprintf("Installing address: %s", rpc.Wallet.Address))
 				if collection_enable.Checked {
 					if collection_low_entry.Text != "" && collection_high_entry.Text != "" {
@@ -1220,9 +1220,9 @@ func SetUpNFACreation(tag, collection string) (save_path string, sign_path strin
 	main_path := "NFA-Creation"
 	_, main := os.Stat(main_path)
 	if os.IsNotExist(main) {
-		log.Printf("[%s] Creating NFA-Creation Dir\n", tag)
+		logger.Printf("[%s] Creating NFA-Creation Dir\n", tag)
 		if err := os.Mkdir(main_path, 0755); err != nil {
-			log.Printf("[%s] %s\n", tag, err)
+			logger.Errorf("[%s] %s\n", tag, err)
 			return
 		}
 	}
@@ -1232,7 +1232,7 @@ func SetUpNFACreation(tag, collection string) (save_path string, sign_path strin
 	if os.IsNotExist(coll) {
 		err := os.Mkdir(save_path, 0755)
 		if err != nil {
-			log.Printf("[%s] %s\n", tag, err)
+			logger.Errorf("[%s] %s\n", tag, err)
 			return
 		}
 	}
@@ -1240,9 +1240,10 @@ func SetUpNFACreation(tag, collection string) (save_path string, sign_path strin
 	asset_path := save_path + "/asset"
 	_, asset := os.Stat(asset_path)
 	if os.IsNotExist(asset) {
+		logger.Printf("[%s] Creating assets Dir\n", tag)
 		err := os.Mkdir(asset_path, 0755)
 		if err != nil {
-			log.Printf("[%s] %s\n", tag, err)
+			logger.Errorf("[%s] %s\n", tag, err)
 			return
 		}
 	}
@@ -1250,10 +1251,10 @@ func SetUpNFACreation(tag, collection string) (save_path string, sign_path strin
 	bas_path := save_path + "/bas"
 	_, bas := os.Stat(bas_path)
 	if os.IsNotExist(bas) {
-		log.Printf("[%s] Creating bas Dir\n", tag)
+		logger.Printf("[%s] Creating bas Dir\n", tag)
 		err := os.Mkdir(bas_path, 0755)
 		if err != nil {
-			log.Printf("[%s] %s\n", tag, err)
+			logger.Errorf("[%s] %s\n", tag, err)
 			return
 		}
 	}
@@ -1261,9 +1262,10 @@ func SetUpNFACreation(tag, collection string) (save_path string, sign_path strin
 	cover_path := save_path + "/cover"
 	_, cover := os.Stat(cover_path)
 	if os.IsNotExist(cover) {
+		logger.Printf("[%s] Creating covers Dir\n", tag)
 		err := os.Mkdir(cover_path, 0755)
 		if err != nil {
-			log.Printf("[%s] %s\n", tag, err)
+			logger.Errorf("[%s] %s\n", tag, err)
 			return
 		}
 	}
@@ -1271,10 +1273,10 @@ func SetUpNFACreation(tag, collection string) (save_path string, sign_path strin
 	icon_path := save_path + "/icon"
 	_, icon := os.Stat(icon_path)
 	if os.IsNotExist(icon) {
-		log.Printf("[%s] Creating icons Dir\n", tag)
+		logger.Printf("[%s] Creating icons Dir\n", tag)
 		err := os.Mkdir(icon_path, 0755)
 		if err != nil {
-			log.Printf("[%s] %s\n", tag, err)
+			logger.Errorf("[%s] %s\n", tag, err)
 			return
 		}
 	}
@@ -1282,10 +1284,10 @@ func SetUpNFACreation(tag, collection string) (save_path string, sign_path strin
 	sign_path = save_path + "/sign"
 	_, sign := os.Stat(sign_path)
 	if os.IsNotExist(sign) {
-		log.Printf("[%s] Creating sign Dir\n", tag)
+		logger.Printf("[%s] Creating sign Dir\n", tag)
 		err := os.Mkdir(sign_path, 0755)
 		if err != nil {
-			log.Printf("[%s] %s\n", tag, err)
+			logger.Errorf("[%s] %s\n", tag, err)
 			return
 		}
 	}

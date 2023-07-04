@@ -2,6 +2,7 @@ package dwidget
 
 import (
 	"fmt"
+	"image/color"
 	"strconv"
 	"strings"
 
@@ -12,21 +13,9 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 	xwidget "fyne.io/x/fyne/widget"
-	"github.com/SixofClubsss/dReams/bundle"
-	"github.com/SixofClubsss/dReams/rpc"
+	"github.com/dReam-dApps/dReams/bundle"
+	"github.com/dReam-dApps/dReams/rpc"
 )
-
-// Main dReams dApp content struct
-type DreamsItems struct {
-	LeftLabel  *widget.Label
-	RightLabel *widget.Label
-	TopLabel   *canvas.Text
-
-	Back    fyne.Container
-	Front   fyne.Container
-	Actions fyne.Container
-	DApp    *fyne.Container
-}
 
 type DeroAmts struct {
 	xwidget.NumericalEntry
@@ -38,12 +27,12 @@ type DeroAmts struct {
 // Create new numerical entry with increment change on up or down key stroke
 //   - If entry does not require prefix, pass ""
 //   - Increment and Decimal for entry input control
-func DeroAmtEntry(prefix string, incerm float64, decim uint) *DeroAmts {
+func NewDeroEntry(prefix string, increm float64, decim uint) *DeroAmts {
 	entry := &DeroAmts{}
 	entry.ExtendBaseWidget(entry)
 	entry.AllowFloat = true
 	entry.Prefix = prefix
-	entry.Increment = incerm
+	entry.Increment = increm
 	entry.Decimal = decim
 
 	return entry
@@ -97,13 +86,20 @@ type DeroRpcEntries struct {
 	default_daemon []string
 }
 
-// Horizontal layout with daemon, wallet and user:pass entries
-//   - Objects bound to dReams rpc Deamon and Wallet vars with disconnect control
+// Create a horizontal layout container with entries for daemon, wallet and user:pass
+//   - Objects bound to dReams rpc Daemon and Wallet vars with disconnect control
 //   - Balance canvas to display wallet balance
 //   - Button for OnTapped func()
 //   - Offset of 1 puts entries on trailing edge
-func HorizontalEntries(tag string, offset int) *DeroRpcEntries {
-	default_daemon := []string{"", rpc.DAEMON_RPC_DEFAULT, rpc.DAEMON_RPC_REMOTE5, rpc.DAEMON_RPC_REMOTE6}
+func NewHorizontalEntries(tag string, offset int) *DeroRpcEntries {
+	default_daemon := []string{
+		"",
+		rpc.DAEMON_RPC_DEFAULT,
+		rpc.DAEMON_RPC_REMOTE1,
+		rpc.DAEMON_RPC_REMOTE2,
+		rpc.DAEMON_RPC_REMOTE5,
+		rpc.DAEMON_RPC_REMOTE6,
+	}
 	daemon_entry := widget.NewSelectEntry(default_daemon)
 	daemon_entry.SetPlaceHolder("Daemon RPC:")
 	this_daemon := binding.BindString(&rpc.Daemon.Rpc)
@@ -115,10 +111,10 @@ func HorizontalEntries(tag string, offset int) *DeroRpcEntries {
 	this_wallet := binding.BindString(&rpc.Wallet.Rpc)
 	wallet_entry.Bind(this_wallet)
 	wallet_entry.OnCursorChanged = func() {
-		if rpc.Wallet.Connect {
+		if rpc.Wallet.IsConnected() {
 			rpc.Wallet.Address = ""
 			rpc.Wallet.Height = 0
-			rpc.Wallet.Connect = false
+			rpc.Wallet.Connected(false)
 		}
 	}
 
@@ -127,9 +123,9 @@ func HorizontalEntries(tag string, offset int) *DeroRpcEntries {
 	this_auth := binding.BindString(&rpc.Wallet.UserPass)
 	pass_entry.Bind(this_auth)
 	pass_entry.OnCursorChanged = func() {
-		if rpc.Wallet.Connect {
+		if rpc.Wallet.IsConnected() {
 			rpc.GetAddress(tag)
-			if !rpc.Wallet.Connect {
+			if !rpc.Wallet.IsConnected() {
 				rpc.Wallet.Address = ""
 				rpc.Wallet.Height = 0
 			}
@@ -167,13 +163,21 @@ func HorizontalEntries(tag string, offset int) *DeroRpcEntries {
 	return d
 }
 
-// Verticle layout with daemon, wallet and user:pass entries
-//   - Objects bound to dReams rpc Deamon and Wallet vars with disconnect control
+// Create a vertical layout container with entries for daemon, wallet and user:pass
+//   - Objects bound to dReams rpc Daemon and Wallet vars with disconnect control
 //   - Balance canvas to display wallet balance
 //   - Button for OnTapped func()
 //   - Offset of 1 puts entries on top edge
-func VerticleEntries(tag string, offset int) *DeroRpcEntries {
-	default_daemon := []string{"", rpc.DAEMON_RPC_DEFAULT, rpc.DAEMON_RPC_REMOTE5, rpc.DAEMON_RPC_REMOTE6}
+func NewVerticalEntries(tag string, offset int) *DeroRpcEntries {
+	default_daemon := []string{
+		"",
+		rpc.DAEMON_RPC_DEFAULT,
+		rpc.DAEMON_RPC_REMOTE1,
+		rpc.DAEMON_RPC_REMOTE2,
+		rpc.DAEMON_RPC_REMOTE5,
+		rpc.DAEMON_RPC_REMOTE6,
+	}
+
 	daemon_entry := widget.NewSelectEntry(default_daemon)
 	daemon_entry.SetPlaceHolder("Daemon RPC:")
 	this_daemon := binding.BindString(&rpc.Daemon.Rpc)
@@ -185,10 +189,10 @@ func VerticleEntries(tag string, offset int) *DeroRpcEntries {
 	this_wallet := binding.BindString(&rpc.Wallet.Rpc)
 	wallet_entry.Bind(this_wallet)
 	wallet_entry.OnCursorChanged = func() {
-		if rpc.Wallet.Connect {
+		if rpc.Wallet.IsConnected() {
 			rpc.Wallet.Address = ""
 			rpc.Wallet.Height = 0
-			rpc.Wallet.Connect = false
+			rpc.Wallet.Connected(false)
 		}
 	}
 
@@ -197,9 +201,9 @@ func VerticleEntries(tag string, offset int) *DeroRpcEntries {
 	this_auth := binding.BindString(&rpc.Wallet.UserPass)
 	pass_entry.Bind(this_auth)
 	pass_entry.OnCursorChanged = func() {
-		if rpc.Wallet.Connect {
+		if rpc.Wallet.IsConnected() {
 			rpc.GetAddress(tag)
-			if !rpc.Wallet.Connect {
+			if !rpc.Wallet.IsConnected() {
 				rpc.Wallet.Address = ""
 				rpc.Wallet.Height = 0
 			}
@@ -249,7 +253,7 @@ func VerticleEntries(tag string, offset int) *DeroRpcEntries {
 // Refresh Balance of DeroRpcEntries
 //   - Gets balance from rpc.Wallet.Balance
 func (d *DeroRpcEntries) RefreshBalance() {
-	d.Balance.Text = (fmt.Sprintf("Balance: %.5f Dero", float64(rpc.Wallet.Balance)/100000))
+	d.Balance.Text = (fmt.Sprintf("Balance: %.5f Dero", float64(rpc.Wallet.ReadBalance())/100000))
 	d.Balance.Refresh()
 }
 
@@ -258,4 +262,16 @@ func (d *DeroRpcEntries) AddDaemonOptions(new_opts []string) {
 	current := d.default_daemon
 	d.Daemon.SetOptions(append(current, new_opts...))
 	d.Daemon.Refresh()
+}
+
+// Top label background used on dApp tabs
+func LabelColor(c *fyne.Container) *fyne.Container {
+	var alpha *canvas.Rectangle
+	if bundle.AppColor == color.White {
+		alpha = canvas.NewRectangle(color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0x33})
+	} else {
+		alpha = canvas.NewRectangle(color.RGBA{0, 0, 0, 150})
+	}
+
+	return container.New(layout.NewMaxLayout(), alpha, c)
 }

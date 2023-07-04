@@ -4,15 +4,15 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/SixofClubsss/dReams/bundle"
-	"github.com/SixofClubsss/dReams/holdero"
-	"github.com/SixofClubsss/dReams/menu"
-	"github.com/SixofClubsss/dReams/rpc"
+	dreams "github.com/dReam-dApps/dReams"
+	"github.com/dReam-dApps/dReams/bundle"
+	"github.com/dReam-dApps/dReams/menu"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/layout"
 )
@@ -24,29 +24,7 @@ const (
 	App_Name   = "dReams"
 )
 
-type dReamsObjects struct {
-	App        fyne.App
-	Window     fyne.Window
-	background *fyne.Container
-	os         string
-	configure  bool
-	menu       bool
-	holdero    bool
-	bacc       bool
-	predict    bool
-	sports     bool
-	tarot      bool
-	cli        bool
-	quit       chan struct{}
-	menu_tabs  struct {
-		wallet    bool
-		contracts bool
-		assets    bool
-		market    bool
-	}
-}
-
-var dReams dReamsObjects
+var dReams dreams.DreamsObject
 
 func main() {
 	n := runtime.NumCPU()
@@ -60,52 +38,57 @@ func main() {
 	dReams.Window.SetMaster()
 	dReams.Window.Resize(fyne.NewSize(MIN_WIDTH, MIN_HEIGHT))
 	dReams.Window.SetFixedSize(false)
-	dReams.Window.SetIcon(bundle.ResourceCardSharkTrayPng)
-	dReams.Window.SetMaster()
-	dReams.quit = make(chan struct{})
+	dReams.Window.SetIcon(bundle.ResourceDReamsIconPng)
 	done := make(chan struct{})
 
 	dReams.Window.SetCloseIntercept(func() {
+		if menu.Gnomes.Start {
+			dialog.NewInformation("Gnomon Syncing", "Please wait for Gnomon to sync before closing dReams", dReams.Window).Show()
+			return
+		}
 		menu.CloseAppSignal(true)
-		menu.WriteDreamsConfig(rpc.Daemon.Rpc, bundle.AppColor)
-		serviceRunning()
+		menu.WriteDreamsConfig(save())
+		dappCloseCheck()
 		go menu.StopLabel()
-		menu.StopGnomon("dReams")
-		dReams.quit <- struct{}{}
-		menu.StopIndicators()
+		menu.Gnomes.Stop("dReams")
+		dReams.StopProcess()
+		menu.StopIndicators(indicators)
 		time.Sleep(time.Second)
 		dReams.Window.Close()
 	})
 
-	dReams.menu = true
+	dReams.SetTab("Menu")
+	dreams.Theme.Img = *canvas.NewImageFromResource(bundle.ResourceBackgroundPng)
+	dReams.Background = container.NewMax(&dreams.Theme.Img)
 
-	holdero.Settings.ThemeImg = *canvas.NewImageFromResource(bundle.ResourceBackgroundPng)
-	dReams.background = container.NewMax(&holdero.Settings.ThemeImg)
-
-	if len(menu.Control.Dapp_list) == 0 {
+	dapps := menu.EnabledDapps()
+	if dapps == 0 {
 		go func() {
+			dReams.SetChannels(0)
 			time.Sleep(300 * time.Millisecond)
 			dReams.Window.SetContent(
 				container.New(layout.NewMaxLayout(),
-					dReams.background,
+					dReams.Background,
 					introScreen()))
 		}()
 	} else {
 		go func() {
+			dReams.SetChannels(dapps)
 			time.Sleep(750 * time.Millisecond)
 			dReams.Window.SetContent(
 				container.New(layout.NewMaxLayout(),
-					dReams.background,
+					dReams.Background,
 					place()))
 
 		}()
 	}
 
 	if systemTray(dReams.App) {
-		dReams.App.(desktop.App).SetSystemTrayIcon(bundle.ResourceCardSharkTrayPng)
+		dReams.App.(desktop.App).SetSystemTrayIcon(bundle.ResourceTrayIconPng)
 	}
 
-	go fetch(dReams.quit, done)
+	go fetch(done)
 	dReams.Window.ShowAndRun()
 	<-done
+	logger.Println("[dReams] Closed")
 }
