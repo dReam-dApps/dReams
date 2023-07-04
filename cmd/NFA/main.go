@@ -27,7 +27,7 @@ const app_tag = "NFA Market"
 func main() {
 	n := runtime.NumCPU()
 	runtime.GOMAXPROCS(n)
-	menu.InitLogrusLog(runtime.GOOS != "windows")
+	menu.InitLogrusLog(runtime.GOOS == "windows")
 	config := menu.ReadDreamsConfig(app_tag)
 
 	a := app.New()

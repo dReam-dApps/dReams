@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/url"
 	"os"
-	"os/exec"
 	"os/signal"
 	"runtime"
 	"sort"
@@ -111,26 +110,9 @@ func flags() (version string) {
 	return
 }
 
-// Enable escape codes for windows Stdout
-func enableEscapeCodes() error {
-	cmd := exec.Command("cmd", "/c", "echo", "ON")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
-}
-
 func init() {
 	dReams.SetOS()
-	if dReams.OS() == "windows" {
-		if err := enableEscapeCodes(); err != nil {
-			menu.InitLogrusLog(false)
-			logger.Warnln("Err enabling escape codes:", err)
-		} else {
-			menu.InitLogrusLog(true)
-		}
-	} else {
-		menu.InitLogrusLog(true)
-	}
+	menu.InitLogrusLog(dReams.OS() == "windows")
 	saved := menu.ReadDreamsConfig("dReams")
 	if saved.Daemon != nil {
 		menu.Control.Daemon_config = saved.Daemon[0]

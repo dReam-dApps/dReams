@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"sort"
@@ -56,7 +57,23 @@ End Function`
 
 var logger = structures.Logger.WithFields(logrus.Fields{})
 
-func InitLogrusLog(colors bool) {
+// Enable escape codes for windows Stdout
+func enableEscapeCodes() error {
+	cmd := exec.Command("cmd", "/c", "echo", "ON")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
+
+func InitLogrusLog(windows bool) {
+	colors := true
+	if windows {
+		if err := enableEscapeCodes(); err != nil {
+			colors = false
+			logger.Warnln("Err enabling escape codes:", err)
+		}
+	}
+
 	structures.Logger = logrus.Logger{
 		Out:   os.Stdout,
 		Level: 4,
