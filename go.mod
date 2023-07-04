@@ -5,8 +5,8 @@ go 1.20
 require (
 	fyne.io/fyne/v2 v2.3.1
 	fyne.io/x/fyne v0.0.0-20230411205836-1ca0ead20763
-	github.com/SixofClubsss/Baccarat v0.0.0-20230703232059-c991f8eac8b6
-	github.com/SixofClubsss/Holdero v0.0.0-20230703222841-ddc62fab86ee
+	github.com/SixofClubsss/Baccarat v0.0.0-20230704040420-0731055cc585
+	github.com/SixofClubsss/Holdero v0.0.0-20230704033457-06e8c5a33afd
 	github.com/SixofClubsss/Iluma v0.0.0-20230703221810-6c84f996b122
 	github.com/SixofClubsss/dPrediction v0.0.0-20230703234512-78c45e265a01
 	github.com/SixofClubsss/derbnbDesktop v0.0.0-20230703235901-601690b29da1
