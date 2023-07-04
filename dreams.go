@@ -224,7 +224,7 @@ func (d *DreamsObject) IsWindows() bool {
 // Get current working directory path for prefix
 func GetDir() (dir string) {
 	dir, err := os.Getwd()
-	if err == nil {
+	if err != nil {
 		logger.Errorln("[GetDir]", err)
 	}
 
