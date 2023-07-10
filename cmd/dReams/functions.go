@@ -13,8 +13,8 @@ import (
 	"syscall"
 	"time"
 
-	holdero "github.com/SixofClubsss/Holdero"
-	prediction "github.com/SixofClubsss/dPrediction"
+	"github.com/SixofClubsss/Holdero/holdero"
+	"github.com/SixofClubsss/dPrediction/prediction"
 	"github.com/civilware/Gnomon/structures"
 	dreams "github.com/dReam-dApps/dReams"
 	"github.com/dReam-dApps/dReams/bundle"
