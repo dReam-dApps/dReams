@@ -84,7 +84,7 @@ func EnabledDapps() (enabled int) {
 }
 
 // Save dReams config.json file for platform wide dApp use
-func WriteDreamsConfig(u dreams.DreamSave) {
+func WriteDreamsConfig(u dreams.SaveData) {
 	if u.Daemon != nil && u.Daemon[0] == "" {
 		if Control.Daemon_config != "" {
 			u.Daemon[0] = Control.Daemon_config
@@ -109,7 +109,7 @@ func WriteDreamsConfig(u dreams.DreamSave) {
 // Read dReams platform config.json file
 //   - tag for log print
 //   - Sets up directory if none exists
-func ReadDreamsConfig(tag string) (saved dreams.DreamSave) {
+func ReadDreamsConfig(tag string) (saved dreams.SaveData) {
 	if !dreams.FileExists("config/config.json", tag) {
 		logger.Printf("[%s] Creating config directory\n", tag)
 		mkdir := os.Mkdir("config", 0755)
@@ -118,7 +118,7 @@ func ReadDreamsConfig(tag string) (saved dreams.DreamSave) {
 		}
 
 		if config, err := os.Create("config/config.json"); err == nil {
-			var save dreams.DreamSave
+			var save dreams.SaveData
 			json, _ := json.MarshalIndent(&save, "", " ")
 			if _, err = config.Write(json); err != nil {
 				logger.Errorln("[WriteDreamsConfig]", err)

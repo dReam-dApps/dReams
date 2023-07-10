@@ -24,7 +24,7 @@ const (
 	App_Name   = "dReams"
 )
 
-var dReams dreams.DreamsObject
+var dReams dreams.AppObject
 
 func main() {
 	n := runtime.NumCPU()

@@ -144,8 +144,8 @@ func init() {
 }
 
 // Build save struct for local preferences
-func save() dreams.DreamSave {
-	return dreams.DreamSave{
+func save() dreams.SaveData {
+	return dreams.SaveData{
 		Skin:    bundle.AppColor,
 		Daemon:  []string{rpc.Daemon.Rpc},
 		Tables:  holdero.Settings.Favorites,

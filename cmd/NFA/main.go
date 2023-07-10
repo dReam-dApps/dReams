@@ -40,7 +40,7 @@ func main() {
 	done := make(chan struct{})
 	w.SetCloseIntercept(func() {
 		menu.WriteDreamsConfig(
-			dreams.DreamSave{
+			dreams.SaveData{
 				Skin:   config.Skin,
 				Daemon: []string{rpc.Daemon.Rpc},
 				DBtype: menu.Gnomes.DBType,
@@ -89,7 +89,7 @@ func main() {
 		<-c
 		fmt.Println()
 		menu.WriteDreamsConfig(
-			dreams.DreamSave{
+			dreams.SaveData{
 				Skin:   config.Skin,
 				Daemon: []string{rpc.Daemon.Rpc},
 				DBtype: menu.Gnomes.DBType,
