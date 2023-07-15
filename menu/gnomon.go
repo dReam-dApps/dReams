@@ -209,7 +209,7 @@ func StartGnomon(tag, dbtype string, filters []string, upper, lower int, custom 
 // Manually add G45 collections to Gnomon index
 func G45Index() {
 	if Gnomes.DBType == "boltdb" {
-		for Gnomes.Writing() {
+		for Gnomes.IsWriting() {
 			time.Sleep(time.Second)
 		}
 	}
