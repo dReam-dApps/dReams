@@ -60,8 +60,8 @@ github.com/OneOfOne/xxhash v1.2.2 h1:KMrpdQIwFcEqXDklaen+P1axHaj9BSKzvpUUfnHldSE
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
 github.com/SixofClubsss/Baccarat v0.0.0-20230710055343-7ef141e0f496 h1:gobiJRQR5AKXjMJ+d6fXj5lejfYX1ZGrLWGGMLEBFOQ=
 github.com/SixofClubsss/Baccarat v0.0.0-20230710055343-7ef141e0f496/go.mod h1:1hNOLRsAMhtZXS91xGdMjSq5e0QxHKsAHY11W+8bAgw=
-github.com/SixofClubsss/Holdero v0.0.0-20230710050327-cf922ffaec82 h1:R+Upfi83adGhkA1IHzPWiJeFP+G+L6oQr57xL2ISn2M=
-github.com/SixofClubsss/Holdero v0.0.0-20230710050327-cf922ffaec82/go.mod h1:OBtPCui4vzm4MR9TGusJzZSpg6LzhF5xIvgaj03wVNQ=
+github.com/SixofClubsss/Holdero v0.0.0-20230716040526-60cc26e9af4c h1:6zHacUOUzvC6yXpuy3hjX54l+RGjO91bnF01Uos6voA=
+github.com/SixofClubsss/Holdero v0.0.0-20230716040526-60cc26e9af4c/go.mod h1:vLi5rL/uM148no+vQXnqwYAVyhSifRJqoCqLC7Irha4=
 github.com/SixofClubsss/Iluma v0.0.0-20230710051132-0c5ec7783071 h1:VkJwwI8DqPhjzruqmDLSvOm55ts4QXIvLqx1LQS9MLA=
 github.com/SixofClubsss/Iluma v0.0.0-20230710051132-0c5ec7783071/go.mod h1:WwYdX5HIRMYI5tWNYOzp9Z2hVerLm5SyZW98An0ynZk=
 github.com/SixofClubsss/dPrediction v0.0.0-20230710055742-7a961eff29d1 h1:dy3WrLibWcF5o5uCG5AGom+bsO7nItEKa8O1WE2SO14=

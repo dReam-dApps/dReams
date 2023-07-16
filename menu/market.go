@@ -415,6 +415,7 @@ func SearchNFAs() fyne.CanvasObject {
 	search_by := widget.NewRadioGroup([]string{"Collection   ", "Name"}, nil)
 	search_by.Horizontal = true
 	search_by.SetSelected("Collection   ")
+	search_by.Required = true
 
 	search_button := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "search"), func() {
 		if search_entry.Text != "" && rpc.Wallet.Connect {
@@ -810,7 +811,7 @@ func PlaceMarket() *container.Split {
 	details_box := container.NewVBox(layout.NewSpacer(), details, layout.NewSpacer())
 
 	menu_top := container.NewHSplit(details_box, max)
-	menu_top.SetOffset(0)
+	menu_top.SetOffset(0.66)
 
 	Market.Market_button = widget.NewButton("Bid", func() {
 		scid := Market.Viewing

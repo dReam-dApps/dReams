@@ -636,7 +636,7 @@ func checkNfaAuctionListing(scid string) (asset string, owned, expired bool) {
 			if listType != nil && header != nil && coll != nil && desc != nil {
 				if Market.DreamsFilter {
 					check := strings.Trim(header[0], "0123456789")
-					if isDreamsNfaCollection(check) {
+					if isDreamsNfaCollection(coll[0]) || isDreamsNfaName(check) {
 						if listType[0] == "auction" {
 							desc_check := TrimStringLen(desc[0], 66)
 							asset = coll[0] + "   " + header[0] + "   " + desc_check + "   " + scid
@@ -700,7 +700,7 @@ func checkNfaBuyListing(scid string) (asset string, owned, expired bool) {
 			if listType != nil && header != nil && coll != nil && desc != nil {
 				if Market.DreamsFilter {
 					check := strings.Trim(header[0], "0123456789")
-					if isDreamsNfaCollection(check) {
+					if isDreamsNfaCollection(coll[0]) || isDreamsNfaName(check) {
 						if listType[0] == "sale" {
 							desc_check := TrimStringLen(desc[0], 66)
 							asset = coll[0] + "   " + header[0] + "   " + desc_check + "   " + scid
