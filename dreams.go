@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"runtime"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -284,9 +285,9 @@ func ThemeSelect() fyne.Widget {
 			Theme.Name = s
 		}
 		go func() {
+			dir := GetDir()
 			check := strings.Trim(s, "0123456789")
 			if check == "AZYDS" {
-				dir := GetDir()
 				file := dir + "/assets/" + s + "/" + s + ".png"
 				if FileExists(file, "dReams") {
 					Theme.Img = *canvas.NewImageFromFile(file)
@@ -296,7 +297,6 @@ func ThemeSelect() fyne.Widget {
 					Theme.Img, _ = DownloadFile(Theme.URL, s)
 				}
 			} else if check == "SIXART" {
-				dir := GetDir()
 				file := dir + "/assets/" + s + "/" + s + ".png"
 				if FileExists(file, "dReams") {
 					Theme.Img = *canvas.NewImageFromFile(file)
@@ -306,7 +306,6 @@ func ThemeSelect() fyne.Widget {
 					Theme.Img, _ = DownloadFile(Theme.URL, s)
 				}
 			} else if check == "HSTheme" {
-				dir := GetDir()
 				file := dir + "/assets/" + s + "/" + s + ".png"
 				if FileExists(file, "dReams") {
 					Theme.Img = *canvas.NewImageFromFile(file)
@@ -335,4 +334,15 @@ func (a *AssetSelect) Add(add, check string) {
 		a.Select.Options = new_opts
 		a.Select.Refresh()
 	}
+}
+
+// Clears all assets from select options
+func (a *AssetSelect) ClearAll() {
+	a.Select.Options = []string{}
+	a.Select.Refresh()
+}
+
+// Sort the select widgets options
+func (a *AssetSelect) Sort() {
+	sort.Strings(a.Select.Options)
 }

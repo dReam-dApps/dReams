@@ -414,7 +414,7 @@ func checkDreamsNFAs(gc bool, scids map[string]string) {
 		}
 
 		holdero.Settings.SortCardAsset()
-		sort.Strings(dreams.Theme.Select.Options)
+		dreams.Theme.Sort()
 		dreams.Theme.Select.Options = append([]string{"Main", "Legacy"}, dreams.Theme.Select.Options...)
 		sort.Strings(menu.Assets.Assets)
 		menu.Assets.Asset_list.Refresh()
@@ -431,7 +431,8 @@ func checkNFAOwner(scid string) {
 		if header, _ := menu.Gnomes.GetSCIDValuesByKey(scid, "nameHdr"); header != nil {
 			owner, _ := menu.Gnomes.GetSCIDValuesByKey(scid, "owner")
 			file, _ := menu.Gnomes.GetSCIDValuesByKey(scid, "fileURL")
-			if owner != nil && file != nil {
+			collection, _ := menu.Gnomes.GetSCIDValuesByKey(scid, "collection")
+			if owner != nil && file != nil && collection != nil {
 				if owner[0] == rpc.Wallet.Address && menu.ValidNfa(file[0]) {
 					check := strings.Trim(header[0], "0123456789")
 					if check == "AZYDS" || check == "SIXART" {
@@ -445,6 +446,9 @@ func checkNFAOwner(scid string) {
 						holdero.Settings.AddFaces(header[0], owner[0])
 						menu.Assets.Add(header[0], scid)
 					} else if check == "DBC" {
+						holdero.Settings.AddAvatar(header[0], owner[0])
+						menu.Assets.Add(header[0], scid)
+					} else if collection[0] == "Dorblings NFA" {
 						holdero.Settings.AddAvatar(header[0], owner[0])
 						menu.Assets.Add(header[0], scid)
 					} else if check == "HighStrangeness" {
@@ -526,14 +530,12 @@ func checkDreamsG45s(gc bool, g45s map[string]string) {
 						} else if minter[0] == menu.ATeam_mint && coll[0] == menu.ATeam_coll {
 							var agent menu.Agent
 							if err := json.Unmarshal([]byte(data[0]), &agent); err == nil {
-								menu.Assets.Asset_map[agent.Name] = scid
 								menu.Assets.Add(agent.Name, scid)
 								holdero.Settings.AddAvatar(agent.Name, owner[0])
 							}
 						} else if minter[0] == menu.Degen_mint && coll[0] == menu.Degen_coll {
 							var degen menu.Degen
 							if err := json.Unmarshal([]byte(data[0]), &degen); err == nil {
-								menu.Assets.Asset_map[degen.Name] = scid
 								menu.Assets.Add(degen.Name, scid)
 								holdero.Settings.AddAvatar(degen.Name, owner[0])
 							}

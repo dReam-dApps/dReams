@@ -98,10 +98,12 @@ var dReamsNFAs = []assetCount{
 	{name: "SIXPCB", count: 10},
 	{name: "SIXART", count: 17},
 	{name: "HighStrangeness", count: 354},
+	{name: "Dorblings NFA", count: 110},
 }
 
 func (a *assetObjects) Add(name, scid string) {
 	a.Assets = append(a.Assets, name+"   "+scid)
+	a.Asset_map[name] = scid
 }
 
 // NFA market amount entry
@@ -860,8 +862,12 @@ func PlaceMarket() *container.Split {
 
 func ReturnEnabledNFAs(assets map[string]bool) (filters []string) {
 	for name, enabled := range assets {
-		if enabled && isDreamsNfaCollection(name) {
-			filters = append(filters, fmt.Sprintf(`330 STORE("nameHdr", "%s`, name))
+		if enabled {
+			if isDreamsNfaName(name) {
+				filters = append(filters, fmt.Sprintf(`330 STORE("nameHdr", "%s`, name))
+			} else if isDreamsNfaCollection(name) {
+				filters = append(filters, fmt.Sprintf(`450 STORE("collection", "%s`, name))
+			}
 		}
 	}
 

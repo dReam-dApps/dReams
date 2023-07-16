@@ -584,9 +584,18 @@ func FindNfaListings(assets map[string]string) {
 	}
 }
 
+// dReams NFA asset name
+func isDreamsNfaName(check string) bool {
+	if check == "AZYDS" || check == "DBC" || check == "AZYPC" || check == "SIXPC" || check == "AZYPCB" || check == "SIXPCB" || check == "SIXART" || check == "HighStrangeness" {
+		return true
+	}
+
+	return false
+}
+
 // dReams NFA collections
 func isDreamsNfaCollection(check string) bool {
-	if check == "AZYDS" || check == "DBC" || check == "AZYPC" || check == "SIXPC" || check == "AZYPCB" || check == "SIXPCB" || check == "SIXART" || check == "HighStrangeness" {
+	if check == "Dorblings NFA" {
 		return true
 	}
 
