@@ -67,9 +67,10 @@ func (g *gnomon) IsWriting() bool {
 	}
 }
 
-// Set Indexer.Backend.Writing var, will wait if Indexer is writing already
+// Set Indexer.Backend.Writing var,
+// if set true will wait if Indexer is writing already
 func (g *gnomon) Writing(b bool) {
-	for g.IsWriting() {
+	for b && g.IsWriting() {
 		time.Sleep(30 * time.Millisecond)
 	}
 
