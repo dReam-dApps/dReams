@@ -979,7 +979,8 @@ func enableG45Opts(asset assetCount) (opts *widget.RadioGroup) {
 }
 
 // Enable asset collection objects
-func enabledCollections() fyne.CanvasObject {
+// intro used to set label if initial boot screen
+func EnabledCollections(intro bool) (obj fyne.CanvasObject) {
 	collection_form := []*widget.FormItem{}
 	enable_all := widget.NewButton("Enable All", func() {
 		for _, item := range collection_form {
@@ -1007,9 +1008,15 @@ func enabledCollections() fyne.CanvasObject {
 		Control.NFA_count = 3
 	}
 
+	label := canvas.NewText("You will need to delete Gnomon DB and resync for changes to take effect ", bundle.TextColor)
+	label.Alignment = fyne.TextAlignCenter
+	if intro {
+		label.Text = "Enable Asset Collections"
+	}
+
 	return container.NewBorder(
 		nil,
-		container.NewBorder(nil, nil, enable_all, disable_all, container.NewCenter(canvas.NewText("You will need to delete Gnomon DB and resync for changes to take effect ", bundle.TextColor))),
+		container.NewBorder(nil, nil, enable_all, disable_all, label),
 		nil,
 		nil,
 		container.NewVScroll(container.NewCenter(widget.NewForm(collection_form...))))
@@ -1039,7 +1046,7 @@ func PlaceAssets(tag string, assets []fyne.Widget, menu_icon fyne.Resource, w fy
 
 	player_input := container.NewVBox(items_box, layout.NewSpacer())
 
-	enable_opts := enabledCollections()
+	enable_opts := EnabledCollections(false)
 
 	tabs := container.NewAppTabs(
 		container.NewTabItem("Owned", AssetList()))
