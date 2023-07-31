@@ -457,6 +457,7 @@ func sendAssetMenu(window_icon fyne.Resource) {
 						load = true
 					}
 					go rpc.SendAsset(send_asset, dest, load)
+					Control.send_open = false
 					saw.Close()
 				}
 			})
@@ -499,8 +500,8 @@ func sendAssetMenu(window_icon fyne.Resource) {
 		container.NewAdaptiveGrid(2, layout.NewSpacer(), send_button))
 
 	go func() {
-		for rpc.IsReady() {
-			time.Sleep(3 * time.Second)
+		for rpc.IsReady() && Control.send_open {
+			time.Sleep(2 * time.Second)
 			if !confirm_open {
 				icon = Assets.Icon
 				saw_content.Objects[1] = menuAssetImg(&icon, bundle.ResourceAvatarFramePng)
@@ -700,8 +701,8 @@ func listMenu(window_icon fyne.Resource) {
 	icon := Assets.Icon
 
 	go func() {
-		for rpc.IsReady() {
-			time.Sleep(3 * time.Second)
+		for rpc.IsReady() && Control.List_open {
+			time.Sleep(2 * time.Second)
 			if !confirm_open && isNfa(Control.Viewing_asset) {
 				icon = Assets.Icon
 				aw_content.Objects[2] = menuAssetImg(&icon, bundle.ResourceAvatarFramePng)
