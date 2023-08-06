@@ -248,6 +248,8 @@ func GetAssetSCIDName(scid string) string {
 		return "dReams"
 	case HgcSCID:
 		return "HGC"
+	case TrvlSCID:
+		return "TRVL"
 	default:
 		return ""
 	}
@@ -262,7 +264,7 @@ func GetWalletHeight(tag string) {
 
 		var result *rpc.GetHeight_Result
 		if err := rpcClientW.CallFor(ctx, &result, "GetHeight"); err != nil {
-			logger.Errorln("[%s] %s\n", tag, err)
+			logger.Errorf("[%s] %s\n", tag, err)
 			return
 		}
 
