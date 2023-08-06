@@ -256,7 +256,12 @@ func FileExists(path, tag string) bool {
 
 // Download image file from url and return as canvas image
 func DownloadFile(URL, fileName string) (canvas.Image, error) {
-	response, err := http.Get(URL)
+	client := &http.Client{Timeout: 10 * time.Second}
+	req, err := http.NewRequest("GET", URL, nil)
+	if err != nil {
+		return *canvas.NewImageFromImage(nil), err
+	}
+	response, err := client.Do(req)
 	if err != nil {
 		return *canvas.NewImageFromImage(nil), err
 	}
@@ -332,6 +337,7 @@ func (a *AssetSelect) Add(add, check string) {
 		opts := a.Select.Options
 		new_opts := append(opts, add)
 		a.Select.Options = new_opts
+		a.Sort()
 		a.Select.Refresh()
 	}
 }
@@ -339,10 +345,28 @@ func (a *AssetSelect) Add(add, check string) {
 // Clears all assets from select options
 func (a *AssetSelect) ClearAll() {
 	a.Select.Options = []string{}
+	a.Select.Selected = ""
 	a.Select.Refresh()
 }
 
 // Sort the select widgets options
 func (a *AssetSelect) Sort() {
 	sort.Strings(a.Select.Options)
+}
+
+// Remove a asset from Select by name
+func (a *AssetSelect) RemoveAsset(rm string) {
+	index := -1
+	for i, item := range a.Select.Options {
+		if item == rm {
+			index = i
+			break
+		}
+	}
+
+	if index != -1 {
+		a.Select.Options = append(a.Select.Options[:index], a.Select.Options[index+1:]...)
+	}
+
+	a.Select.Refresh()
 }
