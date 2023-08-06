@@ -1108,7 +1108,7 @@ func PlaceAssets(tag string, assets []fyne.Widget, menu_icon fyne.Resource, w fy
 	player_box := container.NewHBox(player_input)
 
 	menu_top := container.NewHSplit(player_box, max)
-	menu_bottom := container.NewAdaptiveGrid(1, IndexEntry(menu_icon))
+	menu_bottom := container.NewAdaptiveGrid(1, IndexEntry(menu_icon, w))
 
 	menu_box := container.NewVSplit(menu_top, menu_bottom)
 	menu_box.SetOffset(1)

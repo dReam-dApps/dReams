@@ -23,6 +23,7 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/data/validation"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 )
@@ -286,7 +287,7 @@ func NameEntry() fyne.CanvasObject {
 
 // Index entry and NFA control objects
 //   - Pass window resources for side menu windows
-func IndexEntry(window_icon fyne.Resource) fyne.CanvasObject {
+func IndexEntry(window_icon fyne.Resource, w fyne.Window) fyne.CanvasObject {
 	Assets.Index_entry = widget.NewMultiLineEntry()
 	Assets.Index_entry.PlaceHolder = "SCID:"
 	Assets.Index_button = widget.NewButton("Add to Index", func() {
@@ -310,8 +311,14 @@ func IndexEntry(window_icon fyne.Resource) fyne.CanvasObject {
 		if len(Assets.Index_entry.Text) == 64 {
 			if isNfa(Assets.Index_entry.Text) {
 				rpc.ClaimNFA(Assets.Index_entry.Text)
+				return
 			}
+
+			dialog.NewInformation("Claim NFA", "Could not validate SCID as NFA", w).Show()
+			return
 		}
+
+		dialog.NewInformation("Claim NFA", "Not a valid SCID", w).Show()
 	})
 
 	Assets.Index_button.Hide()
