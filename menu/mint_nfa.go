@@ -2,10 +2,13 @@ package menu
 
 import (
 	_ "embed"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"image/color"
 	"os"
+	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -24,6 +27,19 @@ import (
 	"fyne.io/fyne/v2/storage"
 	"fyne.io/fyne/v2/widget"
 )
+
+type mintConfig struct {
+	Collection  string `json:"collection"`
+	Update      string `json:"update"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	TypeHdr     string `json:"typeHdr"`
+	Tags        string `json:"tags"`
+	File        string `json:"file"`
+	Cover       string `json:"cover"`
+	Icon        string `json:"icon"`
+	Sign        string `json:"sign"`
+}
 
 //go:embed ART-NFA-MS1.bas
 var ART_NFA_MS1 string
@@ -159,22 +175,14 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 	import_signs := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "document"), func() {
 		read_filesign := dialog.NewFileOpen(func(uc fyne.URIReadCloser, err error) {
 			if err == nil && uc != nil {
-				if sign_data, err := os.ReadFile(uc.URI().Path()); err != nil {
-					logger.Errorf("[%s] Cannot read input file %s\n", tag, err)
-				} else {
-					if string(sign_data[0:35]) == "-----BEGIN DERO SIGNED MESSAGE-----" {
-						split := strings.Split(string(sign_data[0:247]), "\n")
-						read_checkC := strings.TrimSpace(split[2][3:])
-						read_checkS := strings.TrimSpace(split[3][3:])
-						checkC_entry.SetText(read_checkC)
-						checkS_entry.SetText(read_checkS)
-					} else {
-						logger.Errorf("[%s] Not a valid Dero .sign file\n", tag)
-					}
-				}
+				readC, readS := ReadDeroSignFile(tag, uc.URI().Path())
+				checkC_entry.SetText(readC)
+				checkS_entry.SetText(readS)
 			}
 		}, window)
-
+		if uri, err := createURI(); err == nil {
+			read_filesign.SetLocation(uri)
+		}
 		read_filesign.SetConfirmText("Open Signature")
 		read_filesign.SetFilter(storage.NewExtensionFileFilter([]string{".sign"}))
 		read_filesign.Resize(fyne.NewSize(900, 600))
@@ -455,7 +463,9 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 				collection_entry.SetText(collection_entry.Text)
 			}
 		}, window)
-
+		if uri, err := createURI(); err == nil {
+			open_wallet.SetLocation(uri)
+		}
 		open_wallet.Resize(fyne.NewSize(900, 600))
 		open_wallet.Show()
 	})
@@ -473,6 +483,9 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 			info_message := dialog.NewInformation("File Exists", info, window)
 			info_message.Resize(fyne.NewSize(300, 150))
 			info_message.Show()
+			readC, readS := ReadDeroSignFile(tag, filepath.Join(sign_path, file_name))
+			checkC_entry.SetText(readC)
+			checkS_entry.SetText(readS)
 			return
 		}
 
@@ -626,18 +639,12 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 							logger.Errorf("[%s] Cannot write output file %s\n", tag, output_file)
 						} else {
 							logger.Printf("[%s] Successfully signed file. please check %s\n", tag, output_file)
-							if sign_data, err := os.ReadFile(output_file); err == nil {
-								if string(sign_data[0:35]) == "-----BEGIN DERO SIGNED MESSAGE-----" {
-									split := strings.Split(string(sign_data[0:247]), "\n")
-									read_checkC := strings.TrimSpace(split[2][3:])
-									read_checkS := strings.TrimSpace(split[3][3:])
-									checkC_entry.SetText(read_checkC)
-									checkS_entry.SetText(read_checkS)
-									info_message := dialog.NewInformation("File Signed", output_file, window)
-									info_message.Resize(fyne.NewSize(300, 150))
-									info_message.Show()
-								}
-							}
+							readC, readS := ReadDeroSignFile(tag, output_file)
+							checkC_entry.SetText(readC)
+							checkS_entry.SetText(readS)
+							info_message := dialog.NewInformation("File Signed", output_file, window)
+							info_message.Resize(fyne.NewSize(300, 150))
+							info_message.Show()
 						}
 					}
 					go rpc.Wallet.File.Close_Encrypted_Wallet()
@@ -1087,8 +1094,94 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 	install_button.Hide()
 	sign_button.Hide()
 
+	// Save and load json config files with collection/asset data
+	config_select := widget.NewSelect([]string{}, nil)
+	config_select.PlaceHolder = "Load config"
+	if dir, err := os.Open("NFA-Creation"); err == nil {
+		defer dir.Close()
+		if files, err := dir.Readdirnames(0); err == nil {
+			opts := []string{}
+			for _, name := range files {
+				if strings.HasSuffix(name, ".json") {
+					opts = append(opts, name)
+				}
+			}
+			sort.Strings(opts)
+			config_select.Options = opts
+		}
+	}
+
+	save_config_button := widget.NewButton("Save config", func() {
+		name := collection_entry.Text + ".json"
+		file, err := os.Create(filepath.Join("NFA-Creation", name))
+		if err != nil {
+			logger.Errorf("[%s] %s", tag, err)
+			return
+		}
+		defer file.Close()
+
+		data := &mintConfig{
+			Collection:  collection_entry.Text,
+			Update:      update_select.Selected,
+			Name:        name_entry.Text,
+			Description: descr_entry.Text,
+			TypeHdr:     type_select.Selected,
+			Tags:        tags_entry.Text,
+			File:        file_entry_end.Text,
+			Cover:       cover_entry_start.Text,
+			Icon:        icon_entry_start.Text,
+			Sign:        sign_entry_start.Text,
+		}
+
+		json, _ := json.MarshalIndent(data, "", " ")
+		if _, err = file.Write(json); err != nil {
+			logger.Errorf("[%s] %s", tag, err)
+		}
+
+		var have bool
+		opts := config_select.Options
+		for _, o := range opts {
+			if o == name {
+				have = true
+				break
+			}
+		}
+
+		if !have {
+			opts = append(opts, name)
+			sort.Strings(opts)
+			config_select.Options = opts
+		}
+	})
+
+	config_select.OnChanged = func(s string) {
+		file, err := os.ReadFile("NFA-Creation/" + s)
+		if err != nil {
+			logger.Errorf("[%s] %s", tag, err)
+			return
+		}
+
+		var data mintConfig
+		if err = json.Unmarshal(file, &data); err != nil {
+			logger.Errorf("[%s] %s", tag, err)
+			return
+		}
+
+		collection_entry.SetText(data.Collection)
+		update_select.SetSelected(data.Update)
+		name_entry.SetText(data.Name)
+		descr_entry.SetText(data.Description)
+		type_select.SetSelected(data.TypeHdr)
+		tags_entry.SetText(data.Tags)
+		file_entry_end.SetText(data.File)
+		cover_entry_start.SetText(data.Cover)
+		icon_entry_start.SetText(data.Icon)
+		sign_entry_start.SetText(data.Sign)
+	}
+
 	mint_form := []*widget.FormItem{}
 	mint_form = append(mint_form, widget.NewFormItem("", instructions_button))
+	mint_form = append(mint_form, widget.NewFormItem("Config", container.NewBorder(nil, nil, nil, save_config_button, config_select)))
 	mint_form = append(mint_form, widget.NewFormItem("", collection_cont))
 	mint_form = append(mint_form, widget.NewFormItem("", layout.NewSpacer()))
 	mint_form = append(mint_form, widget.NewFormItem("Collection", container.NewBorder(nil, nil, nil, set_up_collec, collection_entry)))
@@ -1337,4 +1430,32 @@ func NFACreationExists(collection string) bool {
 	_, sign := os.Stat(sign_path)
 
 	return !os.IsNotExist(sign)
+}
+
+// Read a Dero .sign file and return C and S signatures
+func ReadDeroSignFile(tag, sign_path string) (checkC string, checkS string) {
+	if sign_data, err := os.ReadFile(sign_path); err != nil {
+		logger.Errorf("[%s] Cannot read input file %s\n", tag, err)
+	} else {
+		if string(sign_data[0:35]) == "-----BEGIN DERO SIGNED MESSAGE-----" {
+			split := strings.Split(string(sign_data[0:247]), "\n")
+			checkC = strings.TrimSpace(split[2][3:])
+			checkS = strings.TrimSpace(split[3][3:])
+		} else {
+			logger.Errorf("[%s] Not a valid Dero .sign file\n", tag)
+		}
+	}
+	return
+}
+
+// Create fyne.ListableURI for current directory
+func createURI() (uri fyne.ListableURI, err error) {
+	var dir string
+	dir, err = os.Getwd()
+	if err != nil {
+		logger.Println("[createURI] Failed to get current directory:", err)
+		return
+	}
+
+	return storage.ListerForURI(storage.NewFileURI(dir))
 }
