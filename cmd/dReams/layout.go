@@ -17,6 +17,7 @@ import (
 	"github.com/SixofClubsss/derbnbDesktop/derbnb"
 	dreams "github.com/dReam-dApps/dReams"
 	"github.com/dReam-dApps/dReams/bundle"
+	"github.com/dReam-dApps/dReams/duel"
 	"github.com/dReam-dApps/dReams/dwidget"
 	"github.com/dReam-dApps/dReams/menu"
 	"github.com/dReam-dApps/dReams/rpc"
@@ -432,6 +433,10 @@ func place() *fyne.Container {
 
 	if menu.Control.Dapp_list["DerBnb"] {
 		tabs.Append(container.NewTabItem("DerBnb", derbnb.LayoutAllItems(true, &dReams)))
+	}
+
+	if menu.Control.Dapp_list["Duels"] {
+		tabs.Append(container.NewTabItem("Duels", duel.LayoutAllItems(menu.Assets.Asset_map, &dReams)))
 	}
 
 	if cli.enabled {
