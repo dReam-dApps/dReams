@@ -206,6 +206,9 @@ func FetchDapps() (dApps []string) {
 		}
 	}
 
+	// TODO remove
+	dApps = append(dApps, "Duels")
+
 	return
 }
 

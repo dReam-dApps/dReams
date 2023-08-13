@@ -420,7 +420,7 @@ func checkDreamsNFAs(gc bool, scids map[string]string) {
 		sort.Strings(menu.Assets.Assets)
 		menu.Assets.Asset_list.Refresh()
 		if menu.Control.Dapp_list["Duels"] {
-			duel.Inventory.Sort()
+			duel.Inventory.SortAll()
 		}
 		if menu.Control.Dapp_list["Holdero"] {
 			holdero.DisableHolderoTools()
