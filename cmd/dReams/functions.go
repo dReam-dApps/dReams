@@ -438,16 +438,6 @@ func checkNFAOwner(scid string) {
 			collection, _ := menu.Gnomes.GetSCIDValuesByKey(scid, "collection")
 			if owner != nil && file != nil && collection != nil {
 				if owner[0] == rpc.Wallet.Address && menu.ValidNfa(file[0]) {
-					if collection[0] == "TestChars" {
-						holdero.Settings.AddAvatar(header[0], owner[0])
-						menu.Assets.Add(header[0], scid)
-						duel.AddItemsToInventory(scid, header[0], owner[0], collection[0])
-					} else if collection[0] == "TestItems" {
-						holdero.Settings.AddAvatar(header[0], owner[0])
-						menu.Assets.Add(header[0], scid)
-						duel.AddItemsToInventory(scid, header[0], owner[0], collection[0])
-					}
-
 					check := strings.Trim(header[0], "0123456789")
 					if check == "AZYDS" || check == "SIXART" {
 						dreams.Theme.Add(header[0], owner[0])
@@ -507,6 +497,18 @@ func checkNFAOwner(scid string) {
 								dreams.Theme.Select.Refresh()
 							}
 						}
+					} else if collection[0] == "TestChars" {
+						holdero.Settings.AddAvatar(header[0], owner[0])
+						menu.Assets.Add(header[0], scid)
+						duel.AddItemsToInventory(scid, header[0], owner[0], collection[0])
+					} else if collection[0] == "TestItems" {
+						holdero.Settings.AddAvatar(header[0], owner[0])
+						menu.Assets.Add(header[0], scid)
+						duel.AddItemsToInventory(scid, header[0], owner[0], collection[0])
+					} else if collection[0] == "Dero Desperados" {
+						holdero.Settings.AddAvatar(header[0], owner[0])
+						menu.Assets.Add(header[0], scid)
+						duel.AddItemsToInventory(scid, header[0], owner[0], collection[0])
 					}
 				}
 			}

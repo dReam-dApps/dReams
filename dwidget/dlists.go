@@ -30,7 +30,9 @@ func (l *Lists) RemoveIndex(e uint64) {
 		l.All = append(l.All[:index], l.All[index+1:]...)
 	}
 
-	l.List.Refresh()
+	if l.List != nil {
+		l.List.Refresh()
+	}
 }
 
 // Check if exists in All

@@ -1137,3 +1137,15 @@ func GetListingPercents(scid string) (artP float64, royaltyP float64) {
 
 	return
 }
+
+// Get the nameHdr of a NFA
+func GetNFAName(scid string) string {
+	if Gnomes.IsReady() {
+		name, _ := Gnomes.GetSCIDValuesByKey(scid, "nameHdr")
+		if name != nil {
+			return name[0]
+		}
+	}
+
+	return ""
+}
