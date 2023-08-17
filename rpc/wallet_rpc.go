@@ -151,6 +151,29 @@ func GetWalletTx(txid string) *rpc.Entry {
 	return &result.Entry
 }
 
+// Get wallet transfers with min/max heights and dst port
+func GetWalletTransfers(min, max, dst uint64) *[]rpc.Entry {
+	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
+	defer cancel()
+
+	var result *rpc.Get_Transfers_Result
+	params := rpc.Get_Transfers_Params{
+		Coinbase:        false,
+		In:              true,
+		Out:             false,
+		Min_Height:      min,
+		Max_Height:      max,
+		DestinationPort: dst,
+	}
+
+	if err := rpcClientW.CallFor(ctx, &result, "GetTransfers", params); err != nil {
+		logger.Errorln("[GetWalletTx]", err)
+		return nil
+	}
+
+	return &result.Entries
+}
+
 // Returns Dero wallet balance
 func GetBalance() uint64 {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
@@ -429,7 +452,7 @@ func SetHeaders(name, desc, icon, scid string) {
 }
 
 // Claim transferred NFA token
-func ClaimNFA(scid string) {
+func ClaimNFA(scid string) (tx string) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
@@ -461,6 +484,8 @@ func ClaimNFA(scid string) {
 
 	logger.Println("[ClaimNFA] Claim TX:", txid)
 	AddLog("NFA Claim TX: " + txid.TXID)
+
+	return txid.TXID
 }
 
 // Send bid or buy to NFA SC
