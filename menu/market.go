@@ -99,6 +99,11 @@ var dReamsNFAs = []assetCount{
 	{name: "SIXART", count: 17},
 	{name: "HighStrangeness", count: 354},
 	{name: "Dorblings NFA", count: 110},
+	// TODO correct counts
+	{name: "TestChars", count: 8},
+	{name: "TestItems", count: 8},
+	{name: "Dero Desperados", count: 5},
+	{name: "Desperado Guns", count: 5},
 }
 
 func (a *assetObjects) Add(name, scid string) {

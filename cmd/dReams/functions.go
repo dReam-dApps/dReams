@@ -13,6 +13,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/SixofClubsss/Duels/duel"
 	"github.com/SixofClubsss/Holdero/holdero"
 	"github.com/SixofClubsss/dPrediction/prediction"
 	"github.com/civilware/Gnomon/structures"
@@ -419,7 +420,7 @@ func checkDreamsNFAs(gc bool, scids map[string]string) {
 		sort.Strings(menu.Assets.Assets)
 		menu.Assets.Asset_list.Refresh()
 		if menu.Control.Dapp_list["Duels"] {
-			//duel.Inventory.SortAll()
+			duel.Inventory.SortAll()
 		}
 		if menu.Control.Dapp_list["Holdero"] {
 			holdero.DisableHolderoTools()
@@ -499,15 +500,15 @@ func checkNFAOwner(scid string) {
 					} else if collection[0] == "TestChars" {
 						holdero.Settings.AddAvatar(header[0], owner[0])
 						menu.Assets.Add(header[0], scid)
-						//duel.AddItemsToInventory(scid, header[0], owner[0], collection[0])
+						duel.AddItemsToInventory(scid, header[0], owner[0], collection[0])
 					} else if collection[0] == "TestItems" {
 						holdero.Settings.AddAvatar(header[0], owner[0])
 						menu.Assets.Add(header[0], scid)
-						//duel.AddItemsToInventory(scid, header[0], owner[0], collection[0])
+						duel.AddItemsToInventory(scid, header[0], owner[0], collection[0])
 					} else if collection[0] == "Dero Desperados" {
 						holdero.Settings.AddAvatar(header[0], owner[0])
 						menu.Assets.Add(header[0], scid)
-						//duel.AddItemsToInventory(scid, header[0], owner[0], collection[0])
+						duel.AddItemsToInventory(scid, header[0], owner[0], collection[0])
 					}
 				}
 			}
@@ -683,6 +684,13 @@ func gnomonFilters() (filter []string) {
 		}
 	}
 
+	if menu.Control.Dapp_list["Duels"] {
+		duels := rpc.GetSCCode(duel.DUELSCID)
+		if duels != "" {
+			filter = append(filter, duels)
+		}
+	}
+
 	filter = append(filter, menu.ReturnEnabledNFAs(menu.Control.Enabled_assets)...)
 
 	return
@@ -798,7 +806,7 @@ func recheckDreamsAssets() {
 	menu.Gnomes.Wait = true
 	menu.Assets.Assets = []string{}
 	if menu.Control.Dapp_list["Duels"] {
-		//duel.Inventory.ClearAll()
+		duel.Inventory.ClearAll()
 	}
 	checkDreamsNFAs(false, nil)
 	checkDreamsG45s(false, nil)

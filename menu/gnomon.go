@@ -595,7 +595,7 @@ func isDreamsNfaName(check string) bool {
 
 // dReams NFA collections
 func isDreamsNfaCollection(check string) bool {
-	if check == "Dorblings NFA" {
+	if check == "Dorblings NFA" || check == "TestChars" || check == "TestItems" || check == "Dero Desperados" || check == "Desperado Guns" {
 		return true
 	}
 

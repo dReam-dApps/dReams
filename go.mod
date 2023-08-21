@@ -6,6 +6,7 @@ require (
 	fyne.io/fyne/v2 v2.3.1
 	fyne.io/x/fyne v0.0.0-20230411205836-1ca0ead20763
 	github.com/SixofClubsss/Baccarat v0.0.0-20230710055343-7ef141e0f496
+	github.com/SixofClubsss/Duels v0.0.0-20230821204057-f51461b1f5e8
 	github.com/SixofClubsss/Holdero v0.0.0-20230716040526-60cc26e9af4c
 	github.com/SixofClubsss/Iluma v0.0.0-20230710051132-0c5ec7783071
 	github.com/SixofClubsss/dPrediction v0.0.0-20230710055742-7a961eff29d1
@@ -49,7 +50,7 @@ require (
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/jsummers/gobmp v0.0.0-20151104160322-e2ba15ffa76e // indirect
 	github.com/klauspost/compress v1.15.13 // indirect
-	github.com/klauspost/cpuid/v2 v2.2.2 // indirect
+	github.com/klauspost/cpuid/v2 v2.2.5 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.16 // indirect
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
@@ -72,14 +73,14 @@ require (
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.9.0 // indirect
 	go.uber.org/zap v1.24.0 // indirect
-	golang.org/x/crypto v0.6.0 // indirect
+	golang.org/x/crypto v0.12.0 // indirect
 	golang.org/x/image v0.3.0 // indirect
 	golang.org/x/mobile v0.0.0-20211207041440-4e6c2922fdee // indirect
-	golang.org/x/net v0.10.0 // indirect
+	golang.org/x/net v0.14.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/sys v0.9.0 // indirect
-	golang.org/x/term v0.8.0 // indirect
-	golang.org/x/text v0.9.0 // indirect
+	golang.org/x/sys v0.11.0 // indirect
+	golang.org/x/term v0.11.0 // indirect
+	golang.org/x/text v0.12.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
