@@ -12,7 +12,13 @@ type Lists struct {
 }
 
 // Sort All index
-func (l *Lists) SortIndex() {
+//   - Pas reverse true to sort in reverse order
+func (l *Lists) SortIndex(reverse bool) {
+	if reverse {
+		sort.Slice(l.All, func(i, j int) bool { return l.All[i] > l.All[j] })
+		return
+	}
+
 	sort.Slice(l.All, func(i, j int) bool { return l.All[i] < l.All[j] })
 }
 

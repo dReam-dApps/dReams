@@ -509,6 +509,10 @@ func checkNFAOwner(scid string) {
 						holdero.Settings.AddAvatar(header[0], owner[0])
 						menu.Assets.Add(header[0], scid)
 						duel.AddItemsToInventory(scid, header[0], owner[0], collection[0])
+					} else if collection[0] == "Desperado Guns" {
+						holdero.Settings.AddAvatar(header[0], owner[0])
+						menu.Assets.Add(header[0], scid)
+						duel.AddItemsToInventory(scid, header[0], owner[0], collection[0])
 					}
 				}
 			}
