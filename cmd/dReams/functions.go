@@ -113,7 +113,7 @@ func flags() (version string) {
 
 func init() {
 	dReams.SetOS()
-	menu.InitLogrusLog(dReams.OS() == "windows")
+	menu.InitLogrusLog(logrus.InfoLevel)
 	saved := menu.ReadDreamsConfig("dReams")
 	if saved.Daemon != nil {
 		menu.Control.Daemon_config = saved.Daemon[0]

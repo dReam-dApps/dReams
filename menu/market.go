@@ -1292,11 +1292,12 @@ func RunNFAMarket(tag string, quit, done chan struct{}, connect_box *dwidget.Der
 			offset++
 
 		case <-quit: // exit
-			logger.Printf("[%s] Closing\n", tag)
+			logger.Printf("[%s] Closing...\n", tag)
 			if Gnomes.Icon_ind != nil {
 				Gnomes.Icon_ind.Stop()
 			}
 			ticker.Stop()
+			time.Sleep(time.Second)
 			done <- struct{}{}
 			return
 		}

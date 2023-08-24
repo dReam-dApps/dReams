@@ -8,11 +8,13 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/civilware/Gnomon/structures"
 	dreams "github.com/dReam-dApps/dReams"
 	"github.com/dReam-dApps/dReams/bundle"
 	"github.com/dReam-dApps/dReams/dwidget"
 	"github.com/dReam-dApps/dReams/menu"
 	"github.com/dReam-dApps/dReams/rpc"
+	"github.com/sirupsen/logrus"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -27,33 +29,57 @@ const app_tag = "NFA Market"
 func main() {
 	n := runtime.NumCPU()
 	runtime.GOMAXPROCS(n)
-	menu.InitLogrusLog(runtime.GOOS == "windows")
+	menu.InitLogrusLog(logrus.InfoLevel)
+	logger := structures.Logger.WithFields(logrus.Fields{})
 	config := menu.ReadDreamsConfig(app_tag)
 
-	a := app.New()
+	// Initialize Fyne app and window
+	a := app.NewWithID(fmt.Sprintf("%s Desktop Client", app_tag))
 	a.Settings().SetTheme(bundle.DeroTheme(config.Skin))
 	w := a.NewWindow(app_tag)
-	w.Resize(fyne.NewSize(1200, 800))
+	w.Resize(fyne.NewSize(1400, 800))
 	w.SetIcon(bundle.ResourceMarketIconPng)
 	w.SetMaster()
+
+	// Initialize closing channels and func
 	quit := make(chan struct{})
 	done := make(chan struct{})
-	w.SetCloseIntercept(func() {
-		menu.WriteDreamsConfig(
-			dreams.SaveData{
-				Skin:   config.Skin,
-				Daemon: []string{rpc.Daemon.Rpc},
-				DBtype: menu.Gnomes.DBType,
-			})
+	closeFunc := func() {
+		save := dreams.SaveData{
+			Skin:   config.Skin,
+			DBtype: menu.Gnomes.DBType,
+		}
+
+		if rpc.Daemon.Rpc == "" {
+			save.Daemon = config.Daemon
+		} else {
+			save.Daemon = []string{rpc.Daemon.Rpc}
+		}
+
+		menu.WriteDreamsConfig(save)
+		menu.CloseAppSignal(true)
 		menu.Gnomes.Stop(app_tag)
 		quit <- struct{}{}
 		if rpc.Wallet.File != nil {
 			rpc.Wallet.File.Close_Encrypted_Wallet()
 		}
 		w.Close()
-	})
+	}
+	w.SetCloseIntercept(closeFunc)
 
+	// Handle ctrl-c close
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-c
+		fmt.Println()
+		closeFunc()
+	}()
+
+	// Initialize vars
 	menu.Gnomes.Fast = true
+
+	// Create dwidget connection box with controls
 	connect_box := dwidget.NewHorizontalEntries(app_tag, 1)
 	connect_box.Button.OnTapped = func() {
 		rpc.GetAddress(app_tag)
@@ -74,6 +100,7 @@ func main() {
 	connect_box.AddDaemonOptions(config.Daemon)
 	connect_box.Container.Objects[0].(*fyne.Container).Add(menu.StartIndicators())
 
+	// Layout tabs
 	tabs := container.NewAppTabs(
 		container.NewTabItem("Market", menu.PlaceMarket()),
 		container.NewTabItem("Assets", menu.PlaceAssets(app_tag, nil, bundle.ResourceMarketIconPng, w)),
@@ -81,33 +108,12 @@ func main() {
 
 	tabs.SetTabLocation(container.TabLocationBottom)
 
-	max := container.NewMax(tabs, container.NewVBox(layout.NewSpacer(), connect_box.Container))
-
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-	go func() {
-		<-c
-		fmt.Println()
-		menu.WriteDreamsConfig(
-			dreams.SaveData{
-				Skin:   config.Skin,
-				Daemon: []string{rpc.Daemon.Rpc},
-				DBtype: menu.Gnomes.DBType,
-			})
-		menu.Gnomes.Stop(app_tag)
-		rpc.Wallet.Connected(false)
-		quit <- struct{}{}
-		if rpc.Wallet.File != nil {
-			rpc.Wallet.File.Close_Encrypted_Wallet()
-		}
-		w.Close()
-	}()
-
 	go menu.RunNFAMarket(app_tag, quit, done, connect_box)
 	go func() {
 		time.Sleep(450 * time.Millisecond)
-		w.SetContent(max)
+		w.SetContent(container.NewMax(tabs, container.NewVBox(layout.NewSpacer(), connect_box.Container)))
 	}()
 	w.ShowAndRun()
 	<-done
+	logger.Printf("[%s] Closed\n", app_tag)
 }

@@ -65,18 +65,18 @@ func enableEscapeCodes() error {
 	return cmd.Run()
 }
 
-func InitLogrusLog(windows bool) {
+func InitLogrusLog(level logrus.Level) {
 	colors := true
-	if windows {
+	if runtime.GOOS == "windows" {
 		if err := enableEscapeCodes(); err != nil {
 			colors = false
-			logger.Warnln("Err enabling escape codes:", err)
+			logger.Warnln("[InitLogrusLog] Err enabling escape codes:", err)
 		}
 	}
 
 	structures.Logger = logrus.Logger{
 		Out:   os.Stdout,
-		Level: 4,
+		Level: level,
 		Formatter: &prefixed.TextFormatter{
 			ForceColors:     colors,
 			DisableColors:   !colors,

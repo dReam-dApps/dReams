@@ -62,8 +62,12 @@ github.com/SixofClubsss/Baccarat v0.0.0-20230710055343-7ef141e0f496 h1:gobiJRQR5
 github.com/SixofClubsss/Baccarat v0.0.0-20230710055343-7ef141e0f496/go.mod h1:1hNOLRsAMhtZXS91xGdMjSq5e0QxHKsAHY11W+8bAgw=
 github.com/SixofClubsss/Duels v0.0.0-20230821204057-f51461b1f5e8 h1:mEQbhsC9vtBqj9MRXCfg0GufLImaeY4oQbKPzvHISps=
 github.com/SixofClubsss/Duels v0.0.0-20230821204057-f51461b1f5e8/go.mod h1:yW7V4YZfGXaoTlKaB/QBFrlyQCV9iGRSdOnPYwwk9hQ=
+github.com/SixofClubsss/Duels v0.0.0-20230823004119-15b0cbfa72c6 h1:lCU3Sp7xzyV154w+0aHbpYbRqiVvADSwNwRuO1a95hU=
+github.com/SixofClubsss/Duels v0.0.0-20230823004119-15b0cbfa72c6/go.mod h1:l7ww1uyCMua/26vzl4AFJQPgB4CbdyuqNmqdZHfXv7E=
 github.com/SixofClubsss/Holdero v0.0.0-20230716040526-60cc26e9af4c h1:6zHacUOUzvC6yXpuy3hjX54l+RGjO91bnF01Uos6voA=
 github.com/SixofClubsss/Holdero v0.0.0-20230716040526-60cc26e9af4c/go.mod h1:vLi5rL/uM148no+vQXnqwYAVyhSifRJqoCqLC7Irha4=
+github.com/SixofClubsss/Holdero v0.0.0-20230824003401-127441961227 h1:ap6dhJdvR8Sk4U6MRufGVAnfvhe47sct7aGGUy4PcvM=
+github.com/SixofClubsss/Holdero v0.0.0-20230824003401-127441961227/go.mod h1:EHb/sjY1CftIF5OEU5VgxGmsHas5ezAj75Qc4f/qoSE=
 github.com/SixofClubsss/Iluma v0.0.0-20230710051132-0c5ec7783071 h1:VkJwwI8DqPhjzruqmDLSvOm55ts4QXIvLqx1LQS9MLA=
 github.com/SixofClubsss/Iluma v0.0.0-20230710051132-0c5ec7783071/go.mod h1:WwYdX5HIRMYI5tWNYOzp9Z2hVerLm5SyZW98An0ynZk=
 github.com/SixofClubsss/dPrediction v0.0.0-20230710055742-7a961eff29d1 h1:dy3WrLibWcF5o5uCG5AGom+bsO7nItEKa8O1WE2SO14=
@@ -410,6 +414,7 @@ github.com/srwiley/rasterx v0.0.0-20210519020934-456a8d69b780 h1:oDMiXaTMyBEuZMU
 github.com/srwiley/rasterx v0.0.0-20210519020934-456a8d69b780/go.mod h1:mvWM0+15UqyrFKqdRjY6LuAVJR0HOVhJlEgZ5JWtSWU=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/objx v0.4.0/go.mod h1:YvHI0jy2hoMjB+UWwv71VJQ9isScKT/TqJzVSSt89Yw=
+github.com/stretchr/objx v0.5.0/go.mod h1:Yh+to48EsGEfYuaHDzXPcE3xhTkx73EhmCGUpEOglKo=
 github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
 github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81PSLYec5m4=
