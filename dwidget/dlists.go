@@ -8,9 +8,9 @@ import (
 
 // Fyne List widget, arrays for string or uint64 content
 type Lists struct {
+	List  *widget.List
 	All   []uint64
 	SCIDs []string
-	*widget.List
 }
 
 // Sort All index
