@@ -241,9 +241,9 @@ func DisplayBalance(name string) string {
 	return Wallet.Display.Balance[name]
 }
 
-// Return asset transfer to SCID from Round.AssetID
-func GetAssetSCIDforTransfer(amt uint64, assetId string) (transfer rpc.Transfer) {
-	switch assetId {
+// Return asset transfer for SCID
+func GetAssetSCIDforTransfer(amt uint64, scid string) (transfer rpc.Transfer) {
+	switch scid {
 	case DreamsSCID:
 		transfer = rpc.Transfer{
 			SCID:        crypto.HashHexToHash(DreamsSCID),
@@ -258,7 +258,7 @@ func GetAssetSCIDforTransfer(amt uint64, assetId string) (transfer rpc.Transfer)
 		}
 
 	default:
-
+		// nothing
 	}
 
 	return
