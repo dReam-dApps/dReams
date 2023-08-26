@@ -942,7 +942,7 @@ func CreateSwapContainer(pair string) (*dwidget.DeroAmts, *fyne.Container) {
 	return swap1_entry, container.NewAdaptiveGrid(2, cont1, cont2)
 }
 
-// Create a new raster from image, looking for holdero.Settings.ThemeImg
+// Create a new raster from image, looking for dreams.Theme.Img.Resource
 // and will fallback to bundle.ResourceBackgroundPng if err
 func BackgroundRast(tag string) *canvas.Raster {
 	var err error
