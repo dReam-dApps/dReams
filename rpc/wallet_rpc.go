@@ -23,9 +23,9 @@ import (
 )
 
 // Add entry to Wallet.LogEntry session log
-func AddLog(t string) {
+func AddLog(text string) {
 	if Wallet.LogEntry != nil {
-		Wallet.LogEntry.SetText(Wallet.LogEntry.Text + "\n\n" + t)
+		Wallet.LogEntry.SetText(Wallet.LogEntry.Text + fmt.Sprintf("\n\n%s  %s", time.Now().Format("2006/01/02 15:04:05"), text))
 		Wallet.LogEntry.Refresh()
 	}
 }
@@ -35,7 +35,7 @@ func SessionLog() *fyne.Container {
 	Wallet.LogEntry = widget.NewMultiLineEntry()
 	Wallet.LogEntry.Disable()
 	button := widget.NewButton("Save", func() {
-		file_name := fmt.Sprintf("Log-%s", time.Now().Format(time.UnixDate))
+		file_name := fmt.Sprintf("Log-%s", time.Now().Format("2006/01/02 15:04:05"))
 		if f, err := os.Create(file_name); err == nil {
 			defer f.Close()
 			if _, err = f.WriteString(Wallet.LogEntry.Text); err != nil {

@@ -285,6 +285,19 @@ func NameEntry() fyne.CanvasObject {
 	return container.NewHBox(layout.NewSpacer(), Control.Names)
 }
 
+// Create and show dialog for sent TX, dismiss copies txid to clipboard, dialog will hide after delay
+func ShowTxDialog(title, message, txid string, delay time.Duration, w fyne.Window) {
+	info := dialog.NewInformation(title, message, w)
+	info.SetDismissText("Copy")
+	info.SetOnClosed(func() {
+		w.Clipboard().SetContent(txid)
+	})
+	info.Show()
+	time.Sleep(delay)
+	info.Hide()
+	info = nil
+}
+
 // Index entry and NFA control objects
 //   - Pass window resources for side menu windows
 func IndexEntry(window_icon fyne.Resource, w fyne.Window) fyne.CanvasObject {
@@ -310,7 +323,12 @@ func IndexEntry(window_icon fyne.Resource, w fyne.Window) fyne.CanvasObject {
 	Control.Claim_button = widget.NewButton("Claim NFA", func() {
 		if len(Assets.Index_entry.Text) == 64 {
 			if isNfa(Assets.Index_entry.Text) {
-				rpc.ClaimNFA(Assets.Index_entry.Text)
+				if tx := rpc.ClaimNFA(Assets.Index_entry.Text); tx != "" {
+					go ShowTxDialog("Claim NFA", fmt.Sprintf("TX: %s", tx), tx, 3*time.Second, w)
+				} else {
+					dialog.NewInformation("Claim NFA", "TX Error", w).Show()
+				}
+
 				return
 			}
 

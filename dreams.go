@@ -256,7 +256,7 @@ func FileExists(path, tag string) bool {
 
 // Download image file from url and return as canvas image
 func DownloadFile(URL, fileName string) (canvas.Image, error) {
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := &http.Client{Timeout: 15 * time.Second}
 	req, err := http.NewRequest("GET", URL, nil)
 	if err != nil {
 		return *canvas.NewImageFromImage(nil), err
