@@ -119,9 +119,9 @@ func init() {
 		menu.Control.Daemon_config = saved.Daemon[0]
 	}
 
-	holdero.Settings.Favorites = saved.Tables
-	prediction.Predict.Settings.Favorites = saved.Predict
-	prediction.Sports.Settings.Favorites = saved.Sports
+	holdero.SetFavoriteTables(saved.Tables)
+	prediction.Predict.Favorites.SCIDs = saved.Predict
+	prediction.Sports.Favorites.SCIDs = saved.Sports
 
 	menu.Market.DreamsFilter = true
 
@@ -149,9 +149,9 @@ func save() dreams.SaveData {
 	return dreams.SaveData{
 		Skin:    bundle.AppColor,
 		Daemon:  []string{rpc.Daemon.Rpc},
-		Tables:  holdero.Settings.Favorites,
-		Predict: prediction.Predict.Settings.Favorites,
-		Sports:  prediction.Sports.Settings.Favorites,
+		Tables:  holdero.GetFavoriteTables(),
+		Predict: prediction.Predict.Favorites.SCIDs,
+		Sports:  prediction.Sports.Favorites.SCIDs,
 		DBtype:  menu.Gnomes.DBType,
 		Para:    menu.Gnomes.Para,
 		Assets:  menu.Control.Enabled_assets,
@@ -706,6 +706,7 @@ func daemonConnectedBox() fyne.Widget {
 		if !menu.Gnomes.IsInitialized() && !menu.Gnomes.Start {
 			if rpc.DaemonVersion() == "3.5.3-139.DEROHE.STARGATE+04042023" {
 				dialog.NewInformation("Daemon Version", "This daemon may conflict with Gnomon sync", dReams.Window).Show()
+				menu.Gnomes.Trim = false
 			}
 
 			menu.Assets.Gnomes_sync.Text = (" Starting Gnomon")
