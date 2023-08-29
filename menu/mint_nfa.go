@@ -175,7 +175,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 	import_signs := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "document"), func() {
 		read_filesign := dialog.NewFileOpen(func(uc fyne.URIReadCloser, err error) {
 			if err == nil && uc != nil {
-				readC, readS := ReadDeroSignFile(tag, uc.URI().Path())
+				readC, readS, _ := ReadDeroSignFile(tag, uc.URI().Path())
 				checkC_entry.SetText(readC)
 				checkS_entry.SetText(readS)
 			}
@@ -483,7 +483,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 			info_message := dialog.NewInformation("File Exists", info, window)
 			info_message.Resize(fyne.NewSize(300, 150))
 			info_message.Show()
-			readC, readS := ReadDeroSignFile(tag, filepath.Join(sign_path, file_name))
+			readC, readS, _ := ReadDeroSignFile(tag, filepath.Join(sign_path, file_name))
 			checkC_entry.SetText(readC)
 			checkS_entry.SetText(readS)
 			return
@@ -639,7 +639,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 							logger.Errorf("[%s] Cannot write output file %s\n", tag, output_file)
 						} else {
 							logger.Printf("[%s] Successfully signed file. please check %s\n", tag, output_file)
-							readC, readS := ReadDeroSignFile(tag, output_file)
+							readC, readS, _ := ReadDeroSignFile(tag, output_file)
 							checkC_entry.SetText(readC)
 							checkS_entry.SetText(readS)
 							info_message := dialog.NewInformation("File Signed", output_file, window)
@@ -1432,13 +1432,14 @@ func NFACreationExists(collection string) bool {
 	return !os.IsNotExist(sign)
 }
 
-// Read a Dero .sign file and return C and S signatures
-func ReadDeroSignFile(tag, sign_path string) (checkC string, checkS string) {
+// Read a Dero .sign file and return signer, C and S signatures
+func ReadDeroSignFile(tag, sign_path string) (checkC string, checkS string, signer string) {
 	if sign_data, err := os.ReadFile(sign_path); err != nil {
 		logger.Errorf("[%s] Cannot read input file %s\n", tag, err)
 	} else {
 		if string(sign_data[0:35]) == "-----BEGIN DERO SIGNED MESSAGE-----" {
 			split := strings.Split(string(sign_data[0:247]), "\n")
+			signer = strings.TrimSpace(split[1][9:])
 			checkC = strings.TrimSpace(split[2][3:])
 			checkS = strings.TrimSpace(split[3][3:])
 		} else {
