@@ -18,6 +18,8 @@ Interact with a variety of different products and services on [Dero's](https://d
 ### Project
 dReams is a open source platform application that houses multiple *desktop* dApps and utilities built on Dero. dReams has two facets to its use. 
 
+![goMod](https://img.shields.io/github/go-mod/go-version/dReam-dApps/dReams.svg)![goReport](https://goreportcard.com/badge/github.com/dReam-dApps/dReams)[![goDoc](https://img.shields.io/badge/godoc-reference-blue.svg)](https://pkg.go.dev/github.com/dReam-dApps/dReams)
+
 As a application
 > With a wide array of features from games to blockchain services, dReams is a point of entry into the privacy preserving world of Dero.
 
@@ -25,6 +27,8 @@ As a repository
 > dReams serves as a source for building Dero applications. Written in [Go](https://go.dev/) and using the [Fyne toolkit](https://fyne.io/), the dReams repository is constructed into packages with function imports for many different Dero necessities. 
 
 Download the latest [release](https://github.com/dReam-dApps/dReams/releases) or [build from source](#build) to use dReams.
+
+![windowsOS](https://raw.githubusercontent.com/SixofClubsss/dreamdappsite/main/assets/os-windows-green.svg)![macOS](https://raw.githubusercontent.com/SixofClubsss/dreamdappsite/main/assets/os-macOS-green.svg)![linuxOS](https://raw.githubusercontent.com/SixofClubsss/dreamdappsite/main/assets/os-linux-green.svg)
 
 dReams [Template](https://github.com/dReam-dApps/Template) can be used to help create new Dero dApps.
 
