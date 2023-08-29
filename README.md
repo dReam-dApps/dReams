@@ -150,14 +150,15 @@ The menu package contains the base components used for Gnomon indexing. `StartGn
 package main
 
 import (
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
+	"github.com/civilware/Gnomon/structures"
 	"github.com/dReam-dApps/dReams/menu"
 	"github.com/dReam-dApps/dReams/rpc"
+	"github.com/sirupsen/logrus"
 )
 
 // dReams menu StartGnomon() example
@@ -165,12 +166,18 @@ import (
 // Name my app
 const app_tag = "My_app"
 
+// Log output
+var logger = structures.Logger.WithFields(logrus.Fields{})
+
 func main() {
 	// Initialize Gnomon fast sync
 	menu.Gnomes.Fast = true
 
 	// Initialize rpc address to rpc.Daemon var
 	rpc.Daemon.Rpc = "127.0.0.1:10102"
+
+	// Initialize logger to Stdout
+	menu.InitLogrusLog(logrus.InfoLevel)
 
 	rpc.Ping()
 	// Check for daemon connection, if daemon is not connected we won't start Gnomon
@@ -191,7 +198,7 @@ func main() {
 		// Gnomon will continue to run if daemon is connected
 		for !exit && rpc.Daemon.Connect {
 			contracts := menu.Gnomes.GetAllOwnersAndSCIDs()
-			log.Printf("[%s] Index contains %d contracts\n", app_tag, len(contracts))
+			logger.Printf("[%s] Index contains %d contracts\n", app_tag, len(contracts))
 			time.Sleep(3 * time.Second)
 			rpc.Ping()
 		}
@@ -200,7 +207,7 @@ func main() {
 		menu.Gnomes.Stop(app_tag)
 	}
 
-	log.Printf("[%s] Done\n", app_tag)
+	logger.Printf("[%s] Done\n", app_tag)
 }
 ```
 ### dwidget
@@ -215,6 +222,7 @@ import (
 	"github.com/dReam-dApps/dReams/dwidget"
 	"github.com/dReam-dApps/dReams/menu"
 	"github.com/dReam-dApps/dReams/rpc"
+	"github.com/sirupsen/logrus"
 )
 
 // dReams dwidget NewVerticalEntries() example
@@ -225,6 +233,9 @@ const app_tag = "My_app"
 func main() {
 	// Initialize Gnomon fast sync
 	menu.Gnomes.Fast = true
+
+	// Initialize logger to Stdout
+	menu.InitLogrusLog(logrus.InfoLevel)
 
 	// Initialize fyne app
 	a := app.New()
@@ -274,6 +285,7 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 	"github.com/dReam-dApps/dReams/bundle"
+	"github.com/dReam-dApps/dReams/dwidget"
 )
 
 // Name my app
@@ -295,7 +307,7 @@ func main() {
 
 	// Initialize fyne container and add some various widgets for viewing purposes
 	cont := container.NewVBox()
-	cont.Add(container.NewAdaptiveGrid(3, widget.NewLabel("Label"), widget.NewEntry(), widget.NewButton("Button", nil)))
+	cont.Add(container.NewAdaptiveGrid(3, dwidget.NewCenterLabel("Label"), widget.NewEntry(), widget.NewButton("Button", nil)))
 	cont.Add(container.NewAdaptiveGrid(3, widget.NewLabel("Label"), widget.NewCheck("Check", nil), widget.NewButton("Button", nil)))
 	cont.Add(widget.NewPasswordEntry())
 	cont.Add(widget.NewSlider(0, 100))
