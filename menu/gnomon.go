@@ -274,7 +274,7 @@ func GnomonState(config bool, scan func(map[string]string)) {
 			height := Gnomes.Indexer.ChainHeight
 			if Gnomes.IsRunning() && Gnomes.Indexer.LastIndexedHeight >= height-3 && height != 0 {
 				Gnomes.Synced(true)
-				if !config && rpc.Wallet.IsConnected() && !Gnomes.Check {
+				if !config && rpc.Wallet.IsConnected() && !Gnomes.HasChecked() {
 					Gnomes.Scanning(true)
 
 					CheckWalletNames(rpc.Wallet.Address)
