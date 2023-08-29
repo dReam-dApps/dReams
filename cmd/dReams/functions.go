@@ -332,8 +332,8 @@ func refreshPriceDisplay(c bool) {
 func menuRefresh(offset int) {
 	if dReams.OnTab("Menu") && menu.Gnomes.IsInitialized() {
 		index := menu.Gnomes.Indexer.LastIndexedHeight
-		if index < menu.Gnomes.Indexer.ChainHeight-4 || !menu.Gnomes.HasIndex(uint64(menu.ReturnAssetCount())) {
-			menu.Assets.Gnomes_sync.Text = (" Gnomon Syncing...")
+		if index < menu.Gnomes.Indexer.ChainHeight-4 || (!menu.Gnomes.HasIndex(uint64(menu.ReturnAssetCount())) && !menu.Gnomes.HasChecked()) {
+			menu.Assets.Gnomes_sync.Text = " Gnomon Syncing..."
 			menu.Assets.Gnomes_sync.Refresh()
 		} else {
 			menu.Assets.Gnomes_sync.Text = ("")

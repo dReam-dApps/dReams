@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"image/color"
 	"runtime"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -99,11 +100,11 @@ var dReamsNFAs = []assetCount{
 	{name: "SIXART", count: 17},
 	{name: "HighStrangeness", count: 354},
 	{name: "Dorblings NFA", count: 110},
-	// TODO correct counts
-	{name: "TestChars", count: 8},
-	{name: "TestItems", count: 8},
-	{name: "Dero Desperados", count: 5},
-	{name: "Desperado Guns", count: 5},
+	// // TODO correct counts
+	// {name: "TestChars", count: 8},
+	// {name: "TestItems", count: 8},
+	// {name: "Dero Desperados", count: 5},
+	// {name: "Desperado Guns", count: 5},
 }
 
 func (a *assetObjects) Add(name, scid string) {
@@ -866,6 +867,7 @@ func PlaceMarket() *container.Split {
 	return menu_box
 }
 
+// Returns search filter with all enabled NFAs
 func ReturnEnabledNFAs(assets map[string]bool) (filters []string) {
 	for name, enabled := range assets {
 		if enabled {
@@ -1028,6 +1030,34 @@ func EnabledCollections(intro bool) (obj fyne.CanvasObject) {
 
 }
 
+// Returns string with all enabled asset names formatted for a label
+func returnEnabledNames(assets map[string]bool) (text string) {
+	var names []string
+	for name, enabled := range assets {
+		if enabled {
+			if isDreamsNfaName(name) {
+				names = append(names, name)
+			} else if isDreamsNfaCollection(name) {
+				names = append(names, name)
+			}
+		}
+	}
+
+	for name, enabled := range assets {
+		if enabled && IsDreamsG45(name) {
+			names = append(names, name)
+		}
+	}
+
+	sort.Strings(names)
+
+	for _, n := range names {
+		text = text + n + "\n\n"
+	}
+
+	return
+}
+
 // Owned asset tab layout
 //   - tag for log print
 //   - assets is array of widgets used for asset selections
@@ -1062,8 +1092,10 @@ func PlaceAssets(tag string, assets []fyne.Widget, menu_icon fyne.Resource, w fy
 
 	tabs.OnSelected = func(ti *container.TabItem) {
 		if ti.Text == "Enabled" {
-			if Gnomes.IsRunning() {
-				tabs.Selected().Content = container.NewCenter(canvas.NewText("Stop Gnomon to make changes", bundle.TextColor))
+			if rpc.Daemon.IsConnected() {
+				dialog.NewInformation("Assets", "Shut down Gnomon to make changes to asset index", w).Show()
+				tabs.Selected().Content = container.NewVScroll(container.NewVBox(dwidget.NewCenterLabel("Currently Enabled:"), dwidget.NewCenterLabel(returnEnabledNames(Control.Enabled_assets))))
+
 				return
 			}
 			tabs.Selected().Content = enable_opts

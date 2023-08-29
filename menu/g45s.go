@@ -76,6 +76,7 @@ func G45Collection(name string) (collection string) {
 	}
 }
 
+// Returns search filter with all enabled G45s
 func ReturnEnabledG45s(assets map[string]bool) (filter []string) {
 	for name, enabled := range assets {
 		if enabled && IsDreamsG45(name) {

@@ -47,7 +47,15 @@ func introScreen() *fyne.Container {
 	skin_title.TextSize = 18
 
 	skins := widget.NewRadioGroup([]string{"Dark", "Light"}, nil)
-	skins.SetSelected("Dark")
+	switch bundle.AppColor {
+	case color.White:
+		skins.SetSelected("Light")
+	case color.Black:
+		skins.SetSelected("Dark")
+	default:
+		skins.SetSelected("Dark")
+	}
+
 	skins.Horizontal = true
 	skins.Required = true
 
