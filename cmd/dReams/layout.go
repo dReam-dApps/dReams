@@ -390,6 +390,7 @@ func place() *fyne.Container {
 		case "dApps":
 			if menu.Gnomes.IsScanning() {
 				menu_tabs.SelectIndex(0)
+				dialog.NewInformation("Gnomon Syncing", "Please wait to make dApp changes", dReams.Window).Show()
 			} else {
 				go func() {
 					reset := dReams.Window.Content().(*fyne.Container).Objects[1]
