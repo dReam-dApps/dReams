@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"sync"
+	"time"
 
 	"github.com/civilware/Gnomon/indexer"
 	"github.com/civilware/Gnomon/structures"
@@ -41,19 +42,21 @@ var Gnomes gnomon
 // Shut down Gnomes.Indexer
 //   - tag for log print
 func (g *gnomon) Stop(tag string) {
-	g.Lock()
-	if g.Init && !g.Closing() {
+	if g.IsInitialized() && !g.IsClosing() {
 		logger.Printf("[%s] Putting Gnomon to Sleep\n", tag)
+		g.Lock()
 		g.Indexer.Close()
 		g.Init = false
 		g.Check = false
+		g.Unlock()
 		logger.Printf("[%s] Gnomon is Sleeping\n", tag)
 	}
-	g.Unlock()
 }
 
 // Check if Gnomon is writing
-func (g *gnomon) Writing() bool {
+func (g *gnomon) IsWriting() bool {
+	g.RLock()
+	defer g.RUnlock()
 	switch g.Indexer.DBType {
 	case "gravdb":
 		return g.Indexer.GravDBBackend.Writing == 1
@@ -64,8 +67,32 @@ func (g *gnomon) Writing() bool {
 	}
 }
 
+// Set Indexer.Backend.Writing var,
+// if set true will wait if Indexer is writing already
+func (g *gnomon) Writing(b bool) {
+	for b && g.IsWriting() {
+		time.Sleep(30 * time.Millisecond)
+	}
+
+	i := 0
+	if b {
+		i = 1
+	}
+
+	g.Lock()
+	defer g.Unlock()
+	switch g.Indexer.DBType {
+	case "gravdb":
+		g.Indexer.GravDBBackend.Writing = i
+	case "boltdb":
+		g.Indexer.BBSBackend.Writing = i
+	default:
+		g.Indexer.BBSBackend.Writing = i
+	}
+}
+
 // Check if Gnomon is closing
-func (g *gnomon) Closing() bool {
+func (g *gnomon) IsClosing() bool {
 	if !g.Init {
 		return false
 	}
@@ -168,7 +195,7 @@ func (g *gnomon) IsRunning() bool {
 	g.RLock()
 	defer g.RUnlock()
 
-	if g.Init && !g.Closing() {
+	if g.Init && !g.IsClosing() {
 		return true
 	}
 
@@ -180,7 +207,7 @@ func (g *gnomon) IsReady() bool {
 	g.RLock()
 	defer g.RUnlock()
 
-	if g.Init && g.Sync && !g.Closing() {
+	if g.Init && g.Sync && !g.IsClosing() {
 		return true
 	}
 

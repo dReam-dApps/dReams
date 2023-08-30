@@ -65,18 +65,18 @@ func enableEscapeCodes() error {
 	return cmd.Run()
 }
 
-func InitLogrusLog(windows bool) {
+func InitLogrusLog(level logrus.Level) {
 	colors := true
-	if windows {
+	if runtime.GOOS == "windows" {
 		if err := enableEscapeCodes(); err != nil {
 			colors = false
-			logger.Warnln("Err enabling escape codes:", err)
+			logger.Warnln("[InitLogrusLog] Err enabling escape codes:", err)
 		}
 	}
 
 	structures.Logger = logrus.Logger{
 		Out:   os.Stdout,
-		Level: 4,
+		Level: level,
 		Formatter: &prefixed.TextFormatter{
 			ForceColors:     colors,
 			DisableColors:   !colors,
@@ -209,7 +209,7 @@ func StartGnomon(tag, dbtype string, filters []string, upper, lower int, custom 
 // Manually add G45 collections to Gnomon index
 func G45Index() {
 	if Gnomes.DBType == "boltdb" {
-		for Gnomes.Writing() {
+		for Gnomes.IsWriting() {
 			time.Sleep(time.Second)
 		}
 	}
@@ -274,7 +274,7 @@ func GnomonState(config bool, scan func(map[string]string)) {
 			height := Gnomes.Indexer.ChainHeight
 			if Gnomes.IsRunning() && Gnomes.Indexer.LastIndexedHeight >= height-3 && height != 0 {
 				Gnomes.Synced(true)
-				if !config && rpc.Wallet.IsConnected() && !Gnomes.Check {
+				if !config && rpc.Wallet.IsConnected() && !Gnomes.HasChecked() {
 					Gnomes.Scanning(true)
 
 					CheckWalletNames(rpc.Wallet.Address)
@@ -584,9 +584,18 @@ func FindNfaListings(assets map[string]string) {
 	}
 }
 
+// dReams NFA asset name
+func isDreamsNfaName(check string) bool {
+	if check == "AZYDS" || check == "DBC" || check == "AZYPC" || check == "SIXPC" || check == "AZYPCB" || check == "SIXPCB" || check == "SIXART" || check == "HighStrangeness" {
+		return true
+	}
+
+	return false
+}
+
 // dReams NFA collections
 func isDreamsNfaCollection(check string) bool {
-	if check == "AZYDS" || check == "DBC" || check == "AZYPC" || check == "SIXPC" || check == "AZYPCB" || check == "SIXPCB" || check == "SIXART" || check == "HighStrangeness" {
+	if check == "Dorblings NFA" || check == "TestChars" || check == "TestItems" || check == "Dero Desperados" || check == "Desperado Guns" {
 		return true
 	}
 
@@ -627,7 +636,7 @@ func checkNfaAuctionListing(scid string) (asset string, owned, expired bool) {
 			if listType != nil && header != nil && coll != nil && desc != nil {
 				if Market.DreamsFilter {
 					check := strings.Trim(header[0], "0123456789")
-					if isDreamsNfaCollection(check) {
+					if isDreamsNfaCollection(coll[0]) || isDreamsNfaName(check) {
 						if listType[0] == "auction" {
 							desc_check := TrimStringLen(desc[0], 66)
 							asset = coll[0] + "   " + header[0] + "   " + desc_check + "   " + scid
@@ -691,7 +700,7 @@ func checkNfaBuyListing(scid string) (asset string, owned, expired bool) {
 			if listType != nil && header != nil && coll != nil && desc != nil {
 				if Market.DreamsFilter {
 					check := strings.Trim(header[0], "0123456789")
-					if isDreamsNfaCollection(check) {
+					if isDreamsNfaCollection(coll[0]) || isDreamsNfaName(check) {
 						if listType[0] == "sale" {
 							desc_check := TrimStringLen(desc[0], 66)
 							asset = coll[0] + "   " + header[0] + "   " + desc_check + "   " + scid
@@ -1127,4 +1136,16 @@ func GetListingPercents(scid string) (artP float64, royaltyP float64) {
 	}
 
 	return
+}
+
+// Get the nameHdr of a NFA
+func GetNFAName(scid string) string {
+	if Gnomes.IsReady() {
+		name, _ := Gnomes.GetSCIDValuesByKey(scid, "nameHdr")
+		if name != nil {
+			return name[0]
+		}
+	}
+
+	return ""
 }

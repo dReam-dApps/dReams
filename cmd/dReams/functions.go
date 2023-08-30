@@ -13,8 +13,9 @@ import (
 	"syscall"
 	"time"
 
-	holdero "github.com/SixofClubsss/Holdero"
-	prediction "github.com/SixofClubsss/dPrediction"
+	"github.com/SixofClubsss/Duels/duel"
+	"github.com/SixofClubsss/Holdero/holdero"
+	"github.com/SixofClubsss/dPrediction/prediction"
 	"github.com/civilware/Gnomon/structures"
 	dreams "github.com/dReam-dApps/dReams"
 	"github.com/dReam-dApps/dReams/bundle"
@@ -112,15 +113,15 @@ func flags() (version string) {
 
 func init() {
 	dReams.SetOS()
-	menu.InitLogrusLog(dReams.OS() == "windows")
+	menu.InitLogrusLog(logrus.InfoLevel)
 	saved := menu.ReadDreamsConfig("dReams")
 	if saved.Daemon != nil {
 		menu.Control.Daemon_config = saved.Daemon[0]
 	}
 
-	holdero.Settings.Favorites = saved.Tables
-	prediction.Predict.Settings.Favorites = saved.Predict
-	prediction.Sports.Settings.Favorites = saved.Sports
+	holdero.SetFavoriteTables(saved.Tables)
+	prediction.Predict.Favorites.SCIDs = saved.Predict
+	prediction.Sports.Favorites.SCIDs = saved.Sports
 
 	menu.Market.DreamsFilter = true
 
@@ -144,13 +145,13 @@ func init() {
 }
 
 // Build save struct for local preferences
-func save() dreams.DreamSave {
-	return dreams.DreamSave{
+func save() dreams.SaveData {
+	return dreams.SaveData{
 		Skin:    bundle.AppColor,
 		Daemon:  []string{rpc.Daemon.Rpc},
-		Tables:  holdero.Settings.Favorites,
-		Predict: prediction.Predict.Settings.Favorites,
-		Sports:  prediction.Sports.Settings.Favorites,
+		Tables:  holdero.GetFavoriteTables(),
+		Predict: prediction.Predict.Favorites.SCIDs,
+		Sports:  prediction.Sports.Favorites.SCIDs,
 		DBtype:  menu.Gnomes.DBType,
 		Para:    menu.Gnomes.Para,
 		Assets:  menu.Control.Enabled_assets,
@@ -331,8 +332,8 @@ func refreshPriceDisplay(c bool) {
 func menuRefresh(offset int) {
 	if dReams.OnTab("Menu") && menu.Gnomes.IsInitialized() {
 		index := menu.Gnomes.Indexer.LastIndexedHeight
-		if index < menu.Gnomes.Indexer.ChainHeight-4 || !menu.Gnomes.HasIndex(uint64(menu.ReturnAssetCount())) {
-			menu.Assets.Gnomes_sync.Text = (" Gnomon Syncing...")
+		if index < menu.Gnomes.Indexer.ChainHeight-4 || (!menu.Gnomes.HasIndex(uint64(menu.ReturnAssetCount())) && !menu.Gnomes.HasChecked()) {
+			menu.Assets.Gnomes_sync.Text = " Gnomon Syncing..."
 			menu.Assets.Gnomes_sync.Refresh()
 		} else {
 			menu.Assets.Gnomes_sync.Text = ("")
@@ -414,10 +415,13 @@ func checkDreamsNFAs(gc bool, scids map[string]string) {
 		}
 
 		holdero.Settings.SortCardAsset()
-		sort.Strings(dreams.Theme.Select.Options)
+		dreams.Theme.Sort()
 		dreams.Theme.Select.Options = append([]string{"Main", "Legacy"}, dreams.Theme.Select.Options...)
 		sort.Strings(menu.Assets.Assets)
 		menu.Assets.Asset_list.Refresh()
+		if menu.Control.Dapp_list["Duels"] {
+			duel.Inventory.SortAll()
+		}
 		if menu.Control.Dapp_list["Holdero"] {
 			holdero.DisableHolderoTools()
 		}
@@ -431,7 +435,8 @@ func checkNFAOwner(scid string) {
 		if header, _ := menu.Gnomes.GetSCIDValuesByKey(scid, "nameHdr"); header != nil {
 			owner, _ := menu.Gnomes.GetSCIDValuesByKey(scid, "owner")
 			file, _ := menu.Gnomes.GetSCIDValuesByKey(scid, "fileURL")
-			if owner != nil && file != nil {
+			collection, _ := menu.Gnomes.GetSCIDValuesByKey(scid, "collection")
+			if owner != nil && file != nil && collection != nil {
 				if owner[0] == rpc.Wallet.Address && menu.ValidNfa(file[0]) {
 					check := strings.Trim(header[0], "0123456789")
 					if check == "AZYDS" || check == "SIXART" {
@@ -445,6 +450,9 @@ func checkNFAOwner(scid string) {
 						holdero.Settings.AddFaces(header[0], owner[0])
 						menu.Assets.Add(header[0], scid)
 					} else if check == "DBC" {
+						holdero.Settings.AddAvatar(header[0], owner[0])
+						menu.Assets.Add(header[0], scid)
+					} else if collection[0] == "Dorblings NFA" {
 						holdero.Settings.AddAvatar(header[0], owner[0])
 						menu.Assets.Add(header[0], scid)
 					} else if check == "HighStrangeness" {
@@ -489,6 +497,22 @@ func checkNFAOwner(scid string) {
 								dreams.Theme.Select.Refresh()
 							}
 						}
+					} else if collection[0] == "TestChars" {
+						holdero.Settings.AddAvatar(header[0], owner[0])
+						menu.Assets.Add(header[0], scid)
+						duel.AddItemsToInventory(scid, header[0], owner[0], collection[0])
+					} else if collection[0] == "TestItems" {
+						holdero.Settings.AddAvatar(header[0], owner[0])
+						menu.Assets.Add(header[0], scid)
+						duel.AddItemsToInventory(scid, header[0], owner[0], collection[0])
+					} else if collection[0] == "Dero Desperados" {
+						holdero.Settings.AddAvatar(header[0], owner[0])
+						menu.Assets.Add(header[0], scid)
+						duel.AddItemsToInventory(scid, header[0], owner[0], collection[0])
+					} else if collection[0] == "Desperado Guns" {
+						holdero.Settings.AddAvatar(header[0], owner[0])
+						menu.Assets.Add(header[0], scid)
+						duel.AddItemsToInventory(scid, header[0], owner[0], collection[0])
 					}
 				}
 			}
@@ -526,14 +550,12 @@ func checkDreamsG45s(gc bool, g45s map[string]string) {
 						} else if minter[0] == menu.ATeam_mint && coll[0] == menu.ATeam_coll {
 							var agent menu.Agent
 							if err := json.Unmarshal([]byte(data[0]), &agent); err == nil {
-								menu.Assets.Asset_map[agent.Name] = scid
 								menu.Assets.Add(agent.Name, scid)
 								holdero.Settings.AddAvatar(agent.Name, owner[0])
 							}
 						} else if minter[0] == menu.Degen_mint && coll[0] == menu.Degen_coll {
 							var degen menu.Degen
 							if err := json.Unmarshal([]byte(data[0]), &degen); err == nil {
-								menu.Assets.Asset_map[degen.Name] = scid
 								menu.Assets.Add(degen.Name, scid)
 								holdero.Settings.AddAvatar(degen.Name, owner[0])
 							}
@@ -666,6 +688,13 @@ func gnomonFilters() (filter []string) {
 		}
 	}
 
+	if menu.Control.Dapp_list["Duels"] {
+		duels := rpc.GetSCCode(duel.DUELSCID)
+		if duels != "" {
+			filter = append(filter, duels)
+		}
+	}
+
 	filter = append(filter, menu.ReturnEnabledNFAs(menu.Control.Enabled_assets)...)
 
 	return
@@ -677,6 +706,7 @@ func daemonConnectedBox() fyne.Widget {
 		if !menu.Gnomes.IsInitialized() && !menu.Gnomes.Start {
 			if rpc.DaemonVersion() == "3.5.3-139.DEROHE.STARGATE+04042023" {
 				dialog.NewInformation("Daemon Version", "This daemon may conflict with Gnomon sync", dReams.Window).Show()
+				menu.Gnomes.Trim = false
 			}
 
 			menu.Assets.Gnomes_sync.Text = (" Starting Gnomon")
@@ -780,6 +810,9 @@ func rpcConnectButton() fyne.Widget {
 func recheckDreamsAssets() {
 	menu.Gnomes.Wait = true
 	menu.Assets.Assets = []string{}
+	if menu.Control.Dapp_list["Duels"] {
+		duel.Inventory.ClearAll()
+	}
 	checkDreamsNFAs(false, nil)
 	checkDreamsG45s(false, nil)
 	if menu.Control.Dapp_list["Holdero"] {

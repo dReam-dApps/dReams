@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	DREAMSv    = "0.10.0"
+	DREAMSv    = "0.10.1"
 	NameSCID   = "0000000000000000000000000000000000000000000000000000000000000001"
 	RatingSCID = "c66a11ddb22912e92b0a7ab777ed0d343632d9e3c6e8a81452396ca84d2decb6"
 	DreamsSCID = "ad2e7b37c380cc1aed3a6b27224ddfc92a2d15962ca1f4d35e530dba0f9575a9"
@@ -156,7 +156,7 @@ func GasEstimate(scid, tag string, args rpc.Arguments, t []rpc.Transfer, max uin
 	}
 
 	if err := rpcClientD.CallFor(ctx, &result, "DERO.GetGasEstimate", params); err != nil {
-		logger.Errorf(tag, err)
+		logger.Errorf("%s %s", tag, err)
 		return 0
 	}
 
@@ -192,7 +192,7 @@ func FindStringKey(scid, key, daemon string) interface{} {
 // Get list of dReams dApps from contract store
 //   - Uses remote daemon if not connected
 func FetchDapps() (dApps []string) {
-	dApps = []string{"Holdero", "Baccarat", "dSports and dPredictions", "Iluma", "DerBnb"}
+	dApps = []string{"Holdero", "Baccarat", "dSports and dPredictions", "Iluma"}
 	var daemon string
 	if !Daemon.IsConnected() {
 		daemon = DAEMON_RPC_REMOTE5

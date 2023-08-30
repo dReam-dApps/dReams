@@ -23,6 +23,7 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/data/validation"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 )
@@ -84,7 +85,7 @@ func EnabledDapps() (enabled int) {
 }
 
 // Save dReams config.json file for platform wide dApp use
-func WriteDreamsConfig(u dreams.DreamSave) {
+func WriteDreamsConfig(u dreams.SaveData) {
 	if u.Daemon != nil && u.Daemon[0] == "" {
 		if Control.Daemon_config != "" {
 			u.Daemon[0] = Control.Daemon_config
@@ -109,7 +110,7 @@ func WriteDreamsConfig(u dreams.DreamSave) {
 // Read dReams platform config.json file
 //   - tag for log print
 //   - Sets up directory if none exists
-func ReadDreamsConfig(tag string) (saved dreams.DreamSave) {
+func ReadDreamsConfig(tag string) (saved dreams.SaveData) {
 	if !dreams.FileExists("config/config.json", tag) {
 		logger.Printf("[%s] Creating config directory\n", tag)
 		mkdir := os.Mkdir("config", 0755)
@@ -118,7 +119,7 @@ func ReadDreamsConfig(tag string) (saved dreams.DreamSave) {
 		}
 
 		if config, err := os.Create("config/config.json"); err == nil {
-			var save dreams.DreamSave
+			var save dreams.SaveData
 			json, _ := json.MarshalIndent(&save, "", " ")
 			if _, err = config.Write(json); err != nil {
 				logger.Errorln("[WriteDreamsConfig]", err)
@@ -284,9 +285,22 @@ func NameEntry() fyne.CanvasObject {
 	return container.NewHBox(layout.NewSpacer(), Control.Names)
 }
 
+// Create and show dialog for sent TX, dismiss copies txid to clipboard, dialog will hide after delay
+func ShowTxDialog(title, message, txid string, delay time.Duration, w fyne.Window) {
+	info := dialog.NewInformation(title, message, w)
+	info.SetDismissText("Copy")
+	info.SetOnClosed(func() {
+		w.Clipboard().SetContent(txid)
+	})
+	info.Show()
+	time.Sleep(delay)
+	info.Hide()
+	info = nil
+}
+
 // Index entry and NFA control objects
 //   - Pass window resources for side menu windows
-func IndexEntry(window_icon fyne.Resource) fyne.CanvasObject {
+func IndexEntry(window_icon fyne.Resource, w fyne.Window) fyne.CanvasObject {
 	Assets.Index_entry = widget.NewMultiLineEntry()
 	Assets.Index_entry.PlaceHolder = "SCID:"
 	Assets.Index_button = widget.NewButton("Add to Index", func() {
@@ -309,9 +323,20 @@ func IndexEntry(window_icon fyne.Resource) fyne.CanvasObject {
 	Control.Claim_button = widget.NewButton("Claim NFA", func() {
 		if len(Assets.Index_entry.Text) == 64 {
 			if isNfa(Assets.Index_entry.Text) {
-				rpc.ClaimNFA(Assets.Index_entry.Text)
+				if tx := rpc.ClaimNFA(Assets.Index_entry.Text); tx != "" {
+					go ShowTxDialog("Claim NFA", fmt.Sprintf("TX: %s", tx), tx, 3*time.Second, w)
+				} else {
+					dialog.NewInformation("Claim NFA", "TX Error", w).Show()
+				}
+
+				return
 			}
+
+			dialog.NewInformation("Claim NFA", "Could not validate SCID as NFA", w).Show()
+			return
 		}
+
+		dialog.NewInformation("Claim NFA", "Not a valid SCID", w).Show()
 	})
 
 	Assets.Index_button.Hide()
@@ -457,6 +482,7 @@ func sendAssetMenu(window_icon fyne.Resource) {
 						load = true
 					}
 					go rpc.SendAsset(send_asset, dest, load)
+					Control.send_open = false
 					saw.Close()
 				}
 			})
@@ -499,8 +525,8 @@ func sendAssetMenu(window_icon fyne.Resource) {
 		container.NewAdaptiveGrid(2, layout.NewSpacer(), send_button))
 
 	go func() {
-		for rpc.IsReady() {
-			time.Sleep(3 * time.Second)
+		for rpc.IsReady() && Control.send_open {
+			time.Sleep(2 * time.Second)
 			if !confirm_open {
 				icon = Assets.Icon
 				saw_content.Objects[1] = menuAssetImg(&icon, bundle.ResourceAvatarFramePng)
@@ -700,8 +726,8 @@ func listMenu(window_icon fyne.Resource) {
 	icon := Assets.Icon
 
 	go func() {
-		for rpc.IsReady() {
-			time.Sleep(3 * time.Second)
+		for rpc.IsReady() && Control.List_open {
+			time.Sleep(2 * time.Second)
 			if !confirm_open && isNfa(Control.Viewing_asset) {
 				icon = Assets.Icon
 				aw_content.Objects[2] = menuAssetImg(&icon, bundle.ResourceAvatarFramePng)
@@ -795,7 +821,7 @@ func IntroTree(intros []IntroText) fyne.CanvasObject {
 		"Daemon":                  {"Using local daemon will give best performance while using dReams", "Remote daemon options are available in drop down if a local daemon is not available", "Enter daemon address and the D light in top right will light up if connection is successful", "Once daemon is connected Gnomon will start up, the Gnomon indicator light will have a stripe in middle"},
 		"Wallet":                  {"Set up and register a Dero wallet", "Your wallet will need to be running rpc server", "Using cli, start your wallet with flags --rpc-server --rpc-login=user:pass", "With Engram, turn on cyberdeck to start rpc server", "In dReams enter your wallet rpc address and rpc user:pass", "Press connect and the W light in top right will light up if connection is successful", "Once wallet is connected and Gnomon is running, Gnomon will sync with wallet", "The Gnomon indicator will turn solid when this is complete, everything is now connected"},
 
-		"dApps":         {"Loading dApps", "Holdero", "Baccarat", "Predictions", "Sports", "dService", "Iluma", "DerBnb", "Contract Ratings"},
+		"dApps":         {"Loading dApps", "Holdero", "Baccarat", "Predictions", "Sports", "dService", "Iluma", "DerBnb", "Asset Duels", "Contract Ratings"},
 		"Loading dApps": {"You can add or remove dApps in the dApps tab", "Loading changes will disconnect your wallet", "Gnomon will continue to run, but may need to be resynced to index any new dApps added", "Your dApp preferences will be saved in local config file", "Loading only the dApps you are using will increase Gnomon and dReams performance"},
 	}
 
@@ -934,7 +960,7 @@ func CreateSwapContainer(pair string) (*dwidget.DeroAmts, *fyne.Container) {
 	return swap1_entry, container.NewAdaptiveGrid(2, cont1, cont2)
 }
 
-// Create a new raster from image, looking for holdero.Settings.ThemeImg
+// Create a new raster from image, looking for dreams.Theme.Img.Resource
 // and will fallback to bundle.ResourceBackgroundPng if err
 func BackgroundRast(tag string) *canvas.Raster {
 	var err error

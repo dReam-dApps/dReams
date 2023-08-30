@@ -10,11 +10,12 @@ import (
 	"strings"
 	"time"
 
-	baccarat "github.com/SixofClubsss/Baccarat"
-	holdero "github.com/SixofClubsss/Holdero"
-	tarot "github.com/SixofClubsss/Iluma"
-	prediction "github.com/SixofClubsss/dPrediction"
-	derbnb "github.com/SixofClubsss/derbnbDesktop"
+	"github.com/SixofClubsss/Baccarat/baccarat"
+	"github.com/SixofClubsss/Duels/duel"
+	"github.com/SixofClubsss/Holdero/holdero"
+	"github.com/SixofClubsss/Iluma/tarot"
+	"github.com/SixofClubsss/dPrediction/prediction"
+	"github.com/SixofClubsss/derbnbDesktop/derbnb"
 	dreams "github.com/dReam-dApps/dReams"
 	"github.com/dReam-dApps/dReams/bundle"
 	"github.com/dReam-dApps/dReams/dwidget"
@@ -46,7 +47,15 @@ func introScreen() *fyne.Container {
 	skin_title.TextSize = 18
 
 	skins := widget.NewRadioGroup([]string{"Dark", "Light"}, nil)
-	skins.SetSelected("Dark")
+	switch bundle.AppColor {
+	case color.White:
+		skins.SetSelected("Light")
+	case color.Black:
+		skins.SetSelected("Dark")
+	default:
+		skins.SetSelected("Dark")
+	}
+
 	skins.Horizontal = true
 	skins.Required = true
 
@@ -58,12 +67,16 @@ func introScreen() *fyne.Container {
 		}
 
 		dReams.App.Settings().SetTheme(bundle.DeroTheme(bundle.AppColor))
-		max.Objects[1].(*fyne.Container).Objects[1].(*canvas.Text).Color = bundle.TextColor
-		max.Objects[1].(*fyne.Container).Objects[1].Refresh()
-		max.Objects[1].(*fyne.Container).Objects[6].(*canvas.Text).Color = bundle.TextColor
-		max.Objects[1].(*fyne.Container).Objects[6].Refresh()
-		max.Objects[1].(*fyne.Container).Objects[9].(*canvas.Text).Color = bundle.TextColor
-		max.Objects[1].(*fyne.Container).Objects[9].Refresh()
+		max.Objects[1].(*container.Split).Leading.(*fyne.Container).Objects[1].(*canvas.Text).Color = bundle.TextColor
+		max.Objects[1].(*container.Split).Leading.(*fyne.Container).Objects[1].Refresh()
+		max.Objects[1].(*container.Split).Leading.(*fyne.Container).Objects[6].(*canvas.Text).Color = bundle.TextColor
+		max.Objects[1].(*container.Split).Leading.(*fyne.Container).Objects[6].Refresh()
+		max.Objects[1].(*container.Split).Leading.(*fyne.Container).Objects[9].(*canvas.Text).Color = bundle.TextColor
+		max.Objects[1].(*container.Split).Leading.(*fyne.Container).Objects[9].Refresh()
+		max.Objects[1].(*container.Split).Leading.(*fyne.Container).Objects[11].(*canvas.Text).Color = bundle.TextColor
+		max.Objects[1].(*container.Split).Leading.(*fyne.Container).Objects[11].Refresh()
+		max.Objects[1].(*container.Split).Trailing.(*fyne.Container).Objects[1].(*fyne.Container).Objects[0].(*canvas.Text).Color = bundle.TextColor
+		max.Objects[1].(*container.Split).Trailing.(*fyne.Container).Objects[1].Refresh()
 		max.Objects[0] = bundle.NewAlpha180()
 		max.Objects[0].Refresh()
 	}
@@ -72,9 +85,9 @@ func introScreen() *fyne.Container {
 	dapp_title.Alignment = fyne.TextAlignCenter
 	dapp_title.TextSize = 18
 
-	dapp_label := widget.NewLabel("dReams base app has:\n\nHoldero\n\nBaccarat\n\nNFA Marketplace")
-	dapp_label.Wrapping = fyne.TextWrapWord
-	dapp_label.Alignment = fyne.TextAlignCenter
+	collection_title := canvas.NewText("Enable asset collections in the right side menu", bundle.TextColor)
+	collection_title.Alignment = fyne.TextAlignCenter
+	collection_title.TextSize = 18
 
 	default_dapps := []string{"NFA Market"}
 	default_checks := widget.NewCheckGroup(default_dapps, nil)
@@ -126,21 +139,27 @@ func introScreen() *fyne.Container {
 
 	gnomon_gif.Start()
 
-	intro := container.NewVBox(
-		layout.NewSpacer(),
-		title,
-		container.NewCenter(dreams_img),
-		powered_label,
-		container.NewCenter(gnomon_gif),
-		layout.NewSpacer(),
-		skin_title,
-		container.NewCenter(skins),
-		layout.NewSpacer(),
-		dapp_title,
-		container.NewCenter(container.NewVBox(default_checks, dapp_checks)),
-		layout.NewSpacer(),
-		layout.NewSpacer(),
-		start_button)
+	intro := container.NewHSplit(
+		container.NewVBox(
+			layout.NewSpacer(),
+			title,
+			container.NewCenter(dreams_img),
+			powered_label,
+			container.NewCenter(gnomon_gif),
+			layout.NewSpacer(),
+			skin_title,
+			container.NewCenter(skins),
+			layout.NewSpacer(),
+			collection_title,
+			layout.NewSpacer(),
+			dapp_title,
+			container.NewCenter(container.NewVBox(default_checks, dapp_checks)),
+			layout.NewSpacer(),
+			layout.NewSpacer(),
+			start_button),
+		menu.EnabledCollections(true))
+
+	intro.SetOffset(0.66)
 
 	max = container.NewMax(bundle.Alpha180, intro)
 
@@ -342,6 +361,7 @@ func place() *fyne.Container {
 	intros = append(intros, menu.MakeMenuIntro(prediction.DreamsMenuIntro())...)
 	intros = append(intros, menu.MakeMenuIntro(tarot.DreamsMenuIntro())...)
 	intros = append(intros, menu.MakeMenuIntro(derbnb.DreamsMenuIntro())...)
+	intros = append(intros, menu.MakeMenuIntro(duel.DreamsMenuIntro())...)
 
 	// dReams menu tabs
 	menu_tabs := container.NewAppTabs(
@@ -370,6 +390,7 @@ func place() *fyne.Container {
 		case "dApps":
 			if menu.Gnomes.IsScanning() {
 				menu_tabs.SelectIndex(0)
+				dialog.NewInformation("Gnomon Syncing", "Please wait to make dApp changes", dReams.Window).Show()
 			} else {
 				go func() {
 					reset := dReams.Window.Content().(*fyne.Container).Objects[1]
@@ -422,6 +443,10 @@ func place() *fyne.Container {
 
 	if menu.Control.Dapp_list["DerBnb"] {
 		tabs.Append(container.NewTabItem("DerBnb", derbnb.LayoutAllItems(true, &dReams)))
+	}
+
+	if menu.Control.Dapp_list["Duels"] {
+		tabs.Append(container.NewTabItem("Duels", duel.LayoutAllItems(menu.Assets.Asset_map, &dReams)))
 	}
 
 	if cli.enabled {

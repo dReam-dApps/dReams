@@ -23,9 +23,9 @@ import (
 )
 
 // Add entry to Wallet.LogEntry session log
-func AddLog(t string) {
+func AddLog(text string) {
 	if Wallet.LogEntry != nil {
-		Wallet.LogEntry.SetText(Wallet.LogEntry.Text + "\n\n" + t)
+		Wallet.LogEntry.SetText(Wallet.LogEntry.Text + fmt.Sprintf("\n\n%s  %s", time.Now().Format("2006/01/02 15:04:05"), text))
 		Wallet.LogEntry.Refresh()
 	}
 }
@@ -35,7 +35,7 @@ func SessionLog() *fyne.Container {
 	Wallet.LogEntry = widget.NewMultiLineEntry()
 	Wallet.LogEntry.Disable()
 	button := widget.NewButton("Save", func() {
-		file_name := fmt.Sprintf("Log-%s", time.Now().Format(time.UnixDate))
+		file_name := fmt.Sprintf("Log-%s", time.Now().Format("2006/01/02 15:04:05"))
 		if f, err := os.Create(file_name); err == nil {
 			defer f.Close()
 			if _, err = f.WriteString(Wallet.LogEntry.Text); err != nil {
@@ -151,6 +151,29 @@ func GetWalletTx(txid string) *rpc.Entry {
 	return &result.Entry
 }
 
+// Get wallet transfers with min/max heights and dst port
+func GetWalletTransfers(min, max, dst uint64) *[]rpc.Entry {
+	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
+	defer cancel()
+
+	var result *rpc.Get_Transfers_Result
+	params := rpc.Get_Transfers_Params{
+		Coinbase:        false,
+		In:              true,
+		Out:             false,
+		Min_Height:      min,
+		Max_Height:      max,
+		DestinationPort: dst,
+	}
+
+	if err := rpcClientW.CallFor(ctx, &result, "GetTransfers", params); err != nil {
+		logger.Errorln("[GetWalletTx]", err)
+		return nil
+	}
+
+	return &result.Entries
+}
+
 // Returns Dero wallet balance
 func GetBalance() uint64 {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
@@ -218,9 +241,9 @@ func DisplayBalance(name string) string {
 	return Wallet.Display.Balance[name]
 }
 
-// Return asset transfer to SCID from Round.AssetID
-func GetAssetSCIDforTransfer(amt uint64, assetId string) (transfer rpc.Transfer) {
-	switch assetId {
+// Return asset transfer for SCID
+func GetAssetSCIDforTransfer(amt uint64, scid string) (transfer rpc.Transfer) {
+	switch scid {
 	case DreamsSCID:
 		transfer = rpc.Transfer{
 			SCID:        crypto.HashHexToHash(DreamsSCID),
@@ -235,7 +258,7 @@ func GetAssetSCIDforTransfer(amt uint64, assetId string) (transfer rpc.Transfer)
 		}
 
 	default:
-
+		// nothing
 	}
 
 	return
@@ -248,6 +271,8 @@ func GetAssetSCIDName(scid string) string {
 		return "dReams"
 	case HgcSCID:
 		return "HGC"
+	case TrvlSCID:
+		return "TRVL"
 	default:
 		return ""
 	}
@@ -262,7 +287,7 @@ func GetWalletHeight(tag string) {
 
 		var result *rpc.GetHeight_Result
 		if err := rpcClientW.CallFor(ctx, &result, "GetHeight"); err != nil {
-			logger.Errorln("[%s] %s\n", tag, err)
+			logger.Errorf("[%s] %s\n", tag, err)
 			return
 		}
 
@@ -427,7 +452,7 @@ func SetHeaders(name, desc, icon, scid string) {
 }
 
 // Claim transferred NFA token
-func ClaimNFA(scid string) {
+func ClaimNFA(scid string) (tx string) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
@@ -459,6 +484,8 @@ func ClaimNFA(scid string) {
 
 	logger.Println("[ClaimNFA] Claim TX:", txid)
 	AddLog("NFA Claim TX: " + txid.TXID)
+
+	return txid.TXID
 }
 
 // Send bid or buy to NFA SC

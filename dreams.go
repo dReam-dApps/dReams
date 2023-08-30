@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"runtime"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -21,7 +22,9 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-type DreamsItems struct {
+// ContainerStack used for building various
+// container/label layouts to be placed in main app
+type ContainerStack struct {
 	LeftLabel  *widget.Label
 	RightLabel *widget.Label
 	TopLabel   *canvas.Text
@@ -32,7 +35,8 @@ type DreamsItems struct {
 	DApp    *fyne.Container
 }
 
-type DreamSave struct {
+// Saved data for users local config.json file
+type SaveData struct {
 	Skin    color.Gray16 `json:"skin"`
 	Daemon  []string     `json:"daemon"`
 	Tables  []string     `json:"tables"`
@@ -47,7 +51,8 @@ type DreamSave struct {
 	Dapps  map[string]bool `json:"dapps"`
 }
 
-type DreamsObject struct {
+// AppObject holds the main app and channels
+type AppObject struct {
 	App        fyne.App
 	Window     fyne.Window
 	Background *fyne.Container
@@ -61,6 +66,7 @@ type DreamsObject struct {
 	channels   int
 }
 
+// Select widget items for Dero assets
 type AssetSelect struct {
 	Name   string
 	URL    string
@@ -75,8 +81,10 @@ type counter struct {
 
 var count counter
 var mu sync.RWMutex
-var Theme AssetSelect
 var logger = structures.Logger.WithFields(logrus.Fields{})
+
+// Background theme AssetSelect
+var Theme AssetSelect
 
 // Add to active channel count
 func (c *counter) plus() {
@@ -101,24 +109,24 @@ func (c *counter) active() int {
 }
 
 // Set what OS is being used
-func (d *DreamsObject) SetOS() {
+func (d *AppObject) SetOS() {
 	d.os = runtime.GOOS
 }
 
 // Check what OS is set
-func (d *DreamsObject) OS() string {
+func (d *AppObject) OS() string {
 	return d.os
 }
 
-// Set dReams configure bool
-func (d *DreamsObject) Configure(b bool) {
+// Set main configure bool
+func (d *AppObject) Configure(b bool) {
 	mu.Lock()
 	d.configure = b
 	mu.Unlock()
 }
 
-// Check if dReams is configuring
-func (d *DreamsObject) IsConfiguring() bool {
+// Check if main app is configuring
+func (d *AppObject) IsConfiguring() bool {
 	mu.RLock()
 	defer mu.RUnlock()
 
@@ -126,14 +134,14 @@ func (d *DreamsObject) IsConfiguring() bool {
 }
 
 // Set what tab main windows is on
-func (d *DreamsObject) SetTab(name string) {
+func (d *AppObject) SetTab(name string) {
 	mu.Lock()
 	d.tab = name
 	mu.Unlock()
 }
 
 // Check what tab main windows is on
-func (d *DreamsObject) OnTab(name string) bool {
+func (d *AppObject) OnTab(name string) bool {
 	mu.RLock()
 	defer mu.RUnlock()
 
@@ -141,14 +149,14 @@ func (d *DreamsObject) OnTab(name string) bool {
 }
 
 // Set what sub tab is being viewed
-func (d *DreamsObject) SetSubTab(name string) {
+func (d *AppObject) SetSubTab(name string) {
 	mu.Lock()
 	d.subTab = name
 	mu.Unlock()
 }
 
 // Check what sub tab is being viewed
-func (d *DreamsObject) OnSubTab(name string) bool {
+func (d *AppObject) OnSubTab(name string) bool {
 	mu.RLock()
 	defer mu.RUnlock()
 
@@ -156,7 +164,7 @@ func (d *DreamsObject) OnSubTab(name string) bool {
 }
 
 // Initialize channels
-func (d *DreamsObject) SetChannels(i int) {
+func (d *AppObject) SetChannels(i int) {
 	d.receive = make(chan struct{})
 	d.done = make(chan struct{})
 	d.quit = make(chan struct{})
@@ -164,7 +172,7 @@ func (d *DreamsObject) SetChannels(i int) {
 }
 
 // Signal all available channels when we are ready for them to work
-func (d *DreamsObject) SignalChannel() {
+func (d *AppObject) SignalChannel() {
 	for count.active() < d.channels {
 		count.plus()
 		d.receive <- struct{}{}
@@ -172,22 +180,22 @@ func (d *DreamsObject) SignalChannel() {
 }
 
 // Receive signal for work
-func (d *DreamsObject) Receive() <-chan struct{} {
+func (d *AppObject) Receive() <-chan struct{} {
 	return d.receive
 }
 
 // Signal back to counter when work is done
-func (d *DreamsObject) WorkDone() {
+func (d *AppObject) WorkDone() {
 	count.minus()
 }
 
 // Close signal for a dApp
-func (d *DreamsObject) CloseDapp() <-chan struct{} {
+func (d *AppObject) CloseDapp() <-chan struct{} {
 	return d.done
 }
 
 // Send close signal to all active dApp channels
-func (d *DreamsObject) CloseAllDapps() {
+func (d *AppObject) CloseAllDapps() {
 	ch := 0
 	for ch < d.channels {
 		ch++
@@ -199,25 +207,25 @@ func (d *DreamsObject) CloseAllDapps() {
 	}
 }
 
-// Stop the main dReams process
-func (d *DreamsObject) StopProcess() {
+// Stop the main apps process
+func (d *AppObject) StopProcess() {
 	d.quit <- struct{}{}
 }
 
-// Close signal for dReams
-func (d *DreamsObject) Closing() <-chan struct{} {
+// Close signal for main app
+func (d *AppObject) Closing() <-chan struct{} {
 	return d.quit
 }
 
-// Notification pop up for dReams app
-func (d *DreamsObject) Notification(title, content string) bool {
+// Notification pop up for main app
+func (d *AppObject) Notification(title, content string) bool {
 	d.App.SendNotification(&fyne.Notification{Title: title, Content: content})
 
 	return true
 }
 
 // Check if runtime os is windows
-func (d *DreamsObject) IsWindows() bool {
+func (d *AppObject) IsWindows() bool {
 	return d.os == "windows"
 }
 
@@ -247,8 +255,13 @@ func FileExists(path, tag string) bool {
 }
 
 // Download image file from url and return as canvas image
-func DownloadFile(Url, fileName string) (canvas.Image, error) {
-	response, err := http.Get(Url)
+func DownloadFile(URL, fileName string) (canvas.Image, error) {
+	client := &http.Client{Timeout: 15 * time.Second}
+	req, err := http.NewRequest("GET", URL, nil)
+	if err != nil {
+		return *canvas.NewImageFromImage(nil), err
+	}
+	response, err := client.Do(req)
 	if err != nil {
 		return *canvas.NewImageFromImage(nil), err
 	}
@@ -277,9 +290,9 @@ func ThemeSelect() fyne.Widget {
 			Theme.Name = s
 		}
 		go func() {
+			dir := GetDir()
 			check := strings.Trim(s, "0123456789")
 			if check == "AZYDS" {
-				dir := GetDir()
 				file := dir + "/assets/" + s + "/" + s + ".png"
 				if FileExists(file, "dReams") {
 					Theme.Img = *canvas.NewImageFromFile(file)
@@ -289,7 +302,6 @@ func ThemeSelect() fyne.Widget {
 					Theme.Img, _ = DownloadFile(Theme.URL, s)
 				}
 			} else if check == "SIXART" {
-				dir := GetDir()
 				file := dir + "/assets/" + s + "/" + s + ".png"
 				if FileExists(file, "dReams") {
 					Theme.Img = *canvas.NewImageFromFile(file)
@@ -299,7 +311,6 @@ func ThemeSelect() fyne.Widget {
 					Theme.Img, _ = DownloadFile(Theme.URL, s)
 				}
 			} else if check == "HSTheme" {
-				dir := GetDir()
 				file := dir + "/assets/" + s + "/" + s + ".png"
 				if FileExists(file, "dReams") {
 					Theme.Img = *canvas.NewImageFromFile(file)
@@ -320,11 +331,42 @@ func ThemeSelect() fyne.Widget {
 	return Theme.Select
 }
 
+// Add a asset option to a AssetSelect
 func (a *AssetSelect) Add(add, check string) {
 	if check == rpc.Wallet.Address {
 		opts := a.Select.Options
 		new_opts := append(opts, add)
 		a.Select.Options = new_opts
+		a.Sort()
 		a.Select.Refresh()
 	}
+}
+
+// Clears all assets from select options
+func (a *AssetSelect) ClearAll() {
+	a.Select.Options = []string{}
+	a.Select.Selected = ""
+	a.Select.Refresh()
+}
+
+// Sort the select widgets options
+func (a *AssetSelect) Sort() {
+	sort.Strings(a.Select.Options)
+}
+
+// Remove a asset from Select by name
+func (a *AssetSelect) RemoveAsset(rm string) {
+	index := -1
+	for i, item := range a.Select.Options {
+		if item == rm {
+			index = i
+			break
+		}
+	}
+
+	if index != -1 {
+		a.Select.Options = append(a.Select.Options[:index], a.Select.Options[index+1:]...)
+	}
+
+	a.Select.Refresh()
 }

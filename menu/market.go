@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"image/color"
 	"runtime"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -98,10 +99,17 @@ var dReamsNFAs = []assetCount{
 	{name: "SIXPCB", count: 10},
 	{name: "SIXART", count: 17},
 	{name: "HighStrangeness", count: 354},
+	{name: "Dorblings NFA", count: 110},
+	// // TODO correct counts
+	// {name: "TestChars", count: 8},
+	// {name: "TestItems", count: 8},
+	// {name: "Dero Desperados", count: 5},
+	// {name: "Desperado Guns", count: 5},
 }
 
 func (a *assetObjects) Add(name, scid string) {
 	a.Assets = append(a.Assets, name+"   "+scid)
+	a.Asset_map[name] = scid
 }
 
 // NFA market amount entry
@@ -413,6 +421,7 @@ func SearchNFAs() fyne.CanvasObject {
 	search_by := widget.NewRadioGroup([]string{"Collection   ", "Name"}, nil)
 	search_by.Horizontal = true
 	search_by.SetSelected("Collection   ")
+	search_by.Required = true
 
 	search_button := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "search"), func() {
 		if search_entry.Text != "" && rpc.Wallet.Connect {
@@ -808,7 +817,7 @@ func PlaceMarket() *container.Split {
 	details_box := container.NewVBox(layout.NewSpacer(), details, layout.NewSpacer())
 
 	menu_top := container.NewHSplit(details_box, max)
-	menu_top.SetOffset(0)
+	menu_top.SetOffset(0.66)
 
 	Market.Market_button = widget.NewButton("Bid", func() {
 		scid := Market.Viewing
@@ -858,10 +867,15 @@ func PlaceMarket() *container.Split {
 	return menu_box
 }
 
+// Returns search filter with all enabled NFAs
 func ReturnEnabledNFAs(assets map[string]bool) (filters []string) {
 	for name, enabled := range assets {
-		if enabled && isDreamsNfaCollection(name) {
-			filters = append(filters, fmt.Sprintf(`330 STORE("nameHdr", "%s`, name))
+		if enabled {
+			if isDreamsNfaName(name) {
+				filters = append(filters, fmt.Sprintf(`330 STORE("nameHdr", "%s`, name))
+			} else if isDreamsNfaCollection(name) {
+				filters = append(filters, fmt.Sprintf(`450 STORE("collection", "%s`, name))
+			}
 		}
 	}
 
@@ -972,7 +986,8 @@ func enableG45Opts(asset assetCount) (opts *widget.RadioGroup) {
 }
 
 // Enable asset collection objects
-func enabledCollections() fyne.CanvasObject {
+// intro used to set label if initial boot screen
+func EnabledCollections(intro bool) (obj fyne.CanvasObject) {
 	collection_form := []*widget.FormItem{}
 	enable_all := widget.NewButton("Enable All", func() {
 		for _, item := range collection_form {
@@ -1000,13 +1015,47 @@ func enabledCollections() fyne.CanvasObject {
 		Control.NFA_count = 3
 	}
 
+	label := canvas.NewText("You will need to delete Gnomon DB and resync for changes to take effect ", bundle.TextColor)
+	label.Alignment = fyne.TextAlignCenter
+	if intro {
+		label.Text = "Enable Asset Collections"
+	}
+
 	return container.NewBorder(
 		nil,
-		container.NewBorder(nil, nil, enable_all, disable_all, container.NewCenter(canvas.NewText("You will need to delete Gnomon DB and resync for changes to take effect ", bundle.TextColor))),
+		container.NewBorder(nil, nil, enable_all, disable_all, label),
 		nil,
 		nil,
 		container.NewVScroll(container.NewCenter(widget.NewForm(collection_form...))))
 
+}
+
+// Returns string with all enabled asset names formatted for a label
+func returnEnabledNames(assets map[string]bool) (text string) {
+	var names []string
+	for name, enabled := range assets {
+		if enabled {
+			if isDreamsNfaName(name) {
+				names = append(names, name)
+			} else if isDreamsNfaCollection(name) {
+				names = append(names, name)
+			}
+		}
+	}
+
+	for name, enabled := range assets {
+		if enabled && IsDreamsG45(name) {
+			names = append(names, name)
+		}
+	}
+
+	sort.Strings(names)
+
+	for _, n := range names {
+		text = text + n + "\n\n"
+	}
+
+	return
 }
 
 // Owned asset tab layout
@@ -1032,7 +1081,7 @@ func PlaceAssets(tag string, assets []fyne.Widget, menu_icon fyne.Resource, w fy
 
 	player_input := container.NewVBox(items_box, layout.NewSpacer())
 
-	enable_opts := enabledCollections()
+	enable_opts := EnabledCollections(false)
 
 	tabs := container.NewAppTabs(
 		container.NewTabItem("Owned", AssetList()))
@@ -1043,8 +1092,10 @@ func PlaceAssets(tag string, assets []fyne.Widget, menu_icon fyne.Resource, w fy
 
 	tabs.OnSelected = func(ti *container.TabItem) {
 		if ti.Text == "Enabled" {
-			if Gnomes.IsRunning() {
-				tabs.Selected().Content = container.NewCenter(canvas.NewText("Stop Gnomon to make changes", bundle.TextColor))
+			if rpc.Daemon.IsConnected() {
+				dialog.NewInformation("Assets", "Shut down Gnomon to make changes to asset index", w).Show()
+				tabs.Selected().Content = container.NewVScroll(container.NewVBox(dwidget.NewCenterLabel("Currently Enabled:"), dwidget.NewCenterLabel(returnEnabledNames(Control.Enabled_assets))))
+
 				return
 			}
 			tabs.Selected().Content = enable_opts
@@ -1094,7 +1145,7 @@ func PlaceAssets(tag string, assets []fyne.Widget, menu_icon fyne.Resource, w fy
 	player_box := container.NewHBox(player_input)
 
 	menu_top := container.NewHSplit(player_box, max)
-	menu_bottom := container.NewAdaptiveGrid(1, IndexEntry(menu_icon))
+	menu_bottom := container.NewAdaptiveGrid(1, IndexEntry(menu_icon, w))
 
 	menu_box := container.NewVSplit(menu_top, menu_bottom)
 	menu_box.SetOffset(1)
@@ -1273,11 +1324,12 @@ func RunNFAMarket(tag string, quit, done chan struct{}, connect_box *dwidget.Der
 			offset++
 
 		case <-quit: // exit
-			logger.Printf("[%s] Closing\n", tag)
+			logger.Printf("[%s] Closing...\n", tag)
 			if Gnomes.Icon_ind != nil {
 				Gnomes.Icon_ind.Stop()
 			}
 			ticker.Stop()
+			time.Sleep(time.Second)
 			done <- struct{}{}
 			return
 		}
