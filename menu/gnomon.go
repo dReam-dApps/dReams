@@ -138,7 +138,7 @@ func GnomonBoltDB(dbType, dbPath string) *storage.BboltStore {
 		}
 	}
 
-	db, err := storage.NewBBoltDB(dbPath, filepath.Join(dbPath, db_name))
+	db, err := storage.NewBBoltDB(dbPath, db_name)
 	if err != nil {
 		logger.Fatalf("%s\n", err)
 	}
@@ -174,7 +174,7 @@ func StartGnomon(tag, dbtype string, filters []string, upper, lower int, custom 
 	closeondisconnect := false
 
 	if filters != nil || !Gnomes.Trim {
-		Gnomes.Indexer = indexer.NewIndexer(grav_backend, bolt_backend, dbtype, filters, last_height, rpc.Daemon.Rpc, runmode, mbl, closeondisconnect, Gnomes.Fast)
+		Gnomes.Indexer = indexer.NewIndexer(grav_backend, bolt_backend, dbtype, filters, last_height, rpc.Daemon.Rpc, runmode, mbl, closeondisconnect, Gnomes.Fast, false, nil)
 		go Gnomes.Indexer.StartDaemonMode(Gnomes.Para)
 		time.Sleep(3 * time.Second)
 		Gnomes.Initialized(true)

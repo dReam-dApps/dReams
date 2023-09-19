@@ -255,7 +255,7 @@ func (g *gnomon) GetSCIDKeysByValue(scid string, key interface{}) (valuesstring 
 
 // Method of Gnomon GetAllSCIDVariableDetails() where DB type is defined by Indexer.DBType
 //   - Default is boltdb
-func (g *gnomon) GetAllSCIDVariableDetails(scid string) map[int64][]*structures.SCIDVariable {
+func (g *gnomon) GetAllSCIDVariableDetails(scid string) []*structures.SCIDVariable {
 	switch g.Indexer.DBType {
 	case "gravdb":
 		return g.Indexer.GravDBBackend.GetAllSCIDVariableDetails(scid)

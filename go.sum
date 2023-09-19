@@ -64,12 +64,8 @@ github.com/SixofClubsss/Duels v0.0.0-20230829134852-2c39e9f82fe1 h1:yCP49bEIstp1
 github.com/SixofClubsss/Duels v0.0.0-20230829134852-2c39e9f82fe1/go.mod h1:3g3VeP0tBobAIu9pqP6byVmji3EGnUv6fUPj79KGD2c=
 github.com/SixofClubsss/Holdero v0.0.0-20230829135334-a827b94a6a9f h1:p8M9XRtmXkCw/DSWsq4V2Obo1zf9b8QzLX114UQFQog=
 github.com/SixofClubsss/Holdero v0.0.0-20230829135334-a827b94a6a9f/go.mod h1:vqy7d+qkxDYP/APdrFgqzsChncHIlmsxQxwxa3lVzVg=
-github.com/SixofClubsss/Iluma v0.0.0-20230829135140-0dc5460eb7e9 h1:xGOowU4LSfvjAOdNUTT22vLGKZV4bLN6cziBhspRAAY=
-github.com/SixofClubsss/Iluma v0.0.0-20230829135140-0dc5460eb7e9/go.mod h1:WxqQioLJM7n6b+a4N5DBU3i+QXSYVxMMUzvddCLArqQ=
 github.com/SixofClubsss/Iluma v0.0.0-20230829150341-8df39218e616 h1:8+W9tug4UhvCfZ58b7TPtPO8sswwqyL78RmyfNYOj6k=
 github.com/SixofClubsss/Iluma v0.0.0-20230829150341-8df39218e616/go.mod h1:WxqQioLJM7n6b+a4N5DBU3i+QXSYVxMMUzvddCLArqQ=
-github.com/SixofClubsss/dPrediction v0.0.0-20230829135440-19ef637a2573 h1:TLap7abynPC+S5UNyjyNdtZvXkkr/Eca54n7LdoXdGo=
-github.com/SixofClubsss/dPrediction v0.0.0-20230829135440-19ef637a2573/go.mod h1:Svvf45+r+89tVr0JZtlgL/LZtw9TY7uUDH50T0Y5w/M=
 github.com/SixofClubsss/dPrediction v0.0.0-20230829202710-cd17544c73d6 h1:tVtKZx3ZyTrW9vSGLvX2mVY7x/sAsv2q/DI50Eovr5A=
 github.com/SixofClubsss/dPrediction v0.0.0-20230829202710-cd17544c73d6/go.mod h1:Svvf45+r+89tVr0JZtlgL/LZtw9TY7uUDH50T0Y5w/M=
 github.com/SixofClubsss/derbnbDesktop v0.0.0-20230829135554-5c413013a3f3 h1:yabiPPzP2zUJaEsUPW++rh96qJPnpsKL2DOAVC/Ew5s=
@@ -100,8 +96,8 @@ github.com/cespare/xxhash v1.1.0/go.mod h1:XrSqR1VqqWfGrhpAt58auRo0WTKS1nRRg3ghf
 github.com/chzyer/logex v1.1.10/go.mod h1:+Ywpsq7O8HXn0nuIou7OrIPyXbp3wmkHB+jjWRnGsAI=
 github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e/go.mod h1:nSuG5e5PlCu98SY8svDHJxuZscDgtXS6KTTbou5AhLI=
 github.com/chzyer/test v0.0.0-20180213035817-a1ea475d72b1/go.mod h1:Q3SI9o4m/ZMnBNeIyt5eFwwo7qiLfzFZmjNmxjkiQlU=
-github.com/civilware/Gnomon v0.0.0-20230706132518-bda82e989415 h1:CA6YbEXqd6OP3Fq7qreMwWxqu7cebaYNIgULjrjg9FY=
-github.com/civilware/Gnomon v0.0.0-20230706132518-bda82e989415/go.mod h1:0Aw1IosHn2r4olpU3OWfUlXhZijFtFV9UeHkzytYfTQ=
+github.com/civilware/Gnomon v0.0.0-20230918204942-f216919acb4e h1:Ppt02GDsE2o0InqZp8NLDtOjaSTuW16/K1orZbpPpjM=
+github.com/civilware/Gnomon v0.0.0-20230918204942-f216919acb4e/go.mod h1:0Aw1IosHn2r4olpU3OWfUlXhZijFtFV9UeHkzytYfTQ=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/cncf/udpa/go v0.0.0-20191209042840-269d4d468f6f/go.mod h1:M8M6+tZqaGXZJjfX53e64911xZQV5JYwmTeXPW+k8Sc=
 github.com/cncf/udpa/go v0.0.0-20200629203442-efcf912fb354/go.mod h1:WmhPx2Nbnhtbo57+VJT5O0JRkEi1Wbu0z5j0R8u5Hbk=
@@ -414,7 +410,6 @@ github.com/srwiley/rasterx v0.0.0-20210519020934-456a8d69b780 h1:oDMiXaTMyBEuZMU
 github.com/srwiley/rasterx v0.0.0-20210519020934-456a8d69b780/go.mod h1:mvWM0+15UqyrFKqdRjY6LuAVJR0HOVhJlEgZ5JWtSWU=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/objx v0.4.0/go.mod h1:YvHI0jy2hoMjB+UWwv71VJQ9isScKT/TqJzVSSt89Yw=
-github.com/stretchr/objx v0.5.0/go.mod h1:Yh+to48EsGEfYuaHDzXPcE3xhTkx73EhmCGUpEOglKo=
 github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
 github.com/stretchr/testify v1.4.0/go.mod h1:j7eGeouHqKxXV5pUuKE4zz7dFj8WfuZ+81PSLYec5m4=
