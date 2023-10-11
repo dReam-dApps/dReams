@@ -174,7 +174,7 @@ func StartGnomon(tag, dbtype string, filters []string, upper, lower int, custom 
 	closeondisconnect := false
 
 	if filters != nil || !Gnomes.Trim {
-		Gnomes.Indexer = indexer.NewIndexer(grav_backend, bolt_backend, dbtype, filters, last_height, rpc.Daemon.Rpc, runmode, mbl, closeondisconnect, Gnomes.Fast, false, nil)
+		Gnomes.Indexer = indexer.NewIndexer(grav_backend, bolt_backend, dbtype, filters, last_height, rpc.Daemon.Rpc, runmode, mbl, closeondisconnect, Gnomes.Fast, nil)
 		go Gnomes.Indexer.StartDaemonMode(Gnomes.Para)
 		time.Sleep(3 * time.Second)
 		Gnomes.Initialized(true)
