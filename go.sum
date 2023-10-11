@@ -62,6 +62,8 @@ github.com/SixofClubsss/Baccarat v0.0.0-20230829135714-a0bc2039e207 h1:ECMXF0t3t
 github.com/SixofClubsss/Baccarat v0.0.0-20230829135714-a0bc2039e207/go.mod h1:2m6F7x/Z7jfwlLh89EGlWLgMHG3MmROiGtYbgIToULA=
 github.com/SixofClubsss/Duels v0.0.0-20230829134852-2c39e9f82fe1 h1:yCP49bEIstp1av5VOqiQvecVEY9v7MsR7lm2pOLojsI=
 github.com/SixofClubsss/Duels v0.0.0-20230829134852-2c39e9f82fe1/go.mod h1:3g3VeP0tBobAIu9pqP6byVmji3EGnUv6fUPj79KGD2c=
+github.com/SixofClubsss/Duels v0.0.0-20231011185833-b40f37794131 h1:XDXAOibIqATHr7KNVLk9zAvY1uj0CdIK2+j+g+/q7xI=
+github.com/SixofClubsss/Duels v0.0.0-20231011185833-b40f37794131/go.mod h1:hf+M8mtNp6ESg2Y8liVYny/R0bTTnGGnf2VSWiMla+k=
 github.com/SixofClubsss/Holdero v0.0.0-20230829135334-a827b94a6a9f h1:p8M9XRtmXkCw/DSWsq4V2Obo1zf9b8QzLX114UQFQog=
 github.com/SixofClubsss/Holdero v0.0.0-20230829135334-a827b94a6a9f/go.mod h1:vqy7d+qkxDYP/APdrFgqzsChncHIlmsxQxwxa3lVzVg=
 github.com/SixofClubsss/Iluma v0.0.0-20230829150341-8df39218e616 h1:8+W9tug4UhvCfZ58b7TPtPO8sswwqyL78RmyfNYOj6k=
@@ -70,6 +72,8 @@ github.com/SixofClubsss/dPrediction v0.0.0-20230829202710-cd17544c73d6 h1:tVtKZx
 github.com/SixofClubsss/dPrediction v0.0.0-20230829202710-cd17544c73d6/go.mod h1:Svvf45+r+89tVr0JZtlgL/LZtw9TY7uUDH50T0Y5w/M=
 github.com/SixofClubsss/derbnbDesktop v0.0.0-20230829135554-5c413013a3f3 h1:yabiPPzP2zUJaEsUPW++rh96qJPnpsKL2DOAVC/Ew5s=
 github.com/SixofClubsss/derbnbDesktop v0.0.0-20230829135554-5c413013a3f3/go.mod h1:D6kU7rkhPEQskiRoGZ7JmvPehRoVUuvf0NpspjPPGx4=
+github.com/SixofClubsss/derbnbDesktop v0.0.0-20231011191003-4beb6921010e h1:obncb/jJ0cYiFXAAQDtRQY4jROYfHoPLguqb14BUxFs=
+github.com/SixofClubsss/derbnbDesktop v0.0.0-20231011191003-4beb6921010e/go.mod h1:NFyO9fuvBiwPn9o24pKlB1I20QNg8GlOm0aRmA6UXhA=
 github.com/VictoriaMetrics/metrics v1.24.0 h1:ILavebReOjYctAGY5QU2F9X0MYvkcrG3aEn2RKa1Zkw=
 github.com/akavel/rsrc v0.10.2/go.mod h1:uLoCtb9J+EyAqh+26kdrTgmzRBFPGOolLWKpdxkKq+c=
 github.com/antihax/optional v1.0.0/go.mod h1:uupD/76wgC+ih3iEmQUL+0Ugr19nfwCT1kdvxnR2qWY=
