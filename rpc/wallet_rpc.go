@@ -654,6 +654,7 @@ func UploadNFAContract(code string) (tx string) {
 	}
 
 	logger.Println("[UploadNFAContract] TXID:", txid)
+	AddLog("Upload NFA: " + txid.TXID)
 
 	return txid.TXID
 }
