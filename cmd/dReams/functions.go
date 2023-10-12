@@ -192,7 +192,7 @@ func systemTray(w fyne.App) bool {
 	if desk, ok := w.(desktop.App); ok {
 		m := fyne.NewMenu("MyApp",
 			fyne.NewMenuItem("Send Message", func() {
-				if !dReams.IsConfiguring() && rpc.Wallet.IsConnected() {
+				if !dReams.IsConfiguring() {
 					menu.SendMessageMenu("", bundle.ResourceDReamsIconAltPng)
 				}
 			}),

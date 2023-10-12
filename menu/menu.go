@@ -983,9 +983,9 @@ func BackgroundRast(tag string) *canvas.Raster {
 
 // Send Dero message menu
 func SendMessageMenu(dest string, window_icon fyne.Resource) {
-	if !Control.msg_open {
+	if !Control.msg_open && rpc.Wallet.IsConnected() {
 		Control.msg_open = true
-		smw := fyne.CurrentApp().NewWindow("Send Asset")
+		smw := fyne.CurrentApp().NewWindow("Send Message")
 		smw.Resize(fyne.NewSize(330, 700))
 		smw.SetIcon(window_icon)
 		smw.SetCloseIntercept(func() {
@@ -1044,8 +1044,8 @@ func SendMessageMenu(dest string, window_icon fyne.Resource) {
 		content := container.NewVSplit(dest_cont, message_cont)
 
 		go func() {
-			for rpc.IsReady() {
-				time.Sleep(3 * time.Second)
+			for rpc.IsReady() && Control.msg_open {
+				time.Sleep(2 * time.Second)
 			}
 			Control.msg_open = false
 			smw.Close()

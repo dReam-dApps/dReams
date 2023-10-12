@@ -452,7 +452,7 @@ func SearchNFAs() fyne.CanvasObject {
 	search_cont := container.NewBorder(container.NewCenter(search_by), nil, container.NewHBox(clear_button, show_results), search_button, search_entry)
 
 	message_button := widget.NewButton("Message Owner", func() {
-		if rpc.Wallet.IsConnected() && dest_addr != "" {
+		if dest_addr != "" {
 			SendMessageMenu(dest_addr, bundle.ResourceDReamsIconAltPng)
 		}
 	})
