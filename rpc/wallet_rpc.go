@@ -73,7 +73,7 @@ func InitBalances() {
 	Wallet.Display.Balance["TRVL"] = "0"
 }
 
-// Set wallet rpc client with auth, context and 5 sec cancel
+// Set wallet rpc client with auth, context and 6 sec cancel
 func SetWalletClient(addr, pass string) (jsonrpc.RPCClient, context.Context, context.CancelFunc) {
 	client := jsonrpc.NewClientWithOpts("http://"+addr+"/json_rpc", &jsonrpc.RPCClientOpts{
 		CustomHeaders: map[string]string{
@@ -81,7 +81,7 @@ func SetWalletClient(addr, pass string) (jsonrpc.RPCClient, context.Context, con
 		},
 	})
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 6*time.Second)
 
 	return client, ctx, cancel
 }
