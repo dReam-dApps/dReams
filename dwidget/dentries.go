@@ -82,6 +82,7 @@ type DeroRpcEntries struct {
 	Button         *widget.Button
 	Disconnect     *widget.Check
 	Offset         int
+	layout         int
 	default_daemon []string
 }
 
@@ -151,6 +152,7 @@ func NewHorizontalEntries(tag string, offset int) *DeroRpcEntries {
 		Disconnect:     &control_check,
 		Offset:         offset,
 		default_daemon: default_daemon,
+		layout:         0,
 	}
 
 	if offset == 1 {
@@ -226,6 +228,7 @@ func NewVerticalEntries(tag string, offset int) *DeroRpcEntries {
 		Disconnect:     &control_check,
 		Offset:         offset,
 		default_daemon: default_daemon,
+		layout:         1,
 	}
 
 	if offset == 1 {
@@ -261,4 +264,20 @@ func (d *DeroRpcEntries) AddDaemonOptions(new_opts []string) {
 	current := d.default_daemon
 	d.Daemon.SetOptions(append(current, new_opts...))
 	d.Daemon.Refresh()
+}
+
+// Add canvas object indicators to DeroRpcEntries, switching for layout and Offset
+func (d *DeroRpcEntries) AddIndicator(ind fyne.CanvasObject) {
+	switch d.layout {
+	case 0:
+		if d.Offset == 1 {
+			d.Container.Objects[0].(*fyne.Container).Add(ind)
+			return
+		}
+		d.Container.Objects[1].(*fyne.Container).Add(ind)
+	case 1:
+		d.Container.Add(ind)
+	default:
+		// nothing
+	}
 }
