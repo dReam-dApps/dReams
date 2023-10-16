@@ -131,7 +131,7 @@ func (t dTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) color
 		if t.variant == 1 {
 			return color.NRGBA{R: 0x96, G: 0x5a, B: 0xcd, A: 0x45}
 		}
-		return color.NRGBA{R: 0x88, G: 0xff, B: 0xff, A: 0x22}
+		return color.NRGBA{R: 0x88, G: 0xff, B: 0xff, A: 0x45}
 
 	case theme.ColorNameMenuBackground:
 		if t.variant == 1 {
@@ -147,9 +147,9 @@ func (t dTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) color
 
 	case theme.ColorNamePlaceHolder:
 		if t.variant == 1 {
-			return color.RGBA{31, 150, 200, 180}
+			return color.RGBA{31, 150, 200, 255}
 		}
-		return color.RGBA{105, 90, 205, 180}
+		return color.RGBA{105, 90, 205, 255}
 
 	case theme.ColorNamePressed:
 		if t.variant == 1 {
