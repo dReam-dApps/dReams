@@ -268,7 +268,7 @@ func RateConfirm(scid string, tab *container.AppTabs, reset fyne.CanvasObject) f
 
 	content := container.NewVBox(layout.NewSpacer(), label, rating_label, fee_label, layout.NewSpacer(), rate_cont, layout.NewSpacer(), buttons)
 
-	return container.NewMax(content)
+	return container.NewStack(content)
 
 }
 
@@ -349,7 +349,7 @@ func IndexEntry(window_icon fyne.Resource, w fyne.Window) fyne.CanvasObject {
 	Assets.Gnomes_index.TextSize = 18
 
 	bottom_grid := container.NewAdaptiveGrid(3, Assets.Gnomes_index, Assets.Index_button, Assets.Index_search)
-	top_grid := container.NewAdaptiveGrid(3, container.NewMax(Control.Send_asset), Control.Claim_button, Control.List_button)
+	top_grid := container.NewAdaptiveGrid(3, container.NewStack(Control.Send_asset), Control.Claim_button, Control.List_button)
 	box := container.NewVBox(top_grid, layout.NewSpacer(), bottom_grid)
 
 	return container.NewAdaptiveGrid(2, Assets.Index_entry, box)
@@ -413,7 +413,7 @@ func AssetList() fyne.CanvasObject {
 		}
 	}
 
-	return container.NewMax(Assets.Asset_list)
+	return container.NewStack(Assets.Asset_list)
 }
 
 // Send Dero asset menu
@@ -490,7 +490,7 @@ func sendAssetMenu(window_icon fyne.Resource) {
 			cancel_button := widget.NewButton("Cancel", func() {
 				confirm_open = false
 				saw.SetContent(
-					container.New(layout.NewMaxLayout(),
+					container.NewStack(
 						BackgroundRast("sendAssetMenu"),
 						bundle.Alpha180,
 						saw_content))
@@ -505,7 +505,7 @@ func sendAssetMenu(window_icon fyne.Resource) {
 			confirm_options := container.NewAdaptiveGrid(2, confirm_button, cancel_button)
 			confirm_content := container.NewBorder(nil, confirm_options, nil, nil, confirm_display)
 			saw.SetContent(
-				container.New(layout.NewMaxLayout(),
+				container.NewStack(
 					BackgroundRast("sendAssetMenu"),
 					bundle.Alpha180,
 					confirm_content))
@@ -542,7 +542,7 @@ func sendAssetMenu(window_icon fyne.Resource) {
 	}()
 
 	saw.SetContent(
-		container.New(layout.NewMaxLayout(),
+		container.NewStack(
 			BackgroundRast("sendAssetMenu"),
 			bundle.Alpha180,
 			saw_content))
@@ -692,7 +692,7 @@ func listMenu(window_icon fyne.Resource) {
 				cancel_button := widget.NewButton("Cancel", func() {
 					confirm_open = false
 					aw.SetContent(
-						container.New(layout.NewMaxLayout(),
+						container.NewStack(
 							BackgroundRast("listMenu"),
 							bundle.Alpha180,
 							aw_content))
@@ -714,7 +714,7 @@ func listMenu(window_icon fyne.Resource) {
 				confirm_content := container.NewBorder(nil, confirm_options, nil, nil, confirm_label)
 
 				aw.SetContent(
-					container.New(layout.NewMaxLayout(),
+					container.NewStack(
 						BackgroundRast("listMenu"),
 						bundle.Alpha180,
 						confirm_content))
@@ -777,7 +777,7 @@ func listMenu(window_icon fyne.Resource) {
 		container.NewAdaptiveGrid(2, layout.NewSpacer(), set_list))
 
 	aw.SetContent(
-		container.New(layout.NewMaxLayout(),
+		container.NewStack(
 			BackgroundRast("listMenu"),
 			bundle.Alpha180,
 			aw_content))
@@ -871,7 +871,7 @@ func IntroTree(intros []IntroText) fyne.CanvasObject {
 
 	tree.OpenBranch("Welcome to dReams")
 
-	max := container.NewMax(tree)
+	max := container.NewStack(tree)
 
 	return max
 }
@@ -896,7 +896,7 @@ func CoinDecimal(ticker string) int {
 func CreateSwapContainer(pair string) (*dwidget.DeroAmts, *fyne.Container) {
 	split := strings.Split(pair, "-")
 	if len(split) != 2 {
-		return dwidget.NewDeroEntry("", 0, 0), container.NewMax(widget.NewLabel("Invalid Pair"))
+		return dwidget.NewDeroEntry("", 0, 0), container.NewStack(widget.NewLabel("Invalid Pair"))
 	}
 
 	incr := 0.1
@@ -922,7 +922,7 @@ func CreateSwapContainer(pair string) (*dwidget.DeroAmts, *fyne.Container) {
 	pad2 := container.NewBorder(layout.NewSpacer(), layout.NewSpacer(), layout.NewSpacer(), layout.NewSpacer(), swap2_entry)
 
 	swap2 := container.NewBorder(nil, pad2, nil, nil, container.NewCenter(swap2_label))
-	cont2 := container.NewMax(rect2, image2, swap2)
+	cont2 := container.NewStack(rect2, image2, swap2)
 
 	rect1 := canvas.NewRectangle(color1)
 	rect1.SetMinSize(fyne.NewSize(200, 100))
@@ -955,7 +955,7 @@ func CreateSwapContainer(pair string) (*dwidget.DeroAmts, *fyne.Container) {
 	pad1 := container.NewBorder(layout.NewSpacer(), layout.NewSpacer(), layout.NewSpacer(), layout.NewSpacer(), swap1_entry)
 
 	swap1 := container.NewBorder(nil, pad1, nil, nil, container.NewCenter(swap1_label))
-	cont1 := container.NewMax(rect1, image1, swap1)
+	cont1 := container.NewStack(rect1, image1, swap1)
 
 	return swap1_entry, container.NewAdaptiveGrid(2, cont1, cont2)
 }
@@ -1056,7 +1056,7 @@ func SendMessageMenu(dest string, window_icon fyne.Resource) {
 		}
 
 		smw.SetContent(
-			container.New(layout.NewMaxLayout(),
+			container.NewStack(
 				BackgroundRast("SendMessageMenu"),
 				bundle.Alpha180,
 				content))

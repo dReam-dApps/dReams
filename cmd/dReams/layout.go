@@ -122,7 +122,7 @@ func introScreen() *fyne.Container {
 		go func() {
 			dReams.App.Settings().SetTheme(bundle.DeroTheme(bundle.AppColor))
 			dReams.Window.SetContent(
-				container.NewMax(
+				container.NewStack(
 					dReams.Background,
 					place()))
 			wait = false
@@ -161,7 +161,7 @@ func introScreen() *fyne.Container {
 
 	intro.SetOffset(0.66)
 
-	max = container.NewMax(bundle.Alpha180, intro)
+	max = container.NewStack(bundle.Alpha180, intro)
 
 	return max
 }
@@ -336,9 +336,9 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 		container.NewCenter(gnomon_gif),
 		loading_label,
 		layout.NewSpacer(),
-		container.NewAdaptiveGrid(2, container.NewMax(load_button), back_button))
+		container.NewAdaptiveGrid(2, container.NewStack(load_button), back_button))
 
-	return container.NewMax(bundle.NewAlpha180(), intro)
+	return container.NewStack(bundle.NewAlpha180(), intro)
 }
 
 // Main dReams layout
@@ -407,7 +407,7 @@ func place() *fyne.Container {
 
 	top := canvas.NewRectangle(color.RGBA{0, 0, 0, 180})
 	top.SetMinSize(fyne.NewSize(465, 40))
-	top_bar := container.NewVBox(container.NewMax(top), layout.NewSpacer())
+	top_bar := container.NewVBox(container.NewStack(top), layout.NewSpacer())
 
 	menu_bottom := canvas.NewRectangle(color.RGBA{0, 0, 0, 180})
 	menu_bottom.SetMinSize(fyne.NewSize(268, 37))
@@ -469,7 +469,7 @@ func place() *fyne.Container {
 
 	fs_button.Importance = widget.LowImportance
 
-	alpha_box := container.NewMax(top_bar, menu_bottom_bar, tarot_bottom_bar, bundle.Alpha150)
+	alpha_box := container.NewStack(top_bar, menu_bottom_bar, tarot_bottom_bar, bundle.Alpha150)
 	if dReams.OS() != "darwin" {
 		alpha_box.Objects = append(alpha_box.Objects, container.NewHBox(layout.NewSpacer(), layout.NewSpacer(), layout.NewSpacer(), container.NewVBox(fs_button), layout.NewSpacer()))
 	}
@@ -499,7 +499,7 @@ func place() *fyne.Container {
 
 	dReams.Configure(false)
 
-	return container.NewMax(alpha_box, tabs)
+	return container.NewStack(alpha_box, tabs)
 }
 
 // dReams wallet layout
@@ -552,7 +552,7 @@ func placeWall(intros []menu.IntroText) *container.Split {
 		connect_tabs.EnableIndex(1)
 	}
 
-	menu_top := container.NewHSplit(container.NewMax(bundle.Alpha120, menu.IntroTree(intros)), connect_tabs)
+	menu_top := container.NewHSplit(container.NewStack(bundle.Alpha120, menu.IntroTree(intros)), connect_tabs)
 	menu_top.SetOffset(0.66)
 
 	menu_bottom := container.NewAdaptiveGrid(1, placeSwap())
@@ -593,7 +593,7 @@ func placeSwap() *container.Split {
 	var swap_entry *dwidget.DeroAmts
 	var swap_boxes *fyne.Container
 
-	max := container.NewMax()
+	max := container.NewStack()
 	swap_tabs := container.NewAppTabs()
 
 	swap_button := widget.NewButton("Swap", nil)
@@ -637,7 +637,7 @@ func placeSwap() *container.Split {
 	swap_tabs = container.NewAppTabs(container.NewTabItem("Swap", container.NewCenter(menu.Assets.Swap)))
 	max.Add(swap_tabs)
 
-	full := container.NewHSplit(container.NewMax(bundle.NewAlpha120(), balance_tabs), max)
+	full := container.NewHSplit(container.NewStack(bundle.NewAlpha120(), balance_tabs), max)
 	full.SetOffset(0.66)
 
 	return full

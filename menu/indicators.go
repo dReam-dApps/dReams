@@ -130,15 +130,15 @@ func StartDreamsIndicators(add []DreamsIndicator) fyne.CanvasObject {
 	w.TextSize = 16
 
 	connect_box := container.NewHBox(
-		container.NewMax(d_rect, container.NewCenter(d)),
-		container.NewMax(w_rect, container.NewCenter(w)))
+		container.NewStack(d_rect, container.NewCenter(d)),
+		container.NewStack(w_rect, container.NewCenter(w)))
 
 	additional_inds := container.NewHBox()
 	for _, ind := range add {
-		additional_inds.Add(container.NewMax(ind.Rect, container.NewCenter(ind.Img)))
+		additional_inds.Add(container.NewStack(ind.Rect, container.NewCenter(ind.Img)))
 	}
 
-	top_box := container.NewHBox(layout.NewSpacer(), additional_inds, connect_box, container.NewMax(g_full, sync_box, Gnomes.Icon_ind))
+	top_box := container.NewHBox(layout.NewSpacer(), additional_inds, connect_box, container.NewStack(g_full, sync_box, Gnomes.Icon_ind))
 	place := container.NewVBox(top_box, layout.NewSpacer())
 
 	go func() {
@@ -152,7 +152,7 @@ func StartDreamsIndicators(add []DreamsIndicator) fyne.CanvasObject {
 		}
 	}()
 
-	return container.NewMax(place)
+	return container.NewStack(place)
 }
 
 // Dero status indicators for wallet, daemon and Gnomon
@@ -256,10 +256,10 @@ func StartIndicators() fyne.CanvasObject {
 	w.TextSize = 16
 
 	connect_box := container.NewHBox(
-		container.NewMax(d_rect, container.NewCenter(d)),
-		container.NewMax(w_rect, container.NewCenter(w)))
+		container.NewStack(d_rect, container.NewCenter(d)),
+		container.NewStack(w_rect, container.NewCenter(w)))
 
-	top_box := container.NewHBox(layout.NewSpacer(), connect_box, container.NewMax(g_full, sync_box, Gnomes.Icon_ind))
+	top_box := container.NewHBox(layout.NewSpacer(), connect_box, container.NewStack(g_full, sync_box, Gnomes.Icon_ind))
 	place := container.NewVBox(top_box, layout.NewSpacer())
 
 	go func() {
@@ -270,7 +270,7 @@ func StartIndicators() fyne.CanvasObject {
 		Control.Wallet_ind.Start()
 	}()
 
-	return container.NewMax(place)
+	return container.NewStack(place)
 }
 
 // Stop dReams app status indicators

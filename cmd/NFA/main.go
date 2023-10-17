@@ -112,7 +112,7 @@ func main() {
 	go menu.RunNFAMarket(app_tag, quit, done, connect_box)
 	go func() {
 		time.Sleep(450 * time.Millisecond)
-		w.SetContent(container.NewMax(tabs, container.NewVBox(layout.NewSpacer(), connect_box.Container)))
+		w.SetContent(container.NewStack(tabs, container.NewVBox(layout.NewSpacer(), connect_box.Container)))
 	}()
 	w.ShowAndRun()
 	<-done

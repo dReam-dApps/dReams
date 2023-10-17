@@ -51,12 +51,12 @@ func SessionLog() *fyne.Container {
 	button.Importance = widget.LowImportance
 
 	pad := layout.NewSpacer()
-	cont := container.NewMax(Wallet.LogEntry)
+	cont := container.NewStack(Wallet.LogEntry)
 	vbox := container.NewVBox(
 		layout.NewSpacer(),
 		container.NewHBox(pad, container.NewBorder(pad, pad, pad, pad, button)))
 
-	return container.NewMax(cont, vbox)
+	return container.NewStack(cont, vbox)
 }
 
 // Initialize balance maps for supported tokens

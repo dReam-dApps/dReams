@@ -96,7 +96,7 @@ func incrementSpacer() fyne.CanvasObject {
 
 	rect := canvas.NewRectangle(space_color)
 
-	return container.NewMax(rect, add_text)
+	return container.NewStack(rect, add_text)
 }
 
 // Place objects for NFA minting of collections or single mint
@@ -1202,12 +1202,12 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 	mint_form = append(mint_form, widget.NewFormItem("", layout.NewSpacer()))
 	mint_form = append(mint_form, widget.NewFormItem("Wallet File", wallet_cont))
 	mint_form = append(mint_form, widget.NewFormItem("", layout.NewSpacer()))
-	mint_form = append(mint_form, widget.NewFormItem("", container.NewAdaptiveGrid(3, container.NewMax(install_button), container.NewMax(contracts_button), sign_button)))
+	mint_form = append(mint_form, widget.NewFormItem("", container.NewAdaptiveGrid(3, container.NewStack(install_button), container.NewStack(contracts_button), sign_button)))
 
 	scroll := container.NewVScroll(widget.NewForm(mint_form...))
-	max := container.NewMax(scroll)
+	max := container.NewStack(scroll)
 	instructions_back_button := widget.NewButton("Back", func() {
-		max.Objects[0] = container.NewMax(scroll)
+		max.Objects[0] = container.NewStack(scroll)
 	})
 
 	instructions_button.OnTapped = func() {

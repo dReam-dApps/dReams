@@ -6,7 +6,6 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 	"github.com/dReam-dApps/dReams/bundle"
 )
@@ -20,7 +19,7 @@ func LabelColor(c *fyne.Container) *fyne.Container {
 		alpha = canvas.NewRectangle(color.RGBA{0, 0, 0, 150})
 	}
 
-	return container.New(layout.NewMaxLayout(), alpha, c)
+	return container.NewStack(alpha, c)
 }
 
 // Create a new *widget.Label with center alignment

@@ -200,7 +200,7 @@ func BidBuyConfirm(scid string, amt uint64, b int, obj *container.Split, reset f
 		Market.Confirming = false
 	}()
 
-	return container.NewMax(content)
+	return container.NewStack(content)
 }
 
 // Confirm a cancel or close action of listed NFA
@@ -275,7 +275,7 @@ func ConfirmCancelClose(scid string, c int, obj *container.Split, reset fyne.Can
 
 	content := container.NewVBox(layout.NewSpacer(), label, layout.NewSpacer(), buttons)
 
-	return container.NewMax(content)
+	return container.NewStack(content)
 }
 
 // NFA auction listings object
@@ -469,7 +469,7 @@ func NfaIcon(res fyne.Resource) fyne.CanvasObject {
 	frame := canvas.NewImageFromResource(res)
 	frame.SetMinSize(fyne.NewSize(100, 100))
 
-	return container.NewMax(border, frame)
+	return container.NewStack(border, frame)
 }
 
 // Badge for dReam Tools enabled assets
@@ -482,7 +482,7 @@ func ToolsBadge(res fyne.Resource) fyne.CanvasObject {
 	frame := canvas.NewImageFromResource(res)
 	frame.SetMinSize(fyne.NewSize(100, 100))
 
-	return container.NewMax(border, frame)
+	return container.NewStack(border, frame)
 }
 
 // NFA cover image for market display
@@ -501,7 +501,7 @@ func loadingBar() fyne.CanvasObject {
 
 	return container.NewVBox(
 		layout.NewSpacer(),
-		container.NewMax(spacer, Market.Loading, container.NewCenter(canvas.NewText("Loading...", bundle.TextColor))),
+		container.NewStack(spacer, Market.Loading, container.NewCenter(canvas.NewText("Loading...", bundle.TextColor))),
 		layout.NewSpacer())
 }
 
@@ -770,7 +770,7 @@ func MarketTab(ti *container.TabItem) {
 
 // NFA market layout
 func PlaceMarket() *container.Split {
-	details := container.NewMax(NfaMarketInfo())
+	details := container.NewStack(NfaMarketInfo())
 
 	tabs := container.NewAppTabs(
 		container.NewTabItem("Auctions", AuctionListings()),
@@ -812,7 +812,7 @@ func PlaceMarket() *container.Split {
 
 	scroll_cont := container.NewVBox(container.NewHBox(layout.NewSpacer(), scroll_top, scroll_bottom))
 
-	max := container.NewMax(bundle.Alpha120, tabs, scroll_cont)
+	max := container.NewStack(bundle.Alpha120, tabs, scroll_cont)
 
 	details_box := container.NewVBox(layout.NewSpacer(), details, layout.NewSpacer())
 
@@ -826,10 +826,10 @@ func PlaceMarket() *container.Split {
 			Market.Market_button.Hide()
 			if text == "Bid" {
 				amt := rpc.ToAtomic(Market.Entry.Text, 5)
-				menu_top.Trailing.(*fyne.Container).Objects[1] = BidBuyConfirm(scid, amt, 0, menu_top, container.NewMax(tabs, scroll_cont))
+				menu_top.Trailing.(*fyne.Container).Objects[1] = BidBuyConfirm(scid, amt, 0, menu_top, container.NewStack(tabs, scroll_cont))
 				menu_top.Trailing.(*fyne.Container).Objects[1].Refresh()
 			} else if text == "Buy" {
-				menu_top.Trailing.(*fyne.Container).Objects[1] = BidBuyConfirm(scid, Market.Buy_amt, 1, menu_top, container.NewMax(tabs, scroll_cont))
+				menu_top.Trailing.(*fyne.Container).Objects[1] = BidBuyConfirm(scid, Market.Buy_amt, 1, menu_top, container.NewStack(tabs, scroll_cont))
 				menu_top.Trailing.(*fyne.Container).Objects[1].Refresh()
 			}
 		}
@@ -840,7 +840,7 @@ func PlaceMarket() *container.Split {
 	Market.Cancel_button = widget.NewButton("Cancel", func() {
 		if len(Market.Viewing) == 64 {
 			Market.Cancel_button.Hide()
-			menu_top.Trailing.(*fyne.Container).Objects[1] = ConfirmCancelClose(Market.Viewing, 1, menu_top, container.NewMax(tabs, scroll_cont))
+			menu_top.Trailing.(*fyne.Container).Objects[1] = ConfirmCancelClose(Market.Viewing, 1, menu_top, container.NewStack(tabs, scroll_cont))
 			menu_top.Trailing.(*fyne.Container).Objects[1].Refresh()
 		}
 	})
@@ -848,7 +848,7 @@ func PlaceMarket() *container.Split {
 	Market.Close_button = widget.NewButton("Close", func() {
 		if len(Market.Viewing) == 64 {
 			Market.Close_button.Hide()
-			menu_top.Trailing.(*fyne.Container).Objects[1] = ConfirmCancelClose(Market.Viewing, 0, menu_top, container.NewMax(tabs, scroll_cont))
+			menu_top.Trailing.(*fyne.Container).Objects[1] = ConfirmCancelClose(Market.Viewing, 0, menu_top, container.NewStack(tabs, scroll_cont))
 			menu_top.Trailing.(*fyne.Container).Objects[1].Refresh()
 		}
 	})
@@ -1115,7 +1115,7 @@ func PlaceAssets(tag string, assets []fyne.Widget, menu_icon fyne.Resource, w fy
 
 	scroll_cont := container.NewVBox(container.NewHBox(layout.NewSpacer(), scroll_top, scroll_bottom))
 
-	max := container.NewMax(bundle.Alpha120, tabs, scroll_cont)
+	max := container.NewStack(bundle.Alpha120, tabs, scroll_cont)
 
 	header_name_entry := widget.NewEntry()
 	header_name_entry.PlaceHolder = "Name:"
@@ -1228,11 +1228,11 @@ func setHeaderConfirm(name, desc, icon, scid string, obj []fyne.CanvasObject, re
 
 	})
 
-	alpha := container.NewMax(canvas.NewRectangle(color.RGBA{0, 0, 0, 120}))
+	alpha := container.NewStack(canvas.NewRectangle(color.RGBA{0, 0, 0, 120}))
 	buttons := container.NewAdaptiveGrid(2, confirm_button, cancel_button)
 	content := container.NewVBox(layout.NewSpacer(), label, layout.NewSpacer(), buttons)
 
-	return container.NewMax(alpha, content)
+	return container.NewStack(alpha, content)
 }
 
 // Full routine for NFA market and scanning wallet for NFAs, can use PlaceAssets() and PlaceMarket() layouts

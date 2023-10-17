@@ -14,7 +14,6 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/driver/desktop"
-	"fyne.io/fyne/v2/layout"
 )
 
 const (
@@ -59,7 +58,7 @@ func main() {
 
 	dReams.SetTab("Menu")
 	dreams.Theme.Img = *canvas.NewImageFromResource(bundle.ResourceBackgroundPng)
-	dReams.Background = container.NewMax(&dreams.Theme.Img)
+	dReams.Background = container.NewStack(&dreams.Theme.Img)
 
 	dapps := menu.EnabledDapps()
 	if dapps == 0 {
@@ -67,7 +66,7 @@ func main() {
 			dReams.SetChannels(0)
 			time.Sleep(300 * time.Millisecond)
 			dReams.Window.SetContent(
-				container.New(layout.NewMaxLayout(),
+				container.NewStack(
 					dReams.Background,
 					introScreen()))
 		}()
@@ -76,7 +75,7 @@ func main() {
 			dReams.SetChannels(dapps)
 			time.Sleep(750 * time.Millisecond)
 			dReams.Window.SetContent(
-				container.New(layout.NewMaxLayout(),
+				container.NewStack(
 					dReams.Background,
 					place()))
 
