@@ -456,6 +456,10 @@ func checkNFAOwner(scid string) {
 					} else if collection[0] == "Dorblings NFA" {
 						holdero.Settings.AddAvatar(header[0], owner[0])
 						menu.Assets.Add(header[0], scid)
+					} else if collection[0] == "DLAMPP" {
+						// TODO review after mint
+						holdero.Settings.AddAvatar(header[0], owner[0])
+						menu.Assets.Add(header[0], scid)
 					} else if check == "HighStrangeness" {
 						holdero.Settings.AddAvatar(header[0], owner[0])
 						menu.Assets.Add(header[0], scid)
