@@ -374,8 +374,8 @@ func SearchNFAs() fyne.CanvasObject {
 	var dest_addr string
 	search_entry := xwidget.NewCompletionEntry([]string{})
 	search_entry.Wrapping = fyne.TextTruncate
-	search_entry.OnCursorChanged = func() {
-		split := strings.Split(search_entry.Text, "   ")
+	search_entry.OnChanged = func(s string) {
+		split := strings.Split(s, "   ")
 		if len(split) > 3 {
 			if split[3] != Market.Viewing {
 				Market.Viewing = split[3]

@@ -782,11 +782,8 @@ func SendMessage(dest, msg string, rings uint64) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
-	var dstport [8]byte
-	rand.Read(dstport[:])
-
 	response := rpc.Arguments{
-		{Name: rpc.RPC_DESTINATION_PORT, DataType: rpc.DataUint64, Value: binary.BigEndian.Uint64(dstport[:])},
+		{Name: rpc.RPC_DESTINATION_PORT, DataType: rpc.DataUint64, Value: 1337},
 		{Name: rpc.RPC_SOURCE_PORT, DataType: rpc.DataUint64, Value: uint64(0)},
 		{Name: rpc.RPC_COMMENT, DataType: rpc.DataString, Value: msg},
 	}

@@ -1000,7 +1000,7 @@ func SendMessageMenu(dest string, window_icon fyne.Resource) {
 		label.Wrapping = fyne.TextWrapWord
 		label.Alignment = fyne.TextAlignCenter
 
-		ringsize := widget.NewSelect([]string{"16", "32", "64"}, func(s string) {})
+		ringsize := widget.NewSelect([]string{"2", "16", "32", "64"}, func(s string) {})
 		ringsize.PlaceHolder = "Ringsize:"
 		ringsize.SetSelectedIndex(1)
 

@@ -166,7 +166,7 @@ func StartGnomon(tag, dbtype string, filters []string, upper, lower int, custom 
 	if dbtype == "boltdb" {
 		last_height, _ = bolt_backend.GetLastIndexHeight()
 	} else {
-		last_height = grav_backend.GetLastIndexHeight()
+		last_height, _ = grav_backend.GetLastIndexHeight()
 	}
 
 	runmode := "daemon"

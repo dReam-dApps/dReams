@@ -12,6 +12,7 @@ import (
 
 	"github.com/SixofClubsss/Baccarat/baccarat"
 	"github.com/SixofClubsss/Duels/duel"
+	"github.com/SixofClubsss/Grokked/grok"
 	"github.com/SixofClubsss/Holdero/holdero"
 	"github.com/SixofClubsss/Iluma/tarot"
 	"github.com/SixofClubsss/dPrediction/prediction"
@@ -447,6 +448,10 @@ func place() *fyne.Container {
 
 	if menu.Control.Dapp_list["Duels"] {
 		tabs.Append(container.NewTabItem("Duels", duel.LayoutAllItems(menu.Assets.Asset_map, &dReams)))
+	}
+
+	if menu.Control.Dapp_list["Grokked"] {
+		tabs.Append(container.NewTabItem("Grokked", grok.LayoutAllItems(&dReams)))
 	}
 
 	if cli.enabled {

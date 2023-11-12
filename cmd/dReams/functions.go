@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/SixofClubsss/Duels/duel"
+	"github.com/SixofClubsss/Grokked/grok"
 	"github.com/SixofClubsss/Holdero/holdero"
 	"github.com/SixofClubsss/dPrediction/prediction"
 	"github.com/civilware/Gnomon/structures"
@@ -467,8 +468,12 @@ func checkNFAOwner(scid string) {
 						}
 
 						if !have_cards {
-							holdero.Settings.AddFaces("High-Strangeness", owner[0])
-							holdero.Settings.AddBacks("High-Strangeness", owner[0])
+							holdero.Settings.AddFaces("HS_Deck", owner[0])
+							holdero.Settings.AddBacks("HS_Back", owner[0])
+							holdero.Settings.AddBacks("HS_Back2", owner[0])
+							holdero.Settings.AddBacks("HS_Back3", owner[0])
+							holdero.Settings.AddBacks("HS_Back4", owner[0])
+							holdero.Settings.AddBacks("HS_Back5", owner[0])
 						}
 
 						tower := 0
@@ -695,6 +700,13 @@ func gnomonFilters() (filter []string) {
 		}
 	}
 
+	if menu.Control.Dapp_list["Grokked"] {
+		grok := rpc.GetSCCode(grok.GROKSCID)
+		if grok != "" {
+			filter = append(filter, grok)
+		}
+	}
+
 	filter = append(filter, menu.ReturnEnabledNFAs(menu.Control.Enabled_assets)...)
 
 	return
@@ -740,7 +752,7 @@ func walletRpcEntry() fyne.Widget {
 	options := []string{"", "127.0.0.1:10103"}
 	entry := widget.NewSelectEntry(options)
 	entry.PlaceHolder = "Wallet RPC: "
-	entry.OnCursorChanged = func() {
+	entry.OnChanged = func(s string) {
 		if rpc.Wallet.IsConnected() {
 			rpc.Wallet.Address = ""
 			rpc.Wallet.Display.Height = "0"
@@ -761,7 +773,7 @@ func walletRpcEntry() fyne.Widget {
 func userPassEntry() fyne.Widget {
 	entry := widget.NewPasswordEntry()
 	entry.PlaceHolder = "user:pass"
-	entry.OnCursorChanged = func() {
+	entry.OnChanged = func(s string) {
 		if rpc.Wallet.IsConnected() {
 			rpc.GetAddress("dReams")
 			go checkConnection()

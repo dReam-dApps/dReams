@@ -192,7 +192,7 @@ func FindStringKey(scid, key, daemon string) interface{} {
 // Get list of dReams dApps from contract store
 //   - Uses remote daemon if not connected
 func FetchDapps() (dApps []string) {
-	dApps = []string{"Holdero", "Baccarat", "dSports and dPredictions", "Iluma"}
+	dApps = []string{"Holdero", "Baccarat", "dSports and dPredictions", "Iluma", "Duels", "Grokked"}
 	var daemon string
 	if !Daemon.IsConnected() {
 		daemon = DAEMON_RPC_REMOTE5
@@ -205,6 +205,9 @@ func FetchDapps() (dApps []string) {
 			json.Unmarshal(h, &dApps)
 		}
 	}
+
+	// TODO remove for merge
+	dApps = append(dApps, "Grokked")
 
 	return
 }

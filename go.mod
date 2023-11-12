@@ -7,11 +7,12 @@ require (
 	fyne.io/x/fyne v0.0.0-20230411205836-1ca0ead20763
 	github.com/SixofClubsss/Baccarat v0.0.0-20230829135714-a0bc2039e207
 	github.com/SixofClubsss/Duels v0.0.0-20231011185833-b40f37794131
-	github.com/SixofClubsss/Holdero v0.0.0-20230829135334-a827b94a6a9f
+	github.com/SixofClubsss/Grokked v0.0.0-20231112173751-07ce7cb648ac
+	github.com/SixofClubsss/Holdero v0.0.0-20231112060104-1078aaac90e4
 	github.com/SixofClubsss/Iluma v0.0.0-20230829150341-8df39218e616
 	github.com/SixofClubsss/dPrediction v0.0.0-20230829202710-cd17544c73d6
 	github.com/SixofClubsss/derbnbDesktop v0.0.0-20231011191003-4beb6921010e
-	github.com/civilware/Gnomon v0.0.0-20231002142459-ae4ce13fab05
+	github.com/civilware/Gnomon v0.0.0-20231106154043-ce6788ad1514
 	github.com/deroproject/derohe v0.0.0-20230604143809-765b2db1f482
 	github.com/fyne-io/terminal v0.0.0-20230223114940-c76e408adbd3
 	github.com/sirupsen/logrus v1.9.3
@@ -73,14 +74,14 @@ require (
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.9.0 // indirect
 	go.uber.org/zap v1.24.0 // indirect
-	golang.org/x/crypto v0.12.0 // indirect
+	golang.org/x/crypto v0.14.0 // indirect
 	golang.org/x/image v0.11.0 // indirect
 	golang.org/x/mobile v0.0.0-20230531173138-3c911d8e3eda // indirect
-	golang.org/x/net v0.14.0 // indirect
+	golang.org/x/net v0.17.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/sys v0.11.0 // indirect
-	golang.org/x/term v0.11.0 // indirect
-	golang.org/x/text v0.12.0 // indirect
+	golang.org/x/sys v0.13.0 // indirect
+	golang.org/x/term v0.13.0 // indirect
+	golang.org/x/text v0.13.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
