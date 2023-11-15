@@ -466,7 +466,7 @@ func checkNFAOwner(scid string) {
 
 						var have_cards bool
 						for _, face := range holdero.Settings.CurrentFaces() {
-							if face == "High-Strangeness" {
+							if face == "HS_Deck" {
 								have_cards = true
 							}
 						}

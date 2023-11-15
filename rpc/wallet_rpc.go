@@ -679,7 +679,7 @@ func SendAsset(scid, dest string, payload bool) {
 		response := rpc.Arguments{
 			{Name: rpc.RPC_DESTINATION_PORT, DataType: rpc.DataUint64, Value: binary.BigEndian.Uint64(dstport[:])},
 			{Name: rpc.RPC_SOURCE_PORT, DataType: rpc.DataUint64, Value: uint64(0)},
-			{Name: rpc.RPC_COMMENT, DataType: rpc.DataString, Value: fmt.Sprintf("Sent you asset %s at height %d", scid, Wallet.Height)},
+			{Name: rpc.RPC_COMMENT, DataType: rpc.DataString, Value: fmt.Sprintf("Sent you asset  %s  at height %d", scid, Wallet.Height)},
 		}
 
 		t2 := rpc.Transfer{
