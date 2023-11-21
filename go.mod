@@ -6,13 +6,13 @@ require (
 	fyne.io/fyne/v2 v2.4.1
 	fyne.io/x/fyne v0.0.0-20230411205836-1ca0ead20763
 	github.com/SixofClubsss/Baccarat v0.0.0-20230829135714-a0bc2039e207
-	github.com/SixofClubsss/Duels v0.0.0-20231011185833-b40f37794131
+	github.com/SixofClubsss/Duels v0.0.0-20231116204202-a3d8968d2797
 	github.com/SixofClubsss/Grokked v0.0.0-20231112173751-07ce7cb648ac
-	github.com/SixofClubsss/Holdero v0.0.0-20231112060104-1078aaac90e4
+	github.com/SixofClubsss/Holdero v0.0.0-20231120201503-f3fafcd2b017
 	github.com/SixofClubsss/Iluma v0.0.0-20230829150341-8df39218e616
 	github.com/SixofClubsss/dPrediction v0.0.0-20230829202710-cd17544c73d6
 	github.com/SixofClubsss/derbnbDesktop v0.0.0-20231011191003-4beb6921010e
-	github.com/civilware/Gnomon v0.0.0-20231106154043-ce6788ad1514
+	github.com/civilware/Gnomon v0.0.0-20231116204610-b11728727982
 	github.com/deroproject/derohe v0.0.0-20230604143809-765b2db1f482
 	github.com/fyne-io/terminal v0.0.0-20230223114940-c76e408adbd3
 	github.com/sirupsen/logrus v1.9.3

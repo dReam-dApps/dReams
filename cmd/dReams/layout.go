@@ -118,7 +118,7 @@ func introScreen() *fyne.Container {
 			menu.Control.Dapp_list[name] = true
 		}
 
-		dReams.SetChannels(menu.EnabledDapps())
+		dReams.SetChannels(menu.EnabledDappCount())
 		logger.Println("[dReams] Loading dApps")
 		go func() {
 			dReams.App.Settings().SetTheme(bundle.DeroTheme(bundle.AppColor))
@@ -212,7 +212,7 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 		rpc.Wallet.Height = 0
 		disconnected()
 		menu.Control.Dapp_list = enabled_dapps
-		dReams.SetChannels(menu.EnabledDapps())
+		dReams.SetChannels(menu.EnabledDappCount())
 		menu.CloseAppSignal(true)
 		menu.Gnomes.Checked(false)
 		bundle.AppColor = skin_choice
@@ -423,34 +423,34 @@ func place() *fyne.Container {
 
 	tabs := container.NewAppTabs(container.NewTabItem("Menu", menu_tabs))
 
-	if menu.Control.Dapp_list["Holdero"] {
+	if menu.DappEnabled("Holdero") {
 		tabs.Append(container.NewTabItem("Holdero", holdero.LayoutAllItems(&dReams)))
 		indicators = append(indicators, holdero.HolderoIndicator())
 	}
 
-	if menu.Control.Dapp_list["Baccarat"] {
+	if menu.DappEnabled("Baccarat") {
 		tabs.Append(container.NewTabItem("Baccarat", baccarat.LayoutAllItems(&dReams)))
 	}
 
-	if menu.Control.Dapp_list["dSports and dPredictions"] {
+	if menu.DappEnabled("dSports and dPredictions") {
 		tabs.Append(container.NewTabItem("Predict", prediction.LayoutPredictItems(&dReams)))
 		tabs.Append(container.NewTabItem("Sports", prediction.LayoutSportsItems(&dReams)))
 		indicators = append(indicators, prediction.ServiceIndicator())
 	}
 
-	if menu.Control.Dapp_list["Iluma"] {
+	if menu.DappEnabled("Iluma") {
 		tabs.Append(container.NewTabItem("Iluma", tarot.LayoutAllItems(&dReams)))
 	}
 
-	if menu.Control.Dapp_list["DerBnb"] {
+	if menu.DappEnabled("DerBnb") {
 		tabs.Append(container.NewTabItem("DerBnb", derbnb.LayoutAllItems(true, &dReams)))
 	}
 
-	if menu.Control.Dapp_list["Duels"] {
+	if menu.DappEnabled("Duels") {
 		tabs.Append(container.NewTabItem("Duels", duel.LayoutAllItems(menu.Assets.Asset_map, &dReams)))
 	}
 
-	if menu.Control.Dapp_list["Grokked"] {
+	if menu.DappEnabled("Grokked") {
 		tabs.Append(container.NewTabItem("Grokked", grok.LayoutAllItems(&dReams)))
 	}
 

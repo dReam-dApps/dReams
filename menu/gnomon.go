@@ -88,24 +88,26 @@ func InitLogrusLog(level logrus.Level) {
 }
 
 // Manually add SCID to Gnomon index
-func manualIndex(scid []string) {
+func manualIndex(scid []string) (err error) {
 	filters := Gnomes.Indexer.SearchFilter
 	Gnomes.Indexer.SearchFilter = []string{}
 	scidstoadd := make(map[string]*structures.FastSyncImport)
 
-	for i := range scid {
-		owner := rpc.CheckForIndex(scid[i])
+	for _, sc := range scid {
+		owner, _ := Gnomes.GetSCIDValuesByKey(rpc.GnomonSCID, sc+"owner")
 		if owner != nil {
-			scidstoadd[scid[i]] = &structures.FastSyncImport{}
-			scidstoadd[scid[i]].Owner = owner.(string)
+			scidstoadd[sc] = &structures.FastSyncImport{}
+			scidstoadd[sc].Owner = owner[0]
 		}
 	}
 
-	err := Gnomes.Indexer.AddSCIDToIndex(scidstoadd)
+	err = Gnomes.Indexer.AddSCIDToIndex(scidstoadd, false, false)
 	if err != nil {
 		logger.Errorf("[manualIndex] %v\n", err)
 	}
 	Gnomes.Indexer.SearchFilter = filters
+
+	return
 }
 
 // Create Gnomon graviton db with dReams tag
@@ -169,12 +171,8 @@ func StartGnomon(tag, dbtype string, filters []string, upper, lower int, custom 
 		last_height, _ = grav_backend.GetLastIndexHeight()
 	}
 
-	runmode := "daemon"
-	mbl := false
-	closeondisconnect := false
-
 	if filters != nil || !Gnomes.Trim {
-		Gnomes.Indexer = indexer.NewIndexer(grav_backend, bolt_backend, dbtype, filters, last_height, rpc.Daemon.Rpc, runmode, mbl, closeondisconnect, Gnomes.Fast, nil)
+		Gnomes.Indexer = indexer.NewIndexer(grav_backend, bolt_backend, dbtype, filters, last_height, rpc.Daemon.Rpc, "daemon", false, false, Gnomes.Fast, false, nil)
 		go Gnomes.Indexer.StartDaemonMode(Gnomes.Para)
 		time.Sleep(3 * time.Second)
 		Gnomes.Initialized(true)
@@ -196,7 +194,7 @@ func StartGnomon(tag, dbtype string, filters []string, upper, lower int, custom 
 
 				if !rpc.Daemon.IsConnected() || ClosingApps() {
 					Gnomes.Trim = false
-					logger.Errorf("[%s] Could not add all custom SCID for index\n", tag)
+					logger.Errorf("[%s] Could not add all custom SCIDs to index\n", tag)
 					break
 				}
 			}
@@ -225,7 +223,7 @@ func G45Index() {
 		}
 	}
 
-	err := Gnomes.Indexer.AddSCIDToIndex(scidstoadd)
+	err := Gnomes.Indexer.AddSCIDToIndex(scidstoadd, false, false)
 	if err != nil {
 		logger.Errorf("[G45Index] %v\n", err)
 	}
@@ -586,7 +584,7 @@ func FindNfaListings(assets map[string]string) {
 
 // dReams NFA asset name
 func isDreamsNfaName(check string) bool {
-	if check == "AZYDS" || check == "DBC" || check == "AZYPC" || check == "SIXPC" || check == "AZYPCB" || check == "SIXPCB" || check == "SIXART" || check == "HighStrangeness" {
+	if check == "AZYDS" || check == "DBC" || check == "AZYPC" || check == "SIXPC" || check == "AZYPCB" || check == "SIXPCB" || check == "SIXART" {
 		return true
 	}
 
@@ -595,7 +593,7 @@ func isDreamsNfaName(check string) bool {
 
 // dReams NFA collections
 func isDreamsNfaCollection(check string) bool {
-	if check == "Dorblings NFA" || check == "TestChars" || check == "TestItems" || check == "Dero Desperados" || check == "Desperado Guns" {
+	if check == "Dorblings NFA" || check == "TestChars" || check == "TestItems" || check == "Dero Desperados" || check == "Desperado Guns" || check == "High Strangeness" {
 		return true
 	}
 

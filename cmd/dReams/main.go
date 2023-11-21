@@ -60,7 +60,7 @@ func main() {
 	dreams.Theme.Img = *canvas.NewImageFromResource(bundle.ResourceBackgroundPng)
 	dReams.Background = container.NewStack(&dreams.Theme.Img)
 
-	dapps := menu.EnabledDapps()
+	dapps := menu.EnabledDappCount()
 	if dapps == 0 {
 		go func() {
 			dReams.SetChannels(0)

@@ -98,13 +98,10 @@ var dReamsNFAs = []assetCount{
 	{name: "SIXPC", count: 9},
 	{name: "SIXPCB", count: 10},
 	{name: "SIXART", count: 17},
-	{name: "HighStrangeness", count: 354},
+	{name: "High Strangeness", count: 376},
 	{name: "Dorblings NFA", count: 110},
-	// // TODO correct counts
-	// {name: "TestChars", count: 8},
-	// {name: "TestItems", count: 8},
-	// {name: "Dero Desperados", count: 5},
-	// {name: "Desperado Guns", count: 5},
+	{name: "Dero Desperados", count: 777},
+	{name: "Desperado Guns", count: 777},
 	// TODO DLAMPP count
 	// {name: "DLAMPP ", count: ?},
 }

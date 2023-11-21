@@ -59,12 +59,12 @@ github.com/OneOfOne/xxhash v1.2.2 h1:KMrpdQIwFcEqXDklaen+P1axHaj9BSKzvpUUfnHldSE
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
 github.com/SixofClubsss/Baccarat v0.0.0-20230829135714-a0bc2039e207 h1:ECMXF0t3tqGOtbiPPlua7H7x5DRy3n2D/P+wPHRyStU=
 github.com/SixofClubsss/Baccarat v0.0.0-20230829135714-a0bc2039e207/go.mod h1:2m6F7x/Z7jfwlLh89EGlWLgMHG3MmROiGtYbgIToULA=
-github.com/SixofClubsss/Duels v0.0.0-20231011185833-b40f37794131 h1:XDXAOibIqATHr7KNVLk9zAvY1uj0CdIK2+j+g+/q7xI=
-github.com/SixofClubsss/Duels v0.0.0-20231011185833-b40f37794131/go.mod h1:hf+M8mtNp6ESg2Y8liVYny/R0bTTnGGnf2VSWiMla+k=
+github.com/SixofClubsss/Duels v0.0.0-20231116204202-a3d8968d2797 h1:doB9FTNorQoLJ+NuXQgpyywNtt2ZxC8hGA1vm0QkAE0=
+github.com/SixofClubsss/Duels v0.0.0-20231116204202-a3d8968d2797/go.mod h1:s+OBmJADozhPZTJdNIfE+z1A9g1snbqZSCf6lVyU50M=
 github.com/SixofClubsss/Grokked v0.0.0-20231112173751-07ce7cb648ac h1:M57GynLEESuVosKCSSmkrXez+DN12pjT0wK2Fzp6H5c=
 github.com/SixofClubsss/Grokked v0.0.0-20231112173751-07ce7cb648ac/go.mod h1:j+0Gr9zviOasWN9D5Dcm/aFQm8cBc/rcsKxgvRu+vw4=
-github.com/SixofClubsss/Holdero v0.0.0-20231112060104-1078aaac90e4 h1:FqHGIjcRl2cmrtQK2PNndL8tQjQuoylVjGr11+HmC84=
-github.com/SixofClubsss/Holdero v0.0.0-20231112060104-1078aaac90e4/go.mod h1:XMJ+VwB2gH+FARiNU1TBLqUtc4fiOvBaE5zbbcJunMc=
+github.com/SixofClubsss/Holdero v0.0.0-20231120201503-f3fafcd2b017 h1:ijP8n8wHWd5WPPuakUqP9EP5sQ+2KupVQNYI+JKO+as=
+github.com/SixofClubsss/Holdero v0.0.0-20231120201503-f3fafcd2b017/go.mod h1:pznCRpRPDd9AWl2vG/71L8MPlZ2T0uHdcsbXFVtAzck=
 github.com/SixofClubsss/Iluma v0.0.0-20230829150341-8df39218e616 h1:8+W9tug4UhvCfZ58b7TPtPO8sswwqyL78RmyfNYOj6k=
 github.com/SixofClubsss/Iluma v0.0.0-20230829150341-8df39218e616/go.mod h1:WxqQioLJM7n6b+a4N5DBU3i+QXSYVxMMUzvddCLArqQ=
 github.com/SixofClubsss/dPrediction v0.0.0-20230829202710-cd17544c73d6 h1:tVtKZx3ZyTrW9vSGLvX2mVY7x/sAsv2q/DI50Eovr5A=
@@ -97,8 +97,8 @@ github.com/cespare/xxhash v1.1.0/go.mod h1:XrSqR1VqqWfGrhpAt58auRo0WTKS1nRRg3ghf
 github.com/chzyer/logex v1.1.10/go.mod h1:+Ywpsq7O8HXn0nuIou7OrIPyXbp3wmkHB+jjWRnGsAI=
 github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e/go.mod h1:nSuG5e5PlCu98SY8svDHJxuZscDgtXS6KTTbou5AhLI=
 github.com/chzyer/test v0.0.0-20180213035817-a1ea475d72b1/go.mod h1:Q3SI9o4m/ZMnBNeIyt5eFwwo7qiLfzFZmjNmxjkiQlU=
-github.com/civilware/Gnomon v0.0.0-20231106154043-ce6788ad1514 h1:lJM1JdfeCcscBJC2mOqS/Shog3dcQZtXc9L+MzW8jDY=
-github.com/civilware/Gnomon v0.0.0-20231106154043-ce6788ad1514/go.mod h1:0Aw1IosHn2r4olpU3OWfUlXhZijFtFV9UeHkzytYfTQ=
+github.com/civilware/Gnomon v0.0.0-20231116204610-b11728727982 h1:iaO00NTrEwZbVLu0Qnrwjxxnro5pTXGKb9kZ7QmRfvc=
+github.com/civilware/Gnomon v0.0.0-20231116204610-b11728727982/go.mod h1:0Aw1IosHn2r4olpU3OWfUlXhZijFtFV9UeHkzytYfTQ=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/cncf/udpa/go v0.0.0-20191209042840-269d4d468f6f/go.mod h1:M8M6+tZqaGXZJjfX53e64911xZQV5JYwmTeXPW+k8Sc=
 github.com/cncf/udpa/go v0.0.0-20200629203442-efcf912fb354/go.mod h1:WmhPx2Nbnhtbo57+VJT5O0JRkEi1Wbu0z5j0R8u5Hbk=

@@ -420,10 +420,10 @@ func checkDreamsNFAs(gc bool, scids map[string]string) {
 		dreams.Theme.Select.Options = append([]string{"Main", "Legacy"}, dreams.Theme.Select.Options...)
 		sort.Strings(menu.Assets.Assets)
 		menu.Assets.Asset_list.Refresh()
-		if menu.Control.Dapp_list["Duels"] {
+		if menu.DappEnabled("Duels") {
 			duel.Inventory.SortAll()
 		}
-		if menu.Control.Dapp_list["Holdero"] {
+		if menu.DappEnabled("Holdero") {
 			holdero.DisableHolderoTools()
 		}
 	}
@@ -460,71 +460,100 @@ func checkNFAOwner(scid string) {
 						// TODO review after mint
 						holdero.Settings.AddAvatar(header[0], owner[0])
 						menu.Assets.Add(header[0], scid)
-					} else if check == "HighStrangeness" {
+					} else if collection[0] == "High Strangeness" {
 						holdero.Settings.AddAvatar(header[0], owner[0])
 						menu.Assets.Add(header[0], scid)
-
-						var have_cards bool
-						for _, face := range holdero.Settings.CurrentFaces() {
-							if face == "HS_Deck" {
-								have_cards = true
-							}
+						hsCards(owner[0], header[0], check)
+						if menu.DappEnabled("Duels") {
+							duel.AddItemsToInventory(scid, header[0], owner[0], collection[0])
 						}
-
-						if !have_cards {
-							holdero.Settings.AddFaces("HS_Deck", owner[0])
-							holdero.Settings.AddBacks("HS_Back", owner[0])
-							holdero.Settings.AddBacks("HS_Back2", owner[0])
-							holdero.Settings.AddBacks("HS_Back3", owner[0])
-							holdero.Settings.AddBacks("HS_Back4", owner[0])
-							holdero.Settings.AddBacks("HS_Back5", owner[0])
+					} else if collection[0] == "Dero Desperados" {
+						holdero.Settings.AddAvatar(header[0], owner[0])
+						menu.Assets.Add(header[0], scid)
+						if menu.DappEnabled("Duels") {
+							duel.AddItemsToInventory(scid, header[0], owner[0], collection[0])
 						}
-
-						tower := 0
-						switch header[0] {
-						case "HighStrangeness363":
-							tower = 4
-						case "HighStrangeness364":
-							tower = 8
-						case "HighStrangeness365":
-							tower = 12
-						default:
-						}
-
-						var have_theme bool
-						for i := tower; i > 0; i-- {
-							themes := dreams.Theme.Select.Options
-							for _, th := range themes {
-								if th == "HSTheme"+strconv.Itoa(i) {
-									have_theme = true
-								}
-							}
-
-							if !have_theme {
-								new_themes := append(themes, "HSTheme"+strconv.Itoa(i))
-								dreams.Theme.Select.Options = new_themes
-								dreams.Theme.Select.Refresh()
-							}
+					} else if collection[0] == "Desperado Guns" {
+						holdero.Settings.AddAvatar(header[0], owner[0])
+						menu.Assets.Add(header[0], scid)
+						if menu.DappEnabled("Duels") {
+							duel.AddItemsToInventory(scid, header[0], owner[0], collection[0])
 						}
 					} else if collection[0] == "TestChars" {
 						holdero.Settings.AddAvatar(header[0], owner[0])
 						menu.Assets.Add(header[0], scid)
-						duel.AddItemsToInventory(scid, header[0], owner[0], collection[0])
+						if menu.DappEnabled("Duels") {
+							duel.AddItemsToInventory(scid, header[0], owner[0], collection[0])
+						}
 					} else if collection[0] == "TestItems" {
 						holdero.Settings.AddAvatar(header[0], owner[0])
 						menu.Assets.Add(header[0], scid)
-						duel.AddItemsToInventory(scid, header[0], owner[0], collection[0])
-					} else if collection[0] == "Dero Desperados" {
-						holdero.Settings.AddAvatar(header[0], owner[0])
-						menu.Assets.Add(header[0], scid)
-						duel.AddItemsToInventory(scid, header[0], owner[0], collection[0])
-					} else if collection[0] == "Desperado Guns" {
-						holdero.Settings.AddAvatar(header[0], owner[0])
-						menu.Assets.Add(header[0], scid)
-						duel.AddItemsToInventory(scid, header[0], owner[0], collection[0])
+						if menu.DappEnabled("Duels") {
+							duel.AddItemsToInventory(scid, header[0], owner[0], collection[0])
+						}
 					}
 				}
 			}
+		}
+	}
+}
+
+func hsCards(owner, name, check string) {
+	var have_cards bool
+	for _, face := range holdero.Settings.CurrentFaces() {
+		if face == "HS_Deck" {
+			have_cards = true
+			break
+		}
+	}
+
+	if !have_cards {
+		holdero.Settings.AddFaces("HS_Deck", owner)
+		holdero.Settings.AddBacks("HS_Back", owner)
+		holdero.Settings.AddBacks("HS_Back2", owner)
+		holdero.Settings.AddBacks("HS_Back3", owner)
+		holdero.Settings.AddBacks("HS_Back4", owner)
+		holdero.Settings.AddBacks("HS_Back5", owner)
+	}
+
+	if check == "GOLDCard" {
+		var have_gold bool
+		for _, back := range holdero.Settings.CurrentBacks() {
+			if back == "HS_Back7" {
+				have_gold = true
+				break
+			}
+		}
+
+		if !have_gold {
+			holdero.Settings.AddBacks("HS_Back7", owner)
+		}
+	}
+
+	tower := 0
+	switch name {
+	case "HighStrangeness363":
+		tower = 4
+	case "HighStrangeness364":
+		tower = 8
+	case "HighStrangeness365":
+		tower = 12
+	default:
+	}
+
+	var have_theme bool
+	for i := tower; i > 0; i-- {
+		themes := dreams.Theme.Select.Options
+		for _, th := range themes {
+			if th == "HSTheme"+strconv.Itoa(i) {
+				have_theme = true
+			}
+		}
+
+		if !have_theme {
+			new_themes := append(themes, "HSTheme"+strconv.Itoa(i))
+			dreams.Theme.Select.Options = new_themes
+			dreams.Theme.Select.Refresh()
 		}
 	}
 }
@@ -605,7 +634,7 @@ func checkConnection() {
 func disconnected() {
 	menu.Market.Auctions = []string{}
 	menu.Market.Buy_now = []string{}
-	holdero.Disconnected(menu.Control.Dapp_list["Holdero"])
+	holdero.Disconnected(menu.DappEnabled("Holdero"))
 	prediction.Disconnected()
 	rpc.Wallet.Address = ""
 	dreams.Theme.Select.Options = []string{"Main", "Legacy"}
@@ -639,7 +668,7 @@ func disableActions(d bool) {
 
 // dReams search filters for Gnomon index
 func gnomonFilters() (filter []string) {
-	if menu.Control.Dapp_list["Holdero"] {
+	if menu.DappEnabled("Holdero") {
 		holdero110 := rpc.GetSCCode(holdero.HolderoSCID)
 		if holdero110 != "" {
 			filter = append(filter, holdero110)
@@ -656,14 +685,14 @@ func gnomonFilters() (filter []string) {
 		}
 	}
 
-	if menu.Control.Dapp_list["Baccarat"] {
+	if menu.DappEnabled("Baccarat") {
 		bacc := rpc.GetSCCode(rpc.BaccSCID)
 		if bacc != "" {
 			filter = append(filter, bacc)
 		}
 	}
 
-	if menu.Control.Dapp_list["dSports and dPredictions"] {
+	if menu.DappEnabled("dSports and dPredictions") {
 		predict := rpc.GetSCCode(prediction.PredictSCID)
 		if predict != "" {
 			filter = append(filter, predict)
@@ -690,21 +719,21 @@ func gnomonFilters() (filter []string) {
 		filter = append(filter, ratings)
 	}
 
-	if menu.Control.Dapp_list["DerBnb"] {
+	if menu.DappEnabled("DerBnb") {
 		bnb := rpc.GetSCCode(rpc.DerBnbSCID)
 		if bnb != "" {
 			filter = append(filter, bnb)
 		}
 	}
 
-	if menu.Control.Dapp_list["Duels"] {
+	if menu.DappEnabled("Duels") {
 		duels := rpc.GetSCCode(duel.DUELSCID)
 		if duels != "" {
 			filter = append(filter, duels)
 		}
 	}
 
-	if menu.Control.Dapp_list["Grokked"] {
+	if menu.DappEnabled("Grokked") {
 		grok := rpc.GetSCCode(grok.GROKSCID)
 		if grok != "" {
 			filter = append(filter, grok)
@@ -731,7 +760,7 @@ func daemonConnectedBox() fyne.Widget {
 			menu.StartGnomon("dReams", menu.Gnomes.DBType, filters, menu.Control.G45_count+menu.Control.NFA_count, menu.Control.NFA_count, menu.G45Index)
 			rpc.FetchFees()
 
-			if menu.Control.Dapp_list["dSports and dPredictions"] {
+			if menu.DappEnabled("dSports and dPredictions") {
 				prediction.OnConnected()
 			}
 		}
@@ -801,11 +830,11 @@ func rpcConnectButton() fyne.Widget {
 				rpc.Ping()
 				rpc.GetAddress("dReams")
 				checkConnection()
-				if menu.Control.Dapp_list["Holdero"] {
+				if menu.DappEnabled("Holdero") {
 					holdero.OnConnected()
 				}
 
-				if menu.Control.Dapp_list["dSports and dPredictions"] {
+				if menu.DappEnabled("dSports and dPredictions") {
 					prediction.OnConnected()
 				}
 				wait = false
@@ -826,12 +855,12 @@ func rpcConnectButton() fyne.Widget {
 func recheckDreamsAssets() {
 	menu.Gnomes.Wait = true
 	menu.Assets.Assets = []string{}
-	if menu.Control.Dapp_list["Duels"] {
+	if menu.DappEnabled("Duels") {
 		duel.Inventory.ClearAll()
 	}
 	checkDreamsNFAs(false, nil)
 	checkDreamsG45s(false, nil)
-	if menu.Control.Dapp_list["Holdero"] {
+	if menu.DappEnabled("Holdero") {
 		if rpc.Wallet.IsConnected() {
 			menu.Control.Names.Options = []string{rpc.Wallet.Address[0:12]}
 			menu.CheckWalletNames(rpc.Wallet.Address)

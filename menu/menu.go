@@ -74,7 +74,7 @@ func CloseAppSignal(value bool) {
 }
 
 // Returns how many dApps are enabled
-func EnabledDapps() (enabled int) {
+func EnabledDappCount() (enabled int) {
 	for _, b := range Control.Dapp_list {
 		if b {
 			enabled++
@@ -82,6 +82,15 @@ func EnabledDapps() (enabled int) {
 	}
 
 	return
+}
+
+// Returns if a dApp is enabled
+func DappEnabled(dapp string) bool {
+	if b, ok := Control.Dapp_list[dapp]; ok && b {
+		return true
+	}
+
+	return false
 }
 
 // Save dReams config.json file for platform wide dApp use
@@ -304,8 +313,14 @@ func IndexEntry(window_icon fyne.Resource, w fyne.Window) fyne.CanvasObject {
 	Assets.Index_entry = widget.NewMultiLineEntry()
 	Assets.Index_entry.PlaceHolder = "SCID:"
 	Assets.Index_button = widget.NewButton("Add to Index", func() {
-		s := strings.Split(Assets.Index_entry.Text, "\n")
-		manualIndex(s)
+		if Gnomes.IsReady() {
+			s := strings.Split(Assets.Index_entry.Text, "\n")
+			if err := manualIndex(s); err == nil {
+				dialog.NewInformation("Added to Index", "SCIDs added", w).Show()
+			} else {
+				dialog.NewInformation("Error", "Error adding SCIDs to index", w).Show()
+			}
+		}
 	})
 
 	Assets.Index_search = widget.NewButton("Search Index", func() {
