@@ -23,7 +23,7 @@ type DreamsIndicator struct {
 // Menu label when Gnomon is closing
 func StopLabel() {
 	if Assets.Gnomes_sync != nil {
-		Assets.Gnomes_sync.Text = (" Putting Gnomon to Sleep")
+		Assets.Gnomes_sync.Text = " Putting Gnomon to Sleep"
 		Assets.Gnomes_sync.Refresh()
 	}
 }

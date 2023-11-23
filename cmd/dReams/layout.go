@@ -529,19 +529,20 @@ func placeWall(intros []menu.IntroText) *container.Split {
 
 	connect_tabs.OnSelected = func(ti *container.TabItem) {
 		if ti.Text == "Gnomon" {
-			if rpc.Daemon.IsConnected() || menu.Gnomes.IsInitialized() {
+			if rpc.Daemon.IsConnected() {
 				if menu.Gnomes.Start || menu.Gnomes.IsScanning() {
 					dialog.NewInformation("Gnomon Syncing", "Please wait", dReams.Window).Show()
-				} else {
+					connect_tabs.SelectIndex(0)
+				} else if menu.Gnomes.IsInitialized() {
 					dialog.NewConfirm("Gnomon Running", "Shut down Gnomon to make changes", func(b bool) {
 						if b {
 							daemon_cont.Content.(*widget.SelectEntry).SetText("")
-							time.Sleep(time.Second)
+							daemon_check_cont.Objects[0].(*widget.Check).SetChecked(false)
+						} else {
+							connect_tabs.SelectIndex(0)
 						}
 					}, dReams.Window).Show()
 				}
-
-				connect_tabs.DisableIndex(1)
 
 				return
 			}

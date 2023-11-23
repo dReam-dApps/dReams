@@ -39,6 +39,14 @@ type gnomon struct {
 
 var Gnomes gnomon
 
+// Returns Status string from Indexer
+func (g *gnomon) Status() string {
+	g.Lock()
+	defer g.Unlock()
+
+	return g.Indexer.Status
+}
+
 // Shut down Gnomes.Indexer
 //   - tag for log print
 func (g *gnomon) Stop(tag string) {

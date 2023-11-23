@@ -333,13 +333,24 @@ func refreshPriceDisplay(c bool) {
 func menuRefresh(offset int) {
 	if dReams.OnTab("Menu") && menu.Gnomes.IsInitialized() {
 		index := menu.Gnomes.Indexer.LastIndexedHeight
-		if index < menu.Gnomes.Indexer.ChainHeight-4 || (!menu.Gnomes.HasIndex(uint64(menu.ReturnAssetCount())) && !menu.Gnomes.HasChecked()) {
+		switch menu.Gnomes.Status() {
+		case "initializing":
+			menu.Assets.Gnomes_sync.Text = " Gnomon Initializing"
+		case "fastsyncing":
+			menu.Assets.Gnomes_sync.Text = " Gnomon Fastsyncing..."
+		case "closing":
+			menu.Assets.Gnomes_sync.Text = " Gnomon Closing..."
+		case "indexed":
+			if !menu.Gnomes.HasIndex(uint64(menu.ReturnAssetCount())) && !menu.Gnomes.HasChecked() {
+				menu.Assets.Gnomes_sync.Text = " Gnomon Syncing..."
+			} else {
+				menu.Assets.Gnomes_sync.Text = " Gnomon Synced"
+			}
+		case "indexing":
 			menu.Assets.Gnomes_sync.Text = " Gnomon Syncing..."
-			menu.Assets.Gnomes_sync.Refresh()
-		} else {
-			menu.Assets.Gnomes_sync.Text = ("")
-			menu.Assets.Gnomes_sync.Refresh()
 		}
+		menu.Assets.Gnomes_sync.Refresh()
+
 		go refreshGnomonDisplay(int(index), 1)
 		go refreshIndexDisplay(true)
 
@@ -397,7 +408,7 @@ func menuRefresh(offset int) {
 //   - Pass false gc for rechecks
 func checkDreamsNFAs(gc bool, scids map[string]string) {
 	if menu.Gnomes.IsReady() && !gc {
-		menu.Assets.Gnomes_sync.Text = (" Checking for Assets")
+		menu.Assets.Gnomes_sync.Text = " Checking for Assets"
 		menu.Assets.Gnomes_sync.Refresh()
 		if scids == nil {
 			scids = menu.Gnomes.GetAllOwnersAndSCIDs()
@@ -453,6 +464,9 @@ func checkNFAOwner(scid string) {
 					} else if check == "DBC" {
 						holdero.Settings.AddAvatar(header[0], owner[0])
 						menu.Assets.Add(header[0], scid)
+						if menu.DappEnabled("Duels") {
+							duel.AddItemsToInventory(scid, header[0], owner[0], collection[0])
+						}
 					} else if collection[0] == "Dorblings NFA" {
 						holdero.Settings.AddAvatar(header[0], owner[0])
 						menu.Assets.Add(header[0], scid)
@@ -754,7 +768,7 @@ func daemonConnectedBox() fyne.Widget {
 				menu.Gnomes.Trim = false
 			}
 
-			menu.Assets.Gnomes_sync.Text = (" Starting Gnomon")
+			menu.Assets.Gnomes_sync.Text = " Starting Gnomon"
 			menu.Assets.Gnomes_sync.Refresh()
 			filters := gnomonFilters()
 			menu.StartGnomon("dReams", menu.Gnomes.DBType, filters, menu.Control.G45_count+menu.Control.NFA_count, menu.Control.NFA_count, menu.G45Index)
@@ -768,7 +782,7 @@ func daemonConnectedBox() fyne.Widget {
 		if !b {
 			go menu.StopLabel()
 			menu.Gnomes.Stop("dReams")
-			menu.Assets.Gnomes_sync.Text = (" Gnomon is Sleeping")
+			menu.Assets.Gnomes_sync.Text = " Gnomon is Sleeping"
 			menu.Assets.Gnomes_sync.Refresh()
 		}
 	})
