@@ -41,8 +41,8 @@ var Gnomes gnomon
 
 // Returns Status string from Indexer
 func (g *gnomon) Status() string {
-	g.Lock()
-	defer g.Unlock()
+	g.RLock()
+	defer g.RUnlock()
 
 	return g.Indexer.Status
 }
