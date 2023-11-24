@@ -206,10 +206,18 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 		}
 
 		wait = true
-		logger.Println("[dReams] Closing dApps")
-		dReams.CloseAllDapps()
 		rpc.Wallet.Connected(false)
 		rpc.Wallet.Height = 0
+
+		status_text := canvas.NewText("Closing dApps...", color.NRGBA{R: 0xf0, G: 0xf0, B: 0xf0, A: 0xaa})
+		status_text.TextSize = 21
+		status_text.Alignment = fyne.TextAlignCenter
+
+		dReams.Window.Content().(*fyne.Container).Objects[1] = container.NewStack(status_text, widget.NewProgressBarInfinite())
+		dReams.Window.Content().(*fyne.Container).Objects[1].Refresh()
+
+		logger.Println("[dReams] Closing dApps")
+		dReams.CloseAllDapps()
 		disconnected()
 		menu.Control.Dapp_list = enabled_dapps
 		dReams.SetChannels(menu.EnabledDappCount())
@@ -217,6 +225,8 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 		menu.Gnomes.Checked(false)
 		bundle.AppColor = skin_choice
 		gnomon_gif.Stop()
+		status_text.Text = "Loading dApps..."
+		status_text.Refresh()
 		go func() {
 			time.Sleep(1500 * time.Millisecond)
 			menu.CloseAppSignal(false)

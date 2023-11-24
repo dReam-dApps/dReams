@@ -5,12 +5,12 @@ go 1.20
 require (
 	fyne.io/fyne/v2 v2.4.1
 	fyne.io/x/fyne v0.0.0-20230411205836-1ca0ead20763
-	github.com/SixofClubsss/Baccarat v0.0.0-20230829135714-a0bc2039e207
-	github.com/SixofClubsss/Duels v0.0.0-20231116204202-a3d8968d2797
-	github.com/SixofClubsss/Grokked v0.0.0-20231112173751-07ce7cb648ac
-	github.com/SixofClubsss/Holdero v0.0.0-20231120201503-f3fafcd2b017
-	github.com/SixofClubsss/Iluma v0.0.0-20230829150341-8df39218e616
-	github.com/SixofClubsss/dPrediction v0.0.0-20230829202710-cd17544c73d6
+	github.com/SixofClubsss/Baccarat v0.0.0-20231123193326-2f1c9dbf7ee7
+	github.com/SixofClubsss/Duels v0.0.0-20231123171158-cecf93683946
+	github.com/SixofClubsss/Grokked v0.0.0-20231123171424-d684037a73ee
+	github.com/SixofClubsss/Holdero v0.0.0-20231123190308-bd1072cc0744
+	github.com/SixofClubsss/Iluma v0.0.0-20231123190505-127a4cf2202f
+	github.com/SixofClubsss/dPrediction v0.0.0-20231123190924-a2bd50ea6eb3
 	github.com/SixofClubsss/derbnbDesktop v0.0.0-20231011191003-4beb6921010e
 	github.com/civilware/Gnomon v0.0.0-20231122200651-d74a0cfd22ca
 	github.com/deroproject/derohe v0.0.0-20230604143809-765b2db1f482
