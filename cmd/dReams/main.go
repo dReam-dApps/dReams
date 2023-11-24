@@ -29,8 +29,7 @@ func main() {
 	n := runtime.NumCPU()
 	runtime.GOMAXPROCS(n)
 
-	v := flags()
-	stamp(v)
+	flags()
 	dReams.App = app.NewWithID(App_ID)
 	dReams.App.Settings().SetTheme(bundle.DeroTheme(bundle.AppColor))
 	dReams.Window = dReams.App.NewWindow(App_Name)

@@ -469,7 +469,7 @@ func place() *fyne.Container {
 		tabs.Append(container.NewTabItem("Cli", startTerminal()))
 	}
 
-	tabs.Append(container.NewTabItem("Log", rpc.SessionLog()))
+	tabs.Append(container.NewTabItem("Log", rpc.SessionLog(App_Name)))
 
 	var fs_button *widget.Button
 	fs_button = widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "viewFullScreen"), func() {

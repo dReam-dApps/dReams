@@ -6,7 +6,6 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
-	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -58,12 +57,14 @@ Options:
   --dbtype=<boltdb>     Gnomon option,  defines type of database 'gravdb' or 'boltdb'.`
 
 // Set opts when starting dReams
-func flags() (version string) {
-	version = rpc.DREAMSv
-	arguments, err := docopt.ParseArgs(command_line, nil, version)
-
+func flags() {
+	arguments, err := docopt.ParseArgs(command_line, nil, rpc.DREAMSv)
 	if err != nil {
 		logger.Fatalf("Error while parsing arguments: %s\n", err)
+	}
+
+	if dReams.OS() == "linux" {
+		fmt.Println(string(bundle.ResourceStampTxt.StaticContent))
 	}
 
 	if arguments["--dbtype"] != nil {
@@ -175,14 +176,6 @@ func exitTerminal() {
 	if cli.term != nil {
 		cli.term.Exit()
 	}
-}
-
-// Terminal start info, ascii art for linux
-func stamp(v string) {
-	if dReams.OS() == "linux" {
-		fmt.Println(string(bundle.ResourceStampTxt.StaticContent))
-	}
-	logger.Println("[dReams]", v, runtime.GOOS, runtime.GOARCH)
 }
 
 // Make system tray with opts
