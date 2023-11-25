@@ -16,7 +16,6 @@ import (
 	"github.com/SixofClubsss/Holdero/holdero"
 	"github.com/SixofClubsss/Iluma/tarot"
 	"github.com/SixofClubsss/dPrediction/prediction"
-	"github.com/SixofClubsss/derbnbDesktop/derbnb"
 	dreams "github.com/dReam-dApps/dReams"
 	"github.com/dReam-dApps/dReams/bundle"
 	"github.com/dReam-dApps/dReams/dwidget"
@@ -371,7 +370,7 @@ func place() *fyne.Container {
 	intros = append(intros, menu.MakeMenuIntro(baccarat.DreamsMenuIntro())...)
 	intros = append(intros, menu.MakeMenuIntro(prediction.DreamsMenuIntro())...)
 	intros = append(intros, menu.MakeMenuIntro(tarot.DreamsMenuIntro())...)
-	intros = append(intros, menu.MakeMenuIntro(derbnb.DreamsMenuIntro())...)
+	//intros = append(intros, menu.MakeMenuIntro(derbnb.DreamsMenuIntro())...)
 	intros = append(intros, menu.MakeMenuIntro(duel.DreamsMenuIntro())...)
 
 	// dReams menu tabs
@@ -452,9 +451,10 @@ func place() *fyne.Container {
 		tabs.Append(container.NewTabItem("Iluma", tarot.LayoutAllItems(&dReams)))
 	}
 
-	if menu.DappEnabled("DerBnb") {
-		tabs.Append(container.NewTabItem("DerBnb", derbnb.LayoutAllItems(true, &dReams)))
-	}
+	// // Under development
+	// if menu.DappEnabled("DerBnb") {
+	// 	tabs.Append(container.NewTabItem("DerBnb", derbnb.LayoutAllItems(true, &dReams)))
+	// }
 
 	if menu.DappEnabled("Duels") {
 		tabs.Append(container.NewTabItem("Duels", duel.LayoutAllItems(menu.Assets.Asset_map, &dReams)))

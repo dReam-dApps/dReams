@@ -726,12 +726,12 @@ func gnomonFilters() (filter []string) {
 		filter = append(filter, ratings)
 	}
 
-	if menu.DappEnabled("DerBnb") {
-		bnb := rpc.GetSCCode(rpc.DerBnbSCID)
-		if bnb != "" {
-			filter = append(filter, bnb)
-		}
-	}
+	// if menu.DappEnabled("DerBnb") {
+	// 	bnb := rpc.GetSCCode(rpc.DerBnbSCID)
+	// 	if bnb != "" {
+	// 		filter = append(filter, bnb)
+	// 	}
+	// }
 
 	if menu.DappEnabled("Duels") {
 		duels := rpc.GetSCCode(duel.DUELSCID)
