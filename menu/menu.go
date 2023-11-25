@@ -136,11 +136,18 @@ func ReadDreamsConfig(tag string) (saved dreams.SaveData) {
 			config.Close()
 		}
 
+		Gnomes.Para = 1
 		Gnomes.DBType = "boltdb"
+		Control.Dapp_list = make(map[string]bool)
 		Control.Enabled_assets = make(map[string]bool)
 
 		return
 	}
+
+	Gnomes.Para = 1
+	Gnomes.DBType = "boltdb"
+	Control.Dapp_list = make(map[string]bool)
+	Control.Enabled_assets = make(map[string]bool)
 
 	file, err := os.ReadFile("config/config.json")
 	if err != nil {
@@ -154,20 +161,16 @@ func ReadDreamsConfig(tag string) (saved dreams.SaveData) {
 	}
 
 	bundle.AppColor = saved.Skin
-	Control.Dapp_list = make(map[string]bool)
 	Control.Dapp_list = saved.Dapps
 
-	Control.Enabled_assets = make(map[string]bool)
 	if saved.Assets != nil {
 		Control.Enabled_assets = saved.Assets
 	}
 
-	Gnomes.DBType = "boltdb"
 	if saved.DBtype == "gravdb" {
 		Gnomes.DBType = saved.DBtype
 	}
 
-	Gnomes.Para = 1
 	if saved.Para > 0 && saved.Para < 6 {
 		Gnomes.Para = saved.Para
 	}
