@@ -58,7 +58,7 @@ Options:
 
 // Set opts when starting dReams
 func flags() {
-	arguments, err := docopt.ParseArgs(command_line, nil, rpc.DREAMSv)
+	arguments, err := docopt.ParseArgs(command_line, nil, rpc.Version().String())
 	if err != nil {
 		logger.Fatalf("Error while parsing arguments: %s\n", err)
 	}

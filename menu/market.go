@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"image/color"
-	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -1239,7 +1238,6 @@ func setHeaderConfirm(name, desc, icon, scid string, obj []fyne.CanvasObject, re
 //   - quit for exit chan
 //   - connected box for DeroRpcEntries
 func RunNFAMarket(tag string, quit, done chan struct{}, connect_box *dwidget.DeroRpcEntries) {
-	logger.Printf("[%s] %s %s %s\n", tag, rpc.DREAMSv, runtime.GOOS, runtime.GOARCH)
 	time.Sleep(6 * time.Second)
 	ticker := time.NewTicker(3 * time.Second)
 	offset := 0

@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/blang/semver/v4"
 	"github.com/deroproject/derohe/cryptography/crypto"
 	"github.com/deroproject/derohe/rpc"
 	"github.com/ybbus/jsonrpc/v3"
@@ -22,6 +23,12 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 )
+
+var dreamsV = semver.MustParse("0.10.1-dev") //"0.10.1d"
+
+func Version() semver.Version {
+	return dreamsV
+}
 
 // Prints session log entry to Wallet.LogEntry and stdout
 func PrintLog(format string, a ...any) {
@@ -45,12 +52,22 @@ func PrintError(format string, a ...any) {
 	logger.Errorln(text)
 }
 
-// Make gui log for txs with save function
-func SessionLog(tag string) *fyne.Container {
-	logger.Printf("[%s] %s OS: %s ARCH: %s\n", tag, DREAMSv, runtime.GOOS, runtime.GOARCH)
+// Make gui log for txs with save function.
+// print out for dApp version if being imported
+func SessionLog(tag string, dapp semver.Version) *fyne.Container {
 	Wallet.LogEntry = widget.NewMultiLineEntry()
 	Wallet.LogEntry.Disable()
-	Wallet.LogEntry.SetText(fmt.Sprintf("%s  [%s] %s OS: %s ARCH: %s", time.Now().Format("2006/01/02 15:04:05"), tag, DREAMSv, runtime.GOOS, runtime.GOARCH))
+
+	if tag == "dReams" || tag == "NFA Market" {
+		text := fmt.Sprintf("[%s] %s  OS: %s  ARCH: %s", tag, Version(), runtime.GOOS, runtime.GOARCH)
+		logger.Println(text)
+		Wallet.LogEntry.SetText(fmt.Sprintf("%s  %s", time.Now().Format("2006/01/02 15:04:05"), text))
+	} else {
+		text := fmt.Sprintf("[%s] %s  OS: %s  ARCH: %s  DREAMS: %s", tag, dapp.String(), runtime.GOOS, runtime.GOARCH, Version())
+		logger.Println(text)
+		Wallet.LogEntry.SetText(fmt.Sprintf("%s  %s", time.Now().Format("2006/01/02 15:04:05"), text))
+	}
+
 	button := widget.NewButton("Save", func() {
 		file_name := fmt.Sprintf("Log-%s", time.Now().Format("2006-01-02-15:04:05"))
 		if f, err := os.Create(file_name); err == nil {

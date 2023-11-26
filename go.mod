@@ -11,6 +11,7 @@ require (
 	github.com/SixofClubsss/Holdero v0.0.0-20231125061805-ad52a0b5321f
 	github.com/SixofClubsss/Iluma v0.0.0-20231125005045-506ae7d876bb
 	github.com/SixofClubsss/dPrediction v0.0.0-20231125032416-5053e7222c76
+	github.com/blang/semver/v4 v4.0.0
 	github.com/civilware/Gnomon v0.0.0-20231122200651-d74a0cfd22ca
 	github.com/deroproject/derohe v0.0.0-20230604143809-765b2db1f482
 	github.com/fyne-io/terminal v0.0.0-20230223114940-c76e408adbd3
@@ -24,7 +25,6 @@ require (
 	fyne.io/systray v1.10.1-0.20230722100817-88df1e0ffa9a // indirect
 	github.com/ActiveState/termtest/conpty v0.5.0 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78 // indirect
-	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/caarlos0/env/v6 v6.10.1 // indirect
 	github.com/cespare/xxhash v1.1.0 // indirect
 	github.com/creachadair/jrpc2 v0.43.0 // indirect
