@@ -304,6 +304,7 @@ func (g *gnomon) ControlPanel(w fyne.Window) *fyne.Container {
 		g.Trim = true
 	})
 	trim.Horizontal = true
+	trim.SetSelected(strconv.FormatBool(g.Trim))
 
 	para := widget.NewSelect([]string{"1", "2", "3", "4", "5"}, func(s string) {
 		if i, err := strconv.ParseInt(s, 10, 64); err == nil {

@@ -90,17 +90,17 @@ type assetObjects struct {
 var Assets assetObjects
 var Market marketObjects
 var dReamsNFAs = []assetCount{
-	{name: "AZYPC", count: 23},
-	{name: "AZYPCB", count: 53},
-	{name: "AZYDS", count: 10},
-	{name: "DBC", count: 8},
-	{name: "SIXPC", count: 9},
-	{name: "SIXPCB", count: 10},
-	{name: "SIXART", count: 17},
-	{name: "High Strangeness", count: 376},
-	{name: "Dorblings NFA", count: 110},
-	{name: "Dero Desperados", count: 777},
-	{name: "Desperado Guns", count: 777},
+	{name: "AZY-Playing card decks", count: 23, creator: AZY_mint},
+	{name: "AZY-Playing card backs", count: 53, creator: AZY_mint},
+	{name: "AZY-Deroscapes", count: 10, creator: AZY_mint},
+	{name: "Death By Cupcake", count: 8, creator: DCB_mint},
+	{name: "SIXPC", count: 9, creator: SIX_mint},
+	{name: "SIXPCB", count: 10, creator: SIX_mint},
+	{name: "SIXART", count: 17, creator: SIX_mint},
+	{name: "High Strangeness", count: 376, creator: HS_mint},
+	{name: "Dorblings NFA", count: 110, creator: Dorbling_mint},
+	{name: "Dero Desperados", count: 777, creator: Desperado_mint},
+	{name: "Desperado Guns", count: 777, creator: Desperado_mint},
 	// TODO DLAMPP count
 	// {name: "DLAMPP ", count: ?},
 }
@@ -884,9 +884,7 @@ func PlaceMarket() *container.Split {
 func ReturnEnabledNFAs(assets map[string]bool) (filters []string) {
 	for name, enabled := range assets {
 		if enabled {
-			if isDreamsNfaName(name) {
-				filters = append(filters, fmt.Sprintf(`330 STORE("nameHdr", "%s`, name))
-			} else if isDreamsNfaCollection(name) {
+			if IsDreamsNFACollection(name) {
 				filters = append(filters, fmt.Sprintf(`450 STORE("collection", "%s`, name))
 			}
 		}
@@ -1048,9 +1046,7 @@ func returnEnabledNames(assets map[string]bool) (text string) {
 	var names []string
 	for name, enabled := range assets {
 		if enabled {
-			if isDreamsNfaName(name) {
-				names = append(names, name)
-			} else if isDreamsNfaCollection(name) {
+			if IsDreamsNFACollection(name) {
 				names = append(names, name)
 			}
 		}

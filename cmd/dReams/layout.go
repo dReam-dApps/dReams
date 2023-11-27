@@ -541,31 +541,25 @@ func placeWall(intros []menu.IntroText) *container.Split {
 		if ti.Text == "Gnomon" {
 			if rpc.Daemon.IsConnected() {
 				if menu.Gnomes.Start || menu.Gnomes.IsScanning() {
-					dialog.NewInformation("Gnomon Syncing", "Please wait", dReams.Window).Show()
+					dialog.NewInformation("Gnomon Syncing", fmt.Sprintf("%s, please wait...", menu.Gnomes.Status()), dReams.Window).Show()
 					connect_tabs.SelectIndex(0)
 				} else if menu.Gnomes.IsInitialized() {
 					dialog.NewConfirm("Gnomon Running", "Shut down Gnomon to make changes", func(b bool) {
 						if b {
 							daemon_cont.Content.(*widget.SelectEntry).SetText("")
 							daemon_check_cont.Objects[0].(*widget.Check).SetChecked(false)
+							connect_tabs.Items[1].Content.(*fyne.Container).Objects[0].(*fyne.Container).Objects[0].(*widget.Form).Items[2].Widget.(*widget.RadioGroup).SetSelected("true")
+							menu.Gnomes.Trim = true
 						} else {
 							connect_tabs.SelectIndex(0)
 						}
 					}, dReams.Window).Show()
+				} else {
+					connect_tabs.Items[1].Content.(*fyne.Container).Objects[0].(*fyne.Container).Objects[0].(*widget.Form).Items[2].Widget.(*widget.RadioGroup).SetSelected("true")
+					menu.Gnomes.Trim = true
 				}
-
-				return
 			}
-
-			connect_tabs.Selected().Content.(*fyne.Container).Objects[0].(*fyne.Container).Objects[0].(*widget.Form).Items[2].Widget.(*widget.RadioGroup).SetSelected("true")
-			connect_tabs.Selected().Content.(*fyne.Container).Objects[0].(*fyne.Container).Objects[0].(*widget.Form).Items[2].Widget.(*widget.RadioGroup).Disable()
-			connect_tabs.Selected().Content.(*fyne.Container).Objects[0].(*fyne.Container).Objects[0].(*widget.Form).Items[1].Widget.(*widget.RadioGroup).Disable()
-			menu.Gnomes.Trim = true
-
-			return
 		}
-
-		connect_tabs.EnableIndex(1)
 	}
 
 	menu_top := container.NewHSplit(container.NewStack(bundle.Alpha120, menu.IntroTree(intros)), connect_tabs)

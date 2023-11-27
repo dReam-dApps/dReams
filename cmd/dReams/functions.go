@@ -441,8 +441,13 @@ func checkNFAOwner(scid string) {
 			owner, _ := menu.Gnomes.GetSCIDValuesByKey(scid, "owner")
 			file, _ := menu.Gnomes.GetSCIDValuesByKey(scid, "fileURL")
 			collection, _ := menu.Gnomes.GetSCIDValuesByKey(scid, "collection")
-			if owner != nil && file != nil && collection != nil {
+			creator, _ := menu.Gnomes.GetSCIDValuesByKey(scid, "creatorAddr")
+			if owner != nil && file != nil && collection != nil && creator != nil {
 				if owner[0] == rpc.Wallet.Address && menu.ValidNfa(file[0]) {
+					if !menu.IsDreamsNFACreator(creator[0]) {
+						return
+					}
+
 					check := strings.Trim(header[0], "0123456789")
 					if check == "AZYDS" || check == "SIXART" {
 						dreams.Theme.Add(header[0], owner[0])

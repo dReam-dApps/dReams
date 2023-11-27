@@ -28,6 +28,15 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
+const (
+	SIX_mint       = "dero1qy4ascka9rtspjvcyj6t8maazaay8t9udtt5nper3mukqkx2qtvyxqgflkpwp"
+	AZY_mint       = "dero1qyfk5w2rvqpl9kzfd7fpteyp2k362y6audydcu2qrgcmj6vtasfkgqq9704gn"
+	DCB_mint       = "dero1qy02stluwgh5aaawkmugqh47krtfzcq6f88jv2ydf6dkfupjca4gzqqwsmdzf"
+	HS_mint        = "dero1qy8p8cw8hr8dlxyg9xjxzlxf2zznwshcxk98ad688csgmk44y9kzyqqt9g2m0"
+	Dorbling_mint  = "dero1qy2tkfgpapjsgev8m9rs25209ajc6kcm42vzt2fapgk3ngmtc2guzqq52eq2r"
+	Desperado_mint = "dero1qy0ydkcwuf7nvh6938jpalt5snsj2atgmdyms67rd05whuy8a2hvzqg46gh5f"
+)
+
 type mintConfig struct {
 	Collection  string `json:"collection"`
 	Update      string `json:"update"`

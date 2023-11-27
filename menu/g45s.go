@@ -10,8 +10,9 @@ const (
 )
 
 type assetCount struct {
-	name  string
-	count int
+	name    string
+	count   int
+	creator string
 }
 
 // Dero Seals metadata struct
@@ -55,8 +56,10 @@ var dReamsG45s = []assetCount{
 
 // dReams G45 collections
 func IsDreamsG45(check string) bool {
-	if check == "Dero Seals" || check == "Dero A-Team" || check == "Dero Degens" {
-		return true
+	for _, g := range dReamsG45s {
+		if g.name == check {
+			return true
+		}
 	}
 
 	return false

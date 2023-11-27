@@ -582,19 +582,23 @@ func FindNfaListings(assets map[string]string) {
 	}
 }
 
-// dReams NFA asset name
-func isDreamsNfaName(check string) bool {
-	if check == "AZYDS" || check == "DBC" || check == "AZYPC" || check == "SIXPC" || check == "AZYPCB" || check == "SIXPCB" || check == "SIXART" {
-		return true
+// Check if string is dReams NFA collection
+func IsDreamsNFACollection(collection string) bool {
+	for _, c := range dReamsNFAs {
+		if c.name == collection {
+			return true
+		}
 	}
 
 	return false
 }
 
-// dReams NFA collections
-func isDreamsNfaCollection(check string) bool {
-	if check == "Dorblings NFA" || check == "Dero Desperados" || check == "Desperado Guns" || check == "High Strangeness" {
-		return true
+// Check if string is dReams NFA creator address
+func IsDreamsNFACreator(creator string) bool {
+	for _, c := range dReamsNFAs {
+		if c.creator == creator {
+			return true
+		}
 	}
 
 	return false
@@ -633,8 +637,7 @@ func checkNfaAuctionListing(scid string) (asset string, owned, expired bool) {
 			desc, _ := Gnomes.GetSCIDValuesByKey(scid, "descrHdr")
 			if listType != nil && header != nil && coll != nil && desc != nil {
 				if Market.DreamsFilter {
-					check := strings.Trim(header[0], "0123456789")
-					if isDreamsNfaCollection(coll[0]) || isDreamsNfaName(check) {
+					if IsDreamsNFACollection(coll[0]) {
 						if listType[0] == "auction" {
 							desc_check := TrimStringLen(desc[0], 66)
 							asset = coll[0] + "   " + header[0] + "   " + desc_check + "   " + scid
@@ -697,8 +700,7 @@ func checkNfaBuyListing(scid string) (asset string, owned, expired bool) {
 			desc, _ := Gnomes.GetSCIDValuesByKey(scid, "descrHdr")
 			if listType != nil && header != nil && coll != nil && desc != nil {
 				if Market.DreamsFilter {
-					check := strings.Trim(header[0], "0123456789")
-					if isDreamsNfaCollection(coll[0]) || isDreamsNfaName(check) {
+					if IsDreamsNFACollection(coll[0]) {
 						if listType[0] == "sale" {
 							desc_check := TrimStringLen(desc[0], 66)
 							asset = coll[0] + "   " + header[0] + "   " + desc_check + "   " + scid
