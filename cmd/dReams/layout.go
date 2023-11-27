@@ -392,7 +392,7 @@ func place() *fyne.Container {
 			menu_tabs.Selected().Content.(*container.Split).Leading.(*container.Split).Trailing.(*fyne.Container).Objects[1].(*container.AppTabs).SelectIndex(0)
 		case "Market":
 			dReams.SetSubTab("Market")
-			go menu.FindNfaListings(nil)
+			go menu.FindNFAListings(nil)
 			menu.Market.Cancel_button.Hide()
 			menu.Market.Close_button.Hide()
 			menu.Market.Auction_list.Refresh()

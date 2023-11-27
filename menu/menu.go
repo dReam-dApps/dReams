@@ -340,7 +340,7 @@ func IndexEntry(window_icon fyne.Resource, w fyne.Window) fyne.CanvasObject {
 
 	Control.Claim_button = widget.NewButton("Claim NFA", func() {
 		if len(Assets.Index_entry.Text) == 64 {
-			if isNfa(Assets.Index_entry.Text) {
+			if isNFA(Assets.Index_entry.Text) {
 				if tx := rpc.ClaimNFA(Assets.Index_entry.Text); tx != "" {
 					go ShowTxDialog("Claim NFA", fmt.Sprintf("TX: %s", tx), tx, 3*time.Second, w)
 				} else {
@@ -448,7 +448,7 @@ func sendAssetMenu(window_icon fyne.Resource) {
 		Control.send_open = false
 		if rpc.Wallet.IsConnected() {
 			Control.Send_asset.Show()
-			if isNfa(Control.Viewing_asset) {
+			if isNFA(Control.Viewing_asset) {
 				Control.List_button.Show()
 			}
 		}
@@ -596,7 +596,7 @@ func listMenu(window_icon fyne.Resource) {
 		Control.List_open = false
 		if rpc.Wallet.IsConnected() {
 			Control.Send_asset.Show()
-			if isNfa(Control.Viewing_asset) {
+			if isNFA(Control.Viewing_asset) {
 				Control.List_button.Show()
 			}
 		}
@@ -721,7 +721,7 @@ func listMenu(window_icon fyne.Resource) {
 					Control.List_open = false
 					if rpc.Wallet.IsConnected() {
 						Control.Send_asset.Show()
-						if isNfa(Control.Viewing_asset) {
+						if isNFA(Control.Viewing_asset) {
 							Control.List_button.Show()
 						}
 					}
@@ -746,7 +746,7 @@ func listMenu(window_icon fyne.Resource) {
 	go func() {
 		for rpc.IsReady() && Control.List_open {
 			time.Sleep(2 * time.Second)
-			if !confirm_open && isNfa(Control.Viewing_asset) {
+			if !confirm_open && isNFA(Control.Viewing_asset) {
 				icon = Assets.Icon
 				aw_content.Objects[2] = menuAssetImg(&icon, bundle.ResourceAvatarFramePng)
 				if viewing_asset != Control.Viewing_asset {

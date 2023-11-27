@@ -356,7 +356,7 @@ func menuRefresh(offset int) {
 		}
 
 		if offset%3 == 0 && dReams.OnSubTab("Market") && !dReams.IsWindows() && !menu.ClosingApps() {
-			menu.FindNfaListings(nil)
+			menu.FindNFAListings(nil)
 		}
 	}
 
@@ -367,10 +367,10 @@ func menuRefresh(offset int) {
 	if len(menu.Market.Viewing) == 64 && rpc.Wallet.IsConnected() {
 		if menu.Market.Tab == "Buy" {
 			menu.GetBuyNowDetails(menu.Market.Viewing)
-			go menu.RefreshNfaImages()
+			go menu.RefreshNFAImages()
 		} else {
 			menu.GetAuctionDetails(menu.Market.Viewing)
-			go menu.RefreshNfaImages()
+			go menu.RefreshNFAImages()
 		}
 	}
 
@@ -443,7 +443,7 @@ func checkNFAOwner(scid string) {
 			collection, _ := menu.Gnomes.GetSCIDValuesByKey(scid, "collection")
 			creator, _ := menu.Gnomes.GetSCIDValuesByKey(scid, "creatorAddr")
 			if owner != nil && file != nil && collection != nil && creator != nil {
-				if owner[0] == rpc.Wallet.Address && menu.ValidNfa(file[0]) {
+				if owner[0] == rpc.Wallet.Address && menu.ValidNFA(file[0]) {
 					if !menu.IsDreamsNFACreator(creator[0]) {
 						return
 					}

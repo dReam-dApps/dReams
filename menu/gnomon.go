@@ -277,7 +277,7 @@ func GnomonState(config bool, scan func(map[string]string)) {
 
 					CheckWalletNames(rpc.Wallet.Address)
 					scan(contracts)
-					FindNfaListings(contracts)
+					FindNFAListings(contracts)
 
 					Gnomes.Checked(true)
 					Gnomes.Scanning(false)
@@ -325,7 +325,7 @@ func CheckAllNFAs(gc bool, scids map[string]string) {
 				owner, _ := Gnomes.GetSCIDValuesByKey(sc, "owner")
 				file, _ := Gnomes.GetSCIDValuesByKey(sc, "fileURL")
 				if owner != nil && file != nil {
-					if owner[0] == rpc.Wallet.Address && ValidNfa(file[0]) {
+					if owner[0] == rpc.Wallet.Address && ValidNFA(file[0]) {
 						assets = append(assets, header[0]+"   "+sc)
 					}
 				}
@@ -357,7 +357,7 @@ func GetSCHeaders(scid string) []string {
 }
 
 // Check if SCID is a NFA
-func isNfa(scid string) bool {
+func isNFA(scid string) bool {
 	if Gnomes.IsReady() {
 		artAddr, _ := Gnomes.GetSCIDValuesByKey(scid, "artificerAddr")
 		if artAddr != nil {
@@ -369,7 +369,7 @@ func isNfa(scid string) bool {
 
 // Check if SCID is a valid NFA
 //   - file != "-"
-func ValidNfa(file string) bool {
+func ValidNFA(file string) bool {
 	return file != "-"
 }
 
@@ -531,7 +531,7 @@ func TrimStringLen(str string, l int) string {
 
 // Scan index for any active NFA listings
 //   - Pass assets from db store, can be nil arg
-func FindNfaListings(assets map[string]string) {
+func FindNFAListings(assets map[string]string) {
 	if Gnomes.IsReady() && rpc.IsReady() {
 		auction := []string{" Collection,  Name,  Description,  SCID:"}
 		buy_now := []string{" Collection,  Name,  Description,  SCID:"}
@@ -545,7 +545,7 @@ func FindNfaListings(assets map[string]string) {
 				return
 			}
 
-			a, owned, expired := checkNfaAuctionListing(sc)
+			a, owned, expired := checkNFAAuctionListing(sc)
 
 			if a != "" && !expired {
 				auction = append(auction, a)
@@ -555,7 +555,7 @@ func FindNfaListings(assets map[string]string) {
 				my_list = append(my_list, a)
 			}
 
-			b, owned, expired := checkNfaBuyListing(sc)
+			b, owned, expired := checkNFABuyListing(sc)
 
 			if b != "" && !expired {
 				buy_now = append(buy_now, b)
@@ -628,7 +628,7 @@ func CheckNFAListingType(scid string) (list int, addr string) {
 
 // Check if NFA SCID is listed for auction
 //   - Market.DreamsFilter false for all NFA listings
-func checkNfaAuctionListing(scid string) (asset string, owned, expired bool) {
+func checkNFAAuctionListing(scid string) (asset string, owned, expired bool) {
 	if Gnomes.IsReady() {
 		if creator, _ := Gnomes.GetSCIDValuesByKey(scid, "creatorAddr"); creator != nil {
 			listType, _ := Gnomes.GetSCIDValuesByKey(scid, "listType")
@@ -691,7 +691,7 @@ func checkNfaAuctionListing(scid string) (asset string, owned, expired bool) {
 
 // Check if NFA SCID is listed as buy now
 //   - Market.DreamsFilter false for all NFA listings
-func checkNfaBuyListing(scid string) (asset string, owned, expired bool) {
+func checkNFABuyListing(scid string) (asset string, owned, expired bool) {
 	if Gnomes.IsReady() {
 		if creator, _ := Gnomes.GetSCIDValuesByKey(scid, "creatorAddr"); creator != nil {
 			listType, _ := Gnomes.GetSCIDValuesByKey(scid, "listType")
@@ -764,7 +764,7 @@ func SearchNFAsBy(by int, prefix string) (results []string) {
 			}
 
 			if file, _ := Gnomes.GetSCIDValuesByKey(sc, "fileURL"); file != nil {
-				if ValidNfa(file[0]) {
+				if ValidNFA(file[0]) {
 					if name, _ := Gnomes.GetSCIDValuesByKey(sc, "nameHdr"); name != nil {
 						coll, _ := Gnomes.GetSCIDValuesByKey(sc, "collection")
 						desc, _ := Gnomes.GetSCIDValuesByKey(sc, "descrHdr")
@@ -796,7 +796,7 @@ func SearchNFAsBy(by int, prefix string) (results []string) {
 }
 
 // Get NFA image files
-func GetNfaImages(scid string) {
+func GetNFAImages(scid string) {
 	if Gnomes.IsReady() && len(scid) == 64 {
 		name, _ := Gnomes.GetSCIDValuesByKey(scid, "nameHdr")
 		icon, _ := Gnomes.GetSCIDValuesByKey(scid, "iconURLHdr")

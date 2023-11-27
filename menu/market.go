@@ -136,7 +136,7 @@ func BidBuyConfirm(scid string, amt uint64, b int, obj *container.Split, reset f
 	amt_str := fmt.Sprintf("%.5f", f/100000)
 	switch b {
 	case 0:
-		listing, _, _ := checkNfaAuctionListing(scid)
+		listing, _, _ := checkNFAAuctionListing(scid)
 		split := strings.Split(listing, "   ")
 		if len(split) == 4 {
 			coll = split[0]
@@ -144,7 +144,7 @@ func BidBuyConfirm(scid string, amt uint64, b int, obj *container.Split, reset f
 		}
 		text = fmt.Sprintf("Bidding on SCID:\n\n%s\n\nAsset: %s\n\nCollection: %s\n\nBid amount: %s Dero\n\nConfirm bid", scid, name, coll, amt_str)
 	case 1:
-		listing, _, _ := checkNfaBuyListing(scid)
+		listing, _, _ := checkNFABuyListing(scid)
 		split := strings.Split(listing, "   ")
 		if len(split) == 4 {
 			coll = split[0]
@@ -211,14 +211,14 @@ func ConfirmCancelClose(scid string, c int, obj *container.Split, reset fyne.Can
 	list, _ := CheckNFAListingType(scid)
 	switch list {
 	case 1:
-		listing, _, _ := checkNfaAuctionListing(scid)
+		listing, _, _ := checkNFAAuctionListing(scid)
 		split := strings.Split(listing, "   ")
 		if len(split) == 4 {
 			coll = split[0]
 			name = split[1]
 		}
 	case 2:
-		listing, _, _ := checkNfaBuyListing(scid)
+		listing, _, _ := checkNFABuyListing(scid)
 		split := strings.Split(listing, "   ")
 		if len(split) == 4 {
 			coll = split[0]
@@ -295,9 +295,9 @@ func AuctionListings() fyne.Widget {
 			split := strings.Split(Market.Auctions[id], "   ")
 			if split[3] != Market.Viewing {
 				Market.Entry.SetText("")
-				clearNfaImages()
+				clearNFAImages()
 				Market.Viewing = split[3]
-				go GetNfaImages(split[3])
+				go GetNFAImages(split[3])
 				go GetAuctionDetails(split[3])
 				Market.Details_box.Objects[1] = loadingBar()
 			}
@@ -325,9 +325,9 @@ func BuyNowListings() fyne.Widget {
 		if id != 0 {
 			split := strings.Split(Market.Buy_now[id], "   ")
 			if split[3] != Market.Viewing {
-				clearNfaImages()
+				clearNFAImages()
 				Market.Viewing = split[3]
-				go GetNfaImages(split[3])
+				go GetNFAImages(split[3])
 				go GetBuyNowDetails(split[3])
 				Market.Details_box.Objects[1] = loadingBar()
 			}
@@ -355,9 +355,9 @@ func MyNFAListings() fyne.Widget {
 		if id != 0 {
 			split := strings.Split(Market.My_list[id], "   ")
 			if split[3] != Market.Viewing {
-				clearNfaImages()
+				clearNFAImages()
 				Market.Viewing = split[3]
-				go GetNfaImages(split[3])
+				go GetNFAImages(split[3])
 				go GetUnlistedDetails(split[3])
 				Market.Details_box.Objects[1] = loadingBar()
 			}
@@ -387,8 +387,8 @@ func SearchNFAs() fyne.CanvasObject {
 					Market.Entry.Enable()
 					ResetAuctionInfo()
 					AuctionInfo()
-					clearNfaImages()
-					go GetNfaImages(split[3])
+					clearNFAImages()
+					go GetNFAImages(split[3])
 					go GetAuctionDetails(split[3])
 				case 2:
 					Market.Tab = "Buy"
@@ -397,8 +397,8 @@ func SearchNFAs() fyne.CanvasObject {
 					Market.Entry.Disable()
 					ResetBuyInfo()
 					BuyNowInfo()
-					clearNfaImages()
-					go GetNfaImages(split[3])
+					clearNFAImages()
+					go GetNFAImages(split[3])
 					go GetBuyNowDetails(split[3])
 				default:
 					Market.Tab = "Buy"
@@ -406,8 +406,8 @@ func SearchNFAs() fyne.CanvasObject {
 					Market.Entry.Disable()
 					ResetNotListedInfo()
 					NotListedInfo()
-					clearNfaImages()
-					go GetNfaImages(split[3])
+					clearNFAImages()
+					go GetNFAImages(split[3])
 					go GetUnlistedDetails(split[3])
 				}
 			}
@@ -459,7 +459,7 @@ func SearchNFAs() fyne.CanvasObject {
 }
 
 // NFA market icon image with frame
-func NfaIcon() fyne.CanvasObject {
+func NFAIcon() fyne.CanvasObject {
 	Market.Icon.SetMinSize(fyne.NewSize(90, 90))
 	border := container.NewBorder(layout.NewSpacer(), layout.NewSpacer(), layout.NewSpacer(), layout.NewSpacer(), &Market.Icon)
 
@@ -483,7 +483,7 @@ func ToolsBadge() fyne.CanvasObject {
 }
 
 // NFA cover image for market display
-func NfaCoverImg() fyne.CanvasObject {
+func NFACoverImg() fyne.CanvasObject {
 	Market.Cover.SetMinSize(fyne.NewSize(400, 600))
 
 	return container.NewCenter(&Market.Cover)
@@ -503,7 +503,7 @@ func loadingBar() fyne.CanvasObject {
 }
 
 // Clears all market NFA images
-func clearNfaImages() {
+func clearNFAImages() {
 	Market.Details_box.Objects[0].(*fyne.Container).Objects[0].(*fyne.Container).Objects[1] = layout.NewSpacer()
 	Market.Icon = *canvas.NewImageFromImage(nil)
 
@@ -512,7 +512,7 @@ func clearNfaImages() {
 }
 
 // Set up market info objects
-func NfaMarketInfo() fyne.CanvasObject {
+func NFAMarketInfo() fyne.CanvasObject {
 	Market.Name = widget.NewEntry()
 	Market.Type = widget.NewEntry()
 	Market.Collection = widget.NewEntry()
@@ -578,9 +578,9 @@ func AuctionInfo() fyne.CanvasObject {
 
 	Market.Details_box = *container.NewAdaptiveGrid(2,
 		container.NewVBox(
-			container.NewHBox(NfaIcon(), layout.NewSpacer()),
+			container.NewHBox(NFAIcon(), layout.NewSpacer()),
 			form),
-		NfaCoverImg())
+		NFACoverImg())
 
 	return &Market.Details_box
 }
@@ -607,9 +607,9 @@ func NotListedInfo() fyne.CanvasObject {
 
 	Market.Details_box = *container.NewAdaptiveGrid(2,
 		container.NewVBox(
-			container.NewHBox(NfaIcon(), layout.NewSpacer()),
+			container.NewHBox(NFAIcon(), layout.NewSpacer()),
 			form),
-		NfaCoverImg())
+		NFACoverImg())
 
 	return &Market.Details_box
 }
@@ -617,7 +617,7 @@ func NotListedInfo() fyne.CanvasObject {
 // Set unlisted display content to default values
 func ResetNotListedInfo() {
 	Market.Bid_amt = 0
-	clearNfaImages()
+	clearNFAImages()
 	Market.Name.SetText("Name:")
 	Market.Type.SetText("Asset Type:")
 	Market.Collection.SetText("Collection:")
@@ -630,9 +630,9 @@ func ResetNotListedInfo() {
 }
 
 // Refresh Market images
-func RefreshNfaImages() {
+func RefreshNFAImages() {
 	if Market.Cover.Resource != nil {
-		Market.Details_box.Objects[1] = NfaCoverImg()
+		Market.Details_box.Objects[1] = NFACoverImg()
 		if Market.Loading != nil {
 			Market.Loading.Stop()
 		}
@@ -641,7 +641,7 @@ func RefreshNfaImages() {
 	}
 
 	if Market.Icon.Resource != nil {
-		Market.Details_box.Objects[0].(*fyne.Container).Objects[0].(*fyne.Container).Objects[0] = NfaIcon()
+		Market.Details_box.Objects[0].(*fyne.Container).Objects[0].(*fyne.Container).Objects[0] = NFAIcon()
 	}
 
 	view := Market.Viewing_coll
@@ -657,7 +657,7 @@ func RefreshNfaImages() {
 // Set auction display content to default values
 func ResetAuctionInfo() {
 	Market.Bid_amt = 0
-	clearNfaImages()
+	clearNFAImages()
 	Market.Name.SetText("Name:")
 	Market.Type.SetText("Asset Type:")
 	Market.Collection.SetText("Collection:")
@@ -698,9 +698,9 @@ func BuyNowInfo() fyne.CanvasObject {
 
 	Market.Details_box = *container.NewAdaptiveGrid(2,
 		container.NewVBox(
-			container.NewHBox(NfaIcon(), layout.NewSpacer()),
+			container.NewHBox(NFAIcon(), layout.NewSpacer()),
 			form),
-		NfaCoverImg())
+		NFACoverImg())
 
 	return &Market.Details_box
 }
@@ -708,7 +708,7 @@ func BuyNowInfo() fyne.CanvasObject {
 // Set buy now display content to default values
 func ResetBuyInfo() {
 	Market.Buy_amt = 0
-	clearNfaImages()
+	clearNFAImages()
 	Market.Name.SetText("Name:")
 	Market.Type.SetText("Asset Type:")
 	Market.Collection.SetText("Collection:")
@@ -726,7 +726,7 @@ func ResetBuyInfo() {
 func MarketTab(ti *container.TabItem) {
 	switch ti.Text {
 	case "Auctions":
-		go FindNfaListings(nil)
+		go FindNFAListings(nil)
 		Market.Tab = "Auction"
 		Market.Auction_list.UnselectAll()
 		Market.My_listings.UnselectAll()
@@ -739,7 +739,7 @@ func MarketTab(ti *container.TabItem) {
 		ResetAuctionInfo()
 		AuctionInfo()
 	case "Buy Now":
-		go FindNfaListings(nil)
+		go FindNFAListings(nil)
 		Market.Tab = "Buy"
 		Market.Buy_list.UnselectAll()
 		Market.Viewing = ""
@@ -751,7 +751,7 @@ func MarketTab(ti *container.TabItem) {
 		ResetBuyInfo()
 		BuyNowInfo()
 	case "My Listings":
-		go FindNfaListings(nil)
+		go FindNFAListings(nil)
 		Market.Tab = "Buy"
 		Market.My_listings.UnselectAll()
 		Market.Viewing = ""
@@ -779,7 +779,7 @@ func MarketTab(ti *container.TabItem) {
 
 // NFA market layout
 func PlaceMarket() *container.Split {
-	details := container.NewStack(NfaMarketInfo())
+	details := container.NewStack(NFAMarketInfo())
 
 	tabs := container.NewAppTabs(
 		container.NewTabItem("Auctions", AuctionListings()),
@@ -1261,7 +1261,7 @@ func RunNFAMarket(tag string, quit, done chan struct{}, connect_box *dwidget.Der
 
 			// Get all NFA listings
 			if Gnomes.IsRunning() && offset%2 == 0 {
-				FindNfaListings(nil)
+				FindNFAListings(nil)
 				if offset > 19 {
 					offset = 0
 				}
@@ -1300,10 +1300,10 @@ func RunNFAMarket(tag string, quit, done chan struct{}, connect_box *dwidget.Der
 					if len(Market.Viewing) == 64 {
 						if Market.Tab == "Buy" {
 							GetBuyNowDetails(Market.Viewing)
-							go RefreshNfaImages()
+							go RefreshNFAImages()
 						} else {
 							GetAuctionDetails(Market.Viewing)
-							go RefreshNfaImages()
+							go RefreshNFAImages()
 						}
 					}
 				} else {
