@@ -459,35 +459,34 @@ func SearchNFAs() fyne.CanvasObject {
 }
 
 // NFA market icon image with frame
-//   - Pass res for frame resource
-func NfaIcon(res fyne.Resource) fyne.CanvasObject {
+func NfaIcon() fyne.CanvasObject {
 	Market.Icon.SetMinSize(fyne.NewSize(90, 90))
 	border := container.NewBorder(layout.NewSpacer(), layout.NewSpacer(), layout.NewSpacer(), layout.NewSpacer(), &Market.Icon)
 
-	frame := canvas.NewImageFromResource(res)
+	frame := canvas.NewImageFromResource(bundle.ResourceAvatarFramePng)
 	frame.SetMinSize(fyne.NewSize(100, 100))
 
 	return container.NewStack(border, frame)
 }
 
-// Badge for dReam Tools enabled assets
-//   - Pass res for frame resource
-func ToolsBadge(res fyne.Resource) fyne.CanvasObject {
-	badge := *canvas.NewImageFromResource(bundle.ResourceDReamToolsPng)
-	badge.SetMinSize(fyne.NewSize(90, 90))
-	border := container.NewBorder(layout.NewSpacer(), layout.NewSpacer(), layout.NewSpacer(), layout.NewSpacer(), &badge)
+var toolsBadge = *canvas.NewImageFromResource(bundle.ResourceDReamToolsPng)
 
-	frame := canvas.NewImageFromResource(res)
+// Badge for dReam Tools enabled assets
+func ToolsBadge() fyne.CanvasObject {
+	toolsBadge.SetMinSize(fyne.NewSize(90, 90))
+	border := container.NewBorder(layout.NewSpacer(), layout.NewSpacer(), layout.NewSpacer(), layout.NewSpacer(), &toolsBadge)
+
+	frame := canvas.NewImageFromResource(bundle.ResourceAvatarFramePng)
 	frame.SetMinSize(fyne.NewSize(100, 100))
 
 	return container.NewStack(border, frame)
 }
 
 // NFA cover image for market display
-func NfaImg(img canvas.Image) fyne.CanvasObject {
+func NfaCoverImg() fyne.CanvasObject {
 	Market.Cover.SetMinSize(fyne.NewSize(400, 600))
 
-	return container.NewCenter(&img)
+	return container.NewCenter(&Market.Cover)
 }
 
 // Loading bar for NFA cover image
@@ -507,12 +506,9 @@ func loadingBar() fyne.CanvasObject {
 func clearNfaImages() {
 	Market.Details_box.Objects[0].(*fyne.Container).Objects[0].(*fyne.Container).Objects[1] = layout.NewSpacer()
 	Market.Icon = *canvas.NewImageFromImage(nil)
-	Market.Details_box.Objects[0].Refresh()
 
 	Market.Cover = *canvas.NewImageFromImage(nil)
 	Market.Details_box.Objects[1] = canvas.NewImageFromImage(nil)
-	Market.Details_box.Objects[1].Refresh()
-	Market.Details_box.Refresh()
 }
 
 // Set up market info objects
@@ -550,6 +546,8 @@ func NfaMarketInfo() fyne.CanvasObject {
 	Market.Icon.SetMinSize(fyne.NewSize(94, 94))
 	Market.Cover.SetMinSize(fyne.NewSize(400, 600))
 
+	Market.Description.Wrapping = fyne.TextWrapWord
+
 	return AuctionInfo()
 }
 
@@ -572,12 +570,17 @@ func AuctionInfo() fyne.CanvasObject {
 
 	auction_form = append(auction_form, widget.NewFormItem("Current Bid", Market.Current_bid))
 
-	Market.Details_box = *container.NewAdaptiveGrid(2,
-		container.NewVBox(container.NewHBox(NfaIcon(bundle.ResourceAvatarFramePng), layout.NewSpacer()), widget.NewForm(auction_form...)),
-		NfaImg(Market.Cover))
+	spacer := canvas.NewRectangle(color.Transparent)
+	spacer.SetMinSize(fyne.NewSize(330, 0))
+	auction_form = append(auction_form, widget.NewFormItem("", container.NewStack(spacer)))
 
-	Market.Description.Wrapping = fyne.TextWrapWord
-	Market.Details_box.Refresh()
+	form := widget.NewForm(auction_form...)
+
+	Market.Details_box = *container.NewAdaptiveGrid(2,
+		container.NewVBox(
+			container.NewHBox(NfaIcon(), layout.NewSpacer()),
+			form),
+		NfaCoverImg())
 
 	return &Market.Details_box
 }
@@ -596,12 +599,17 @@ func NotListedInfo() fyne.CanvasObject {
 
 	unlisted_form = append(unlisted_form, widget.NewFormItem("Owner Update", Market.Owner_update))
 
-	Market.Details_box = *container.NewAdaptiveGrid(2,
-		container.NewVBox(container.NewHBox(NfaIcon(bundle.ResourceAvatarFramePng), layout.NewSpacer()), widget.NewForm(unlisted_form...)),
-		NfaImg(Market.Cover))
+	spacer := canvas.NewRectangle(color.Transparent)
+	spacer.SetMinSize(fyne.NewSize(330, 0))
+	unlisted_form = append(unlisted_form, widget.NewFormItem("", container.NewStack(spacer)))
 
-	Market.Description.Wrapping = fyne.TextWrapWord
-	Market.Details_box.Refresh()
+	form := widget.NewForm(unlisted_form...)
+
+	Market.Details_box = *container.NewAdaptiveGrid(2,
+		container.NewVBox(
+			container.NewHBox(NfaIcon(), layout.NewSpacer()),
+			form),
+		NfaCoverImg())
 
 	return &Market.Details_box
 }
@@ -619,13 +627,12 @@ func ResetNotListedInfo() {
 	Market.Royalty.SetText("Royalty:")
 	Market.Owner.SetText("Owner:")
 	Market.Owner_update.SetText("Owner can update:")
-	Market.Details_box.Refresh()
 }
 
 // Refresh Market images
 func RefreshNfaImages() {
 	if Market.Cover.Resource != nil {
-		Market.Details_box.Objects[1] = NfaImg(Market.Cover)
+		Market.Details_box.Objects[1] = NfaCoverImg()
 		if Market.Loading != nil {
 			Market.Loading.Stop()
 		}
@@ -634,11 +641,12 @@ func RefreshNfaImages() {
 	}
 
 	if Market.Icon.Resource != nil {
-		Market.Details_box.Objects[0].(*fyne.Container).Objects[0].(*fyne.Container).Objects[0] = NfaIcon(bundle.ResourceAvatarFramePng)
+		Market.Details_box.Objects[0].(*fyne.Container).Objects[0].(*fyne.Container).Objects[0] = NfaIcon()
 	}
+
 	view := Market.Viewing_coll
 	if view == "AZYPC" || view == "SIXPC" || view == "AZYPCB" || view == "SIXPCB" {
-		Market.Details_box.Objects[0].(*fyne.Container).Objects[0].(*fyne.Container).Objects[1] = ToolsBadge(bundle.ResourceAvatarFramePng)
+		Market.Details_box.Objects[0].(*fyne.Container).Objects[0].(*fyne.Container).Objects[1] = ToolsBadge()
 	} else {
 		Market.Details_box.Objects[0].(*fyne.Container).Objects[0].(*fyne.Container).Objects[1] = layout.NewSpacer()
 	}
@@ -664,7 +672,6 @@ func ResetAuctionInfo() {
 	Market.Bid_price.SetText("Minimum Bid:")
 	Market.Bid_count.SetText("Bids:")
 	Market.End_time.SetText("Ends At:")
-	Market.Details_box.Refresh()
 }
 
 // Container for buy now info objects
@@ -683,12 +690,17 @@ func BuyNowInfo() fyne.CanvasObject {
 	buy_form = append(buy_form, widget.NewFormItem("Owner Update", Market.Owner_update))
 	buy_form = append(buy_form, widget.NewFormItem("Price", Market.Start_price))
 
-	Market.Details_box = *container.NewAdaptiveGrid(2,
-		container.NewVBox(container.NewHBox(NfaIcon(bundle.ResourceAvatarFramePng), layout.NewSpacer()), widget.NewForm(buy_form...)),
-		NfaImg(Market.Cover))
+	spacer := canvas.NewRectangle(color.Transparent)
+	spacer.SetMinSize(fyne.NewSize(330, 0))
+	buy_form = append(buy_form, widget.NewFormItem("", container.NewStack(spacer)))
 
-	Market.Description.Wrapping = fyne.TextWrapWord
-	Market.Details_box.Refresh()
+	form := widget.NewForm(buy_form...)
+
+	Market.Details_box = *container.NewAdaptiveGrid(2,
+		container.NewVBox(
+			container.NewHBox(NfaIcon(), layout.NewSpacer()),
+			form),
+		NfaCoverImg())
 
 	return &Market.Details_box
 }
@@ -708,7 +720,6 @@ func ResetBuyInfo() {
 	Market.Owner.SetText("Owner:")
 	Market.Owner_update.SetText("Owner can update:")
 	Market.End_time.SetText("Ends At:")
-	Market.Details_box.Refresh()
 }
 
 // Switch triggered when market tab changes
@@ -810,7 +821,11 @@ func PlaceMarket() *container.Split {
 
 	scroll_cont := container.NewVBox(container.NewHBox(layout.NewSpacer(), scroll_top, scroll_bottom))
 
-	max := container.NewStack(bundle.Alpha120, tabs, scroll_cont)
+	// TDOD revisit scroll here when cover image is showing
+	min_size := bundle.Alpha120
+	min_size.SetMinSize(fyne.NewSize(420, 0))
+
+	max := container.NewStack(min_size, tabs, scroll_cont)
 
 	details_box := container.NewVBox(layout.NewSpacer(), details, layout.NewSpacer())
 
