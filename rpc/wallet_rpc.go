@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/blang/semver/v4"
+	"github.com/civilware/Gnomon/structures"
 	"github.com/deroproject/derohe/cryptography/crypto"
 	"github.com/deroproject/derohe/rpc"
 	"github.com/ybbus/jsonrpc/v3"
@@ -59,11 +60,11 @@ func SessionLog(tag string, dapp semver.Version) *fyne.Container {
 	Wallet.LogEntry.Disable()
 
 	if tag == "dReams" || tag == "NFA Market" {
-		text := fmt.Sprintf("[%s] %s  OS: %s  ARCH: %s", tag, Version(), runtime.GOOS, runtime.GOARCH)
+		text := fmt.Sprintf("[%s] %s  OS: %s  ARCH: %s  GNOMON: %s", tag, Version(), runtime.GOOS, runtime.GOARCH, structures.Version.String())
 		logger.Println(text)
 		Wallet.LogEntry.SetText(fmt.Sprintf("%s  %s", time.Now().Format("2006/01/02 15:04:05"), text))
 	} else {
-		text := fmt.Sprintf("[%s] %s  OS: %s  ARCH: %s  DREAMS: %s", tag, dapp.String(), runtime.GOOS, runtime.GOARCH, Version())
+		text := fmt.Sprintf("[%s] %s  OS: %s  ARCH: %s  DREAMS: %s  GNOMON: %s", tag, dapp.String(), runtime.GOOS, runtime.GOARCH, Version(), structures.Version.String())
 		logger.Println(text)
 		Wallet.LogEntry.SetText(fmt.Sprintf("%s  %s", time.Now().Format("2006/01/02 15:04:05"), text))
 	}

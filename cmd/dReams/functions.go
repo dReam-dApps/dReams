@@ -12,9 +12,11 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/SixofClubsss/Baccarat/baccarat"
 	"github.com/SixofClubsss/Duels/duel"
 	"github.com/SixofClubsss/Grokked/grok"
 	"github.com/SixofClubsss/Holdero/holdero"
+	"github.com/SixofClubsss/Iluma/tarot"
 	"github.com/SixofClubsss/dPrediction/prediction"
 	"github.com/civilware/Gnomon/structures"
 	dreams "github.com/dReam-dApps/dReams"
@@ -888,4 +890,29 @@ func recheckButton(tag string, recheck func()) (button fyne.Widget) {
 
 func dappCloseCheck() {
 	prediction.Service.IsStopped()
+}
+
+// Returns map of current dApp package versions
+func dappVersions(dapps []string) map[string]string {
+	versions := make(map[string]string)
+	versions["NFA Market"] = rpc.Version().String()
+	versions["Gnomon"] = structures.Version.String()
+	for _, pkg := range dapps {
+		switch pkg {
+		case "Holdero":
+			versions["Holdero"] = holdero.Version().String()
+		case "Baccarat":
+			versions["Baccarat"] = baccarat.Version().String()
+		case "dSports and dPredictions":
+			versions["dSports and dPredictions"] = prediction.Version().String()
+		case "Iluma":
+			versions["Iluma"] = tarot.Version().String()
+		case "Duels":
+			versions["Duels"] = duel.Version().String()
+		case "Grokked":
+			versions["Grokked"] = grok.Version().String()
+		}
+	}
+
+	return versions
 }

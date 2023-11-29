@@ -1029,7 +1029,7 @@ func EnabledCollections(intro bool) (obj fyne.CanvasObject) {
 	label := canvas.NewText("You will need to delete Gnomon DB and resync for changes to take effect ", bundle.TextColor)
 	label.Alignment = fyne.TextAlignCenter
 	if intro {
-		label.Text = "Enable Asset Collections"
+		label.Text = ""
 	}
 
 	return container.NewBorder(

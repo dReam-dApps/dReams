@@ -21,6 +21,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
@@ -63,15 +64,13 @@ func introScreen() *fyne.Container {
 		}
 
 		dReams.App.Settings().SetTheme(bundle.DeroTheme(bundle.AppColor))
-		max.Objects[1].(*container.Split).Leading.(*fyne.Container).Objects[1].(*canvas.Text).Color = bundle.TextColor
-		max.Objects[1].(*container.Split).Leading.(*fyne.Container).Objects[1].Refresh()
-		max.Objects[1].(*container.Split).Leading.(*fyne.Container).Objects[6].(*canvas.Text).Color = bundle.TextColor
-		max.Objects[1].(*container.Split).Leading.(*fyne.Container).Objects[6].Refresh()
+		max.Objects[1].(*container.Split).Leading.(*fyne.Container).Objects[2].(*canvas.Text).Color = bundle.TextColor
+		max.Objects[1].(*container.Split).Leading.(*fyne.Container).Objects[2].Refresh()
+		max.Objects[1].(*container.Split).Leading.(*fyne.Container).Objects[7].(*canvas.Text).Color = bundle.TextColor
+		max.Objects[1].(*container.Split).Leading.(*fyne.Container).Objects[7].Refresh()
 		max.Objects[1].(*container.Split).Leading.(*fyne.Container).Objects[9].(*canvas.Text).Color = bundle.TextColor
 		max.Objects[1].(*container.Split).Leading.(*fyne.Container).Objects[9].Refresh()
-		max.Objects[1].(*container.Split).Leading.(*fyne.Container).Objects[11].(*canvas.Text).Color = bundle.TextColor
-		max.Objects[1].(*container.Split).Leading.(*fyne.Container).Objects[11].Refresh()
-		max.Objects[1].(*container.Split).Trailing.(*fyne.Container).Objects[1].(*fyne.Container).Objects[0].(*canvas.Text).Color = bundle.TextColor
+		max.Objects[1].(*container.Split).Trailing.(*fyne.Container).Objects[1].(*canvas.Text).Color = bundle.TextColor
 		max.Objects[1].(*container.Split).Trailing.(*fyne.Container).Objects[1].Refresh()
 		max.Objects[0] = bundle.NewAlpha180()
 		max.Objects[0].Refresh()
@@ -81,17 +80,60 @@ func introScreen() *fyne.Container {
 	dapp_title.Alignment = fyne.TextAlignCenter
 	dapp_title.TextSize = 18
 
-	collection_title := canvas.NewText("Enable asset collections in the right side menu", bundle.TextColor)
+	collection_title := canvas.NewText("Enable asset collections", bundle.TextColor)
 	collection_title.Alignment = fyne.TextAlignCenter
 	collection_title.TextSize = 18
 
-	default_dapps := []string{"NFA Market"}
-	default_checks := widget.NewCheckGroup(default_dapps, nil)
-	default_checks.SetSelected(default_dapps)
-	default_checks.Disable()
-
 	dApps := rpc.FetchDapps()
-	dapp_checks := widget.NewCheckGroup(dApps, nil)
+	enabled_dapps := make(map[string]bool)
+
+	versions := dappVersions(dApps)
+
+	default_dapps := []string{"Gnomon", "NFA Market"}
+	dApps = append(default_dapps, dApps...)
+
+	dapp_checks := widget.NewListWithData(
+		binding.BindStringList(&dApps),
+		func() fyne.CanvasObject {
+			check := widget.NewCheck("", nil)
+			check.OnChanged = func(b bool) {
+				if b {
+					enabled_dapps[check.Text] = true
+				} else {
+					enabled_dapps[check.Text] = false
+				}
+			}
+
+			return container.NewAdaptiveGrid(2, check, widget.NewLabel(""))
+		},
+		func(di binding.DataItem, c fyne.CanvasObject) {
+			dat := di.(binding.String)
+			str, err := dat.Get()
+			if err != nil {
+				return
+			}
+
+			// Defaults
+			if str == "Gnomon" || str == "NFA Market" {
+				c.(*fyne.Container).Objects[0].(*widget.Check).OnChanged = nil
+				c.(*fyne.Container).Objects[0].(*widget.Check).Disable()
+				c.(*fyne.Container).Objects[0].(*widget.Check).SetText(str)
+				c.(*fyne.Container).Objects[0].(*widget.Check).SetChecked(true)
+				c.(*fyne.Container).Objects[1].(*widget.Label).SetText(versions[str])
+				return
+			}
+
+			c.(*fyne.Container).Objects[0].(*widget.Check).SetText(str)
+			c.(*fyne.Container).Objects[1].(*widget.Label).SetText(versions[str])
+		})
+
+	dapp_checks.OnSelected = func(id widget.ListItemID) {
+		dapp_checks.Unselect(id)
+	}
+
+	dapp_spacer := canvas.NewRectangle(color.Transparent)
+	dapp_spacer.SetMinSize(fyne.NewSize(500, 310))
+	dapp_box := container.NewStack(dapp_spacer, dapp_checks)
 
 	gnomon_gif, _ := xwidget.NewAnimatedGifFromResource(bundle.ResourceGnomonGifGif)
 	gnomon_gif.SetMinSize(fyne.NewSize(100, 100))
@@ -109,9 +151,7 @@ func introScreen() *fyne.Container {
 			menu.Control.Dapp_list[name] = false
 		}
 
-		for _, name := range dapp_checks.Selected {
-			menu.Control.Dapp_list[name] = true
-		}
+		menu.Control.Dapp_list = enabled_dapps
 
 		dReams.SetChannels(menu.EnabledDappCount())
 		logger.Println("[dReams] Loading dApps")
@@ -128,32 +168,43 @@ func introScreen() *fyne.Container {
 	start_button.Importance = widget.LowImportance
 
 	dreams_img := canvas.NewImageFromResource(bundle.ResourceBlueBadge3Png)
-	dreams_img.SetMinSize(fyne.NewSize(100, 100))
+	dreams_img.SetMinSize(fyne.NewSize(90, 90))
 
 	powered_label := widget.NewLabel("Powered by")
 	powered_label.Alignment = fyne.TextAlignCenter
 
 	gnomon_gif.Start()
 
+	collections_spacer := canvas.NewRectangle(color.Transparent)
+	collections_spacer.SetMinSize(fyne.NewSize(10, 750))
+
+	line := canvas.NewLine(bundle.TextColor)
+	line_spacer := canvas.NewRectangle(color.Transparent)
+	line_spacer.SetMinSize(fyne.NewSize(300, 0))
+
+	under_circle := canvas.NewRadialGradient(color.White, color.Transparent)
+	under_circle.SetMinSize(fyne.NewSize(120, 120))
+
+	over_circle := canvas.NewRadialGradient(color.White, color.Transparent)
+	over_circle.SetMinSize(fyne.NewSize(130, 130))
+
 	intro := container.NewHSplit(
 		container.NewVBox(
 			layout.NewSpacer(),
+			container.NewHBox(layout.NewSpacer(), container.NewVBox(line_spacer, line), layout.NewSpacer()),
 			title,
-			container.NewCenter(dreams_img),
+			container.NewHBox(layout.NewSpacer(), container.NewVBox(line_spacer, line), layout.NewSpacer()),
+			container.NewStack(container.NewCenter(under_circle, dreams_img, over_circle)),
 			powered_label,
 			container.NewCenter(gnomon_gif),
-			layout.NewSpacer(),
 			skin_title,
 			container.NewCenter(skins),
-			layout.NewSpacer(),
-			collection_title,
-			layout.NewSpacer(),
 			dapp_title,
-			container.NewCenter(container.NewVBox(default_checks, dapp_checks)),
+			container.NewCenter(container.NewVBox(dapp_box)),
 			layout.NewSpacer(),
-			layout.NewSpacer(),
-			start_button),
-		menu.EnabledCollections(true))
+			container.NewHBox(layout.NewSpacer(), container.NewVBox(line_spacer, line), layout.NewSpacer()),
+			container.NewCenter(start_button)),
+		container.NewVBox(layout.NewSpacer(), collection_title, container.NewStack(collections_spacer, menu.EnabledCollections(true))))
 
 	intro.SetOffset(0.66)
 
@@ -170,7 +221,6 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 	config_title.Alignment = fyne.TextAlignCenter
 	config_title.TextSize = 18
 
-	is_enabled := []string{}
 	enabled_dapps := make(map[string]bool)
 
 	gnomon_gif, _ := xwidget.NewAnimatedGifFromResource(bundle.ResourceGnomonGifGif)
@@ -188,9 +238,6 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 
 	for name, enabled := range menu.Control.Dapp_list {
 		enabled_dapps[name] = enabled
-		if enabled {
-			is_enabled = append(is_enabled, name)
-		}
 	}
 
 	var wait bool
@@ -238,34 +285,68 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 
 	var dapps_changed bool
 	dApps := rpc.FetchDapps()
-	dapp_checks := widget.NewCheckGroup(dApps, func(s []string) {
-		for reset := range enabled_dapps {
-			enabled_dapps[reset] = false
-		}
+	versions := dappVersions(dApps)
 
-		for _, name := range s {
-			enabled_dapps[name] = true
-		}
+	default_dapps := []string{"Gnomon", "NFA Market"}
+	dApps = append(default_dapps, dApps...)
 
-		if reflect.DeepEqual(enabled_dapps, menu.Control.Dapp_list) {
-			dapps_changed = false
-			if current_skin == skin_choice {
-				load_button.Hide()
-				back_button.Show()
+	dapp_checks := widget.NewListWithData(
+		binding.BindStringList(&dApps),
+		func() fyne.CanvasObject {
+			check := widget.NewCheck("", nil)
+			check.OnChanged = func(b bool) {
+				if b {
+					enabled_dapps[check.Text] = true
+				} else {
+					enabled_dapps[check.Text] = false
+				}
+
+				if reflect.DeepEqual(enabled_dapps, menu.Control.Dapp_list) {
+					dapps_changed = false
+					if current_skin == skin_choice {
+						load_button.Hide()
+					}
+				} else {
+					dapps_changed = true
+					load_button.Show()
+				}
 			}
-		} else {
-			dapps_changed = true
-			load_button.Show()
-			back_button.Hide()
-		}
-	})
 
-	dapp_checks.SetSelected(is_enabled)
+			return container.NewAdaptiveGrid(2, check, widget.NewLabel(""))
+		},
+		func(di binding.DataItem, c fyne.CanvasObject) {
+			dat := di.(binding.String)
+			str, err := dat.Get()
+			if err != nil {
+				return
+			}
 
-	default_dapps := []string{"NFA Market"}
-	default_checks := widget.NewCheckGroup(default_dapps, nil)
-	default_checks.SetSelected(default_dapps)
-	default_checks.Disable()
+			// Defaults
+			if str == "Gnomon" || str == "NFA Market" {
+				c.(*fyne.Container).Objects[0].(*widget.Check).OnChanged = nil
+				c.(*fyne.Container).Objects[0].(*widget.Check).Disable()
+				c.(*fyne.Container).Objects[0].(*widget.Check).SetText(str)
+				c.(*fyne.Container).Objects[0].(*widget.Check).SetChecked(true)
+				c.(*fyne.Container).Objects[1].(*widget.Label).SetText(versions[str])
+				return
+			}
+
+			c.(*fyne.Container).Objects[0].(*widget.Check).SetText(str)
+			for name, b := range enabled_dapps {
+				if b && name == str {
+					c.(*fyne.Container).Objects[0].(*widget.Check).SetChecked(true)
+				}
+			}
+			c.(*fyne.Container).Objects[1].(*widget.Label).SetText(versions[str])
+		})
+
+	dapp_checks.OnSelected = func(id widget.ListItemID) {
+		dapp_checks.Unselect(id)
+	}
+
+	dapp_spacer := canvas.NewRectangle(color.Transparent)
+	dapp_spacer.SetMinSize(fyne.NewSize(500, 310))
+	dapp_box := container.NewStack(dapp_spacer, dapp_checks)
 
 	skin_title := canvas.NewText("Skin", bundle.TextColor)
 	skin_title.Alignment = fyne.TextAlignCenter
@@ -281,10 +362,8 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 		if !dapps_changed {
 			if skin_choice == current_skin {
 				load_button.Hide()
-				back_button.Show()
 			} else {
 				load_button.Show()
-				back_button.Hide()
 			}
 		}
 	})
@@ -302,11 +381,21 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 
 	}
 
+	line := canvas.NewLine(bundle.TextColor)
+	line_spacer := canvas.NewRectangle(color.Transparent)
+	line_spacer.SetMinSize(fyne.NewSize(300, 0))
+
+	under_circle := canvas.NewRadialGradient(color.White, color.Transparent)
+	under_circle.SetMinSize(fyne.NewSize(75, 75))
+
+	over_circle := canvas.NewRadialGradient(color.White, color.Transparent)
+	over_circle.SetMinSize(fyne.NewSize(85, 85))
+
 	load_button.Hide()
 	back_button.Show()
 
-	dreams_img := canvas.NewImageFromResource(bundle.ResourceBlueBadge3Png)
-	dreams_img.SetMinSize(fyne.NewSize(100, 100))
+	dreams_img := canvas.NewImageFromResource(bundle.ResourceBlueBadgePng)
+	dreams_img.SetMinSize(fyne.NewSize(60, 60))
 
 	gnomon_gif.Start()
 
@@ -325,26 +414,21 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 	loading_label := widget.NewLabel("Loading changes to dReams will disconnect your wallet")
 	loading_label.Alignment = fyne.TextAlignCenter
 
-	intro := container.NewVBox(
-		layout.NewSpacer(),
+	config_screen := container.NewVBox(
 		config_title,
-		container.NewCenter(dreams_img),
-		layout.NewSpacer(),
+		container.NewStack(container.NewCenter(under_circle, dreams_img, over_circle)),
 		skin_title,
 		container.NewCenter(skins),
-		layout.NewSpacer(),
-		layout.NewSpacer(),
 		dapp_title,
 		changes_label,
-		container.NewCenter(container.NewVBox(default_checks, dapp_checks)),
-		layout.NewSpacer(),
+		container.NewCenter(container.NewVBox(dapp_box)),
 		gnomon_label,
 		container.NewCenter(gnomon_gif),
 		loading_label,
-		layout.NewSpacer(),
-		container.NewAdaptiveGrid(2, container.NewStack(load_button), back_button))
+		container.NewHBox(layout.NewSpacer(), container.NewVBox(line_spacer, line), layout.NewSpacer()),
+		container.NewCenter(container.NewHBox(container.NewStack(load_button), container.NewStack(back_button))))
 
-	return container.NewStack(bundle.NewAlpha180(), intro)
+	return container.NewStack(bundle.NewAlpha180(), config_screen)
 }
 
 // Main dReams layout
@@ -366,7 +450,8 @@ func place() *fyne.Container {
 	intros = append(intros, menu.MakeMenuIntro(baccarat.DreamsMenuIntro())...)
 	intros = append(intros, menu.MakeMenuIntro(prediction.DreamsMenuIntro())...)
 	intros = append(intros, menu.MakeMenuIntro(tarot.DreamsMenuIntro())...)
-	//intros = append(intros, menu.MakeMenuIntro(derbnb.DreamsMenuIntro())...)
+	// intros = append(intros, menu.MakeMenuIntro(derbnb.DreamsMenuIntro())...)
+	intros = append(intros, menu.MakeMenuIntro(grok.DreamsMenuIntro())...)
 	intros = append(intros, menu.MakeMenuIntro(duel.DreamsMenuIntro())...)
 
 	// dReams menu tabs
