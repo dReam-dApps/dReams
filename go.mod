@@ -5,12 +5,12 @@ go 1.20
 require (
 	fyne.io/fyne/v2 v2.4.1
 	fyne.io/x/fyne v0.0.0-20230411205836-1ca0ead20763
-	github.com/SixofClubsss/Baccarat v0.0.0-20231129022457-4d56a8f064de
-	github.com/SixofClubsss/Duels v0.0.0-20231129022346-21b04aa0570b
+	github.com/SixofClubsss/Baccarat v0.0.0-20231130051111-b18d259c1b8b
+	github.com/SixofClubsss/Duels v0.0.0-20231130051539-25a6bedafd41
 	github.com/SixofClubsss/Grokked v0.0.0-20231129022156-8875ed081f11
-	github.com/SixofClubsss/Holdero v0.0.0-20231129022055-615a4400eb13
+	github.com/SixofClubsss/Holdero v0.0.0-20231130050832-44c3cf08e835
 	github.com/SixofClubsss/Iluma v0.0.0-20231129021751-2da23da85c8f
-	github.com/SixofClubsss/dPrediction v0.0.0-20231128182832-b8474502098e
+	github.com/SixofClubsss/dPrediction v0.0.0-20231130051428-8bd0a6f0bb28
 	github.com/blang/semver/v4 v4.0.0
 	github.com/civilware/Gnomon v0.0.0-20231122200651-d74a0cfd22ca
 	github.com/deroproject/derohe v0.0.0-20230604143809-765b2db1f482
