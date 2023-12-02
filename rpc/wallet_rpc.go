@@ -101,11 +101,11 @@ func InitBalances() {
 	SCIDs = make(map[string]string)
 	SCIDs["dReams"] = DreamsSCID
 	SCIDs["HGC"] = HgcSCID
-	SCIDs["TRVL"] = TrvlSCID
+	//SCIDs["TRVL"] = TrvlSCID
 	Wallet.Display.Balance["Dero"] = "0"
 	Wallet.Display.Balance["dReams"] = "0"
 	Wallet.Display.Balance["HGC"] = "0"
-	Wallet.Display.Balance["TRVL"] = "0"
+	//Wallet.Display.Balance["TRVL"] = "0"
 }
 
 // Set wallet rpc client with auth, context and 6 sec cancel

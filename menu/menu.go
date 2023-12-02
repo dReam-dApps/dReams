@@ -160,6 +160,11 @@ func ReadDreamsConfig(tag string) (saved dreams.SaveData) {
 		return
 	}
 
+	// Old config may have this enabled, set false so we don't block trying to signal this chan
+	if saved.Dapps["DerBnb"] {
+		saved.Dapps["DerBnb"] = false
+	}
+
 	bundle.AppColor = saved.Skin
 	Control.Dapp_list = saved.Dapps
 

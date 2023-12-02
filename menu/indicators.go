@@ -1,6 +1,7 @@
 package menu
 
 import (
+	"fmt"
 	"image/color"
 	"time"
 
@@ -10,7 +11,9 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/layout"
+	"fyne.io/fyne/v2/widget"
 	xwidget "fyne.io/x/fyne/widget"
 )
 
@@ -138,7 +141,9 @@ func StartDreamsIndicators(add []DreamsIndicator) fyne.CanvasObject {
 		additional_inds.Add(container.NewStack(ind.Rect, container.NewCenter(ind.Img)))
 	}
 
-	top_box := container.NewHBox(layout.NewSpacer(), additional_inds, connect_box, container.NewStack(g_full, sync_box, Gnomes.Icon_ind))
+	hover := gnomonToolTip(45, nil)
+
+	top_box := container.NewHBox(layout.NewSpacer(), additional_inds, connect_box, container.NewStack(g_full, sync_box, Gnomes.Icon_ind, hover))
 	place := container.NewVBox(top_box, layout.NewSpacer())
 
 	go func() {
@@ -150,6 +155,8 @@ func StartDreamsIndicators(add []DreamsIndicator) fyne.CanvasObject {
 		for _, ind := range add {
 			ind.Animation.Start()
 		}
+		time.Sleep(time.Second)
+		hover.canvas = fyne.CurrentApp().Driver().CanvasForObject(Gnomes.Icon_ind)
 	}()
 
 	return container.NewStack(place)
@@ -259,7 +266,9 @@ func StartIndicators() fyne.CanvasObject {
 		container.NewStack(d_rect, container.NewCenter(d)),
 		container.NewStack(w_rect, container.NewCenter(w)))
 
-	top_box := container.NewHBox(layout.NewSpacer(), connect_box, container.NewStack(g_full, sync_box, Gnomes.Icon_ind))
+	hover := gnomonToolTip(-45, nil)
+
+	top_box := container.NewHBox(layout.NewSpacer(), connect_box, container.NewStack(g_full, sync_box, Gnomes.Icon_ind, hover))
 	place := container.NewVBox(top_box, layout.NewSpacer())
 
 	go func() {
@@ -268,6 +277,8 @@ func StartIndicators() fyne.CanvasObject {
 		Gnomes.Icon_ind.Start()
 		Control.Daemon_ind.Start()
 		Control.Wallet_ind.Start()
+		time.Sleep(time.Second)
+		hover.canvas = fyne.CurrentApp().Driver().CanvasForObject(Gnomes.Icon_ind)
 	}()
 
 	return container.NewStack(place)
@@ -294,3 +305,51 @@ func RestartGif(g *xwidget.AnimatedGif) {
 		g.Start()
 	}
 }
+
+var _ desktop.Hoverable = (*toolTip)(nil)
+
+type toolTip struct {
+	canvas fyne.Canvas
+	popup  *widget.PopUp
+	offset float32
+	*canvas.Rectangle
+}
+
+// Display Gnomon heights when hovered
+func gnomonToolTip(offset float32, can fyne.Canvas) *toolTip {
+	rect := canvas.NewRectangle(color.Black)
+	rect.SetMinSize(fyne.NewSize(57, 36))
+
+	return &toolTip{
+		Rectangle: rect,
+		canvas:    can,
+		popup:     &widget.PopUp{},
+		offset:    offset,
+	}
+}
+
+func (t *toolTip) MouseIn(event *desktop.MouseEvent) {
+	if t.canvas != nil {
+		if Gnomes.Indexer != nil {
+			t.popup = widget.NewPopUp(canvas.NewText(fmt.Sprintf("%d/%d", Gnomes.Indexer.LastIndexedHeight, Gnomes.Indexer.ChainHeight), bundle.TextColor), t.canvas)
+		} else {
+			t.popup = widget.NewPopUp(canvas.NewText("0/0", bundle.TextColor), t.canvas)
+		}
+
+		if !t.popup.Hidden {
+			pos := event.AbsolutePosition
+			t.popup.ShowAtPosition(fyne.NewPos(pos.X-t.offset/4.5, pos.Y+t.offset))
+			t.Refresh()
+		}
+	}
+}
+
+func (t *toolTip) MouseOut() {
+	if t.canvas != nil {
+		t.popup.Hide()
+		t.popup = nil
+		t.Refresh()
+	}
+}
+
+func (t *toolTip) MouseMoved(event *desktop.MouseEvent) {}

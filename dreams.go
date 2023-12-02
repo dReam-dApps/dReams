@@ -42,8 +42,6 @@ type SaveData struct {
 	Tables  []string     `json:"tables"`
 	Predict []string     `json:"predict"`
 	Sports  []string     `json:"sports"`
-	G45s    []string     `json:"g45s"`
-	NFAs    []string     `json:"nfas"`
 	DBtype  string       `json:"dbType"`
 	Para    int          `json:"paraBlocks"`
 
