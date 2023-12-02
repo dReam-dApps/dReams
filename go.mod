@@ -6,8 +6,8 @@ require (
 	fyne.io/fyne/v2 v2.4.1
 	fyne.io/x/fyne v0.0.0-20230411205836-1ca0ead20763
 	github.com/SixofClubsss/Baccarat v0.0.0-20231130051111-b18d259c1b8b
-	github.com/SixofClubsss/Duels v0.0.0-20231130051539-25a6bedafd41
-	github.com/SixofClubsss/Grokked v0.0.0-20231129022156-8875ed081f11
+	github.com/SixofClubsss/Duels v0.0.0-20231202172416-02d2a8db1e7c
+	github.com/SixofClubsss/Grokked v0.0.0-20231202172229-4ba52520bfac
 	github.com/SixofClubsss/Holdero v0.0.0-20231130050832-44c3cf08e835
 	github.com/SixofClubsss/Iluma v0.0.0-20231129021751-2da23da85c8f
 	github.com/SixofClubsss/dPrediction v0.0.0-20231130051428-8bd0a6f0bb28
