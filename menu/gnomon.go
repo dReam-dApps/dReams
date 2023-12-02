@@ -152,8 +152,7 @@ func GnomonBoltDB(dbType, dbPath string) *storage.BboltStore {
 //   - End point from rpc.Daemon.Rpc
 //   - tag for log print
 //   - dbtype defines gravdb or boltdb
-//   - Passing nil filters with Gnomes.Trim false will run a full Gnomon index
-//   - custom func() is for adding specific SCID to index on Gnomon start, Gnomes.Trim false will bypass
+//   - custom func() is for adding specific SCID to index on Gnomon start, Gnomes.Fast false will bypass
 //   - lower defines the lower limit of indexed SCIDs from Gnomon search filters before custom adds
 //   - upper defines the higher limit when custom indexed SCIDs exist already
 func StartGnomon(tag, dbtype string, filters []string, upper, lower int, custom func()) {
@@ -171,17 +170,16 @@ func StartGnomon(tag, dbtype string, filters []string, upper, lower int, custom 
 		last_height, _ = grav_backend.GetLastIndexHeight()
 	}
 
-	if filters != nil || !Gnomes.Trim {
+	if filters != nil {
 		Gnomes.Indexer = indexer.NewIndexer(grav_backend, bolt_backend, dbtype, filters, last_height, rpc.Daemon.Rpc, "daemon", false, false, Gnomes.Fast, false, nil)
 		go Gnomes.Indexer.StartDaemonMode(Gnomes.Para)
 		time.Sleep(3 * time.Second)
 		Gnomes.Initialized(true)
 
-		if Gnomes.Trim {
+		if Gnomes.Fast {
 			for {
 				contracts := len(Gnomes.GetAllOwnersAndSCIDs())
 				if contracts >= upper {
-					Gnomes.Trim = false
 					break
 				}
 
@@ -193,7 +191,6 @@ func StartGnomon(tag, dbtype string, filters []string, upper, lower int, custom 
 				time.Sleep(time.Second)
 
 				if !rpc.Daemon.IsConnected() || ClosingApps() {
-					Gnomes.Trim = false
 					logger.Errorf("[%s] Could not add all custom SCIDs to index\n", tag)
 					break
 				}
@@ -218,8 +215,8 @@ func G45Index() {
 
 	for _, c := range ReturnEnabledG45s(Control.Enabled_assets) {
 		g45 := rpc.GetG45Collection(c)
-		for i := range g45 {
-			scidstoadd[g45[i]] = &structures.FastSyncImport{}
+		for _, sc := range g45 {
+			scidstoadd[sc] = &structures.FastSyncImport{}
 		}
 	}
 
@@ -228,7 +225,6 @@ func G45Index() {
 		logger.Errorf("[G45Index] %v\n", err)
 	}
 	Gnomes.Indexer.SearchFilter = filters
-	Gnomes.Trim = false
 
 	if runtime.GOOS != "windows" {
 		fyne.CurrentApp().SendNotification(&fyne.Notification{
@@ -268,9 +264,9 @@ func GnomonScan(config bool) bool {
 func GnomonState(config bool, scan func(map[string]string)) {
 	if rpc.Daemon.IsConnected() && Gnomes.IsRunning() {
 		contracts := Gnomes.IndexContains()
-		if Gnomes.HasIndex(2) && !Gnomes.Trim {
+		if Gnomes.HasIndex(2) && !Gnomes.Start {
 			height := Gnomes.Indexer.ChainHeight
-			if Gnomes.IsRunning() && Gnomes.Indexer.LastIndexedHeight >= height-3 && height != 0 {
+			if Gnomes.Indexer.LastIndexedHeight >= height-3 && height != 0 {
 				Gnomes.Synced(true)
 				if !config && rpc.Wallet.IsConnected() && !Gnomes.HasChecked() {
 					Gnomes.Scanning(true)

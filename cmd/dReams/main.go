@@ -39,11 +39,7 @@ func main() {
 	dReams.Window.SetIcon(bundle.ResourceDReamsIconPng)
 	done := make(chan struct{})
 
-	dReams.Window.SetCloseIntercept(func() {
-		if menu.Gnomes.Start {
-			dialog.NewInformation("Gnomon Syncing", "Please wait for Gnomon to sync before closing dReams", dReams.Window).Show()
-			return
-		}
+	close := func() {
 		menu.CloseAppSignal(true)
 		menu.WriteDreamsConfig(save())
 		dappCloseCheck()
@@ -53,6 +49,18 @@ func main() {
 		menu.StopIndicators(indicators)
 		time.Sleep(time.Second)
 		dReams.Window.Close()
+	}
+
+	dReams.Window.SetCloseIntercept(func() {
+		if menu.Gnomes.Start {
+			dialog.NewConfirm("Gnomon Syncing", "Are you sure you want to close dReams?", func(b bool) {
+				if b {
+					close()
+				}
+			}, dReams.Window).Show()
+		} else {
+			close()
+		}
 	})
 
 	dReams.SetTab("Menu")

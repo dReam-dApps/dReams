@@ -621,23 +621,22 @@ func placeWall(intros []menu.IntroText) *container.Split {
 	connect_tabs.OnSelected = func(ti *container.TabItem) {
 		if ti.Text == "Gnomon" {
 			if rpc.Daemon.IsConnected() {
-				if menu.Gnomes.Start || menu.Gnomes.IsScanning() {
-					dialog.NewInformation("Gnomon Syncing", fmt.Sprintf("%s, please wait...", menu.Gnomes.Status()), dReams.Window).Show()
+				status := menu.Gnomes.Status()
+				if (menu.Gnomes.Start && status != "indexing") || menu.Gnomes.IsScanning() {
+					if status == "indexed" {
+						status = "scanning wallet"
+					}
+					dialog.NewInformation("Gnomon Syncing", fmt.Sprintf("%s, please wait...", status), dReams.Window).Show()
 					connect_tabs.SelectIndex(0)
 				} else if menu.Gnomes.IsInitialized() {
 					dialog.NewConfirm("Gnomon Running", "Shut down Gnomon to make changes", func(b bool) {
 						if b {
 							daemon_cont.Content.(*widget.SelectEntry).SetText("")
 							daemon_check_cont.Objects[0].(*widget.Check).SetChecked(false)
-							connect_tabs.Items[1].Content.(*fyne.Container).Objects[0].(*fyne.Container).Objects[0].(*widget.Form).Items[2].Widget.(*widget.RadioGroup).SetSelected("true")
-							menu.Gnomes.Trim = true
 						} else {
 							connect_tabs.SelectIndex(0)
 						}
 					}, dReams.Window).Show()
-				} else {
-					connect_tabs.Items[1].Content.(*fyne.Container).Objects[0].(*fyne.Container).Objects[0].(*widget.Form).Items[2].Widget.(*widget.RadioGroup).SetSelected("true")
-					menu.Gnomes.Trim = true
 				}
 			}
 		}

@@ -53,7 +53,6 @@ Usage:
 Options:
   -h --help             Show this screen.
   --cli=<false>		dReams option, enables cli app tab.
-  --trim=<true>	        dReams option, defaults true for minimum index search filters.
   --fastsync=<true>	Gnomon option,  true/false value to define loading at chain height on start up.
   --num-parallel-blocks=<1>   Gnomon option,  defines the number of parallel blocks to index.
   --dbtype=<boltdb>     Gnomon option,  defines type of database 'gravdb' or 'boltdb'.`
@@ -72,13 +71,6 @@ func flags() {
 	if arguments["--dbtype"] != nil {
 		if arguments["--dbtype"] == "gravdb" {
 			menu.Gnomes.DBType = arguments["--dbtype"].(string)
-		}
-	}
-
-	menu.Gnomes.Trim = true
-	if arguments["--trim"] != nil {
-		if arguments["--trim"].(string) == "false" {
-			menu.Gnomes.Trim = false
 		}
 	}
 
@@ -111,8 +103,6 @@ func flags() {
 			cli.enabled = true
 		}
 	}
-
-	return
 }
 
 func init() {
@@ -753,14 +743,13 @@ func daemonConnectedBox() fyne.Widget {
 		if !menu.Gnomes.IsInitialized() && !menu.Gnomes.Start {
 			if rpc.DaemonVersion() == "3.5.3-139.DEROHE.STARGATE+04042023" {
 				dialog.NewInformation("Daemon Version", "This daemon may conflict with Gnomon sync", dReams.Window).Show()
-				menu.Gnomes.Trim = false
 			}
 
 			menu.Assets.Gnomes_sync.Text = " Starting Gnomon"
 			menu.Assets.Gnomes_sync.Refresh()
+			rpc.FetchFees()
 			filters := gnomonFilters()
 			menu.StartGnomon("dReams", menu.Gnomes.DBType, filters, menu.Control.G45_count+menu.Control.NFA_count, menu.Control.NFA_count, menu.G45Index)
-			rpc.FetchFees()
 
 			if menu.DappEnabled("dSports and dPredictions") {
 				prediction.OnConnected()
