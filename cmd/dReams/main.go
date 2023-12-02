@@ -19,7 +19,7 @@ import (
 const (
 	MIN_WIDTH  = 1400
 	MIN_HEIGHT = 800
-	App_ID     = "dReams Platform"
+	App_ID     = "https://dreamdapps.io"
 	App_Name   = "dReams"
 )
 
@@ -37,6 +37,7 @@ func main() {
 	dReams.Window.Resize(fyne.NewSize(MIN_WIDTH, MIN_HEIGHT))
 	dReams.Window.SetFixedSize(false)
 	dReams.Window.SetIcon(bundle.ResourceDReamsIconPng)
+	dReams.Window.CenterOnScreen()
 	done := make(chan struct{})
 
 	close := func() {

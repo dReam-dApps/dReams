@@ -39,6 +39,7 @@ func main() {
 	w := a.NewWindow(app_tag)
 	w.Resize(fyne.NewSize(1400, 800))
 	w.SetIcon(bundle.ResourceMarketIconPng)
+	w.CenterOnScreen()
 	w.SetMaster()
 
 	// Initialize closing channels and func
