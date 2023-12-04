@@ -225,12 +225,12 @@ func DisplayRating(i uint64) fyne.Resource {
 }
 
 // Confirmation for a SCID rating
-func RateConfirm(scid string, tab *container.AppTabs, reset fyne.CanvasObject) fyne.CanvasObject {
+func RateConfirm(scid string, d *dreams.AppObject) {
 	label := widget.NewLabel(fmt.Sprintf("Rate your experience with this contract\n\n%s", scid))
 	label.Wrapping = fyne.TextWrapWord
 	label.Alignment = fyne.TextAlignCenter
 
-	rating_label := widget.NewLabel("")
+	rating_label := widget.NewLabel("Pick a rating")
 	rating_label.Wrapping = fyne.TextWrapWord
 	rating_label.Alignment = fyne.TextAlignCenter
 
@@ -239,7 +239,9 @@ func RateConfirm(scid string, tab *container.AppTabs, reset fyne.CanvasObject) f
 	fee_label.Alignment = fyne.TextAlignCenter
 
 	var slider *widget.Slider
-	confirm := widget.NewButton("Confirm", func() {
+	var confirm *dialog.CustomDialog
+
+	confirm_button := widget.NewButton("Confirm", func() {
 		var pos uint64
 		if slider.Value > 0 {
 			pos = 1
@@ -247,15 +249,15 @@ func RateConfirm(scid string, tab *container.AppTabs, reset fyne.CanvasObject) f
 
 		fee := uint64(math.Abs(slider.Value * 10000))
 		rpc.RateSCID(scid, fee, pos)
-		tab.Selected().Content = reset
-		tab.Selected().Content.Refresh()
+		confirm.Hide()
+		confirm = nil
 	})
 
-	confirm.Hide()
+	confirm_button.Hide()
 
-	cancel := widget.NewButton("Cancel", func() {
-		tab.Selected().Content = reset
-		tab.Selected().Content.Refresh()
+	cancel_button := widget.NewButton("Cancel", func() {
+		confirm.Hide()
+		confirm = nil
 	})
 
 	slider = widget.NewSlider(-5, 5)
@@ -264,11 +266,11 @@ func RateConfirm(scid string, tab *container.AppTabs, reset fyne.CanvasObject) f
 		if slider.Value != 0 {
 			rating_label.SetText(fmt.Sprintf("Rating: %.0f", f*10000))
 			fee_label.SetText(fmt.Sprintf("Fee: %.5f Dero", math.Abs(f)/10))
-			confirm.Show()
+			confirm_button.Show()
 		} else {
 			rating_label.SetText("Pick a rating")
 			fee_label.SetText("")
-			confirm.Hide()
+			confirm_button.Hide()
 		}
 	}
 
@@ -277,16 +279,31 @@ func RateConfirm(scid string, tab *container.AppTabs, reset fyne.CanvasObject) f
 	bad := canvas.NewImageFromResource(bundle.ResourceRedBadgePng)
 	bad.SetMinSize(fyne.NewSize(30, 30))
 
-	rate_cont := container.NewBorder(nil, nil, bad, good, slider)
+	spacer := canvas.NewRectangle(color.Transparent)
+	spacer.SetMinSize(fyne.NewSize(400, 100))
 
-	left := container.NewVBox(confirm)
-	right := container.NewVBox(cancel)
+	rate_cont := container.NewBorder(spacer, nil, bad, good, slider)
+
+	left := container.NewVBox(confirm_button)
+	right := container.NewVBox(cancel_button)
 	buttons := container.NewAdaptiveGrid(2, left, right)
 
-	content := container.NewVBox(layout.NewSpacer(), label, rating_label, fee_label, layout.NewSpacer(), rate_cont, layout.NewSpacer(), buttons)
+	content := container.NewVBox(layout.NewSpacer(), label, rating_label, fee_label, rate_cont, layout.NewSpacer())
 
-	return container.NewStack(content)
+	confirm = dialog.NewCustom("Rate Contract", "", content, d.Window)
+	confirm.SetButtons([]fyne.CanvasObject{buttons})
+	confirm.Show()
 
+	go func() {
+		for rpc.IsReady() {
+			time.Sleep(time.Second)
+		}
+
+		if confirm != nil {
+			confirm.Hide()
+			confirm = nil
+		}
+	}()
 }
 
 var Username string

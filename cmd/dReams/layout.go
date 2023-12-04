@@ -255,7 +255,10 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 		status_text.TextSize = 21
 		status_text.Alignment = fyne.TextAlignCenter
 
-		dReams.Window.Content().(*fyne.Container).Objects[1] = container.NewStack(status_text, widget.NewProgressBarInfinite())
+		img := canvas.NewImageFromResource(bundle.ResourceFigure1CirclePng)
+		img.SetMinSize(fyne.NewSize(150, 150))
+
+		dReams.Window.Content().(*fyne.Container).Objects[1] = container.NewStack(container.NewCenter(container.NewBorder(nil, status_text, nil, nil, img)), widget.NewProgressBarInfinite())
 		dReams.Window.Content().(*fyne.Container).Objects[1].Refresh()
 
 		logger.Println("[dReams] Closing dApps")
@@ -394,8 +397,8 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 	load_button.Hide()
 	back_button.Show()
 
-	dreams_img := canvas.NewImageFromResource(bundle.ResourceBlueBadgePng)
-	dreams_img.SetMinSize(fyne.NewSize(60, 60))
+	title_img := canvas.NewImageFromResource(bundle.ResourceFigure1CirclePng)
+	title_img.SetMinSize(fyne.NewSize(60, 60))
 
 	gnomon_gif.Start()
 
@@ -416,7 +419,7 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 
 	config_screen := container.NewVBox(
 		config_title,
-		container.NewStack(container.NewCenter(under_circle, dreams_img, over_circle)),
+		container.NewStack(container.NewCenter(under_circle, title_img, over_circle)),
 		skin_title,
 		container.NewCenter(skins),
 		dapp_title,

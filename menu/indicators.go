@@ -44,6 +44,8 @@ func StartDreamsIndicators(add []DreamsIndicator) fyne.CanvasObject {
 	g_bottom := canvas.NewRectangle(color.Black)
 	g_bottom.SetMinSize(fyne.NewSize(57, 10))
 
+	hover := gnomonToolTip(45, nil)
+
 	Gnomes.Sync_ind = canvas.NewColorRGBAAnimation(purple, blue,
 		time.Second*3, func(c color.Color) {
 			if Gnomes.IsInitialized() && !Gnomes.HasChecked() {
@@ -57,6 +59,7 @@ func StartDreamsIndicators(add []DreamsIndicator) fyne.CanvasObject {
 				g_bottom.FillColor = alpha
 				canvas.Refresh(g_bottom)
 			}
+			hover.Refresh()
 		})
 
 	Gnomes.Sync_ind.RepeatCount = fyne.AnimationRepeatForever
@@ -141,8 +144,6 @@ func StartDreamsIndicators(add []DreamsIndicator) fyne.CanvasObject {
 		additional_inds.Add(container.NewStack(ind.Rect, container.NewCenter(ind.Img)))
 	}
 
-	hover := gnomonToolTip(45, nil)
-
 	top_box := container.NewHBox(layout.NewSpacer(), additional_inds, connect_box, container.NewStack(g_full, sync_box, Gnomes.Icon_ind, hover))
 	place := container.NewVBox(top_box, layout.NewSpacer())
 
@@ -200,6 +201,8 @@ func StartIndicators() fyne.CanvasObject {
 	g_full := canvas.NewRectangle(color.Black)
 	g_full.SetMinSize(fyne.NewSize(57, 36))
 
+	hover := gnomonToolTip(-45, nil)
+
 	Gnomes.Full_ind = canvas.NewColorRGBAAnimation(purple, blue,
 		time.Second*3, func(c color.Color) {
 			if Gnomes.IsInitialized() && Gnomes.HasIndex(1) && Gnomes.HasChecked() {
@@ -211,6 +214,7 @@ func StartIndicators() fyne.CanvasObject {
 				canvas.Refresh(g_full)
 				sync_box.Show()
 			}
+			hover.Refresh()
 		})
 
 	Gnomes.Full_ind.RepeatCount = fyne.AnimationRepeatForever
@@ -266,8 +270,6 @@ func StartIndicators() fyne.CanvasObject {
 		container.NewStack(d_rect, container.NewCenter(d)),
 		container.NewStack(w_rect, container.NewCenter(w)))
 
-	hover := gnomonToolTip(-45, nil)
-
 	top_box := container.NewHBox(layout.NewSpacer(), connect_box, container.NewStack(g_full, sync_box, Gnomes.Icon_ind, hover))
 	place := container.NewVBox(top_box, layout.NewSpacer())
 
@@ -309,9 +311,11 @@ func RestartGif(g *xwidget.AnimatedGif) {
 var _ desktop.Hoverable = (*toolTip)(nil)
 
 type toolTip struct {
-	canvas fyne.Canvas
-	popup  *widget.PopUp
-	offset float32
+	hovered bool
+	text    *canvas.Text
+	canvas  fyne.Canvas
+	popup   *widget.PopUp
+	offset  float32
 	*canvas.Rectangle
 }
 
@@ -321,19 +325,23 @@ func gnomonToolTip(offset float32, can fyne.Canvas) *toolTip {
 	rect.SetMinSize(fyne.NewSize(57, 36))
 
 	return &toolTip{
-		Rectangle: rect,
+		text:      canvas.NewText("", bundle.TextColor),
 		canvas:    can,
 		popup:     &widget.PopUp{},
 		offset:    offset,
+		Rectangle: rect,
 	}
 }
 
 func (t *toolTip) MouseIn(event *desktop.MouseEvent) {
+	t.hovered = true
 	if t.canvas != nil {
 		if Gnomes.Indexer != nil {
-			t.popup = widget.NewPopUp(canvas.NewText(fmt.Sprintf("%d/%d", Gnomes.Indexer.LastIndexedHeight, Gnomes.Indexer.ChainHeight), bundle.TextColor), t.canvas)
+			t.text.Text = fmt.Sprintf("%d/%d (%s)", Gnomes.Indexer.LastIndexedHeight, Gnomes.Indexer.ChainHeight, Gnomes.Status())
+			t.popup = widget.NewPopUp(t.text, t.canvas)
 		} else {
-			t.popup = widget.NewPopUp(canvas.NewText("0/0", bundle.TextColor), t.canvas)
+			t.text.Text = "0/0"
+			t.popup = widget.NewPopUp(t.text, t.canvas)
 		}
 
 		if !t.popup.Hidden {
@@ -346,6 +354,7 @@ func (t *toolTip) MouseIn(event *desktop.MouseEvent) {
 
 func (t *toolTip) MouseOut() {
 	if t.canvas != nil {
+		t.hovered = false
 		t.popup.Hide()
 		t.popup = nil
 		t.Refresh()
@@ -353,3 +362,14 @@ func (t *toolTip) MouseOut() {
 }
 
 func (t *toolTip) MouseMoved(event *desktop.MouseEvent) {}
+
+func (t *toolTip) Refresh() {
+	if t.hovered {
+		if Gnomes.Indexer != nil {
+			t.text.Text = fmt.Sprintf("%d/%d (%s)", Gnomes.Indexer.LastIndexedHeight, Gnomes.Indexer.ChainHeight, Gnomes.Status())
+		} else {
+			t.text.Text = "0/0"
+		}
+		t.text.Refresh()
+	}
+}
