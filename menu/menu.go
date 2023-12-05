@@ -241,7 +241,7 @@ func RateConfirm(scid string, d *dreams.AppObject) {
 	var slider *widget.Slider
 	var confirm *dialog.CustomDialog
 
-	confirm_button := widget.NewButton("Confirm", func() {
+	confirm_button := widget.NewButtonWithIcon("Confirm", dreams.FyneIcon("confirm"), func() {
 		var pos uint64
 		if slider.Value > 0 {
 			pos = 1
@@ -252,10 +252,10 @@ func RateConfirm(scid string, d *dreams.AppObject) {
 		confirm.Hide()
 		confirm = nil
 	})
-
+	confirm_button.Importance = widget.HighImportance
 	confirm_button.Hide()
 
-	cancel_button := widget.NewButton("Cancel", func() {
+	cancel_button := widget.NewButtonWithIcon("Cancel", dreams.FyneIcon("cancel"), func() {
 		confirm.Hide()
 		confirm = nil
 	})
@@ -515,7 +515,7 @@ func sendAssetMenu(window_icon fyne.Resource) {
 				load = true
 			}
 
-			confirm_button := widget.NewButton("Confirm", func() {
+			confirm_button := widget.NewButtonWithIcon("Confirm", dreams.FyneIcon("confirm"), func() {
 				if dest_entry.Validate() == nil {
 					var load bool
 					if payload.Checked {
@@ -526,8 +526,9 @@ func sendAssetMenu(window_icon fyne.Resource) {
 					saw.Close()
 				}
 			})
+			confirm_button.Importance = widget.HighImportance
 
-			cancel_button := widget.NewButton("Cancel", func() {
+			cancel_button := widget.NewButtonWithIcon("Cancel", dreams.FyneIcon("cancel"), func() {
 				confirm_open = false
 				saw.SetContent(
 					container.NewStack(
@@ -729,7 +730,7 @@ func listMenu(window_icon fyne.Resource) {
 				confirm_label.Wrapping = fyne.TextWrapWord
 				confirm_label.Alignment = fyne.TextAlignCenter
 
-				cancel_button := widget.NewButton("Cancel", func() {
+				cancel_button := widget.NewButtonWithIcon("Cancel", dreams.FyneIcon("cancel"), func() {
 					confirm_open = false
 					aw.SetContent(
 						container.NewStack(
@@ -738,7 +739,7 @@ func listMenu(window_icon fyne.Resource) {
 							aw_content))
 				})
 
-				confirm_button := widget.NewButton("Confirm", func() {
+				confirm_button := widget.NewButtonWithIcon("Confirm", dreams.FyneIcon("confirm"), func() {
 					rpc.SetNFAListing(listing_asset, listing.Selected, charAddr.Text, d, s, cp)
 					Control.List_open = false
 					if rpc.Wallet.IsConnected() {
@@ -749,6 +750,7 @@ func listMenu(window_icon fyne.Resource) {
 					}
 					aw.Close()
 				})
+				confirm_button.Importance = widget.HighImportance
 
 				confirm_options := container.NewAdaptiveGrid(2, confirm_button, cancel_button)
 				confirm_content := container.NewBorder(nil, confirm_options, nil, nil, confirm_label)
@@ -911,9 +913,7 @@ func IntroTree(intros []IntroText) fyne.CanvasObject {
 
 	tree.OpenBranch("Welcome to dReams")
 
-	max := container.NewStack(tree)
-
-	return max
+	return container.NewStack(tree)
 }
 
 // Used for placing coin decimal, default returns 2 decimal place

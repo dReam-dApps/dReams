@@ -256,7 +256,7 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 		status_text.Alignment = fyne.TextAlignCenter
 
 		img := canvas.NewImageFromResource(bundle.ResourceFigure1CirclePng)
-		img.SetMinSize(fyne.NewSize(150, 150))
+		img.SetMinSize(fyne.NewSize(180, 180))
 
 		dReams.Window.Content().(*fyne.Container).Objects[1] = container.NewStack(container.NewCenter(container.NewBorder(nil, status_text, nil, nil, img)), widget.NewProgressBarInfinite())
 		dReams.Window.Content().(*fyne.Container).Objects[1].Refresh()

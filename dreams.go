@@ -329,6 +329,11 @@ func ThemeSelect() fyne.Widget {
 	return Theme.Select
 }
 
+// Returns Fyne theme icon for name
+func FyneIcon(name fyne.ThemeIconName) fyne.Resource {
+	return fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), name)
+}
+
 // Add a asset option to a AssetSelect
 func (a *AssetSelect) Add(add, check string) {
 	if check == rpc.Wallet.Address {

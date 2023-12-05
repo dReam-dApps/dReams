@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	dreams "github.com/dReam-dApps/dReams"
 	"github.com/dReam-dApps/dReams/bundle"
 	"github.com/dReam-dApps/dReams/dwidget"
 	"github.com/dReam-dApps/dReams/rpc"
@@ -161,7 +162,7 @@ func BidBuyConfirm(scid string, amt uint64, b int, obj *container.Split, reset f
 	label.Wrapping = fyne.TextWrapWord
 	label.Alignment = fyne.TextAlignCenter
 
-	confirm := widget.NewButton("Confirm", func() {
+	confirm := widget.NewButtonWithIcon("Confirm", dreams.FyneIcon("confirm"), func() {
 		switch b {
 		case 0:
 			rpc.BidBuyNFA(scid, "Bid", amt)
@@ -175,8 +176,9 @@ func BidBuyConfirm(scid string, amt uint64, b int, obj *container.Split, reset f
 		obj.Trailing.(*fyne.Container).Objects[1].Refresh()
 		Market.Confirming = false
 	})
+	confirm.Importance = widget.HighImportance
 
-	cancel := widget.NewButton("Cancel", func() {
+	cancel := widget.NewButtonWithIcon("Cancel", dreams.FyneIcon("cancel"), func() {
 		obj.Trailing.(*fyne.Container).Objects[1] = reset
 		obj.Trailing.(*fyne.Container).Objects[1].Refresh()
 		Market.Confirming = false
@@ -243,7 +245,7 @@ func ConfirmCancelClose(scid string, c int, obj *container.Split, reset fyne.Can
 	label.Wrapping = fyne.TextWrapWord
 	label.Alignment = fyne.TextAlignCenter
 
-	confirm := widget.NewButton("Confirm", func() {
+	confirm := widget.NewButtonWithIcon("Confirm", dreams.FyneIcon("confirm"), func() {
 		switch c {
 		case 0:
 			rpc.CancelCloseNFA(scid, "CloseListing")
@@ -260,8 +262,9 @@ func ConfirmCancelClose(scid string, c int, obj *container.Split, reset fyne.Can
 		obj.Trailing.(*fyne.Container).Objects[1].Refresh()
 		Market.Confirming = false
 	})
+	confirm.Importance = widget.HighImportance
 
-	cancel := widget.NewButton("Cancel", func() {
+	cancel := widget.NewButtonWithIcon("Cancel", dreams.FyneIcon("cancel"), func() {
 		obj.Trailing.(*fyne.Container).Objects[1] = reset
 		obj.Trailing.(*fyne.Container).Objects[1].Refresh()
 		Market.Confirming = false
@@ -1225,13 +1228,14 @@ func setHeaderConfirm(name, desc, icon, scid string, obj []fyne.CanvasObject, re
 	label.Wrapping = fyne.TextWrapWord
 	label.Alignment = fyne.TextAlignCenter
 
-	confirm_button := widget.NewButton("Confirm", func() {
+	confirm_button := widget.NewButtonWithIcon("Confirm", dreams.FyneIcon("confirm"), func() {
 		rpc.SetHeaders(name, desc, icon, scid)
 		obj[1] = reset
 		obj[1].Refresh()
 	})
+	confirm_button.Importance = widget.HighImportance
 
-	cancel_button := widget.NewButton("Cancel", func() {
+	cancel_button := widget.NewButtonWithIcon("Cancel", dreams.FyneIcon("cancel"), func() {
 		obj[1] = reset
 		obj[1].Refresh()
 

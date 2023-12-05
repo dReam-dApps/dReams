@@ -99,6 +99,11 @@ func (t dTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) color
 	case theme.ColorNameError:
 		return color.NRGBA{R: 0xf4, G: 0x33, B: 0x25, A: 0xff}
 
+	// case theme.ColorNameSuccess:
+	// case theme.ColorNameWarning:
+	// case theme.ColorNameHyperlink:
+	// case theme.ColorNameHeaderBackground:
+
 	case theme.ColorNameFocus:
 		// entry highlight
 		if t.variant == 1 {
@@ -141,7 +146,7 @@ func (t dTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) color
 
 	case theme.ColorNameOverlayBackground:
 		if t.variant == 1 {
-			return color.NRGBA{R: 0xf0, G: 0xf0, B: 0xf0, A: 0xaa} //color.RGBA{255, 255, 255, 6}
+			return color.NRGBA{R: 0xf0, G: 0xf0, B: 0xf0, A: 0xaa}
 		}
 		return color.RGBA{4, 4, 4, 210}
 
@@ -155,7 +160,7 @@ func (t dTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) color
 		if t.variant == 1 {
 			return color.White
 		}
-		return purple
+		return color.Black
 
 	case theme.ColorNamePrimary:
 		// tab select color, progress bar
