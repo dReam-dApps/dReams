@@ -332,6 +332,56 @@ func ShowTxDialog(title, message, txid string, delay time.Duration, w fyne.Windo
 	info = nil
 }
 
+// Shows a passed Fyne CustomDialog or ConfirmDialog and closes it if connection is lost
+func ShowConfirmDialog(done chan struct{}, confirm interface{}) {
+	switch c := confirm.(type) {
+	case *dialog.CustomDialog:
+		c.Show()
+		for {
+			select {
+			case <-done:
+				if c != nil {
+					c.Hide()
+					c = nil
+				}
+				return
+			default:
+				if !rpc.IsReady() {
+					if c != nil {
+						c.Hide()
+						c = nil
+					}
+					return
+				}
+				time.Sleep(time.Second)
+			}
+		}
+	case *dialog.ConfirmDialog:
+		c.Show()
+		for {
+			select {
+			case <-done:
+				if c != nil {
+					c.Hide()
+					c = nil
+				}
+				return
+			default:
+				if !rpc.IsReady() {
+					if c != nil {
+						c.Hide()
+						c = nil
+					}
+					return
+				}
+				time.Sleep(time.Second)
+			}
+		}
+	default:
+		// Nothing
+	}
+}
+
 // Index entry and NFA control objects
 //   - Pass window resources for side menu windows
 func IndexEntry(window_icon fyne.Resource, w fyne.Window) fyne.CanvasObject {
