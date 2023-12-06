@@ -21,7 +21,6 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/data/validation"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
@@ -183,32 +182,6 @@ func ReadDreamsConfig(tag string) (saved dreams.SaveData) {
 	return
 }
 
-// Daemon rpc entry object with default options
-//   - Bound to rpc.Daemon.Rpc
-func DaemonRpcEntry() fyne.Widget {
-	options := []string{
-		"",
-		rpc.DAEMON_RPC_DEFAULT,
-		rpc.DAEMON_RPC_REMOTE1,
-		rpc.DAEMON_RPC_REMOTE2,
-		rpc.DAEMON_RPC_REMOTE3,
-		rpc.DAEMON_RPC_REMOTE4,
-		rpc.DAEMON_RPC_REMOTE5,
-		rpc.DAEMON_RPC_REMOTE6,
-	}
-
-	if Control.Daemon_config != "" {
-		options = append(options, Control.Daemon_config)
-	}
-	entry := widget.NewSelectEntry(options)
-	entry.PlaceHolder = "Daemon RPC: "
-
-	this := binding.BindString(&rpc.Daemon.Rpc)
-	entry.Bind(this)
-
-	return entry
-}
-
 // Display SCID rating from dReams SCID rating system
 func DisplayRating(i uint64) fyne.Resource {
 	if i > 250000 {
@@ -306,19 +279,6 @@ func RateConfirm(scid string, d *dreams.AppObject) {
 	}()
 }
 
-var Username string
-
-// Dero wallet name entry
-func NameEntry() fyne.CanvasObject {
-	Control.Names = widget.NewSelect([]string{}, func(s string) {
-		Username = s
-	})
-
-	Control.Names.PlaceHolder = "Wallet names:"
-
-	return container.NewHBox(layout.NewSpacer(), Control.Names)
-}
-
 // Create and show dialog for sent TX, dismiss copies txid to clipboard, dialog will hide after delay
 func ShowTxDialog(title, message, txid string, delay time.Duration, w fyne.Window) {
 	info := dialog.NewInformation(title, message, w)
@@ -380,130 +340,6 @@ func ShowConfirmDialog(done chan struct{}, confirm interface{}) {
 	default:
 		// Nothing
 	}
-}
-
-// Index entry and NFA control objects
-//   - Pass window resources for side menu windows
-func IndexEntry(window_icon fyne.Resource, w fyne.Window) fyne.CanvasObject {
-	Assets.Index_entry = widget.NewMultiLineEntry()
-	Assets.Index_entry.PlaceHolder = "SCID:"
-	Assets.Index_button = widget.NewButton("Add to Index", func() {
-		if Gnomes.IsReady() {
-			s := strings.Split(Assets.Index_entry.Text, "\n")
-			if err := manualIndex(s); err == nil {
-				dialog.NewInformation("Added to Index", "SCIDs added", w).Show()
-			} else {
-				dialog.NewInformation("Error", "Error adding SCIDs to index", w).Show()
-			}
-		}
-	})
-
-	Assets.Index_search = widget.NewButton("Search Index", func() {
-		searchIndex(Assets.Index_entry.Text)
-	})
-
-	Control.Send_asset = widget.NewButton("Send Asset", func() {
-		go sendAssetMenu(window_icon)
-	})
-
-	Control.List_button = widget.NewButton("List Asset", func() {
-		go listMenu(window_icon)
-	})
-
-	Control.Claim_button = widget.NewButton("Claim NFA", func() {
-		if len(Assets.Index_entry.Text) == 64 {
-			if isNFA(Assets.Index_entry.Text) {
-				if tx := rpc.ClaimNFA(Assets.Index_entry.Text); tx != "" {
-					go ShowTxDialog("Claim NFA", fmt.Sprintf("TX: %s", tx), tx, 3*time.Second, w)
-				} else {
-					dialog.NewInformation("Claim NFA", "TX Error", w).Show()
-				}
-
-				return
-			}
-
-			dialog.NewInformation("Claim NFA", "Could not validate SCID as NFA", w).Show()
-			return
-		}
-
-		dialog.NewInformation("Claim NFA", "Not a valid SCID", w).Show()
-	})
-
-	Assets.Index_button.Hide()
-	Assets.Index_search.Hide()
-	Control.List_button.Hide()
-	Control.Claim_button.Hide()
-	Control.Send_asset.Hide()
-
-	Assets.Gnomes_index = canvas.NewText(" Indexed SCIDs: ", bundle.TextColor)
-	Assets.Gnomes_index.TextSize = 18
-
-	bottom_grid := container.NewAdaptiveGrid(3, Assets.Gnomes_index, Assets.Index_button, Assets.Index_search)
-	top_grid := container.NewAdaptiveGrid(3, container.NewStack(Control.Send_asset), Control.Claim_button, Control.List_button)
-	box := container.NewVBox(top_grid, layout.NewSpacer(), bottom_grid)
-
-	return container.NewAdaptiveGrid(2, Assets.Index_entry, box)
-}
-
-// Disable index objects
-func DisableIndexControls(d bool) {
-	if d {
-		Assets.Index_button.Hide()
-		Assets.Index_search.Hide()
-		Assets.Header_box.Hide()
-		Market.Market_box.Hide()
-		Gnomes.SCIDS = 0
-	} else {
-		Assets.Index_button.Show()
-		Assets.Index_search.Show()
-		if rpc.Wallet.IsConnected() {
-			Control.Claim_button.Show()
-			Assets.Header_box.Show()
-			Market.Market_box.Show()
-			if Control.List_open {
-				Control.List_button.Hide()
-			}
-		} else {
-			Control.Send_asset.Hide()
-			Control.List_button.Hide()
-			Control.Claim_button.Hide()
-			Assets.Header_box.Hide()
-			Market.Market_box.Hide()
-		}
-	}
-	Assets.Index_button.Refresh()
-	Assets.Index_search.Refresh()
-	Assets.Header_box.Refresh()
-	Market.Market_box.Refresh()
-}
-
-// Owned asset list object
-//   - Sets Control.Viewing_asset and asset stats on selected
-func AssetList() fyne.CanvasObject {
-	Assets.Asset_list = widget.NewList(
-		func() int {
-			return len(Assets.Assets)
-		},
-		func() fyne.CanvasObject {
-			return widget.NewLabel("")
-		},
-		func(i widget.ListItemID, o fyne.CanvasObject) {
-			if len(Assets.Assets) > 0 {
-				o.(*widget.Label).SetText(Assets.Assets[i])
-			}
-		})
-
-	Assets.Asset_list.OnSelected = func(id widget.ListItemID) {
-		split := strings.Split(Assets.Assets[id], "   ")
-		if len(split) >= 2 {
-			trimmed := strings.Trim(split[1], " ")
-			Control.Viewing_asset = trimmed
-			Assets.Icon = *canvas.NewImageFromImage(nil)
-			go GetOwnedAssetStats(trimmed)
-		}
-	}
-
-	return container.NewStack(Assets.Asset_list)
 }
 
 // Send Dero asset menu
@@ -874,113 +710,6 @@ func listMenu(window_icon fyne.Resource) {
 			bundle.Alpha180,
 			aw_content))
 	aw.Show()
-}
-
-type IntroText struct {
-	name    string
-	content []string
-}
-
-// Create menu tree items for dApps
-func MakeMenuIntro(items map[string][]string) (entries []IntroText) {
-	var menu_entry IntroText
-	for name, e := range items {
-		menu_entry.name = name
-		menu_entry.content = e
-		entries = append(entries, menu_entry)
-	}
-
-	return
-}
-
-// Menu instruction tree
-func IntroTree(intros []IntroText) fyne.CanvasObject {
-	list := map[string][]string{
-		"":                        {"Welcome to dReams"},
-		"Welcome to dReams":       {"Get Started", "dApps", "Assets", "Market"},
-		"Get Started":             {"Visit dero.io for daemon and wallet download info", "Connecting", "FAQ"},
-		"Connecting":              {"Daemon", "Wallet"},
-		"FAQ":                     {"Can't connect", "How to resync Gnomon DB", "Can't see any tables, contracts or market info", "How to see terminal log", "Visit dreamdapps.io for further documentation"},
-		"Can't connect":           {"Using a local daemon will yield the best results", "If you are using a remote daemon, try changing daemons", "Any connection errors can be found in terminal log"},
-		"How to resync Gnomon DB": {"Go to Gnomon options in Menu", "If Gnomon is running you will be prompted to shut it down to make changes", "Click the delete DB button", "Reconnect to a daemon to resync", "Any sync errors can be found in terminal log"},
-
-		"Can't see any tables, contracts or market info": {"Make sure daemon, wallet and Gnomon indicators are lit up solid", "If you've added new dApps to your dReams, a Gnomon resync will add them to your index", "Look in the asset tab for number of indexed SCIDs, it should be above 0", "Make sure your collection or dApp is enabled", "Try resyncing", "Any errors can be found in terminal log"},
-
-		"How to see terminal log": {"Windows", "Mac", "Linux"},
-		"Windows":                 {"Open powershell or command prompt", "Navigate to dReams directory", `Start dReams using       .\dReams-windows-amd64.exe`},
-		"Mac":                     {"Open a terminal", "Navigate to dReams directory", `Start dReams using       ./dReams-macos-amd64`},
-		"Linux":                   {"Open a terminal", "Navigate to dReams directory", `Start dReams using       ./dReams-linux-amd64`},
-		"Daemon":                  {"Using local daemon will give best performance while using dReams", "Remote daemon options are available in drop down if a local daemon is not available", "Enter daemon address and the D light in top right will light up if connection is successful", "Once daemon is connected Gnomon will start up, the Gnomon indicator light will have a stripe in middle"},
-		"Wallet":                  {"Set up and register a Dero wallet", "Your wallet will need to be running rpc server", "Using cli, start your wallet with flags --rpc-server --rpc-login=user:pass", "With Engram, turn on cyberdeck to start rpc server", "In dReams enter your wallet rpc address and rpc user:pass", "Press connect and the W light in top right will light up if connection is successful", "Once wallet is connected and Gnomon is running, Gnomon will sync with wallet", "The Gnomon indicator will turn solid when this is complete, everything is now connected"},
-
-		"dApps":         {"Loading dApps", "Holdero", "Baccarat", "Predictions", "Sports", "dService", "Iluma", "Asset Duels", "Grokked", "Contract Ratings"},
-		"Loading dApps": {"You can add or remove dApps in the dApps tab", "Loading changes will disconnect your wallet", "Gnomon will continue to run, but may need to be resynced to index any new dApps added", "Your dApp preferences will be saved in local config file", "Loading only the dApps you are using will increase Gnomon and dReams performance"},
-	}
-
-	for i := range intros {
-		list[intros[i].name] = intros[i].content
-	}
-
-	list["Contract Ratings"] = []string{
-		"dReams has a public rating store on chain for multiplayer contracts",
-		"Players can rate other contracts positively or negatively",
-		"Four rating tiers, tier two being the starting tier for all contracts",
-		"Each rating transaction is weight based by its Dero value",
-		"Contracts that fall below tier one will no longer populate in the public index"}
-
-	list["Assets"] = []string{
-		"Enabling assets collections",
-		"View any owned assets held in wallet",
-		"Put owned assets up for auction or for sale",
-		"Send assets privately to another wallet",
-		"Indexer, add custom contracts to your index and search current index DB"}
-
-	list["Enabling assets collections"] = []string{
-		"You can enable or disable indexing of any asset collection in the Asset/Enabled tab",
-		"Changes will require Gnomon DB to be resynced to take effect",
-		"Your collection preferences will be saved in local config file",
-		"Loading only the asset collections you are using will increase Gnomon and dReams performance"}
-
-	list["Market"] = []string{
-		"View any in game assets up for auction or sale",
-		"Search all NFAs",
-		"Bid on or buy assets",
-		"Cancel or close out any existing listings",
-		"Create NFA charity auctions and sales"}
-
-	tree := widget.NewTreeWithStrings(list)
-
-	tree.OnBranchClosed = func(uid widget.TreeNodeID) {
-		tree.UnselectAll()
-		if uid == "Welcome to dReams" {
-			tree.CloseAllBranches()
-		}
-	}
-
-	tree.OnBranchOpened = func(uid widget.TreeNodeID) {
-		tree.Select(uid)
-	}
-
-	tree.OpenBranch("Welcome to dReams")
-
-	return container.NewStack(tree)
-}
-
-// Used for placing coin decimal, default returns 2 decimal place
-func CoinDecimal(ticker string) int {
-	split := strings.Split(ticker, "-")
-	if len(split) == 2 {
-		switch split[1] {
-		case "BTC":
-			return 8
-		case "DERO":
-			return 5
-		default:
-			return 2
-		}
-	}
-
-	return 2
 }
 
 func CreateSwapContainer(pair string) (*dwidget.DeroAmts, *fyne.Container) {

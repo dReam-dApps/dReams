@@ -769,6 +769,32 @@ func daemonConnectedBox() fyne.Widget {
 	return menu.Control.Daemon_check
 }
 
+// Daemon rpc entry object with default options
+//   - Bound to rpc.Daemon.Rpc
+func daemonRpcEntry() fyne.Widget {
+	options := []string{
+		"",
+		rpc.DAEMON_RPC_DEFAULT,
+		rpc.DAEMON_RPC_REMOTE1,
+		rpc.DAEMON_RPC_REMOTE2,
+		rpc.DAEMON_RPC_REMOTE3,
+		rpc.DAEMON_RPC_REMOTE4,
+		rpc.DAEMON_RPC_REMOTE5,
+		rpc.DAEMON_RPC_REMOTE6,
+	}
+
+	if menu.Control.Daemon_config != "" {
+		options = append(options, menu.Control.Daemon_config)
+	}
+	entry := widget.NewSelectEntry(options)
+	entry.PlaceHolder = "Daemon RPC: "
+
+	this := binding.BindString(&rpc.Daemon.Rpc)
+	entry.Bind(this)
+
+	return entry
+}
+
 // Wallet rpc entry object
 //   - Bound to rpc.Wallet.Rpc
 //   - Changes reset wallet connection and call checkConnection()
