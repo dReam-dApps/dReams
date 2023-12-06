@@ -44,7 +44,7 @@ func main() {
 		menu.CloseAppSignal(true)
 		menu.WriteDreamsConfig(save())
 		dappCloseCheck()
-		go menu.StopLabel()
+		menu.Info.SetStatus("Putting Gnomon to Sleep")
 		menu.Gnomes.Stop("dReams")
 		dReams.StopProcess()
 		menu.StopIndicators(indicators)

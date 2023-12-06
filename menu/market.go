@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"image/color"
-	"strconv"
 	"strings"
 	"time"
 
@@ -909,9 +908,7 @@ func RunNFAMarket(tag string, quit, done chan struct{}, connect_box *dwidget.Der
 
 				// Check wallet for all owned NFAs and refresh content
 				go CheckAllNFAs(false, nil)
-				indexed_scids := " Indexed SCIDs: " + strconv.Itoa(int(Gnomes.SCIDS))
-				Assets.Gnomes_index.Text = (indexed_scids)
-				Assets.Gnomes_index.Refresh()
+				Info.RefreshIndexed()
 				Assets.Stats_box = *container.NewVBox(Assets.Collection, Assets.Name, IconImg(bundle.ResourceAvatarFramePng))
 				Assets.Stats_box.Refresh()
 			} else {

@@ -23,14 +23,6 @@ type DreamsIndicator struct {
 	Animation *fyne.Animation
 }
 
-// Menu label when Gnomon is closing
-func StopLabel() {
-	if Assets.Gnomes_sync != nil {
-		Assets.Gnomes_sync.Text = " Putting Gnomon to Sleep"
-		Assets.Gnomes_sync.Refresh()
-	}
-}
-
 // dReams app status indicators for wallet, daemon, Gnomon and services
 //   - Pass further DreamsIndicators to add
 func StartDreamsIndicators(add []DreamsIndicator) fyne.CanvasObject {

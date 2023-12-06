@@ -612,7 +612,7 @@ func placeWall(intros []menu.IntroText) *container.Split {
 		userPassEntry(),
 		rpcConnectButton(),
 		layout.NewSpacer(),
-		menu.MenuDisplay())
+		menu.InfoDisplay())
 
 	daemon_check_cont := container.NewVBox(daemonConnectedBox())
 

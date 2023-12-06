@@ -174,6 +174,14 @@ func (g *gnomon) IndexContains() map[string]string {
 	return contracts
 }
 
+// Returns Gnomes.SCIDS
+func (g *gnomon) IndexCount() uint64 {
+	g.RLock()
+	defer g.RUnlock()
+
+	return g.SCIDS
+}
+
 // Check if Gnomes index contains SCIDs >= u
 func (g *gnomon) HasIndex(u uint64) bool {
 	g.RLock()

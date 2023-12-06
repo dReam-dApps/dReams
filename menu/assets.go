@@ -20,16 +20,8 @@ import (
 )
 
 type assetObjects struct {
-	Swap     *fyne.Container
-	Balances *widget.List
-
-	Dero_price    *canvas.Text
-	Wall_height   *canvas.Text
-	Daem_height   *canvas.Text
-	Gnomes_height *canvas.Text
-	Gnomes_sync   *canvas.Text
-
-	Gnomes_index *canvas.Text
+	Swap         *fyne.Container
+	Balances     *widget.List
 	Index_entry  *widget.Entry
 	Index_button *widget.Button
 	Index_search *widget.Button
@@ -456,10 +448,10 @@ func IndexEntry(window_icon fyne.Resource, w fyne.Window) fyne.CanvasObject {
 	Control.Claim_button.Hide()
 	Control.Send_asset.Hide()
 
-	Assets.Gnomes_index = canvas.NewText(" Indexed SCIDs: ", bundle.TextColor)
-	Assets.Gnomes_index.TextSize = 18
+	Info.Indexed = canvas.NewText("Indexed SCIDs: ", bundle.TextColor)
+	Info.Indexed.TextSize = 18
 
-	bottom_grid := container.NewAdaptiveGrid(3, Assets.Gnomes_index, Assets.Index_button, Assets.Index_search)
+	bottom_grid := container.NewAdaptiveGrid(3, Info.Indexed, Assets.Index_button, Assets.Index_search)
 	top_grid := container.NewAdaptiveGrid(3, container.NewStack(Control.Send_asset), Control.Claim_button, Control.List_button)
 	box := container.NewVBox(top_grid, layout.NewSpacer(), bottom_grid)
 

@@ -129,7 +129,7 @@ func init() {
 		menu.WriteDreamsConfig(save())
 		fmt.Println()
 		dappCloseCheck()
-		go menu.StopLabel()
+		menu.Info.SetStatus("Putting Gnomon to Sleep")
 		menu.Gnomes.Stop("dReams")
 		menu.StopIndicators(indicators)
 		time.Sleep(time.Second)
@@ -234,7 +234,7 @@ func fetch(done chan struct{}) {
 
 				if rpc.Daemon.IsConnected() {
 					if rpc.Startup {
-						go refreshPriceDisplay(true)
+						go menu.Info.RefreshPrice(App_Name)
 					}
 
 					rpc.Startup = false
@@ -254,97 +254,28 @@ func fetch(done chan struct{}) {
 	}
 }
 
-// Refresh Gnomon height display
-func refreshGnomonDisplay(index_height, c int) {
-	if c == 1 {
-		height := " Gnomon Height: " + strconv.Itoa(index_height)
-		menu.Assets.Gnomes_height.Text = (height)
-		menu.Assets.Gnomes_height.Refresh()
-	} else {
-		menu.Assets.Gnomes_height.Text = (" Gnomon Height: 0")
-		menu.Assets.Gnomes_height.Refresh()
-	}
-}
-
-// Refresh indexed asset count
-func refreshIndexDisplay(c bool) {
-	if c {
-		scids := " Indexed SCIDs: " + strconv.Itoa(int(menu.Gnomes.SCIDS))
-		menu.Assets.Gnomes_index.Text = (scids)
-		menu.Assets.Gnomes_index.Refresh()
-	} else {
-		menu.Assets.Gnomes_index.Text = (" Indexed SCIDs: 0")
-		menu.Assets.Gnomes_index.Refresh()
-	}
-}
-
-// Refresh daemon height display
-func refreshDaemonDisplay(c bool) {
-	if c {
-		dHeight := rpc.DaemonHeight("dReams", rpc.Daemon.Rpc)
-		d := strconv.Itoa(int(dHeight))
-		menu.Assets.Daem_height.Text = (" Daemon Height: " + d)
-		menu.Assets.Daem_height.Refresh()
-	} else {
-		menu.Assets.Daem_height.Text = (" Daemon Height: 0")
-		menu.Assets.Daem_height.Refresh()
-	}
-}
-
-// Refresh menu wallet display
-func refreshWalletDisplay(c bool) {
-	if c {
-		menu.Assets.Wall_height.Text = (" Wallet Height: " + rpc.Wallet.Display.Height)
-		menu.Assets.Wall_height.Refresh()
-	} else {
-		menu.Assets.Wall_height.Text = (" Wallet Height: 0")
-		menu.Assets.Wall_height.Refresh()
-	}
-}
-
-// Refresh current Dero-USDT price
-func refreshPriceDisplay(c bool) {
-	if c && rpc.Daemon.IsConnected() {
-		_, price := menu.GetPrice("DERO-USDT", "dReams")
-		menu.Assets.Dero_price.Text = (" Dero Price: $" + price)
-		menu.Assets.Dero_price.Refresh()
-	} else {
-		menu.Assets.Dero_price.Text = (" Dero Price: $")
-		menu.Assets.Dero_price.Refresh()
-	}
-}
-
 // Refresh all menu gui objects
 func menuRefresh(offset int) {
 	if dReams.OnTab("Menu") && menu.Gnomes.IsInitialized() {
-		index := menu.Gnomes.Indexer.LastIndexedHeight
 		switch menu.Gnomes.Status() {
 		case "initializing":
-			menu.Assets.Gnomes_sync.Text = " Gnomon Initializing"
+			menu.Info.SetStatus("Gnomon Initializing")
 		case "fastsyncing":
-			menu.Assets.Gnomes_sync.Text = " Gnomon Fastsyncing..."
+			menu.Info.SetStatus("Gnomon Fastsyncing...")
 		case "closing":
-			menu.Assets.Gnomes_sync.Text = " Gnomon Closing..."
+			menu.Info.SetStatus("Gnomon Closing...")
 		case "indexed":
 			if !menu.Gnomes.HasIndex(uint64(menu.ReturnAssetCount())) && !menu.Gnomes.HasChecked() {
-				menu.Assets.Gnomes_sync.Text = " Gnomon Syncing..."
+				menu.Info.SetStatus("Gnomon Syncing...")
 			} else {
-				menu.Assets.Gnomes_sync.Text = " Gnomon Synced"
+				menu.Info.SetStatus("Gnomon Synced")
 			}
 		case "indexing":
-			menu.Assets.Gnomes_sync.Text = " Gnomon Syncing..."
-		}
-		menu.Assets.Gnomes_sync.Refresh()
-
-		go refreshGnomonDisplay(int(index), 1)
-		go refreshIndexDisplay(true)
-
-		if rpc.Daemon.IsConnected() {
-			go refreshDaemonDisplay(true)
+			menu.Info.SetStatus("Gnomon Syncing...")
 		}
 
 		if offset == 20 {
-			go refreshPriceDisplay(true)
+			go menu.Info.RefreshPrice(App_Name)
 		}
 
 		if offset%3 == 0 && dReams.OnSubTab("Market") && !dReams.IsWindows() && !menu.ClosingApps() {
@@ -366,19 +297,10 @@ func menuRefresh(offset int) {
 		}
 	}
 
-	if rpc.Daemon.IsConnected() {
-		go refreshDaemonDisplay(true)
-	} else {
-		go refreshDaemonDisplay(false)
-		go refreshGnomonDisplay(0, 0)
-		go refreshIndexDisplay(false)
-	}
-
-	if rpc.Wallet.IsConnected() {
-		go refreshWalletDisplay(true)
-	} else {
-		go refreshWalletDisplay(false)
-	}
+	menu.Info.RefreshDaemon(App_Name)
+	menu.Info.RefreshGnomon()
+	menu.Info.RefreshWallet()
+	menu.Info.RefreshIndexed()
 
 	menu.Assets.Balances.Refresh()
 
@@ -393,8 +315,7 @@ func menuRefresh(offset int) {
 //   - Pass false gc for rechecks
 func checkDreamsNFAs(gc bool, scids map[string]string) {
 	if menu.Gnomes.IsReady() && !gc {
-		menu.Assets.Gnomes_sync.Text = " Checking for Assets"
-		menu.Assets.Gnomes_sync.Refresh()
+		menu.Info.SetStatus("Checking for Assets")
 		if scids == nil {
 			scids = menu.Gnomes.GetAllOwnersAndSCIDs()
 		}
@@ -745,8 +666,7 @@ func daemonConnectedBox() fyne.Widget {
 				dialog.NewInformation("Daemon Version", "This daemon may conflict with Gnomon sync", dReams.Window).Show()
 			}
 
-			menu.Assets.Gnomes_sync.Text = " Starting Gnomon"
-			menu.Assets.Gnomes_sync.Refresh()
+			menu.Info.SetStatus("Starting Gnomon")
 			rpc.FetchFees()
 			filters := gnomonFilters()
 			menu.StartGnomon("dReams", menu.Gnomes.DBType, filters, menu.Control.G45_count+menu.Control.NFA_count, menu.Control.NFA_count, menu.G45Index)
@@ -757,10 +677,9 @@ func daemonConnectedBox() fyne.Widget {
 		}
 
 		if !b {
-			go menu.StopLabel()
+			menu.Info.SetStatus("Putting Gnomon to Sleep")
 			menu.Gnomes.Stop("dReams")
-			menu.Assets.Gnomes_sync.Text = " Gnomon is Sleeping"
-			menu.Assets.Gnomes_sync.Refresh()
+			menu.Info.SetStatus("Gnomon is Sleeping")
 		}
 	})
 	menu.Control.Daemon_check.Disable()
