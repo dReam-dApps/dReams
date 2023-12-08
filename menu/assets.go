@@ -109,6 +109,57 @@ func (a *assetObjects) SortList() {
 	a.List.Refresh()
 }
 
+// Check if string is dReams NFA collection
+func IsDreamsNFACollection(collection string) bool {
+	for _, c := range dReamsNFAs {
+		if c.name == collection {
+			return true
+		}
+	}
+
+	return false
+}
+
+// Check if string is dReams NFA creator address
+func IsDreamsNFACreator(creator string) bool {
+	for _, c := range dReamsNFAs {
+		if c.creator == creator {
+			return true
+		}
+	}
+
+	return false
+}
+
+// Get the nameHdr of a NFA
+func GetNFAName(scid string) string {
+	if Gnomes.IsReady() {
+		name, _ := Gnomes.GetSCIDValuesByKey(scid, "nameHdr")
+		if name != nil {
+			return name[0]
+		}
+	}
+
+	return ""
+}
+
+// Check if SCID is a NFA
+func isNFA(scid string) bool {
+	if Gnomes.IsReady() {
+		artAddr, _ := Gnomes.GetSCIDValuesByKey(scid, "artificerAddr")
+		if artAddr != nil {
+			return artAddr[0] == rpc.ArtAddress
+		}
+	}
+	return false
+}
+
+// Check if SCID is a valid NFA
+//   - file != "-"
+func ValidNFA(file string) bool {
+	return file != "-"
+}
+
 // Additional asset type info
 func AssetType(collection, typeHdr string) string {
 	switch collection {
@@ -524,7 +575,7 @@ func indexEntry(w fyne.Window) fyne.CanvasObject {
 	Assets.Index.Add = widget.NewButton("Add to Index", func() {
 		if Gnomes.IsReady() {
 			s := strings.Split(Assets.Index.Entry.Text, "\n")
-			if err := manualIndex(s); err == nil {
+			if err := AddToIndex(s); err == nil {
 				dialog.NewInformation("Added to Index", "SCIDs added", w).Show()
 			} else {
 				dialog.NewInformation("Error", "Error adding SCIDs to index", w).Show()

@@ -1,5 +1,14 @@
 package menu
 
+import (
+	"runtime"
+	"time"
+
+	"fyne.io/fyne/v2"
+	"github.com/civilware/Gnomon/structures"
+	"github.com/dReam-dApps/dReams/rpc"
+)
+
 const (
 	Seals_mint = "dero1qyfq8m3rju62tshju60zuc0ymrajwxqajkdh6pw888ejuv94jlfgjqq58px98"
 	Seals_coll = "c6fa9a2c95d97da816eb9689a2fb52be385bb1df9e93abe99373ddbd3407129d"
@@ -88,4 +97,36 @@ func ReturnEnabledG45s(assets map[string]bool) (filter []string) {
 	}
 
 	return
+}
+
+// Manually add G45 collections to Gnomon index
+func G45Index() {
+	if Gnomes.DBType == "boltdb" {
+		for Gnomes.IsWriting() {
+			time.Sleep(time.Second)
+		}
+	}
+	logger.Println("[dReams] Adding G45 Collections")
+	filters := Gnomes.Indexer.SearchFilter
+	Gnomes.Indexer.SearchFilter = []string{}
+	scidstoadd := make(map[string]*structures.FastSyncImport)
+
+	for _, c := range ReturnEnabledG45s(Control.Enabled_assets) {
+		g45 := rpc.GetG45Collection(c)
+		for _, sc := range g45 {
+			scidstoadd[sc] = &structures.FastSyncImport{}
+		}
+	}
+
+	err := Gnomes.Indexer.AddSCIDToIndex(scidstoadd, false, false)
+	if err != nil {
+		logger.Errorf("[G45Index] %v\n", err)
+	}
+	Gnomes.Indexer.SearchFilter = filters
+
+	if runtime.GOOS != "windows" {
+		fyne.CurrentApp().SendNotification(&fyne.Notification{
+			Title:   "dReams - Gnomon",
+			Content: "Fast sync completed"})
+	}
 }
