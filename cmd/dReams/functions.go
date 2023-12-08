@@ -198,8 +198,10 @@ func systemTray(w fyne.App) bool {
 
 // This is what we want to scan wallet for when Gnomon is synced
 func gnomonScan(contracts map[string]string) {
+	menu.CheckWalletNames(rpc.Wallet.Address)
 	checkDreamsNFAs(menu.Gnomes.Check, contracts)
 	checkDreamsG45s(menu.Gnomes.Check, contracts)
+	menu.FindNFAListings(contracts)
 	// TODO If boltdb {}
 	for _, r := range menu.Assets.Asset {
 		menu.StoreIndex(r.Collection, r.Name, r)
