@@ -22,7 +22,7 @@ func StoreBolt(bucket, key string, store interface{}) (err error) {
 	db := gnomes.Indexer.BBSBackend.DB
 	for gnomes.IsWriting() {
 		time.Sleep(20 * time.Millisecond)
-		logger.Warnln("[StoreBolt] Write wait")
+		logger.Debugf("[StoreBolt] Write wait for %s\n", key)
 	}
 
 	gnomes.Writing(true)

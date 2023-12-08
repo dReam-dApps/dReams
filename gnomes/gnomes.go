@@ -17,6 +17,7 @@ import (
 	xwidget "fyne.io/x/fyne/widget"
 )
 
+// Gnomon contains params and Indexer for running Gnomon package
 type Gnomon struct {
 	DBType  string
 	Para    int
@@ -31,12 +32,16 @@ type Gnomon struct {
 	sync.RWMutex
 }
 
-var Imported bool
-var Sync_ind *fyne.Animation
-var Full_ind *fyne.Animation
-var Icon_ind *xwidget.AnimatedGif
+type indicator struct {
+	Sync *fyne.Animation
+	Full *fyne.Animation
+	Icon *xwidget.AnimatedGif
+}
 
-// GnomonInterface defines the methods of the gnomon type that you want to expose
+// Gnomon GUI indicator
+var Indicator indicator
+
+// Gnomes exposes methods of Gnomon
 type Gnomes interface {
 	Status() string
 	IsStarting() bool
@@ -78,6 +83,7 @@ type Gnomes interface {
 
 var gnomes Gnomon
 
+// Create new instance of gnomes
 func NewGnomes() Gnomes {
 	return &gnomes
 }

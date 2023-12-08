@@ -951,8 +951,8 @@ func RunNFAMarket(tag string, quit, done chan struct{}, connect_box *dwidget.Der
 
 		case <-quit: // exit
 			logger.Printf("[%s] Closing...\n", tag)
-			if gnomes.Icon_ind != nil {
-				gnomes.Icon_ind.Stop()
+			if gnomes.Indicator.Icon != nil {
+				gnomes.Indicator.Icon.Stop()
 			}
 			ticker.Stop()
 			time.Sleep(time.Second)
