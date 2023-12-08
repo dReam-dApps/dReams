@@ -6,7 +6,6 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
-	"sort"
 	"strconv"
 	"strings"
 	"syscall"
@@ -29,7 +28,6 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
-	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/driver/desktop"
@@ -202,6 +200,10 @@ func systemTray(w fyne.App) bool {
 func gnomonScan(contracts map[string]string) {
 	checkDreamsNFAs(menu.Gnomes.Check, contracts)
 	checkDreamsG45s(menu.Gnomes.Check, contracts)
+	// TODO If boltdb {}
+	for _, r := range menu.Assets.Asset {
+		menu.StoreIndex(r.Collection, r.Name, r)
+	}
 }
 
 // Main dReams process loop
@@ -283,9 +285,6 @@ func menuRefresh(offset int) {
 		}
 	}
 
-	menu.Assets.Stats_box = *container.NewVBox(menu.Assets.Collection, menu.Assets.Name, menu.IconImg(bundle.ResourceAvatarFramePng))
-	menu.Assets.Stats_box.Refresh()
-
 	// Update live market info
 	if len(menu.Market.Viewing) == 64 && rpc.Wallet.IsConnected() {
 		if menu.Market.Tab == "Buy" {
@@ -332,11 +331,9 @@ func checkDreamsNFAs(gc bool, scids map[string]string) {
 			checkNFAOwner(sc)
 		}
 
-		holdero.Settings.SortCardAsset()
+		holdero.Settings.SortCardAssets()
 		dreams.Theme.Sort()
 		dreams.Theme.Select.Options = append([]string{"Main", "Legacy"}, dreams.Theme.Select.Options...)
-		sort.Strings(menu.Assets.Assets)
-		menu.Assets.Asset_list.Refresh()
 		if menu.DappEnabled("Duels") {
 			duel.Inventory.SortAll()
 		}
@@ -355,52 +352,61 @@ func checkNFAOwner(scid string) {
 			file, _ := menu.Gnomes.GetSCIDValuesByKey(scid, "fileURL")
 			collection, _ := menu.Gnomes.GetSCIDValuesByKey(scid, "collection")
 			creator, _ := menu.Gnomes.GetSCIDValuesByKey(scid, "creatorAddr")
-			if owner != nil && file != nil && collection != nil && creator != nil {
+			icon, _ := menu.Gnomes.GetSCIDValuesByKey(scid, "iconURLHdr")
+			if owner != nil && file != nil && collection != nil && creator != nil && icon != nil {
 				if owner[0] == rpc.Wallet.Address && menu.ValidNFA(file[0]) {
 					if !menu.IsDreamsNFACreator(creator[0]) {
 						return
+					}
+
+					var add menu.Asset
+					add.Name = header[0]
+					add.Collection = collection[0]
+					add.SCID = scid
+					if typeHdr, _ := menu.Gnomes.GetSCIDValuesByKey(scid, "typeHdr"); typeHdr != nil {
+						add.Type = menu.AssetType(collection[0], typeHdr[0])
 					}
 
 					check := strings.Trim(header[0], "0123456789")
 					if check == "AZYDS" || check == "SIXART" {
 						dreams.Theme.Add(header[0], owner[0])
 						holdero.Settings.AddAvatar(header[0], owner[0])
-						menu.Assets.Add(header[0], scid)
+						menu.Assets.Add(add, icon[0])
 					} else if check == "AZYPCB" || check == "SIXPCB" {
 						holdero.Settings.AddBacks(header[0], owner[0])
-						menu.Assets.Add(header[0], scid)
+						menu.Assets.Add(add, icon[0])
 					} else if check == "AZYPC" || check == "SIXPC" {
 						holdero.Settings.AddFaces(header[0], owner[0])
-						menu.Assets.Add(header[0], scid)
+						menu.Assets.Add(add, icon[0])
 					} else if check == "DBC" {
 						holdero.Settings.AddAvatar(header[0], owner[0])
-						menu.Assets.Add(header[0], scid)
+						menu.Assets.Add(add, icon[0])
 						if menu.DappEnabled("Duels") {
 							duel.AddItemsToInventory(scid, header[0], owner[0], collection[0])
 						}
 					} else if collection[0] == "Dorblings NFA" {
 						holdero.Settings.AddAvatar(header[0], owner[0])
-						menu.Assets.Add(header[0], scid)
+						menu.Assets.Add(add, icon[0])
 					} else if collection[0] == "DLAMPP" {
 						// TODO review after mint
 						holdero.Settings.AddAvatar(header[0], owner[0])
-						menu.Assets.Add(header[0], scid)
+						menu.Assets.Add(add, icon[0])
 					} else if collection[0] == "High Strangeness" {
 						holdero.Settings.AddAvatar(header[0], owner[0])
-						menu.Assets.Add(header[0], scid)
+						menu.Assets.Add(add, icon[0])
 						hsCards(owner[0], header[0], check)
 						if menu.DappEnabled("Duels") {
 							duel.AddItemsToInventory(scid, header[0], owner[0], collection[0])
 						}
 					} else if collection[0] == "Dero Desperados" {
 						holdero.Settings.AddAvatar(header[0], owner[0])
-						menu.Assets.Add(header[0], scid)
+						menu.Assets.Add(add, icon[0])
 						if menu.DappEnabled("Duels") {
 							duel.AddItemsToInventory(scid, header[0], owner[0], collection[0])
 						}
 					} else if collection[0] == "Desperado Guns" {
 						holdero.Settings.AddAvatar(header[0], owner[0])
-						menu.Assets.Add(header[0], scid)
+						menu.Assets.Add(add, icon[0])
 						if menu.DappEnabled("Duels") {
 							duel.AddItemsToInventory(scid, header[0], owner[0], collection[0])
 						}
@@ -492,22 +498,37 @@ func checkDreamsG45s(gc bool, g45s map[string]string) {
 				coll, _ := menu.Gnomes.GetSCIDValuesByKey(scid, "collection")
 				if owner != nil && minter != nil && coll != nil {
 					if owner[0] == rpc.Wallet.Address {
+						var add menu.Asset
+						add.Type = "Avatar"
 						if minter[0] == menu.Seals_mint && coll[0] == menu.Seals_coll {
 							var seal menu.Seal
 							if err := json.Unmarshal([]byte(data[0]), &seal); err == nil {
-								menu.Assets.Add(seal.Name, scid)
+								add.Name = seal.Name
+								add.Collection = "Dero Seals"
+								add.SCID = scid
+
+								menu.Assets.Add(add, menu.ParseURL(seal.Image))
 								holdero.Settings.AddAvatar(seal.Name, owner[0])
+
 							}
 						} else if minter[0] == menu.ATeam_mint && coll[0] == menu.ATeam_coll {
 							var agent menu.Agent
 							if err := json.Unmarshal([]byte(data[0]), &agent); err == nil {
-								menu.Assets.Add(agent.Name, scid)
+								add.Name = agent.Name
+								add.Collection = "Dero A-Team"
+								add.SCID = scid
+
+								menu.Assets.Add(add, menu.ParseURL(agent.Image))
 								holdero.Settings.AddAvatar(agent.Name, owner[0])
 							}
 						} else if minter[0] == menu.Degen_mint && coll[0] == menu.Degen_coll {
 							var degen menu.Degen
 							if err := json.Unmarshal([]byte(data[0]), &degen); err == nil {
-								menu.Assets.Add(degen.Name, scid)
+								add.Name = degen.Name
+								add.Collection = "Dero Degens"
+								add.SCID = scid
+
+								menu.Assets.Add(add, menu.ParseURL(degen.Image))
 								holdero.Settings.AddAvatar(degen.Name, owner[0])
 							}
 						}
@@ -516,7 +537,8 @@ func checkDreamsG45s(gc bool, g45s map[string]string) {
 			}
 		}
 		holdero.Settings.SortAvatarAsset()
-		menu.Assets.Asset_list.Refresh()
+		menu.Assets.List.UnselectAll()
+		menu.Assets.SortList()
 	}
 }
 
@@ -552,12 +574,7 @@ func disconnected() {
 	rpc.Wallet.Address = ""
 	dreams.Theme.Select.Options = []string{"Main", "Legacy"}
 	dreams.Theme.Select.Refresh()
-	menu.Assets.Assets = []string{}
-	menu.Assets.Name.Text = (" Name:")
-	menu.Assets.Name.Refresh()
-	menu.Assets.Collection.Text = (" Collection:")
-	menu.Assets.Collection.Refresh()
-	menu.Assets.Icon = *canvas.NewImageFromImage(nil)
+	menu.Assets.Asset = []menu.Asset{}
 	menu.Market.Auction_list.UnselectAll()
 	menu.Market.Buy_list.UnselectAll()
 	menu.Market.Icon = *canvas.NewImageFromImage(nil)
@@ -790,7 +807,7 @@ func rpcConnectButton() fyne.Widget {
 // dReams recheck owned assets routine
 func recheckDreamsAssets() {
 	menu.Gnomes.Wait = true
-	menu.Assets.Assets = []string{}
+	menu.Assets.Asset = []menu.Asset{}
 	if menu.DappEnabled("Duels") {
 		duel.Inventory.ClearAll()
 	}
@@ -802,9 +819,8 @@ func recheckDreamsAssets() {
 			menu.CheckWalletNames(rpc.Wallet.Address)
 		}
 	}
-	sort.Strings(menu.Assets.Assets)
-	menu.Assets.Asset_list.UnselectAll()
-	menu.Assets.Asset_list.Refresh()
+	menu.Assets.List.UnselectAll()
+	menu.Assets.SortList()
 	menu.Gnomes.Wait = false
 }
 

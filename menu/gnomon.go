@@ -285,23 +285,6 @@ func GnomonState(config bool, scan func(map[string]string)) {
 	}
 }
 
-// Search Gnomon db for indexed SCID
-func searchIndex(scid string) {
-	if len(scid) == 64 {
-		var found bool
-		all := Gnomes.GetAllOwnersAndSCIDs()
-		for sc := range all {
-			if scid == sc {
-				logger.Println("[dReams] " + scid + " Indexed")
-				found = true
-			}
-		}
-		if !found {
-			logger.Errorln("[dReams] " + scid + " Not Found")
-		}
-	}
-}
-
 // Check wallet for all indexed NFAs
 //   - Pass scids from db store, can be nil arg
 //   - Pass false gc for rechecks
@@ -311,7 +294,7 @@ func CheckAllNFAs(gc bool, scids map[string]string) {
 			scids = Gnomes.GetAllOwnersAndSCIDs()
 		}
 
-		assets := []string{}
+		assets := []Asset{}
 		for sc := range scids {
 			if !rpc.Wallet.IsConnected() || !Gnomes.IsRunning() {
 				break
@@ -322,15 +305,19 @@ func CheckAllNFAs(gc bool, scids map[string]string) {
 				file, _ := Gnomes.GetSCIDValuesByKey(sc, "fileURL")
 				if owner != nil && file != nil {
 					if owner[0] == rpc.Wallet.Address && ValidNFA(file[0]) {
-						assets = append(assets, header[0]+"   "+sc)
+						if asset := GetOwnedAssetInfo(sc); asset.Collection != "" {
+							assets = append(assets, asset)
+						}
 					}
 				}
 			}
 		}
 
-		sort.Strings(assets)
-		Assets.Assets = assets
-		Assets.Asset_list.Refresh()
+		sort.Slice(assets, func(i, j int) bool {
+			return assets[i].Name < assets[j].Name
+		})
+		Assets.Asset = assets
+		Assets.List.Refresh()
 	}
 }
 
@@ -369,103 +356,83 @@ func ValidNFA(file string) bool {
 	return file != "-"
 }
 
-// Get SCID info and update Asset content
-func GetOwnedAssetStats(scid string) {
+// Get NFA or G45 asset info
+func GetOwnedAssetInfo(scid string) (asset Asset) {
 	if Gnomes.IsReady() {
-		n, _ := Gnomes.GetSCIDValuesByKey(scid, "nameHdr")
-		if n != nil {
-			c, _ := Gnomes.GetSCIDValuesByKey(scid, "collection")
-			//d, _ := Gnomes.GetSCIDValuesByKey(scid, "descrHdr:")
-			i, _ := Gnomes.GetSCIDValuesByKey(scid, "iconURLHdr")
-
-			if n != nil {
-				Assets.Name.Text = (" Name: " + n[0])
-				Assets.Name.Refresh()
-				if !Control.List_open && !Control.send_open {
-					Control.List_button.Show()
-					Control.Send_asset.Show()
-				}
-
-			} else {
-				Assets.Name.Text = (" Name: ?")
-				Assets.Name.Refresh()
-			}
-
-			var a []string
-			if c != nil {
-				Assets.Collection.Text = (" Collection: " + c[0])
-				Assets.Collection.Refresh()
-				if c[0] == "High Strangeness" {
-					a, _ = Gnomes.GetSCIDValuesByKey(scid, "fileURL")
+		header, _ := Gnomes.GetSCIDValuesByKey(scid, "nameHdr")
+		if header != nil {
+			asset.SCID = scid
+			asset.Name = header[0]
+			collection, _ := Gnomes.GetSCIDValuesByKey(scid, "collection")
+			if collection != nil {
+				asset.Collection = collection[0]
+				typeHdr, _ := Gnomes.GetSCIDValuesByKey(scid, "typeHdr")
+				if typeHdr != nil {
+					asset.Type = AssetType(collection[0], typeHdr[0])
 				}
 			} else {
-				Assets.Collection.Text = (" Collection: ?")
-				Assets.Collection.Refresh()
+				asset.Collection = "?"
 			}
 
-			if i != nil {
-				if a != nil {
-					Assets.Icon, _ = dreams.DownloadFile(a[0], n[0])
+			icon, _ := Gnomes.GetSCIDValuesByKey(scid, "iconURLHdr")
+			if icon != nil {
+				if img, err := dreams.DownloadBytes(icon[0]); err == nil {
+					asset.Image = img
 				} else {
-					Assets.Icon, _ = dreams.DownloadFile(i[0], n[0])
+					logger.Errorln("[GetOwnedAssetInfo]", err)
 				}
-			} else {
-				Assets.Icon = *canvas.NewImageFromImage(nil)
 			}
-
 		} else {
-			Control.List_button.Hide()
 			data, _ := Gnomes.GetSCIDValuesByKey(scid, "metadata")
 			minter, _ := Gnomes.GetSCIDValuesByKey(scid, "minter")
-			coll, _ := Gnomes.GetSCIDValuesByKey(scid, "collection")
-			if data != nil && minter != nil && coll != nil {
-				if minter[0] == Seals_mint && coll[0] == Seals_coll {
+			collection, _ := Gnomes.GetSCIDValuesByKey(scid, "collection")
+			if data != nil && minter != nil && collection != nil {
+				asset.SCID = scid
+				if minter[0] == Seals_mint && collection[0] == Seals_coll {
 					var seal Seal
 					if err := json.Unmarshal([]byte(data[0]), &seal); err == nil {
 						check := strings.Trim(seal.Name, " #0123456789")
 						if check == "Dero Seals" {
-							Assets.Name.Text = (" Name: " + seal.Name)
-							Assets.Name.Refresh()
-
-							Assets.Collection.Text = (" Collection: " + check)
-							Assets.Collection.Refresh()
-
-							number := strings.Trim(seal.Name, "DeroSals# ")
-							Assets.Icon, _ = dreams.DownloadFile("https://ipfs.io/ipfs/QmP3HnzWpiaBA6ZE8c3dy5ExeG7hnYjSqkNfVbeVW5iEp6/low/"+number+".jpg", seal.Name)
+							asset.Name = seal.Name
+							asset.Collection = check
+							asset.Type = "Avatar"
+							if img, err := dreams.DownloadBytes(ParseURL(seal.Image)); err == nil {
+								asset.Image = img
+							} else {
+								logger.Errorln("[GetOwnedAssetInfo]", err)
+							}
 						}
 					}
-				} else if minter[0] == ATeam_mint && coll[0] == ATeam_coll {
+				} else if minter[0] == ATeam_mint && collection[0] == ATeam_coll {
 					var agent Agent
 					if err := json.Unmarshal([]byte(data[0]), &agent); err == nil {
-						Assets.Name.Text = (" Name: " + agent.Name)
-						Assets.Name.Refresh()
-
-						Assets.Collection.Text = (" Collection: Dero A-Team")
-						Assets.Collection.Refresh()
-
-						number := strconv.Itoa(agent.ID)
-						if agent.ID < 172 {
-							Assets.Icon, _ = dreams.DownloadFile("https://ipfs.io/ipfs/QmaRHXcQwbFdUAvwbjgpDtr5kwGiNpkCM2eDBzAbvhD7wh/low/"+number+".jpg", agent.Name)
+						asset.Name = agent.Name
+						asset.Collection = "Dero A-Team"
+						asset.Type = "Avatar"
+						if img, err := dreams.DownloadBytes(ParseURL(agent.Image)); err == nil {
+							asset.Image = img
 						} else {
-							Assets.Icon, _ = dreams.DownloadFile("https://ipfs.io/ipfs/QmQQyKoE9qDnzybeDCXhyMhwQcPmLaVy3AyYAzzC2zMauW/low/"+number+".jpg", agent.Name)
+							logger.Errorln("[GetOwnedAssetInfo]", err)
 						}
 					}
-				} else if minter[0] == Degen_mint && coll[0] == Degen_coll {
+				} else if minter[0] == Degen_mint && collection[0] == Degen_coll {
 					var degen Degen
 					if err := json.Unmarshal([]byte(data[0]), &degen); err == nil {
-						Assets.Name.Text = (" Name: " + degen.Name)
-						Assets.Name.Refresh()
-
-						Assets.Collection.Text = (" Collection: Dero Degens")
-						Assets.Collection.Refresh()
-
-						number := strconv.Itoa(degen.ID)
-						Assets.Icon, _ = dreams.DownloadFile("https://ipfs.io/ipfs/QmZM6onfiS8yUHFwfVypYnc6t9ZrvmpT43F9HFTou6LJyg/"+number+".png", degen.Name)
+						asset.Name = degen.Name
+						asset.Collection = "Dero Degens"
+						asset.Type = "Avatar"
+						if img, err := dreams.DownloadBytes(ParseURL(degen.Image)); err == nil {
+							asset.Image = img
+						} else {
+							logger.Errorln("[GetOwnedAssetInfo]", err)
+						}
 					}
 				}
 			}
 		}
 	}
+
+	return
 }
 
 // Get a requested NFA url
@@ -798,8 +765,8 @@ func GetNFAImages(scid string) {
 		icon, _ := Gnomes.GetSCIDValuesByKey(scid, "iconURLHdr")
 		cover, _ := Gnomes.GetSCIDValuesByKey(scid, "coverURL")
 		if icon != nil {
-			Market.Icon, _ = dreams.DownloadFile(icon[0], name[0])
-			Market.Cover, _ = dreams.DownloadFile(cover[0], name[0]+"-cover")
+			Market.Icon, _ = dreams.DownloadCanvas(icon[0], name[0])
+			Market.Cover, _ = dreams.DownloadCanvas(cover[0], name[0]+"-cover")
 		} else {
 			Market.Icon = *canvas.NewImageFromImage(nil)
 			Market.Cover = *canvas.NewImageFromImage(nil)
@@ -828,25 +795,11 @@ func GetAuctionDetails(scid string) {
 
 		if name != nil && collection != nil && start != nil && royalty != nil && endTime != nil && artFee != nil && typeHdr != nil {
 			go func() {
-				var ty string
-				check := strings.Trim(name[0], "0123456789")
-				if check == "AZYPC" || check == "SIXPC" {
-					ty = "Playing card deck"
-				} else if check == "AZYPCB" || check == "SIXPCB" {
-					ty = "Playing card back"
-				} else if check == "AZYDS" || check == "SIXART" {
-					ty = "Theme/Avatar"
-				} else if check == "DBC" || check == "HighStrangeness" {
-					ty = "Avatar"
-				} else {
-					ty = typeHdr[0]
-				}
-
-				Market.Viewing_coll = check
+				Market.Viewing_coll = collection[0]
 
 				Market.Name.SetText(name[0])
 
-				Market.Type.SetText(ty)
+				Market.Type.SetText(AssetType(collection[0], typeHdr[0]))
 
 				Market.Collection.SetText(collection[0])
 
@@ -953,25 +906,11 @@ func GetBuyNowDetails(scid string) {
 
 		if name != nil && collection != nil && start != nil && royalty != nil && endTime != nil && artFee != nil && typeHdr != nil {
 			go func() {
-				var ty string
-				check := strings.Trim(name[0], "0123456789")
-				if check == "AZYPC" || check == "SIXPC" {
-					ty = "Playing card deck"
-				} else if check == "AZYPCB" || check == "SIXPCB" {
-					ty = "Playing card back"
-				} else if check == "AZYDS" || check == "SIXART" {
-					ty = "Theme/Avatar"
-				} else if check == "DBC" || check == "HighStrangeness" {
-					ty = "Avatar"
-				} else {
-					ty = typeHdr[0]
-				}
-
-				Market.Viewing_coll = check
+				Market.Viewing_coll = collection[0]
 
 				Market.Name.SetText(name[0])
 
-				Market.Type.SetText(ty)
+				Market.Type.SetText(AssetType(collection[0], typeHdr[0]))
 
 				Market.Collection.SetText(collection[0])
 
@@ -1050,25 +989,11 @@ func GetUnlistedDetails(scid string) {
 
 		if name != nil && collection != nil && start != nil && royalty != nil && endTime != nil && artFee != nil && typeHdr != nil {
 			go func() {
-				var ty string
-				check := strings.Trim(name[0], "0123456789")
-				if check == "AZYPC" || check == "SIXPC" {
-					ty = "Playing card deck"
-				} else if check == "AZYPCB" || check == "SIXPCB" {
-					ty = "Playing card back"
-				} else if check == "AZYDS" || check == "SIXART" {
-					ty = "Theme/Avatar"
-				} else if check == "DBC" || check == "HighStrangeness" {
-					ty = "Avatar"
-				} else {
-					ty = typeHdr[0]
-				}
-
-				Market.Viewing_coll = check
+				Market.Viewing_coll = collection[0]
 
 				Market.Name.SetText(name[0])
 
-				Market.Type.SetText(ty)
+				Market.Type.SetText(AssetType(collection[0], typeHdr[0]))
 
 				Market.Collection.SetText(collection[0])
 

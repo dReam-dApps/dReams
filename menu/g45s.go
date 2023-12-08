@@ -66,7 +66,7 @@ func IsDreamsG45(check string) bool {
 }
 
 // Returns collection SCID by name
-func G45Collection(name string) (collection string) {
+func G45CollectionSC(name string) (collection string) {
 	switch name {
 	case "Dero Seals":
 		return Seals_coll
@@ -83,7 +83,7 @@ func G45Collection(name string) (collection string) {
 func ReturnEnabledG45s(assets map[string]bool) (filter []string) {
 	for name, enabled := range assets {
 		if enabled && IsDreamsG45(name) {
-			filter = append(filter, G45Collection(name))
+			filter = append(filter, G45CollectionSC(name))
 		}
 	}
 

@@ -30,19 +30,13 @@ import (
 type menuObjects struct {
 	G45_count       int
 	NFA_count       int
-	List_open       bool
-	send_open       bool
 	msg_open        bool
 	once            bool
 	Daemon_config   string
-	Viewing_asset   string
 	Dapp_list       map[string]bool
 	Enabled_assets  map[string]bool
 	Contract_rating map[string]uint64
 	Names           *widget.Select
-	Send_asset      *widget.Button
-	Claim_button    *widget.Button
-	List_button     *widget.Button
 	Daemon_check    *widget.Check
 	Wallet_ind      *fyne.Animation
 	Daemon_ind      *fyne.Animation
@@ -346,18 +340,18 @@ func ShowConfirmDialog(done chan struct{}, confirm interface{}) {
 //   - Asset SCID can be sent as payload to receiver when sending asset
 //   - Pass resources for window_icon
 func sendAssetMenu(window_icon fyne.Resource) {
-	Control.send_open = true
+	Assets.Button.sending = true
 	saw := fyne.CurrentApp().NewWindow("Send Asset")
 	saw.Resize(fyne.NewSize(330, 700))
 	saw.SetIcon(window_icon)
-	Control.Send_asset.Hide()
-	Control.List_button.Hide()
+	Assets.Button.Send.Hide()
+	Assets.Button.List.Hide()
 	saw.SetCloseIntercept(func() {
-		Control.send_open = false
+		Assets.Button.sending = false
 		if rpc.Wallet.IsConnected() {
-			Control.Send_asset.Show()
-			if isNFA(Control.Viewing_asset) {
-				Control.List_button.Show()
+			if isNFA(Assets.Viewing) {
+				Assets.Button.Send.Show()
+				Assets.Button.List.Show()
 			}
 		}
 		saw.Close()
@@ -367,7 +361,7 @@ func sendAssetMenu(window_icon fyne.Resource) {
 	var saw_content *fyne.Container
 	var send_button *widget.Button
 
-	viewing_asset := Control.Viewing_asset
+	viewing_asset := Assets.Viewing
 
 	viewing_label := widget.NewLabel(fmt.Sprintf("Sending SCID:\n\n%s\n\nEnter destination address below\n\nSCID can be sent to receiver as payload\n\n", viewing_asset))
 	viewing_label.Wrapping = fyne.TextWrapWord
@@ -385,10 +379,15 @@ func sendAssetMenu(window_icon fyne.Resource) {
 			info_label.SetText("")
 			send_button.Show()
 		} else {
-			info_label.SetText("Enter destination address.")
+			info_label.SetText("Enter destination address")
 			send_button.Hide()
 		}
 	}
+
+	entry_clear := widget.NewButtonWithIcon("", dreams.FyneIcon("contentUndo"), func() {
+		dest_entry.SetText("")
+	})
+	entry_clear.Importance = widget.LowImportance
 
 	var dest string
 	var confirm_open bool
@@ -408,7 +407,7 @@ func sendAssetMenu(window_icon fyne.Resource) {
 						load = true
 					}
 					go rpc.SendAsset(send_asset, dest, load)
-					Control.send_open = false
+					Assets.Button.sending = false
 					saw.Close()
 				}
 			})
@@ -438,33 +437,38 @@ func sendAssetMenu(window_icon fyne.Resource) {
 					confirm_content))
 		}
 	})
+	send_button.Importance = widget.HighImportance
 	send_button.Hide()
 
-	icon := Assets.Icon
+	button_spacer := canvas.NewRectangle(color.Transparent)
+	button_spacer.SetMinSize(fyne.NewSize(0, 90))
 
 	saw_content = container.NewVBox(
 		viewing_label,
-		menuAssetImg(&icon, bundle.ResourceAvatarFramePng),
 		layout.NewSpacer(),
-		dest_entry,
+		container.NewCenter(Assets.Icon),
+		button_spacer,
+		container.NewStack(
+			dest_entry,
+			container.NewVBox(
+				layout.NewSpacer(),
+				container.NewHBox(layout.NewSpacer(), container.NewBorder(nil, layout.NewSpacer(), nil, layout.NewSpacer(), entry_clear)))),
 		container.NewCenter(payload),
-		layout.NewSpacer(),
-		container.NewAdaptiveGrid(2, layout.NewSpacer(), send_button))
+		container.NewStack(button_spacer, container.NewVBox(layout.NewSpacer(), container.NewAdaptiveGrid(2, layout.NewSpacer(), container.NewStack(send_button)))))
 
 	go func() {
-		for rpc.IsReady() && Control.send_open {
-			time.Sleep(2 * time.Second)
+		for rpc.IsReady() && Assets.Button.sending {
+			time.Sleep(time.Second)
 			if !confirm_open {
-				icon = Assets.Icon
-				saw_content.Objects[1] = menuAssetImg(&icon, bundle.ResourceAvatarFramePng)
-				if viewing_asset != Control.Viewing_asset {
-					viewing_asset = Control.Viewing_asset
+				saw_content.Objects[2].(*fyne.Container).Objects[0] = Assets.Icon
+				if viewing_asset != Assets.Viewing {
+					viewing_asset = Assets.Viewing
 					viewing_label.SetText("Sending SCID:\n\n" + viewing_asset + " \n\nEnter destination address below\n\nSCID can be sent to receiver as payload\n\n")
 				}
-				saw_content.Refresh()
+
 			}
 		}
-		Control.send_open = false
+		Assets.Button.sending = false
 		saw.Close()
 	}()
 
@@ -476,37 +480,21 @@ func sendAssetMenu(window_icon fyne.Resource) {
 	saw.Show()
 }
 
-// Image for send asset and list menus
-//   - Pass res for frame resource
-func menuAssetImg(img *canvas.Image, res fyne.Resource) fyne.CanvasObject {
-	img.SetMinSize(fyne.NewSize(100, 100))
-	img.Resize(fyne.NewSize(94, 94))
-	img.Move(fyne.NewPos(118, 3))
-
-	frame := canvas.NewImageFromResource(res)
-	frame.Resize(fyne.NewSize(100, 100))
-	frame.Move(fyne.NewPos(115, 0))
-
-	cont := container.NewWithoutLayout(img, frame)
-
-	return cont
-}
-
 // NFA listing menu
 //   - Pass resources for menu window to match main
 func listMenu(window_icon fyne.Resource) {
-	Control.List_open = true
+	Assets.Button.listing = true
 	aw := fyne.CurrentApp().NewWindow("List NFA")
 	aw.Resize(fyne.NewSize(330, 700))
 	aw.SetIcon(window_icon)
-	Control.List_button.Hide()
-	Control.Send_asset.Hide()
+	Assets.Button.List.Hide()
+	Assets.Button.Send.Hide()
 	aw.SetCloseIntercept(func() {
-		Control.List_open = false
+		Assets.Button.listing = false
 		if rpc.Wallet.IsConnected() {
-			Control.Send_asset.Show()
-			if isNFA(Control.Viewing_asset) {
-				Control.List_button.Show()
+			if isNFA(Assets.Viewing) {
+				Assets.Button.Send.Show()
+				Assets.Button.List.Show()
 			}
 		}
 		aw.Close()
@@ -514,9 +502,9 @@ func listMenu(window_icon fyne.Resource) {
 	aw.SetFixedSize(true)
 
 	var aw_content *fyne.Container
-	var set_list *widget.Button
+	var set_button *widget.Button
 
-	viewing_asset := Control.Viewing_asset
+	viewing_asset := Assets.Viewing
 	viewing_label := widget.NewLabel(fmt.Sprintf("Listing SCID:\n\n%s", viewing_asset))
 	viewing_label.Wrapping = fyne.TextWrapWord
 	viewing_label.Alignment = fyne.TextAlignCenter
@@ -537,7 +525,8 @@ func listMenu(window_icon fyne.Resource) {
 	start.SetPlaceHolder("Start Price:")
 	start.Validator = validation.NewRegexp(`^\d{1,}\.\d{1,5}$|^[^0]\d{0,}$`, "Int or float required")
 
-	charAddr := widget.NewEntry()
+	charAddr := widget.NewMultiLineEntry()
+	charAddr.Wrapping = fyne.TextWrapWord
 	charAddr.SetPlaceHolder("Charity Donation Address:")
 	charAddr.Validator = validation.NewRegexp(`^(dero)\w{62}$`, "Int required")
 
@@ -547,9 +536,9 @@ func listMenu(window_icon fyne.Resource) {
 	charPerc.Validator = validation.NewRegexp(`^\d{1,2}$`, "Int required")
 	charPerc.OnChanged = func(s string) {
 		if listing.Selected != "" && duration.Validate() == nil && start.Validate() == nil && charAddr.Validate() == nil && charPerc.Validate() == nil {
-			set_list.Show()
+			set_button.Show()
 		} else {
-			set_list.Hide()
+			set_button.Hide()
 		}
 	}
 
@@ -559,38 +548,38 @@ func listMenu(window_icon fyne.Resource) {
 		}
 
 		if listing.Selected != "" && duration.Validate() == nil && start.Validate() == nil && charAddr.Validate() == nil && charPerc.Validate() == nil {
-			set_list.Show()
+			set_button.Show()
 		} else {
-			set_list.Hide()
+			set_button.Hide()
 		}
 	}
 
 	start.OnChanged = func(s string) {
 		if listing.Selected != "" && duration.Validate() == nil && start.Validate() == nil && charAddr.Validate() == nil && charPerc.Validate() == nil {
-			set_list.Show()
+			set_button.Show()
 		} else {
-			set_list.Hide()
+			set_button.Hide()
 		}
 	}
 
 	charAddr.OnChanged = func(s string) {
 		if listing.Selected != "" && duration.Validate() == nil && start.Validate() == nil && charAddr.Validate() == nil && charPerc.Validate() == nil {
-			set_list.Show()
+			set_button.Show()
 		} else {
-			set_list.Hide()
+			set_button.Hide()
 		}
 	}
 
 	listing.OnChanged = func(s string) {
 		if listing.Selected != "" && duration.Validate() == nil && start.Validate() == nil && charAddr.Validate() == nil && charPerc.Validate() == nil {
-			set_list.Show()
+			set_button.Show()
 		} else {
-			set_list.Hide()
+			set_button.Hide()
 		}
 	}
 
 	var confirm_open bool
-	set_list = widget.NewButton("Set Listing", func() {
+	set_button = widget.NewButton("Set Listing", func() {
 		if duration.Validate() == nil && start.Validate() == nil && charAddr.Validate() == nil && charPerc.Validate() == nil {
 			if listing.Selected != "" {
 				confirm_open = true
@@ -627,11 +616,11 @@ func listMenu(window_icon fyne.Resource) {
 
 				confirm_button := widget.NewButtonWithIcon("Confirm", dreams.FyneIcon("confirm"), func() {
 					rpc.SetNFAListing(listing_asset, listing.Selected, charAddr.Text, d, s, cp)
-					Control.List_open = false
+					Assets.Button.listing = false
 					if rpc.Wallet.IsConnected() {
-						Control.Send_asset.Show()
-						if isNFA(Control.Viewing_asset) {
-							Control.List_button.Show()
+						if isNFA(Assets.Viewing) {
+							Assets.Button.Send.Show()
+							Assets.Button.List.Show()
 						}
 					}
 					aw.Close()
@@ -649,24 +638,24 @@ func listMenu(window_icon fyne.Resource) {
 			}
 		}
 	})
-	set_list.Hide()
+	set_button.Importance = widget.HighImportance
+	set_button.Hide()
 
-	icon := Assets.Icon
+	button_spacer := canvas.NewRectangle(color.Transparent)
+	button_spacer.SetMinSize(fyne.NewSize(0, 36))
 
 	go func() {
-		for rpc.IsReady() && Control.List_open {
-			time.Sleep(2 * time.Second)
-			if !confirm_open && isNFA(Control.Viewing_asset) {
-				icon = Assets.Icon
-				aw_content.Objects[2] = menuAssetImg(&icon, bundle.ResourceAvatarFramePng)
-				if viewing_asset != Control.Viewing_asset {
-					viewing_asset = Control.Viewing_asset
+		for rpc.IsReady() && Assets.Button.listing {
+			time.Sleep(time.Second)
+			if !confirm_open && isNFA(Assets.Viewing) {
+				aw_content.Objects[2].(*fyne.Container).Objects[0] = Assets.Icon
+				if viewing_asset != Assets.Viewing {
+					viewing_asset = Assets.Viewing
 					viewing_label.SetText(fmt.Sprintf("Listing SCID:\n\n%s", viewing_asset))
 				}
-				aw_content.Refresh()
 			}
 		}
-		Control.List_open = false
+		Assets.Button.listing = false
 		aw.Close()
 	}()
 
@@ -692,9 +681,8 @@ func listMenu(window_icon fyne.Resource) {
 	aw_content = container.NewVBox(
 		viewing_label,
 		layout.NewSpacer(),
-		menuAssetImg(&icon, bundle.ResourceAvatarFramePng),
-		layout.NewSpacer(),
-		layout.NewSpacer(),
+		container.NewCenter(Assets.Icon),
+		button_spacer,
 		listing,
 		duration,
 		start,
@@ -702,7 +690,7 @@ func listMenu(window_icon fyne.Resource) {
 		charAddr,
 		charPerc,
 		container.NewCenter(fee_label),
-		container.NewAdaptiveGrid(2, layout.NewSpacer(), set_list))
+		container.NewStack(button_spacer, container.NewVBox(layout.NewSpacer(), container.NewAdaptiveGrid(2, layout.NewSpacer(), container.NewStack(set_button)))))
 
 	aw.SetContent(
 		container.NewStack(

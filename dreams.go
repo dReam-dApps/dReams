@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"image/color"
+	"io"
 	"net/http"
 	"os"
 	"runtime"
@@ -253,23 +254,48 @@ func FileExists(path, tag string) bool {
 }
 
 // Download image file from url and return as canvas image
-func DownloadFile(URL, fileName string) (canvas.Image, error) {
+func DownloadCanvas(URL, fileName string) (canvas.Image, error) {
 	client := &http.Client{Timeout: 15 * time.Second}
-	req, err := http.NewRequest("GET", URL, nil)
-	if err != nil {
-		return *canvas.NewImageFromImage(nil), err
-	}
-	response, err := client.Do(req)
+	response, err := client.Get(URL)
 	if err != nil {
 		return *canvas.NewImageFromImage(nil), err
 	}
 	defer response.Body.Close()
 
-	if response.StatusCode != 200 {
+	if response.StatusCode != http.StatusOK {
 		return *canvas.NewImageFromImage(nil), fmt.Errorf("received %d response code", response.StatusCode)
 	}
 
+	if !strings.HasPrefix(response.Header.Get("Content-Type"), "image/") {
+		return *canvas.NewImageFromImage(nil), fmt.Errorf("the requested URL does not point to an image")
+	}
+
 	return *canvas.NewImageFromReader(response.Body, fileName), nil
+}
+
+// Download url image file as []byte
+func DownloadBytes(URL string) ([]byte, error) {
+	client := http.Client{Timeout: 15 * time.Second}
+	response, err := client.Get(URL)
+	if err != nil {
+		return nil, err
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to download the image: status code %d", response.StatusCode)
+	}
+
+	if !strings.HasPrefix(response.Header.Get("Content-Type"), "image/") {
+		return nil, fmt.Errorf("the requested URL does not point to an image")
+	}
+
+	image, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return image, nil
 }
 
 // dReams app theme selection object
@@ -297,7 +323,7 @@ func ThemeSelect() fyne.Widget {
 				} else {
 					Theme.URL = "https://raw.githubusercontent.com/Azylem/" + s + "/main/" + s + ".png"
 					logger.Println("[dReams] Downloading", Theme.URL)
-					Theme.Img, _ = DownloadFile(Theme.URL, s)
+					Theme.Img, _ = DownloadCanvas(Theme.URL, s)
 				}
 			} else if check == "SIXART" {
 				file := dir + "/assets/" + s + "/" + s + ".png"
@@ -306,7 +332,7 @@ func ThemeSelect() fyne.Widget {
 				} else {
 					Theme.URL = "https://raw.githubusercontent.com/SixofClubsss/SIXART/main/" + s + "/" + s + ".png"
 					logger.Println("[dReams] Downloading", Theme.URL)
-					Theme.Img, _ = DownloadFile(Theme.URL, s)
+					Theme.Img, _ = DownloadCanvas(Theme.URL, s)
 				}
 			} else if check == "HSTheme" {
 				file := dir + "/assets/" + s + "/" + s + ".png"
@@ -315,7 +341,7 @@ func ThemeSelect() fyne.Widget {
 				} else {
 					Theme.URL = "https://raw.githubusercontent.com/High-Strangeness/High-Strangeness/main/" + s + "/" + s + ".png"
 					logger.Println("[dReams] Downloading", Theme.URL)
-					Theme.Img, _ = DownloadFile(Theme.URL, s)
+					Theme.Img, _ = DownloadCanvas(Theme.URL, s)
 				}
 			} else if s == "Main" {
 				Theme.Img = *canvas.NewImageFromResource(bundle.ResourceBackgroundPng)
@@ -324,7 +350,7 @@ func ThemeSelect() fyne.Widget {
 			}
 		}()
 	})
-	Theme.Select.PlaceHolder = "Theme"
+	Theme.Select.PlaceHolder = "Theme:"
 
 	return Theme.Select
 }

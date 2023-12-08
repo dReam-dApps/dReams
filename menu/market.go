@@ -602,7 +602,7 @@ func RefreshNFAImages() {
 	}
 
 	view := Market.Viewing_coll
-	if view == "AZYPC" || view == "SIXPC" || view == "AZYPCB" || view == "SIXPCB" {
+	if view == "AZY-Playing card decks" || view == "SIXPC" || view == "AZY-Playing card backs" || view == "SIXPCB" {
 		Market.Details_box.Objects[0].(*fyne.Container).Objects[0].(*fyne.Container).Objects[1] = ToolsBadge()
 	} else {
 		Market.Details_box.Objects[0].(*fyne.Container).Objects[0].(*fyne.Container).Objects[1] = layout.NewSpacer()
@@ -888,7 +888,7 @@ func RunNFAMarket(tag string, quit, done chan struct{}, connect_box *dwidget.Der
 				go DisableIndexControls(false)
 				if rpc.Wallet.IsConnected() {
 					Market.Market_box.Show()
-					Control.Claim_button.Show()
+					Assets.Claim.Show()
 					// Update live market info
 					if len(Market.Viewing) == 64 {
 						if Market.Tab == "Buy" {
@@ -901,16 +901,14 @@ func RunNFAMarket(tag string, quit, done chan struct{}, connect_box *dwidget.Der
 					}
 				} else {
 					Market.Market_box.Hide()
-					Control.List_button.Hide()
-					Control.Send_asset.Hide()
-					Control.Claim_button.Hide()
+					Assets.Button.List.Hide()
+					Assets.Button.Send.Hide()
+					Assets.Claim.Hide()
 				}
 
 				// Check wallet for all owned NFAs and refresh content
 				go CheckAllNFAs(false, nil)
 				Info.RefreshIndexed()
-				Assets.Stats_box = *container.NewVBox(Assets.Collection, Assets.Name, IconImg(bundle.ResourceAvatarFramePng))
-				Assets.Stats_box.Refresh()
 			} else {
 				connect_box.Disconnect.SetChecked(false)
 				DisableIndexControls(true)

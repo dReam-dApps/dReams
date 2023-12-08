@@ -1,6 +1,7 @@
 package menu
 
 import (
+	"bytes"
 	"fmt"
 	"image/color"
 	"sort"
@@ -20,19 +21,35 @@ import (
 )
 
 type assetObjects struct {
-	Swap         *fyne.Container
-	Balances     *widget.List
-	Index_entry  *widget.Entry
-	Index_button *widget.Button
-	Index_search *widget.Button
-	Asset_list   *widget.List
-	Assets       []string
-	Asset_map    map[string]string
-	Name         *canvas.Text
-	Collection   *canvas.Text
-	Icon         canvas.Image
-	Stats_box    fyne.Container
-	Header_box   fyne.Container
+	Headers  *fyne.Container
+	Swap     *fyne.Container
+	Claim    *fyne.Container
+	Balances *widget.List
+	List     *widget.List
+	Asset    []Asset
+	Viewing  string
+	SCIDs    map[string]string
+	Icon     fyne.CanvasObject
+	Button   struct {
+		Send    *widget.Button
+		List    *widget.Button
+		sending bool
+		listing bool
+	}
+	Index struct {
+		Entry  *widget.Entry
+		Add    *widget.Button
+		Search *widget.Button
+	}
+}
+
+// Asset info
+type Asset struct {
+	Name       string `json:"name"`
+	Collection string `json:"collection"`
+	SCID       string `json:"scid"`
+	Type       string `json:"type"`
+	Image      []byte `json:"image"`
 }
 
 var Assets assetObjects
@@ -53,36 +70,89 @@ var dReamsNFAs = []assetCount{
 	// {name: "DLAMPP ", count: ?},
 }
 
-func (a *assetObjects) Add(name, scid string) {
-	a.Assets = append(a.Assets, name+"   "+scid)
-	a.Asset_map[name] = scid
+// Add asset to List and SCIDs
+func (a *assetObjects) Add(details Asset, url string) {
+	have, err := StorageExists(details.Collection, details.Name)
+	if err != nil {
+		have = false
+		logger.Errorln("[AddAsset]", err)
+	}
+
+	if have {
+		var new Asset
+		GetStorage(details.Collection, details.Name, &new)
+		if new.Image != nil && !bytes.Equal(new.Image, bundle.ResourceMarketCirclePng.StaticContent) {
+			details.Image = new.Image
+		} else {
+			have = false
+		}
+	}
+
+	if !have {
+		if img, err := dreams.DownloadBytes(url); err == nil {
+			details.Image = img
+		} else {
+			details.Image = bundle.ResourceMarketCirclePng.StaticContent
+			logger.Errorln("[AddAsset]", err)
+		}
+	}
+
+	a.Asset = append(a.Asset, details)
+	a.SCIDs[details.Name] = details.SCID
 }
 
-// Icon image for Holdero tables and asset viewing
-//   - Pass res as frame resource
-func IconImg(res fyne.Resource) *fyne.Container {
-	Assets.Icon.SetMinSize(fyne.NewSize(100, 100))
-	Assets.Icon.Resize(fyne.NewSize(94, 94))
-	Assets.Icon.Move(fyne.NewPos(7, 3))
-
-	frame := canvas.NewImageFromResource(res)
-	frame.Resize(fyne.NewSize(100, 100))
-	frame.Move(fyne.NewPos(4, 0))
-
-	return container.NewWithoutLayout(&Assets.Icon, frame)
+// Sorts asset list by name
+func (a *assetObjects) SortList() {
+	sort.Slice(a.Asset, func(i, j int) bool {
+		return a.Asset[i].Name < a.Asset[j].Name
+	})
+	a.List.Refresh()
 }
 
-// Display for owned asset info
-func AssetStats() fyne.CanvasObject {
-	Assets.Collection = canvas.NewText(" Collection: ", bundle.TextColor)
-	Assets.Name = canvas.NewText(" Name: ", bundle.TextColor)
+// Additional asset type info
+func AssetType(collection, typeHdr string) string {
+	switch collection {
+	case "AZY-Playing card decks", "SIXPC":
+		return "Playing card deck"
+	case "AZY-Playing card backs", "SIXPCB":
+		return "Playing card back"
+	case "AZY-Deroscapes", "SIXART":
+		return "Theme/Avatar"
+	case "Dorblings NFA":
+		return "Avatar"
+	case "Death By Cupcake", "High Strangeness", "Dero Desperados", "Desperado Guns":
+		return "Avatar/Duel"
+	default:
+		return typeHdr
+	}
+}
 
-	Assets.Name.TextSize = 18
-	Assets.Collection.TextSize = 18
+// Parse url for ipfs prefix
+func ParseURL(url string) string {
+	if strings.HasPrefix(url, "ipfs://") {
+		return fmt.Sprintf("https://ipfs.io/ipfs/%s", url[7:])
+	}
 
-	Assets.Stats_box = *container.NewVBox(Assets.Collection, Assets.Name, IconImg(nil))
+	return url
+}
 
-	return &Assets.Stats_box
+// Creates framed icon image
+func AssetIcon(icon []byte, name string, size float32) fyne.CanvasObject {
+	frame := canvas.NewImageFromResource(bundle.ResourceAvatarFramePng)
+	frame.SetMinSize(fyne.NewSize(size, size))
+	if icon == nil {
+		icon = bundle.ResourceMarketCirclePng.StaticContent
+	}
+
+	img := canvas.NewImageFromReader(bytes.NewReader(icon), name)
+	if img == nil {
+		return container.NewStack(frame)
+	}
+
+	img.SetMinSize(fyne.NewSize(size, size))
+	border := container.NewBorder(layout.NewSpacer(), layout.NewSpacer(), layout.NewSpacer(), layout.NewSpacer(), img)
+
+	return container.NewStack(border, frame)
 }
 
 // Returns search filter with all enabled NFAs
@@ -218,6 +288,9 @@ func EnabledCollections(intro bool) (obj fyne.CanvasObject) {
 		}
 	})
 
+	enable_all.Importance = widget.HighImportance
+	disable_all.Importance = widget.HighImportance
+
 	for _, asset := range dReamsNFAs {
 		collection_form = append(collection_form, widget.NewFormItem(asset.name, enableNFAOpts(asset)))
 	}
@@ -231,7 +304,7 @@ func EnabledCollections(intro bool) (obj fyne.CanvasObject) {
 		Control.NFA_count = 3
 	}
 
-	label := canvas.NewText("You will need to delete Gnomon DB and resync for changes to take effect ", bundle.TextColor)
+	label := canvas.NewText("Delete Gnomon DB and resync for changes to take effect", bundle.TextColor)
 	label.Alignment = fyne.TextAlignCenter
 	if intro {
 		label.Text = ""
@@ -275,134 +348,182 @@ func returnEnabledNames(assets map[string]bool) (text string) {
 // Owned asset tab layout
 //   - tag for log print
 //   - assets is array of widgets used for asset selections
-//   - menu_icon resources for side menus
-//   - w for main window dialog
-func PlaceAssets(tag string, assets []fyne.Widget, menu_icon fyne.Resource, w fyne.Window) *container.Split {
-	items_box := container.NewAdaptiveGrid(2)
-
-	asset_selects := container.NewVBox()
-	for _, sel := range assets {
-		asset_selects.Add(sel)
-	}
-	asset_selects.Add(layout.NewSpacer())
-
-	cont := container.NewHScroll(asset_selects)
-	cont.SetMinSize(fyne.NewSize(290, 35.1875))
-
-	items_box.Add(cont)
-
-	items_box.Add(container.NewAdaptiveGrid(1, AssetStats()))
-
-	player_input := container.NewVBox(items_box, layout.NewSpacer())
-
+//   - icon resources for side menus
+//   - d for main window dialogs
+func PlaceAssets(tag string, profile fyne.CanvasObject, icon fyne.Resource, d *dreams.AppObject) *fyne.Container {
 	enable_opts := EnabledCollections(false)
 
-	tabs := container.NewAppTabs(
-		container.NewTabItem("Owned", AssetList()))
+	scid_entry := widget.NewEntry()
+	scid_entry.SetPlaceHolder("SCID:")
 
-	if len(asset_selects.Objects) > 1 {
-		tabs.Append(container.NewTabItem("Enabled", enable_opts))
-	}
+	line := canvas.NewLine(bundle.TextColor)
+	line_spacer := canvas.NewRectangle(color.Transparent)
+	line_spacer.SetMinSize(fyne.NewSize(300, 0))
 
-	tabs.OnSelected = func(ti *container.TabItem) {
-		if ti.Text == "Enabled" {
-			if rpc.Daemon.IsConnected() {
-				dialog.NewInformation("Assets", "Shut down Gnomon to make changes to asset index", w).Show()
-				tabs.Selected().Content = container.NewVScroll(container.NewVBox(dwidget.NewCenterLabel("Currently Enabled:"), dwidget.NewCenterLabel(returnEnabledNames(Control.Enabled_assets))))
+	name_entry := widget.NewEntry()
+	name_entry.SetPlaceHolder("Name:")
 
-				return
-			}
-			tabs.Selected().Content = enable_opts
-		}
-	}
+	descr_entry := widget.NewMultiLineEntry()
+	descr_entry.SetPlaceHolder("Description:")
+
+	icon_entry := widget.NewEntry()
+	icon_entry.SetPlaceHolder("Icon:")
+
+	header_spacer := canvas.NewRectangle(color.Transparent)
+	header_spacer.SetMinSize(fyne.NewSize(580, 30))
+
+	header_button := widget.NewButton("Set Headers", nil)
+	header_button.Importance = widget.HighImportance
+
+	headers := container.NewVBox(scid_entry, container.NewVBox(line_spacer, line, line_spacer), header_spacer, container.NewVBox(line_spacer, line, line_spacer), name_entry, descr_entry, icon_entry, container.NewCenter(header_button))
+	Assets.Headers = container.NewCenter(headers)
+	Assets.Headers.Hide()
 
 	scroll_top := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "arrowUp"), func() {
-		Assets.Asset_list.ScrollToTop()
+		Assets.List.ScrollToTop()
 	})
 
 	scroll_bottom := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "arrowDown"), func() {
-		Assets.Asset_list.ScrollToBottom()
+		Assets.List.ScrollToBottom()
 	})
 
 	scroll_top.Importance = widget.LowImportance
 	scroll_bottom.Importance = widget.LowImportance
 
-	scroll_cont := container.NewVBox(container.NewHBox(layout.NewSpacer(), scroll_top, scroll_bottom))
+	Info.Indexed = canvas.NewText("Indexed SCIDs: ", bundle.TextColor)
+	Info.Indexed.TextSize = 18
 
-	max := container.NewStack(bundle.Alpha120, tabs, scroll_cont)
+	scroll_spacer := canvas.NewRectangle(color.Transparent)
+	scroll_spacer.SetMinSize(fyne.NewSize(77, 36))
+	scroll_buttons := container.NewHBox(scroll_top, scroll_bottom)
 
-	header_name_entry := widget.NewEntry()
-	header_name_entry.PlaceHolder = "Name:"
-	header_descr_entry := widget.NewEntry()
-	header_descr_entry.PlaceHolder = "Description"
-	header_icon_entry := widget.NewEntry()
-	header_icon_entry.PlaceHolder = "Icon:"
+	border := container.NewBorder(
+		container.NewHBox(layout.NewSpacer(), Info.Indexed, container.NewStack(scroll_spacer, scroll_buttons)),
+		nil,
+		nil,
+		nil)
 
-	header_button := widget.NewButton("Set Headers", func() {
-		scid := Assets.Index_entry.Text
-		if len(scid) == 64 && header_name_entry.Text != "dReam Tables" && header_name_entry.Text != "dReams" {
-			if _, ok := rpc.FindStringKey(rpc.GnomonSCID, scid, rpc.Daemon.Rpc).(string); ok {
-				max.Objects[1] = setHeaderConfirm(header_name_entry.Text, header_descr_entry.Text, header_icon_entry.Text, scid, max.Objects, tabs)
-				max.Objects[1].Refresh()
+	var tab *container.TabItem
+	tabs := container.NewAppTabs(
+		container.NewTabItemWithIcon("", bundle.ResourceMarketCirclePng, layout.NewSpacer()),
+		container.NewTabItem("Owned", AssetList(icon, d)),
+		container.NewTabItem("Headers", container.NewBorder(
+			dwidget.NewCanvasText("Gnomon SC Headers", 18, fyne.TextAlignCenter),
+			nil,
+			nil,
+			nil,
+			Assets.Headers)),
+
+		container.NewTabItem("Index", container.NewBorder(
+			dwidget.NewCanvasText("Gnomon Index", 18, fyne.TextAlignCenter),
+			nil,
+			nil,
+			nil,
+			container.NewAdaptiveGrid(2, indexEntry(d.Window), enable_opts))),
+
+		container.NewTabItem("Profile", container.NewBorder(
+			dwidget.NewCanvasText("User Profile", 18, fyne.TextAlignCenter),
+			nil,
+			nil,
+			nil,
+			profile)),
+	)
+
+	tabs.DisableIndex(0)
+	tabs.SetTabLocation(container.TabLocationLeading)
+	tabs.OnSelected = func(ti *container.TabItem) {
+		switch ti.Text {
+		case "Owned":
+			scroll_buttons.Show()
+		case "Headers":
+			scroll_buttons.Hide()
+			if !rpc.Daemon.IsConnected() || !rpc.Wallet.IsConnected() {
+				dialog.NewInformation("Headers", "Connect to daemon and wallet to set SC headers", d.Window).Show()
+				tabs.Select(tab)
+				return
+			}
+		case "Enabled":
+			scroll_buttons.Show()
+			if rpc.Daemon.IsConnected() {
+				dialog.NewInformation("Assets", "Shut down Gnomon to make changes to asset index", d.Window).Show()
+				tabs.Selected().Content = container.NewBorder(
+					dwidget.NewCanvasText("Enabled Assets", 18, fyne.TextAlignCenter),
+					nil,
+					nil,
+					nil,
+					container.NewVScroll(container.NewVBox(dwidget.NewCenterLabel(returnEnabledNames(Control.Enabled_assets)))))
+				tab = ti
+				return
+			}
+			tabs.Selected().Content = container.NewBorder(dwidget.NewCanvasText("Enabled Assets", 18, fyne.TextAlignCenter), nil, nil, nil, enable_opts)
+		case "Index":
+			scroll_buttons.Hide()
+			if rpc.Daemon.IsConnected() {
+				Assets.Index.Entry.Enable()
+				enable_opts.(*fyne.Container).Objects[1].(*fyne.Container).Objects[1].(*widget.Button).Hide()
+				enable_opts.(*fyne.Container).Objects[1].(*fyne.Container).Objects[2].(*widget.Button).Hide()
+				enable_opts.(*fyne.Container).Objects[1].(*fyne.Container).Objects[0].(*canvas.Text).Text = "Shut down Gnomon to enable/disable collections"
+				if f, ok := enable_opts.(*fyne.Container).Objects[0].(*container.Scroll).Content.(*fyne.Container).Objects[0].(*widget.Form); ok {
+					for _, r := range f.Items {
+						r.Widget.(*widget.RadioGroup).Disable()
+					}
+				}
 			} else {
-				dialog.NewInformation("Check back soon", "SCID not stored on the main Gnomon SC yet\n\nOnce stored, you can set your SCID headers", w).Show()
+				Assets.Index.Entry.SetText("")
+				Assets.Index.Entry.Disable()
+				enable_opts.(*fyne.Container).Objects[1].(*fyne.Container).Objects[1].(*widget.Button).Show()
+				enable_opts.(*fyne.Container).Objects[1].(*fyne.Container).Objects[2].(*widget.Button).Show()
+				enable_opts.(*fyne.Container).Objects[1].(*fyne.Container).Objects[0].(*canvas.Text).Text = "Delete Gnomon DB and resync for changes to take effect"
+				if f, ok := enable_opts.(*fyne.Container).Objects[0].(*container.Scroll).Content.(*fyne.Container).Objects[0].(*widget.Form); ok {
+					for _, r := range f.Items {
+						r.Widget.(*widget.RadioGroup).Enable()
+					}
+				}
 			}
 		}
-	})
 
-	header_contr := container.NewVBox(header_name_entry, header_descr_entry, header_icon_entry, header_button)
-	Assets.Header_box = *container.NewAdaptiveGrid(2, header_contr)
-	Assets.Header_box.Hide()
+		tab = ti
+	}
 
-	player_input.Add(&Assets.Header_box)
+	header_button.OnTapped = func() {
+		scid := scid_entry.Text
+		if len(scid) == 64 && name_entry.Text != "dReam Tables" && name_entry.Text != "dReams" {
+			if _, ok := rpc.FindStringKey(rpc.GnomonSCID, scid, rpc.Daemon.Rpc).(string); ok {
+				setHeaderConfirm(name_entry.Text, descr_entry.Text, icon_entry.Text, scid, d.Window)
+			} else {
+				dialog.NewInformation("Check back soon", "SCID not stored on the main Gnomon SC yet\n\nOnce stored, you can set your SCID headers", d.Window).Show()
+			}
+		} else {
+			dialog.NewInformation("Not Valid", fmt.Sprintf("SCID %s is not valid", scid), d.Window).Show()
+		}
+	}
 
-	player_box := container.NewHBox(player_input)
-
-	menu_top := container.NewHSplit(player_box, max)
-	menu_bottom := container.NewAdaptiveGrid(1, IndexEntry(menu_icon, w))
-
-	menu_box := container.NewVSplit(menu_top, menu_bottom)
-	menu_box.SetOffset(1)
-
-	return menu_box
+	return container.NewStack(bundle.Alpha120, tabs, border)
 }
 
-// Confirmation for setting SCID headers
-//   - name, desc and icon of SCID header
-//   - Pass main window obj to reset to
-func setHeaderConfirm(name, desc, icon, scid string, obj []fyne.CanvasObject, reset *container.AppTabs) fyne.CanvasObject {
-	label := widget.NewLabel("Headers for SCID:\n\n" + scid + "\n\nName: " + name + "\n\nDescription: " + desc + "\n\nIcon: " + icon)
-	label.Wrapping = fyne.TextWrapWord
-	label.Alignment = fyne.TextAlignCenter
+// Confirmation dialog for setting SCID headers
+//   - name, desc and icon of SCID header on Gnomon SC
+func setHeaderConfirm(name, desc, icon, scid string, w fyne.Window) {
+	text := fmt.Sprintf("Headers for SCID:\n\n%s\n\nName: %s\n\nDescription: %s\n\nIcon: %s", scid, name, desc, icon)
+	done := make(chan struct{})
+	confirm := dialog.NewConfirm("Set Headers", text, func(b bool) {
+		if b {
+			rpc.SetHeaders(name, desc, icon, scid)
+		}
+		done <- struct{}{}
+	}, w)
 
-	confirm_button := widget.NewButtonWithIcon("Confirm", dreams.FyneIcon("confirm"), func() {
-		rpc.SetHeaders(name, desc, icon, scid)
-		obj[1] = reset
-		obj[1].Refresh()
-	})
-	confirm_button.Importance = widget.HighImportance
-
-	cancel_button := widget.NewButtonWithIcon("Cancel", dreams.FyneIcon("cancel"), func() {
-		obj[1] = reset
-		obj[1].Refresh()
-
-	})
-
-	alpha := container.NewStack(canvas.NewRectangle(color.RGBA{0, 0, 0, 120}))
-	buttons := container.NewAdaptiveGrid(2, confirm_button, cancel_button)
-	content := container.NewVBox(layout.NewSpacer(), label, layout.NewSpacer(), buttons)
-
-	return container.NewStack(alpha, content)
+	go ShowConfirmDialog(done, confirm)
 }
 
 // Index entry and NFA control objects
 //   - Pass window resources for side menu windows
-func IndexEntry(window_icon fyne.Resource, w fyne.Window) fyne.CanvasObject {
-	Assets.Index_entry = widget.NewMultiLineEntry()
-	Assets.Index_entry.PlaceHolder = "SCID:"
-	Assets.Index_button = widget.NewButton("Add to Index", func() {
+func indexEntry(w fyne.Window) fyne.CanvasObject {
+	Assets.Index.Entry = widget.NewMultiLineEntry()
+	Assets.Index.Entry.SetPlaceHolder("Add SCID(s):")
+	Assets.Index.Add = widget.NewButton("Add to Index", func() {
 		if Gnomes.IsReady() {
-			s := strings.Split(Assets.Index_entry.Text, "\n")
+			s := strings.Split(Assets.Index.Entry.Text, "\n")
 			if err := manualIndex(s); err == nil {
 				dialog.NewInformation("Added to Index", "SCIDs added", w).Show()
 			} else {
@@ -411,110 +532,170 @@ func IndexEntry(window_icon fyne.Resource, w fyne.Window) fyne.CanvasObject {
 		}
 	})
 
-	Assets.Index_search = widget.NewButton("Search Index", func() {
-		searchIndex(Assets.Index_entry.Text)
-	})
-
-	Control.Send_asset = widget.NewButton("Send Asset", func() {
-		go sendAssetMenu(window_icon)
-	})
-
-	Control.List_button = widget.NewButton("List Asset", func() {
-		go listMenu(window_icon)
-	})
-
-	Control.Claim_button = widget.NewButton("Claim NFA", func() {
-		if len(Assets.Index_entry.Text) == 64 {
-			if isNFA(Assets.Index_entry.Text) {
-				if tx := rpc.ClaimNFA(Assets.Index_entry.Text); tx != "" {
-					go ShowTxDialog("Claim NFA", fmt.Sprintf("TX: %s", tx), tx, 3*time.Second, w)
-				} else {
-					dialog.NewInformation("Claim NFA", "TX Error", w).Show()
+	Assets.Index.Search = widget.NewButton("Search Index", func() {
+		if Gnomes.IsReady() {
+			scid := Assets.Index.Entry.Text
+			if len(scid) == 64 {
+				var found bool
+				all := Gnomes.GetAllOwnersAndSCIDs()
+				for sc := range all {
+					if scid == sc {
+						dialog.NewInformation("Found", fmt.Sprintf("SCID %s found", scid), w).Show()
+						logger.Printf("[Search] %s Found\n", scid)
+						found = true
+					}
 				}
-
-				return
+				if !found {
+					dialog.NewInformation("Not Found", fmt.Sprintf("Index does not contain SCID %s", scid), w).Show()
+					logger.Errorf("[Search] %s Not Found\n", scid)
+				}
+			} else {
+				dialog.NewInformation("Not Valid", fmt.Sprintf("SCID %s is not valid", scid), w).Show()
+				logger.Errorf("[Search] %s Not Found\n", scid)
 			}
-
-			dialog.NewInformation("Claim NFA", "Could not validate SCID as NFA", w).Show()
-			return
 		}
-
-		dialog.NewInformation("Claim NFA", "Not a valid SCID", w).Show()
 	})
 
-	Assets.Index_button.Hide()
-	Assets.Index_search.Hide()
-	Control.List_button.Hide()
-	Control.Claim_button.Hide()
-	Control.Send_asset.Hide()
+	Assets.Index.Add.Hide()
+	Assets.Index.Search.Hide()
 
-	Info.Indexed = canvas.NewText("Indexed SCIDs: ", bundle.TextColor)
-	Info.Indexed.TextSize = 18
-
-	bottom_grid := container.NewAdaptiveGrid(3, Info.Indexed, Assets.Index_button, Assets.Index_search)
-	top_grid := container.NewAdaptiveGrid(3, container.NewStack(Control.Send_asset), Control.Claim_button, Control.List_button)
-	box := container.NewVBox(top_grid, layout.NewSpacer(), bottom_grid)
-
-	return container.NewAdaptiveGrid(2, Assets.Index_entry, box)
+	return container.NewBorder(
+		nil,
+		container.NewCenter(container.NewHBox(Assets.Index.Add, Assets.Index.Search)),
+		nil,
+		nil,
+		Assets.Index.Entry)
 }
 
 // Disable index objects
 func DisableIndexControls(d bool) {
 	if d {
-		Assets.Index_button.Hide()
-		Assets.Index_search.Hide()
-		Assets.Header_box.Hide()
+		Assets.Index.Add.Hide()
+		Assets.Index.Search.Hide()
+		Assets.Headers.Hide()
 		Market.Market_box.Hide()
 		Gnomes.SCIDS = 0
 	} else {
-		Assets.Index_button.Show()
-		Assets.Index_search.Show()
+		Assets.Index.Add.Show()
+		Assets.Index.Search.Show()
 		if rpc.Wallet.IsConnected() {
-			Control.Claim_button.Show()
-			Assets.Header_box.Show()
+			Assets.Headers.Show()
+			Assets.Claim.Show()
 			Market.Market_box.Show()
-			if Control.List_open {
-				Control.List_button.Hide()
+			if Assets.Button.listing {
+				Assets.Button.List.Hide()
+			}
+			if Assets.Button.sending {
+				Assets.Button.Send.Hide()
 			}
 		} else {
-			Control.Send_asset.Hide()
-			Control.List_button.Hide()
-			Control.Claim_button.Hide()
-			Assets.Header_box.Hide()
+			Assets.Button.Send.Hide()
+			Assets.Button.List.Hide()
+			Assets.Claim.Hide()
 			Market.Market_box.Hide()
 		}
 	}
-	Assets.Index_button.Refresh()
-	Assets.Index_search.Refresh()
-	Assets.Header_box.Refresh()
+	Assets.Index.Add.Refresh()
+	Assets.Index.Search.Refresh()
+	Assets.Headers.Refresh()
 	Market.Market_box.Refresh()
 }
 
 // Owned asset list object
 //   - Sets Control.Viewing_asset and asset stats on selected
-func AssetList() fyne.CanvasObject {
-	Assets.Asset_list = widget.NewList(
+func AssetList(icon fyne.Resource, d *dreams.AppObject) fyne.CanvasObject {
+	Assets.List = widget.NewList(
 		func() int {
-			return len(Assets.Assets)
+			return len(Assets.Asset)
 		},
 		func() fyne.CanvasObject {
-			return widget.NewLabel("")
+			return container.NewStack(
+				container.NewBorder(
+					nil,
+					nil,
+					container.NewCenter(canvas.NewImageFromImage(nil)),
+					nil,
+					container.NewBorder(
+						widget.NewLabel(""),
+						widget.NewLabel(""),
+						nil,
+						nil,
+					)))
 		},
 		func(i widget.ListItemID, o fyne.CanvasObject) {
-			if len(Assets.Assets) > 0 {
-				o.(*widget.Label).SetText(Assets.Assets[i])
+			a := Assets.Asset
+			if i > len(a)-1 {
+				return
+			}
+
+			header := fmt.Sprintf("%s   %s   %s", a[i].Name, a[i].Collection, a[i].SCID)
+			if o.(*fyne.Container).Objects[0].(*fyne.Container).Objects[0].(*fyne.Container).Objects[0].(*widget.Label).Text != header {
+				o.(*fyne.Container).Objects[0].(*fyne.Container).Objects[0].(*fyne.Container).Objects[0].(*widget.Label).SetText(header)
+				o.(*fyne.Container).Objects[0].(*fyne.Container).Objects[0].(*fyne.Container).Objects[1].(*widget.Label).SetText(fmt.Sprintf("Type: %s", a[i].Type))
+				o.(*fyne.Container).Objects[0].(*fyne.Container).Objects[1].(*fyne.Container).Objects[0] = AssetIcon(a[i].Image, a[i].Name, 70)
+				o.Refresh()
 			}
 		})
 
-	Assets.Asset_list.OnSelected = func(id widget.ListItemID) {
-		split := strings.Split(Assets.Assets[id], "   ")
-		if len(split) >= 2 {
-			trimmed := strings.Trim(split[1], " ")
-			Control.Viewing_asset = trimmed
-			Assets.Icon = *canvas.NewImageFromImage(nil)
-			go GetOwnedAssetStats(trimmed)
+	Assets.List.OnSelected = func(id widget.ListItemID) {
+		if len(Assets.Asset[id].SCID) == 64 {
+			Assets.Viewing = Assets.Asset[id].SCID
+			if !isNFA(Assets.Asset[id].SCID) {
+				Assets.Button.List.Hide()
+				Assets.Button.Send.Hide()
+			} else {
+				if !Assets.Button.listing && !Assets.Button.sending {
+					Assets.Button.List.Show()
+					Assets.Button.Send.Show()
+				}
+			}
+			Assets.Icon = AssetIcon(Assets.Asset[id].Image, Assets.Asset[id].Name, 100)
 		}
 	}
 
-	return container.NewStack(Assets.Asset_list)
+	Assets.Button.Send = widget.NewButton("Send Asset", func() {
+		go sendAssetMenu(icon)
+	})
+
+	Assets.Button.List = widget.NewButton("List Asset", func() {
+		go listMenu(icon)
+	})
+
+	Assets.Button.Send.Importance = widget.HighImportance
+	Assets.Button.List.Importance = widget.HighImportance
+	Assets.Button.List.Hide()
+	Assets.Button.Send.Hide()
+
+	entry := widget.NewEntry()
+	entry.SetPlaceHolder("Claim NFA:")
+
+	claim_button := widget.NewButton("Claim", func() {
+		if len(entry.Text) == 64 {
+			if isNFA(entry.Text) {
+				if tx := rpc.ClaimNFA(entry.Text); tx != "" {
+					go ShowTxDialog("Claim NFA", fmt.Sprintf("TX: %s", tx), tx, 3*time.Second, d.Window)
+				} else {
+					dialog.NewInformation("Claim NFA", "TX Error", d.Window).Show()
+				}
+
+				return
+			}
+
+			dialog.NewInformation("Claim NFA", "Could not validate SCID as NFA", d.Window).Show()
+			return
+		}
+
+		dialog.NewInformation("Claim NFA", "Not a valid SCID", d.Window).Show()
+	})
+
+	Assets.Claim = container.NewBorder(nil, nil, nil, claim_button, entry)
+
+	return container.NewBorder(
+		nil,
+		container.NewAdaptiveGrid(2,
+			Assets.Claim,
+			container.NewAdaptiveGrid(3, layout.NewSpacer(), Assets.Button.Send, Assets.Button.List)),
+		nil,
+		nil,
+		Assets.List)
 }

@@ -434,19 +434,30 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 	return container.NewStack(bundle.NewAlpha180(), config_screen)
 }
 
+func profile() fyne.CanvasObject {
+	form := []*widget.FormItem{}
+	form = append(form, widget.NewFormItem("Avatar", holdero.AvatarSelect(menu.Assets.SCIDs)))
+	form = append(form, widget.NewFormItem("Theme", dreams.ThemeSelect()))
+	form = append(form, widget.NewFormItem("Card Deck", holdero.FaceSelect()))
+	form = append(form, widget.NewFormItem("Card Back", holdero.BackSelect()))
+	form = append(form, widget.NewFormItem("Sharing", holdero.SharedDecks()))
+
+	return container.NewCenter(widget.NewForm(form...))
+}
+
 // Main dReams layout
 func place() *fyne.Container {
 	menu.Control.Contract_rating = make(map[string]uint64)
-	menu.Assets.Asset_map = make(map[string]string)
+	menu.Assets.SCIDs = make(map[string]string)
 
-	asset_selects := []fyne.Widget{
-		holdero.FaceSelect(),
-		holdero.BackSelect(),
-		dreams.ThemeSelect(),
-		holdero.AvatarSelect(menu.Assets.Asset_map),
-		holdero.SharedDecks(),
-		recheckButton("dReams", recheckDreamsAssets),
-	}
+	// asset_selects := []fyne.Widget{
+	// 	holdero.FaceSelect(),
+	// 	holdero.BackSelect(),
+	// 	dreams.ThemeSelect(),
+	// 	holdero.AvatarSelect(menu.Assets.SCIDs),
+	// 	holdero.SharedDecks(),
+	// 	recheckButton("dReams", recheckDreamsAssets),
+	// }
 
 	var intros []menu.IntroText
 	intros = append(intros, menu.MakeMenuIntro(holdero.DreamsMenuIntro())...)
@@ -461,7 +472,7 @@ func place() *fyne.Container {
 	menu_tabs := container.NewAppTabs(
 		container.NewTabItem("Wallet", placeWall(intros)),
 		container.NewTabItem("dApps", layout.NewSpacer()),
-		container.NewTabItem("Assets", menu.PlaceAssets("dReams", asset_selects, bundle.ResourceDReamsIconAltPng, dReams.Window)),
+		container.NewTabItem("Assets", menu.PlaceAssets("dReams", profile(), bundle.ResourceDReamsIconAltPng, &dReams)),
 		container.NewTabItem("Market", menu.PlaceMarket()))
 
 	menu_tabs.OnSelected = func(ti *container.TabItem) {
@@ -471,9 +482,9 @@ func place() *fyne.Container {
 			dReams.SetSubTab("Wallet")
 		case "Assets":
 			dReams.SetSubTab("Assets")
-			menu.Control.Viewing_asset = ""
-			menu.Assets.Asset_list.UnselectAll()
-			menu_tabs.Selected().Content.(*container.Split).Leading.(*container.Split).Trailing.(*fyne.Container).Objects[1].(*container.AppTabs).SelectIndex(0)
+			menu.Assets.Viewing = ""
+			menu.Assets.List.UnselectAll()
+			menu_tabs.Selected().Content.(*fyne.Container).Objects[1].(*container.AppTabs).SelectIndex(1)
 		case "Market":
 			dReams.SetSubTab("Market")
 			go menu.FindNFAListings(nil)
@@ -541,7 +552,7 @@ func place() *fyne.Container {
 	// }
 
 	if menu.DappEnabled("Duels") {
-		tabs.Append(container.NewTabItem("Duels", duel.LayoutAllItems(menu.Assets.Asset_map, &dReams)))
+		tabs.Append(container.NewTabItem("Duels", duel.LayoutAllItems(menu.Assets.SCIDs, &dReams)))
 	}
 
 	if menu.DappEnabled("Grokked") {

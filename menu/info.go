@@ -25,8 +25,10 @@ type dispayObjects struct {
 var Info dispayObjects
 
 func (i *dispayObjects) SetStatus(s string) {
-	i.Status.Text = s
-	i.Status.Refresh()
+	if i.Status != nil {
+		i.Status.Text = s
+		i.Status.Refresh()
+	}
 }
 
 // Refresh Gnomon height display

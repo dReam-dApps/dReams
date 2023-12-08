@@ -34,13 +34,14 @@ func main() {
 	config := menu.ReadDreamsConfig(app_tag)
 
 	// Initialize Fyne app and window
-	a := app.NewWithID(fmt.Sprintf("%s Desktop Client", app_tag))
-	a.Settings().SetTheme(bundle.DeroTheme(config.Skin))
-	w := a.NewWindow(app_tag)
-	w.Resize(fyne.NewSize(1400, 800))
-	w.SetIcon(bundle.ResourceMarketIconPng)
-	w.CenterOnScreen()
-	w.SetMaster()
+	var d dreams.AppObject
+	d.App = app.NewWithID(fmt.Sprintf("%s Desktop Client", app_tag))
+	d.App.Settings().SetTheme(bundle.DeroTheme(config.Skin))
+	d.Window = d.App.NewWindow(app_tag)
+	d.Window.Resize(fyne.NewSize(1400, 800))
+	d.Window.SetIcon(bundle.ResourceMarketIconPng)
+	d.Window.CenterOnScreen()
+	d.Window.SetMaster()
 
 	// Initialize closing channels and func
 	quit := make(chan struct{})
@@ -64,9 +65,9 @@ func main() {
 		if rpc.Wallet.File != nil {
 			rpc.Wallet.File.Close_Encrypted_Wallet()
 		}
-		w.Close()
+		d.Window.Close()
 	}
-	w.SetCloseIntercept(closeFunc)
+	d.Window.SetCloseIntercept(closeFunc)
 
 	// Handle ctrl-c close
 	c := make(chan os.Signal, 1)
@@ -104,8 +105,8 @@ func main() {
 	// Layout tabs
 	tabs := container.NewAppTabs(
 		container.NewTabItem("Market", menu.PlaceMarket()),
-		container.NewTabItem("Assets", menu.PlaceAssets(app_tag, nil, bundle.ResourceMarketIconPng, w)),
-		container.NewTabItem("Mint", menu.PlaceNFAMint(app_tag, w)),
+		container.NewTabItem("Assets", menu.PlaceAssets(app_tag, nil, bundle.ResourceMarketIconPng, &d)),
+		container.NewTabItem("Mint", menu.PlaceNFAMint(app_tag, d.Window)),
 		container.NewTabItem("Log", rpc.SessionLog(app_tag, rpc.Version())))
 
 	tabs.SetTabLocation(container.TabLocationBottom)
@@ -113,9 +114,9 @@ func main() {
 	go menu.RunNFAMarket(app_tag, quit, done, connect_box)
 	go func() {
 		time.Sleep(450 * time.Millisecond)
-		w.SetContent(container.NewStack(tabs, container.NewVBox(layout.NewSpacer(), connect_box.Container)))
+		d.Window.SetContent(container.NewStack(tabs, container.NewVBox(layout.NewSpacer(), connect_box.Container)))
 	}()
-	w.ShowAndRun()
+	d.Window.ShowAndRun()
 	<-done
 	logger.Printf("[%s] Closed\n", app_tag)
 }
