@@ -483,12 +483,21 @@ func PlaceAssets(tag string, profile fyne.CanvasObject, rescan func(), icon fyne
 			nil,
 			container.NewAdaptiveGrid(2, indexEntry(d.Window), enable_opts))))
 
+	tab = tabs.Items[1]
+	tabs.Select(tab)
 	tabs.DisableIndex(0)
 	tabs.SetTabLocation(container.TabLocationLeading)
 	tabs.OnSelected = func(ti *container.TabItem) {
 		switch ti.Text {
 		case "Owned":
 			scroll_buttons.Show()
+		case "Profile":
+			scroll_buttons.Hide()
+			if !rpc.Daemon.IsConnected() || !rpc.Wallet.IsConnected() {
+				dialog.NewInformation("Profile", "Connect to daemon and wallet to set profile", d.Window).Show()
+				tabs.Select(tab)
+				return
+			}
 		case "Headers":
 			scroll_buttons.Hide()
 			if !rpc.Daemon.IsConnected() || !rpc.Wallet.IsConnected() {
@@ -751,6 +760,7 @@ func AssetList(icon fyne.Resource, rescan func(), d *dreams.AppObject) fyne.Canv
 	})
 
 	Assets.Claim = container.NewBorder(nil, nil, nil, claim_button, entry)
+	Assets.Claim.Hide()
 
 	Assets.Button.Rescan = widget.NewButton("Rescan", func() {
 		go func() {

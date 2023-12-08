@@ -167,7 +167,7 @@ func introScreen() *fyne.Container {
 
 	start_button.Importance = widget.LowImportance
 
-	dreams_img := canvas.NewImageFromResource(bundle.ResourceBlueBadge3Png)
+	dreams_img := canvas.NewImageFromResource(bundle.ResourceFigure1CirclePng)
 	dreams_img.SetMinSize(fyne.NewSize(90, 90))
 
 	powered_label := widget.NewLabel("Powered by")
