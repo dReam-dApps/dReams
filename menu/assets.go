@@ -6,6 +6,7 @@ import (
 	"image/color"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"fyne.io/fyne/v2"
@@ -22,9 +23,12 @@ import (
 )
 
 type assetObjects struct {
+	sync.RWMutex
+	Enabled  map[string]bool
 	Headers  *fyne.Container
 	Swap     *fyne.Container
 	Claim    *fyne.Container
+	Names    *widget.Select
 	Balances *widget.List
 	List     *widget.List
 	Asset    []Asset
@@ -32,17 +36,23 @@ type assetObjects struct {
 	SCIDs    map[string]string
 	Icon     fyne.CanvasObject
 	Button   struct {
-		Rescan   *widget.Button
-		Send     *widget.Button
-		List     *widget.Button
-		scanning bool
-		sending  bool
-		listing  bool
+		Rescan    *widget.Button
+		Send      *widget.Button
+		List      *widget.Button
+		scanning  bool
+		sending   bool
+		listing   bool
+		messaging bool
 	}
 	Index struct {
 		Entry  *widget.Entry
 		Add    *widget.Button
 		Search *widget.Button
+	}
+	counted bool
+	Count   struct {
+		G45 int
+		NFA int
 	}
 }
 
@@ -223,7 +233,7 @@ func ReturnEnabledNFAs(assets map[string]bool) (filters []string) {
 }
 
 func ReturnAssetCount() (count int) {
-	count = Control.NFA_count + Control.G45_count - 10
+	count = Assets.Count.NFA + Assets.Count.G45 - 10
 	if count < 2 {
 		count = 2
 	}
@@ -235,26 +245,26 @@ func ReturnAssetCount() (count int) {
 func enableNFAOpts(asset assetCount) (opts *widget.RadioGroup) {
 	onChanged := func(s string) {
 		if s == "Yes" {
-			Control.Lock()
-			Control.Enabled_assets[asset.name] = true
-			Control.NFA_count += asset.count
-			Control.Unlock()
+			Assets.Lock()
+			Assets.Enabled[asset.name] = true
+			Assets.Count.NFA += asset.count
+			Assets.Unlock()
 			return
 		}
 
-		Control.Lock()
-		defer Control.Unlock()
-		Control.Enabled_assets[asset.name] = false
-		if Control.NFA_count >= asset.count {
-			Control.NFA_count -= asset.count
+		Assets.Lock()
+		defer Assets.Unlock()
+		Assets.Enabled[asset.name] = false
+		if Assets.Count.NFA >= asset.count {
+			Assets.Count.NFA -= asset.count
 		}
 	}
 
-	if !Control.once {
+	if !Assets.counted {
 		opts = widget.NewRadioGroup([]string{"Yes", "No"}, nil)
 		opts.Required = true
 		opts.Horizontal = true
-		if Control.Enabled_assets[asset.name] {
+		if Assets.Enabled[asset.name] {
 			opts.OnChanged = onChanged
 			opts.SetSelected("Yes")
 		} else {
@@ -268,7 +278,7 @@ func enableNFAOpts(asset assetCount) (opts *widget.RadioGroup) {
 	opts = widget.NewRadioGroup([]string{"Yes", "No"}, nil)
 	opts.Required = true
 	opts.Horizontal = true
-	if Control.Enabled_assets[asset.name] {
+	if Assets.Enabled[asset.name] {
 		opts.SetSelected("Yes")
 	} else {
 		opts.SetSelected("No")
@@ -282,26 +292,26 @@ func enableNFAOpts(asset assetCount) (opts *widget.RadioGroup) {
 func enableG45Opts(asset assetCount) (opts *widget.RadioGroup) {
 	onChanged := func(s string) {
 		if s == "Yes" {
-			Control.Lock()
-			Control.Enabled_assets[asset.name] = true
-			Control.G45_count += asset.count
-			Control.Unlock()
+			Assets.Lock()
+			Assets.Enabled[asset.name] = true
+			Assets.Count.G45 += asset.count
+			Assets.Unlock()
 			return
 		}
 
-		Control.Lock()
-		defer Control.Unlock()
-		Control.Enabled_assets[asset.name] = false
-		if Control.G45_count >= asset.count {
-			Control.G45_count -= asset.count
+		Assets.Lock()
+		defer Assets.Unlock()
+		Assets.Enabled[asset.name] = false
+		if Assets.Count.G45 >= asset.count {
+			Assets.Count.G45 -= asset.count
 		}
 	}
 
-	if !Control.once {
+	if !Assets.counted {
 		opts = widget.NewRadioGroup([]string{"Yes", "No"}, nil)
 		opts.Required = true
 		opts.Horizontal = true
-		if Control.Enabled_assets[asset.name] {
+		if Assets.Enabled[asset.name] {
 			opts.OnChanged = onChanged
 			opts.SetSelected("Yes")
 		} else {
@@ -315,7 +325,7 @@ func enableG45Opts(asset assetCount) (opts *widget.RadioGroup) {
 	opts = widget.NewRadioGroup([]string{"Yes", "No"}, nil)
 	opts.Required = true
 	opts.Horizontal = true
-	if Control.Enabled_assets[asset.name] {
+	if Assets.Enabled[asset.name] {
 		opts.SetSelected("Yes")
 	} else {
 		opts.SetSelected("No")
@@ -353,9 +363,9 @@ func EnabledCollections(intro bool) (obj fyne.CanvasObject) {
 		collection_form = append(collection_form, widget.NewFormItem(asset.name, enableG45Opts(asset)))
 	}
 
-	Control.once = true
-	if Control.NFA_count < 3 {
-		Control.NFA_count = 3
+	Assets.counted = true
+	if Assets.Count.NFA < 3 {
+		Assets.Count.NFA = 3
 	}
 
 	label := canvas.NewText("Delete Gnomon DB and resync for changes to take effect", bundle.TextColor)
@@ -514,7 +524,7 @@ func PlaceAssets(tag string, profile fyne.CanvasObject, rescan func(), icon fyne
 					nil,
 					nil,
 					nil,
-					container.NewVScroll(container.NewVBox(dwidget.NewCenterLabel(returnEnabledNames(Control.Enabled_assets)))))
+					container.NewVScroll(container.NewVBox(dwidget.NewCenterLabel(returnEnabledNames(Assets.Enabled)))))
 				tab = ti
 				return
 			}

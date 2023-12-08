@@ -31,22 +31,21 @@ import (
 )
 
 type menuObjects struct {
-	G45_count       int
-	NFA_count       int
-	msg_open        bool
-	once            bool
-	Daemon_config   string
-	Dapp_list       map[string]bool
-	Enabled_assets  map[string]bool
-	Contract_rating map[string]uint64
-	Names           *widget.Select
-	Daemon_check    *widget.Check
-	Wallet_ind      *fyne.Animation
-	Daemon_ind      *fyne.Animation
 	sync.Mutex
+	Daemon    string
+	Dapps     map[string]bool
+	Ratings   map[string]uint64
+	Indicator struct {
+		Wallet *fyne.Animation
+		Daemon *fyne.Animation
+	}
+	Check struct {
+		Daemon *widget.Check
+	}
 }
+
 type exit struct {
-	Signal bool
+	signal bool
 	sync.RWMutex
 }
 
@@ -57,25 +56,25 @@ var gnomon = gnomes.NewGnomes()
 var Control menuObjects
 var Exit exit
 
-// Check for app closing signal
-func ClosingApps() (close bool) {
+// Check if menu is calling to close
+func IsClosing() (close bool) {
 	Exit.RLock()
-	close = Exit.Signal
+	close = Exit.signal
 	Exit.RUnlock()
 
 	return
 }
 
-// Set app closing signal value
-func CloseAppSignal(value bool) {
+// Set menu closing bool value
+func SetClose(value bool) {
 	Exit.Lock()
-	Exit.Signal = value
+	Exit.signal = value
 	Exit.Unlock()
 }
 
 // Returns how many dApps are enabled
 func EnabledDappCount() (enabled int) {
-	for _, b := range Control.Dapp_list {
+	for _, b := range Control.Dapps {
 		if b {
 			enabled++
 		}
@@ -86,7 +85,7 @@ func EnabledDappCount() (enabled int) {
 
 // Returns if a dApp is enabled
 func DappEnabled(dapp string) bool {
-	if b, ok := Control.Dapp_list[dapp]; ok && b {
+	if b, ok := Control.Dapps[dapp]; ok && b {
 		return true
 	}
 
@@ -96,8 +95,8 @@ func DappEnabled(dapp string) bool {
 // Save dReams config.json file for platform wide dApp use
 func WriteDreamsConfig(u dreams.SaveData) {
 	if u.Daemon != nil && u.Daemon[0] == "" {
-		if Control.Daemon_config != "" {
-			u.Daemon[0] = Control.Daemon_config
+		if Control.Daemon != "" {
+			u.Daemon[0] = Control.Daemon
 		} else {
 			u.Daemon[0] = "127.0.0.1:10102"
 		}
@@ -138,16 +137,16 @@ func ReadDreamsConfig(tag string) (saved dreams.SaveData) {
 
 		gnomon.SetParallel(1)
 		gnomon.SetDBStorageType("boltdb")
-		Control.Dapp_list = make(map[string]bool)
-		Control.Enabled_assets = make(map[string]bool)
+		Control.Dapps = make(map[string]bool)
+		Assets.Enabled = make(map[string]bool)
 
 		return
 	}
 
 	gnomon.SetParallel(1)
 	gnomon.SetDBStorageType("boltdb")
-	Control.Dapp_list = make(map[string]bool)
-	Control.Enabled_assets = make(map[string]bool)
+	Control.Dapps = make(map[string]bool)
+	Assets.Enabled = make(map[string]bool)
 
 	file, err := os.ReadFile("config/config.json")
 	if err != nil {
@@ -166,10 +165,10 @@ func ReadDreamsConfig(tag string) (saved dreams.SaveData) {
 	}
 
 	bundle.AppColor = saved.Skin
-	Control.Dapp_list = saved.Dapps
+	Control.Dapps = saved.Dapps
 
 	if saved.Assets != nil {
-		Control.Enabled_assets = saved.Assets
+		Assets.Enabled = saved.Assets
 	}
 
 	if saved.DBtype == "gravdb" {
@@ -908,13 +907,13 @@ func BackgroundRast(tag string) *canvas.Raster {
 
 // Send Dero message menu
 func SendMessageMenu(dest string, window_icon fyne.Resource) {
-	if !Control.msg_open && rpc.Wallet.IsConnected() {
-		Control.msg_open = true
+	if !Assets.Button.messaging && rpc.Wallet.IsConnected() {
+		Assets.Button.messaging = true
 		smw := fyne.CurrentApp().NewWindow("Send Message")
 		smw.Resize(fyne.NewSize(330, 700))
 		smw.SetIcon(window_icon)
 		smw.SetCloseIntercept(func() {
-			Control.msg_open = false
+			Assets.Button.messaging = false
 			smw.Close()
 		})
 		smw.SetFixedSize(true)
@@ -957,7 +956,7 @@ func SendMessageMenu(dest string, window_icon fyne.Resource) {
 			if dest_entry.Validate() == nil && message_entry.Text != "" {
 				rings := rpc.StringToUint64(ringsize.Selected)
 				go rpc.SendMessage(dest_entry.Text, message_entry.Text, rings)
-				Control.msg_open = false
+				Assets.Button.messaging = false
 				smw.Close()
 			}
 		})
@@ -969,10 +968,10 @@ func SendMessageMenu(dest string, window_icon fyne.Resource) {
 		content := container.NewVSplit(dest_cont, message_cont)
 
 		go func() {
-			for rpc.IsReady() && Control.msg_open {
+			for rpc.IsReady() && Assets.Button.messaging {
 				time.Sleep(2 * time.Second)
 			}
-			Control.msg_open = false
+			Assets.Button.messaging = false
 			smw.Close()
 		}()
 

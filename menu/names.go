@@ -13,13 +13,13 @@ var Username string
 
 // Dero wallet name entry
 func NameEntry() fyne.CanvasObject {
-	Control.Names = widget.NewSelect([]string{}, func(s string) {
+	Assets.Names = widget.NewSelect([]string{}, func(s string) {
 		Username = s
 	})
 
-	Control.Names.PlaceHolder = "Wallet names:"
+	Assets.Names.PlaceHolder = "Wallet names:"
 
-	return container.NewStack(Control.Names)
+	return container.NewStack(Assets.Names)
 }
 
 // Get a wallets registered names
@@ -28,6 +28,6 @@ func CheckWalletNames(value string) {
 		names, _ := gnomon.GetSCIDKeysByValue(rpc.NameSCID, value)
 
 		sort.Strings(names)
-		Control.Names.Options = append(Control.Names.Options, names...)
+		Assets.Names.Options = append(Assets.Names.Options, names...)
 	}
 }

@@ -145,13 +145,13 @@ func introScreen() *fyne.Container {
 		}
 
 		wait = true
-		menu.Control.Dapp_list = make(map[string]bool)
+		menu.Control.Dapps = make(map[string]bool)
 
 		for _, name := range dApps {
-			menu.Control.Dapp_list[name] = false
+			menu.Control.Dapps[name] = false
 		}
 
-		menu.Control.Dapp_list = enabled_dapps
+		menu.Control.Dapps = enabled_dapps
 
 		dReams.SetChannels(menu.EnabledDappCount())
 		logger.Println("[dReams] Loading dApps")
@@ -236,7 +236,7 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 		}()
 	})
 
-	for name, enabled := range menu.Control.Dapp_list {
+	for name, enabled := range menu.Control.Dapps {
 		enabled_dapps[name] = enabled
 	}
 
@@ -264,9 +264,9 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 		logger.Println("[dReams] Closing dApps")
 		dReams.CloseAllDapps()
 		disconnected()
-		menu.Control.Dapp_list = enabled_dapps
+		menu.Control.Dapps = enabled_dapps
 		dReams.SetChannels(menu.EnabledDappCount())
-		menu.CloseAppSignal(true)
+		menu.SetClose(true)
 		gnomon.Checked(false)
 		bundle.AppColor = skin_choice
 		gnomon_gif.Stop()
@@ -274,7 +274,7 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 		status_text.Refresh()
 		go func() {
 			time.Sleep(1500 * time.Millisecond)
-			menu.CloseAppSignal(false)
+			menu.SetClose(false)
 			logger.Println("[dReams] Loading dApps")
 			dReams.App.Settings().SetTheme(bundle.DeroTheme(bundle.AppColor))
 			dReams.Window.Content().(*fyne.Container).Objects[1] = place()
@@ -304,7 +304,7 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 					enabled_dapps[check.Text] = false
 				}
 
-				if reflect.DeepEqual(enabled_dapps, menu.Control.Dapp_list) {
+				if reflect.DeepEqual(enabled_dapps, menu.Control.Dapps) {
 					dapps_changed = false
 					if current_skin == skin_choice {
 						load_button.Hide()
@@ -459,7 +459,7 @@ var asset_tab *fyne.Container
 
 // Main dReams layout
 func place() *fyne.Container {
-	menu.Control.Contract_rating = make(map[string]uint64)
+	menu.Control.Ratings = make(map[string]uint64)
 	menu.Assets.SCIDs = make(map[string]string)
 
 	var intros []menu.IntroText

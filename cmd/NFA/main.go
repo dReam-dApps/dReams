@@ -61,7 +61,7 @@ func main() {
 		}
 
 		menu.WriteDreamsConfig(save)
-		menu.CloseAppSignal(true)
+		menu.SetClose(true)
 		gnomon.Stop(app_tag)
 		quit <- struct{}{}
 		if rpc.Wallet.File != nil {

@@ -85,7 +85,7 @@ func StartDreamsIndicators(add []DreamsIndicator) fyne.CanvasObject {
 	d_rect := canvas.NewRectangle(color.Black)
 	d_rect.SetMinSize(fyne.NewSize(36, 36))
 
-	Control.Daemon_ind = canvas.NewColorRGBAAnimation(purple, blue,
+	Control.Indicator.Daemon = canvas.NewColorRGBAAnimation(purple, blue,
 		time.Second*3, func(c color.Color) {
 			if rpc.Daemon.IsConnected() {
 				d_rect.FillColor = c
@@ -96,13 +96,13 @@ func StartDreamsIndicators(add []DreamsIndicator) fyne.CanvasObject {
 			}
 		})
 
-	Control.Daemon_ind.RepeatCount = fyne.AnimationRepeatForever
-	Control.Daemon_ind.AutoReverse = true
+	Control.Indicator.Daemon.RepeatCount = fyne.AnimationRepeatForever
+	Control.Indicator.Daemon.AutoReverse = true
 
 	w_rect := canvas.NewRectangle(color.Black)
 	w_rect.SetMinSize(fyne.NewSize(36, 36))
 
-	Control.Wallet_ind = canvas.NewColorRGBAAnimation(purple, blue,
+	Control.Indicator.Wallet = canvas.NewColorRGBAAnimation(purple, blue,
 		time.Second*3, func(c color.Color) {
 			if rpc.Wallet.IsConnected() {
 				w_rect.FillColor = c
@@ -113,8 +113,8 @@ func StartDreamsIndicators(add []DreamsIndicator) fyne.CanvasObject {
 			}
 		})
 
-	Control.Wallet_ind.RepeatCount = fyne.AnimationRepeatForever
-	Control.Wallet_ind.AutoReverse = true
+	Control.Indicator.Wallet.RepeatCount = fyne.AnimationRepeatForever
+	Control.Indicator.Wallet.AutoReverse = true
 
 	d := canvas.NewText(" D ", bundle.TextColor)
 	d.TextStyle.Bold = true
@@ -141,8 +141,8 @@ func StartDreamsIndicators(add []DreamsIndicator) fyne.CanvasObject {
 		gnomes.Sync_ind.Start()
 		gnomes.Full_ind.Start()
 		gnomes.Icon_ind.Start()
-		Control.Daemon_ind.Start()
-		Control.Wallet_ind.Start()
+		Control.Indicator.Daemon.Start()
+		Control.Indicator.Wallet.Start()
 		for _, ind := range add {
 			ind.Animation.Start()
 		}
@@ -216,7 +216,7 @@ func StartIndicators() fyne.CanvasObject {
 	d_rect := canvas.NewRectangle(color.Black)
 	d_rect.SetMinSize(fyne.NewSize(36, 36))
 
-	Control.Daemon_ind = canvas.NewColorRGBAAnimation(purple, blue,
+	Control.Indicator.Daemon = canvas.NewColorRGBAAnimation(purple, blue,
 		time.Second*3, func(c color.Color) {
 			if rpc.Daemon.IsConnected() {
 				d_rect.FillColor = c
@@ -227,13 +227,13 @@ func StartIndicators() fyne.CanvasObject {
 			}
 		})
 
-	Control.Daemon_ind.RepeatCount = fyne.AnimationRepeatForever
-	Control.Daemon_ind.AutoReverse = true
+	Control.Indicator.Daemon.RepeatCount = fyne.AnimationRepeatForever
+	Control.Indicator.Daemon.AutoReverse = true
 
 	w_rect := canvas.NewRectangle(color.Black)
 	w_rect.SetMinSize(fyne.NewSize(36, 36))
 
-	Control.Wallet_ind = canvas.NewColorRGBAAnimation(purple, blue,
+	Control.Indicator.Wallet = canvas.NewColorRGBAAnimation(purple, blue,
 		time.Second*3, func(c color.Color) {
 			if rpc.Wallet.IsConnected() {
 				w_rect.FillColor = c
@@ -244,8 +244,8 @@ func StartIndicators() fyne.CanvasObject {
 			}
 		})
 
-	Control.Wallet_ind.RepeatCount = fyne.AnimationRepeatForever
-	Control.Wallet_ind.AutoReverse = true
+	Control.Indicator.Wallet.RepeatCount = fyne.AnimationRepeatForever
+	Control.Indicator.Wallet.AutoReverse = true
 
 	d := canvas.NewText(" D ", bundle.TextColor)
 	d.TextStyle.Bold = true
@@ -267,8 +267,8 @@ func StartIndicators() fyne.CanvasObject {
 		gnomes.Sync_ind.Start()
 		gnomes.Full_ind.Start()
 		gnomes.Icon_ind.Start()
-		Control.Daemon_ind.Start()
-		Control.Wallet_ind.Start()
+		Control.Indicator.Daemon.Start()
+		Control.Indicator.Wallet.Start()
 		time.Sleep(time.Second)
 		hover.Canvas = fyne.CurrentApp().Driver().CanvasForObject(gnomes.Icon_ind)
 	}()
@@ -280,8 +280,8 @@ func StartIndicators() fyne.CanvasObject {
 func StopIndicators(these []DreamsIndicator) {
 	gnomes.Sync_ind.Stop()
 	gnomes.Full_ind.Stop()
-	Control.Daemon_ind.Stop()
-	Control.Wallet_ind.Stop()
+	Control.Indicator.Daemon.Stop()
+	Control.Indicator.Wallet.Stop()
 	for _, ind := range these {
 		ind.Animation.Stop()
 	}

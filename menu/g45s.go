@@ -111,7 +111,7 @@ func G45Index() {
 	gnomon.SetSearchFilters([]string{})
 	scidstoadd := make(map[string]*structures.FastSyncImport)
 
-	for _, c := range ReturnEnabledG45s(Control.Enabled_assets) {
+	for _, c := range ReturnEnabledG45s(Assets.Enabled) {
 		g45 := rpc.GetG45Collection(c)
 		for _, sc := range g45 {
 			scidstoadd[sc] = &structures.FastSyncImport{}

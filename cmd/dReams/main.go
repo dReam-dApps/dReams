@@ -43,7 +43,7 @@ func main() {
 	done := make(chan struct{})
 
 	close := func() {
-		menu.CloseAppSignal(true)
+		menu.SetClose(true)
 		menu.WriteDreamsConfig(save())
 		dappCloseCheck()
 		menu.Info.SetStatus("Putting Gnomon to Sleep")

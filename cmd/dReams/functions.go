@@ -111,7 +111,7 @@ func init() {
 	gnomes.InitLogrusLog(logrus.InfoLevel)
 	saved := menu.ReadDreamsConfig("dReams")
 	if saved.Daemon != nil {
-		menu.Control.Daemon_config = saved.Daemon[0]
+		menu.Control.Daemon = saved.Daemon[0]
 	}
 
 	holdero.SetFavoriteTables(saved.Tables)
@@ -126,7 +126,7 @@ func init() {
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-c
-		menu.CloseAppSignal(true)
+		menu.SetClose(true)
 		menu.WriteDreamsConfig(save())
 		fmt.Println()
 		dappCloseCheck()
@@ -149,8 +149,8 @@ func save() dreams.SaveData {
 		Sports:  prediction.Sports.Favorites.SCIDs,
 		DBtype:  gnomon.DBStorageType(),
 		Para:    gnomon.GetParallel(),
-		Assets:  menu.Control.Enabled_assets,
-		Dapps:   menu.Control.Dapp_list,
+		Assets:  menu.Assets.Enabled,
+		Dapps:   menu.Control.Dapps,
 	}
 }
 
@@ -294,7 +294,7 @@ func menuRefresh(offset int) {
 			go menu.Info.RefreshPrice(App_Name)
 		}
 
-		if offset%3 == 0 && dReams.OnSubTab("Market") && !dReams.IsWindows() && !menu.ClosingApps() {
+		if offset%3 == 0 && dReams.OnSubTab("Market") && !dReams.IsWindows() && !menu.IsClosing() {
 			menu.FindNFAListings(nil)
 		}
 	}
@@ -559,10 +559,10 @@ func checkDreamsG45s(gc bool, g45s map[string]string) {
 // Connection check for main process
 func checkConnection() {
 	if rpc.Daemon.IsConnected() {
-		menu.Control.Daemon_check.SetChecked(true)
+		menu.Control.Check.Daemon.SetChecked(true)
 		menu.DisableIndexControls(false)
 	} else {
-		menu.Control.Daemon_check.SetChecked(false)
+		menu.Control.Check.Daemon.SetChecked(false)
 		disableActions(true)
 		disconnected()
 		menu.DisableIndexControls(true)
@@ -684,14 +684,14 @@ func gnomonFilters() (filter []string) {
 		}
 	}
 
-	filter = append(filter, menu.ReturnEnabledNFAs(menu.Control.Enabled_assets)...)
+	filter = append(filter, menu.ReturnEnabledNFAs(menu.Assets.Enabled)...)
 
 	return
 }
 
 // Hidden object, controls Gnomon start and stop based on daemon connection
 func daemonConnectedBox() fyne.Widget {
-	menu.Control.Daemon_check = widget.NewCheck("", func(b bool) {
+	menu.Control.Check.Daemon = widget.NewCheck("", func(b bool) {
 		if !gnomon.IsInitialized() && !gnomon.IsStarting() {
 			if rpc.DaemonVersion() == "3.5.3-139.DEROHE.STARGATE+04042023" {
 				dialog.NewInformation("Daemon Version", "This daemon may conflict with Gnomon sync", dReams.Window).Show()
@@ -700,7 +700,7 @@ func daemonConnectedBox() fyne.Widget {
 			menu.Info.SetStatus("Starting Gnomon")
 			rpc.FetchFees()
 			filters := gnomonFilters()
-			gnomes.StartGnomon("dReams", gnomon.DBStorageType(), filters, menu.Control.G45_count+menu.Control.NFA_count, menu.Control.NFA_count, menu.G45Index)
+			gnomes.StartGnomon("dReams", gnomon.DBStorageType(), filters, menu.Assets.Count.G45+menu.Assets.Count.NFA, menu.Assets.Count.NFA, menu.G45Index)
 
 			if menu.DappEnabled("dSports and dPredictions") {
 				prediction.OnConnected()
@@ -713,10 +713,10 @@ func daemonConnectedBox() fyne.Widget {
 			menu.Info.SetStatus("Gnomon is Sleeping")
 		}
 	})
-	menu.Control.Daemon_check.Disable()
-	menu.Control.Daemon_check.Hide()
+	menu.Control.Check.Daemon.Disable()
+	menu.Control.Check.Daemon.Hide()
 
-	return menu.Control.Daemon_check
+	return menu.Control.Check.Daemon
 }
 
 // Daemon rpc entry object with default options
@@ -733,8 +733,8 @@ func daemonRpcEntry() fyne.Widget {
 		rpc.DAEMON_RPC_REMOTE6,
 	}
 
-	if menu.Control.Daemon_config != "" {
-		options = append(options, menu.Control.Daemon_config)
+	if menu.Control.Daemon != "" {
+		options = append(options, menu.Control.Daemon)
 	}
 	entry := widget.NewSelectEntry(options)
 	entry.PlaceHolder = "Daemon RPC: "
@@ -830,7 +830,7 @@ func rescan() {
 	checkDreamsG45s(false, nil)
 	if menu.DappEnabled("Holdero") {
 		if rpc.Wallet.IsConnected() {
-			menu.Control.Names.Options = []string{rpc.Wallet.Address[0:12]}
+			menu.Assets.Names.Options = []string{rpc.Wallet.Address[0:12]}
 			menu.CheckWalletNames(rpc.Wallet.Address)
 		}
 	}
