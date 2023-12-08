@@ -209,9 +209,10 @@ func gnomonScan(contracts map[string]string) {
 	bar.SetValue(2)
 	checkDreamsG45s(gnomon.HasChecked(), contracts)
 	bar.SetValue(3)
-	// TODO If boltdb {}
-	for _, r := range menu.Assets.Asset {
-		gnomes.StoreIndex(r.Collection, r.Name, r)
+	if gnomon.DBStorageType() == "boltdb" {
+		for _, r := range menu.Assets.Asset {
+			gnomes.StoreBolt(r.Collection, r.Name, r)
+		}
 	}
 	bar.SetValue(4)
 	asset_tab.Objects[1].(*container.AppTabs).SelectIndex(1)

@@ -5,7 +5,6 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 	"github.com/dReam-dApps/dReams/rpc"
 )
@@ -20,7 +19,7 @@ func NameEntry() fyne.CanvasObject {
 
 	Control.Names.PlaceHolder = "Wallet names:"
 
-	return container.NewHBox(layout.NewSpacer(), Control.Names)
+	return container.NewStack(Control.Names)
 }
 
 // Get a wallets registered names

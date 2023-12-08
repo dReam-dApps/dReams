@@ -272,7 +272,8 @@ func ThemeSelect() fyne.CanvasObject {
 					if img, err := dreams.DownloadCanvas(Theme.URL, s); err == nil {
 						Theme.Img = img
 					}
-					max.Objects[1].(*fyne.Container).Objects[0].(*fyne.Container).Objects[0] = SwitchProfileIcon("High Strangeness", "HighStrangeness1", gnomes.GetAssetUrl(1, Assets.SCIDs[s]), 60)
+					hs_icon := "https://raw.githubusercontent.com/High-Strangeness/High-Strangeness/main/HighStrangeness-IC.jpg"
+					max.Objects[1].(*fyne.Container).Objects[0].(*fyne.Container).Objects[0] = SwitchProfileIcon("High Strangeness", "HighStrangeness1", hs_icon, 60)
 				}
 			} else if s == "Main" {
 				Theme.Img = *canvas.NewImageFromResource(bundle.ResourceBackgroundPng)

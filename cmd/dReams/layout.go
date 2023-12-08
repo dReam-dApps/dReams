@@ -434,18 +434,19 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 	return container.NewStack(bundle.NewAlpha180(), config_screen)
 }
 
-func profileBorder(widget fyne.Widget) fyne.CanvasObject {
-	img := menu.AssetIcon(bundle.ResourceMarketCirclePng.StaticContent, "", 60)
-	return container.NewBorder(nil, nil, img, nil, container.NewVBox(widget))
-}
-
+// User profile layout with dreams.AssetSelects
 func profile() fyne.CanvasObject {
+	line := canvas.NewLine(bundle.TextColor)
 	form := []*widget.FormItem{}
+	form = append(form, widget.NewFormItem("Name", menu.NameEntry()))
+	form = append(form, widget.NewFormItem("", layout.NewSpacer()))
+	form = append(form, widget.NewFormItem("", container.NewVBox(line)))
 	form = append(form, widget.NewFormItem("Avatar", holdero.AvatarSelect(menu.Assets.SCIDs)))
 	form = append(form, widget.NewFormItem("Theme", menu.ThemeSelect()))
-	form = append(form, widget.NewFormItem("Card Deck", profileBorder(holdero.FaceSelect())))
-	form = append(form, widget.NewFormItem("Card Back", profileBorder(holdero.BackSelect())))
+	form = append(form, widget.NewFormItem("Card Deck", holdero.FaceSelect(menu.Assets.SCIDs)))
+	form = append(form, widget.NewFormItem("Card Back", holdero.BackSelect(menu.Assets.SCIDs)))
 	form = append(form, widget.NewFormItem("Sharing", holdero.SharedDecks()))
+	form = append(form, widget.NewFormItem("", container.NewVBox(line)))
 
 	spacer := canvas.NewRectangle(color.Transparent)
 	spacer.SetMinSize(fyne.NewSize(450, 0))

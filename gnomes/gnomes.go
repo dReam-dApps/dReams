@@ -17,7 +17,7 @@ import (
 	xwidget "fyne.io/x/fyne/widget"
 )
 
-type gnomon struct {
+type Gnomon struct {
 	DBType  string
 	Para    int
 	Fast    bool
@@ -76,22 +76,26 @@ type Gnomes interface {
 	ControlPanel(w fyne.Window) *fyne.Container
 }
 
-var gnomes gnomon
+var gnomes Gnomon
 
 func NewGnomes() Gnomes {
 	return &gnomes
 }
 
 // Returns Status string from Indexer
-func (g *gnomon) Status() string {
+func (g *Gnomon) Status() (status string) {
 	g.RLock()
 	defer g.RUnlock()
 
-	return g.Indexer.Status
+	if g.Indexer != nil {
+		return g.Indexer.Status
+	}
+
+	return
 }
 
 // Returns true if gnomes is starting
-func (g *gnomon) IsStarting() bool {
+func (g *Gnomon) IsStarting() bool {
 	g.RLock()
 	defer g.RUnlock()
 
@@ -99,30 +103,37 @@ func (g *gnomon) IsStarting() bool {
 }
 
 // Get DBType
-func (g *gnomon) DBStorageType() string {
+func (g *Gnomon) DBStorageType() string {
 	return g.DBType
 }
 
 // Set DB type to be used
 //   - boltdb
 //   - gravdb
-func (g *gnomon) SetDBStorageType(s string) {
+func (g *Gnomon) SetDBStorageType(s string) {
 	g.DBType = s
 }
 
 // Get Indexer.LastIndexedHeight
-func (g *gnomon) GetLastHeight() int64 {
-	return g.Indexer.LastIndexedHeight
+func (g *Gnomon) GetLastHeight() (height int64) {
+	if g.Indexer != nil {
+		return g.Indexer.LastIndexedHeight
+	}
+
+	return
 }
 
 // Get Indexer.ChainHeight
-func (g *gnomon) GetChainHeight() int64 {
-	return g.Indexer.ChainHeight
+func (g *Gnomon) GetChainHeight() (height int64) {
+	if g.Indexer != nil {
+		return g.Indexer.ChainHeight
+	}
+	return
 }
 
 // Shut down gnomes.Indexer
 //   - tag for log print
-func (g *gnomon) Stop(tag string) {
+func (g *Gnomon) Stop(tag string) {
 	if g.IsInitialized() && !g.IsClosing() {
 		logger.Printf("[%s] Putting Gnomon to Sleep\n", tag)
 		g.Lock()
@@ -135,7 +146,7 @@ func (g *gnomon) Stop(tag string) {
 }
 
 // Check if Indexer is writing
-func (g *gnomon) IsWriting() bool {
+func (g *Gnomon) IsWriting() bool {
 	g.RLock()
 	defer g.RUnlock()
 	switch g.Indexer.DBType {
@@ -150,7 +161,7 @@ func (g *gnomon) IsWriting() bool {
 
 // Set Indexer.Backend.Writing var,
 // if set true will wait if Indexer is writing already
-func (g *gnomon) Writing(b bool) {
+func (g *Gnomon) Writing(b bool) {
 	for b && g.IsWriting() {
 		time.Sleep(30 * time.Millisecond)
 	}
@@ -173,7 +184,7 @@ func (g *gnomon) Writing(b bool) {
 }
 
 // Check if Gnomon is closing
-func (g *gnomon) IsClosing() bool {
+func (g *Gnomon) IsClosing() bool {
 	if !g.Init {
 		return false
 	}
@@ -193,14 +204,14 @@ func (g *gnomon) IsClosing() bool {
 }
 
 // Set Gnomes.Init var
-func (g *gnomon) Initialized(b bool) {
+func (g *Gnomon) Initialized(b bool) {
 	g.Lock()
 	g.Init = b
 	g.Unlock()
 }
 
 // Check if Gnomes.Init
-func (g *gnomon) IsInitialized() bool {
+func (g *Gnomon) IsInitialized() bool {
 	g.RLock()
 	defer g.RUnlock()
 
@@ -208,14 +219,14 @@ func (g *gnomon) IsInitialized() bool {
 }
 
 // Set Gnomes.Syncing var when scanning wallet
-func (g *gnomon) Scanning(b bool) {
+func (g *Gnomon) Scanning(b bool) {
 	g.Lock()
 	g.Syncing = b
 	g.Unlock()
 }
 
 // Check if Gnomes.Syncing
-func (g *gnomon) IsScanning() bool {
+func (g *Gnomon) IsScanning() bool {
 	g.RLock()
 	defer g.RUnlock()
 
@@ -223,14 +234,14 @@ func (g *gnomon) IsScanning() bool {
 }
 
 // Set Gnomes.Checked var
-func (g *gnomon) Checked(b bool) {
+func (g *Gnomon) Checked(b bool) {
 	g.Lock()
 	g.Check = b
 	g.Unlock()
 }
 
 // Check if Gnomes.Checked
-func (g *gnomon) HasChecked() bool {
+func (g *Gnomon) HasChecked() bool {
 	g.RLock()
 	defer g.RUnlock()
 
@@ -238,7 +249,7 @@ func (g *gnomon) HasChecked() bool {
 }
 
 // Set Gnomes.SCIDS index count and return GetAllOwnersAndSCIDs()
-func (g *gnomon) IndexContains() map[string]string {
+func (g *Gnomon) IndexContains() map[string]string {
 	contracts := g.GetAllOwnersAndSCIDs()
 
 	g.Lock()
@@ -249,7 +260,7 @@ func (g *gnomon) IndexContains() map[string]string {
 }
 
 // Returns Gnomes.SCIDS
-func (g *gnomon) IndexCount() uint64 {
+func (g *Gnomon) IndexCount() uint64 {
 	g.RLock()
 	defer g.RUnlock()
 
@@ -257,14 +268,14 @@ func (g *gnomon) IndexCount() uint64 {
 }
 
 // Set index count to zero
-func (g *gnomon) ZeroIndexCount() {
+func (g *Gnomon) ZeroIndexCount() {
 	g.Lock()
 	g.SCIDS = 0
 	g.Unlock()
 }
 
 // Check if Gnomes index contains SCIDs >= u
-func (g *gnomon) HasIndex(u uint64) bool {
+func (g *Gnomon) HasIndex(u uint64) bool {
 	g.RLock()
 	defer g.RUnlock()
 
@@ -272,14 +283,14 @@ func (g *gnomon) HasIndex(u uint64) bool {
 }
 
 // Set Gnomes.Sync var
-func (g *gnomon) Synced(b bool) {
+func (g *Gnomon) Synced(b bool) {
 	g.Lock()
 	g.Sync = b
 	g.Unlock()
 }
 
 // Check if Gnomes.Sync
-func (g *gnomon) IsSynced() bool {
+func (g *Gnomon) IsSynced() bool {
 	g.RLock()
 	defer g.RUnlock()
 
@@ -287,7 +298,7 @@ func (g *gnomon) IsSynced() bool {
 }
 
 // Check if Gnomon is initialized, and not closing
-func (g *gnomon) IsRunning() bool {
+func (g *Gnomon) IsRunning() bool {
 	g.RLock()
 	defer g.RUnlock()
 
@@ -299,7 +310,7 @@ func (g *gnomon) IsRunning() bool {
 }
 
 // Check if Gnomon is initialized, synced and not closing
-func (g *gnomon) IsReady() bool {
+func (g *Gnomon) IsReady() bool {
 	g.RLock()
 	defer g.RUnlock()
 
@@ -311,19 +322,19 @@ func (g *gnomon) IsReady() bool {
 }
 
 // Set fastsync bool
-func (g *gnomon) SetFastsync(b bool) {
+func (g *Gnomon) SetFastsync(b bool) {
 	g.Fast = b
 }
 
 // Set Indexer parallel blocks value
-func (g *gnomon) SetParallel(i int) {
+func (g *Gnomon) SetParallel(i int) {
 	g.Lock()
 	g.Para = i
 	g.Unlock()
 }
 
 // Get Indexer parallel blocks value
-func (g *gnomon) GetParallel() int {
+func (g *Gnomon) GetParallel() int {
 	g.RLock()
 	defer g.RUnlock()
 
@@ -331,18 +342,18 @@ func (g *gnomon) GetParallel() int {
 }
 
 // Set Indexer search filters
-func (g *gnomon) SetSearchFilters(filters []string) {
+func (g *Gnomon) SetSearchFilters(filters []string) {
 	g.Indexer.SearchFilter = filters
 }
 
 // Get Indexer search filters
-func (g *gnomon) GetSearchFilters() []string {
+func (g *Gnomon) GetSearchFilters() []string {
 	return g.Indexer.SearchFilter
 }
 
 // Method of Gnomon GetAllOwnersAndSCIDs() where DB type is defined by Indexer.DBType
 //   - Default is boltdb
-func (g *gnomon) GetAllOwnersAndSCIDs() map[string]string {
+func (g *Gnomon) GetAllOwnersAndSCIDs() map[string]string {
 	switch g.Indexer.DBType {
 	case "gravdb":
 		return g.Indexer.GravDBBackend.GetAllOwnersAndSCIDs()
@@ -355,7 +366,7 @@ func (g *gnomon) GetAllOwnersAndSCIDs() map[string]string {
 
 // Method of Gnomon GetSCIDValuesByKey() where DB type is defined by Indexer.DBType
 //   - Default is boltdb
-func (g *gnomon) GetSCIDValuesByKey(scid string, key interface{}) (valuesstring []string, valuesuint64 []uint64) {
+func (g *Gnomon) GetSCIDValuesByKey(scid string, key interface{}) (valuesstring []string, valuesuint64 []uint64) {
 	switch g.Indexer.DBType {
 	case "gravdb":
 		return g.Indexer.GravDBBackend.GetSCIDValuesByKey(scid, key, g.Indexer.ChainHeight, true)
@@ -368,7 +379,7 @@ func (g *gnomon) GetSCIDValuesByKey(scid string, key interface{}) (valuesstring 
 
 // Method of Gnomon GetSCIDKeysByValue() where DB type is defined by Indexer.DBType
 //   - Default is boltdb
-func (g *gnomon) GetSCIDKeysByValue(scid string, key interface{}) (valuesstring []string, valuesuint64 []uint64) {
+func (g *Gnomon) GetSCIDKeysByValue(scid string, key interface{}) (valuesstring []string, valuesuint64 []uint64) {
 	switch g.Indexer.DBType {
 	case "gravdb":
 		return g.Indexer.GravDBBackend.GetSCIDKeysByValue(scid, key, g.Indexer.ChainHeight, true)
@@ -381,7 +392,7 @@ func (g *gnomon) GetSCIDKeysByValue(scid string, key interface{}) (valuesstring 
 
 // Method of Gnomon GetAllSCIDVariableDetails() where DB type is defined by Indexer.DBType
 //   - Default is boltdb
-func (g *gnomon) GetAllSCIDVariableDetails(scid string) []*structures.SCIDVariable {
+func (g *Gnomon) GetAllSCIDVariableDetails(scid string) []*structures.SCIDVariable {
 	switch g.Indexer.DBType {
 	case "gravdb":
 		return g.Indexer.GravDBBackend.GetAllSCIDVariableDetails(scid)
@@ -393,18 +404,18 @@ func (g *gnomon) GetAllSCIDVariableDetails(scid string) []*structures.SCIDVariab
 }
 
 // Method of Gnomon Indexer.AddSCIDToIndex()
-func (g *gnomon) AddSCIDToIndex(scids map[string]*structures.FastSyncImport) error {
+func (g *Gnomon) AddSCIDToIndex(scids map[string]*structures.FastSyncImport) error {
 	return g.Indexer.AddSCIDToIndex(scids, false, false)
 }
 
 // Method of Gnomon Indexer.GetSCIDValuesByKey()
-func (g *gnomon) GetLiveSCIDValuesByKey(scid string, key interface{}) (valuesstring []string, valuesuint64 []uint64, err error) {
+func (g *Gnomon) GetLiveSCIDValuesByKey(scid string, key interface{}) (valuesstring []string, valuesuint64 []uint64, err error) {
 	var v []*structures.SCIDVariable
 	return g.Indexer.GetSCIDValuesByKey(v, scid, key, g.Indexer.ChainHeight)
 }
 
 // UI control panel to set Gnomes vars
-func (g *gnomon) ControlPanel(w fyne.Window) *fyne.Container {
+func (g *Gnomon) ControlPanel(w fyne.Window) *fyne.Container {
 	db := widget.NewRadioGroup([]string{"boltdb", "gravdb"}, func(s string) {
 		g.DBType = s
 	})
