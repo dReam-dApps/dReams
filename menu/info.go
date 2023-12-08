@@ -33,8 +33,8 @@ func (i *dispayObjects) SetStatus(s string) {
 
 // Refresh Gnomon height display
 func (i *dispayObjects) RefreshGnomon() {
-	if Gnomes.IsRunning() {
-		i.Height.Gnomes.Text = fmt.Sprintf("Gnomon Height: %d", Gnomes.Indexer.LastIndexedHeight)
+	if gnomon.IsRunning() {
+		i.Height.Gnomes.Text = fmt.Sprintf("Gnomon Height: %d", gnomon.GetLastHeight())
 	} else {
 		i.Height.Gnomes.Text = "Gnomon Height: 0"
 
@@ -44,8 +44,8 @@ func (i *dispayObjects) RefreshGnomon() {
 
 // Refresh Gnomon indexed scids display
 func (i *dispayObjects) RefreshIndexed() {
-	if Gnomes.IsRunning() {
-		i.Indexed.Text = fmt.Sprintf("Indexed SCIDs: %d", Gnomes.IndexCount())
+	if gnomon.IsRunning() {
+		i.Indexed.Text = fmt.Sprintf("Indexed SCIDs: %d", gnomon.IndexCount())
 	} else {
 		i.Indexed.Text = "Indexed SCIDs: 0"
 

@@ -1,19 +1,17 @@
 package menu
 
 import (
-	"fmt"
 	"image/color"
 	"time"
 
 	"github.com/dReam-dApps/dReams/bundle"
+	"github.com/dReam-dApps/dReams/gnomes"
 	"github.com/dReam-dApps/dReams/rpc"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/layout"
-	"fyne.io/fyne/v2/widget"
 	xwidget "fyne.io/x/fyne/widget"
 )
 
@@ -36,11 +34,11 @@ func StartDreamsIndicators(add []DreamsIndicator) fyne.CanvasObject {
 	g_bottom := canvas.NewRectangle(color.Black)
 	g_bottom.SetMinSize(fyne.NewSize(57, 10))
 
-	hover := gnomonToolTip(45, nil)
+	hover := gnomes.ToolTip(45, nil)
 
-	Gnomes.Sync_ind = canvas.NewColorRGBAAnimation(purple, blue,
+	gnomes.Sync_ind = canvas.NewColorRGBAAnimation(purple, blue,
 		time.Second*3, func(c color.Color) {
-			if Gnomes.IsInitialized() && !Gnomes.HasChecked() {
+			if gnomon.IsInitialized() && !gnomon.HasChecked() {
 				g_top.FillColor = c
 				canvas.Refresh(g_top)
 				g_bottom.FillColor = c
@@ -54,8 +52,8 @@ func StartDreamsIndicators(add []DreamsIndicator) fyne.CanvasObject {
 			hover.Refresh()
 		})
 
-	Gnomes.Sync_ind.RepeatCount = fyne.AnimationRepeatForever
-	Gnomes.Sync_ind.AutoReverse = true
+	gnomes.Sync_ind.RepeatCount = fyne.AnimationRepeatForever
+	gnomes.Sync_ind.AutoReverse = true
 
 	sync_box := container.NewVBox(
 		g_top,
@@ -65,9 +63,9 @@ func StartDreamsIndicators(add []DreamsIndicator) fyne.CanvasObject {
 	g_full := canvas.NewRectangle(color.Black)
 	g_full.SetMinSize(fyne.NewSize(57, 36))
 
-	Gnomes.Full_ind = canvas.NewColorRGBAAnimation(purple, blue,
+	gnomes.Full_ind = canvas.NewColorRGBAAnimation(purple, blue,
 		time.Second*3, func(c color.Color) {
-			if Gnomes.IsInitialized() && Gnomes.HasIndex(2) && Gnomes.HasChecked() {
+			if gnomon.IsInitialized() && gnomon.HasIndex(2) && gnomon.HasChecked() {
 				g_full.FillColor = c
 				canvas.Refresh(g_full)
 				sync_box.Hide()
@@ -78,11 +76,11 @@ func StartDreamsIndicators(add []DreamsIndicator) fyne.CanvasObject {
 			}
 		})
 
-	Gnomes.Full_ind.RepeatCount = fyne.AnimationRepeatForever
-	Gnomes.Full_ind.AutoReverse = true
+	gnomes.Full_ind.RepeatCount = fyne.AnimationRepeatForever
+	gnomes.Full_ind.AutoReverse = true
 
-	Gnomes.Icon_ind, _ = xwidget.NewAnimatedGifFromResource(bundle.ResourceGnomonGifGif)
-	Gnomes.Icon_ind.SetMinSize(fyne.NewSize(36, 36))
+	gnomes.Icon_ind, _ = xwidget.NewAnimatedGifFromResource(bundle.ResourceGnomonGifGif)
+	gnomes.Icon_ind.SetMinSize(fyne.NewSize(36, 36))
 
 	d_rect := canvas.NewRectangle(color.Black)
 	d_rect.SetMinSize(fyne.NewSize(36, 36))
@@ -136,20 +134,20 @@ func StartDreamsIndicators(add []DreamsIndicator) fyne.CanvasObject {
 		additional_inds.Add(container.NewStack(ind.Rect, container.NewCenter(ind.Img)))
 	}
 
-	top_box := container.NewHBox(layout.NewSpacer(), additional_inds, connect_box, container.NewStack(g_full, sync_box, Gnomes.Icon_ind, hover))
+	top_box := container.NewHBox(layout.NewSpacer(), additional_inds, connect_box, container.NewStack(g_full, sync_box, gnomes.Icon_ind, hover))
 	place := container.NewVBox(top_box, layout.NewSpacer())
 
 	go func() {
-		Gnomes.Sync_ind.Start()
-		Gnomes.Full_ind.Start()
-		Gnomes.Icon_ind.Start()
+		gnomes.Sync_ind.Start()
+		gnomes.Full_ind.Start()
+		gnomes.Icon_ind.Start()
 		Control.Daemon_ind.Start()
 		Control.Wallet_ind.Start()
 		for _, ind := range add {
 			ind.Animation.Start()
 		}
 		time.Sleep(time.Second)
-		hover.canvas = fyne.CurrentApp().Driver().CanvasForObject(Gnomes.Icon_ind)
+		hover.Canvas = fyne.CurrentApp().Driver().CanvasForObject(gnomes.Icon_ind)
 	}()
 
 	return container.NewStack(place)
@@ -167,9 +165,9 @@ func StartIndicators() fyne.CanvasObject {
 	g_bottom := canvas.NewRectangle(color.Black)
 	g_bottom.SetMinSize(fyne.NewSize(57, 10))
 
-	Gnomes.Sync_ind = canvas.NewColorRGBAAnimation(purple, blue,
+	gnomes.Sync_ind = canvas.NewColorRGBAAnimation(purple, blue,
 		time.Second*3, func(c color.Color) {
-			if Gnomes.IsInitialized() && !Gnomes.HasChecked() {
+			if gnomon.IsInitialized() && !gnomon.HasChecked() {
 				g_top.FillColor = c
 				canvas.Refresh(g_top)
 				g_bottom.FillColor = c
@@ -182,8 +180,8 @@ func StartIndicators() fyne.CanvasObject {
 			}
 		})
 
-	Gnomes.Sync_ind.RepeatCount = fyne.AnimationRepeatForever
-	Gnomes.Sync_ind.AutoReverse = true
+	gnomes.Sync_ind.RepeatCount = fyne.AnimationRepeatForever
+	gnomes.Sync_ind.AutoReverse = true
 
 	sync_box := container.NewVBox(
 		g_top,
@@ -193,11 +191,11 @@ func StartIndicators() fyne.CanvasObject {
 	g_full := canvas.NewRectangle(color.Black)
 	g_full.SetMinSize(fyne.NewSize(57, 36))
 
-	hover := gnomonToolTip(-45, nil)
+	hover := gnomes.ToolTip(-45, nil)
 
-	Gnomes.Full_ind = canvas.NewColorRGBAAnimation(purple, blue,
+	gnomes.Full_ind = canvas.NewColorRGBAAnimation(purple, blue,
 		time.Second*3, func(c color.Color) {
-			if Gnomes.IsInitialized() && Gnomes.HasIndex(1) && Gnomes.HasChecked() {
+			if gnomon.IsInitialized() && gnomon.HasIndex(1) && gnomon.HasChecked() {
 				g_full.FillColor = c
 				canvas.Refresh(g_full)
 				sync_box.Hide()
@@ -209,11 +207,11 @@ func StartIndicators() fyne.CanvasObject {
 			hover.Refresh()
 		})
 
-	Gnomes.Full_ind.RepeatCount = fyne.AnimationRepeatForever
-	Gnomes.Full_ind.AutoReverse = true
+	gnomes.Full_ind.RepeatCount = fyne.AnimationRepeatForever
+	gnomes.Full_ind.AutoReverse = true
 
-	Gnomes.Icon_ind, _ = xwidget.NewAnimatedGifFromResource(bundle.ResourceGnomonGifGif)
-	Gnomes.Icon_ind.SetMinSize(fyne.NewSize(36, 36))
+	gnomes.Icon_ind, _ = xwidget.NewAnimatedGifFromResource(bundle.ResourceGnomonGifGif)
+	gnomes.Icon_ind.SetMinSize(fyne.NewSize(36, 36))
 
 	d_rect := canvas.NewRectangle(color.Black)
 	d_rect.SetMinSize(fyne.NewSize(36, 36))
@@ -262,17 +260,17 @@ func StartIndicators() fyne.CanvasObject {
 		container.NewStack(d_rect, container.NewCenter(d)),
 		container.NewStack(w_rect, container.NewCenter(w)))
 
-	top_box := container.NewHBox(layout.NewSpacer(), connect_box, container.NewStack(g_full, sync_box, Gnomes.Icon_ind, hover))
+	top_box := container.NewHBox(layout.NewSpacer(), connect_box, container.NewStack(g_full, sync_box, gnomes.Icon_ind, hover))
 	place := container.NewVBox(top_box, layout.NewSpacer())
 
 	go func() {
-		Gnomes.Sync_ind.Start()
-		Gnomes.Full_ind.Start()
-		Gnomes.Icon_ind.Start()
+		gnomes.Sync_ind.Start()
+		gnomes.Full_ind.Start()
+		gnomes.Icon_ind.Start()
 		Control.Daemon_ind.Start()
 		Control.Wallet_ind.Start()
 		time.Sleep(time.Second)
-		hover.canvas = fyne.CurrentApp().Driver().CanvasForObject(Gnomes.Icon_ind)
+		hover.Canvas = fyne.CurrentApp().Driver().CanvasForObject(gnomes.Icon_ind)
 	}()
 
 	return container.NewStack(place)
@@ -280,15 +278,15 @@ func StartIndicators() fyne.CanvasObject {
 
 // Stop dReams app status indicators
 func StopIndicators(these []DreamsIndicator) {
-	Gnomes.Sync_ind.Stop()
-	Gnomes.Full_ind.Stop()
+	gnomes.Sync_ind.Stop()
+	gnomes.Full_ind.Stop()
 	Control.Daemon_ind.Stop()
 	Control.Wallet_ind.Stop()
 	for _, ind := range these {
 		ind.Animation.Stop()
 	}
-	if Gnomes.Icon_ind != nil {
-		Gnomes.Icon_ind.Stop()
+	if gnomes.Icon_ind != nil {
+		gnomes.Icon_ind.Stop()
 	}
 }
 
@@ -297,71 +295,5 @@ func StopIndicators(these []DreamsIndicator) {
 func RestartGif(g *xwidget.AnimatedGif) {
 	if g != nil {
 		g.Start()
-	}
-}
-
-var _ desktop.Hoverable = (*toolTip)(nil)
-
-type toolTip struct {
-	hovered bool
-	text    *canvas.Text
-	canvas  fyne.Canvas
-	popup   *widget.PopUp
-	offset  float32
-	*canvas.Rectangle
-}
-
-// Display Gnomon heights when hovered
-func gnomonToolTip(offset float32, can fyne.Canvas) *toolTip {
-	rect := canvas.NewRectangle(color.Black)
-	rect.SetMinSize(fyne.NewSize(57, 36))
-
-	return &toolTip{
-		text:      canvas.NewText("", bundle.TextColor),
-		canvas:    can,
-		popup:     &widget.PopUp{},
-		offset:    offset,
-		Rectangle: rect,
-	}
-}
-
-func (t *toolTip) MouseIn(event *desktop.MouseEvent) {
-	t.hovered = true
-	if t.canvas != nil {
-		if Gnomes.Indexer != nil {
-			t.text.Text = fmt.Sprintf("%d/%d (%s)", Gnomes.Indexer.LastIndexedHeight, Gnomes.Indexer.ChainHeight, Gnomes.Status())
-			t.popup = widget.NewPopUp(t.text, t.canvas)
-		} else {
-			t.text.Text = "0/0"
-			t.popup = widget.NewPopUp(t.text, t.canvas)
-		}
-
-		if !t.popup.Hidden {
-			pos := event.AbsolutePosition
-			t.popup.ShowAtPosition(fyne.NewPos(pos.X-t.offset/4.5, pos.Y+t.offset))
-			t.Refresh()
-		}
-	}
-}
-
-func (t *toolTip) MouseOut() {
-	if t.canvas != nil {
-		t.hovered = false
-		t.popup.Hide()
-		t.popup = nil
-		t.Refresh()
-	}
-}
-
-func (t *toolTip) MouseMoved(event *desktop.MouseEvent) {}
-
-func (t *toolTip) Refresh() {
-	if t.hovered {
-		if Gnomes.Indexer != nil {
-			t.text.Text = fmt.Sprintf("%d/%d (%s)", Gnomes.Indexer.LastIndexedHeight, Gnomes.Indexer.ChainHeight, Gnomes.Status())
-		} else {
-			t.text.Text = "0/0"
-		}
-		t.text.Refresh()
 	}
 }

@@ -25,8 +25,8 @@ func NameEntry() fyne.CanvasObject {
 
 // Get a wallets registered names
 func CheckWalletNames(value string) {
-	if Gnomes.IsReady() {
-		names, _ := Gnomes.GetSCIDKeysByValue(rpc.NameSCID, value)
+	if gnomon.IsReady() {
+		names, _ := gnomon.GetSCIDKeysByValue(rpc.NameSCID, value)
 
 		sort.Strings(names)
 		Control.Names.Options = append(Control.Names.Options, names...)

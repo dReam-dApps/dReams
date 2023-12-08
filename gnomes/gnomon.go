@@ -1,4 +1,4 @@
-package menu
+package gnomes
 
 import (
 	"crypto/sha1"
@@ -82,23 +82,23 @@ func InitLogrusLog(level logrus.Level) {
 
 // Manually add SCID to Gnomon index
 func AddToIndex(scid []string) (err error) {
-	filters := Gnomes.Indexer.SearchFilter
-	Gnomes.Indexer.SearchFilter = []string{}
+	filters := gnomes.Indexer.SearchFilter
+	gnomes.Indexer.SearchFilter = []string{}
 	scidstoadd := make(map[string]*structures.FastSyncImport)
 
 	for _, sc := range scid {
-		owner, _ := Gnomes.GetSCIDValuesByKey(rpc.GnomonSCID, sc+"owner")
+		owner, _ := gnomes.GetSCIDValuesByKey(rpc.GnomonSCID, sc+"owner")
 		if owner != nil {
 			scidstoadd[sc] = &structures.FastSyncImport{}
 			scidstoadd[sc].Owner = owner[0]
 		}
 	}
 
-	err = Gnomes.Indexer.AddSCIDToIndex(scidstoadd, false, false)
+	err = gnomes.Indexer.AddSCIDToIndex(scidstoadd, false, false)
 	if err != nil {
 		logger.Errorf("[AddToIndex] %v\n", err)
 	}
-	Gnomes.Indexer.SearchFilter = filters
+	gnomes.Indexer.SearchFilter = filters
 
 	return
 }
@@ -149,7 +149,7 @@ func GnomonBoltDB(dbType, dbPath string) *storage.BboltStore {
 //   - lower defines the lower limit of indexed SCIDs from Gnomon search filters before custom adds
 //   - upper defines the higher limit when custom indexed SCIDs exist already
 func StartGnomon(tag, dbtype string, filters []string, upper, lower int, custom func()) {
-	Gnomes.Start = true
+	gnomes.Start = true
 	logger.Printf("[%s] Starting Gnomon\n", tag)
 	shasum := fmt.Sprintf("%x", sha1.Sum([]byte("dReams")))
 	db_path := filepath.Join("gnomondb", fmt.Sprintf("%s_%s", "dReams", shasum))
@@ -164,14 +164,14 @@ func StartGnomon(tag, dbtype string, filters []string, upper, lower int, custom 
 	}
 
 	if filters != nil {
-		Gnomes.Indexer = indexer.NewIndexer(grav_backend, bolt_backend, dbtype, filters, last_height, rpc.Daemon.Rpc, "daemon", false, false, Gnomes.Fast, false, nil)
-		go Gnomes.Indexer.StartDaemonMode(Gnomes.Para)
+		gnomes.Indexer = indexer.NewIndexer(grav_backend, bolt_backend, dbtype, filters, last_height, rpc.Daemon.Rpc, "daemon", false, false, gnomes.Fast, false, nil)
+		go gnomes.Indexer.StartDaemonMode(gnomes.Para)
 		time.Sleep(3 * time.Second)
-		Gnomes.Initialized(true)
+		gnomes.Initialized(true)
 
-		if Gnomes.Fast {
+		if gnomes.Fast {
 			for {
-				contracts := len(Gnomes.GetAllOwnersAndSCIDs())
+				contracts := len(gnomes.GetAllOwnersAndSCIDs())
 				if contracts >= upper {
 					break
 				}
@@ -183,7 +183,12 @@ func StartGnomon(tag, dbtype string, filters []string, upper, lower int, custom 
 
 				time.Sleep(time.Second)
 
-				if !rpc.Daemon.IsConnected() || ClosingApps() {
+				// if !rpc.Daemon.IsConnected() || ClosingApps() {
+				// 	logger.Errorf("[%s] Could not add all custom SCIDs to index\n", tag)
+				// 	break
+				// }
+
+				if !rpc.Daemon.IsConnected() {
 					logger.Errorf("[%s] Could not add all custom SCIDs to index\n", tag)
 					break
 				}
@@ -191,19 +196,19 @@ func StartGnomon(tag, dbtype string, filters []string, upper, lower int, custom 
 		}
 	}
 
-	Gnomes.Start = false
+	gnomes.Start = false
 }
 
 // Update Gnomon endpoint to current rpc.Daemon.Rpc value
 func GnomonEndPoint() {
-	if rpc.Daemon.IsConnected() && Gnomes.IsInitialized() && !Gnomes.IsScanning() {
-		Gnomes.Indexer.Endpoint = rpc.Daemon.Rpc
+	if rpc.Daemon.IsConnected() && gnomes.IsInitialized() && !gnomes.IsScanning() {
+		gnomes.Indexer.Endpoint = rpc.Daemon.Rpc
 	}
 }
 
 // Check three connection signals
 func Connected() bool {
-	if rpc.IsReady() && Gnomes.IsSynced() {
+	if rpc.IsReady() && gnomes.IsSynced() {
 		return true
 	}
 
@@ -212,7 +217,7 @@ func Connected() bool {
 
 // Gnomon is ready for dApp to preform initial scan
 func GnomonScan(config bool) bool {
-	if Gnomes.IsSynced() && Gnomes.HasChecked() && !config {
+	if gnomes.IsSynced() && gnomes.HasChecked() && !config {
 		return true
 	}
 
@@ -223,24 +228,20 @@ func GnomonScan(config bool) bool {
 //   - Hold out checking if dReams is in configure
 //   - Pass scan func for initial Gnomon sync
 func GnomonState(config bool, scan func(map[string]string)) {
-	if rpc.Daemon.IsConnected() && Gnomes.IsRunning() {
-		contracts := Gnomes.IndexContains()
-		if Gnomes.HasIndex(2) && !Gnomes.Start {
-			height := Gnomes.Indexer.ChainHeight
-			if Gnomes.Indexer.LastIndexedHeight >= height-3 && height != 0 {
-				Gnomes.Synced(true)
-				if !config && rpc.Wallet.IsConnected() && !Gnomes.HasChecked() {
-					Gnomes.Scanning(true)
-
-					CheckWalletNames(rpc.Wallet.Address)
+	if rpc.Daemon.IsConnected() && gnomes.IsRunning() {
+		contracts := gnomes.IndexContains()
+		if gnomes.HasIndex(2) && !gnomes.Start {
+			height := gnomes.GetChainHeight()
+			if gnomes.GetLastHeight() >= height-3 && height != 0 {
+				gnomes.Synced(true)
+				if !config && rpc.Wallet.IsConnected() && !gnomes.HasChecked() {
+					gnomes.Scanning(true)
 					scan(contracts)
-					FindNFAListings(contracts)
-
-					Gnomes.Checked(true)
-					Gnomes.Scanning(false)
+					gnomes.Checked(true)
+					gnomes.Scanning(false)
 				}
 			} else {
-				Gnomes.Synced(false)
+				gnomes.Synced(false)
 			}
 		}
 	}
@@ -248,8 +249,8 @@ func GnomonState(config bool, scan func(map[string]string)) {
 
 // Get Gnomon headers of SCID
 func GetSCHeaders(scid string) []string {
-	if Gnomes.IsRunning() {
-		headers, _ := Gnomes.GetSCIDValuesByKey(rpc.GnomonSCID, scid)
+	if gnomes.IsRunning() {
+		headers, _ := gnomes.GetSCIDValuesByKey(rpc.GnomonSCID, scid)
 
 		if headers != nil {
 			split := strings.Split(headers[0], ";")
@@ -272,11 +273,11 @@ func GetAssetUrl(w int, scid string) (url string) {
 	var link []string
 	switch w {
 	case 0:
-		link, _ = Gnomes.GetSCIDValuesByKey(scid, "fileURL")
+		link, _ = gnomes.GetSCIDValuesByKey(scid, "fileURL")
 	case 1:
-		link, _ = Gnomes.GetSCIDValuesByKey(scid, "iconURLHdr")
+		link, _ = gnomes.GetSCIDValuesByKey(scid, "iconURLHdr")
 	case 2:
-		link, _ = Gnomes.GetSCIDValuesByKey(scid, "coverURL")
+		link, _ = gnomes.GetSCIDValuesByKey(scid, "coverURL")
 	default:
 		// nothing
 	}
@@ -290,11 +291,11 @@ func GetAssetUrl(w int, scid string) (url string) {
 
 // Check owner of any SCID using "owner" key
 func CheckOwner(scid string) bool {
-	if len(scid) != 64 || !Gnomes.IsReady() {
+	if len(scid) != 64 || !gnomes.IsReady() {
 		return false
 	}
 
-	owner, _ := Gnomes.GetSCIDValuesByKey(scid, "owner")
+	owner, _ := gnomes.GetSCIDValuesByKey(scid, "owner")
 	if owner != nil {
 		return owner[0] == rpc.Wallet.Address
 	}

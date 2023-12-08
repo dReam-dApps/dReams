@@ -17,6 +17,7 @@ import (
 	dreams "github.com/dReam-dApps/dReams"
 	"github.com/dReam-dApps/dReams/bundle"
 	"github.com/dReam-dApps/dReams/dwidget"
+	"github.com/dReam-dApps/dReams/gnomes"
 	"github.com/dReam-dApps/dReams/rpc"
 )
 
@@ -31,10 +32,12 @@ type assetObjects struct {
 	SCIDs    map[string]string
 	Icon     fyne.CanvasObject
 	Button   struct {
-		Send    *widget.Button
-		List    *widget.Button
-		sending bool
-		listing bool
+		Rescan   *widget.Button
+		Send     *widget.Button
+		List     *widget.Button
+		scanning bool
+		sending  bool
+		listing  bool
 	}
 	Index struct {
 		Entry  *widget.Entry
@@ -72,7 +75,7 @@ var dReamsNFAs = []assetCount{
 
 // Add asset to List and SCIDs
 func (a *assetObjects) Add(details Asset, url string) {
-	have, err := StorageExists(details.Collection, details.Name)
+	have, err := gnomes.StorageExists(details.Collection, details.Name)
 	if err != nil {
 		have = false
 		logger.Errorln("[AddAsset]", err)
@@ -80,7 +83,7 @@ func (a *assetObjects) Add(details Asset, url string) {
 
 	if have {
 		var new Asset
-		GetStorage(details.Collection, details.Name, &new)
+		gnomes.GetStorage(details.Collection, details.Name, &new)
 		if new.Image != nil && !bytes.Equal(new.Image, bundle.ResourceMarketCirclePng.StaticContent) {
 			details.Image = new.Image
 		} else {
@@ -133,8 +136,8 @@ func IsDreamsNFACreator(creator string) bool {
 
 // Get the nameHdr of a NFA
 func GetNFAName(scid string) string {
-	if Gnomes.IsReady() {
-		name, _ := Gnomes.GetSCIDValuesByKey(scid, "nameHdr")
+	if gnomon.IsReady() {
+		name, _ := gnomon.GetSCIDValuesByKey(scid, "nameHdr")
 		if name != nil {
 			return name[0]
 		}
@@ -145,8 +148,8 @@ func GetNFAName(scid string) string {
 
 // Check if SCID is a NFA
 func isNFA(scid string) bool {
-	if Gnomes.IsReady() {
-		artAddr, _ := Gnomes.GetSCIDValuesByKey(scid, "artificerAddr")
+	if gnomon.IsReady() {
+		artAddr, _ := gnomon.GetSCIDValuesByKey(scid, "artificerAddr")
 		if artAddr != nil {
 			return artAddr[0] == rpc.ArtAddress
 		}
@@ -398,10 +401,11 @@ func returnEnabledNames(assets map[string]bool) (text string) {
 
 // Owned asset tab layout
 //   - tag for log print
-//   - assets is array of widgets used for asset selections
+//   - profile is canvas object of widgets used to select assets for games, themes, ect
+//   - rescan is func used to rescan wallet assets
 //   - icon resources for side menus
 //   - d for main window dialogs
-func PlaceAssets(tag string, profile fyne.CanvasObject, icon fyne.Resource, d *dreams.AppObject) *fyne.Container {
+func PlaceAssets(tag string, profile fyne.CanvasObject, rescan func(), icon fyne.Resource, d *dreams.AppObject) *fyne.Container {
 	enable_opts := EnabledCollections(false)
 
 	scid_entry := widget.NewEntry()
@@ -457,7 +461,14 @@ func PlaceAssets(tag string, profile fyne.CanvasObject, icon fyne.Resource, d *d
 	var tab *container.TabItem
 	tabs := container.NewAppTabs(
 		container.NewTabItemWithIcon("", bundle.ResourceMarketCirclePng, layout.NewSpacer()),
-		container.NewTabItem("Owned", AssetList(icon, d)),
+		container.NewTabItem("Owned", AssetList(icon, rescan, d)),
+		container.NewTabItem("Profile", container.NewBorder(
+			dwidget.NewCanvasText("User Profile", 18, fyne.TextAlignCenter),
+			nil,
+			nil,
+			nil,
+			profile)),
+
 		container.NewTabItem("Headers", container.NewBorder(
 			dwidget.NewCanvasText("Gnomon SC Headers", 18, fyne.TextAlignCenter),
 			nil,
@@ -470,15 +481,7 @@ func PlaceAssets(tag string, profile fyne.CanvasObject, icon fyne.Resource, d *d
 			nil,
 			nil,
 			nil,
-			container.NewAdaptiveGrid(2, indexEntry(d.Window), enable_opts))),
-
-		container.NewTabItem("Profile", container.NewBorder(
-			dwidget.NewCanvasText("User Profile", 18, fyne.TextAlignCenter),
-			nil,
-			nil,
-			nil,
-			profile)),
-	)
+			container.NewAdaptiveGrid(2, indexEntry(d.Window), enable_opts))))
 
 	tabs.DisableIndex(0)
 	tabs.SetTabLocation(container.TabLocationLeading)
@@ -573,9 +576,9 @@ func indexEntry(w fyne.Window) fyne.CanvasObject {
 	Assets.Index.Entry = widget.NewMultiLineEntry()
 	Assets.Index.Entry.SetPlaceHolder("Add SCID(s):")
 	Assets.Index.Add = widget.NewButton("Add to Index", func() {
-		if Gnomes.IsReady() {
+		if gnomon.IsReady() {
 			s := strings.Split(Assets.Index.Entry.Text, "\n")
-			if err := AddToIndex(s); err == nil {
+			if err := gnomes.AddToIndex(s); err == nil {
 				dialog.NewInformation("Added to Index", "SCIDs added", w).Show()
 			} else {
 				dialog.NewInformation("Error", "Error adding SCIDs to index", w).Show()
@@ -584,11 +587,11 @@ func indexEntry(w fyne.Window) fyne.CanvasObject {
 	})
 
 	Assets.Index.Search = widget.NewButton("Search Index", func() {
-		if Gnomes.IsReady() {
+		if gnomon.IsReady() {
 			scid := Assets.Index.Entry.Text
 			if len(scid) == 64 {
 				var found bool
-				all := Gnomes.GetAllOwnersAndSCIDs()
+				all := gnomon.GetAllOwnersAndSCIDs()
 				for sc := range all {
 					if scid == sc {
 						dialog.NewInformation("Found", fmt.Sprintf("SCID %s found", scid), w).Show()
@@ -625,7 +628,7 @@ func DisableIndexControls(d bool) {
 		Assets.Index.Search.Hide()
 		Assets.Headers.Hide()
 		Market.Market_box.Hide()
-		Gnomes.SCIDS = 0
+		gnomon.ZeroIndexCount()
 	} else {
 		Assets.Index.Add.Show()
 		Assets.Index.Search.Show()
@@ -633,6 +636,11 @@ func DisableIndexControls(d bool) {
 			Assets.Headers.Show()
 			Assets.Claim.Show()
 			Market.Market_box.Show()
+			if !Assets.Button.scanning && gnomon.HasChecked() {
+				Assets.Button.Rescan.Show()
+			} else {
+				Assets.Button.Rescan.Hide()
+			}
 			if Assets.Button.listing {
 				Assets.Button.List.Hide()
 			}
@@ -644,17 +652,20 @@ func DisableIndexControls(d bool) {
 			Assets.Button.List.Hide()
 			Assets.Claim.Hide()
 			Market.Market_box.Hide()
+			Assets.Button.Rescan.Hide()
 		}
 	}
 	Assets.Index.Add.Refresh()
 	Assets.Index.Search.Refresh()
 	Assets.Headers.Refresh()
 	Market.Market_box.Refresh()
+	Assets.Button.Rescan.Refresh()
 }
 
 // Owned asset list object
-//   - Sets Control.Viewing_asset and asset stats on selected
-func AssetList(icon fyne.Resource, d *dreams.AppObject) fyne.CanvasObject {
+//   - Sets Assets.Viewing and buttons visibility on selected
+//   - rescan is func placed in button to rescan wallet assets
+func AssetList(icon fyne.Resource, rescan func(), d *dreams.AppObject) fyne.CanvasObject {
 	Assets.List = widget.NewList(
 		func() int {
 			return len(Assets.Asset)
@@ -741,11 +752,24 @@ func AssetList(icon fyne.Resource, d *dreams.AppObject) fyne.CanvasObject {
 
 	Assets.Claim = container.NewBorder(nil, nil, nil, claim_button, entry)
 
+	Assets.Button.Rescan = widget.NewButton("Rescan", func() {
+		go func() {
+			Assets.Button.scanning = true
+			Assets.Button.Rescan.Hide()
+			Assets.Button.List.Hide()
+			Assets.Button.Send.Hide()
+			rescan()
+			Assets.Button.scanning = false
+		}()
+	})
+	Assets.Button.Rescan.Importance = widget.LowImportance
+	Assets.Button.Rescan.Hide()
+
 	return container.NewBorder(
 		nil,
 		container.NewAdaptiveGrid(2,
 			Assets.Claim,
-			container.NewAdaptiveGrid(3, layout.NewSpacer(), Assets.Button.Send, Assets.Button.List)),
+			container.NewAdaptiveGrid(5, layout.NewSpacer(), container.NewStack(layout.NewSpacer(), Assets.Button.Rescan), layout.NewSpacer(), Assets.Button.Send, Assets.Button.List)),
 		nil,
 		nil,
 		Assets.List)

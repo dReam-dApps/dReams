@@ -13,8 +13,8 @@ import (
 	"github.com/SixofClubsss/Holdero/holdero"
 	"github.com/SixofClubsss/Iluma/tarot"
 	"github.com/SixofClubsss/dPrediction/prediction"
-	dreams "github.com/dReam-dApps/dReams"
 	"github.com/dReam-dApps/dReams/bundle"
+	"github.com/dReam-dApps/dReams/gnomes"
 	"github.com/dReam-dApps/dReams/menu"
 	"github.com/dReam-dApps/dReams/rpc"
 
@@ -229,7 +229,7 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 	back_button := widget.NewButton("Back", func() {
 		dReams.Configure(false)
 		gnomon_gif.Stop()
-		menu.RestartGif(menu.Gnomes.Icon_ind)
+		menu.RestartGif(gnomes.Icon_ind)
 		go func() {
 			dReams.Window.Content().(*fyne.Container).Objects[1] = reset
 			dReams.Window.Content().(*fyne.Container).Objects[1].Refresh()
@@ -267,7 +267,7 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 		menu.Control.Dapp_list = enabled_dapps
 		dReams.SetChannels(menu.EnabledDappCount())
 		menu.CloseAppSignal(true)
-		menu.Gnomes.Checked(false)
+		gnomon.Checked(false)
 		bundle.AppColor = skin_choice
 		gnomon_gif.Stop()
 		status_text.Text = "Loading dApps..."
@@ -434,30 +434,32 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 	return container.NewStack(bundle.NewAlpha180(), config_screen)
 }
 
+func profileBorder(widget fyne.Widget) fyne.CanvasObject {
+	img := menu.AssetIcon(bundle.ResourceMarketCirclePng.StaticContent, "", 60)
+	return container.NewBorder(nil, nil, img, nil, container.NewVBox(widget))
+}
+
 func profile() fyne.CanvasObject {
 	form := []*widget.FormItem{}
 	form = append(form, widget.NewFormItem("Avatar", holdero.AvatarSelect(menu.Assets.SCIDs)))
-	form = append(form, widget.NewFormItem("Theme", dreams.ThemeSelect()))
-	form = append(form, widget.NewFormItem("Card Deck", holdero.FaceSelect()))
-	form = append(form, widget.NewFormItem("Card Back", holdero.BackSelect()))
+	form = append(form, widget.NewFormItem("Theme", menu.ThemeSelect()))
+	form = append(form, widget.NewFormItem("Card Deck", profileBorder(holdero.FaceSelect())))
+	form = append(form, widget.NewFormItem("Card Back", profileBorder(holdero.BackSelect())))
 	form = append(form, widget.NewFormItem("Sharing", holdero.SharedDecks()))
 
-	return container.NewCenter(widget.NewForm(form...))
+	spacer := canvas.NewRectangle(color.Transparent)
+	spacer.SetMinSize(fyne.NewSize(450, 0))
+
+	return container.NewCenter(container.NewBorder(spacer, nil, nil, nil, widget.NewForm(form...)))
 }
+
+var menu_tabs *container.AppTabs
+var asset_tab *fyne.Container
 
 // Main dReams layout
 func place() *fyne.Container {
 	menu.Control.Contract_rating = make(map[string]uint64)
 	menu.Assets.SCIDs = make(map[string]string)
-
-	// asset_selects := []fyne.Widget{
-	// 	holdero.FaceSelect(),
-	// 	holdero.BackSelect(),
-	// 	dreams.ThemeSelect(),
-	// 	holdero.AvatarSelect(menu.Assets.SCIDs),
-	// 	holdero.SharedDecks(),
-	// 	recheckButton("dReams", recheckDreamsAssets),
-	// }
 
 	var intros []menu.IntroText
 	intros = append(intros, menu.MakeMenuIntro(holdero.DreamsMenuIntro())...)
@@ -469,10 +471,11 @@ func place() *fyne.Container {
 	intros = append(intros, menu.MakeMenuIntro(duel.DreamsMenuIntro())...)
 
 	// dReams menu tabs
-	menu_tabs := container.NewAppTabs(
+	asset_tab = menu.PlaceAssets("dReams", profile(), rescan, bundle.ResourceDReamsIconAltPng, &dReams)
+	menu_tabs = container.NewAppTabs(
 		container.NewTabItem("Wallet", placeWall(intros)),
 		container.NewTabItem("dApps", layout.NewSpacer()),
-		container.NewTabItem("Assets", menu.PlaceAssets("dReams", profile(), bundle.ResourceDReamsIconAltPng, &dReams)),
+		container.NewTabItem("Assets", asset_tab),
 		container.NewTabItem("Market", menu.PlaceMarket()))
 
 	menu_tabs.OnSelected = func(ti *container.TabItem) {
@@ -484,7 +487,9 @@ func place() *fyne.Container {
 			dReams.SetSubTab("Assets")
 			menu.Assets.Viewing = ""
 			menu.Assets.List.UnselectAll()
-			menu_tabs.Selected().Content.(*fyne.Container).Objects[1].(*container.AppTabs).SelectIndex(1)
+			if _, ok := menu_tabs.Selected().Content.(*fyne.Container).Objects[1].(*container.AppTabs); ok {
+				menu_tabs.Selected().Content.(*fyne.Container).Objects[1].(*container.AppTabs).SelectIndex(1)
+			}
 		case "Market":
 			dReams.SetSubTab("Market")
 			go menu.FindNFAListings(nil)
@@ -493,7 +498,7 @@ func place() *fyne.Container {
 			menu.Market.Auction_list.Refresh()
 			menu.Market.Buy_list.Refresh()
 		case "dApps":
-			if menu.Gnomes.IsScanning() {
+			if gnomon.IsScanning() {
 				menu_tabs.SelectIndex(0)
 				dialog.NewInformation("Gnomon Syncing", "Please wait to make dApp changes", dReams.Window).Show()
 			} else {
@@ -630,19 +635,19 @@ func placeWall(intros []menu.IntroText) *container.Split {
 	user_input_box := container.NewHBox(user_input_cont, daemon_check_cont)
 	connect_tabs := container.NewAppTabs(
 		container.NewTabItem("Connect", container.NewCenter(user_input_box)),
-		container.NewTabItem("Gnomon", container.NewCenter(menu.Gnomes.ControlPanel(dReams.Window))))
+		container.NewTabItem("Gnomon", container.NewCenter(gnomon.ControlPanel(dReams.Window))))
 
 	connect_tabs.OnSelected = func(ti *container.TabItem) {
 		if ti.Text == "Gnomon" {
 			if rpc.Daemon.IsConnected() {
-				status := menu.Gnomes.Status()
-				if (menu.Gnomes.Start && status != "indexing") || menu.Gnomes.IsScanning() {
+				status := gnomon.Status()
+				if (gnomon.IsStarting() && status != "indexing") || gnomon.IsScanning() {
 					if status == "indexed" {
 						status = "scanning wallet"
 					}
 					dialog.NewInformation("Gnomon Syncing", fmt.Sprintf("%s, please wait...", status), dReams.Window).Show()
 					connect_tabs.SelectIndex(0)
-				} else if menu.Gnomes.IsInitialized() {
+				} else if gnomon.IsInitialized() {
 					dialog.NewConfirm("Gnomon Running", "Shut down Gnomon to make changes", func(b bool) {
 						if b {
 							daemon_cont.Content.(*widget.SelectEntry).SetText("")

@@ -12,6 +12,7 @@ import (
 	dreams "github.com/dReam-dApps/dReams"
 	"github.com/dReam-dApps/dReams/bundle"
 	"github.com/dReam-dApps/dReams/dwidget"
+	"github.com/dReam-dApps/dReams/gnomes"
 	"github.com/dReam-dApps/dReams/menu"
 	"github.com/dReam-dApps/dReams/rpc"
 	"github.com/sirupsen/logrus"
@@ -29,9 +30,10 @@ const app_tag = "NFA Market"
 func main() {
 	n := runtime.NumCPU()
 	runtime.GOMAXPROCS(n)
-	menu.InitLogrusLog(logrus.InfoLevel)
+	gnomes.InitLogrusLog(logrus.InfoLevel)
 	logger := structures.Logger.WithFields(logrus.Fields{})
 	config := menu.ReadDreamsConfig(app_tag)
+	gnomon := gnomes.NewGnomes()
 
 	// Initialize Fyne app and window
 	var d dreams.AppObject
@@ -49,7 +51,7 @@ func main() {
 	closeFunc := func() {
 		save := dreams.SaveData{
 			Skin:   config.Skin,
-			DBtype: menu.Gnomes.DBType,
+			DBtype: gnomon.DBStorageType(),
 		}
 
 		if rpc.Daemon.Rpc == "" {
@@ -60,7 +62,7 @@ func main() {
 
 		menu.WriteDreamsConfig(save)
 		menu.CloseAppSignal(true)
-		menu.Gnomes.Stop(app_tag)
+		gnomon.Stop(app_tag)
 		quit <- struct{}{}
 		if rpc.Wallet.File != nil {
 			rpc.Wallet.File.Close_Encrypted_Wallet()
@@ -79,15 +81,15 @@ func main() {
 	}()
 
 	// Initialize vars
-	menu.Gnomes.Fast = true
+	gnomon.SetFastsync(true)
 
 	// Create dwidget connection box with controls
 	connect_box := dwidget.NewHorizontalEntries(app_tag, 1)
 	connect_box.Button.OnTapped = func() {
 		rpc.GetAddress(app_tag)
 		rpc.Ping()
-		if rpc.Daemon.IsConnected() && !menu.Gnomes.IsInitialized() && !menu.Gnomes.Start {
-			go menu.StartGnomon(app_tag, menu.Gnomes.DBType, []string{menu.NFA_SEARCH_FILTER}, 0, 0, nil)
+		if rpc.Daemon.IsConnected() && !gnomon.IsInitialized() && !gnomon.IsStarting() {
+			go gnomes.StartGnomon(app_tag, gnomon.DBStorageType(), []string{gnomes.NFA_SEARCH_FILTER}, 0, 0, nil)
 			rpc.FetchFees()
 			menu.Market.Filters = menu.FetchFilters("market_filter")
 		}
@@ -95,7 +97,7 @@ func main() {
 
 	connect_box.Disconnect.OnChanged = func(b bool) {
 		if !b {
-			menu.Gnomes.Stop(app_tag)
+			gnomon.Stop(app_tag)
 		}
 	}
 
@@ -105,7 +107,7 @@ func main() {
 	// Layout tabs
 	tabs := container.NewAppTabs(
 		container.NewTabItem("Market", menu.PlaceMarket()),
-		container.NewTabItem("Assets", menu.PlaceAssets(app_tag, nil, bundle.ResourceMarketIconPng, &d)),
+		container.NewTabItem("Assets", menu.PlaceAssets(app_tag, nil, nil, bundle.ResourceMarketIconPng, &d)),
 		container.NewTabItem("Mint", menu.PlaceNFAMint(app_tag, d.Window)),
 		container.NewTabItem("Log", rpc.SessionLog(app_tag, rpc.Version())))
 

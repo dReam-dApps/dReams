@@ -13,10 +13,13 @@ import (
 	"sync"
 	"time"
 
+	"github.com/civilware/Gnomon/structures"
 	dreams "github.com/dReam-dApps/dReams"
 	"github.com/dReam-dApps/dReams/bundle"
 	"github.com/dReam-dApps/dReams/dwidget"
+	"github.com/dReam-dApps/dReams/gnomes"
 	"github.com/dReam-dApps/dReams/rpc"
+	"github.com/sirupsen/logrus"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -47,6 +50,10 @@ type exit struct {
 	sync.RWMutex
 }
 
+// Background theme AssetSelect
+var Theme dreams.AssetSelect
+var logger = structures.Logger.WithFields(logrus.Fields{})
+var gnomon = gnomes.NewGnomes()
 var Control menuObjects
 var Exit exit
 
@@ -129,16 +136,16 @@ func ReadDreamsConfig(tag string) (saved dreams.SaveData) {
 			config.Close()
 		}
 
-		Gnomes.Para = 1
-		Gnomes.DBType = "boltdb"
+		gnomon.SetParallel(1)
+		gnomon.SetDBStorageType("boltdb")
 		Control.Dapp_list = make(map[string]bool)
 		Control.Enabled_assets = make(map[string]bool)
 
 		return
 	}
 
-	Gnomes.Para = 1
-	Gnomes.DBType = "boltdb"
+	gnomon.SetParallel(1)
+	gnomon.SetDBStorageType("boltdb")
 	Control.Dapp_list = make(map[string]bool)
 	Control.Enabled_assets = make(map[string]bool)
 
@@ -166,14 +173,124 @@ func ReadDreamsConfig(tag string) (saved dreams.SaveData) {
 	}
 
 	if saved.DBtype == "gravdb" {
-		Gnomes.DBType = saved.DBtype
+		gnomon.SetDBStorageType(saved.DBtype)
 	}
 
 	if saved.Para > 0 && saved.Para < 6 {
-		Gnomes.Para = saved.Para
+		gnomon.SetParallel(saved.Para)
 	}
 
 	return
+}
+
+func SwitchProfileIcon(collection, name, url string, size float32) (icon *canvas.Image) {
+	have, err := gnomes.StorageExists(collection, name)
+	if err != nil {
+		have = false
+		logger.Errorln("[SwitchProfileIcon]", err)
+	}
+
+	if have {
+		var new Asset
+		gnomes.GetStorage(collection, name, &new)
+		if new.Image != nil && !bytes.Equal(new.Image, bundle.ResourceMarketCirclePng.StaticContent) {
+			icon = canvas.NewImageFromReader(bytes.NewReader(new.Image), name)
+			icon.SetMinSize(fyne.NewSize(size, size))
+			return
+		} else {
+			have = false
+		}
+	}
+
+	if !have {
+		if img, err := dreams.DownloadBytes(url); err == nil {
+			icon = canvas.NewImageFromReader(bytes.NewReader(img), name)
+			icon.SetMinSize(fyne.NewSize(60, 60))
+			return
+		} else {
+			logger.Errorln("[SwitchProfileIcon]", err)
+		}
+	}
+
+	icon = canvas.NewImageFromResource(bundle.ResourceFigure1CirclePng)
+	icon.SetMinSize(fyne.NewSize(60, 60))
+	return
+}
+
+// App theme selection object
+//   - If image is not present locally, it is downloaded
+func ThemeSelect() fyne.CanvasObject {
+	options := []string{"Main", "Legacy"}
+	icon := AssetIcon(bundle.ResourceMarketCirclePng.StaticContent, "", 60)
+	var max *fyne.Container
+	Theme.Select = widget.NewSelect(options, func(s string) {
+		switch Theme.Select.SelectedIndex() {
+		case -1:
+			Theme.Name = "Main"
+		case 0:
+			Theme.Name = "Main"
+		case 1:
+			Theme.Name = "Legacy"
+		default:
+			Theme.Name = s
+		}
+		go func() {
+			dir := dreams.GetDir()
+			check := strings.Trim(s, "0123456789")
+			if check == "AZYDS" {
+				file := dir + "/assets/" + s + "/" + s + ".png"
+				if dreams.FileExists(file, "dReams") {
+					Theme.Img = *canvas.NewImageFromFile(file)
+				} else {
+					fmt.Println()
+					Theme.URL = gnomes.GetAssetUrl(1, Assets.SCIDs[s]) // "https://raw.githubusercontent.com/Azylem/" + s + "/main/" + s + ".png"
+					logger.Println("[dReams] Downloading", Theme.URL)
+					if img, err := dreams.DownloadCanvas(gnomes.GetAssetUrl(0, Assets.SCIDs[s]), s); err == nil {
+						Theme.Img = img
+					}
+					max.Objects[1].(*fyne.Container).Objects[0].(*fyne.Container).Objects[0] = SwitchProfileIcon("AZY-Deroscapes", s, Theme.URL, 60)
+				}
+			} else if check == "SIXART" {
+				file := dir + "/assets/" + s + "/" + s + ".png"
+				if dreams.FileExists(file, "dReams") {
+					Theme.Img = *canvas.NewImageFromFile(file)
+				} else {
+					Theme.URL = gnomes.GetAssetUrl(1, Assets.SCIDs[s]) // "https://raw.githubusercontent.com/SixofClubsss/SIXART/main/" + s + "/" + s + ".png"
+					logger.Println("[dReams] Downloading", Theme.URL)
+					if img, err := dreams.DownloadCanvas(gnomes.GetAssetUrl(0, Assets.SCIDs[s]), s); err == nil {
+						Theme.Img = img
+					}
+					max.Objects[1].(*fyne.Container).Objects[0].(*fyne.Container).Objects[0] = SwitchProfileIcon("SIXART", s, Theme.URL, 60)
+				}
+			} else if check == "HSTheme" {
+				file := dir + "/assets/" + s + "/" + s + ".png"
+				if dreams.FileExists(file, "dReams") {
+					Theme.Img = *canvas.NewImageFromFile(file)
+				} else {
+					Theme.URL = "https://raw.githubusercontent.com/High-Strangeness/High-Strangeness/main/" + s + "/" + s + ".png"
+					logger.Println("[dReams] Downloading", Theme.URL)
+					if img, err := dreams.DownloadCanvas(Theme.URL, s); err == nil {
+						Theme.Img = img
+					}
+					max.Objects[1].(*fyne.Container).Objects[0].(*fyne.Container).Objects[0] = SwitchProfileIcon("High Strangeness", "HighStrangeness1", gnomes.GetAssetUrl(1, Assets.SCIDs[s]), 60)
+				}
+			} else if s == "Main" {
+				Theme.Img = *canvas.NewImageFromResource(bundle.ResourceBackgroundPng)
+				img := canvas.NewImageFromResource(bundle.ResourceMarketCirclePng)
+				img.SetMinSize(fyne.NewSize(60, 60))
+				max.Objects[1].(*fyne.Container).Objects[0].(*fyne.Container).Objects[0] = img
+			} else if s == "Legacy" {
+				Theme.Img = *canvas.NewImageFromResource(bundle.ResourceLegacyBackgroundPng)
+				img := canvas.NewImageFromResource(bundle.ResourceMarketCirclePng)
+				img.SetMinSize(fyne.NewSize(60, 60))
+				max.Objects[1].(*fyne.Container).Objects[0].(*fyne.Container).Objects[0] = img
+			}
+		}()
+	})
+	Theme.Select.PlaceHolder = "Theme:"
+	max = container.NewBorder(nil, nil, icon, nil, container.NewVBox(Theme.Select))
+
+	return max
 }
 
 // Display SCID rating from dReams SCID rating system
@@ -772,8 +889,8 @@ func CreateSwapContainer(pair string) (*dwidget.DeroAmts, *fyne.Container) {
 func BackgroundRast(tag string) *canvas.Raster {
 	var err error
 	var img image.Image
-	if dreams.Theme.Img.Resource != nil {
-		if img, _, err = image.Decode(bytes.NewReader(dreams.Theme.Img.Resource.Content())); err == nil {
+	if Theme.Img.Resource != nil {
+		if img, _, err = image.Decode(bytes.NewReader(Theme.Img.Resource.Content())); err == nil {
 			return canvas.NewRasterFromImage(img)
 		}
 

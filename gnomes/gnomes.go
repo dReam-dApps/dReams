@@ -1,4 +1,4 @@
-package menu
+package gnomes
 
 import (
 	"os"
@@ -18,25 +18,69 @@ import (
 )
 
 type gnomon struct {
-	DBType   string
-	Para     int
-	Fast     bool
-	Start    bool
-	Init     bool
-	Sync     bool
-	Syncing  bool
-	Check    bool
-	Wait     bool
-	Import   bool
-	SCIDS    uint64
-	Sync_ind *fyne.Animation
-	Full_ind *fyne.Animation
-	Icon_ind *xwidget.AnimatedGif
-	Indexer  *indexer.Indexer
+	DBType  string
+	Para    int
+	Fast    bool
+	Start   bool
+	Init    bool
+	Sync    bool
+	Syncing bool
+	Check   bool
+	SCIDS   uint64
+	Indexer *indexer.Indexer
 	sync.RWMutex
 }
 
-var Gnomes gnomon
+var Imported bool
+var Sync_ind *fyne.Animation
+var Full_ind *fyne.Animation
+var Icon_ind *xwidget.AnimatedGif
+
+// GnomonInterface defines the methods of the gnomon type that you want to expose
+type Gnomes interface {
+	Status() string
+	IsStarting() bool
+	DBStorageType() string
+	SetDBStorageType(s string)
+	GetLastHeight() int64
+	GetChainHeight() int64
+	Stop(tag string)
+	IsWriting() bool
+	Writing(b bool)
+	IsClosing() bool
+	Initialized(b bool)
+	IsInitialized() bool
+	Scanning(b bool)
+	IsScanning() bool
+	Checked(b bool)
+	HasChecked() bool
+	IndexContains() map[string]string
+	IndexCount() uint64
+	ZeroIndexCount()
+	HasIndex(u uint64) bool
+	Synced(b bool)
+	IsSynced() bool
+	IsRunning() bool
+	IsReady() bool
+	SetFastsync(b bool)
+	SetParallel(i int)
+	GetParallel() int
+	SetSearchFilters(filters []string)
+	GetSearchFilters() []string
+	GetAllOwnersAndSCIDs() map[string]string
+	GetSCIDValuesByKey(scid string, key interface{}) (valuesstring []string, valuesuint64 []uint64)
+	GetSCIDKeysByValue(scid string, key interface{}) (valuesstring []string, valuesuint64 []uint64)
+	GetAllSCIDVariableDetails(scid string) []*structures.SCIDVariable
+	AddSCIDToIndex(scids map[string]*structures.FastSyncImport) error
+	GetLiveSCIDValuesByKey(scid string, key interface{}) (valuesstring []string, valuesuint64 []uint64, err error)
+	ControlPanel(w fyne.Window) *fyne.Container
+}
+
+var gnomes gnomon
+
+func NewGnomes() Gnomes {
+	return &gnomes
+}
 
 // Returns Status string from Indexer
 func (g *gnomon) Status() string {
@@ -46,7 +90,37 @@ func (g *gnomon) Status() string {
 	return g.Indexer.Status
 }
 
-// Shut down Gnomes.Indexer
+// Returns true if gnomes is starting
+func (g *gnomon) IsStarting() bool {
+	g.RLock()
+	defer g.RUnlock()
+
+	return g.Start
+}
+
+// Get DBType
+func (g *gnomon) DBStorageType() string {
+	return g.DBType
+}
+
+// Set DB type to be used
+//   - boltdb
+//   - gravdb
+func (g *gnomon) SetDBStorageType(s string) {
+	g.DBType = s
+}
+
+// Get Indexer.LastIndexedHeight
+func (g *gnomon) GetLastHeight() int64 {
+	return g.Indexer.LastIndexedHeight
+}
+
+// Get Indexer.ChainHeight
+func (g *gnomon) GetChainHeight() int64 {
+	return g.Indexer.ChainHeight
+}
+
+// Shut down gnomes.Indexer
 //   - tag for log print
 func (g *gnomon) Stop(tag string) {
 	if g.IsInitialized() && !g.IsClosing() {
@@ -60,7 +134,7 @@ func (g *gnomon) Stop(tag string) {
 	}
 }
 
-// Check if Gnomon is writing
+// Check if Indexer is writing
 func (g *gnomon) IsWriting() bool {
 	g.RLock()
 	defer g.RUnlock()
@@ -182,6 +256,13 @@ func (g *gnomon) IndexCount() uint64 {
 	return g.SCIDS
 }
 
+// Set index count to zero
+func (g *gnomon) ZeroIndexCount() {
+	g.Lock()
+	g.SCIDS = 0
+	g.Unlock()
+}
+
 // Check if Gnomes index contains SCIDs >= u
 func (g *gnomon) HasIndex(u uint64) bool {
 	g.RLock()
@@ -227,6 +308,36 @@ func (g *gnomon) IsReady() bool {
 	}
 
 	return false
+}
+
+// Set fastsync bool
+func (g *gnomon) SetFastsync(b bool) {
+	g.Fast = b
+}
+
+// Set Indexer parallel blocks value
+func (g *gnomon) SetParallel(i int) {
+	g.Lock()
+	g.Para = i
+	g.Unlock()
+}
+
+// Get Indexer parallel blocks value
+func (g *gnomon) GetParallel() int {
+	g.RLock()
+	defer g.RUnlock()
+
+	return g.Para
+}
+
+// Set Indexer search filters
+func (g *gnomon) SetSearchFilters(filters []string) {
+	g.Indexer.SearchFilter = filters
+}
+
+// Get Indexer search filters
+func (g *gnomon) GetSearchFilters() []string {
+	return g.Indexer.SearchFilter
 }
 
 // Method of Gnomon GetAllOwnersAndSCIDs() where DB type is defined by Indexer.DBType
@@ -279,6 +390,17 @@ func (g *gnomon) GetAllSCIDVariableDetails(scid string) []*structures.SCIDVariab
 	default:
 		return g.Indexer.BBSBackend.GetAllSCIDVariableDetails(scid)
 	}
+}
+
+// Method of Gnomon Indexer.AddSCIDToIndex()
+func (g *gnomon) AddSCIDToIndex(scids map[string]*structures.FastSyncImport) error {
+	return g.Indexer.AddSCIDToIndex(scids, false, false)
+}
+
+// Method of Gnomon Indexer.GetSCIDValuesByKey()
+func (g *gnomon) GetLiveSCIDValuesByKey(scid string, key interface{}) (valuesstring []string, valuesuint64 []uint64, err error) {
+	var v []*structures.SCIDVariable
+	return g.Indexer.GetSCIDValuesByKey(v, scid, key, g.Indexer.ChainHeight)
 }
 
 // UI control panel to set Gnomes vars

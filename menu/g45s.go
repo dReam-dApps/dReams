@@ -101,14 +101,14 @@ func ReturnEnabledG45s(assets map[string]bool) (filter []string) {
 
 // Manually add G45 collections to Gnomon index
 func G45Index() {
-	if Gnomes.DBType == "boltdb" {
-		for Gnomes.IsWriting() {
+	if gnomon.DBStorageType() == "boltdb" {
+		for gnomon.IsWriting() {
 			time.Sleep(time.Second)
 		}
 	}
 	logger.Println("[dReams] Adding G45 Collections")
-	filters := Gnomes.Indexer.SearchFilter
-	Gnomes.Indexer.SearchFilter = []string{}
+	filters := gnomon.GetSearchFilters()
+	gnomon.SetSearchFilters([]string{})
 	scidstoadd := make(map[string]*structures.FastSyncImport)
 
 	for _, c := range ReturnEnabledG45s(Control.Enabled_assets) {
@@ -118,11 +118,11 @@ func G45Index() {
 		}
 	}
 
-	err := Gnomes.Indexer.AddSCIDToIndex(scidstoadd, false, false)
+	err := gnomon.AddSCIDToIndex(scidstoadd)
 	if err != nil {
 		logger.Errorf("[G45Index] %v\n", err)
 	}
-	Gnomes.Indexer.SearchFilter = filters
+	gnomon.SetSearchFilters(filters)
 
 	if runtime.GOOS != "windows" {
 		fyne.CurrentApp().SendNotification(&fyne.Notification{

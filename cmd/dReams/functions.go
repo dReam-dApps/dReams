@@ -20,6 +20,8 @@ import (
 	"github.com/civilware/Gnomon/structures"
 	dreams "github.com/dReam-dApps/dReams"
 	"github.com/dReam-dApps/dReams/bundle"
+	"github.com/dReam-dApps/dReams/dwidget"
+	"github.com/dReam-dApps/dReams/gnomes"
 	"github.com/dReam-dApps/dReams/menu"
 	"github.com/dReam-dApps/dReams/rpc"
 	"github.com/docopt/docopt-go"
@@ -28,6 +30,7 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
+	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/driver/desktop"
@@ -68,14 +71,14 @@ func flags() {
 
 	if arguments["--dbtype"] != nil {
 		if arguments["--dbtype"] == "gravdb" {
-			menu.Gnomes.DBType = arguments["--dbtype"].(string)
+			gnomon.SetDBStorageType(arguments["--dbtype"].(string))
 		}
 	}
 
-	menu.Gnomes.Fast = true
+	gnomon.SetFastsync(true)
 	if arguments["--fastsync"] != nil {
 		if arguments["--fastsync"].(string) == "false" {
-			menu.Gnomes.Fast = false
+			gnomon.SetFastsync(false)
 		}
 	}
 
@@ -83,15 +86,15 @@ func flags() {
 		s := arguments["--num-parallel-blocks"].(string)
 		switch s {
 		case "2":
-			menu.Gnomes.Para = 2
+			gnomon.SetParallel(2)
 		case "3":
-			menu.Gnomes.Para = 3
+			gnomon.SetParallel(3)
 		case "4":
-			menu.Gnomes.Para = 4
+			gnomon.SetParallel(4)
 		case "5":
-			menu.Gnomes.Para = 5
+			gnomon.SetParallel(5)
 		default:
-			menu.Gnomes.Para = 1
+			gnomon.SetParallel(1)
 		}
 	}
 
@@ -105,7 +108,7 @@ func flags() {
 
 func init() {
 	dReams.SetOS()
-	menu.InitLogrusLog(logrus.InfoLevel)
+	gnomes.InitLogrusLog(logrus.InfoLevel)
 	saved := menu.ReadDreamsConfig("dReams")
 	if saved.Daemon != nil {
 		menu.Control.Daemon_config = saved.Daemon[0]
@@ -128,7 +131,7 @@ func init() {
 		fmt.Println()
 		dappCloseCheck()
 		menu.Info.SetStatus("Putting Gnomon to Sleep")
-		menu.Gnomes.Stop("dReams")
+		gnomon.Stop("dReams")
 		menu.StopIndicators(indicators)
 		time.Sleep(time.Second)
 		dReams.StopProcess()
@@ -144,8 +147,8 @@ func save() dreams.SaveData {
 		Tables:  holdero.GetFavoriteTables(),
 		Predict: prediction.Predict.Favorites.SCIDs,
 		Sports:  prediction.Sports.Favorites.SCIDs,
-		DBtype:  menu.Gnomes.DBType,
-		Para:    menu.Gnomes.Para,
+		DBtype:  gnomon.DBStorageType(),
+		Para:    gnomon.GetParallel(),
 		Assets:  menu.Control.Enabled_assets,
 		Dapps:   menu.Control.Dapp_list,
 	}
@@ -198,14 +201,22 @@ func systemTray(w fyne.App) bool {
 
 // This is what we want to scan wallet for when Gnomon is synced
 func gnomonScan(contracts map[string]string) {
+	screen, bar := syncScreen()
+	menu_tabs.Items[2].Content = screen
 	menu.CheckWalletNames(rpc.Wallet.Address)
-	checkDreamsNFAs(menu.Gnomes.Check, contracts)
-	checkDreamsG45s(menu.Gnomes.Check, contracts)
-	menu.FindNFAListings(contracts)
+	bar.SetValue(1)
+	checkDreamsNFAs(gnomon.HasChecked(), contracts)
+	bar.SetValue(2)
+	checkDreamsG45s(gnomon.HasChecked(), contracts)
+	bar.SetValue(3)
 	// TODO If boltdb {}
 	for _, r := range menu.Assets.Asset {
-		menu.StoreIndex(r.Collection, r.Name, r)
+		gnomes.StoreIndex(r.Collection, r.Name, r)
 	}
+	bar.SetValue(4)
+	asset_tab.Objects[1].(*container.AppTabs).SelectIndex(1)
+	menu_tabs.Items[2].Content = asset_tab
+	menu_tabs.Refresh()
 }
 
 // Main dReams process loop
@@ -224,8 +235,8 @@ func fetch(done chan struct{}) {
 				rpc.GetWalletHeight("dReams")
 				if !rpc.Startup {
 					checkConnection()
-					menu.GnomonEndPoint()
-					menu.GnomonState(dReams.IsConfiguring(), gnomonScan)
+					gnomes.GnomonEndPoint()
+					gnomes.GnomonState(dReams.IsConfiguring(), gnomonScan)
 					dReams.Background.Refresh()
 
 					go menuRefresh(offset)
@@ -260,8 +271,8 @@ func fetch(done chan struct{}) {
 
 // Refresh all menu gui objects
 func menuRefresh(offset int) {
-	if dReams.OnTab("Menu") && menu.Gnomes.IsInitialized() {
-		switch menu.Gnomes.Status() {
+	if dReams.OnTab("Menu") && gnomon.IsInitialized() {
+		switch gnomon.Status() {
 		case "initializing":
 			menu.Info.SetStatus("Gnomon Initializing")
 		case "fastsyncing":
@@ -269,7 +280,7 @@ func menuRefresh(offset int) {
 		case "closing":
 			menu.Info.SetStatus("Gnomon Closing...")
 		case "indexed":
-			if !menu.Gnomes.HasIndex(uint64(menu.ReturnAssetCount())) && !menu.Gnomes.HasChecked() {
+			if !gnomon.HasIndex(uint64(menu.ReturnAssetCount())) && !gnomon.HasChecked() {
 				menu.Info.SetStatus("Gnomon Syncing...")
 			} else {
 				menu.Info.SetStatus("Gnomon Synced")
@@ -315,18 +326,18 @@ func menuRefresh(offset int) {
 //   - Pass scids from db store, can be nil arg
 //   - Pass false gc for rechecks
 func checkDreamsNFAs(gc bool, scids map[string]string) {
-	if menu.Gnomes.IsReady() && !gc {
+	if gnomon.IsReady() && !gc {
 		menu.Info.SetStatus("Checking for Assets")
 		if scids == nil {
-			scids = menu.Gnomes.GetAllOwnersAndSCIDs()
+			scids = gnomon.GetAllOwnersAndSCIDs()
 		}
 
 		logger.Println("[dReams] Checking NFA Assets")
-		dreams.Theme.Select.Options = []string{}
+		menu.Theme.Select.Options = []string{}
 		holdero.Settings.ClearAssets()
 
 		for sc := range scids {
-			if !rpc.Wallet.IsConnected() || !menu.Gnomes.IsRunning() {
+			if !rpc.Wallet.IsConnected() || !gnomon.IsRunning() {
 				break
 			}
 
@@ -334,8 +345,8 @@ func checkDreamsNFAs(gc bool, scids map[string]string) {
 		}
 
 		holdero.Settings.SortCardAssets()
-		dreams.Theme.Sort()
-		dreams.Theme.Select.Options = append([]string{"Main", "Legacy"}, dreams.Theme.Select.Options...)
+		menu.Theme.Sort()
+		menu.Theme.Select.Options = append([]string{"Main", "Legacy"}, menu.Theme.Select.Options...)
 		if menu.DappEnabled("Duels") {
 			duel.Inventory.SortAll()
 		}
@@ -348,13 +359,13 @@ func checkDreamsNFAs(gc bool, scids map[string]string) {
 // If wallet owns dReams NFA, populate for use in dReams
 //   - See asset_selects container in menu.PlaceAssets()
 func checkNFAOwner(scid string) {
-	if menu.Gnomes.IsRunning() {
-		if header, _ := menu.Gnomes.GetSCIDValuesByKey(scid, "nameHdr"); header != nil {
-			owner, _ := menu.Gnomes.GetSCIDValuesByKey(scid, "owner")
-			file, _ := menu.Gnomes.GetSCIDValuesByKey(scid, "fileURL")
-			collection, _ := menu.Gnomes.GetSCIDValuesByKey(scid, "collection")
-			creator, _ := menu.Gnomes.GetSCIDValuesByKey(scid, "creatorAddr")
-			icon, _ := menu.Gnomes.GetSCIDValuesByKey(scid, "iconURLHdr")
+	if gnomon.IsRunning() {
+		if header, _ := gnomon.GetSCIDValuesByKey(scid, "nameHdr"); header != nil {
+			owner, _ := gnomon.GetSCIDValuesByKey(scid, "owner")
+			file, _ := gnomon.GetSCIDValuesByKey(scid, "fileURL")
+			collection, _ := gnomon.GetSCIDValuesByKey(scid, "collection")
+			creator, _ := gnomon.GetSCIDValuesByKey(scid, "creatorAddr")
+			icon, _ := gnomon.GetSCIDValuesByKey(scid, "iconURLHdr")
 			if owner != nil && file != nil && collection != nil && creator != nil && icon != nil {
 				if owner[0] == rpc.Wallet.Address && menu.ValidNFA(file[0]) {
 					if !menu.IsDreamsNFACreator(creator[0]) {
@@ -365,13 +376,13 @@ func checkNFAOwner(scid string) {
 					add.Name = header[0]
 					add.Collection = collection[0]
 					add.SCID = scid
-					if typeHdr, _ := menu.Gnomes.GetSCIDValuesByKey(scid, "typeHdr"); typeHdr != nil {
+					if typeHdr, _ := gnomon.GetSCIDValuesByKey(scid, "typeHdr"); typeHdr != nil {
 						add.Type = menu.AssetType(collection[0], typeHdr[0])
 					}
 
 					check := strings.Trim(header[0], "0123456789")
 					if check == "AZYDS" || check == "SIXART" {
-						dreams.Theme.Add(header[0], owner[0])
+						menu.Theme.Add(header[0], owner[0])
 						holdero.Settings.AddAvatar(header[0], owner[0])
 						menu.Assets.Add(add, icon[0])
 					} else if check == "AZYPCB" || check == "SIXPCB" {
@@ -464,7 +475,7 @@ func hsCards(owner, name, check string) {
 
 	var have_theme bool
 	for i := tower; i > 0; i-- {
-		themes := dreams.Theme.Select.Options
+		themes := menu.Theme.Select.Options
 		for _, th := range themes {
 			if th == "HSTheme"+strconv.Itoa(i) {
 				have_theme = true
@@ -473,8 +484,8 @@ func hsCards(owner, name, check string) {
 
 		if !have_theme {
 			new_themes := append(themes, "HSTheme"+strconv.Itoa(i))
-			dreams.Theme.Select.Options = new_themes
-			dreams.Theme.Select.Refresh()
+			menu.Theme.Select.Options = new_themes
+			menu.Theme.Select.Refresh()
 		}
 	}
 }
@@ -483,21 +494,21 @@ func hsCards(owner, name, check string) {
 //   - Pass g45s from db store, can be nil arg
 //   - Pass false gc for rechecks
 func checkDreamsG45s(gc bool, g45s map[string]string) {
-	if menu.Gnomes.IsReady() && !gc {
+	if gnomon.IsReady() && !gc {
 		if g45s == nil {
-			g45s = menu.Gnomes.GetAllOwnersAndSCIDs()
+			g45s = gnomon.GetAllOwnersAndSCIDs()
 		}
 		logger.Println("[dReams] Checking G45 Assets")
 
 		for scid := range g45s {
-			if !rpc.Wallet.IsConnected() || !menu.Gnomes.IsRunning() {
+			if !rpc.Wallet.IsConnected() || !gnomon.IsRunning() {
 				break
 			}
 
-			if data, _ := menu.Gnomes.GetSCIDValuesByKey(scid, "metadata"); data != nil {
-				owner, _ := menu.Gnomes.GetSCIDValuesByKey(scid, "owner")
-				minter, _ := menu.Gnomes.GetSCIDValuesByKey(scid, "minter")
-				coll, _ := menu.Gnomes.GetSCIDValuesByKey(scid, "collection")
+			if data, _ := gnomon.GetSCIDValuesByKey(scid, "metadata"); data != nil {
+				owner, _ := gnomon.GetSCIDValuesByKey(scid, "owner")
+				minter, _ := gnomon.GetSCIDValuesByKey(scid, "minter")
+				coll, _ := gnomon.GetSCIDValuesByKey(scid, "collection")
 				if owner != nil && minter != nil && coll != nil {
 					if owner[0] == rpc.Wallet.Address {
 						var add menu.Asset
@@ -563,7 +574,7 @@ func checkConnection() {
 	} else {
 		disableActions(true)
 		disconnected()
-		menu.Gnomes.Checked(false)
+		gnomon.Checked(false)
 	}
 }
 
@@ -574,8 +585,8 @@ func disconnected() {
 	holdero.Disconnected(menu.DappEnabled("Holdero"))
 	prediction.Disconnected()
 	rpc.Wallet.Address = ""
-	dreams.Theme.Select.Options = []string{"Main", "Legacy"}
-	dreams.Theme.Select.Refresh()
+	menu.Theme.Select.Options = []string{"Main", "Legacy"}
+	menu.Theme.Select.Refresh()
 	menu.Assets.Asset = []menu.Asset{}
 	menu.Market.Auction_list.UnselectAll()
 	menu.Market.Buy_list.UnselectAll()
@@ -680,7 +691,7 @@ func gnomonFilters() (filter []string) {
 // Hidden object, controls Gnomon start and stop based on daemon connection
 func daemonConnectedBox() fyne.Widget {
 	menu.Control.Daemon_check = widget.NewCheck("", func(b bool) {
-		if !menu.Gnomes.IsInitialized() && !menu.Gnomes.Start {
+		if !gnomon.IsInitialized() && !gnomon.IsStarting() {
 			if rpc.DaemonVersion() == "3.5.3-139.DEROHE.STARGATE+04042023" {
 				dialog.NewInformation("Daemon Version", "This daemon may conflict with Gnomon sync", dReams.Window).Show()
 			}
@@ -688,7 +699,7 @@ func daemonConnectedBox() fyne.Widget {
 			menu.Info.SetStatus("Starting Gnomon")
 			rpc.FetchFees()
 			filters := gnomonFilters()
-			menu.StartGnomon("dReams", menu.Gnomes.DBType, filters, menu.Control.G45_count+menu.Control.NFA_count, menu.Control.NFA_count, menu.G45Index)
+			gnomes.StartGnomon("dReams", gnomon.DBStorageType(), filters, menu.Control.G45_count+menu.Control.NFA_count, menu.Control.NFA_count, menu.G45Index)
 
 			if menu.DappEnabled("dSports and dPredictions") {
 				prediction.OnConnected()
@@ -697,7 +708,7 @@ func daemonConnectedBox() fyne.Widget {
 
 		if !b {
 			menu.Info.SetStatus("Putting Gnomon to Sleep")
-			menu.Gnomes.Stop("dReams")
+			gnomon.Stop("dReams")
 			menu.Info.SetStatus("Gnomon is Sleeping")
 		}
 	})
@@ -806,9 +817,10 @@ func rpcConnectButton() fyne.Widget {
 	return button
 }
 
-// dReams recheck owned assets routine
-func recheckDreamsAssets() {
-	menu.Gnomes.Wait = true
+// Rescan func for owned assets list
+func rescan() {
+	logger.Printf("[%s] Rescaning Assets\n", App_Name)
+
 	menu.Assets.Asset = []menu.Asset{}
 	if menu.DappEnabled("Duels") {
 		duel.Inventory.ClearAll()
@@ -823,21 +835,6 @@ func recheckDreamsAssets() {
 	}
 	menu.Assets.List.UnselectAll()
 	menu.Assets.SortList()
-	menu.Gnomes.Wait = false
-}
-
-// Recheck owned assets button
-//   - tag for log print
-//   - pass recheck for desired check
-func recheckButton(tag string, recheck func()) (button fyne.Widget) {
-	button = widget.NewButton("Check Assets", func() {
-		if !menu.Gnomes.Wait {
-			logger.Printf("[%s] Rechecking Assets\n", tag)
-			go recheck()
-		}
-	})
-
-	return
 }
 
 func dappCloseCheck() {
@@ -867,4 +864,26 @@ func dappVersions(dapps []string) map[string]string {
 	}
 
 	return versions
+}
+
+// Splash screen for assets syncing
+func syncScreen() (max *fyne.Container, bar *widget.ProgressBar) {
+	text := canvas.NewText("Syncing...", bundle.TextColor)
+	text.Alignment = fyne.TextAlignCenter
+	text.TextSize = 21
+
+	img := canvas.NewImageFromResource(bundle.ResourceMarketCirclePng)
+	img.SetMinSize(fyne.NewSize(150, 150))
+
+	bar = widget.NewProgressBar()
+	bar.Max = 4
+
+	max = container.NewBorder(
+		dwidget.LabelColor(container.NewVBox(widget.NewLabel(""))),
+		nil,
+		nil,
+		nil,
+		container.NewCenter(container.NewBorder(nil, text, nil, nil, img)), bar)
+
+	return
 }

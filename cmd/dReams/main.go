@@ -6,6 +6,7 @@ import (
 
 	dreams "github.com/dReam-dApps/dReams"
 	"github.com/dReam-dApps/dReams/bundle"
+	"github.com/dReam-dApps/dReams/gnomes"
 	"github.com/dReam-dApps/dReams/menu"
 
 	"fyne.io/fyne/v2"
@@ -24,6 +25,7 @@ const (
 )
 
 var dReams dreams.AppObject
+var gnomon = gnomes.NewGnomes()
 
 func main() {
 	n := runtime.NumCPU()
@@ -45,7 +47,7 @@ func main() {
 		menu.WriteDreamsConfig(save())
 		dappCloseCheck()
 		menu.Info.SetStatus("Putting Gnomon to Sleep")
-		menu.Gnomes.Stop("dReams")
+		gnomon.Stop("dReams")
 		dReams.StopProcess()
 		menu.StopIndicators(indicators)
 		time.Sleep(time.Second)
@@ -53,7 +55,7 @@ func main() {
 	}
 
 	dReams.Window.SetCloseIntercept(func() {
-		if menu.Gnomes.Start {
+		if gnomon.IsStarting() {
 			dialog.NewConfirm("Gnomon Syncing", "Are you sure you want to close dReams?", func(b bool) {
 				if b {
 					close()
@@ -65,8 +67,8 @@ func main() {
 	})
 
 	dReams.SetTab("Menu")
-	dreams.Theme.Img = *canvas.NewImageFromResource(bundle.ResourceBackgroundPng)
-	dReams.Background = container.NewStack(&dreams.Theme.Img)
+	menu.Theme.Img = *canvas.NewImageFromResource(bundle.ResourceBackgroundPng)
+	dReams.Background = container.NewStack(&menu.Theme.Img)
 
 	dapps := menu.EnabledDappCount()
 	if dapps == 0 {
