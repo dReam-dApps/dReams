@@ -460,7 +460,6 @@ var asset_tab *fyne.Container
 // Main dReams layout
 func place() *fyne.Container {
 	menu.Control.Ratings = make(map[string]uint64)
-	menu.Assets.SCIDs = make(map[string]string)
 
 	var intros []menu.IntroText
 	intros = append(intros, menu.MakeMenuIntro(holdero.DreamsMenuIntro())...)

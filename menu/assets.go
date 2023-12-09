@@ -416,6 +416,8 @@ func returnEnabledNames(assets map[string]bool) (text string) {
 //   - icon resources for side menus
 //   - d for main window dialogs
 func PlaceAssets(tag string, profile fyne.CanvasObject, rescan func(), icon fyne.Resource, d *dreams.AppObject) *fyne.Container {
+	Assets.SCIDs = make(map[string]string)
+
 	enable_opts := EnabledCollections(false)
 
 	scid_entry := widget.NewEntry()
