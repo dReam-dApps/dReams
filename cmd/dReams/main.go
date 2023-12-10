@@ -42,6 +42,10 @@ func main() {
 	dReams.Window.CenterOnScreen()
 	done := make(chan struct{})
 
+	menu.Theme.Img = *canvas.NewImageFromResource(bundle.ResourceBackgroundPng)
+	dReams.Background = container.NewStack(&menu.Theme.Img)
+	dReams.Window.SetContent(splashScreen())
+
 	close := func() {
 		menu.SetClose(true)
 		menu.WriteDreamsConfig(save())
@@ -67,8 +71,6 @@ func main() {
 	})
 
 	dReams.SetTab("Menu")
-	menu.Theme.Img = *canvas.NewImageFromResource(bundle.ResourceBackgroundPng)
-	dReams.Background = container.NewStack(&menu.Theme.Img)
 
 	dapps := menu.EnabledDappCount()
 	if dapps == 0 {

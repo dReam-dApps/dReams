@@ -14,6 +14,7 @@ import (
 	"github.com/SixofClubsss/Iluma/tarot"
 	"github.com/SixofClubsss/dPrediction/prediction"
 	"github.com/dReam-dApps/dReams/bundle"
+	"github.com/dReam-dApps/dReams/dwidget"
 	"github.com/dReam-dApps/dReams/gnomes"
 	"github.com/dReam-dApps/dReams/menu"
 	"github.com/dReam-dApps/dReams/rpc"
@@ -29,6 +30,18 @@ import (
 )
 
 var indicators []menu.DreamsIndicator
+
+// Boot splash screen
+func splashScreen() fyne.CanvasObject {
+	text := dwidget.NewCanvasText("Initializing...", 21, fyne.TextAlignCenter)
+	text.Color = color.NRGBA{R: 0xf0, G: 0xf0, B: 0xf0, A: 0xaa}
+
+	img := canvas.NewImageFromResource(bundle.ResourceFigure1CirclePng)
+	img.SetMinSize(fyne.NewSize(180, 180))
+
+	return container.NewStack(dReams.Background, container.NewCenter(container.NewBorder(nil, text, nil, nil, img)), widget.NewProgressBarInfinite())
+
+}
 
 // If dReams has not been initialized, show this screen
 //   - User selects dApps and skin to load
