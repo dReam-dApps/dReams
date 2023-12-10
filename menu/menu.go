@@ -44,7 +44,7 @@ type menuObjects struct {
 	}
 }
 
-type exit struct {
+type exiting struct {
 	signal bool
 	sync.RWMutex
 }
@@ -54,22 +54,27 @@ var Theme dreams.AssetSelect
 var logger = structures.Logger.WithFields(logrus.Fields{})
 var gnomon = gnomes.NewGnomes()
 var Control menuObjects
-var Exit exit
+var exit exiting
+
+func init() {
+	Assets.SCIDs = make(map[string]string)
+	Control.Ratings = make(map[string]uint64)
+}
 
 // Check if menu is calling to close
 func IsClosing() (close bool) {
-	Exit.RLock()
-	close = Exit.signal
-	Exit.RUnlock()
+	exit.RLock()
+	close = exit.signal
+	exit.RUnlock()
 
 	return
 }
 
 // Set menu closing bool value
 func SetClose(value bool) {
-	Exit.Lock()
-	Exit.signal = value
-	Exit.Unlock()
+	exit.Lock()
+	exit.signal = value
+	exit.Unlock()
 }
 
 // Returns how many dApps are enabled
@@ -236,31 +241,31 @@ func ThemeSelect() fyne.CanvasObject {
 		go func() {
 			dir := dreams.GetDir()
 			check := strings.Trim(s, "0123456789")
+			scid := Assets.SCIDs[s]
 			if check == "AZYDS" {
 				file := dir + "/assets/" + s + "/" + s + ".png"
 				if dreams.FileExists(file, "dReams") {
 					Theme.Img = *canvas.NewImageFromFile(file)
 				} else {
-					fmt.Println()
-					Theme.URL = gnomes.GetAssetUrl(1, Assets.SCIDs[s]) // "https://raw.githubusercontent.com/Azylem/" + s + "/main/" + s + ".png"
+					Theme.URL = gnomes.GetAssetUrl(1, scid) // "https://raw.githubusercontent.com/Azylem/" + s + "/main/" + s + ".png"
 					logger.Println("[dReams] Downloading", Theme.URL)
-					if img, err := dreams.DownloadCanvas(gnomes.GetAssetUrl(0, Assets.SCIDs[s]), s); err == nil {
+					if img, err := dreams.DownloadCanvas(gnomes.GetAssetUrl(0, scid), s); err == nil {
 						Theme.Img = img
 					}
-					max.Objects[1].(*fyne.Container).Objects[0].(*fyne.Container).Objects[0] = SwitchProfileIcon("AZY-Deroscapes", s, Theme.URL, 60)
 				}
+				max.Objects[1].(*fyne.Container).Objects[0].(*fyne.Container).Objects[0] = SwitchProfileIcon("AZY-Deroscapes", s, Theme.URL, 60)
 			} else if check == "SIXART" {
 				file := dir + "/assets/" + s + "/" + s + ".png"
 				if dreams.FileExists(file, "dReams") {
 					Theme.Img = *canvas.NewImageFromFile(file)
 				} else {
-					Theme.URL = gnomes.GetAssetUrl(1, Assets.SCIDs[s]) // "https://raw.githubusercontent.com/SixofClubsss/SIXART/main/" + s + "/" + s + ".png"
+					Theme.URL = gnomes.GetAssetUrl(1, scid) // "https://raw.githubusercontent.com/SixofClubsss/SIXART/main/" + s + "/" + s + ".png"
 					logger.Println("[dReams] Downloading", Theme.URL)
-					if img, err := dreams.DownloadCanvas(gnomes.GetAssetUrl(0, Assets.SCIDs[s]), s); err == nil {
+					if img, err := dreams.DownloadCanvas(gnomes.GetAssetUrl(0, scid), s); err == nil {
 						Theme.Img = img
 					}
-					max.Objects[1].(*fyne.Container).Objects[0].(*fyne.Container).Objects[0] = SwitchProfileIcon("SIXART", s, Theme.URL, 60)
 				}
+				max.Objects[1].(*fyne.Container).Objects[0].(*fyne.Container).Objects[0] = SwitchProfileIcon("SIXART", s, Theme.URL, 60)
 			} else if check == "HSTheme" {
 				file := dir + "/assets/" + s + "/" + s + ".png"
 				if dreams.FileExists(file, "dReams") {
@@ -271,9 +276,9 @@ func ThemeSelect() fyne.CanvasObject {
 					if img, err := dreams.DownloadCanvas(Theme.URL, s); err == nil {
 						Theme.Img = img
 					}
-					hs_icon := "https://raw.githubusercontent.com/High-Strangeness/High-Strangeness/main/HighStrangeness-IC.jpg"
-					max.Objects[1].(*fyne.Container).Objects[0].(*fyne.Container).Objects[0] = SwitchProfileIcon("High Strangeness", "HighStrangeness1", hs_icon, 60)
 				}
+				hs_icon := "https://raw.githubusercontent.com/High-Strangeness/High-Strangeness/main/HighStrangeness-IC.jpg"
+				max.Objects[1].(*fyne.Container).Objects[0].(*fyne.Container).Objects[0] = SwitchProfileIcon("High Strangeness", "HighStrangeness1", hs_icon, 60)
 			} else if s == "Main" {
 				Theme.Img = *canvas.NewImageFromResource(bundle.ResourceBackgroundPng)
 				img := canvas.NewImageFromResource(bundle.ResourceMarketCirclePng)

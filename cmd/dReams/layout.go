@@ -157,10 +157,10 @@ func introScreen() *fyne.Container {
 		logger.Println("[dReams] Loading dApps")
 		go func() {
 			dReams.App.Settings().SetTheme(bundle.DeroTheme(bundle.AppColor))
-			dReams.Window.SetContent(
-				container.NewStack(
-					dReams.Background,
-					place()))
+			dReams.Window.SetContent(container.NewStack(dReams.Background, place()))
+			if !dReams.Window.FullScreen() {
+				dReams.Window.Resize(fyne.NewSize(MIN_WIDTH, MIN_HEIGHT))
+			}
 			wait = false
 		}()
 	})
@@ -278,7 +278,9 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 			logger.Println("[dReams] Loading dApps")
 			dReams.App.Settings().SetTheme(bundle.DeroTheme(bundle.AppColor))
 			dReams.Window.Content().(*fyne.Container).Objects[1] = place()
-			dReams.Window.Content().(*fyne.Container).Objects[1].Refresh()
+			if !dReams.Window.FullScreen() {
+				dReams.Window.Resize(fyne.NewSize(MIN_WIDTH, MIN_HEIGHT))
+			}
 			wait = false
 		}()
 	})
@@ -506,7 +508,6 @@ func place() *fyne.Container {
 					reset := dReams.Window.Content().(*fyne.Container).Objects[1]
 					dapp_screen := dAppScreen(reset)
 					dReams.Window.Content().(*fyne.Container).Objects[1] = dapp_screen
-					dReams.Window.Content().(*fyne.Container).Objects[1].Refresh()
 					menu_tabs.SelectIndex(0)
 				}()
 			}

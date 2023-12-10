@@ -75,20 +75,14 @@ func main() {
 		go func() {
 			dReams.SetChannels(0)
 			time.Sleep(300 * time.Millisecond)
-			dReams.Window.SetContent(
-				container.NewStack(
-					dReams.Background,
-					introScreen()))
+			dReams.Window.SetContent(container.NewStack(dReams.Background, introScreen()))
 		}()
 	} else {
 		go func() {
 			dReams.SetChannels(dapps)
 			time.Sleep(750 * time.Millisecond)
-			dReams.Window.SetContent(
-				container.NewStack(
-					dReams.Background,
-					place()))
-
+			dReams.Window.SetContent(container.NewStack(dReams.Background, place()))
+			dReams.Window.Resize(fyne.NewSize(MIN_WIDTH, MIN_HEIGHT))
 		}()
 	}
 

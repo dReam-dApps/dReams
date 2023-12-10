@@ -95,7 +95,7 @@ func SessionLog(tag string, dapp semver.Version) *fyne.Container {
 }
 
 // Initialize balance maps for supported tokens
-func InitBalances() {
+func init() {
 	Wallet.TokenBal = make(map[string]uint64)
 	Wallet.Display.Balance = make(map[string]string)
 	SCIDs = make(map[string]string)
