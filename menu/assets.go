@@ -202,7 +202,7 @@ func ParseURL(url string) string {
 
 // Creates framed icon image
 func AssetIcon(icon []byte, name string, size float32) fyne.CanvasObject {
-	frame := canvas.NewImageFromResource(bundle.ResourceAvatarFramePng)
+	frame := canvas.NewImageFromResource(bundle.ResourceFramePng)
 	frame.SetMinSize(fyne.NewSize(size, size))
 	if icon == nil {
 		icon = bundle.ResourceMarketCirclePng.StaticContent

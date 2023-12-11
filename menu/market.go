@@ -448,7 +448,7 @@ func NFAIcon() fyne.CanvasObject {
 	Market.Icon.SetMinSize(fyne.NewSize(90, 90))
 	border := container.NewBorder(layout.NewSpacer(), layout.NewSpacer(), layout.NewSpacer(), layout.NewSpacer(), &Market.Icon)
 
-	frame := canvas.NewImageFromResource(bundle.ResourceAvatarFramePng)
+	frame := canvas.NewImageFromResource(bundle.ResourceFramePng)
 	frame.SetMinSize(fyne.NewSize(100, 100))
 
 	return container.NewStack(border, frame)
@@ -461,7 +461,7 @@ func ToolsBadge() fyne.CanvasObject {
 	toolsBadge.SetMinSize(fyne.NewSize(90, 90))
 	border := container.NewBorder(layout.NewSpacer(), layout.NewSpacer(), layout.NewSpacer(), layout.NewSpacer(), &toolsBadge)
 
-	frame := canvas.NewImageFromResource(bundle.ResourceAvatarFramePng)
+	frame := canvas.NewImageFromResource(bundle.ResourceFramePng)
 	frame.SetMinSize(fyne.NewSize(100, 100))
 
 	return container.NewStack(border, frame)
