@@ -164,7 +164,8 @@ func StartGnomon(tag, dbtype string, filters []string, upper, lower int, custom 
 	}
 
 	if filters != nil {
-		gnomes.Indexer = indexer.NewIndexer(grav_backend, bolt_backend, dbtype, filters, last_height, rpc.Daemon.Rpc, "daemon", false, false, gnomes.Fast, false, nil)
+		exclusions := []string{"bb43c3eb626ee767c9f305772a6666f7c7300441a0ad8538a0799eb4f12ebcd2"}
+		gnomes.Indexer = indexer.NewIndexer(grav_backend, bolt_backend, dbtype, filters, last_height, rpc.Daemon.Rpc, "daemon", false, false, gnomes.Fast, false, exclusions)
 		go gnomes.Indexer.StartDaemonMode(gnomes.Para)
 		time.Sleep(3 * time.Second)
 		gnomes.Initialized(true)
