@@ -34,13 +34,12 @@ var indicators []menu.DreamsIndicator
 // Boot splash screen
 func splashScreen() fyne.CanvasObject {
 	text := dwidget.NewCanvasText("Initializing...", 21, fyne.TextAlignCenter)
-	text.Color = color.NRGBA{R: 0xf0, G: 0xf0, B: 0xf0, A: 0xaa}
+	text.Color = color.White
 
 	img := canvas.NewImageFromResource(bundle.ResourceFigure1CirclePng)
 	img.SetMinSize(fyne.NewSize(180, 180))
 
-	return container.NewStack(dReams.Background, container.NewCenter(container.NewBorder(nil, text, nil, nil, img)), widget.NewProgressBarInfinite())
-
+	return container.NewStack(dReams.Background, container.NewCenter(img, text), widget.NewProgressBarInfinite())
 }
 
 // If dReams has not been initialized, show this screen
@@ -264,14 +263,13 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 		rpc.Wallet.Connected(false)
 		rpc.Wallet.Height = 0
 
-		status_text := canvas.NewText("Closing dApps...", color.NRGBA{R: 0xf0, G: 0xf0, B: 0xf0, A: 0xaa})
-		status_text.TextSize = 21
-		status_text.Alignment = fyne.TextAlignCenter
+		status_text := dwidget.NewCanvasText("Closing dApps...", 21, fyne.TextAlignCenter)
+		status_text.Color = color.White
 
 		img := canvas.NewImageFromResource(bundle.ResourceFigure1CirclePng)
 		img.SetMinSize(fyne.NewSize(180, 180))
 
-		dReams.Window.Content().(*fyne.Container).Objects[1] = container.NewStack(container.NewCenter(container.NewBorder(nil, status_text, nil, nil, img)), widget.NewProgressBarInfinite())
+		dReams.Window.Content().(*fyne.Container).Objects[1] = container.NewStack(container.NewCenter(img, status_text), widget.NewProgressBarInfinite())
 		dReams.Window.Content().(*fyne.Container).Objects[1].Refresh()
 
 		logger.Println("[dReams] Closing dApps")
@@ -457,7 +455,7 @@ func profile() fyne.CanvasObject {
 	form = append(form, widget.NewFormItem("", layout.NewSpacer()))
 	form = append(form, widget.NewFormItem("", container.NewVBox(line)))
 	form = append(form, widget.NewFormItem("Avatar", holdero.AvatarSelect(menu.Assets.SCIDs)))
-	form = append(form, widget.NewFormItem("Theme", menu.ThemeSelect()))
+	form = append(form, widget.NewFormItem("Theme", menu.ThemeSelect(&dReams)))
 	form = append(form, widget.NewFormItem("Card Deck", holdero.FaceSelect(menu.Assets.SCIDs)))
 	form = append(form, widget.NewFormItem("Card Back", holdero.BackSelect(menu.Assets.SCIDs)))
 	form = append(form, widget.NewFormItem("Sharing", holdero.SharedDecks()))

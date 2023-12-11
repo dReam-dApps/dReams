@@ -41,6 +41,7 @@ type SaveData struct {
 	Tables  []string     `json:"tables"`
 	Predict []string     `json:"predict"`
 	Sports  []string     `json:"sports"`
+	Theme   string       `json:"theme"`
 	DBtype  string       `json:"dbType"`
 	Para    int          `json:"paraBlocks"`
 
@@ -71,31 +72,34 @@ type AssetSelect struct {
 	Select *widget.Select
 }
 
-type counter struct {
-	i int
+type count struct {
+	i       int
+	calling bool
+	closing bool
 	sync.RWMutex
 }
 
-var count counter
+var counter count
 var mu sync.RWMutex
+var ms = 100 * time.Millisecond
 var logger = structures.Logger.WithFields(logrus.Fields{})
 
 // Add to active channel count
-func (c *counter) plus() {
+func (c *count) plus() {
 	c.Lock()
 	c.i++
 	c.Unlock()
 }
 
 // Subtract from active channel count
-func (c *counter) minus() {
+func (c *count) minus() {
 	c.Lock()
 	c.i--
 	c.Unlock()
 }
 
 // Check active channel count
-func (c *counter) active() int {
+func (c *count) active() int {
 	c.RLock()
 	defer c.RUnlock()
 
@@ -167,9 +171,13 @@ func (d *AppObject) SetChannels(i int) {
 
 // Signal all available channels when we are ready for them to work
 func (d *AppObject) SignalChannel() {
-	for count.active() < d.channels {
-		count.plus()
-		d.receive <- struct{}{}
+	if !counter.closing {
+		counter.calling = true
+		for counter.active() < d.channels {
+			counter.plus()
+			d.receive <- struct{}{}
+		}
+		counter.calling = false
 	}
 }
 
@@ -180,7 +188,10 @@ func (d *AppObject) Receive() <-chan struct{} {
 
 // Signal back to counter when work is done
 func (d *AppObject) WorkDone() {
-	count.minus()
+	for counter.calling {
+		time.Sleep(ms)
+	}
+	counter.minus()
 }
 
 // Close signal for a dApp
@@ -190,15 +201,20 @@ func (d *AppObject) CloseDapp() <-chan struct{} {
 
 // Send close signal to all active dApp channels
 func (d *AppObject) CloseAllDapps() {
+	for counter.calling {
+		time.Sleep(ms)
+	}
+	counter.closing = true
 	ch := 0
 	for ch < d.channels {
 		ch++
 		d.done <- struct{}{}
 	}
 
-	for count.active() > 0 {
+	for counter.active() > 0 {
 		time.Sleep(time.Second)
 	}
+	counter.closing = false
 }
 
 // Stop the main apps process

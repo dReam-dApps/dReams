@@ -33,6 +33,7 @@ import (
 type menuObjects struct {
 	sync.Mutex
 	Daemon    string
+	Themes    []string
 	Dapps     map[string]bool
 	Ratings   map[string]uint64
 	Indicator struct {
@@ -51,14 +52,27 @@ type exiting struct {
 
 // Background theme AssetSelect
 var Theme dreams.AssetSelect
-var logger = structures.Logger.WithFields(logrus.Fields{})
-var gnomon = gnomes.NewGnomes()
+
+// Control menu indicators, checks, maps and defaults
 var Control menuObjects
+
+// Log output with logrus matching Gnomon
+var logger = structures.Logger.WithFields(logrus.Fields{})
+
+// Gnomon instance for menu
+var gnomon = gnomes.NewGnomes()
+
+// Exit from menu routines
 var exit exiting
 
+// Initialize maps and defaults
 func init() {
+	Theme.Name = "Hex"
 	Assets.SCIDs = make(map[string]string)
+	Assets.Enabled = make(map[string]bool)
+	Control.Dapps = make(map[string]bool)
 	Control.Ratings = make(map[string]uint64)
+	Control.Themes = []string{"Hex", "Bullet", "Highway", "Glass"}
 }
 
 // Check if menu is calling to close
@@ -142,16 +156,12 @@ func ReadDreamsConfig(tag string) (saved dreams.SaveData) {
 
 		gnomon.SetParallel(1)
 		gnomon.SetDBStorageType("boltdb")
-		Control.Dapps = make(map[string]bool)
-		Assets.Enabled = make(map[string]bool)
 
 		return
 	}
 
 	gnomon.SetParallel(1)
 	gnomon.SetDBStorageType("boltdb")
-	Control.Dapps = make(map[string]bool)
-	Assets.Enabled = make(map[string]bool)
 
 	file, err := os.ReadFile("config/config.json")
 	if err != nil {
@@ -171,6 +181,10 @@ func ReadDreamsConfig(tag string) (saved dreams.SaveData) {
 
 	bundle.AppColor = saved.Skin
 	Control.Dapps = saved.Dapps
+
+	if saved.Theme != "" {
+		Theme.Name = saved.Theme
+	}
 
 	if saved.Assets != nil {
 		Assets.Enabled = saved.Assets
@@ -221,20 +235,34 @@ func SwitchProfileIcon(collection, name, url string, size float32) (icon *canvas
 	return
 }
 
+// Returns default theme resource by Theme.Name
+func DefaultThemeResource() *fyne.StaticResource {
+	switch Theme.Name {
+	case "Hex":
+		return bundle.ResourceBackground100Png
+	case "Bullet":
+		return bundle.ResourceBackground110Png
+	case "Highway":
+		return bundle.ResourceBackground111Png
+	case "Glass":
+		return bundle.ResourceBackground112Png
+	default:
+		return bundle.ResourceBackground100Png
+	}
+}
+
 // App theme selection object
 //   - If image is not present locally, it is downloaded
-func ThemeSelect() fyne.CanvasObject {
-	options := []string{"Main", "Legacy"}
+func ThemeSelect(d *dreams.AppObject) fyne.CanvasObject {
+	options := Control.Themes
 	icon := AssetIcon(bundle.ResourceMarketCirclePng.StaticContent, "", 60)
 	var max *fyne.Container
-	Theme.Select = widget.NewSelect(options, func(s string) {
+	Theme.Select = widget.NewSelect(options, nil)
+	Theme.Select.SetSelected(Theme.Name)
+	Theme.Select.OnChanged = func(s string) {
 		switch Theme.Select.SelectedIndex() {
 		case -1:
-			Theme.Name = "Main"
-		case 0:
-			Theme.Name = "Main"
-		case 1:
-			Theme.Name = "Legacy"
+			Theme.Name = "Hex"
 		default:
 			Theme.Name = s
 		}
@@ -279,19 +307,30 @@ func ThemeSelect() fyne.CanvasObject {
 				}
 				hs_icon := "https://raw.githubusercontent.com/High-Strangeness/High-Strangeness/main/HighStrangeness-IC.jpg"
 				max.Objects[1].(*fyne.Container).Objects[0].(*fyne.Container).Objects[0] = SwitchProfileIcon("High Strangeness", "HighStrangeness1", hs_icon, 60)
-			} else if s == "Main" {
-				Theme.Img = *canvas.NewImageFromResource(bundle.ResourceBackgroundPng)
+			} else if s == "Hex" {
+				Theme.Img = *canvas.NewImageFromResource(bundle.ResourceBackground100Png)
 				img := canvas.NewImageFromResource(bundle.ResourceMarketCirclePng)
 				img.SetMinSize(fyne.NewSize(60, 60))
 				max.Objects[1].(*fyne.Container).Objects[0].(*fyne.Container).Objects[0] = img
-			} else if s == "Legacy" {
-				Theme.Img = *canvas.NewImageFromResource(bundle.ResourceLegacyBackgroundPng)
+			} else if s == "Bullet" {
+				Theme.Img = *canvas.NewImageFromResource(bundle.ResourceBackground110Png)
+				img := canvas.NewImageFromResource(bundle.ResourceMarketCirclePng)
+				img.SetMinSize(fyne.NewSize(60, 60))
+				max.Objects[1].(*fyne.Container).Objects[0].(*fyne.Container).Objects[0] = img
+			} else if s == "Highway" {
+				Theme.Img = *canvas.NewImageFromResource(bundle.ResourceBackground111Png)
+				img := canvas.NewImageFromResource(bundle.ResourceMarketCirclePng)
+				img.SetMinSize(fyne.NewSize(60, 60))
+				max.Objects[1].(*fyne.Container).Objects[0].(*fyne.Container).Objects[0] = img
+			} else if s == "Glass" {
+				Theme.Img = *canvas.NewImageFromResource(bundle.ResourceBackground112Png)
 				img := canvas.NewImageFromResource(bundle.ResourceMarketCirclePng)
 				img.SetMinSize(fyne.NewSize(60, 60))
 				max.Objects[1].(*fyne.Container).Objects[0].(*fyne.Container).Objects[0] = img
 			}
+			d.Background.Refresh()
 		}()
-	})
+	}
 	Theme.Select.PlaceHolder = "Theme:"
 	max = container.NewBorder(nil, nil, icon, nil, container.NewVBox(Theme.Select))
 
@@ -899,7 +938,7 @@ func BackgroundRast(tag string) *canvas.Raster {
 			return canvas.NewRasterFromImage(img)
 		}
 
-		if img, _, err = image.Decode(bytes.NewReader(bundle.ResourceBackgroundPng.Content())); err == nil {
+		if img, _, err = image.Decode(bytes.NewReader(DefaultThemeResource().StaticContent)); err == nil {
 			return canvas.NewRasterFromImage(img)
 		}
 

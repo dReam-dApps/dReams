@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"image/color"
 	"net/url"
 	"os"
 	"os/signal"
@@ -145,6 +146,7 @@ func save() dreams.SaveData {
 		Tables:  holdero.GetFavoriteTables(),
 		Predict: prediction.Predict.Favorites.SCIDs,
 		Sports:  prediction.Sports.Favorites.SCIDs,
+		Theme:   menu.Theme.Name,
 		DBtype:  gnomon.DBStorageType(),
 		Para:    gnomon.GetParallel(),
 		Assets:  menu.Assets.Enabled,
@@ -236,7 +238,6 @@ func fetch(done chan struct{}) {
 					checkConnection()
 					gnomes.GnomonEndPoint()
 					gnomes.GnomonState(dReams.IsConfiguring(), gnomonScan)
-					dReams.Background.Refresh()
 
 					go menuRefresh(offset)
 
@@ -345,7 +346,8 @@ func checkDreamsNFAs(gc bool, scids map[string]string) {
 
 		holdero.Settings.SortCardAssets()
 		menu.Theme.Sort()
-		menu.Theme.Select.Options = append([]string{"Main", "Legacy"}, menu.Theme.Select.Options...)
+		menu.Theme.Select.Options = append(menu.Control.Themes, menu.Theme.Select.Options...)
+		menu.Theme.Select.SetSelected(menu.Theme.Name)
 		if menu.DappEnabled("Duels") {
 			duel.Inventory.SortAll()
 		}
@@ -584,7 +586,7 @@ func disconnected() {
 	holdero.Disconnected(menu.DappEnabled("Holdero"))
 	prediction.Disconnected()
 	rpc.Wallet.Address = ""
-	menu.Theme.Select.Options = []string{"Main", "Legacy"}
+	menu.Theme.Select.Options = menu.Control.Themes
 	menu.Theme.Select.Refresh()
 	menu.Assets.Asset = []menu.Asset{}
 	menu.Market.Auction_list.UnselectAll()
@@ -867,7 +869,7 @@ func dappVersions(dapps []string) map[string]string {
 
 // Splash screen for assets syncing
 func syncScreen() (max *fyne.Container, bar *widget.ProgressBar) {
-	text := canvas.NewText("Syncing...", bundle.TextColor)
+	text := canvas.NewText("Syncing...", color.White)
 	text.Alignment = fyne.TextAlignCenter
 	text.TextSize = 21
 
@@ -876,13 +878,16 @@ func syncScreen() (max *fyne.Container, bar *widget.ProgressBar) {
 
 	bar = widget.NewProgressBar()
 	bar.Max = 4
+	bar.TextFormatter = func() string {
+		return ""
+	}
 
 	max = container.NewBorder(
 		dwidget.LabelColor(container.NewVBox(widget.NewLabel(""))),
 		nil,
 		nil,
 		nil,
-		container.NewCenter(container.NewBorder(nil, text, nil, nil, img)), bar)
+		container.NewCenter(img, text), bar)
 
 	return
 }

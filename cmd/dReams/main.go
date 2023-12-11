@@ -42,7 +42,7 @@ func main() {
 	dReams.Window.CenterOnScreen()
 	done := make(chan struct{})
 
-	menu.Theme.Img = *canvas.NewImageFromResource(bundle.ResourceBackgroundPng)
+	menu.Theme.Img = *canvas.NewImageFromResource(menu.DefaultThemeResource())
 	dReams.Background = container.NewStack(&menu.Theme.Img)
 	dReams.Window.SetContent(splashScreen())
 
