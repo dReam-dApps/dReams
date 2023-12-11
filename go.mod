@@ -12,7 +12,7 @@ require (
 	github.com/SixofClubsss/Iluma v0.0.0-20231208231711-534c7e431f8d
 	github.com/SixofClubsss/dPrediction v0.0.0-20231208232530-6585e1c14d1e
 	github.com/blang/semver/v4 v4.0.0
-	github.com/civilware/Gnomon v0.0.0-20231122200651-d74a0cfd22ca
+	github.com/civilware/Gnomon v0.0.0-20231205220231-bb87c5860268
 	github.com/deroproject/derohe v0.0.0-20230604143809-765b2db1f482
 	github.com/fyne-io/terminal v0.0.0-20230223114940-c76e408adbd3
 	github.com/sirupsen/logrus v1.9.3
