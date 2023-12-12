@@ -292,21 +292,6 @@ func menuRefresh(offset int) {
 		if offset == 20 {
 			go menu.Info.RefreshPrice(App_Name)
 		}
-
-		if offset%3 == 0 && dReams.OnSubTab("Market") && !dReams.IsWindows() && !menu.IsClosing() {
-			menu.FindNFAListings(nil)
-		}
-	}
-
-	// Update live market info
-	if len(menu.Market.Viewing) == 64 && rpc.Wallet.IsConnected() {
-		if menu.Market.Tab == "Buy" {
-			menu.GetBuyNowDetails(menu.Market.Viewing)
-			go menu.RefreshNFAImages()
-		} else {
-			menu.GetAuctionDetails(menu.Market.Viewing)
-			go menu.RefreshNFAImages()
-		}
 	}
 
 	menu.Info.RefreshDaemon(App_Name)
@@ -315,11 +300,6 @@ func menuRefresh(offset int) {
 	menu.Info.RefreshIndexed()
 
 	menu.Assets.Balances.Refresh()
-
-	if !dReams.OnTab("Menu") {
-		menu.Market.Viewing = ""
-		menu.Market.Viewing_coll = ""
-	}
 }
 
 // Check wallet for dReams NFAs
@@ -560,12 +540,10 @@ func checkDreamsG45s(gc bool, g45s map[string]string) {
 func checkConnection() {
 	if rpc.Daemon.IsConnected() {
 		menu.Control.Check.Daemon.SetChecked(true)
-		menu.DisableIndexControls(false)
 	} else {
 		menu.Control.Check.Daemon.SetChecked(false)
 		disableActions(true)
 		disconnected()
-		menu.DisableIndexControls(true)
 	}
 
 	if rpc.Wallet.IsConnected() {
@@ -581,8 +559,8 @@ func checkConnection() {
 
 // Do when disconnected
 func disconnected() {
-	menu.Market.Auctions = []string{}
-	menu.Market.Buy_now = []string{}
+	menu.Market.Auctions = []menu.NFAListing{}
+	menu.Market.Buy_now = []menu.NFAListing{}
 	holdero.Disconnected(menu.DappEnabled("Holdero"))
 	prediction.Disconnected()
 	rpc.Wallet.Address = ""

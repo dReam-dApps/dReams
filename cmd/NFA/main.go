@@ -55,8 +55,14 @@ func main() {
 		Background: container.NewStack(&menu.Theme.Img),
 	}
 
+	// Enable calling RunNFAMarket
+	enabled := menu.EnabledDappCount()
+	if enabled < 1 {
+		enabled = 1
+	}
+	d.SetChannels(enabled)
+
 	// Initialize closing channels and func
-	quit := make(chan struct{})
 	done := make(chan struct{})
 	closeFunc := func() {
 		save := dreams.SaveData{
@@ -74,7 +80,7 @@ func main() {
 		menu.WriteDreamsConfig(save)
 		menu.SetClose(true)
 		gnomon.Stop(app_tag)
-		quit <- struct{}{}
+		d.StopProcess()
 		if rpc.Wallet.File != nil {
 			rpc.Wallet.File.Close_Encrypted_Wallet()
 		}
@@ -145,7 +151,78 @@ func main() {
 
 	tabs.SetTabLocation(container.TabLocationBottom)
 
-	go menu.RunNFAMarket(app_tag, quit, done, connect_box)
+	// For RunNFAMarket routine
+	d.SetSubTab("Market")
+
+	// NFA Market routine, signals RunNFAMarket
+	go func() {
+		synced := false
+		time.Sleep(3 * time.Second)
+		ticker := time.NewTicker(3 * time.Second)
+		for {
+			select {
+			case <-ticker.C:
+				rpc.Ping()
+				rpc.EchoWallet(app_tag)
+				go rpc.GetDreamsBalances(rpc.SCIDs)
+				rpc.GetWalletHeight(app_tag)
+
+				// Refresh Dero balance and Gnomon endpoint
+				connect_box.RefreshBalance()
+				if !rpc.Startup {
+					gnomes.GnomonEndPoint()
+				}
+
+				if rpc.Daemon.IsConnected() && gnomon.IsRunning() {
+					rpc.Startup = false
+					connect_box.Disconnect.SetChecked(true)
+
+					// Check Gnomon index for SCs
+					gnomon.IndexContains()
+					if gnomon.HasIndex(1) {
+						gnomon.Checked(true)
+					}
+
+					// Check Gnomon index for sync
+					if gnomon.GetLastHeight() >= gnomon.GetChainHeight()-3 {
+						gnomon.Synced(true)
+					} else {
+						synced = false
+						gnomon.Synced(false)
+						gnomon.Checked(false)
+					}
+
+					// Check wallet for all owned NFAs and store icons in boltdb
+					if gnomon.IsSynced() {
+						if !synced {
+							menu.CheckAllNFAs(nil)
+							menu.Assets.List.Refresh()
+							if gnomon.DBStorageType() == "boltdb" {
+								for _, r := range menu.Assets.Asset {
+									gnomes.StoreBolt(r.Collection, r.Name, r)
+								}
+							}
+							synced = true
+						}
+					}
+
+				} else {
+					connect_box.Disconnect.SetChecked(false)
+				}
+
+				d.SignalChannel()
+
+			case <-d.Closing():
+				logger.Printf("[%s] Closing...", app_tag)
+				ticker.Stop()
+				d.CloseAllDapps()
+				time.Sleep(time.Second)
+				done <- struct{}{}
+				return
+			}
+		}
+	}()
+
 	go func() {
 		time.Sleep(450 * time.Millisecond)
 		d.Window.SetContent(container.NewStack(d.Background, tabs, container.NewVBox(layout.NewSpacer(), connect_box.Container)))

@@ -407,7 +407,7 @@ var HighLimitFee = uint64(10000)
 // Rate a SC with dReams rating system. Ratings are weight based on transactions Dero amount
 //   - amt of Dero for rating
 //   - pos defines positive or negative rating
-func RateSCID(scid string, amt, pos uint64) {
+func RateSCID(scid string, amt, pos uint64) (tx string) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
@@ -439,6 +439,8 @@ func RateSCID(scid string, amt, pos uint64) {
 	}
 
 	PrintLog("[RateSCID] Rate TX: %s", txid)
+
+	return txid.TXID
 }
 
 // Set any SC headers on Gnomon SC

@@ -30,7 +30,7 @@ import (
 )
 
 type menuObjects struct {
-	sync.Mutex
+	sync.RWMutex
 	Daemon    string
 	Themes    []string
 	Dapps     map[string]bool
@@ -92,6 +92,8 @@ func SetClose(value bool) {
 
 // Returns how many dApps are enabled
 func EnabledDappCount() (enabled int) {
+	Control.RLock()
+	defer Control.RUnlock()
 	for _, b := range Control.Dapps {
 		if b {
 			enabled++
@@ -103,6 +105,8 @@ func EnabledDappCount() (enabled int) {
 
 // Returns if a dApp is enabled
 func DappEnabled(dapp string) bool {
+	Control.RLock()
+	defer Control.RUnlock()
 	if b, ok := Control.Dapps[dapp]; ok && b {
 		return true
 	}
@@ -173,13 +177,18 @@ func ReadDreamsConfig(tag string) (saved dreams.SaveData) {
 		return
 	}
 
-	// Old config may have this enabled, set false so we don't block trying to signal this chan
-	if saved.Dapps["DerBnb"] {
-		saved.Dapps["DerBnb"] = false
-	}
-
 	bundle.AppColor = saved.Skin
-	Control.Dapps = saved.Dapps
+
+	if saved.Dapps != nil {
+		// Old config may have this enabled, set false so we don't block trying to signal this chan
+		if saved.Dapps["DerBnb"] {
+			saved.Dapps["DerBnb"] = false
+		}
+
+		Control.Lock()
+		Control.Dapps = saved.Dapps
+		Control.Unlock()
+	}
 
 	if saved.Theme != "" {
 		Theme.Name = saved.Theme
@@ -366,8 +375,8 @@ func RateConfirm(scid string, d *dreams.AppObject) {
 	fee_label.Alignment = fyne.TextAlignCenter
 
 	var slider *widget.Slider
-	var confirm *dialog.CustomDialog
 
+	done := make(chan struct{})
 	confirm_button := widget.NewButtonWithIcon("Confirm", dreams.FyneIcon("confirm"), func() {
 		var pos uint64
 		if slider.Value > 0 {
@@ -375,16 +384,18 @@ func RateConfirm(scid string, d *dreams.AppObject) {
 		}
 
 		fee := uint64(math.Abs(slider.Value * 10000))
-		rpc.RateSCID(scid, fee, pos)
-		confirm.Hide()
-		confirm = nil
+		if tx := rpc.RateSCID(scid, fee, pos); tx != "" {
+			go ShowTxDialog("Rate SCID", fmt.Sprintf("TXID: %s", tx), tx, 3*time.Second, d.Window)
+		} else {
+			go ShowTxDialog("Rate SCID", "TX error, check logs", tx, 3*time.Second, d.Window)
+		}
+		done <- struct{}{}
 	})
 	confirm_button.Importance = widget.HighImportance
 	confirm_button.Hide()
 
 	cancel_button := widget.NewButtonWithIcon("Cancel", dreams.FyneIcon("cancel"), func() {
-		confirm.Hide()
-		confirm = nil
+		done <- struct{}{}
 	})
 
 	slider = widget.NewSlider(-5, 5)
@@ -417,20 +428,9 @@ func RateConfirm(scid string, d *dreams.AppObject) {
 
 	content := container.NewVBox(layout.NewSpacer(), label, rating_label, fee_label, rate_cont, layout.NewSpacer())
 
-	confirm = dialog.NewCustom("Rate Contract", "", content, d.Window)
+	confirm := dialog.NewCustom("Rate Contract", "", content, d.Window)
 	confirm.SetButtons([]fyne.CanvasObject{buttons})
-	confirm.Show()
-
-	go func() {
-		for rpc.IsReady() {
-			time.Sleep(time.Second)
-		}
-
-		if confirm != nil {
-			confirm.Hide()
-			confirm = nil
-		}
-	}()
+	go ShowConfirmDialog(done, confirm)
 }
 
 // Create and show dialog for sent TX, dismiss copies txid to clipboard, dialog will hide after delay
@@ -460,7 +460,7 @@ func ShowConfirmDialog(done chan struct{}, confirm interface{}) {
 				}
 				return
 			default:
-				if !rpc.IsReady() {
+				if !rpc.IsReady() || IsClosing() {
 					if c != nil {
 						c.Hide()
 						c = nil
@@ -483,7 +483,7 @@ func ShowConfirmDialog(done chan struct{}, confirm interface{}) {
 				}
 				return
 			default:
-				if !rpc.IsReady() {
+				if !rpc.IsReady() || IsClosing() {
 					if c != nil {
 						c.Hide()
 						c = nil
@@ -545,6 +545,7 @@ func sendAssetMenu(window_icon fyne.Resource, d *dreams.AppObject) {
 		}
 	}
 
+	// TODO entry highlight and delete all hang
 	entry_clear := widget.NewButtonWithIcon("", dreams.FyneIcon("contentUndo"), func() {
 		dest_entry.SetText("")
 	})
@@ -619,7 +620,7 @@ func sendAssetMenu(window_icon fyne.Resource, d *dreams.AppObject) {
 		container.NewStack(button_spacer, container.NewVBox(layout.NewSpacer(), container.NewAdaptiveGrid(2, layout.NewSpacer(), container.NewStack(send_button)))))
 
 	go func() {
-		for rpc.IsReady() && Assets.Button.sending {
+		for rpc.IsReady() && Assets.Button.sending && !IsClosing() {
 			time.Sleep(time.Second)
 			if !confirm_open {
 				saw_content.Objects[3].(*fyne.Container).Objects[0] = Assets.Icon
@@ -696,47 +697,10 @@ func listMenu(window_icon fyne.Resource, d *dreams.AppObject) {
 	charPerc.AllowFloat = false
 	charPerc.SetPlaceHolder("Charity Donation %:")
 	charPerc.Validator = validation.NewRegexp(`^\d{1,2}$`, "Int required")
-	charPerc.OnChanged = func(s string) {
-		if listing.Selected != "" && duration.Validate() == nil && start.Validate() == nil && charAddr.Validate() == nil && charPerc.Validate() == nil {
-			set_button.Show()
-		} else {
-			set_button.Hide()
-		}
-	}
 
 	duration.OnChanged = func(s string) {
-		if rpc.StringToInt(s) > 168 {
+		if rpc.StringToInt(duration.Text) > 168 {
 			duration.SetText("168")
-		}
-
-		if listing.Selected != "" && duration.Validate() == nil && start.Validate() == nil && charAddr.Validate() == nil && charPerc.Validate() == nil {
-			set_button.Show()
-		} else {
-			set_button.Hide()
-		}
-	}
-
-	start.OnChanged = func(s string) {
-		if listing.Selected != "" && duration.Validate() == nil && start.Validate() == nil && charAddr.Validate() == nil && charPerc.Validate() == nil {
-			set_button.Show()
-		} else {
-			set_button.Hide()
-		}
-	}
-
-	charAddr.OnChanged = func(s string) {
-		if listing.Selected != "" && duration.Validate() == nil && start.Validate() == nil && charAddr.Validate() == nil && charPerc.Validate() == nil {
-			set_button.Show()
-		} else {
-			set_button.Hide()
-		}
-	}
-
-	listing.OnChanged = func(s string) {
-		if listing.Selected != "" && duration.Validate() == nil && start.Validate() == nil && charAddr.Validate() == nil && charPerc.Validate() == nil {
-			set_button.Show()
-		} else {
-			set_button.Hide()
 		}
 	}
 
@@ -820,7 +784,7 @@ func listMenu(window_icon fyne.Resource, d *dreams.AppObject) {
 	button_spacer.SetMinSize(fyne.NewSize(0, 36))
 
 	go func() {
-		for rpc.IsReady() && Assets.Button.listing {
+		for rpc.IsReady() && Assets.Button.listing && !IsClosing() {
 			time.Sleep(time.Second)
 			if !confirm_open && isNFA(Assets.Viewing) {
 				aw_content.Objects[3].(*fyne.Container).Objects[0] = Assets.Icon
@@ -828,6 +792,12 @@ func listMenu(window_icon fyne.Resource, d *dreams.AppObject) {
 					viewing_asset = Assets.Viewing
 					viewing_label.SetText(fmt.Sprintf("Listing SCID:\n\n%s", viewing_asset))
 				}
+			}
+
+			if listing.Selected != "" && duration.Validate() == nil && start.Validate() == nil && charAddr.Validate() == nil && charPerc.Validate() == nil {
+				set_button.Show()
+			} else {
+				set_button.Hide()
 			}
 		}
 		Assets.Button.listing = false
@@ -960,8 +930,8 @@ func SendMessageMenu(dest string, window_icon fyne.Resource) {
 		content := container.NewVSplit(dest_cont, message_cont)
 
 		go func() {
-			for rpc.IsReady() && Assets.Button.messaging {
-				time.Sleep(2 * time.Second)
+			for rpc.IsReady() && Assets.Button.messaging && !IsClosing() {
+				time.Sleep(time.Second)
 			}
 			Assets.Button.messaging = false
 			smw.Close()

@@ -132,6 +132,9 @@ func introScreen() *fyne.Container {
 				c.(*fyne.Container).Objects[0].(*widget.Check).SetText(str)
 				c.(*fyne.Container).Objects[0].(*widget.Check).SetChecked(true)
 				c.(*fyne.Container).Objects[1].(*widget.Label).SetText(versions[str])
+				if str == "NFA Market" {
+					enabled_dapps[str] = true
+				}
 				return
 			}
 
@@ -157,13 +160,17 @@ func introScreen() *fyne.Container {
 		}
 
 		wait = true
+		menu.Control.Lock()
 		menu.Control.Dapps = make(map[string]bool)
 
 		for _, name := range dApps {
-			menu.Control.Dapps[name] = false
+			if name != "NFA Market" {
+				menu.Control.Dapps[name] = false
+			}
 		}
 
 		menu.Control.Dapps = enabled_dapps
+		menu.Control.Unlock()
 
 		dReams.SetChannels(menu.EnabledDappCount())
 		logger.Println("[dReams] Loading dApps")
@@ -248,9 +255,11 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 		}()
 	})
 
+	menu.Control.RLock()
 	for name, enabled := range menu.Control.Dapps {
 		enabled_dapps[name] = enabled
 	}
+	menu.Control.RUnlock()
 
 	var wait bool
 	var current_skin, skin_choice color.Gray16
@@ -275,7 +284,9 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 		logger.Println("[dReams] Closing dApps")
 		dReams.CloseAllDapps()
 		disconnected()
+		menu.Control.Lock()
 		menu.Control.Dapps = enabled_dapps
+		menu.Control.Unlock()
 		dReams.SetChannels(menu.EnabledDappCount())
 		menu.SetClose(true)
 		gnomon.Checked(false)
@@ -317,6 +328,7 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 					enabled_dapps[check.Text] = false
 				}
 
+				menu.Control.RLock()
 				if reflect.DeepEqual(enabled_dapps, menu.Control.Dapps) {
 					dapps_changed = false
 					if current_skin == skin_choice {
@@ -326,6 +338,7 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 					dapps_changed = true
 					load_button.Show()
 				}
+				menu.Control.RUnlock()
 			}
 
 			return container.NewAdaptiveGrid(2, check, widget.NewLabel(""))
