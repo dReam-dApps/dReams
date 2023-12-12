@@ -2,10 +2,8 @@ package rpc
 
 import (
 	"context"
-	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
-	"encoding/binary"
 	"encoding/hex"
 	"fmt"
 	"os"
@@ -520,7 +518,7 @@ func ClaimNFA(scid string) (tx string) {
 
 // Send bid or buy to NFA SC
 //   - bidor defines bid or buy call
-func BidBuyNFA(scid, bidor string, amt uint64) {
+func BidBuyNFA(scid, bidor string, amt uint64) (tx string) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
@@ -554,6 +552,8 @@ func BidBuyNFA(scid, bidor string, amt uint64) {
 	} else {
 		PrintLog("[BidBuyNFA] NFA Buy TX: %s", txid)
 	}
+
+	return txid.TXID
 }
 
 // List NFA for auction or sale by SCID
@@ -562,7 +562,7 @@ func BidBuyNFA(scid, bidor string, amt uint64) {
 //   - dur sets listing duration
 //   - amt sets starting price
 //   - perc sets percentage to go to charity on sale
-func SetNFAListing(scid, list, char string, dur, amt, perc uint64) {
+func SetNFAListing(scid, list, char string, dur, amt, perc uint64) (tx string) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
@@ -614,15 +614,22 @@ func SetNFAListing(scid, list, char string, dur, amt, perc uint64) {
 	}
 
 	PrintLog("[SetNFAListing] NFA List TX: %s", txid)
+
+	return txid.TXID
 }
 
 // Cancel or close a listed NFA. Can only be canceled within opening buffer period. Can only close listing after expiry
-//   - c defines cancel or close call
-func CancelCloseNFA(scid, c string) {
+//   - close true to close a listing and false to cancel
+func CancelCloseNFA(scid string, close bool) (tx string) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
-	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: c}
+	call := "CancelListing"
+	if close {
+		call = "CloseListing"
+	}
+
+	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: call}
 	args := rpc.Arguments{arg1}
 	txid := rpc.Transfer_Result{}
 
@@ -630,6 +637,13 @@ func CancelCloseNFA(scid, c string) {
 		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
 		Amount:      0,
 		Burn:        0,
+	}
+
+	if close {
+		t1.Payload_RPC = rpc.Arguments{
+			{Name: rpc.RPC_DESTINATION_PORT, DataType: rpc.DataUint64, Value: uint64(0xA1B2C3D4E5F67890)},
+			{Name: rpc.RPC_SOURCE_PORT, DataType: rpc.DataUint64, Value: uint64(0)},
+			{Name: rpc.RPC_COMMENT, DataType: rpc.DataString, Value: fmt.Sprintf("Winning bid on  %s  at height %d", scid, Wallet.Height)}}
 	}
 
 	t := []rpc.Transfer{t1}
@@ -647,11 +661,13 @@ func CancelCloseNFA(scid, c string) {
 		return
 	}
 
-	if c == "CloseListing" {
+	if close {
 		PrintLog("[CancelCloseNFA] Close Listing TX: %s", txid)
 	} else {
 		PrintLog("[CancelCloseNFA] Cancel Listing TX: %s", txid)
 	}
+
+	return txid.TXID
 }
 
 // Upload a new NFA SC by string
@@ -683,8 +699,8 @@ func UploadNFAContract(code string) (tx string) {
 	return txid.TXID
 }
 
-// Send Dero asset to destination address with option to send asset SCID as message to destination as payload
-func SendAsset(scid, dest string, payload bool) {
+// Send Dero asset to destination address and sends asset SCID as message to destination as payload for claiming
+func SendAsset(scid, dest string) (tx string) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
@@ -696,24 +712,19 @@ func SendAsset(scid, dest string, payload bool) {
 
 	t := []rpc.Transfer{t1}
 
-	if payload {
-		var dstport [8]byte
-		rand.Read(dstport[:])
-
-		response := rpc.Arguments{
-			{Name: rpc.RPC_DESTINATION_PORT, DataType: rpc.DataUint64, Value: binary.BigEndian.Uint64(dstport[:])},
-			{Name: rpc.RPC_SOURCE_PORT, DataType: rpc.DataUint64, Value: uint64(0)},
-			{Name: rpc.RPC_COMMENT, DataType: rpc.DataString, Value: fmt.Sprintf("Sent you asset  %s  at height %d", scid, Wallet.Height)},
-		}
-
-		t2 := rpc.Transfer{
-			Destination: dest,
-			Amount:      1,
-			Burn:        0,
-			Payload_RPC: response,
-		}
-		t = append(t, t2)
+	response := rpc.Arguments{
+		{Name: rpc.RPC_DESTINATION_PORT, DataType: rpc.DataUint64, Value: uint64(0xA1B2C3D4E5F67890)},
+		{Name: rpc.RPC_SOURCE_PORT, DataType: rpc.DataUint64, Value: uint64(0)},
+		{Name: rpc.RPC_COMMENT, DataType: rpc.DataString, Value: fmt.Sprintf("Sent you asset  %s  at height %d", scid, Wallet.Height)},
 	}
+
+	t2 := rpc.Transfer{
+		Destination: dest,
+		Amount:      1,
+		Burn:        0,
+		Payload_RPC: response,
+	}
+	t = append(t, t2)
 
 	txid := rpc.Transfer_Result{}
 
@@ -729,6 +740,8 @@ func SendAsset(scid, dest string, payload bool) {
 	}
 
 	PrintLog("[SendAsset] Send Asset TX: %s", txid)
+
+	return txid.TXID
 }
 
 // Watch a sent tx and return true if tx is confirmed

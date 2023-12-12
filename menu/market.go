@@ -20,6 +20,7 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/data/validation"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 	xwidget "fyne.io/x/fyne/widget"
@@ -95,87 +96,68 @@ func MarketEntry() fyne.CanvasObject {
 
 // Confirm a bid or buy action of listed NFA
 //   - amt of Dero in atomic units
-//   - b defines auction or sale
-//   - Pass main window obj to reset to
-func BidBuyConfirm(scid string, amt uint64, b int, obj *container.Split, reset fyne.CanvasObject) fyne.CanvasObject {
-	var text, coll, name string
+//   - bid true for auction, false for sale
+func BidBuyConfirm(scid string, amt uint64, bid bool, d *dreams.AppObject) {
+	var text, title, coll, name string
+	Market.Confirming = true
 	f := float64(amt)
 	amt_str := fmt.Sprintf("%.5f", f/100000)
-	switch b {
-	case 0:
+	if bid {
+		title = "Bid"
 		listing, _, _ := checkNFAAuctionListing(scid)
 		split := strings.Split(listing, "   ")
 		if len(split) == 4 {
 			coll = split[0]
 			name = split[1]
 		}
-		text = fmt.Sprintf("Bidding on SCID:\n\n%s\n\nAsset: %s\n\nCollection: %s\n\nBid amount: %s Dero\n\nConfirm bid", scid, name, coll, amt_str)
-	case 1:
+		text = fmt.Sprintf("Bidding on SCID:\n\n%s\n\nAsset: %s\n\nCollection: %s\n\nBid amount: %s Dero", scid, name, coll, amt_str)
+	} else {
+		title = "Buy"
 		listing, _, _ := checkNFABuyListing(scid)
 		split := strings.Split(listing, "   ")
 		if len(split) == 4 {
 			coll = split[0]
 			name = split[1]
 		}
-		text = fmt.Sprintf("Buying SCID:\n\n%s\n\nAsset: %s\n\nCollection: %s\n\nAmount: %s Dero\n\nConfirm buy", scid, name, coll, amt_str)
-	default:
+		text = fmt.Sprintf("Buying SCID:\n\n%s\n\nAsset: %s\n\nCollection: %s\n\nAmount: %s Dero", scid, name, coll, amt_str)
 
 	}
-
-	Market.Confirming = true
 
 	label := widget.NewLabel(text)
 	label.Wrapping = fyne.TextWrapWord
 	label.Alignment = fyne.TextAlignCenter
 
-	confirm := widget.NewButtonWithIcon("Confirm", dreams.FyneIcon("confirm"), func() {
-		switch b {
-		case 0:
-			rpc.BidBuyNFA(scid, "Bid", amt)
-		case 1:
-			rpc.BidBuyNFA(scid, "BuyItNow", amt)
-		default:
-
+	done := make(chan struct{})
+	confirm := dialog.NewConfirm(title, text, func(b bool) {
+		if b {
+			if bid {
+				if tx := rpc.BidBuyNFA(scid, "Bid", amt); tx != "" {
+					go ShowTxDialog("NFA Bid", fmt.Sprintf("TXID: %s", tx), tx, 3*time.Second, d.Window)
+				} else {
+					go ShowTxDialog("NFA Bid", "TX error, check logs", tx, 3*time.Second, d.Window)
+				}
+			} else {
+				if tx := rpc.BidBuyNFA(scid, "BuyItNow", amt); tx != "" {
+					go ShowTxDialog("NFA Buy", fmt.Sprintf("TXID: %s", tx), tx, 3*time.Second, d.Window)
+				} else {
+					go ShowTxDialog("NFA Buy", "TX error, check logs", tx, 3*time.Second, d.Window)
+				}
+			}
 		}
-
-		obj.Trailing.(*fyne.Container).Objects[1] = reset
-		obj.Trailing.(*fyne.Container).Objects[1].Refresh()
 		Market.Confirming = false
-	})
-	confirm.Importance = widget.HighImportance
+		done <- struct{}{}
+	}, d.Window)
 
-	cancel := widget.NewButtonWithIcon("Cancel", dreams.FyneIcon("cancel"), func() {
-		obj.Trailing.(*fyne.Container).Objects[1] = reset
-		obj.Trailing.(*fyne.Container).Objects[1].Refresh()
-		Market.Confirming = false
-	})
-
-	left := container.NewVBox(confirm)
-	right := container.NewVBox(cancel)
-	buttons := container.NewAdaptiveGrid(2, left, right)
-
-	content := container.NewVBox(layout.NewSpacer(), label, layout.NewSpacer(), buttons)
-
-	go func() {
-		for rpc.IsReady() {
-			time.Sleep(time.Second)
-		}
-
-		obj.Trailing.(*fyne.Container).Objects[1] = reset
-		obj.Trailing.(*fyne.Container).Objects[1].Refresh()
-		Market.Confirming = false
-	}()
-
-	return container.NewStack(content)
+	go ShowConfirmDialog(done, confirm)
 }
 
 // Confirm a cancel or close action of listed NFA
-//   - c defines close or cancel
+//   - close true to close listing, false to cancel
 //   - Confirmation string from Market.Tab
 //   - Pass main window obj to reset to
-func ConfirmCancelClose(scid string, c int, obj *container.Split, reset fyne.CanvasObject) fyne.CanvasObject {
-	var text, coll, name string
-
+func ConfirmCancelClose(scid string, close bool, d *dreams.AppObject) {
+	var text, title, coll, name string
+	Market.Confirming = true
 	list, _ := CheckNFAListingType(scid)
 	switch list {
 	case 1:
@@ -195,54 +177,42 @@ func ConfirmCancelClose(scid string, c int, obj *container.Split, reset fyne.Can
 	default:
 
 	}
-
-	switch c {
-	case 0:
+	if close {
 		text = fmt.Sprintf("Close listing for SCID:\n\n%s\n\nAsset: %s\n\nCollection: %s", scid, name, coll)
-	case 1:
+	} else {
 		text = fmt.Sprintf("Cancel listing for SCID:\n\n%s\n\nAsset: %s\n\nCollection: %s", scid, name, coll)
-	default:
-
 	}
-
-	Market.Confirming = true
 
 	label := widget.NewLabel(text)
 	label.Wrapping = fyne.TextWrapWord
 	label.Alignment = fyne.TextAlignCenter
 
-	confirm := widget.NewButtonWithIcon("Confirm", dreams.FyneIcon("confirm"), func() {
-		switch c {
-		case 0:
-			rpc.CancelCloseNFA(scid, "CloseListing")
-		case 1:
-			rpc.CancelCloseNFA(scid, "CancelListing")
-
-		default:
-
+	done := make(chan struct{})
+	confirm := dialog.NewConfirm(title, text, func(b bool) {
+		if b {
+			if close {
+				if tx := rpc.CancelCloseNFA(scid, true); tx != "" {
+					go ShowTxDialog("NFA Close", fmt.Sprintf("TXID: %s", tx), tx, 3*time.Second, d.Window)
+				} else {
+					go ShowTxDialog("NFA Close", "TX error, check logs", tx, 3*time.Second, d.Window)
+				}
+			} else {
+				if tx := rpc.CancelCloseNFA(scid, false); tx != "" {
+					go ShowTxDialog("NFA Cancel", fmt.Sprintf("TXID: %s", tx), tx, 3*time.Second, d.Window)
+				} else {
+					go ShowTxDialog("NFA Cancel", "TX error, check logs", tx, 3*time.Second, d.Window)
+				}
+			}
+			Market.Viewing = ""
+			Market.Viewing_coll = ""
+			Market.Cancel_button.Hide()
 		}
-		Market.Cancel_button.Hide()
-		Market.Viewing = ""
-		Market.Viewing_coll = ""
-		obj.Trailing.(*fyne.Container).Objects[1] = reset
-		obj.Trailing.(*fyne.Container).Objects[1].Refresh()
+
 		Market.Confirming = false
-	})
-	confirm.Importance = widget.HighImportance
+		done <- struct{}{}
+	}, d.Window)
 
-	cancel := widget.NewButtonWithIcon("Cancel", dreams.FyneIcon("cancel"), func() {
-		obj.Trailing.(*fyne.Container).Objects[1] = reset
-		obj.Trailing.(*fyne.Container).Objects[1].Refresh()
-		Market.Confirming = false
-	})
-
-	left := container.NewVBox(confirm)
-	right := container.NewVBox(cancel)
-	buttons := container.NewAdaptiveGrid(2, left, right)
-
-	content := container.NewVBox(layout.NewSpacer(), label, layout.NewSpacer(), buttons)
-
-	return container.NewStack(content)
+	go ShowConfirmDialog(done, confirm)
 }
 
 // NFA auction listings object
@@ -337,8 +307,9 @@ func MyNFAListings() fyne.Widget {
 }
 
 // Search NFA objects
-func SearchNFAs() fyne.CanvasObject {
+func SearchNFAs(d *dreams.AppObject) fyne.CanvasObject {
 	var dest_addr string
+	var message_button *widget.Button
 	search_entry := xwidget.NewCompletionEntry([]string{})
 	search_entry.Wrapping = fyne.TextTruncate
 	search_entry.OnChanged = func(s string) {
@@ -382,6 +353,14 @@ func SearchNFAs() fyne.CanvasObject {
 			}
 
 			Market.Details_box.Objects[1] = loadingBar()
+		} else {
+			dest_addr = ""
+		}
+
+		if len(dest_addr) == 66 {
+			message_button.Show()
+		} else {
+			message_button.Hide()
 		}
 	}
 
@@ -411,6 +390,7 @@ func SearchNFAs() fyne.CanvasObject {
 		search_entry.SetOptions([]string{" Collection,  Name,  Description,  SCID:"})
 		search_entry.SetText("")
 	})
+	clear_button.Importance = widget.LowImportance
 
 	show_results := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "arrowDropDown"), func() {
 		search_entry.ShowCompletion()
@@ -418,13 +398,17 @@ func SearchNFAs() fyne.CanvasObject {
 
 	search_cont := container.NewBorder(container.NewCenter(search_by), nil, container.NewHBox(clear_button, show_results), search_button, search_entry)
 
-	message_button := widget.NewButton("Message Owner", func() {
+	message_button = widget.NewButton("Message Owner", func() {
 		if dest_addr != "" {
 			SendMessageMenu(dest_addr, bundle.ResourceDReamsIconAltPng)
+		} else {
+			dialog.NewInformation("No Address", "Could not get owner address", d.Window).Show()
 		}
 	})
+	message_button.Importance = widget.HighImportance
+	message_button.Hide()
 
-	return container.NewBorder(search_cont, message_button, nil, nil, container.NewHBox())
+	return container.NewBorder(search_cont, container.NewHBox(layout.NewSpacer(), message_button), nil, nil, container.NewHBox())
 }
 
 // Get NFA image files
@@ -636,7 +620,7 @@ func RefreshNFAImages() {
 		Market.Details_box.Objects[0].(*fyne.Container).Objects[0].(*fyne.Container).Objects[1] = layout.NewSpacer()
 	}
 
-	Market.Details_box.Refresh()
+	// Market.Details_box.Refresh()
 }
 
 // Set auction display content to default values
@@ -763,14 +747,14 @@ func MarketTab(ti *container.TabItem) {
 }
 
 // NFA market layout
-func PlaceMarket() *container.Split {
+func PlaceMarket(d *dreams.AppObject) *container.Split {
 	details := container.NewStack(NFAMarketInfo())
 
 	tabs := container.NewAppTabs(
 		container.NewTabItem("Auctions", AuctionListings()),
 		container.NewTabItem("Buy Now", BuyNowListings()),
 		container.NewTabItem("My Listings", MyNFAListings()),
-		container.NewTabItem("Search", SearchNFAs()))
+		container.NewTabItem("Search", SearchNFAs(d)))
 
 	tabs.SetTabLocation(container.TabLocationTop)
 	tabs.OnSelected = func(ti *container.TabItem) {
@@ -824,30 +808,26 @@ func PlaceMarket() *container.Split {
 			Market.Market_button.Hide()
 			if text == "Bid" {
 				amt := rpc.ToAtomic(Market.Entry.Text, 5)
-				menu_top.Trailing.(*fyne.Container).Objects[1] = BidBuyConfirm(scid, amt, 0, menu_top, container.NewStack(tabs, scroll_cont))
-				menu_top.Trailing.(*fyne.Container).Objects[1].Refresh()
+				BidBuyConfirm(scid, amt, true, d)
 			} else if text == "Buy" {
-				menu_top.Trailing.(*fyne.Container).Objects[1] = BidBuyConfirm(scid, Market.Buy_amt, 1, menu_top, container.NewStack(tabs, scroll_cont))
-				menu_top.Trailing.(*fyne.Container).Objects[1].Refresh()
+				BidBuyConfirm(scid, Market.Buy_amt, false, d)
 			}
 		}
 	})
-
+	Market.Market_button.Importance = widget.HighImportance
 	Market.Market_button.Hide()
 
 	Market.Cancel_button = widget.NewButton("Cancel", func() {
 		if len(Market.Viewing) == 64 {
 			Market.Cancel_button.Hide()
-			menu_top.Trailing.(*fyne.Container).Objects[1] = ConfirmCancelClose(Market.Viewing, 1, menu_top, container.NewStack(tabs, scroll_cont))
-			menu_top.Trailing.(*fyne.Container).Objects[1].Refresh()
+			ConfirmCancelClose(Market.Viewing, false, d)
 		}
 	})
 
 	Market.Close_button = widget.NewButton("Close", func() {
 		if len(Market.Viewing) == 64 {
 			Market.Close_button.Hide()
-			menu_top.Trailing.(*fyne.Container).Objects[1] = ConfirmCancelClose(Market.Viewing, 0, menu_top, container.NewStack(tabs, scroll_cont))
-			menu_top.Trailing.(*fyne.Container).Objects[1].Refresh()
+			ConfirmCancelClose(Market.Viewing, true, d)
 		}
 	})
 
@@ -873,6 +853,7 @@ func RunNFAMarket(tag string, quit, done chan struct{}, connect_box *dwidget.Der
 	time.Sleep(6 * time.Second)
 	ticker := time.NewTicker(3 * time.Second)
 	offset := 0
+	synced := false
 
 	for {
 		select {
@@ -933,14 +914,25 @@ func RunNFAMarket(tag string, quit, done chan struct{}, connect_box *dwidget.Der
 					Assets.Button.Send.Hide()
 					Assets.Button.Rescan.Hide()
 					Assets.Claim.Hide()
+					Assets.Asset = []Asset{}
 				}
 
-				// Check wallet for all owned NFAs and refresh content
-				go CheckAllNFAs(false, nil)
+				// Check wallet for all owned NFAs and store icons in boltdb
+				if gnomon.IsSynced() && !synced {
+					CheckAllNFAs(nil)
+					Assets.List.Refresh()
+					if gnomon.DBStorageType() == "boltdb" {
+						for _, r := range Assets.Asset {
+							gnomes.StoreBolt(r.Collection, r.Name, r)
+						}
+					}
+					synced = true
+				}
 				Info.RefreshIndexed()
 			} else {
 				connect_box.Disconnect.SetChecked(false)
 				DisableIndexControls(true)
+				Assets.Asset = []Asset{}
 			}
 
 			if rpc.Daemon.IsConnected() {
@@ -1507,15 +1499,16 @@ func FindNFAListings(assets map[string]string) {
 }
 
 // Check wallet for all indexed NFAs
-//   - Pass scids from db store, can be nil arg
-//   - Pass false gc for rechecks
-func CheckAllNFAs(gc bool, scids map[string]string) {
-	if gnomon.IsReady() && !gc {
+//   - Pass scids from db store, can be nil arg to check all from db
+func CheckAllNFAs(scids map[string]string) {
+	if gnomon.IsReady() {
 		if scids == nil {
 			scids = gnomon.GetAllOwnersAndSCIDs()
 		}
 
-		assets := []Asset{}
+		Assets.Asset = []Asset{}
+		Theme.Select.Options = []string{}
+
 		for sc := range scids {
 			if !rpc.Wallet.IsConnected() || !gnomon.IsRunning() {
 				break
@@ -1524,99 +1517,88 @@ func CheckAllNFAs(gc bool, scids map[string]string) {
 			if header, _ := gnomon.GetSCIDValuesByKey(sc, "nameHdr"); header != nil {
 				owner, _ := gnomon.GetSCIDValuesByKey(sc, "owner")
 				file, _ := gnomon.GetSCIDValuesByKey(sc, "fileURL")
-				if owner != nil && file != nil {
+				collection, _ := gnomon.GetSCIDValuesByKey(sc, "collection")
+				icon, _ := gnomon.GetSCIDValuesByKey(sc, "iconURLHdr")
+				if owner != nil && file != nil && collection != nil && icon != nil {
 					if owner[0] == rpc.Wallet.Address && ValidNFA(file[0]) {
-						if asset := GetOwnedAssetInfo(sc); asset.Collection != "" {
-							assets = append(assets, asset)
+						var add Asset
+						add.Name = header[0]
+						add.Collection = collection[0]
+						add.SCID = sc
+						if typeHdr, _ := gnomon.GetSCIDValuesByKey(sc, "typeHdr"); typeHdr != nil {
+							add.Type = AssetType(collection[0], typeHdr[0])
 						}
+
+						if collection[0] == "AZY-Deroscapes" || collection[0] == "SIXART" {
+							Theme.Add(header[0], owner[0])
+						}
+						Assets.Add(add, icon[0])
 					}
 				}
-			}
-		}
-
-		sort.Slice(assets, func(i, j int) bool {
-			return assets[i].Name < assets[j].Name
-		})
-		Assets.Asset = assets
-		Assets.List.Refresh()
-	}
-}
-
-// Get NFA or G45 asset info
-func GetOwnedAssetInfo(scid string) (asset Asset) {
-	if gnomon.IsReady() {
-		header, _ := gnomon.GetSCIDValuesByKey(scid, "nameHdr")
-		if header != nil {
-			asset.SCID = scid
-			asset.Name = header[0]
-			collection, _ := gnomon.GetSCIDValuesByKey(scid, "collection")
-			if collection != nil {
-				asset.Collection = collection[0]
-				typeHdr, _ := gnomon.GetSCIDValuesByKey(scid, "typeHdr")
-				if typeHdr != nil {
-					asset.Type = AssetType(collection[0], typeHdr[0])
-				}
 			} else {
-				asset.Collection = "?"
-			}
+				if data, _ := gnomon.GetSCIDValuesByKey(sc, "metadata"); data != nil {
+					icon, _ := gnomon.GetSCIDValuesByKey(sc, "iconURLHdr")
+					owner, _ := gnomon.GetSCIDValuesByKey(sc, "owner")
+					minter, _ := gnomon.GetSCIDValuesByKey(sc, "minter")
+					collection, _ := gnomon.GetSCIDValuesByKey(sc, "collection")
 
-			icon, _ := gnomon.GetSCIDValuesByKey(scid, "iconURLHdr")
-			if icon != nil {
-				if img, err := dreams.DownloadBytes(icon[0]); err == nil {
-					asset.Image = img
-				} else {
-					logger.Errorln("[GetOwnedAssetInfo]", err)
-				}
-			}
-		} else {
-			data, _ := gnomon.GetSCIDValuesByKey(scid, "metadata")
-			minter, _ := gnomon.GetSCIDValuesByKey(scid, "minter")
-			collection, _ := gnomon.GetSCIDValuesByKey(scid, "collection")
-			if data != nil && minter != nil && collection != nil {
-				asset.SCID = scid
-				if minter[0] == Seals_mint && collection[0] == Seals_coll {
-					var seal Seal
-					if err := json.Unmarshal([]byte(data[0]), &seal); err == nil {
-						check := strings.Trim(seal.Name, " #0123456789")
-						if check == "Dero Seals" {
-							asset.Name = seal.Name
-							asset.Collection = check
-							asset.Type = "Avatar"
-							if img, err := dreams.DownloadBytes(ParseURL(seal.Image)); err == nil {
-								asset.Image = img
-							} else {
-								logger.Errorln("[GetOwnedAssetInfo]", err)
+					if data != nil && minter != nil && collection != nil && owner != nil && icon != nil {
+						if owner[0] == rpc.Wallet.Address {
+							var add Asset
+							if minter[0] == Seals_mint && collection[0] == Seals_coll {
+								var seal Seal
+								if err := json.Unmarshal([]byte(data[0]), &seal); err == nil {
+									check := strings.Trim(seal.Name, " #0123456789")
+									if check == "Dero Seals" {
+										add.Name = seal.Name
+										add.Collection = check
+										add.Type = "Avatar"
+										if img, err := dreams.DownloadBytes(ParseURL(seal.Image)); err == nil {
+											add.Image = img
+										} else {
+											logger.Errorln("[CheckAllNFAs]", err)
+										}
+
+										Assets.Add(add, icon[0])
+									}
+								}
+							} else if minter[0] == ATeam_mint && collection[0] == ATeam_coll {
+								var agent Agent
+								if err := json.Unmarshal([]byte(data[0]), &agent); err == nil {
+									add.Name = agent.Name
+									add.Collection = "Dero A-Team"
+									add.Type = "Avatar"
+									if img, err := dreams.DownloadBytes(ParseURL(agent.Image)); err == nil {
+										add.Image = img
+									} else {
+										logger.Errorln("[CheckAllNFAs]", err)
+									}
+
+									Assets.Add(add, icon[0])
+								}
+							} else if minter[0] == Degen_mint && collection[0] == Degen_coll {
+								var degen Degen
+								if err := json.Unmarshal([]byte(data[0]), &degen); err == nil {
+									add.Name = degen.Name
+									add.Collection = "Dero Degens"
+									add.Type = "Avatar"
+									if img, err := dreams.DownloadBytes(ParseURL(degen.Image)); err == nil {
+										add.Image = img
+									} else {
+										logger.Errorln("[CheckAllNFAs]", err)
+									}
+
+									Assets.Add(add, icon[0])
+								}
 							}
 						}
 					}
-				} else if minter[0] == ATeam_mint && collection[0] == ATeam_coll {
-					var agent Agent
-					if err := json.Unmarshal([]byte(data[0]), &agent); err == nil {
-						asset.Name = agent.Name
-						asset.Collection = "Dero A-Team"
-						asset.Type = "Avatar"
-						if img, err := dreams.DownloadBytes(ParseURL(agent.Image)); err == nil {
-							asset.Image = img
-						} else {
-							logger.Errorln("[GetOwnedAssetInfo]", err)
-						}
-					}
-				} else if minter[0] == Degen_mint && collection[0] == Degen_coll {
-					var degen Degen
-					if err := json.Unmarshal([]byte(data[0]), &degen); err == nil {
-						asset.Name = degen.Name
-						asset.Collection = "Dero Degens"
-						asset.Type = "Avatar"
-						if img, err := dreams.DownloadBytes(ParseURL(degen.Image)); err == nil {
-							asset.Image = img
-						} else {
-							logger.Errorln("[GetOwnedAssetInfo]", err)
-						}
-					}
 				}
 			}
 		}
-	}
 
-	return
+		Theme.Sort()
+		Theme.Select.Options = append(Control.Themes, Theme.Select.Options...)
+		Assets.SortList()
+	}
 }

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"image/color"
 	"os"
 	"os/signal"
 	"runtime"
@@ -19,8 +20,10 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
+	"fyne.io/fyne/v2/widget"
 )
 
 // dApp to run NFA market with full wallet controls from dReams packages
@@ -36,14 +39,21 @@ func main() {
 	gnomon := gnomes.NewGnomes()
 
 	// Initialize Fyne app and window
-	var d dreams.AppObject
-	d.App = app.NewWithID(fmt.Sprintf("%s Desktop Client", app_tag))
-	d.App.Settings().SetTheme(bundle.DeroTheme(config.Skin))
-	d.Window = d.App.NewWindow(app_tag)
-	d.Window.Resize(fyne.NewSize(1400, 800))
-	d.Window.SetIcon(bundle.ResourceMarketIconPng)
-	d.Window.CenterOnScreen()
-	d.Window.SetMaster()
+	a := app.NewWithID(fmt.Sprintf("%s Desktop Client", app_tag))
+	a.Settings().SetTheme(bundle.DeroTheme(config.Skin))
+	w := a.NewWindow(app_tag)
+	w.Resize(fyne.NewSize(1400, 800))
+	w.SetIcon(bundle.ResourceMarketIconPng)
+	w.CenterOnScreen()
+	w.SetMaster()
+
+	// Initialize dReams AppObject
+	menu.Theme.Img = *canvas.NewImageFromResource(menu.DefaultThemeResource())
+	d := dreams.AppObject{
+		App:        a,
+		Window:     w,
+		Background: container.NewStack(&menu.Theme.Img),
+	}
 
 	// Initialize closing channels and func
 	quit := make(chan struct{})
@@ -52,6 +62,7 @@ func main() {
 		save := dreams.SaveData{
 			Skin:   config.Skin,
 			DBtype: gnomon.DBStorageType(),
+			Theme:  menu.Theme.Name,
 		}
 
 		if rpc.Daemon.Rpc == "" {
@@ -82,6 +93,7 @@ func main() {
 
 	// Initialize vars
 	gnomon.SetFastsync(true)
+	gnomon.SetDBStorageType("boltdb")
 
 	// Create dwidget connection box with controls
 	connect_box := dwidget.NewHorizontalEntries(app_tag, 1)
@@ -104,10 +116,30 @@ func main() {
 	connect_box.AddDaemonOptions(config.Daemon)
 	connect_box.Container.Objects[0].(*fyne.Container).Add(menu.StartIndicators())
 
+	// Layout asset profile objects
+	line := canvas.NewLine(bundle.TextColor)
+	form := []*widget.FormItem{}
+	form = append(form, widget.NewFormItem("Name", menu.NameEntry()))
+	form = append(form, widget.NewFormItem("", layout.NewSpacer()))
+	form = append(form, widget.NewFormItem("", container.NewVBox(line)))
+	form = append(form, widget.NewFormItem("Theme", menu.ThemeSelect(&d)))
+	form = append(form, widget.NewFormItem("", layout.NewSpacer()))
+	form = append(form, widget.NewFormItem("", container.NewVBox(line)))
+
+	spacer := canvas.NewRectangle(color.Transparent)
+	spacer.SetMinSize(fyne.NewSize(450, 0))
+
+	profile := container.NewCenter(container.NewBorder(spacer, nil, nil, nil, widget.NewForm(form...)))
+
+	// Initialize asset rescan func
+	rescan := func() {
+		menu.CheckAllNFAs(nil)
+	}
+
 	// Layout tabs
 	tabs := container.NewAppTabs(
-		container.NewTabItem("Market", menu.PlaceMarket()),
-		container.NewTabItem("Assets", menu.PlaceAssets(app_tag, nil, nil, bundle.ResourceMarketIconPng, &d)),
+		container.NewTabItem("Market", menu.PlaceMarket(&d)),
+		container.NewTabItem("Assets", menu.PlaceAssets(app_tag, profile, rescan, bundle.ResourceMarketIconPng, &d)),
 		container.NewTabItem("Mint", menu.PlaceNFAMint(app_tag, d.Window)),
 		container.NewTabItem("Log", rpc.SessionLog(app_tag, rpc.Version())))
 
@@ -116,7 +148,7 @@ func main() {
 	go menu.RunNFAMarket(app_tag, quit, done, connect_box)
 	go func() {
 		time.Sleep(450 * time.Millisecond)
-		d.Window.SetContent(container.NewStack(tabs, container.NewVBox(layout.NewSpacer(), connect_box.Container)))
+		d.Window.SetContent(container.NewStack(d.Background, tabs, container.NewVBox(layout.NewSpacer(), connect_box.Container)))
 	}()
 	d.Window.ShowAndRun()
 	<-done

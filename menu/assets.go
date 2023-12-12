@@ -468,26 +468,28 @@ func PlaceAssets(tag string, profile fyne.CanvasObject, rescan func(), icon fyne
 		nil,
 		nil)
 
+	title_line := canvas.NewLine(bundle.TextColor)
+
 	var tab *container.TabItem
 	tabs := container.NewAppTabs(
 		container.NewTabItemWithIcon("", bundle.ResourceMarketCirclePng, layout.NewSpacer()),
 		container.NewTabItem("Owned", AssetList(icon, rescan, d)),
 		container.NewTabItem("Profile", container.NewBorder(
-			dwidget.NewCanvasText("User Profile", 18, fyne.TextAlignCenter),
+			container.NewCenter(container.NewVBox(dwidget.NewCanvasText("User Profile", 18, fyne.TextAlignCenter), title_line)),
 			nil,
 			nil,
 			nil,
 			profile)),
 
 		container.NewTabItem("Headers", container.NewBorder(
-			dwidget.NewCanvasText("Gnomon SC Headers", 18, fyne.TextAlignCenter),
+			container.NewCenter(container.NewVBox(dwidget.NewCanvasText("Gnomon SC Headers", 18, fyne.TextAlignCenter), title_line)),
 			nil,
 			nil,
 			nil,
 			Assets.Headers)),
 
 		container.NewTabItem("Index", container.NewBorder(
-			dwidget.NewCanvasText("Gnomon Index", 18, fyne.TextAlignCenter),
+			container.NewCenter(container.NewVBox(dwidget.NewCanvasText("Gnomon Index", 18, fyne.TextAlignCenter), title_line)),
 			nil,
 			nil,
 			nil,
@@ -632,9 +634,13 @@ func indexEntry(w fyne.Window) fyne.CanvasObject {
 	Assets.Index.Add.Hide()
 	Assets.Index.Search.Hide()
 
+	line := canvas.NewLine(bundle.TextColor)
+	spacer := canvas.NewRectangle(color.Transparent)
+	spacer.SetMinSize(fyne.NewSize(180, 0))
+
 	return container.NewBorder(
 		nil,
-		container.NewCenter(container.NewHBox(Assets.Index.Add, Assets.Index.Search)),
+		container.NewCenter(container.NewVBox(line, spacer, container.NewHBox(Assets.Index.Add, Assets.Index.Search))),
 		nil,
 		nil,
 		Assets.Index.Entry)
@@ -735,11 +741,11 @@ func AssetList(icon fyne.Resource, rescan func(), d *dreams.AppObject) fyne.Canv
 	}
 
 	Assets.Button.Send = widget.NewButton("Send Asset", func() {
-		go sendAssetMenu(icon)
+		go sendAssetMenu(icon, d)
 	})
 
 	Assets.Button.List = widget.NewButton("List Asset", func() {
-		go listMenu(icon)
+		go listMenu(icon, d)
 	})
 
 	Assets.Button.Send.Importance = widget.HighImportance
@@ -769,7 +775,11 @@ func AssetList(icon fyne.Resource, rescan func(), d *dreams.AppObject) fyne.Canv
 		dialog.NewInformation("Claim NFA", "Not a valid SCID", d.Window).Show()
 	})
 
-	Assets.Claim = container.NewBorder(nil, nil, nil, claim_button, entry)
+	claim_all := widget.NewButton("Claim All", func() {
+		ClaimAll("Claim NFAs", d)
+	})
+
+	Assets.Claim = container.NewBorder(nil, nil, nil, container.NewHBox(claim_button, claim_all), entry)
 	Assets.Claim.Hide()
 
 	Assets.Button.Rescan = widget.NewButton("Rescan", func() {
@@ -793,4 +803,92 @@ func AssetList(icon fyne.Resource, rescan func(), d *dreams.AppObject) fyne.Canv
 		nil,
 		nil,
 		Assets.List)
+}
+
+// Dialogs for claiming all NFAs available to wallet
+func ClaimAll(title string, d *dreams.AppObject) {
+	if rpc.IsReady() {
+		claimable := checkClaimable()
+		l := len(claimable)
+		if l > 0 {
+			dialog.NewConfirm("Claim All", fmt.Sprintf("Claim your %d available assets?", l), func(b bool) {
+				if b {
+					go claimClaimable(title, claimable, d)
+				}
+			}, d.Window).Show()
+		} else {
+			dialog.NewInformation("Claim All", "You have no claimable assets", d.Window).Show()
+		}
+	} else {
+		dialog.NewInformation("Claim All", "You are not connected to daemon or wallet", d.Window).Show()
+	}
+}
+
+// Checks if wallet has any claimable NFAs, looking assets sent with dst uint64(0xA1B2C3D4E5F67890)
+func checkClaimable() (claimable []string) {
+	entries := rpc.GetWalletTransfers(3000000, uint64(rpc.Wallet.Height), uint64(0xA1B2C3D4E5F67890))
+	for _, e := range *entries {
+		split := strings.Split(string(e.Payload), "  ")
+		if len(split) > 2 && len(split[1]) == 64 {
+			if gnomes.CheckOwner(split[1]) || rpc.TokenBalance(split[1]) != 1 {
+				continue
+			}
+
+			var have bool
+			for _, sc := range claimable {
+				if sc == split[1] {
+					have = true
+					break
+				}
+			}
+
+			if !have {
+				claimable = append(claimable, split[1])
+			}
+		}
+	}
+
+	return
+}
+
+// Call ClaimOwnership on SC and confirm tx on all claimable SCs
+func claimClaimable(title string, claimable []string, d *dreams.AppObject) {
+	wait := true
+	progress_label := dwidget.NewCenterLabel("")
+	progress := widget.NewProgressBar()
+	progress_cont := container.NewBorder(nil, progress_label, nil, nil, progress)
+	progress.Min = float64(0)
+	progress.Max = float64(len(claimable))
+	progress.SetValue(1)
+	wait_message := dialog.NewCustom(title, "Stop", progress_cont, d.Window)
+	wait_message.Resize(fyne.NewSize(610, 150))
+	wait_message.SetOnClosed(func() {
+		wait = false
+	})
+	wait_message.Show()
+
+	for i, claim := range claimable {
+		if !wait {
+			break
+		}
+
+		retry := 0
+		for retry < 4 {
+			if !wait {
+				break
+			}
+
+			progress.SetValue(float64(i))
+			progress_label.SetText(fmt.Sprintf("Claiming: %s\n\nPlease wait for TX to be confirmed", claim))
+			tx := rpc.ClaimNFA(claim)
+			time.Sleep(time.Second)
+			retry += rpc.ConfirmTxRetry(tx, "claimClaimable", 60)
+
+			retry++
+
+		}
+	}
+	progress.SetValue(progress.Value + 1)
+	progress_label.SetText("Completed all claims")
+	wait_message.SetDismissText("Done")
 }

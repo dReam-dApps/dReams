@@ -471,6 +471,8 @@ func ShowConfirmDialog(done chan struct{}, confirm interface{}) {
 			}
 		}
 	case *dialog.ConfirmDialog:
+		c.SetConfirmText("Confirm")
+		c.SetDismissText("Cancel")
 		c.Show()
 		for {
 			select {
@@ -499,10 +501,10 @@ func ShowConfirmDialog(done chan struct{}, confirm interface{}) {
 // Send Dero asset menu
 //   - Asset SCID can be sent as payload to receiver when sending asset
 //   - Pass resources for window_icon
-func sendAssetMenu(window_icon fyne.Resource) {
+func sendAssetMenu(window_icon fyne.Resource, d *dreams.AppObject) {
 	Assets.Button.sending = true
 	saw := fyne.CurrentApp().NewWindow("Send Asset")
-	saw.Resize(fyne.NewSize(330, 700))
+	saw.Resize(fyne.NewSize(330, 680))
 	saw.SetIcon(window_icon)
 	Assets.Button.Send.Hide()
 	Assets.Button.List.Hide()
@@ -523,12 +525,11 @@ func sendAssetMenu(window_icon fyne.Resource) {
 
 	viewing_asset := Assets.Viewing
 
-	viewing_label := widget.NewLabel(fmt.Sprintf("Sending SCID:\n\n%s\n\nEnter destination address below\n\nSCID can be sent to receiver as payload\n\n", viewing_asset))
+	viewing_label := widget.NewLabel(fmt.Sprintf("Sending SCID:\n\n%s\n\nEnter destination address below", viewing_asset))
 	viewing_label.Wrapping = fyne.TextWrapWord
 	viewing_label.Alignment = fyne.TextAlignCenter
 
 	info_label := widget.NewLabel("Enter all info before sending")
-	payload := widget.NewCheck("Send SCID as payload", func(b bool) {})
 
 	dest_entry := widget.NewMultiLineEntry()
 	dest_entry.SetPlaceHolder("Destination Address:")
@@ -549,25 +550,25 @@ func sendAssetMenu(window_icon fyne.Resource) {
 	})
 	entry_clear.Importance = widget.LowImportance
 
+	title_line := canvas.NewLine(bundle.TextColor)
+	title := container.NewCenter(container.NewVBox(dwidget.NewCanvasText("Sending Asset", 21, fyne.TextAlignCenter), title_line))
+
 	var dest string
 	var confirm_open bool
 	send_button = widget.NewButton("Send Asset", func() {
 		if dest_entry.Validate() == nil {
 			confirm_open = true
 			send_asset := viewing_asset
-			var load bool
-			if payload.Checked {
-				load = true
-			}
 
 			confirm_button := widget.NewButtonWithIcon("Confirm", dreams.FyneIcon("confirm"), func() {
 				if dest_entry.Validate() == nil {
-					var load bool
-					if payload.Checked {
-						load = true
-					}
-					go rpc.SendAsset(send_asset, dest, load)
+					tx := rpc.SendAsset(send_asset, dest)
 					Assets.Button.sending = false
+					if tx != "" {
+						go ShowTxDialog("Send Asset", fmt.Sprintf("TXID: %s", tx), tx, 3*time.Second, d.Window)
+					} else {
+						go ShowTxDialog("Send Asset", "TX error, check logs", tx, 3*time.Second, d.Window)
+					}
 					saw.Close()
 				}
 			})
@@ -583,13 +584,13 @@ func sendAssetMenu(window_icon fyne.Resource) {
 			})
 
 			dest = dest_entry.Text
-			confirm_label := widget.NewLabel(fmt.Sprintf("Sending SCID:\n\n%s\n\nDestination: %s\n\nSending SCID as payload: %t", send_asset, dest, load))
+			confirm_label := widget.NewLabel(fmt.Sprintf("Sending SCID:\n\n%s\n\nDestination: %s", send_asset, dest))
 			confirm_label.Wrapping = fyne.TextWrapWord
 			confirm_label.Alignment = fyne.TextAlignCenter
 
-			confirm_display := container.NewVBox(confirm_label, layout.NewSpacer())
+			confirm_display := container.NewVBox(layout.NewSpacer(), confirm_label, layout.NewSpacer())
 			confirm_options := container.NewAdaptiveGrid(2, confirm_button, cancel_button)
-			confirm_content := container.NewBorder(nil, confirm_options, nil, nil, confirm_display)
+			confirm_content := container.NewBorder(title, confirm_options, nil, nil, confirm_display)
 			saw.SetContent(
 				container.NewStack(
 					BackgroundRast("sendAssetMenu"),
@@ -604,6 +605,7 @@ func sendAssetMenu(window_icon fyne.Resource) {
 	button_spacer.SetMinSize(fyne.NewSize(0, 90))
 
 	saw_content = container.NewVBox(
+		title,
 		viewing_label,
 		layout.NewSpacer(),
 		container.NewCenter(Assets.Icon),
@@ -613,17 +615,17 @@ func sendAssetMenu(window_icon fyne.Resource) {
 			container.NewVBox(
 				layout.NewSpacer(),
 				container.NewHBox(layout.NewSpacer(), container.NewBorder(nil, layout.NewSpacer(), nil, layout.NewSpacer(), entry_clear)))),
-		container.NewCenter(payload),
+		button_spacer,
 		container.NewStack(button_spacer, container.NewVBox(layout.NewSpacer(), container.NewAdaptiveGrid(2, layout.NewSpacer(), container.NewStack(send_button)))))
 
 	go func() {
 		for rpc.IsReady() && Assets.Button.sending {
 			time.Sleep(time.Second)
 			if !confirm_open {
-				saw_content.Objects[2].(*fyne.Container).Objects[0] = Assets.Icon
+				saw_content.Objects[3].(*fyne.Container).Objects[0] = Assets.Icon
 				if viewing_asset != Assets.Viewing {
 					viewing_asset = Assets.Viewing
-					viewing_label.SetText("Sending SCID:\n\n" + viewing_asset + " \n\nEnter destination address below\n\nSCID can be sent to receiver as payload\n\n")
+					viewing_label.SetText("Sending SCID:\n\n" + viewing_asset + " \n\nEnter destination address below")
 				}
 
 			}
@@ -642,10 +644,10 @@ func sendAssetMenu(window_icon fyne.Resource) {
 
 // NFA listing menu
 //   - Pass resources for menu window to match main
-func listMenu(window_icon fyne.Resource) {
+func listMenu(window_icon fyne.Resource, d *dreams.AppObject) {
 	Assets.Button.listing = true
 	aw := fyne.CurrentApp().NewWindow("List NFA")
-	aw.Resize(fyne.NewSize(330, 700))
+	aw.Resize(fyne.NewSize(330, 680))
 	aw.SetIcon(window_icon)
 	Assets.Button.List.Hide()
 	Assets.Button.Send.Hide()
@@ -738,6 +740,9 @@ func listMenu(window_icon fyne.Resource) {
 		}
 	}
 
+	title_line := canvas.NewLine(bundle.TextColor)
+	title := container.NewCenter(container.NewVBox(dwidget.NewCanvasText("List Asset", 21, fyne.TextAlignCenter), title_line))
+
 	var confirm_open bool
 	set_button = widget.NewButton("Set Listing", func() {
 		if duration.Validate() == nil && start.Validate() == nil && charAddr.Validate() == nil && charPerc.Validate() == nil {
@@ -746,7 +751,7 @@ func listMenu(window_icon fyne.Resource) {
 				listing_asset := viewing_asset
 				artP, royaltyP := GetListingPercents(listing_asset)
 
-				d := rpc.StringToUint64(duration.Text)
+				dur := rpc.StringToUint64(duration.Text)
 				s := rpc.ToAtomic(start.Text, 5)
 				sp := float64(s) / 100000
 				cp := rpc.StringToUint64(charPerc.Text)
@@ -775,7 +780,7 @@ func listMenu(window_icon fyne.Resource) {
 				})
 
 				confirm_button := widget.NewButtonWithIcon("Confirm", dreams.FyneIcon("confirm"), func() {
-					rpc.SetNFAListing(listing_asset, listing.Selected, charAddr.Text, d, s, cp)
+					tx := rpc.SetNFAListing(listing_asset, listing.Selected, charAddr.Text, dur, s, cp)
 					Assets.Button.listing = false
 					if rpc.Wallet.IsConnected() {
 						if isNFA(Assets.Viewing) {
@@ -783,12 +788,22 @@ func listMenu(window_icon fyne.Resource) {
 							Assets.Button.List.Show()
 						}
 					}
+					if tx != "" {
+						go ShowTxDialog(fmt.Sprintf("NFA %s", listing.Selected), fmt.Sprintf("TXID: %s", tx), tx, 3*time.Second, d.Window)
+					} else {
+						go ShowTxDialog(fmt.Sprintf("NFA %s", listing.Selected), "TX error, check logs", tx, 3*time.Second, d.Window)
+					}
 					aw.Close()
 				})
 				confirm_button.Importance = widget.HighImportance
 
 				confirm_options := container.NewAdaptiveGrid(2, confirm_button, cancel_button)
-				confirm_content := container.NewBorder(nil, confirm_options, nil, nil, confirm_label)
+				confirm_content := container.NewBorder(
+					title,
+					confirm_options,
+					nil,
+					nil,
+					container.NewVBox(layout.NewSpacer(), confirm_label, layout.NewSpacer()))
 
 				aw.SetContent(
 					container.NewStack(
@@ -808,7 +823,7 @@ func listMenu(window_icon fyne.Resource) {
 		for rpc.IsReady() && Assets.Button.listing {
 			time.Sleep(time.Second)
 			if !confirm_open && isNFA(Assets.Viewing) {
-				aw_content.Objects[2].(*fyne.Container).Objects[0] = Assets.Icon
+				aw_content.Objects[3].(*fyne.Container).Objects[0] = Assets.Icon
 				if viewing_asset != Assets.Viewing {
 					viewing_asset = Assets.Viewing
 					viewing_label.SetText(fmt.Sprintf("Listing SCID:\n\n%s", viewing_asset))
@@ -839,6 +854,7 @@ func listMenu(window_icon fyne.Resource) {
 	})
 
 	aw_content = container.NewVBox(
+		title,
 		viewing_label,
 		layout.NewSpacer(),
 		container.NewCenter(Assets.Icon),

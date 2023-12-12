@@ -489,7 +489,7 @@ func place() *fyne.Container {
 		container.NewTabItem("Wallet", placeWall(intros)),
 		container.NewTabItem("dApps", layout.NewSpacer()),
 		container.NewTabItem("Assets", asset_tab),
-		container.NewTabItem("Market", menu.PlaceMarket()))
+		container.NewTabItem("Market", menu.PlaceMarket(&dReams)))
 
 	menu_tabs.OnSelected = func(ti *container.TabItem) {
 		switch ti.Text {
