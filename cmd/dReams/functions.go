@@ -560,19 +560,20 @@ func checkConnection() {
 // Do when disconnected
 func disconnected() {
 	menu.Market.Auctions = []menu.NFAListing{}
-	menu.Market.Buy_now = []menu.NFAListing{}
+	menu.Market.Buys = []menu.NFAListing{}
 	holdero.Disconnected(menu.DappEnabled("Holdero"))
 	prediction.Disconnected()
 	rpc.Wallet.Address = ""
 	menu.Theme.Select.Options = menu.Control.Themes
 	menu.Theme.Select.Refresh()
 	menu.Assets.Asset = []menu.Asset{}
-	menu.Market.Auction_list.UnselectAll()
-	menu.Market.Buy_list.UnselectAll()
+	menu.Market.List.Auction.UnselectAll()
+	menu.Market.List.Wallet.UnselectAll()
+	menu.Market.List.Buy.UnselectAll()
 	menu.Market.Icon = *canvas.NewImageFromImage(nil)
 	menu.Market.Cover = *canvas.NewImageFromImage(nil)
-	menu.Market.Viewing = ""
-	menu.Market.Viewing_coll = ""
+	menu.Market.Viewing.Asset = ""
+	menu.Market.Viewing.Collection = ""
 	menu.ResetAuctionInfo()
 	menu.AuctionInfo()
 }

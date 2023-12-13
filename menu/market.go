@@ -28,45 +28,56 @@ import (
 )
 
 type marketObjects struct {
-	Tab           string
-	Entry         *dwidget.DeroAmts
-	Name          *widget.Entry
-	Type          *widget.Entry
-	Collection    *widget.Entry
-	Description   *widget.Entry
-	Creator       *widget.Entry
-	Owner         *widget.Entry
-	Owner_update  *widget.Entry
-	Start_price   *widget.Entry
-	Art_fee       *widget.Entry
-	Royalty       *widget.Entry
-	Bid_count     *widget.Entry
-	Buy_price     *widget.Entry
-	Current_bid   *widget.Entry
-	Bid_price     *widget.Entry
-	End_time      *widget.Entry
-	Loading       *widget.ProgressBarInfinite
-	Market_button *widget.Button
-	Cancel_button *widget.Button
-	Close_button  *widget.Button
-	Auction_list  *widget.List
-	Buy_list      *widget.List
-	My_listings   *widget.List
-	Icon          canvas.Image
-	Cover         canvas.Image
-	Details_box   fyne.Container
-	Market_box    fyne.Container
-	Confirming    bool
-	Searching     bool
-	DreamsFilter  bool
-	Buy_amt       uint64
-	Bid_amt       uint64
-	Viewing       string
-	Viewing_coll  string
-	Auctions      []NFAListing
-	Buy_now       []NFAListing
-	My_list       []NFAListing
-	Filters       []string
+	Tab          string
+	Entry        *dwidget.DeroAmts
+	Loading      *widget.ProgressBarInfinite
+	Icon         canvas.Image
+	Cover        canvas.Image
+	Details      fyne.Container
+	Actions      fyne.Container
+	Confirming   bool
+	Searching    bool
+	DreamsFilter bool
+	Auctions     []NFAListing
+	Buys         []NFAListing
+	Wallets      []NFAListing
+	Filters      []string
+	Display      struct {
+		Name        *widget.Entry
+		Type        *widget.Entry
+		Collection  *widget.Entry
+		Description *widget.Entry
+		Creator     *widget.Entry
+		Owner       *widget.Entry
+		Update      *widget.Entry
+		Price       *widget.Entry
+		Artificer   *widget.Entry
+		Royalty     *widget.Entry
+		Ends        *widget.Entry
+		Bid         struct {
+			Count   *widget.Entry
+			Current *widget.Entry
+			Price   *widget.Entry
+		}
+	}
+	Button struct {
+		BidBuy *widget.Button
+		Cancel *widget.Button
+		Close  *widget.Button
+	}
+	Viewing struct {
+		Asset      string
+		Collection string
+	}
+	List struct {
+		Auction *widget.List
+		Buy     *widget.List
+		Wallet  *widget.List
+	}
+	amount struct {
+		buy uint64
+		bid uint64
+	}
 }
 
 // NFA listing data
@@ -79,6 +90,7 @@ type NFAListing struct {
 	IconURL     string `json:"iconURL"`
 }
 
+// Market contains widget a list objects for NFA market
 var Market marketObjects
 
 // Trim input string to specified len
@@ -95,23 +107,23 @@ func (m *marketObjects) SortAuctions() {
 	sort.Slice(m.Auctions, func(i, j int) bool {
 		return m.Auctions[i].Name < m.Auctions[j].Name
 	})
-	m.Auction_list.Refresh()
+	m.List.Auction.Refresh()
 }
 
 // Sorts buy now list by name
 func (m *marketObjects) SortBuys() {
-	sort.Slice(m.Buy_now, func(i, j int) bool {
-		return m.Buy_now[i].Name < m.Buy_now[j].Name
+	sort.Slice(m.Buys, func(i, j int) bool {
+		return m.Buys[i].Name < m.Buys[j].Name
 	})
-	m.Buy_list.Refresh()
+	m.List.Buy.Refresh()
 }
 
 // Sorts wallet listings list by name
 func (m *marketObjects) SortMyList() {
-	sort.Slice(m.My_list, func(i, j int) bool {
-		return m.My_list[i].Name < m.My_list[j].Name
+	sort.Slice(m.Wallets, func(i, j int) bool {
+		return m.Wallets[i].Name < m.Wallets[j].Name
 	})
-	m.My_listings.Refresh()
+	m.List.Wallet.Refresh()
 }
 
 // NFA market amount entry
@@ -226,9 +238,9 @@ func ConfirmCancelClose(scid string, close bool, d *dreams.AppObject) {
 					go ShowTxDialog("NFA Cancel", "TX error, check logs", tx, 3*time.Second, d.Window)
 				}
 			}
-			Market.Viewing = ""
-			Market.Viewing_coll = ""
-			Market.Cancel_button.Hide()
+			Market.Viewing.Asset = ""
+			Market.Viewing.Collection = ""
+			Market.Button.Cancel.Hide()
 		}
 
 		Market.Confirming = false
@@ -308,7 +320,7 @@ func updateListItem(i widget.ListItemID, o fyne.CanvasObject, asset []NFAListing
 // NFA auction listings object
 //   - Gets images and details for Market objects on selected
 func AuctionListings() fyne.Widget {
-	Market.Auction_list = widget.NewList(
+	Market.List.Auction = widget.NewList(
 		func() int {
 			return len(Market.Auctions)
 		},
@@ -317,71 +329,71 @@ func AuctionListings() fyne.Widget {
 			go updateListItem(i, o, Market.Auctions)
 		})
 
-	Market.Auction_list.OnSelected = func(id widget.ListItemID) {
+	Market.List.Auction.OnSelected = func(id widget.ListItemID) {
 		scid := Market.Auctions[id].SCID
-		if scid != Market.Viewing {
+		if scid != Market.Viewing.Asset {
 			Market.Entry.SetText("")
 			clearNFAImages()
-			Market.Viewing = scid
+			Market.Viewing.Asset = scid
 			go GetNFAImages(scid)
 			go GetAuctionDetails(scid)
-			Market.Details_box.Objects[1] = loadingBar()
+			Market.Details.Objects[1] = loadingBar()
 		}
 	}
 
-	return Market.Auction_list
+	return Market.List.Auction
 }
 
 // NFA buy now listings object
 //   - Gets images and details for Market objects on selected
 func BuyNowListings() fyne.Widget {
-	Market.Buy_list = widget.NewList(
+	Market.List.Buy = widget.NewList(
 		func() int {
-			return len(Market.Buy_now)
+			return len(Market.Buys)
 		},
 		listItem,
 		func(i widget.ListItemID, o fyne.CanvasObject) {
-			go updateListItem(i, o, Market.Buy_now)
+			go updateListItem(i, o, Market.Buys)
 		})
 
-	Market.Buy_list.OnSelected = func(id widget.ListItemID) {
-		scid := Market.Buy_now[id].SCID
-		if scid != Market.Viewing {
+	Market.List.Buy.OnSelected = func(id widget.ListItemID) {
+		scid := Market.Buys[id].SCID
+		if scid != Market.Viewing.Asset {
 			clearNFAImages()
-			Market.Viewing = scid
+			Market.Viewing.Asset = scid
 			go GetNFAImages(scid)
 			go GetBuyNowDetails(scid)
-			Market.Details_box.Objects[1] = loadingBar()
+			Market.Details.Objects[1] = loadingBar()
 		}
 	}
 
-	return Market.Buy_list
+	return Market.List.Buy
 }
 
 // NFA listing for connected wallet
 //   - Gets images and details for Market objects on selected
 func MyNFAListings() fyne.Widget {
-	Market.My_listings = widget.NewList(
+	Market.List.Wallet = widget.NewList(
 		func() int {
-			return len(Market.My_list)
+			return len(Market.Wallets)
 		},
 		listItem,
 		func(i widget.ListItemID, o fyne.CanvasObject) {
-			updateListItem(i, o, Market.My_list)
+			updateListItem(i, o, Market.Wallets)
 		})
 
-	Market.My_listings.OnSelected = func(id widget.ListItemID) {
-		scid := Market.My_list[id].SCID
-		if scid != Market.Viewing {
+	Market.List.Wallet.OnSelected = func(id widget.ListItemID) {
+		scid := Market.Wallets[id].SCID
+		if scid != Market.Viewing.Asset {
 			clearNFAImages()
-			Market.Viewing = scid
+			Market.Viewing.Asset = scid
 			go GetNFAImages(scid)
 			go GetUnlistedDetails(scid)
-			Market.Details_box.Objects[1] = loadingBar()
+			Market.Details.Objects[1] = loadingBar()
 		}
 	}
 
-	return Market.My_listings
+	return Market.List.Wallet
 }
 
 // Search NFA objects
@@ -393,14 +405,14 @@ func SearchNFAs(d *dreams.AppObject) fyne.CanvasObject {
 	search_entry.OnChanged = func(s string) {
 		split := strings.Split(s, "   ")
 		if len(split) > 3 {
-			if split[3] != Market.Viewing {
-				Market.Viewing = split[3]
+			if split[3] != Market.Viewing.Asset {
+				Market.Viewing.Asset = split[3]
 				list, addr := CheckNFAListingType(split[3])
 				dest_addr = addr
 				switch list {
 				case 1:
 					Market.Tab = "Auction"
-					Market.Market_button.Text = "Bid"
+					Market.Button.BidBuy.Text = "Bid"
 					Market.Entry.SetText("0.0")
 					Market.Entry.Enable()
 					ResetAuctionInfo()
@@ -410,7 +422,7 @@ func SearchNFAs(d *dreams.AppObject) fyne.CanvasObject {
 					go GetAuctionDetails(split[3])
 				case 2:
 					Market.Tab = "Buy"
-					Market.Market_button.Text = "Buy"
+					Market.Button.BidBuy.Text = "Buy"
 					Market.Entry.SetText("0.0")
 					Market.Entry.Disable()
 					ResetBuyInfo()
@@ -430,7 +442,7 @@ func SearchNFAs(d *dreams.AppObject) fyne.CanvasObject {
 				}
 			}
 
-			Market.Details_box.Objects[1] = loadingBar()
+			Market.Details.Objects[1] = loadingBar()
 		} else {
 			dest_addr = ""
 		}
@@ -516,17 +528,17 @@ func GetNFAImages(scid string) {
 			if !have {
 				if img, err := dreams.DownloadBytes(icon[0]); err == nil {
 					Market.Icon = *canvas.NewImageFromReader(bytes.NewReader(img), name[0])
-					Market.Details_box.Objects[0].(*fyne.Container).Objects[0].(*fyne.Container).Objects[1] = NFAIcon()
+					Market.Details.Objects[0].(*fyne.Container).Objects[0].(*fyne.Container).Objects[1] = NFAIcon()
 				} else {
 					Market.Icon = *canvas.NewImageFromResource(bundle.ResourceMarketCirclePng)
 				}
 			}
 
-			view := Market.Viewing_coll
+			view := Market.Viewing.Collection
 			if view == "AZY-Playing card decks" || view == "SIXPC" || view == "AZY-Playing card backs" || view == "SIXPCB" {
-				Market.Details_box.Objects[0].(*fyne.Container).Objects[0].(*fyne.Container).Objects[2] = ToolsBadge()
+				Market.Details.Objects[0].(*fyne.Container).Objects[0].(*fyne.Container).Objects[2] = ToolsBadge()
 			} else {
-				Market.Details_box.Objects[0].(*fyne.Container).Objects[0].(*fyne.Container).Objects[2] = layout.NewSpacer()
+				Market.Details.Objects[0].(*fyne.Container).Objects[0].(*fyne.Container).Objects[2] = layout.NewSpacer()
 			}
 		} else {
 			Market.Icon = *canvas.NewImageFromResource(bundle.ResourceMarketCirclePng)
@@ -535,12 +547,12 @@ func GetNFAImages(scid string) {
 		if cover != nil {
 			Market.Cover, _ = dreams.DownloadCanvas(cover[0], name[0]+"-cover")
 			if Market.Cover.Resource != nil {
-				Market.Details_box.Objects[1] = NFACoverImg()
+				Market.Details.Objects[1] = NFACoverImg()
 				if Market.Loading != nil {
 					Market.Loading.Stop()
 				}
 			} else {
-				Market.Details_box.Objects[1] = loadingBar()
+				Market.Details.Objects[1] = loadingBar()
 			}
 		} else {
 			Market.Cover = *canvas.NewImageFromImage(nil)
@@ -591,49 +603,49 @@ func loadingBar() fyne.CanvasObject {
 
 // Clears all market NFA images
 func clearNFAImages() {
-	Market.Details_box.Objects[0].(*fyne.Container).Objects[0].(*fyne.Container).Objects[2] = layout.NewSpacer()
+	Market.Details.Objects[0].(*fyne.Container).Objects[0].(*fyne.Container).Objects[2] = layout.NewSpacer()
 	Market.Icon = *canvas.NewImageFromImage(nil)
 
 	Market.Cover = *canvas.NewImageFromImage(nil)
-	Market.Details_box.Objects[1] = canvas.NewImageFromImage(nil)
+	Market.Details.Objects[1] = canvas.NewImageFromImage(nil)
 }
 
 // Set up market info objects
 func NFAMarketInfo() fyne.Container {
-	Market.Name = widget.NewEntry()
-	Market.Type = widget.NewEntry()
-	Market.Collection = widget.NewEntry()
-	Market.Description = widget.NewMultiLineEntry()
-	Market.Creator = widget.NewEntry()
-	Market.Art_fee = widget.NewEntry()
-	Market.Royalty = widget.NewEntry()
-	Market.Start_price = widget.NewEntry()
-	Market.Owner = widget.NewEntry()
-	Market.Owner_update = widget.NewEntry()
-	Market.Current_bid = widget.NewEntry()
-	Market.Bid_price = widget.NewEntry()
-	Market.Bid_count = widget.NewEntry()
-	Market.End_time = widget.NewEntry()
+	Market.Display.Name = widget.NewEntry()
+	Market.Display.Type = widget.NewEntry()
+	Market.Display.Collection = widget.NewEntry()
+	Market.Display.Description = widget.NewMultiLineEntry()
+	Market.Display.Creator = widget.NewEntry()
+	Market.Display.Artificer = widget.NewEntry()
+	Market.Display.Royalty = widget.NewEntry()
+	Market.Display.Price = widget.NewEntry()
+	Market.Display.Owner = widget.NewEntry()
+	Market.Display.Update = widget.NewEntry()
+	Market.Display.Bid.Current = widget.NewEntry()
+	Market.Display.Bid.Price = widget.NewEntry()
+	Market.Display.Bid.Count = widget.NewEntry()
+	Market.Display.Ends = widget.NewEntry()
 
-	Market.Name.Disable()
-	Market.Type.Disable()
-	Market.Collection.Disable()
-	Market.Description.Disable()
-	Market.Creator.Disable()
-	Market.Art_fee.Disable()
-	Market.Royalty.Disable()
-	Market.Start_price.Disable()
-	Market.Owner.Disable()
-	Market.Owner_update.Disable()
-	Market.Current_bid.Disable()
-	Market.Bid_price.Disable()
-	Market.Bid_count.Disable()
-	Market.End_time.Disable()
+	Market.Display.Name.Disable()
+	Market.Display.Type.Disable()
+	Market.Display.Collection.Disable()
+	Market.Display.Description.Disable()
+	Market.Display.Creator.Disable()
+	Market.Display.Artificer.Disable()
+	Market.Display.Royalty.Disable()
+	Market.Display.Price.Disable()
+	Market.Display.Owner.Disable()
+	Market.Display.Update.Disable()
+	Market.Display.Bid.Current.Disable()
+	Market.Display.Bid.Price.Disable()
+	Market.Display.Bid.Count.Disable()
+	Market.Display.Ends.Disable()
 
 	Market.Icon.SetMinSize(fyne.NewSize(94, 94))
 	Market.Cover.SetMinSize(fyne.NewSize(400, 600))
 
-	Market.Description.Wrapping = fyne.TextWrapWord
+	Market.Display.Description.Wrapping = fyne.TextWrapWord
 
 	return AuctionInfo()
 }
@@ -641,21 +653,21 @@ func NFAMarketInfo() fyne.Container {
 // Container for auction info objects
 func AuctionInfo() fyne.Container {
 	auction_form := []*widget.FormItem{}
-	auction_form = append(auction_form, widget.NewFormItem("Name", Market.Name))
-	auction_form = append(auction_form, widget.NewFormItem("Asset Type", Market.Type))
-	auction_form = append(auction_form, widget.NewFormItem("Collection", Market.Collection))
-	auction_form = append(auction_form, widget.NewFormItem("Ends", Market.End_time))
-	auction_form = append(auction_form, widget.NewFormItem("Bids", Market.Bid_count))
-	auction_form = append(auction_form, widget.NewFormItem("Description", Market.Description))
-	auction_form = append(auction_form, widget.NewFormItem("Creator", Market.Creator))
-	auction_form = append(auction_form, widget.NewFormItem("Owner", Market.Owner))
-	auction_form = append(auction_form, widget.NewFormItem("Artificer %", Market.Art_fee))
-	auction_form = append(auction_form, widget.NewFormItem("Royalty %", Market.Royalty))
+	auction_form = append(auction_form, widget.NewFormItem("Name", Market.Display.Name))
+	auction_form = append(auction_form, widget.NewFormItem("Asset Type", Market.Display.Type))
+	auction_form = append(auction_form, widget.NewFormItem("Collection", Market.Display.Collection))
+	auction_form = append(auction_form, widget.NewFormItem("Ends", Market.Display.Ends))
+	auction_form = append(auction_form, widget.NewFormItem("Bids", Market.Display.Bid.Count))
+	auction_form = append(auction_form, widget.NewFormItem("Description", Market.Display.Description))
+	auction_form = append(auction_form, widget.NewFormItem("Creator", Market.Display.Creator))
+	auction_form = append(auction_form, widget.NewFormItem("Owner", Market.Display.Owner))
+	auction_form = append(auction_form, widget.NewFormItem("Artificer %", Market.Display.Artificer))
+	auction_form = append(auction_form, widget.NewFormItem("Royalty %", Market.Display.Royalty))
 
-	auction_form = append(auction_form, widget.NewFormItem("Owner Update", Market.Owner_update))
-	auction_form = append(auction_form, widget.NewFormItem("Start Price", Market.Start_price))
+	auction_form = append(auction_form, widget.NewFormItem("Owner Update", Market.Display.Update))
+	auction_form = append(auction_form, widget.NewFormItem("Start Price", Market.Display.Price))
 
-	auction_form = append(auction_form, widget.NewFormItem("Current Bid", Market.Current_bid))
+	auction_form = append(auction_form, widget.NewFormItem("Current Bid", Market.Display.Bid.Current))
 
 	form_spacer := canvas.NewRectangle(color.Transparent)
 	form_spacer.SetMinSize(fyne.NewSize(330, 0))
@@ -676,16 +688,16 @@ func AuctionInfo() fyne.Container {
 // Container for unlisted info objects
 func NotListedInfo() fyne.Container {
 	unlisted_form := []*widget.FormItem{}
-	unlisted_form = append(unlisted_form, widget.NewFormItem("Name", Market.Name))
-	unlisted_form = append(unlisted_form, widget.NewFormItem("Asset Type", Market.Type))
-	unlisted_form = append(unlisted_form, widget.NewFormItem("Collection", Market.Collection))
-	unlisted_form = append(unlisted_form, widget.NewFormItem("Description", Market.Description))
-	unlisted_form = append(unlisted_form, widget.NewFormItem("Creator", Market.Creator))
-	unlisted_form = append(unlisted_form, widget.NewFormItem("Owner", Market.Owner))
-	unlisted_form = append(unlisted_form, widget.NewFormItem("Artificer %", Market.Art_fee))
-	unlisted_form = append(unlisted_form, widget.NewFormItem("Royalty %", Market.Royalty))
+	unlisted_form = append(unlisted_form, widget.NewFormItem("Name", Market.Display.Name))
+	unlisted_form = append(unlisted_form, widget.NewFormItem("Asset Type", Market.Display.Type))
+	unlisted_form = append(unlisted_form, widget.NewFormItem("Collection", Market.Display.Collection))
+	unlisted_form = append(unlisted_form, widget.NewFormItem("Description", Market.Display.Description))
+	unlisted_form = append(unlisted_form, widget.NewFormItem("Creator", Market.Display.Creator))
+	unlisted_form = append(unlisted_form, widget.NewFormItem("Owner", Market.Display.Owner))
+	unlisted_form = append(unlisted_form, widget.NewFormItem("Artificer %", Market.Display.Artificer))
+	unlisted_form = append(unlisted_form, widget.NewFormItem("Royalty %", Market.Display.Royalty))
 
-	unlisted_form = append(unlisted_form, widget.NewFormItem("Owner Update", Market.Owner_update))
+	unlisted_form = append(unlisted_form, widget.NewFormItem("Owner Update", Market.Display.Update))
 
 	form_spacer := canvas.NewRectangle(color.Transparent)
 	form_spacer.SetMinSize(fyne.NewSize(330, 0))
@@ -705,54 +717,54 @@ func NotListedInfo() fyne.Container {
 
 // Set unlisted display content to default values
 func ResetNotListedInfo() {
-	Market.Bid_amt = 0
+	Market.amount.bid = 0
 	clearNFAImages()
-	Market.Name.SetText("Name:")
-	Market.Type.SetText("Asset Type:")
-	Market.Collection.SetText("Collection:")
-	Market.Description.SetText("Description:")
-	Market.Creator.SetText("Creator:")
-	Market.Art_fee.SetText("Artificer:")
-	Market.Royalty.SetText("Royalty:")
-	Market.Owner.SetText("Owner:")
-	Market.Owner_update.SetText("Owner can update:")
+	Market.Display.Name.SetText("Name:")
+	Market.Display.Type.SetText("Asset Type:")
+	Market.Display.Collection.SetText("Collection:")
+	Market.Display.Description.SetText("Description:")
+	Market.Display.Creator.SetText("Creator:")
+	Market.Display.Artificer.SetText("Artificer:")
+	Market.Display.Royalty.SetText("Royalty:")
+	Market.Display.Owner.SetText("Owner:")
+	Market.Display.Update.SetText("Owner can update:")
 }
 
 // Set auction display content to default values
 func ResetAuctionInfo() {
-	Market.Bid_amt = 0
+	Market.amount.bid = 0
 	clearNFAImages()
-	Market.Name.SetText("Name:")
-	Market.Type.SetText("Asset Type:")
-	Market.Collection.SetText("Collection:")
-	Market.Description.SetText("Description:")
-	Market.Creator.SetText("Creator:")
-	Market.Art_fee.SetText("Artificer:")
-	Market.Royalty.SetText("Royalty:")
-	Market.Start_price.SetText("Start Price:")
-	Market.Owner.SetText("Owner:")
-	Market.Owner_update.SetText("Owner can update:")
-	Market.Current_bid.SetText("Current Bid:")
-	Market.Bid_price.SetText("Minimum Bid:")
-	Market.Bid_count.SetText("Bids:")
-	Market.End_time.SetText("Ends At:")
+	Market.Display.Name.SetText("Name:")
+	Market.Display.Type.SetText("Asset Type:")
+	Market.Display.Collection.SetText("Collection:")
+	Market.Display.Description.SetText("Description:")
+	Market.Display.Creator.SetText("Creator:")
+	Market.Display.Artificer.SetText("Artificer:")
+	Market.Display.Royalty.SetText("Royalty:")
+	Market.Display.Price.SetText("Start Price:")
+	Market.Display.Owner.SetText("Owner:")
+	Market.Display.Update.SetText("Owner can update:")
+	Market.Display.Bid.Current.SetText("Current Bid:")
+	Market.Display.Bid.Price.SetText("Minimum Bid:")
+	Market.Display.Bid.Count.SetText("Bids:")
+	Market.Display.Ends.SetText("Ends At:")
 }
 
 // Container for buy now info objects
 func BuyNowInfo() fyne.Container {
 	buy_form := []*widget.FormItem{}
-	buy_form = append(buy_form, widget.NewFormItem("Name", Market.Name))
-	buy_form = append(buy_form, widget.NewFormItem("Asset Type", Market.Type))
-	buy_form = append(buy_form, widget.NewFormItem("Collection", Market.Collection))
-	buy_form = append(buy_form, widget.NewFormItem("Ends", Market.End_time))
-	buy_form = append(buy_form, widget.NewFormItem("Description", Market.Description))
-	buy_form = append(buy_form, widget.NewFormItem("Creator", Market.Creator))
-	buy_form = append(buy_form, widget.NewFormItem("Owner", Market.Owner))
-	buy_form = append(buy_form, widget.NewFormItem("Artificer %", Market.Art_fee))
-	buy_form = append(buy_form, widget.NewFormItem("Royalty %", Market.Royalty))
+	buy_form = append(buy_form, widget.NewFormItem("Name", Market.Display.Name))
+	buy_form = append(buy_form, widget.NewFormItem("Asset Type", Market.Display.Type))
+	buy_form = append(buy_form, widget.NewFormItem("Collection", Market.Display.Collection))
+	buy_form = append(buy_form, widget.NewFormItem("Ends", Market.Display.Ends))
+	buy_form = append(buy_form, widget.NewFormItem("Description", Market.Display.Description))
+	buy_form = append(buy_form, widget.NewFormItem("Creator", Market.Display.Creator))
+	buy_form = append(buy_form, widget.NewFormItem("Owner", Market.Display.Owner))
+	buy_form = append(buy_form, widget.NewFormItem("Artificer %", Market.Display.Artificer))
+	buy_form = append(buy_form, widget.NewFormItem("Royalty %", Market.Display.Royalty))
 
-	buy_form = append(buy_form, widget.NewFormItem("Owner Update", Market.Owner_update))
-	buy_form = append(buy_form, widget.NewFormItem("Price", Market.Start_price))
+	buy_form = append(buy_form, widget.NewFormItem("Owner Update", Market.Display.Update))
+	buy_form = append(buy_form, widget.NewFormItem("Price", Market.Display.Price))
 
 	form_spacer := canvas.NewRectangle(color.Transparent)
 	form_spacer.SetMinSize(fyne.NewSize(330, 0))
@@ -773,19 +785,19 @@ func BuyNowInfo() fyne.Container {
 
 // Set buy now display content to default values
 func ResetBuyInfo() {
-	Market.Buy_amt = 0
+	Market.amount.buy = 0
 	clearNFAImages()
-	Market.Name.SetText("Name:")
-	Market.Type.SetText("Asset Type:")
-	Market.Collection.SetText("Collection:")
-	Market.Description.SetText("Description:")
-	Market.Creator.SetText("Creator:")
-	Market.Art_fee.SetText("Artificer:")
-	Market.Royalty.SetText("Royalty:")
-	Market.Start_price.SetText("Buy now for:")
-	Market.Owner.SetText("Owner:")
-	Market.Owner_update.SetText("Owner can update:")
-	Market.End_time.SetText("Ends At:")
+	Market.Display.Name.SetText("Name:")
+	Market.Display.Type.SetText("Asset Type:")
+	Market.Display.Collection.SetText("Collection:")
+	Market.Display.Description.SetText("Description:")
+	Market.Display.Creator.SetText("Creator:")
+	Market.Display.Artificer.SetText("Artificer:")
+	Market.Display.Royalty.SetText("Royalty:")
+	Market.Display.Price.SetText("Buy now for:")
+	Market.Display.Owner.SetText("Owner:")
+	Market.Display.Update.SetText("Owner can update:")
+	Market.Display.Ends.SetText("Ends At:")
 }
 
 // NFA market layout
@@ -796,34 +808,34 @@ func PlaceMarket(d *dreams.AppObject) *container.Split {
 
 	not_listed_info := NotListedInfo()
 
-	Market.Cancel_button = widget.NewButton("Cancel", func() {
-		if len(Market.Viewing) == 64 {
-			Market.Cancel_button.Hide()
-			ConfirmCancelClose(Market.Viewing, false, d)
+	Market.Button.Cancel = widget.NewButton("Cancel", func() {
+		if len(Market.Viewing.Asset) == 64 {
+			Market.Button.Cancel.Hide()
+			ConfirmCancelClose(Market.Viewing.Asset, false, d)
 		} else {
 			dialog.NewInformation("NFA Cancel", "SCID error", d.Window).Show()
 		}
 	})
-	Market.Cancel_button.Importance = widget.HighImportance
-	Market.Cancel_button.Hide()
+	Market.Button.Cancel.Importance = widget.HighImportance
+	Market.Button.Cancel.Hide()
 
-	Market.Close_button = widget.NewButton("Close", func() {
-		if len(Market.Viewing) == 64 {
-			Market.Close_button.Hide()
-			ConfirmCancelClose(Market.Viewing, true, d)
+	Market.Button.Close = widget.NewButton("Close", func() {
+		if len(Market.Viewing.Asset) == 64 {
+			Market.Button.Close.Hide()
+			ConfirmCancelClose(Market.Viewing.Asset, true, d)
 		} else {
 			dialog.NewInformation("NFA Close", "SCID error", d.Window).Show()
 		}
 	})
-	Market.Close_button.Importance = widget.HighImportance
-	Market.Close_button.Hide()
+	Market.Button.Close.Importance = widget.HighImportance
+	Market.Button.Close.Hide()
 
 	tabs := container.NewAppTabs(
 		container.NewTabItem("Auctions", AuctionListings()),
 		container.NewTabItem("Buy Now", BuyNowListings()),
 		container.NewTabItem("My Listings", container.NewBorder(
 			nil,
-			container.NewBorder(nil, nil, Market.Close_button, Market.Cancel_button),
+			container.NewBorder(nil, nil, Market.Button.Close, Market.Button.Cancel),
 			nil,
 			nil,
 			MyNFAListings())),
@@ -836,57 +848,61 @@ func PlaceMarket(d *dreams.AppObject) *container.Split {
 		case "Auctions":
 			go FindNFAListings(nil)
 			Market.Tab = "Auction"
-			Market.Auction_list.UnselectAll()
-			Market.My_listings.UnselectAll()
-			Market.Viewing = ""
-			Market.Viewing_coll = ""
-			Market.Market_button.Text = "Bid"
-			Market.Market_button.Refresh()
+			Market.List.Auction.UnselectAll()
+			Market.List.Wallet.UnselectAll()
+			Market.Viewing.Asset = ""
+			Market.Viewing.Collection = ""
+			Market.Button.BidBuy.Text = "Bid"
+			Market.Button.BidBuy.Refresh()
 			Market.Entry.Show()
 			Market.Entry.SetText("0.0")
 			Market.Entry.Enable()
 			ResetAuctionInfo()
-			Market.Details_box = auction_info
+			Market.Details = auction_info
 		case "Buy Now":
 			go FindNFAListings(nil)
 			Market.Tab = "Buy"
-			Market.Buy_list.UnselectAll()
-			Market.Viewing = ""
-			Market.Viewing_coll = ""
-			Market.Market_button.Text = "Buy"
+			Market.List.Buy.UnselectAll()
+			Market.List.Wallet.UnselectAll()
+			Market.Viewing.Asset = ""
+			Market.Viewing.Collection = ""
+			Market.Button.BidBuy.Text = "Buy"
+			Market.Button.BidBuy.Refresh()
 			Market.Entry.Show()
 			Market.Entry.SetText("0.0")
 			Market.Entry.Disable()
-			Market.Market_button.Refresh()
 			ResetBuyInfo()
-			Market.Details_box = buy_info
+			Market.Details = buy_info
 		case "My Listings":
 			go FindNFAListings(nil)
 			Market.Tab = "Buy"
-			Market.My_listings.UnselectAll()
-			Market.Viewing = ""
-			Market.Viewing_coll = ""
+			Market.List.Auction.UnselectAll()
+			Market.List.Wallet.UnselectAll()
+			Market.List.Buy.UnselectAll()
+			Market.Viewing.Asset = ""
+			Market.Viewing.Collection = ""
 			Market.Entry.Hide()
 			Market.Entry.SetText("0.0")
 			Market.Entry.Disable()
 			ResetBuyInfo()
-			Market.Details_box = not_listed_info
+			Market.Details = not_listed_info
 		case "Search":
 			Market.Tab = "Buy"
-			Market.Auction_list.UnselectAll()
-			Market.Buy_list.UnselectAll()
-			Market.Viewing = ""
-			Market.Viewing_coll = ""
+			Market.List.Auction.UnselectAll()
+			Market.List.Wallet.UnselectAll()
+			Market.List.Buy.UnselectAll()
+			Market.Viewing.Asset = ""
+			Market.Viewing.Collection = ""
 			Market.Entry.Hide()
 			Market.Entry.SetText("0.0")
 			Market.Entry.Disable()
 			ResetBuyInfo()
-			Market.Details_box = not_listed_info
+			Market.Details = not_listed_info
 		}
 
-		Market.Close_button.Hide()
-		Market.Cancel_button.Hide()
-		Market.Market_button.Hide()
+		Market.Button.Close.Hide()
+		Market.Button.Cancel.Hide()
+		Market.Button.BidBuy.Hide()
 	}
 
 	Market.Tab = "Auction"
@@ -894,9 +910,9 @@ func PlaceMarket(d *dreams.AppObject) *container.Split {
 	scroll_top := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "arrowUp"), func() {
 		switch Market.Tab {
 		case "Buy":
-			Market.Buy_list.ScrollToTop()
+			Market.List.Buy.ScrollToTop()
 		case "Auction":
-			Market.Auction_list.ScrollToTop()
+			Market.List.Auction.ScrollToTop()
 		default:
 
 		}
@@ -905,9 +921,9 @@ func PlaceMarket(d *dreams.AppObject) *container.Split {
 	scroll_bottom := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "arrowDown"), func() {
 		switch Market.Tab {
 		case "Buy":
-			Market.Buy_list.ScrollToBottom()
+			Market.List.Buy.ScrollToBottom()
 		case "Auction":
-			Market.Auction_list.ScrollToBottom()
+			Market.List.Auction.ScrollToBottom()
 		default:
 
 		}
@@ -923,25 +939,25 @@ func PlaceMarket(d *dreams.AppObject) *container.Split {
 
 	max := container.NewStack(min_size, tabs, scroll_cont)
 
-	Market.Details_box = auction_info
+	Market.Details = auction_info
 
-	Market.Market_button = widget.NewButton("Bid", func() {
-		scid := Market.Viewing
+	Market.Button.BidBuy = widget.NewButton("Bid", func() {
+		scid := Market.Viewing.Asset
 		if len(scid) == 64 {
-			text := Market.Market_button.Text
-			Market.Market_button.Hide()
+			text := Market.Button.BidBuy.Text
+			Market.Button.BidBuy.Hide()
 			if text == "Bid" {
 				amt := rpc.ToAtomic(Market.Entry.Text, 5)
 				BidBuyConfirm(scid, amt, true, d)
 			} else if text == "Buy" {
-				BidBuyConfirm(scid, Market.Buy_amt, false, d)
+				BidBuyConfirm(scid, Market.amount.buy, false, d)
 			}
 		} else {
 			dialog.NewInformation("Market", "SCID error", d.Window).Show()
 		}
 	})
-	Market.Market_button.Importance = widget.HighImportance
-	Market.Market_button.Hide()
+	Market.Button.BidBuy.Importance = widget.HighImportance
+	Market.Button.BidBuy.Hide()
 
 	entry_spacer := canvas.NewRectangle(color.Transparent)
 	entry_spacer.SetMinSize(fyne.NewSize(210, 0))
@@ -949,13 +965,13 @@ func PlaceMarket(d *dreams.AppObject) *container.Split {
 	button_spacer := canvas.NewRectangle(color.Transparent)
 	button_spacer.SetMinSize(fyne.NewSize(40, 0))
 
-	Market.Market_box = *container.NewBorder(nil, nil, nil, container.NewStack(button_spacer, Market.Market_button), MarketEntry())
-	Market.Market_box.Hide()
+	Market.Actions = *container.NewBorder(nil, nil, nil, container.NewStack(button_spacer, Market.Button.BidBuy), MarketEntry())
+	Market.Actions.Hide()
 
 	padding := canvas.NewRectangle(color.Transparent)
 	padding.SetMinSize(fyne.NewSize(123, 0))
 
-	details := container.NewBorder(nil, container.NewHBox(padding, container.NewStack(entry_spacer, &Market.Market_box)), nil, nil, &Market.Details_box)
+	details := container.NewBorder(nil, container.NewHBox(padding, container.NewStack(entry_spacer, &Market.Actions)), nil, nil, &Market.Details)
 
 	market := container.NewHSplit(details, max)
 	market.SetOffset(0.66)
@@ -976,7 +992,7 @@ func RunNFAMarket(d *dreams.AppObject) {
 		select {
 		case <-d.Receive(): // do on interval
 			if !rpc.Wallet.IsConnected() || !rpc.Daemon.IsConnected() {
-				Market.Market_button.Hide()
+				Market.Button.BidBuy.Hide()
 				d.WorkDone()
 				continue
 			}
@@ -986,15 +1002,15 @@ func RunNFAMarket(d *dreams.AppObject) {
 				// Enable index controls and check if wallet is connected
 				DisableIndexControls(false)
 				if rpc.Wallet.IsConnected() {
-					Market.Market_box.Show()
+					Market.Actions.Show()
 					Assets.Claim.Show()
 					if d.OnSubTab("Market") {
 						// Update live market info
-						if len(Market.Viewing) == 64 {
+						if len(Market.Viewing.Asset) == 64 {
 							if Market.Tab == "Buy" {
-								GetBuyNowDetails(Market.Viewing)
+								GetBuyNowDetails(Market.Viewing.Asset)
 							} else {
-								GetAuctionDetails(Market.Viewing)
+								GetAuctionDetails(Market.Viewing.Asset)
 							}
 						}
 					}
@@ -1008,7 +1024,7 @@ func RunNFAMarket(d *dreams.AppObject) {
 										gnomes.StoreBolt(r.Collection, r.Name, r)
 									}
 
-									for _, r := range Market.Buy_now {
+									for _, r := range Market.Buys {
 										gnomes.StoreBolt(r.Collection, r.Name, r)
 									}
 								}
@@ -1016,7 +1032,7 @@ func RunNFAMarket(d *dreams.AppObject) {
 						}
 					}
 				} else {
-					Market.Market_box.Hide()
+					Market.Actions.Hide()
 					Assets.Button.List.Hide()
 					Assets.Button.Send.Hide()
 					Assets.Button.Rescan.Hide()
@@ -1298,66 +1314,66 @@ func GetAuctionDetails(scid string) {
 
 		if name != nil && collection != nil && start != nil && royalty != nil && endTime != nil && artFee != nil && typeHdr != nil {
 			go func() {
-				Market.Viewing_coll = collection[0]
+				Market.Viewing.Collection = collection[0]
 
-				Market.Name.SetText(name[0])
+				Market.Display.Name.SetText(name[0])
 
-				Market.Type.SetText(AssetType(collection[0], typeHdr[0]))
+				Market.Display.Type.SetText(AssetType(collection[0], typeHdr[0]))
 
-				Market.Collection.SetText(collection[0])
+				Market.Display.Collection.SetText(collection[0])
 
-				Market.Description.SetText(description[0])
+				Market.Display.Description.SetText(description[0])
 
-				if Market.Creator.Text != creator[0] {
-					Market.Creator.SetText(creator[0])
+				if Market.Display.Creator.Text != creator[0] {
+					Market.Display.Creator.SetText(creator[0])
 				}
 
-				if Market.Owner.Text != owner[0] {
-					Market.Owner.SetText(owner[0])
+				if Market.Display.Owner.Text != owner[0] {
+					Market.Display.Owner.SetText(owner[0])
 				}
 				if owner_update[0] == 1 {
-					Market.Owner_update.SetText("Yes")
+					Market.Display.Update.SetText("Yes")
 				} else {
-					Market.Owner_update.SetText("No")
+					Market.Display.Update.SetText("No")
 				}
 
-				Market.Art_fee.SetText(strconv.Itoa(int(artFee[0])) + "%")
+				Market.Display.Artificer.SetText(strconv.Itoa(int(artFee[0])) + "%")
 
-				Market.Royalty.SetText(strconv.Itoa(int(royalty[0])) + "%")
+				Market.Display.Royalty.SetText(strconv.Itoa(int(royalty[0])) + "%")
 
 				price := float64(start[0])
 				str := fmt.Sprintf("%.5f", price/100000)
-				Market.Start_price.SetText(str + " Dero")
+				Market.Display.Price.SetText(str + " Dero")
 
-				Market.Bid_count.SetText(strconv.Itoa(int(bids[0])))
+				Market.Display.Bid.Count.SetText(strconv.Itoa(int(bids[0])))
 
 				end, _ := rpc.MsToTime(strconv.Itoa(int(endTime[0]) * 1000))
-				Market.End_time.SetText(end.String())
+				Market.Display.Ends.SetText(end.String())
 
 				if current != nil {
 					value := float64(current[0])
 					str := fmt.Sprintf("%.5f", value/100000)
-					Market.Current_bid.SetText(str)
+					Market.Display.Bid.Current.SetText(str)
 				} else {
-					Market.Current_bid.SetText("")
+					Market.Display.Bid.Current.SetText("")
 				}
 
 				if bid_price != nil {
 					value := float64(bid_price[0])
 					str := fmt.Sprintf("%.5f", value/100000)
 					if bid_price[0] == 0 {
-						Market.Bid_amt = start[0]
+						Market.amount.bid = start[0]
 					} else {
-						Market.Bid_amt = bid_price[0]
+						Market.amount.bid = bid_price[0]
 					}
-					Market.Bid_price.SetText(str)
+					Market.Display.Bid.Price.SetText(str)
 				} else {
-					Market.Bid_amt = 0
-					Market.Bid_price.SetText("")
+					Market.amount.bid = 0
+					Market.Display.Bid.Price.SetText("")
 				}
 
 				if amt, err := strconv.ParseFloat(Market.Entry.Text, 64); err == nil {
-					value := float64(Market.Bid_amt) / 100000
+					value := float64(Market.amount.bid) / 100000
 					if amt == 0 || amt < value {
 						amt := fmt.Sprintf("%.5f", value)
 						Market.Entry.SetText(amt)
@@ -1367,24 +1383,24 @@ func GetAuctionDetails(scid string) {
 				now := uint64(time.Now().Unix())
 				if owner[0] == rpc.Wallet.Address {
 					if now < startTime[0]+300 && startTime[0] > 0 && !Market.Confirming {
-						Market.Cancel_button.Show()
+						Market.Button.Cancel.Show()
 					} else {
-						Market.Cancel_button.Hide()
+						Market.Button.Cancel.Hide()
 					}
 
 					if now > endTime[0] && endTime[0] > 0 && !Market.Confirming {
-						Market.Close_button.Show()
+						Market.Button.Close.Show()
 					} else {
-						Market.Close_button.Hide()
+						Market.Button.Close.Hide()
 					}
 				} else {
-					Market.Close_button.Hide()
-					Market.Cancel_button.Hide()
+					Market.Button.Close.Hide()
+					Market.Button.Cancel.Hide()
 				}
 
-				Market.Market_button.Show()
+				Market.Button.BidBuy.Show()
 				if now > endTime[0] || Market.Confirming {
-					Market.Market_button.Hide()
+					Market.Button.BidBuy.Hide()
 				}
 			}()
 		}
@@ -1409,65 +1425,65 @@ func GetBuyNowDetails(scid string) {
 
 		if name != nil && collection != nil && start != nil && royalty != nil && endTime != nil && artFee != nil && typeHdr != nil {
 			go func() {
-				Market.Viewing_coll = collection[0]
+				Market.Viewing.Collection = collection[0]
 
-				Market.Name.SetText(name[0])
+				Market.Display.Name.SetText(name[0])
 
-				Market.Type.SetText(AssetType(collection[0], typeHdr[0]))
+				Market.Display.Type.SetText(AssetType(collection[0], typeHdr[0]))
 
-				Market.Collection.SetText(collection[0])
+				Market.Display.Collection.SetText(collection[0])
 
-				Market.Description.SetText(description[0])
+				Market.Display.Description.SetText(description[0])
 
-				if Market.Creator.Text != creator[0] {
-					Market.Creator.SetText(creator[0])
+				if Market.Display.Creator.Text != creator[0] {
+					Market.Display.Creator.SetText(creator[0])
 				}
 
-				if Market.Owner.Text != owner[0] {
-					Market.Owner.SetText(owner[0])
+				if Market.Display.Owner.Text != owner[0] {
+					Market.Display.Owner.SetText(owner[0])
 				}
 
 				if owner_update[0] == 1 {
-					Market.Owner_update.SetText("Yes")
+					Market.Display.Update.SetText("Yes")
 				} else {
-					Market.Owner_update.SetText("No")
+					Market.Display.Update.SetText("No")
 				}
 
-				Market.Art_fee.SetText(strconv.Itoa(int(artFee[0])) + "%")
+				Market.Display.Artificer.SetText(strconv.Itoa(int(artFee[0])) + "%")
 
-				Market.Royalty.SetText(strconv.Itoa(int(royalty[0])) + "%")
+				Market.Display.Royalty.SetText(strconv.Itoa(int(royalty[0])) + "%")
 
-				Market.Buy_amt = start[0]
+				Market.amount.buy = start[0]
 				value := float64(start[0])
 				str := fmt.Sprintf("%.5f", value/100000)
-				Market.Start_price.SetText(str + " Dero")
+				Market.Display.Price.SetText(str + " Dero")
 
 				Market.Entry.SetText(str)
 				Market.Entry.Disable()
 				end, _ := rpc.MsToTime(strconv.Itoa(int(endTime[0]) * 1000))
-				Market.End_time.SetText(end.String())
+				Market.Display.Ends.SetText(end.String())
 
 				now := uint64(time.Now().Unix())
 				if owner[0] == rpc.Wallet.Address {
 					if now < startTime[0]+300 && startTime[0] > 0 && !Market.Confirming {
-						Market.Cancel_button.Show()
+						Market.Button.Cancel.Show()
 					} else {
-						Market.Cancel_button.Hide()
+						Market.Button.Cancel.Hide()
 					}
 
 					if now > endTime[0] && endTime[0] > 0 && !Market.Confirming {
-						Market.Close_button.Show()
+						Market.Button.Close.Show()
 					} else {
-						Market.Close_button.Hide()
+						Market.Button.Close.Hide()
 					}
 				} else {
-					Market.Close_button.Hide()
-					Market.Cancel_button.Hide()
+					Market.Button.Close.Hide()
+					Market.Button.Cancel.Hide()
 				}
 
-				Market.Market_button.Show()
+				Market.Button.BidBuy.Show()
 				if now > endTime[0] || Market.Confirming {
-					Market.Market_button.Hide()
+					Market.Button.BidBuy.Hide()
 				}
 			}()
 		}
@@ -1492,33 +1508,33 @@ func GetUnlistedDetails(scid string) {
 
 		if name != nil && collection != nil && start != nil && royalty != nil && endTime != nil && artFee != nil && typeHdr != nil {
 			go func() {
-				Market.Viewing_coll = collection[0]
+				Market.Viewing.Collection = collection[0]
 
-				Market.Name.SetText(name[0])
+				Market.Display.Name.SetText(name[0])
 
-				Market.Type.SetText(AssetType(collection[0], typeHdr[0]))
+				Market.Display.Type.SetText(AssetType(collection[0], typeHdr[0]))
 
-				Market.Collection.SetText(collection[0])
+				Market.Display.Collection.SetText(collection[0])
 
-				Market.Description.SetText(description[0])
+				Market.Display.Description.SetText(description[0])
 
-				if Market.Creator.Text != creator[0] {
-					Market.Creator.SetText(creator[0])
+				if Market.Display.Creator.Text != creator[0] {
+					Market.Display.Creator.SetText(creator[0])
 				}
 
-				if Market.Owner.Text != owner[0] {
-					Market.Owner.SetText(owner[0])
+				if Market.Display.Owner.Text != owner[0] {
+					Market.Display.Owner.SetText(owner[0])
 				}
 
 				if owner_update[0] == 1 {
-					Market.Owner_update.SetText("Yes")
+					Market.Display.Update.SetText("Yes")
 				} else {
-					Market.Owner_update.SetText("No")
+					Market.Display.Update.SetText("No")
 				}
 
-				Market.Art_fee.SetText(strconv.Itoa(int(artFee[0])) + "%")
+				Market.Display.Artificer.SetText(strconv.Itoa(int(artFee[0])) + "%")
 
-				Market.Royalty.SetText(strconv.Itoa(int(royalty[0])) + "%")
+				Market.Display.Royalty.SetText(strconv.Itoa(int(royalty[0])) + "%")
 
 				Market.Entry.SetText("0")
 				Market.Entry.Disable()
@@ -1526,19 +1542,19 @@ func GetUnlistedDetails(scid string) {
 				now := uint64(time.Now().Unix())
 				if owner[0] == rpc.Wallet.Address {
 					if now < startTime[0]+300 && startTime[0] > 0 && !Market.Confirming {
-						Market.Cancel_button.Show()
+						Market.Button.Cancel.Show()
 					} else {
-						Market.Cancel_button.Hide()
+						Market.Button.Cancel.Hide()
 					}
 
 					if now > endTime[0] && endTime[0] > 0 && !Market.Confirming {
-						Market.Close_button.Show()
+						Market.Button.Close.Show()
 					} else {
-						Market.Close_button.Hide()
+						Market.Button.Close.Hide()
 					}
 				} else {
-					Market.Close_button.Hide()
-					Market.Cancel_button.Hide()
+					Market.Button.Close.Hide()
+					Market.Button.Cancel.Hide()
 				}
 			}()
 		}
@@ -1614,9 +1630,9 @@ func FindNFAListings(assets map[string]string) {
 
 		Market.Auctions = auction
 		Market.SortAuctions()
-		Market.Buy_now = buy_now
+		Market.Buys = buy_now
 		Market.SortBuys()
-		Market.My_list = my_list
+		Market.Wallets = my_list
 		Market.SortMyList()
 	}
 }

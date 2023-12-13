@@ -519,10 +519,10 @@ func place() *fyne.Container {
 		case "Market":
 			dReams.SetSubTab("Market")
 			go menu.FindNFAListings(nil)
-			menu.Market.Cancel_button.Hide()
-			menu.Market.Close_button.Hide()
-			menu.Market.Auction_list.Refresh()
-			menu.Market.Buy_list.Refresh()
+			menu.Market.Button.Cancel.Hide()
+			menu.Market.Button.Close.Hide()
+			menu.Market.List.Auction.Refresh()
+			menu.Market.List.Buy.Refresh()
 		case "dApps":
 			if gnomon.IsScanning() {
 				menu_tabs.SelectIndex(0)

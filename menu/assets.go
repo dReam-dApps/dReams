@@ -652,7 +652,7 @@ func DisableIndexControls(d bool) {
 		Assets.Index.Add.Hide()
 		Assets.Index.Search.Hide()
 		Assets.Headers.Hide()
-		Market.Market_box.Hide()
+		Market.Actions.Hide()
 		gnomon.ZeroIndexCount()
 	} else {
 		Assets.Index.Add.Show()
@@ -660,7 +660,7 @@ func DisableIndexControls(d bool) {
 		if rpc.Wallet.IsConnected() {
 			Assets.Headers.Show()
 			Assets.Claim.Show()
-			Market.Market_box.Show()
+			Market.Actions.Show()
 			if !Assets.Button.scanning && gnomon.HasChecked() {
 				Assets.Button.Rescan.Show()
 			} else {
@@ -676,14 +676,14 @@ func DisableIndexControls(d bool) {
 			Assets.Button.Send.Hide()
 			Assets.Button.List.Hide()
 			Assets.Claim.Hide()
-			Market.Market_box.Hide()
+			Market.Actions.Hide()
 			Assets.Button.Rescan.Hide()
 		}
 	}
 	Assets.Index.Add.Refresh()
 	Assets.Index.Search.Refresh()
 	Assets.Headers.Refresh()
-	Market.Market_box.Refresh()
+	Market.Actions.Refresh()
 	Assets.Button.Rescan.Refresh()
 }
 
