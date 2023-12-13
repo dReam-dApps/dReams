@@ -490,7 +490,7 @@ func checkDreamsG45s(gc bool, g45s map[string]string) {
 				owner, _ := gnomon.GetSCIDValuesByKey(scid, "owner")
 				minter, _ := gnomon.GetSCIDValuesByKey(scid, "minter")
 				coll, _ := gnomon.GetSCIDValuesByKey(scid, "collection")
-				if owner != nil && minter != nil && coll != nil {
+				if owner != nil && minter != nil && coll != nil && owner[0] != "" {
 					if owner[0] == rpc.Wallet.Address {
 						var add menu.Asset
 						add.Type = "Avatar"

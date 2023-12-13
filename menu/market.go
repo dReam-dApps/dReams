@@ -194,8 +194,6 @@ func BidBuyConfirm(scid string, amt uint64, bid bool, d *dreams.AppObject) {
 
 // Confirm a cancel or close action of listed NFA
 //   - close true to close listing, false to cancel
-//   - Confirmation string from Market.Tab
-//   - Pass main window obj to reset to
 func ConfirmCancelClose(scid string, close bool, d *dreams.AppObject) {
 	var text, title, coll, name string
 	Market.Confirming = true
@@ -980,21 +978,49 @@ func PlaceMarket(d *dreams.AppObject) *container.Split {
 	Control.Dapps["NFA Market"] = true
 	Control.Unlock()
 
-	go RunNFAMarket(d)
+	go RunNFAMarket(d, max)
 
 	return market
 }
 
+// Splash screen for when listings lists syncing
+func syncScreen() *fyne.Container {
+	text := canvas.NewText("Syncing...", color.White)
+	text.Alignment = fyne.TextAlignCenter
+	text.TextSize = 21
+
+	img := canvas.NewImageFromResource(bundle.ResourceMarketCirclePng)
+	img.SetMinSize(fyne.NewSize(150, 150))
+
+	return container.NewBorder(
+		dwidget.LabelColor(container.NewVBox(widget.NewLabel(""))),
+		nil,
+		nil,
+		nil,
+		container.NewCenter(img, text), widget.NewProgressBarInfinite())
+}
+
 // Routine for NFA market, finds listings and disables controls, see PlaceAssets() and PlaceMarket() layouts
-func RunNFAMarket(d *dreams.AppObject) {
+func RunNFAMarket(d *dreams.AppObject, cont *fyne.Container) {
 	offset := 0
+	synced := false
 	for {
 		select {
 		case <-d.Receive(): // do on interval
 			if !rpc.Wallet.IsConnected() || !rpc.Daemon.IsConnected() {
 				Market.Button.BidBuy.Hide()
+				synced = false
 				d.WorkDone()
 				continue
+			}
+
+			if !synced && gnomes.GnomonScan(d.IsConfiguring()) {
+				reset := cont.Objects[1]
+				cont.Objects[1] = syncScreen()
+				logger.Println("[NFA Market] Syncing")
+				FindNFAListings(nil)
+				synced = true
+				cont.Objects[1] = reset
 			}
 
 			// If connected daemon connected start looking for Gnomon sync with daemon
@@ -1581,7 +1607,7 @@ func GetListingPercents(scid string) (artP float64, royaltyP float64) {
 // Scan index for any active NFA listings
 //   - Pass assets from db store, can be nil arg
 func FindNFAListings(assets map[string]string) {
-	if Market.Searching {
+	if Market.Searching || !gnomon.HasChecked() {
 		return
 	}
 
@@ -1682,7 +1708,7 @@ func CheckAllNFAs(scids map[string]string) {
 					collection, _ := gnomon.GetSCIDValuesByKey(sc, "collection")
 
 					if data != nil && minter != nil && collection != nil && owner != nil && icon != nil {
-						if owner[0] == rpc.Wallet.Address {
+						if owner[0] == rpc.Wallet.Address && owner[0] != "" {
 							var add Asset
 							if minter[0] == Seals_mint && collection[0] == Seals_coll {
 								var seal Seal
