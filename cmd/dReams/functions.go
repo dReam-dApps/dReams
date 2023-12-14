@@ -204,17 +204,16 @@ func gnomonScan(contracts map[string]string) {
 	screen, bar := syncScreen()
 	menu_tabs.Items[2].Content = screen
 	menu.CheckWalletNames(rpc.Wallet.Address)
-	bar.SetValue(1)
-	checkDreamsNFAs(gnomon.HasChecked(), contracts)
-	bar.SetValue(2)
-	checkDreamsG45s(gnomon.HasChecked(), contracts)
-	bar.SetValue(3)
+	screen.Objects[0].(*fyne.Container).Objects[1].(*canvas.Text).Text = "Syncing NFAs..."
+	checkDreamsNFAs(contracts, bar)
+	bar.SetValue(0)
+	screen.Objects[0].(*fyne.Container).Objects[1].(*canvas.Text).Text = "Syncing G45s..."
+	checkDreamsG45s(contracts, bar)
 	if gnomon.DBStorageType() == "boltdb" {
 		for _, r := range menu.Assets.Asset {
 			gnomes.StoreBolt(r.Collection, r.Name, r)
 		}
 	}
-	bar.SetValue(4)
 	asset_tab.Objects[1].(*container.AppTabs).SelectIndex(1)
 	menu_tabs.Items[2].Content = asset_tab
 	menu_tabs.Refresh()
@@ -304,9 +303,8 @@ func menuRefresh(offset int) {
 
 // Check wallet for dReams NFAs
 //   - Pass scids from db store, can be nil arg
-//   - Pass false gc for rechecks
-func checkDreamsNFAs(gc bool, scids map[string]string) {
-	if gnomon.IsReady() && !gc {
+func checkDreamsNFAs(scids map[string]string, progress *widget.ProgressBar) {
+	if gnomon.IsReady() {
 		menu.Info.SetStatus("Checking for Assets")
 		if scids == nil {
 			scids = gnomon.GetAllOwnersAndSCIDs()
@@ -316,12 +314,15 @@ func checkDreamsNFAs(gc bool, scids map[string]string) {
 		menu.Theme.Select.Options = []string{}
 		holdero.Settings.ClearAssets()
 
+		progress.Max = float64(len(scids))
+
 		for sc := range scids {
 			if !rpc.Wallet.IsConnected() || !gnomon.IsRunning() {
 				break
 			}
 
 			checkNFAOwner(sc)
+			progress.SetValue(progress.Value + 1)
 		}
 
 		holdero.Settings.SortCardAssets()
@@ -473,13 +474,14 @@ func hsCards(owner, name, check string) {
 
 // Check if wallet owns in game G45 asset
 //   - Pass g45s from db store, can be nil arg
-//   - Pass false gc for rechecks
-func checkDreamsG45s(gc bool, g45s map[string]string) {
-	if gnomon.IsReady() && !gc {
+func checkDreamsG45s(g45s map[string]string, progress *widget.ProgressBar) {
+	if gnomon.IsReady() {
 		if g45s == nil {
 			g45s = gnomon.GetAllOwnersAndSCIDs()
 		}
 		logger.Println("[dReams] Checking G45 Assets")
+
+		progress.Max = float64(len(g45s))
 
 		for scid := range g45s {
 			if !rpc.Wallet.IsConnected() || !gnomon.IsRunning() {
@@ -529,6 +531,8 @@ func checkDreamsG45s(gc bool, g45s map[string]string) {
 					}
 				}
 			}
+
+			progress.SetValue(progress.Value + 1)
 		}
 		holdero.Settings.SortAvatarAsset()
 		menu.Assets.List.UnselectAll()
@@ -564,6 +568,7 @@ func disconnected() {
 	holdero.Disconnected(menu.DappEnabled("Holdero"))
 	prediction.Disconnected()
 	rpc.Wallet.Address = ""
+	menu.Assets.Names.ClearSelected()
 	menu.Theme.Select.Options = menu.Control.Themes
 	menu.Theme.Select.Refresh()
 	menu.Assets.Asset = []menu.Asset{}
@@ -805,14 +810,7 @@ func rescan() {
 	if menu.DappEnabled("Duels") {
 		duel.Inventory.ClearAll()
 	}
-	checkDreamsNFAs(false, nil)
-	checkDreamsG45s(false, nil)
-	if menu.DappEnabled("Holdero") {
-		if rpc.Wallet.IsConnected() {
-			menu.Assets.Names.Options = []string{rpc.Wallet.Address[0:12]}
-			menu.CheckWalletNames(rpc.Wallet.Address)
-		}
-	}
+	gnomonScan(gnomon.IndexContains())
 	menu.Assets.List.UnselectAll()
 	menu.Assets.SortList()
 }

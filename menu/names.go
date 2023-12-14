@@ -24,10 +24,35 @@ func NameEntry() fyne.CanvasObject {
 
 // Get a wallets registered names
 func CheckWalletNames(value string) {
+	var wallet, names []string
+	if len(value) > 12 {
+		wallet = append(wallet, value[0:12])
+	}
+
 	if gnomon.IsReady() {
-		names, _ := gnomon.GetSCIDKeysByValue(rpc.NameSCID, value)
+		names, _ = gnomon.GetSCIDKeysByValue(rpc.NameSCID, value)
 
 		sort.Strings(names)
-		Assets.Names.Options = append(Assets.Names.Options, names...)
+	}
+
+	Assets.Names.Options = append(wallet, names...)
+
+	if len(Assets.Names.Options) > 0 {
+		if Username == "" {
+			Assets.Names.SetSelectedIndex(0)
+		} else {
+			var found bool
+			for _, name := range Assets.Names.Options {
+				if name == Username {
+					found = true
+					Assets.Names.SetSelected(name)
+					break
+				}
+			}
+
+			if !found {
+				Assets.Names.SetSelectedIndex(0)
+			}
+		}
 	}
 }

@@ -46,3 +46,11 @@ func NewCanvasText(text string, size float32, align fyne.TextAlign) (canv *canva
 
 	return
 }
+
+// Create a new transparent *canvas.Rectangle to use as object spacer
+func NewSpacer(w, h float32) *canvas.Rectangle {
+	spacer := canvas.NewRectangle(color.Transparent)
+	spacer.SetMinSize(fyne.NewSize(w, h))
+
+	return spacer
+}
