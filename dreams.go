@@ -1,11 +1,13 @@
 package dreams
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"image/color"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"runtime"
 	"sort"
@@ -264,10 +266,15 @@ func FileExists(path, tag string) bool {
 	return false
 }
 
-// Download image file from url and return as canvas image
+// Download image file from URL and return as canvas.Image
 func DownloadCanvas(URL, fileName string) (canvas.Image, error) {
+	url, err := url.Parse(URL)
+	if err != nil {
+		return *canvas.NewImageFromImage(nil), err
+	}
+
 	client := &http.Client{Timeout: 15 * time.Second}
-	response, err := client.Get(URL)
+	response, err := client.Get(url.String())
 	if err != nil {
 		return *canvas.NewImageFromImage(nil), err
 	}
@@ -281,13 +288,24 @@ func DownloadCanvas(URL, fileName string) (canvas.Image, error) {
 	// 	return canvas.NewImageFromImage(nil), fmt.Errorf("%s does not point to an image", URL)
 	// }
 
-	return *canvas.NewImageFromReader(response.Body, fileName), nil
+	var buf bytes.Buffer
+	_, err = io.Copy(&buf, response.Body)
+	if err != nil {
+		return *canvas.NewImageFromImage(nil), err
+	}
+
+	return *canvas.NewImageFromReader(&buf, fileName), nil
 }
 
-// Download url image file as []byte
+// Download url image file from URL and return as []byte
 func DownloadBytes(URL string) ([]byte, error) {
+	url, err := url.Parse(URL)
+	if err != nil {
+		return nil, err
+	}
+
 	client := http.Client{Timeout: 15 * time.Second}
-	response, err := client.Get(URL)
+	response, err := client.Get(url.String())
 	if err != nil {
 		return nil, err
 	}

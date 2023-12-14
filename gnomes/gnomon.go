@@ -48,6 +48,19 @@ End Function`
 	G45_search_filter = `STORE("type", "G45-NFT")`
 )
 
+// Headers from Gnomon SC
+type SCHeaders struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	IconURL     string `json:"iconURL"`
+}
+
+// SCID with Gnomon headers
+type SC struct {
+	ID     string
+	Header SCHeaders
+}
+
 var logger = structures.Logger.WithFields(logrus.Fields{})
 
 // Enable escape codes for windows Stdout
@@ -58,6 +71,7 @@ func enableEscapeCodes() error {
 	return cmd.Run()
 }
 
+// Initialize logrus logger matching Gnomon log
 func InitLogrusLog(level logrus.Level) {
 	colors := true
 	if runtime.GOOS == "windows" {
@@ -81,12 +95,12 @@ func InitLogrusLog(level logrus.Level) {
 }
 
 // Manually add SCID to Gnomon index
-func AddToIndex(scid []string) (err error) {
+func AddToIndex(scids []string) (err error) {
 	filters := gnomes.Indexer.SearchFilter
 	gnomes.Indexer.SearchFilter = []string{}
 	scidstoadd := make(map[string]*structures.FastSyncImport)
 
-	for _, sc := range scid {
+	for _, sc := range scids {
 		owner, _ := gnomes.GetSCIDValuesByKey(rpc.GnomonSCID, sc+"owner")
 		if owner != nil {
 			scidstoadd[sc] = &structures.FastSyncImport{}
@@ -249,21 +263,25 @@ func GnomonState(config bool, scan func(map[string]string)) {
 }
 
 // Get Gnomon headers of SCID
-func GetSCHeaders(scid string) []string {
+func GetSCHeaders(scid string) (header SCHeaders) {
 	if gnomes.IsRunning() {
 		headers, _ := gnomes.GetSCIDValuesByKey(rpc.GnomonSCID, scid)
-
 		if headers != nil {
 			split := strings.Split(headers[0], ";")
-
-			if split[0] == "" {
-				return nil
+			switch len(split) {
+			case 1:
+				header.Name = split[0]
+			case 2:
+				header.Name = split[0]
+				header.Description = split[1]
+			case 3:
+				header.Name = split[0]
+				header.Description = split[1]
+				header.IconURL = split[2]
 			}
-
-			return split
 		}
 	}
-	return nil
+	return
 }
 
 // Get a requested NFA url

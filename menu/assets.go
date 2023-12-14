@@ -468,28 +468,38 @@ func PlaceAssets(tag string, profile fyne.CanvasObject, rescan func(), icon fyne
 		nil,
 		nil)
 
-	title_line := canvas.NewLine(bundle.TextColor)
-
 	var tab *container.TabItem
 	tabs := container.NewAppTabs(
 		container.NewTabItemWithIcon("", bundle.ResourceMarketCirclePng, layout.NewSpacer()),
 		container.NewTabItem("Owned", AssetList(icon, rescan, d)),
 		container.NewTabItem("Profile", container.NewBorder(
-			container.NewCenter(container.NewVBox(dwidget.NewCanvasText("User Profile", 18, fyne.TextAlignCenter), title_line)),
+			container.NewCenter(
+				container.NewVBox(
+					canvas.NewLine(bundle.TextColor),
+					dwidget.NewCanvasText("User Profile", 18, fyne.TextAlignCenter),
+					canvas.NewLine(bundle.TextColor))),
 			nil,
 			nil,
 			nil,
 			profile)),
 
 		container.NewTabItem("Headers", container.NewBorder(
-			container.NewCenter(container.NewVBox(dwidget.NewCanvasText("Gnomon SC Headers", 18, fyne.TextAlignCenter), title_line)),
+			container.NewCenter(
+				container.NewVBox(
+					canvas.NewLine(bundle.TextColor),
+					dwidget.NewCanvasText("Gnomon SC Headers", 18, fyne.TextAlignCenter),
+					canvas.NewLine(bundle.TextColor))),
 			nil,
 			nil,
 			nil,
 			Assets.Headers)),
 
 		container.NewTabItem("Index", container.NewBorder(
-			container.NewCenter(container.NewVBox(dwidget.NewCanvasText("Gnomon Index", 18, fyne.TextAlignCenter), title_line)),
+			container.NewCenter(
+				container.NewVBox(
+					canvas.NewLine(bundle.TextColor),
+					dwidget.NewCanvasText("Gnomon Index", 18, fyne.TextAlignCenter),
+					canvas.NewLine(bundle.TextColor))),
 			nil,
 			nil,
 			nil,
