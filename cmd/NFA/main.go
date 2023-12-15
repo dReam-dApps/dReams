@@ -170,7 +170,7 @@ func main() {
 				// Refresh Dero balance and Gnomon endpoint
 				connect_box.RefreshBalance()
 				if !rpc.Startup {
-					gnomes.GnomonEndPoint()
+					gnomes.EndPoint()
 				}
 
 				if rpc.Daemon.IsConnected() && gnomon.IsRunning() {

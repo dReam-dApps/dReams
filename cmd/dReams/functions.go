@@ -229,8 +229,8 @@ func fetch(done chan struct{}) {
 				rpc.GetWalletHeight("dReams")
 				if !rpc.Startup {
 					checkConnection()
-					gnomes.GnomonEndPoint()
-					gnomes.GnomonState(dReams.IsConfiguring(), gnomonScan)
+					gnomes.EndPoint()
+					gnomes.State(dReams.IsConfiguring(), gnomonScan)
 
 					go menuRefresh(offset)
 

@@ -38,7 +38,8 @@ func StartDreamsIndicators(add []DreamsIndicator) fyne.CanvasObject {
 
 	gnomes.Indicator.Sync = canvas.NewColorRGBAAnimation(purple, blue,
 		time.Second*3, func(c color.Color) {
-			if gnomon.IsInitialized() && !gnomon.HasChecked() {
+			init := gnomon.IsInitialized()
+			if (init && !gnomon.IsStatus("indexed")) || (init && !gnomon.HasChecked()) {
 				g_top.FillColor = c
 				canvas.Refresh(g_top)
 				g_bottom.FillColor = c
@@ -65,7 +66,7 @@ func StartDreamsIndicators(add []DreamsIndicator) fyne.CanvasObject {
 
 	gnomes.Indicator.Full = canvas.NewColorRGBAAnimation(purple, blue,
 		time.Second*3, func(c color.Color) {
-			if gnomon.IsInitialized() && gnomon.HasIndex(2) && gnomon.HasChecked() {
+			if gnomon.IsInitialized() && gnomon.HasIndex(2) && gnomon.HasChecked() && gnomon.IsStatus("indexed") {
 				g_full.FillColor = c
 				canvas.Refresh(g_full)
 				sync_box.Hide()
@@ -167,7 +168,8 @@ func StartIndicators() fyne.CanvasObject {
 
 	gnomes.Indicator.Sync = canvas.NewColorRGBAAnimation(purple, blue,
 		time.Second*3, func(c color.Color) {
-			if gnomon.IsInitialized() && !gnomon.HasChecked() {
+			init := gnomon.IsInitialized()
+			if (init && !gnomon.IsStatus("indexed")) || (init && !gnomon.HasChecked()) {
 				g_top.FillColor = c
 				canvas.Refresh(g_top)
 				g_bottom.FillColor = c
@@ -195,7 +197,7 @@ func StartIndicators() fyne.CanvasObject {
 
 	gnomes.Indicator.Full = canvas.NewColorRGBAAnimation(purple, blue,
 		time.Second*3, func(c color.Color) {
-			if gnomon.IsInitialized() && gnomon.HasIndex(1) && gnomon.HasChecked() {
+			if gnomon.IsInitialized() && gnomon.HasIndex(1) && gnomon.HasChecked() && gnomon.IsStatus("indexed") {
 				g_full.FillColor = c
 				canvas.Refresh(g_full)
 				sync_box.Hide()

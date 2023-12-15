@@ -8,6 +8,7 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
+	"github.com/dReam-dApps/dReams/dwidget"
 	"github.com/dReam-dApps/dReams/rpc"
 )
 
@@ -113,10 +114,10 @@ func InfoDisplay() fyne.CanvasObject {
 
 	info_form := []*widget.FormItem{}
 	info_form = append(info_form, widget.NewFormItem("", Info.Status))
-	info_form = append(info_form, widget.NewFormItem("Gnomon Height", Info.Height.Gnomes))
-	info_form = append(info_form, widget.NewFormItem("Daemon Height", Info.Height.Daemon))
-	info_form = append(info_form, widget.NewFormItem("Wallet Height", Info.Height.Wallet))
-	info_form = append(info_form, widget.NewFormItem("Price", Info.Price))
+	info_form = append(info_form, widget.NewFormItem("Gnomon Height", container.NewStack(dwidget.NewSpacer(210, 0), Info.Height.Gnomes)))
+	info_form = append(info_form, widget.NewFormItem("Daemon Height", container.NewStack(dwidget.NewSpacer(210, 0), Info.Height.Daemon)))
+	info_form = append(info_form, widget.NewFormItem("Wallet Height", container.NewStack(dwidget.NewSpacer(210, 0), Info.Height.Wallet)))
+	info_form = append(info_form, widget.NewFormItem("Price", container.NewStack(dwidget.NewSpacer(210, 0), Info.Price)))
 
 	return container.NewVBox(widget.NewForm(info_form...))
 }

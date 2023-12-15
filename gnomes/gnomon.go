@@ -94,7 +94,7 @@ func InitLogrusLog(level logrus.Level) {
 	}
 }
 
-// Manually add SCID to Gnomon index
+// Manually add SCID(s) to Gnomon index
 func AddToIndex(scids []string) (err error) {
 	filters := gnomes.Indexer.SearchFilter
 	gnomes.Indexer.SearchFilter = []string{}
@@ -117,24 +117,24 @@ func AddToIndex(scids []string) (err error) {
 	return
 }
 
-// Create Gnomon graviton db with dReams tag
+// Create a new graviton DB for Gnomon storage
 //   - If dbType is boltdb, will return nil gravdb
-func GnomonGravDB(dbType, dbPath string) *storage.GravitonStore {
+func NewGravDB(dbType, dbPath string) *storage.GravitonStore {
 	if dbType == "boltdb" {
 		return nil
 	}
 
 	db, err := storage.NewGravDB(dbPath, "25ms")
 	if err != nil {
-		logger.Fatalf("[GnomonGravDB] %s\n", err)
+		logger.Fatalf("%s\n", err)
 	}
 
 	return db
 }
 
-// Create Gnomon bbolt db with dReams tag
+// Create a new bbolt DB with dReams tag for Gnomon storage
 //   - If dbType is not boltdb, will return nil boltdb
-func GnomonBoltDB(dbType, dbPath string) *storage.BboltStore {
+func NewBoltDB(dbType, dbPath string) *storage.BboltStore {
 	if dbType != "boltdb" {
 		return nil
 	}
@@ -143,7 +143,7 @@ func GnomonBoltDB(dbType, dbPath string) *storage.BboltStore {
 	db_name := fmt.Sprintf("gnomondb_bolt_%s_%s.db", "dReams", shasum)
 	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
 		if err := os.MkdirAll(dbPath, 0755); err != nil {
-			logger.Fatalf("[GnomonBoltDB] %s\n", err)
+			logger.Fatalf("[NewBoltDB] %s\n", err)
 		}
 	}
 
@@ -167,8 +167,8 @@ func StartGnomon(tag, dbtype string, filters []string, upper, lower int, custom 
 	logger.Printf("[%s] Starting Gnomon\n", tag)
 	shasum := fmt.Sprintf("%x", sha1.Sum([]byte("dReams")))
 	db_path := filepath.Join("gnomondb", fmt.Sprintf("%s_%s", "dReams", shasum))
-	bolt_backend := GnomonBoltDB(dbtype, db_path)
-	grav_backend := GnomonGravDB(dbtype, db_path)
+	bolt_backend := NewBoltDB(dbtype, db_path)
+	grav_backend := NewGravDB(dbtype, db_path)
 
 	var last_height int64
 	if dbtype == "boltdb" {
@@ -191,19 +191,14 @@ func StartGnomon(tag, dbtype string, filters []string, upper, lower int, custom 
 					break
 				}
 
-				if contracts >= lower {
+				if contracts >= lower && gnomes.IsStatus("indexed") {
 					custom()
 					break
 				}
 
 				time.Sleep(time.Second)
 
-				// if !rpc.Daemon.IsConnected() || ClosingApps() {
-				// 	logger.Errorf("[%s] Could not add all custom SCIDs to index\n", tag)
-				// 	break
-				// }
-
-				if !rpc.Daemon.IsConnected() {
+				if !rpc.Daemon.IsConnected() || gnomes.IsClosing() || !gnomes.IsInitialized() {
 					logger.Errorf("[%s] Could not add all custom SCIDs to index\n", tag)
 					break
 				}
@@ -215,14 +210,14 @@ func StartGnomon(tag, dbtype string, filters []string, upper, lower int, custom 
 }
 
 // Update Gnomon endpoint to current rpc.Daemon.Rpc value
-func GnomonEndPoint() {
+func EndPoint() {
 	if rpc.Daemon.IsConnected() && gnomes.IsInitialized() && !gnomes.IsScanning() {
 		gnomes.Indexer.Endpoint = rpc.Daemon.Rpc
 	}
 }
 
-// Check three connection signals
-func Connected() bool {
+// Check if Gnomon and RPC are ready
+func IsConnected() bool {
 	if rpc.IsReady() && gnomes.IsSynced() {
 		return true
 	}
@@ -230,8 +225,8 @@ func Connected() bool {
 	return false
 }
 
-// Gnomon is ready for dApp to preform initial scan
-func GnomonScan(config bool) bool {
+// Scan tells dApps if Gnomon is ready for them to preform their initial scan
+func Scan(config bool) bool {
 	if gnomes.IsSynced() && gnomes.HasChecked() && !config {
 		return true
 	}
@@ -239,13 +234,13 @@ func GnomonScan(config bool) bool {
 	return false
 }
 
-// Gnomon will scan connected wallet on start up, then ensure sync
-//   - Hold out checking if dReams is in configure
+// State checks and maintains Gnomon state (synced/scanning/checked), it will scan connected wallet once synced, then ensure sync
+//   - Hold out checking if app is configuring
 //   - Pass scan func for initial Gnomon sync
-func GnomonState(config bool, scan func(map[string]string)) {
+func State(config bool, scan func(map[string]string)) {
 	if rpc.Daemon.IsConnected() && gnomes.IsRunning() {
 		contracts := gnomes.IndexContains()
-		if gnomes.HasIndex(2) && !gnomes.Start {
+		if gnomes.HasIndex(2) && !gnomes.IsStarting() {
 			height := gnomes.GetChainHeight()
 			if gnomes.GetLastHeight() >= height-3 && height != 0 {
 				gnomes.Synced(true)
@@ -259,6 +254,8 @@ func GnomonState(config bool, scan func(map[string]string)) {
 				gnomes.Synced(false)
 			}
 		}
+	} else {
+		gnomes.Synced(false)
 	}
 }
 

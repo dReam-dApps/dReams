@@ -47,6 +47,7 @@ var Indicator indicator
 // Gnomes exposes methods of Gnomon
 type Gnomes interface {
 	Status() string
+	IsStatus(status string) bool
 	IsStarting() bool
 	DBStorageType() string
 	SetDBStorageType(s string)
@@ -102,6 +103,14 @@ func (g *Gnomon) Status() (status string) {
 	}
 
 	return
+}
+
+// Returns if Indexer.Status matches status string
+func (g *Gnomon) IsStatus(status string) bool {
+	g.RLock()
+	defer g.RUnlock()
+
+	return g.Indexer.Status == status
 }
 
 // Returns true if gnomes is starting
