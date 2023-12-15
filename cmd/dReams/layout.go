@@ -519,7 +519,7 @@ func place() *fyne.Container {
 			}
 		case "Market":
 			dReams.SetSubTab("Market")
-			go menu.FindNFAListings(nil)
+			go menu.FindNFAListings(nil, nil)
 			menu.Market.Button.Cancel.Hide()
 			menu.Market.Button.Close.Hide()
 			menu.Market.List.Auction.Refresh()

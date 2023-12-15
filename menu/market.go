@@ -815,7 +815,7 @@ func PlaceMarket(d *dreams.AppObject) *container.Split {
 		Market.Entry.SetText("0.0")
 		switch ti.Text {
 		case "Auctions":
-			go FindNFAListings(nil)
+			go FindNFAListings(nil, nil)
 			Market.Tab = "Auction"
 			Market.List.Auction.UnselectAll()
 			Market.List.Wallet.UnselectAll()
@@ -826,7 +826,7 @@ func PlaceMarket(d *dreams.AppObject) *container.Split {
 			ResetAuctionInfo()
 			Market.Details = auction_info
 		case "Buy Now":
-			go FindNFAListings(nil)
+			go FindNFAListings(nil, nil)
 			Market.Tab = "Buy"
 			Market.List.Buy.UnselectAll()
 			Market.List.Wallet.UnselectAll()
@@ -837,7 +837,7 @@ func PlaceMarket(d *dreams.AppObject) *container.Split {
 			ResetBuyInfo()
 			Market.Details = buy_info
 		case "My Listings":
-			go FindNFAListings(nil)
+			go FindNFAListings(nil, nil)
 			Market.Tab = "Buy"
 			Market.List.Auction.UnselectAll()
 			Market.List.Wallet.UnselectAll()
@@ -1018,7 +1018,7 @@ func PlaceMarket(d *dreams.AppObject) *container.Split {
 }
 
 // Splash screen for when listings lists syncing
-func syncScreen() *fyne.Container {
+func syncScreen() (max *fyne.Container, bar *widget.ProgressBar) {
 	text := canvas.NewText("Syncing...", color.White)
 	text.Alignment = fyne.TextAlignCenter
 	text.TextSize = 21
@@ -1026,12 +1026,19 @@ func syncScreen() *fyne.Container {
 	img := canvas.NewImageFromResource(bundle.ResourceMarketCirclePng)
 	img.SetMinSize(fyne.NewSize(150, 150))
 
-	return container.NewBorder(
+	bar = widget.NewProgressBar()
+	bar.TextFormatter = func() string {
+		return ""
+	}
+
+	max = container.NewBorder(
 		dwidget.LabelColor(container.NewVBox(widget.NewLabel(""))),
 		nil,
 		nil,
 		nil,
-		container.NewCenter(img, text), widget.NewProgressBarInfinite())
+		container.NewCenter(img, text), bar)
+
+	return
 }
 
 // Routine for NFA market, finds listings and disables controls, see PlaceAssets() and PlaceMarket() layouts
@@ -1051,9 +1058,10 @@ func RunNFAMarket(d *dreams.AppObject, cont *fyne.Container) {
 			if !synced && gnomes.GnomonScan(d.IsConfiguring()) {
 				cont.Objects[2].(*fyne.Container).Hide()
 				reset := cont.Objects[1]
-				cont.Objects[1] = syncScreen()
+				screen, bar := syncScreen()
+				cont.Objects[1] = screen
 				logger.Println("[NFA Market] Syncing")
-				FindNFAListings(nil)
+				FindNFAListings(nil, bar)
 				synced = true
 				cont.Objects[1] = reset
 				cont.Objects[2].(*fyne.Container).Show()
@@ -1083,7 +1091,7 @@ func RunNFAMarket(d *dreams.AppObject, cont *fyne.Container) {
 					if gnomon.IsSynced() {
 						if offset%5 == 0 {
 							if d.OnSubTab("Market") {
-								FindNFAListings(nil)
+								FindNFAListings(nil, nil)
 								if gnomon.DBStorageType() == "boltdb" {
 									for _, r := range Market.Auctions {
 										gnomes.StoreBolt(r.Collection, r.Name, r)
@@ -1656,7 +1664,8 @@ func GetListingPercents(scid string) (artP float64, royaltyP float64) {
 
 // Scan index for any active auction and buy now NFA listings
 //   - Pass scids from db store, can be nil arg to check all from db
-func FindNFAListings(scids map[string]string) {
+//   - progress widget to update ui
+func FindNFAListings(scids map[string]string, progress *widget.ProgressBar) {
 	if Market.Searching || !gnomon.HasChecked() {
 		return
 	}
@@ -1672,6 +1681,10 @@ func FindNFAListings(scids map[string]string) {
 		my_list := []NFAListing{}
 		if scids == nil {
 			scids = gnomon.GetAllOwnersAndSCIDs()
+		}
+
+		if progress != nil {
+			progress.Max = float64(len(scids))
 		}
 
 		for sc := range scids {
@@ -1697,6 +1710,10 @@ func FindNFAListings(scids map[string]string) {
 
 			if owned {
 				my_list = append(my_list, b)
+			}
+
+			if progress != nil {
+				progress.SetValue(progress.Value + 1)
 			}
 		}
 
