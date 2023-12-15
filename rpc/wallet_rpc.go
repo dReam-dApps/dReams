@@ -330,7 +330,7 @@ func GetWalletHeight(tag string) {
 
 // Swap Dero for dReams
 //   - amt of Der to swap for dReams
-func GetdReams(amt uint64) {
+func GetdReams(amt uint64) (tx string) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
@@ -360,11 +360,13 @@ func GetdReams(amt uint64) {
 	}
 
 	PrintLog("[Swap] DERO-dReams TX: %s", txid)
+
+	return txid.TXID
 }
 
 // Swap dReams for Dero
 //   - amt of dReams to swap for Dero
-func TradedReams(amt uint64) {
+func TradedReams(amt uint64) (tx string) {
 	rpcClientW, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
 	defer cancel()
 
@@ -395,6 +397,8 @@ func TradedReams(amt uint64) {
 	}
 
 	PrintLog("[Swap] dReams-DERO TX: %s", txid)
+
+	return txid.TXID
 }
 
 var UnlockFee = uint64(300000)

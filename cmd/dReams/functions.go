@@ -679,10 +679,6 @@ func daemonConnectedBox() fyne.Widget {
 			rpc.FetchFees()
 			filters := gnomonFilters()
 			gnomes.StartGnomon("dReams", gnomon.DBStorageType(), filters, menu.Assets.Count.G45+menu.Assets.Count.NFA, menu.Assets.Count.NFA, menu.G45Index)
-
-			if menu.DappEnabled("dSports and dPredictions") {
-				prediction.OnConnected()
-			}
 		}
 
 		if !b {
@@ -775,13 +771,7 @@ func rpcConnectButton() fyne.Widget {
 				rpc.Ping()
 				rpc.GetAddress("dReams")
 				checkConnection()
-				if menu.DappEnabled("Holdero") {
-					holdero.OnConnected()
-				}
 
-				if menu.DappEnabled("dSports and dPredictions") {
-					prediction.OnConnected()
-				}
 				wait = false
 
 				return

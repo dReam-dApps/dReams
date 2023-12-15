@@ -646,13 +646,12 @@ func place() *fyne.Container {
 // dReams wallet layout
 func placeWall(intros []menu.IntroText) *container.Split {
 	daemon_cont := container.NewHScroll(daemonRpcEntry())
-	daemon_cont.SetMinSize(fyne.NewSize(340, 35.1875))
+	daemon_cont.SetMinSize(fyne.NewSize(300, 35.1875))
 
 	user_input_cont := container.NewVBox(
 		daemon_cont,
 		walletRpcEntry(),
-		userPassEntry(),
-		rpcConnectButton(),
+		container.NewBorder(nil, nil, nil, rpcConnectButton(), userPassEntry()),
 		layout.NewSpacer(),
 		menu.InfoDisplay())
 

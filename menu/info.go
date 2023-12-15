@@ -7,16 +7,16 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
-	"github.com/dReam-dApps/dReams/bundle"
+	"fyne.io/fyne/v2/widget"
 	"github.com/dReam-dApps/dReams/rpc"
 )
 
 type dispayObjects struct {
-	Price  *canvas.Text
+	Price  *widget.Entry
 	Height struct {
-		Wallet *canvas.Text
-		Daemon *canvas.Text
-		Gnomes *canvas.Text
+		Wallet *widget.Entry
+		Daemon *widget.Entry
+		Gnomes *widget.Entry
 	}
 	Indexed *canvas.Text
 	Status  *canvas.Text
@@ -34,9 +34,9 @@ func (i *dispayObjects) SetStatus(s string) {
 // Refresh Gnomon height display
 func (i *dispayObjects) RefreshGnomon() {
 	if gnomon.IsRunning() {
-		i.Height.Gnomes.Text = fmt.Sprintf("Gnomon Height: %d", gnomon.GetLastHeight())
+		i.Height.Gnomes.Text = fmt.Sprintf("%d", gnomon.GetLastHeight())
 	} else {
-		i.Height.Gnomes.Text = "Gnomon Height: 0"
+		i.Height.Gnomes.Text = "0"
 
 	}
 	i.Height.Gnomes.Refresh()
@@ -57,9 +57,9 @@ func (i *dispayObjects) RefreshIndexed() {
 func (i *dispayObjects) RefreshDaemon(tag string) {
 	if rpc.Daemon.IsConnected() {
 		height := rpc.DaemonHeight(tag, rpc.Daemon.Rpc)
-		i.Height.Daemon.Text = fmt.Sprintf("Daemon Height: %d", height)
+		i.Height.Daemon.Text = fmt.Sprintf("%d", height)
 	} else {
-		i.Height.Daemon.Text = "Daemon Height: 0"
+		i.Height.Daemon.Text = "0"
 
 	}
 	i.Height.Daemon.Refresh()
@@ -69,9 +69,9 @@ func (i *dispayObjects) RefreshDaemon(tag string) {
 func (i *dispayObjects) RefreshPrice(tag string) {
 	if rpc.Daemon.IsConnected() {
 		_, price := GetPrice("DERO-USDT", tag)
-		i.Price.Text = fmt.Sprintf("Dero Price: $%s", price)
+		i.Price.Text = fmt.Sprintf("$%s", price)
 	} else {
-		i.Price.Text = "Dero Price: $"
+		i.Price.Text = "$"
 	}
 	i.Price.Refresh()
 }
@@ -79,9 +79,9 @@ func (i *dispayObjects) RefreshPrice(tag string) {
 // Refresh wallet height display
 func (i *dispayObjects) RefreshWallet() {
 	if rpc.Wallet.IsConnected() {
-		i.Height.Wallet.Text = fmt.Sprintf("Wallet Height: %s", rpc.Wallet.Display.Height)
+		i.Height.Wallet.Text = fmt.Sprintf("%d", rpc.Wallet.Height)
 	} else {
-		i.Height.Wallet.Text = " Wallet Height: 0"
+		i.Height.Wallet.Text = "0"
 	}
 	i.Height.Wallet.Refresh()
 }
@@ -89,27 +89,34 @@ func (i *dispayObjects) RefreshWallet() {
 // Set wallet and chain display content for menu
 func InfoDisplay() fyne.CanvasObject {
 	Info.Status = canvas.NewText("", color.RGBA{31, 150, 200, 210})
-	Info.Height.Gnomes = canvas.NewText("Gnomon Height: ", bundle.TextColor)
-	Info.Height.Daemon = canvas.NewText("Daemon Height: ", bundle.TextColor)
-	Info.Height.Wallet = canvas.NewText("Wallet Height: ", bundle.TextColor)
-	Info.Price = canvas.NewText("Dero Price: $", bundle.TextColor)
+	Info.Height.Gnomes = widget.NewEntry()
+	Info.Height.Daemon = widget.NewEntry()
+	Info.Height.Wallet = widget.NewEntry()
+	Info.Price = widget.NewEntry()
+
+	Info.Height.Gnomes.Disable()
+	Info.Height.Daemon.Disable()
+	Info.Height.Wallet.Disable()
+	Info.Price.Disable()
 
 	Info.Status.TextSize = 18
-	Info.Height.Gnomes.TextSize = 18
-	Info.Height.Daemon.TextSize = 18
-	Info.Height.Wallet.TextSize = 18
-	Info.Price.TextSize = 18
+	// Info.Height.Gnomes.TextSize = 18
+	// Info.Height.Daemon.TextSize = 18
+	// Info.Height.Wallet.TextSize = 18
+	// Info.Price.TextSize = 18
 
 	Info.Status.Alignment = fyne.TextAlignCenter
-	Info.Height.Gnomes.Alignment = fyne.TextAlignCenter
-	Info.Height.Daemon.Alignment = fyne.TextAlignCenter
-	Info.Height.Wallet.Alignment = fyne.TextAlignCenter
-	Info.Price.Alignment = fyne.TextAlignCenter
+	// Info.Height.Gnomes.Alignment = fyne.TextAlignCenter
+	// Info.Height.Daemon.Alignment = fyne.TextAlignCenter
+	// Info.Height.Wallet.Alignment = fyne.TextAlignCenter
+	// Info.Price.Alignment = fyne.TextAlignCenter
 
-	return container.NewVBox(
-		Info.Status,
-		Info.Height.Gnomes,
-		Info.Height.Daemon,
-		Info.Height.Wallet,
-		Info.Price)
+	info_form := []*widget.FormItem{}
+	info_form = append(info_form, widget.NewFormItem("", Info.Status))
+	info_form = append(info_form, widget.NewFormItem("Gnomon Height", Info.Height.Gnomes))
+	info_form = append(info_form, widget.NewFormItem("Daemon Height", Info.Height.Daemon))
+	info_form = append(info_form, widget.NewFormItem("Wallet Height", Info.Height.Wallet))
+	info_form = append(info_form, widget.NewFormItem("Price", Info.Price))
+
+	return container.NewVBox(widget.NewForm(info_form...))
 }
