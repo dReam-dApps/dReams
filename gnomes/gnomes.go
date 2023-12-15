@@ -9,9 +9,12 @@ import (
 
 	"github.com/civilware/Gnomon/indexer"
 	"github.com/civilware/Gnomon/structures"
+	"github.com/dReam-dApps/dReams/dwidget"
+	"github.com/dReam-dApps/dReams/rpc"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/data/validation"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
 	xwidget "fyne.io/x/fyne/widget"
@@ -21,7 +24,7 @@ import (
 type Gnomon struct {
 	DBType  string
 	Para    int
-	Fast    bool
+	Fast    structures.FastSyncConfig
 	Start   bool
 	Init    bool
 	Sync    bool
@@ -67,7 +70,8 @@ type Gnomes interface {
 	IsSynced() bool
 	IsRunning() bool
 	IsReady() bool
-	SetFastsync(b bool)
+	SetFastsync(enabled, force bool, diff int64)
+	GetFastsync() structures.FastSyncConfig
 	SetParallel(i int)
 	GetParallel() int
 	SetSearchFilters(filters []string)
@@ -327,9 +331,23 @@ func (g *Gnomon) IsReady() bool {
 	return false
 }
 
-// Set fastsync bool
-func (g *Gnomon) SetFastsync(b bool) {
-	g.Fast = b
+// Set Gnomon structures.FastSyncConfig, skip recheck and no code default false
+func (g *Gnomon) SetFastsync(enabled, force bool, diff int64) {
+	g.Lock()
+	g.Fast.Enabled = enabled
+	g.Fast.SkipFSRecheck = false
+	g.Fast.ForceFastSync = force
+	g.Fast.NoCode = false
+	g.Fast.ForceFastSyncDiff = diff
+	g.Unlock()
+}
+
+// Get Gnomon structures.FastSyncConfig
+func (g *Gnomon) GetFastsync() structures.FastSyncConfig {
+	g.RLock()
+	defer g.RUnlock()
+
+	return g.Fast
 }
 
 // Set Indexer parallel blocks value
@@ -420,25 +438,89 @@ func (g *Gnomon) GetLiveSCIDValuesByKey(scid string, key interface{}) (valuesstr
 	return g.Indexer.GetSCIDValuesByKey(v, scid, key, g.Indexer.ChainHeight)
 }
 
-// UI control panel to set Gnomes vars
+// UI control panel to set Gnomon vars
 func (g *Gnomon) ControlPanel(w fyne.Window) *fyne.Container {
 	db := widget.NewRadioGroup([]string{"boltdb", "gravdb"}, func(s string) {
 		g.DBType = s
 	})
 	db.Horizontal = true
+	db.Required = true
 	db.SetSelected(g.DBType)
 
-	fast := widget.NewRadioGroup([]string{"true", "false"}, func(s string) {
+	fast_force := widget.NewRadioGroup([]string{"true", "false"}, nil)
+	fast_force.Horizontal = true
+	fast_force.Required = true
+
+	fast_diff := dwidget.NewDeroEntry("", 1, 0)
+	fast_diff.Validator = validation.NewRegexp(`^[^0]\d{0,}$`, "Int required")
+	fast_diff.AllowFloat = false
+
+	fast_enabled := widget.NewRadioGroup([]string{"true", "false"}, func(s string) {
 		if b, err := strconv.ParseBool(s); err == nil {
-			g.Fast = b
+			if b {
+				fast_force.Enable()
+				if fast_force.Selected == "true" {
+					fast_diff.Enable()
+				}
+			} else {
+				fast_force.Disable()
+				fast_diff.Disable()
+			}
+
+			g.Fast.Enabled = b
 
 			return
 		}
 
-		g.Fast = true
+		g.Fast.Enabled = true
 	})
-	fast.Horizontal = true
-	fast.SetSelected(strconv.FormatBool(g.Fast))
+	fast_enabled.Horizontal = true
+	fast_enabled.Required = true
+
+	fast_diff.OnChanged = func(s string) {
+		if fast_diff.Validate() != nil {
+			fast_diff.SetText("100")
+			g.Fast.ForceFastSyncDiff = structures.FORCE_FASTSYNC_DIFF
+			return
+		}
+
+		if i, err := strconv.ParseInt(fast_diff.Text, 10, 64); err == nil {
+			if i > 100000 {
+				i = 100000
+				fast_diff.SetText("100000")
+			} else if i < 100 {
+				i = 100
+				fast_diff.SetText("100")
+			}
+			g.Fast.ForceFastSyncDiff = i
+
+			return
+		}
+
+		fast_diff.SetText("100")
+		g.Fast.ForceFastSyncDiff = structures.FORCE_FASTSYNC_DIFF
+	}
+
+	fast_diff.SetText(strconv.Itoa(int(g.Fast.ForceFastSyncDiff)))
+
+	fast_force.OnChanged = func(s string) {
+		if b, err := strconv.ParseBool(s); err == nil {
+			if b {
+				fast_diff.Enable()
+			} else {
+				fast_diff.Disable()
+			}
+			g.Fast.ForceFastSync = b
+
+			return
+		}
+		fast_diff.Disable()
+		g.Fast.ForceFastSync = false
+	}
+
+	fast_force.SetSelected(strconv.FormatBool(g.Fast.ForceFastSync))
+
+	fast_enabled.SetSelected(strconv.FormatBool(g.Fast.Enabled))
 
 	para := widget.NewSelect([]string{"1", "2", "3", "4", "5"}, func(s string) {
 		if i, err := strconv.ParseInt(s, 10, 64); err == nil {
@@ -460,13 +542,19 @@ func (g *Gnomon) ControlPanel(w fyne.Window) *fyne.Container {
 		dialog.NewConfirm("Delete DB", "This will delete your current Gnomon DB", func(b bool) {
 			if b {
 				os.RemoveAll(filepath.Clean("gnomondb"))
+				dialog.NewInformation("Gnomon", "DB Deleted", w).Show()
+				rpc.PrintLog("[Gnomon] DB deleted")
+
 			}
 		}, w).Show()
 	})
+	delete_db.Importance = widget.HighImportance
 
 	gnomes_form := []*widget.FormItem{}
 	gnomes_form = append(gnomes_form, widget.NewFormItem("DB Type", db))
-	gnomes_form = append(gnomes_form, widget.NewFormItem("Fastsync", fast))
+	gnomes_form = append(gnomes_form, widget.NewFormItem("Fastsync", fast_enabled))
+	gnomes_form = append(gnomes_form, widget.NewFormItem("Force fastsync", fast_force))
+	gnomes_form = append(gnomes_form, widget.NewFormItem("Fastsync diff", fast_diff))
 	gnomes_form = append(gnomes_form, widget.NewFormItem("Parallel Blocks", para))
 
 	return container.NewBorder(nil, container.NewCenter(delete_db), nil, nil, widget.NewForm(gnomes_form...))

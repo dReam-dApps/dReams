@@ -159,7 +159,7 @@ func GnomonBoltDB(dbType, dbPath string) *storage.BboltStore {
 //   - End point from rpc.Daemon.Rpc
 //   - tag for log print
 //   - dbtype defines gravdb or boltdb
-//   - custom func() is for adding specific SCID to index on Gnomon start, Gnomes.Fast false will bypass
+//   - custom func() is for adding specific SCID to index on Gnomon start, gnomes.Fast.Enabled false will bypass
 //   - lower defines the lower limit of indexed SCIDs from Gnomon search filters before custom adds
 //   - upper defines the higher limit when custom indexed SCIDs exist already
 func StartGnomon(tag, dbtype string, filters []string, upper, lower int, custom func()) {
@@ -179,12 +179,12 @@ func StartGnomon(tag, dbtype string, filters []string, upper, lower int, custom 
 
 	if filters != nil {
 		exclusions := []string{"bb43c3eb626ee767c9f305772a6666f7c7300441a0ad8538a0799eb4f12ebcd2"}
-		gnomes.Indexer = indexer.NewIndexer(grav_backend, bolt_backend, dbtype, filters, last_height, rpc.Daemon.Rpc, "daemon", false, false, gnomes.Fast, false, exclusions)
+		gnomes.Indexer = indexer.NewIndexer(grav_backend, bolt_backend, dbtype, filters, last_height, rpc.Daemon.Rpc, "daemon", false, false, &gnomes.Fast, exclusions)
 		go gnomes.Indexer.StartDaemonMode(gnomes.Para)
 		time.Sleep(3 * time.Second)
 		gnomes.Initialized(true)
 
-		if gnomes.Fast {
+		if gnomes.Fast.Enabled {
 			for {
 				contracts := len(gnomes.GetAllOwnersAndSCIDs())
 				if contracts >= upper {

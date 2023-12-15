@@ -159,12 +159,14 @@ func ReadDreamsConfig(tag string) (saved dreams.SaveData) {
 
 		gnomon.SetParallel(1)
 		gnomon.SetDBStorageType("boltdb")
+		gnomon.SetFastsync(true, false, 10000)
 
 		return
 	}
 
 	gnomon.SetParallel(1)
 	gnomon.SetDBStorageType("boltdb")
+	gnomon.SetFastsync(true, false, 10000)
 
 	file, err := os.ReadFile("config/config.json")
 	if err != nil {
@@ -206,6 +208,10 @@ func ReadDreamsConfig(tag string) (saved dreams.SaveData) {
 		gnomon.SetParallel(saved.Para)
 	}
 
+	if saved.FSDiff > 0 {
+		gnomon.SetFastsync(true, saved.FSForce, saved.FSDiff)
+	}
+
 	return
 }
 
@@ -240,6 +246,7 @@ func SwitchProfileIcon(collection, name, url string, size float32) (icon *canvas
 
 	icon = canvas.NewImageFromResource(bundle.ResourceFigure1CirclePng)
 	icon.SetMinSize(fyne.NewSize(60, 60))
+
 	return
 }
 

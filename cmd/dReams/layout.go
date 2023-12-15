@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"image/color"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/SixofClubsss/Baccarat/baccarat"
@@ -670,6 +671,7 @@ func placeWall(intros []menu.IntroText) *container.Split {
 					if status == "indexed" {
 						status = "scanning wallet"
 					}
+					status = fmt.Sprintf("%s%s", strings.ToUpper(string(status[0])), status[1:])
 					dialog.NewInformation("Gnomon Syncing", fmt.Sprintf("%s, please wait...", status), dReams.Window).Show()
 					connect_tabs.SelectIndex(0)
 				} else if gnomon.IsInitialized() {

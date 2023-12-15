@@ -98,7 +98,7 @@ func main() {
 	}()
 
 	// Initialize vars
-	gnomon.SetFastsync(true)
+	gnomon.SetFastsync(true, true, 10000)
 	gnomon.SetDBStorageType("boltdb")
 
 	// Create dwidget connection box with controls

@@ -55,7 +55,6 @@ Usage:
 Options:
   -h --help             Show this screen.
   --cli=<false>		dReams option, enables cli app tab.
-  --fastsync=<true>	Gnomon option,  true/false value to define loading at chain height on start up.
   --num-parallel-blocks=<1>   Gnomon option,  defines the number of parallel blocks to index.
   --dbtype=<boltdb>     Gnomon option,  defines type of database 'gravdb' or 'boltdb'.`
 
@@ -73,13 +72,6 @@ func flags() {
 	if arguments["--dbtype"] != nil {
 		if arguments["--dbtype"] == "gravdb" {
 			gnomon.SetDBStorageType(arguments["--dbtype"].(string))
-		}
-	}
-
-	gnomon.SetFastsync(true)
-	if arguments["--fastsync"] != nil {
-		if arguments["--fastsync"].(string) == "false" {
-			gnomon.SetFastsync(false)
 		}
 	}
 
@@ -147,6 +139,8 @@ func save() dreams.SaveData {
 		Predict: prediction.Predict.Favorites.SCIDs,
 		Sports:  prediction.Sports.Favorites.SCIDs,
 		Theme:   menu.Theme.Name,
+		FSForce: gnomon.GetFastsync().ForceFastSync,
+		FSDiff:  gnomon.GetFastsync().ForceFastSyncDiff,
 		DBtype:  gnomon.DBStorageType(),
 		Para:    gnomon.GetParallel(),
 		Assets:  menu.Assets.Enabled,

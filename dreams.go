@@ -46,6 +46,8 @@ type SaveData struct {
 	Theme   string       `json:"theme"`
 	DBtype  string       `json:"dbType"`
 	Para    int          `json:"paraBlocks"`
+	FSForce bool         `json:"fastsyncForce"`
+	FSDiff  int64        `json:"fastsyncDiff"`
 
 	Assets map[string]bool `json:"assets"`
 	Dapps  map[string]bool `json:"dapps"`
