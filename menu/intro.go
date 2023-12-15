@@ -64,10 +64,12 @@ func IntroTree(intros []IntroText) fyne.CanvasObject {
 		"View any owned assets held in wallet",
 		"Put owned assets up for auction or for sale",
 		"Send assets privately to another wallet",
+		"Headers, set the Gnomon SC headers to a owned contract",
+		"Profile, change background themes, set your global name and assets for in use in dApps",
 		"Indexer, add custom contracts to your index and search current index DB"}
 
 	list["Enabling assets collections"] = []string{
-		"You can enable or disable indexing of any asset collection in the Asset/Enabled tab",
+		"You can enable or disable indexing of any asset collection in the Asset/Index tab",
 		"Changes will require Gnomon DB to be resynced to take effect",
 		"Your collection preferences will be saved in local config file",
 		"Loading only the asset collections you are using will increase Gnomon and dReams performance"}

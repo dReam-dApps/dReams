@@ -494,8 +494,8 @@ func place() *fyne.Container {
 	intros = append(intros, menu.MakeMenuIntro(prediction.DreamsMenuIntro())...)
 	intros = append(intros, menu.MakeMenuIntro(tarot.DreamsMenuIntro())...)
 	// intros = append(intros, menu.MakeMenuIntro(derbnb.DreamsMenuIntro())...)
-	intros = append(intros, menu.MakeMenuIntro(grok.DreamsMenuIntro())...)
 	intros = append(intros, menu.MakeMenuIntro(duel.DreamsMenuIntro())...)
+	intros = append(intros, menu.MakeMenuIntro(grok.DreamsMenuIntro())...)
 
 	// dReams menu tabs
 	asset_tab = menu.PlaceAssets("dReams", profile(), rescan, bundle.ResourceDReamsIconAltPng, &dReams)
