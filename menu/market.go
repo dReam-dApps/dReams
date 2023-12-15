@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	dreams "github.com/dReam-dApps/dReams"
@@ -28,6 +29,7 @@ import (
 )
 
 type marketObjects struct {
+	sync.RWMutex
 	Tab          string
 	Entry        *dwidget.DeroAmts
 	Loading      *widget.ProgressBarInfinite
@@ -38,6 +40,7 @@ type marketObjects struct {
 	Confirming   bool
 	Searching    bool
 	DreamsFilter bool
+	downloading  bool
 	Auctions     []NFAListing
 	Buys         []NFAListing
 	Wallets      []NFAListing
@@ -124,22 +127,6 @@ func (m *marketObjects) SortMyList() {
 		return m.Wallets[i].Name < m.Wallets[j].Name
 	})
 	m.List.Wallet.Refresh()
-}
-
-// NFA market amount entry
-func MarketEntry() fyne.CanvasObject {
-	Market.Entry = dwidget.NewDeroEntry("", 0.1, 1)
-	Market.Entry.ExtendBaseWidget(Market.Entry)
-	Market.Entry.SetText("0.0")
-	Market.Entry.PlaceHolder = "Dero:"
-	Market.Entry.Validator = validation.NewRegexp(`^\d{1,}\.\d{1,5}$|^[^0.]\d{0,}$`, "Int or float required")
-	Market.Entry.OnChanged = func(s string) {
-		if Market.Entry.Validate() != nil {
-			Market.Entry.SetText("0.0")
-		}
-	}
-
-	return Market.Entry
 }
 
 // Confirm a bid or buy action of listed NFA
@@ -315,209 +302,15 @@ func updateListItem(i widget.ListItemID, o fyne.CanvasObject, asset []NFAListing
 	}
 }
 
-// NFA auction listings object
-//   - Gets images and details for Market objects on selected
-func AuctionListings() fyne.Widget {
-	Market.List.Auction = widget.NewList(
-		func() int {
-			return len(Market.Auctions)
-		},
-		listItem,
-		func(i widget.ListItemID, o fyne.CanvasObject) {
-			go updateListItem(i, o, Market.Auctions)
-		})
-
-	Market.List.Auction.OnSelected = func(id widget.ListItemID) {
-		scid := Market.Auctions[id].SCID
-		if scid != Market.Viewing.Asset {
-			Market.Entry.SetText("")
-			clearNFAImages()
-			Market.Viewing.Asset = scid
-			go GetNFAImages(scid)
-			go GetAuctionDetails(scid)
-			Market.Details.Objects[1] = loadingBar()
-		}
-	}
-
-	return Market.List.Auction
-}
-
-// NFA buy now listings object
-//   - Gets images and details for Market objects on selected
-func BuyNowListings() fyne.Widget {
-	Market.List.Buy = widget.NewList(
-		func() int {
-			return len(Market.Buys)
-		},
-		listItem,
-		func(i widget.ListItemID, o fyne.CanvasObject) {
-			go updateListItem(i, o, Market.Buys)
-		})
-
-	Market.List.Buy.OnSelected = func(id widget.ListItemID) {
-		scid := Market.Buys[id].SCID
-		if scid != Market.Viewing.Asset {
-			clearNFAImages()
-			Market.Viewing.Asset = scid
-			go GetNFAImages(scid)
-			go GetBuyNowDetails(scid)
-			Market.Details.Objects[1] = loadingBar()
-		}
-	}
-
-	return Market.List.Buy
-}
-
-// NFA listing for connected wallet
-//   - Gets images and details for Market objects on selected
-func MyNFAListings() fyne.Widget {
-	Market.List.Wallet = widget.NewList(
-		func() int {
-			return len(Market.Wallets)
-		},
-		listItem,
-		func(i widget.ListItemID, o fyne.CanvasObject) {
-			updateListItem(i, o, Market.Wallets)
-		})
-
-	Market.List.Wallet.OnSelected = func(id widget.ListItemID) {
-		scid := Market.Wallets[id].SCID
-		if scid != Market.Viewing.Asset {
-			clearNFAImages()
-			Market.Viewing.Asset = scid
-			go GetNFAImages(scid)
-			go GetUnlistedDetails(scid)
-			Market.Details.Objects[1] = loadingBar()
-		}
-	}
-
-	return Market.List.Wallet
-}
-
-// Search NFA objects
-func SearchNFAs(d *dreams.AppObject, auction, buy, not *fyne.Container) fyne.CanvasObject {
-	var dest_addr string
-	var message_button *widget.Button
-	var scids = make(map[string]string)
-	search_entry := xwidget.NewCompletionEntry([]string{})
-	search_entry.Wrapping = fyne.TextTruncate
-	search_entry.OnChanged = func(s string) {
-		scid := scids[s]
-		if len(scid) == 64 {
-			if scid != Market.Viewing.Asset {
-				Market.Viewing.Asset = scid
-				list, addr := CheckNFAListingType(scid)
-				dest_addr = addr
-				switch list {
-				case 1:
-					Market.Details = *auction
-					Market.Tab = "Auction"
-					Market.Button.BidBuy.Text = "Bid"
-					Market.Entry.SetText("0.0")
-					Market.Entry.Enable()
-					Market.Entry.Show()
-					ResetAuctionInfo()
-					AuctionInfo()
-					clearNFAImages()
-					go GetNFAImages(scid)
-					go GetAuctionDetails(scid)
-				case 2:
-					Market.Details = *buy
-					Market.Tab = "Buy"
-					Market.Button.BidBuy.Text = "Buy"
-					Market.Entry.SetText("0.0")
-					Market.Entry.Disable()
-					Market.Entry.Show()
-					ResetBuyInfo()
-					BuyNowInfo()
-					clearNFAImages()
-					go GetNFAImages(scid)
-					go GetBuyNowDetails(scid)
-				default:
-					Market.Details = *not
-					Market.Tab = "Buy"
-					Market.Entry.SetText("0.0")
-					Market.Entry.Disable()
-					Market.Entry.Hide()
-					ResetNotListedInfo()
-					NotListedInfo()
-					clearNFAImages()
-					go GetNFAImages(scid)
-					go GetUnlistedDetails(scid)
-				}
-			}
-
-			Market.Details.Objects[1] = loadingBar()
-		} else {
-			dest_addr = ""
-		}
-
-		if len(dest_addr) == 66 {
-			message_button.Show()
-		} else {
-			message_button.Hide()
-		}
-	}
-
-	search_by := widget.NewRadioGroup([]string{"Collection", "Name", "Description"}, nil)
-	search_by.Horizontal = true
-	search_by.SetSelected("Collection")
-	search_by.Required = true
-
-	search_button := widget.NewButtonWithIcon("", dreams.FyneIcon("search"), func() {
-		if search_entry.Text != "" && rpc.Wallet.IsConnected() {
-			var i int
-			switch search_by.Selected {
-			case "Collection":
-				i = 0
-			case "Name":
-				i = 1
-			case "Description":
-				i = 2
-			}
-
-			if scids = SearchNFAsBy(i, search_entry.Text); scids == nil || len(scids) < 1 {
-				dialog.NewInformation("No results", "Nothing found", d.Window).Show()
-			} else {
-				var showing []string
-				for k := range scids {
-					showing = append(showing, k)
-				}
-				sort.Strings(showing)
-				search_entry.SetOptions(showing)
-				search_entry.ShowCompletion()
-			}
-		}
-	})
-
-	clear_button := widget.NewButtonWithIcon("", dreams.FyneIcon("searchReplace"), func() {
-		search_entry.SetOptions([]string{})
-		search_entry.SetText("")
-	})
-	clear_button.Importance = widget.LowImportance
-
-	show_results := widget.NewButtonWithIcon("", dreams.FyneIcon("arrowDropDown"), func() {
-		search_entry.ShowCompletion()
-	})
-
-	search_cont := container.NewBorder(container.NewCenter(search_by), nil, container.NewHBox(clear_button, show_results), search_button, search_entry)
-
-	message_button = widget.NewButton("Message Owner", func() {
-		if dest_addr != "" {
-			SendMessageMenu(dest_addr, bundle.ResourceDReamsIconAltPng)
-		} else {
-			dialog.NewInformation("No Address", "Could not get owner address", d.Window).Show()
-		}
-	})
-	message_button.Importance = widget.HighImportance
-	message_button.Hide()
-
-	return container.NewBorder(search_cont, container.NewHBox(layout.NewSpacer(), message_button), nil, nil, container.NewHBox())
-}
-
-// Get NFA cover and icon images
+// Get NFA cover and icon images for scid and set market images
 func GetNFAImages(scid string) {
 	if gnomon.IsReady() && len(scid) == 64 {
+		Market.Lock()
+		Market.downloading = true
+		defer func() {
+			Market.Unlock()
+			Market.downloading = false
+		}()
 		name, _ := gnomon.GetSCIDValuesByKey(scid, "nameHdr")
 		icon, _ := gnomon.GetSCIDValuesByKey(scid, "iconURLHdr")
 		cover, _ := gnomon.GetSCIDValuesByKey(scid, "coverURL")
@@ -574,7 +367,7 @@ func GetNFAImages(scid string) {
 	}
 }
 
-// NFA market icon image with frame
+// Returns NFA market icon image with frame
 func NFAIcon() fyne.CanvasObject {
 	Market.Icon.SetMinSize(fyne.NewSize(90, 90))
 	border := container.NewBorder(layout.NewSpacer(), layout.NewSpacer(), layout.NewSpacer(), layout.NewSpacer(), &Market.Icon)
@@ -587,7 +380,7 @@ func NFAIcon() fyne.CanvasObject {
 
 var toolsBadge = *canvas.NewImageFromResource(bundle.ResourceDReamToolsPng)
 
-// Badge for dReam Tools enabled assets
+// Returns badge for dReam Tools enabled assets
 func ToolsBadge() fyne.CanvasObject {
 	toolsBadge.SetMinSize(fyne.NewSize(90, 90))
 	border := container.NewBorder(layout.NewSpacer(), layout.NewSpacer(), layout.NewSpacer(), layout.NewSpacer(), &toolsBadge)
@@ -598,7 +391,7 @@ func ToolsBadge() fyne.CanvasObject {
 	return container.NewStack(border, frame)
 }
 
-// NFA cover image for market display
+// Returns NFA cover image for market display
 func NFACoverImg() fyne.CanvasObject {
 	Market.Cover.SetMinSize(fyne.NewSize(400, 600))
 
@@ -624,7 +417,7 @@ func clearNFAImages() {
 	Market.Details.Objects[1] = canvas.NewImageFromImage(nil)
 }
 
-// Set up market info objects
+// Initialize market display objects
 func NFAMarketInfo() fyne.Container {
 	Market.Display.Name = widget.NewEntry()
 	Market.Display.Type = widget.NewEntry()
@@ -664,7 +457,7 @@ func NFAMarketInfo() fyne.Container {
 	return AuctionInfo()
 }
 
-// Container for auction info objects
+// Returns container for auction display objects
 func AuctionInfo() fyne.Container {
 	auction_form := []*widget.FormItem{}
 	auction_form = append(auction_form, widget.NewFormItem("Name", Market.Display.Name))
@@ -699,7 +492,27 @@ func AuctionInfo() fyne.Container {
 		NFACoverImg())
 }
 
-// Container for unlisted info objects
+// Reset auction display content to default values
+func ResetAuctionInfo() {
+	Market.amount.bid = 0
+	clearNFAImages()
+	Market.Display.Name.SetText("")
+	Market.Display.Type.SetText("")
+	Market.Display.Collection.SetText("")
+	Market.Display.Description.SetText("")
+	Market.Display.Creator.SetText("")
+	Market.Display.Artificer.SetText("")
+	Market.Display.Royalty.SetText("")
+	Market.Display.Price.SetText("")
+	Market.Display.Owner.SetText("")
+	Market.Display.Update.SetText("")
+	Market.Display.Bid.Current.SetText("")
+	Market.Display.Bid.Price.SetText("")
+	Market.Display.Bid.Count.SetText("")
+	Market.Display.Ends.SetText("")
+}
+
+// Returns container for unlisted display objects
 func NotListedInfo() fyne.Container {
 	unlisted_form := []*widget.FormItem{}
 	unlisted_form = append(unlisted_form, widget.NewFormItem("Name", Market.Display.Name))
@@ -729,7 +542,7 @@ func NotListedInfo() fyne.Container {
 		NFACoverImg())
 }
 
-// Set unlisted display content to default values
+// Reset unlisted NFA display content to default values
 func ResetNotListedInfo() {
 	Market.amount.bid = 0
 	clearNFAImages()
@@ -744,27 +557,7 @@ func ResetNotListedInfo() {
 	Market.Display.Update.SetText("")
 }
 
-// Set auction display content to default values
-func ResetAuctionInfo() {
-	Market.amount.bid = 0
-	clearNFAImages()
-	Market.Display.Name.SetText("")
-	Market.Display.Type.SetText("")
-	Market.Display.Collection.SetText("")
-	Market.Display.Description.SetText("")
-	Market.Display.Creator.SetText("")
-	Market.Display.Artificer.SetText("")
-	Market.Display.Royalty.SetText("")
-	Market.Display.Price.SetText("")
-	Market.Display.Owner.SetText("")
-	Market.Display.Update.SetText("")
-	Market.Display.Bid.Current.SetText("")
-	Market.Display.Bid.Price.SetText("")
-	Market.Display.Bid.Count.SetText("")
-	Market.Display.Ends.SetText("")
-}
-
-// Container for buy now info objects
+// Returns container for NFA buy now display objects
 func BuyNowInfo() fyne.Container {
 	buy_form := []*widget.FormItem{}
 	buy_form = append(buy_form, widget.NewFormItem("Name", Market.Display.Name))
@@ -797,7 +590,7 @@ func BuyNowInfo() fyne.Container {
 		NFACoverImg())
 }
 
-// Set buy now display content to default values
+// Reset buy now display content to default values
 func ResetBuyInfo() {
 	Market.amount.buy = 0
 	clearNFAImages()
@@ -814,7 +607,7 @@ func ResetBuyInfo() {
 	Market.Display.Ends.SetText("")
 }
 
-// NFA market layout
+// Place NFA market layout
 func PlaceMarket(d *dreams.AppObject) *container.Split {
 	auction_info := NFAMarketInfo()
 
@@ -844,34 +637,191 @@ func PlaceMarket(d *dreams.AppObject) *container.Split {
 	Market.Button.Close.Importance = widget.HighImportance
 	Market.Button.Close.Hide()
 
+	var market *container.Split
+
+	// Search NFA object
+	var dest_addr, searching string
+	var message_button *widget.Button
+	var scids = make(map[string]string)
+	search_entry := xwidget.NewCompletionEntry([]string{})
+	search_entry.Wrapping = fyne.TextWrap(fyne.TextTruncateClip)
+	search_entry.OnChanged = func(s string) {
+		if Market.downloading {
+			search_entry.SetText(searching)
+			return
+		}
+
+		scid := scids[s]
+		if len(scid) == 64 {
+			if scid != Market.Viewing.Asset {
+				searching = s
+				Market.Entry.SetText("0.0")
+				Market.Viewing.Asset = scid
+				list, addr := CheckNFAListingType(scid)
+				dest_addr = addr
+				switch list {
+				case 1:
+					Market.Details = auction_info
+					Market.Tab = "Auction"
+					Market.Button.BidBuy.Text = "Bid"
+					Market.Entry.Enable()
+					Market.Entry.Show()
+					ResetAuctionInfo()
+					go GetNFAImages(scid)
+					go GetAuctionDetails(scid)
+				case 2:
+					Market.Details = buy_info
+					Market.Tab = "Buy"
+					Market.Button.BidBuy.Text = "Buy"
+					Market.Entry.Disable()
+					Market.Entry.Show()
+					ResetBuyInfo()
+					go GetNFAImages(scid)
+					go GetBuyNowDetails(scid)
+				default:
+					Market.Details = not_listed_info
+					Market.Tab = "Buy"
+					Market.Entry.Disable()
+					Market.Entry.Hide()
+					ResetNotListedInfo()
+					go GetNFAImages(scid)
+					go GetUnlistedDetails(scid)
+				}
+
+				Market.Details.Objects[1] = loadingBar()
+				market.SetOffset(0.62)
+			}
+		} else {
+			dest_addr = ""
+		}
+
+		if len(dest_addr) == 66 {
+			message_button.Show()
+		} else {
+			message_button.Hide()
+		}
+	}
+
+	search_by := widget.NewRadioGroup([]string{"Collection", "Name", "Description", "SCID"}, nil)
+	search_by.Horizontal = true
+	search_by.SetSelected("Collection")
+	search_by.Required = true
+
+	search_button := widget.NewButtonWithIcon("", dreams.FyneIcon("search"), func() {
+		if search_entry.Text != "" && rpc.Wallet.IsConnected() {
+			var i int
+			switch search_by.Selected {
+			case "Collection":
+				i = 0
+			case "Name":
+				i = 1
+			case "Description":
+				i = 2
+			case "SCID":
+				if len(search_entry.Text) != 64 {
+					dialog.NewInformation("Search", "Not a valid SCID", d.Window).Show()
+					return
+				}
+				i = 3
+			}
+
+			if scids = SearchNFAsBy(i, search_entry.Text); scids == nil || len(scids) < 1 {
+				dialog.NewInformation("No results", "Nothing found", d.Window).Show()
+			} else {
+				var showing []string
+				for k := range scids {
+					showing = append(showing, k)
+				}
+				sort.Strings(showing)
+				search_entry.SetOptions(showing)
+				search_entry.ShowCompletion()
+			}
+		}
+	})
+
+	clear_button := widget.NewButtonWithIcon("", dreams.FyneIcon("searchReplace"), func() {
+		search_entry.SetOptions([]string{})
+		search_entry.SetText("")
+	})
+	clear_button.Importance = widget.LowImportance
+
+	show_results := widget.NewButtonWithIcon("", dreams.FyneIcon("arrowDropDown"), func() {
+		search_entry.ShowCompletion()
+	})
+
+	search_cont := container.NewBorder(container.NewCenter(search_by), nil, container.NewHBox(clear_button, show_results), search_button, search_entry)
+
+	message_button = widget.NewButton("Message Owner", func() {
+		if dest_addr != "" {
+			SendMessageMenu(dest_addr, bundle.ResourceDReamsIconAltPng)
+		} else {
+			dialog.NewInformation("No Address", "Could not get owner address", d.Window).Show()
+		}
+	})
+	message_button.Importance = widget.HighImportance
+	message_button.Hide()
+
+	// NFA List objects
+	Market.List.Auction = widget.NewList(
+		func() int {
+			return len(Market.Auctions)
+		},
+		listItem,
+		func(i widget.ListItemID, o fyne.CanvasObject) {
+			go updateListItem(i, o, Market.Auctions)
+		})
+
+	Market.List.Buy = widget.NewList(
+		func() int {
+			return len(Market.Buys)
+		},
+		listItem,
+		func(i widget.ListItemID, o fyne.CanvasObject) {
+			go updateListItem(i, o, Market.Buys)
+		})
+
+	Market.List.Wallet = widget.NewList(
+		func() int {
+			return len(Market.Wallets)
+		},
+		listItem,
+		func(i widget.ListItemID, o fyne.CanvasObject) {
+			updateListItem(i, o, Market.Wallets)
+		})
+
 	tabs := container.NewAppTabs(
 		container.NewTabItemWithIcon("", bundle.ResourceMarketCirclePng, layout.NewSpacer()),
-		container.NewTabItem("Auctions", AuctionListings()),
-		container.NewTabItem("Buy Now", BuyNowListings()),
+		container.NewTabItem("Auctions", Market.List.Auction),
+		container.NewTabItem("Buy Now", Market.List.Buy),
 		container.NewTabItem("My Listings", container.NewBorder(
 			nil,
 			container.NewBorder(nil, nil, Market.Button.Close, Market.Button.Cancel),
 			nil,
 			nil,
-			MyNFAListings())),
+			Market.List.Wallet)),
 
-		container.NewTabItem("Search", SearchNFAs(d, &auction_info, &buy_info, &not_listed_info)))
+		container.NewTabItem("Search", container.NewBorder(
+			search_cont,
+			container.NewHBox(layout.NewSpacer(), message_button),
+			nil,
+			nil,
+			container.NewHBox())))
 
 	tabs.DisableIndex(0)
 	tabs.SetTabLocation(container.TabLocationTop)
 	tabs.OnSelected = func(ti *container.TabItem) {
+		Market.Viewing.Asset = ""
+		Market.Viewing.Collection = ""
+		Market.Entry.SetText("0.0")
 		switch ti.Text {
 		case "Auctions":
 			go FindNFAListings(nil)
 			Market.Tab = "Auction"
 			Market.List.Auction.UnselectAll()
 			Market.List.Wallet.UnselectAll()
-			Market.Viewing.Asset = ""
-			Market.Viewing.Collection = ""
 			Market.Button.BidBuy.Text = "Bid"
 			Market.Button.BidBuy.Refresh()
 			Market.Entry.Show()
-			Market.Entry.SetText("0.0")
 			Market.Entry.Enable()
 			ResetAuctionInfo()
 			Market.Details = auction_info
@@ -880,12 +830,9 @@ func PlaceMarket(d *dreams.AppObject) *container.Split {
 			Market.Tab = "Buy"
 			Market.List.Buy.UnselectAll()
 			Market.List.Wallet.UnselectAll()
-			Market.Viewing.Asset = ""
-			Market.Viewing.Collection = ""
 			Market.Button.BidBuy.Text = "Buy"
 			Market.Button.BidBuy.Refresh()
 			Market.Entry.Show()
-			Market.Entry.SetText("0.0")
 			Market.Entry.Disable()
 			ResetBuyInfo()
 			Market.Details = buy_info
@@ -895,10 +842,7 @@ func PlaceMarket(d *dreams.AppObject) *container.Split {
 			Market.List.Auction.UnselectAll()
 			Market.List.Wallet.UnselectAll()
 			Market.List.Buy.UnselectAll()
-			Market.Viewing.Asset = ""
-			Market.Viewing.Collection = ""
 			Market.Entry.Hide()
-			Market.Entry.SetText("0.0")
 			Market.Entry.Disable()
 			ResetBuyInfo()
 			Market.Details = not_listed_info
@@ -907,10 +851,7 @@ func PlaceMarket(d *dreams.AppObject) *container.Split {
 			Market.List.Auction.UnselectAll()
 			Market.List.Wallet.UnselectAll()
 			Market.List.Buy.UnselectAll()
-			Market.Viewing.Asset = ""
-			Market.Viewing.Collection = ""
 			Market.Entry.Hide()
-			Market.Entry.SetText("0.0")
 			Market.Entry.Disable()
 			ResetBuyInfo()
 			Market.Details = not_listed_info
@@ -957,6 +898,7 @@ func PlaceMarket(d *dreams.AppObject) *container.Split {
 
 	Market.Details = auction_info
 
+	// Market action button
 	Market.Button.BidBuy = widget.NewButton("Bid", func() {
 		scid := Market.Viewing.Asset
 		if len(scid) == 64 {
@@ -981,7 +923,20 @@ func PlaceMarket(d *dreams.AppObject) *container.Split {
 	button_spacer := canvas.NewRectangle(color.Transparent)
 	button_spacer.SetMinSize(fyne.NewSize(40, 0))
 
-	Market.Actions = *container.NewBorder(nil, nil, nil, container.NewStack(button_spacer, Market.Button.BidBuy), MarketEntry())
+	// Market amount entry
+	Market.Entry = dwidget.NewDeroEntry("", 0.1, 1)
+	Market.Entry.ExtendBaseWidget(Market.Entry)
+	Market.Entry.SetText("0.0")
+	Market.Entry.PlaceHolder = "Dero:"
+	Market.Entry.Validator = validation.NewRegexp(`^\d{1,}\.\d{1,5}$|^[^0.]\d{0,}$`, "Int or float required")
+	Market.Entry.OnChanged = func(s string) {
+		if Market.Entry.Validate() != nil {
+			Market.Entry.SetText("0.0")
+		}
+	}
+
+	// NFA actions container
+	Market.Actions = *container.NewBorder(nil, nil, nil, container.NewStack(button_spacer, Market.Button.BidBuy), Market.Entry)
 	Market.Actions.Hide()
 
 	padding := canvas.NewRectangle(color.Transparent)
@@ -989,8 +944,69 @@ func PlaceMarket(d *dreams.AppObject) *container.Split {
 
 	details := container.NewBorder(nil, container.NewHBox(padding, container.NewStack(entry_spacer, &Market.Actions)), nil, nil, &Market.Details)
 
-	market := container.NewHSplit(details, max)
+	market = container.NewHSplit(details, max)
 	market.SetOffset(0.66)
+
+	// Selected indexes
+	var buy_index widget.ListItemID
+	var wallet_index widget.ListItemID
+	var auction_index widget.ListItemID
+
+	// Lists get images and details for Market objects on selected if not downloading already
+	Market.List.Auction.OnSelected = func(id widget.ListItemID) {
+		if Market.downloading && id != auction_index {
+			Market.List.Buy.Select(auction_index)
+			return
+		}
+
+		scid := Market.Auctions[id].SCID
+		if scid != Market.Viewing.Asset {
+			auction_index = id
+			Market.Entry.SetText("")
+			clearNFAImages()
+			Market.Viewing.Asset = scid
+			go GetNFAImages(scid)
+			go GetAuctionDetails(scid)
+			Market.Details.Objects[1] = loadingBar()
+			market.SetOffset(0.62)
+		}
+	}
+
+	Market.List.Buy.OnSelected = func(id widget.ListItemID) {
+		if Market.downloading && id != buy_index {
+			Market.List.Buy.Select(buy_index)
+			return
+		}
+
+		scid := Market.Buys[id].SCID
+		if scid != Market.Viewing.Asset {
+			buy_index = id
+			clearNFAImages()
+			Market.Viewing.Asset = scid
+			go GetNFAImages(scid)
+			go GetBuyNowDetails(scid)
+			Market.Details.Objects[1] = loadingBar()
+			market.SetOffset(0.62)
+		}
+	}
+
+	Market.List.Wallet.OnSelected = func(id widget.ListItemID) {
+		if Market.downloading && id != wallet_index {
+			Market.List.Buy.Select(wallet_index)
+			return
+		}
+
+		scid := Market.Wallets[id].SCID
+		if scid != Market.Viewing.Asset {
+			wallet_index = id
+			clearNFAImages()
+			Market.Viewing.Asset = scid
+			go GetNFAImages(scid)
+			go GetUnlistedDetails(scid)
+			Market.Details.Objects[1] = loadingBar()
+			market.SetOffset(0.62)
+		}
+	}
 
 	Control.Lock()
 	Control.Dapps["NFA Market"] = true
@@ -1033,12 +1049,14 @@ func RunNFAMarket(d *dreams.AppObject, cont *fyne.Container) {
 			}
 
 			if !synced && gnomes.GnomonScan(d.IsConfiguring()) {
+				cont.Objects[2].(*fyne.Container).Hide()
 				reset := cont.Objects[1]
 				cont.Objects[1] = syncScreen()
 				logger.Println("[NFA Market] Syncing")
 				FindNFAListings(nil)
 				synced = true
 				cont.Objects[1] = reset
+				cont.Objects[2].(*fyne.Container).Show()
 			}
 
 			// If connected daemon connected start looking for Gnomon sync with daemon
@@ -1298,7 +1316,7 @@ func checkNFABuyListing(scid string) (asset NFAListing, owned, expired bool) {
 }
 
 // Search NFAs in index by name or collection
-//   - by 0 is collection, 1 is name, 2 is description
+//   - by 0 is collection, 1 is name, 2 is description, 3 is scid
 func SearchNFAsBy(by int, prefix string) (results map[string]string) {
 	if gnomon.IsReady() {
 		assets := gnomon.GetAllOwnersAndSCIDs()
@@ -1333,6 +1351,13 @@ func SearchNFAsBy(by int, prefix string) (results map[string]string) {
 									asset := coll[0] + "   " + name[0] + "   " + desc_check
 									results[asset] = sc
 								}
+							case 3:
+								if sc == prefix {
+									desc_check := TrimStringLen(desc[0], 66)
+									asset := coll[0] + "   " + name[0] + "   " + desc_check
+									results[asset] = sc
+									break
+								}
 							}
 						}
 					}
@@ -1344,7 +1369,7 @@ func SearchNFAsBy(by int, prefix string) (results map[string]string) {
 	return
 }
 
-// Create auction tab info for current asset
+// Get auction details for current asset and set display objects
 func GetAuctionDetails(scid string) {
 	if gnomon.IsReady() && len(scid) == 64 {
 		name, _ := gnomon.GetSCIDValuesByKey(scid, "nameHdr")
@@ -1458,7 +1483,7 @@ func GetAuctionDetails(scid string) {
 	}
 }
 
-// Create buy now tab info for current asset
+// Get buy now details for current asset and set display objects
 func GetBuyNowDetails(scid string) {
 	if gnomon.IsReady() && len(scid) == 64 {
 		name, _ := gnomon.GetSCIDValuesByKey(scid, "nameHdr")
@@ -1541,7 +1566,7 @@ func GetBuyNowDetails(scid string) {
 	}
 }
 
-// Create info for unlisted NFA
+// Get details for unlisted NFA and set display objects
 func GetUnlistedDetails(scid string) {
 	if gnomon.IsReady() && len(scid) == 64 {
 		name, _ := gnomon.GetSCIDValuesByKey(scid, "nameHdr")
@@ -1629,7 +1654,7 @@ func GetListingPercents(scid string) (artP float64, royaltyP float64) {
 	return
 }
 
-// Scan index for any active NFA listings
+// Scan index for any active auction and buy now NFA listings
 //   - Pass scids from db store, can be nil arg to check all from db
 func FindNFAListings(scids map[string]string) {
 	if Market.Searching || !gnomon.HasChecked() {
@@ -1688,7 +1713,7 @@ func FindNFAListings(scids map[string]string) {
 	}
 }
 
-// Check wallet for all indexed NFAs
+// Check if wallet owns any indexed NFAs
 //   - Pass scids from db store, can be nil arg to check all from db
 func CheckAllNFAs(scids map[string]string) {
 	if gnomon.IsReady() {
