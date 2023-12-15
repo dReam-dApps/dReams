@@ -97,7 +97,7 @@ func introScreen() *fyne.Container {
 	collection_title.Alignment = fyne.TextAlignCenter
 	collection_title.TextSize = 18
 
-	dApps := rpc.FetchDapps()
+	dApps := rpc.GetDapps()
 	enabled_dapps := make(map[string]bool)
 
 	versions := dappVersions(dApps)
@@ -312,7 +312,7 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 	back_button.Importance = widget.LowImportance
 
 	var dapps_changed bool
-	dApps := rpc.FetchDapps()
+	dApps := rpc.GetDapps()
 	versions := dappVersions(dApps)
 
 	default_dapps := []string{"Gnomon", "NFA Market"}

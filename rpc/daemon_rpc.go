@@ -169,7 +169,7 @@ func GasEstimate(scid, tag string, args rpc.Arguments, t []rpc.Transfer, max uin
 }
 
 // Get single string key result from SCID with daemon input
-func FindStringKey(scid, key, daemon string) interface{} {
+func GetStringKey(scid, key, daemon string) interface{} {
 	rpcClientD, ctx, cancel := SetDaemonClient(daemon)
 	defer cancel()
 
@@ -181,7 +181,7 @@ func FindStringKey(scid, key, daemon string) interface{} {
 	}
 
 	if err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params); err != nil {
-		logger.Errorln("[FindStringKey]", err)
+		logger.Errorln("[GetStringKey]", err)
 		return nil
 	}
 
@@ -190,7 +190,7 @@ func FindStringKey(scid, key, daemon string) interface{} {
 
 // Get list of dReams dApps from contract store
 //   - Uses remote daemon if not connected
-func FetchDapps() (dApps []string) {
+func GetDapps() (dApps []string) {
 	dApps = []string{"Holdero", "Baccarat", "dSports and dPredictions", "Iluma", "Duels", "Grokked"}
 	var daemon string
 	if !Daemon.IsConnected() {
@@ -199,7 +199,7 @@ func FetchDapps() (dApps []string) {
 		daemon = Daemon.Rpc
 	}
 
-	if stored, ok := FindStringKey(RatingSCID, "dApps", daemon).(string); ok {
+	if stored, ok := GetStringKey(RatingSCID, "dApps", daemon).(string); ok {
 		if h, err := hex.DecodeString(stored); err == nil {
 			json.Unmarshal(h, &dApps)
 		}
@@ -213,35 +213,35 @@ func FetchDapps() (dApps []string) {
 
 // Get platform fees from on chain store
 //   - Overwrites default fee values with current stored values
-func FetchFees() {
-	if fee, ok := FindStringKey(RatingSCID, "ContractUnlock", Daemon.Rpc).(float64); ok {
+func GetFees() {
+	if fee, ok := GetStringKey(RatingSCID, "ContractUnlock", Daemon.Rpc).(float64); ok {
 		UnlockFee = uint64(fee)
 	} else {
-		logger.Errorln("[FetchFees] Could not get current contract unlock fee, using default")
+		logger.Errorln("[GetFees] Could not get current contract unlock fee, using default")
 	}
 
-	if fee, ok := FindStringKey(RatingSCID, "ListingFee", Daemon.Rpc).(float64); ok {
+	if fee, ok := GetStringKey(RatingSCID, "ListingFee", Daemon.Rpc).(float64); ok {
 		ListingFee = uint64(fee)
 	} else {
-		logger.Errorln("[FetchFees] Could not get current listing fee, using default")
+		logger.Errorln("[GetFees] Could not get current listing fee, using default")
 	}
 
-	if fee, ok := FindStringKey(TarotSCID, "Fee", Daemon.Rpc).(float64); ok {
+	if fee, ok := GetStringKey(TarotSCID, "Fee", Daemon.Rpc).(float64); ok {
 		IlumaFee = uint64(fee)
 	} else {
-		logger.Errorln("[FetchFees] Could not get current Iluma fee, using default")
+		logger.Errorln("[GetFees] Could not get current Iluma fee, using default")
 	}
 
-	if fee, ok := FindStringKey(RatingSCID, "LowLimitFee", Daemon.Rpc).(float64); ok {
+	if fee, ok := GetStringKey(RatingSCID, "LowLimitFee", Daemon.Rpc).(float64); ok {
 		LowLimitFee = uint64(fee)
 	} else {
-		logger.Errorln("[FetchFees] Could not get current low fee limit, using default")
+		logger.Errorln("[GetFees] Could not get current low fee limit, using default")
 	}
 
-	if fee, ok := FindStringKey(RatingSCID, "HighLimitFee", Daemon.Rpc).(float64); ok {
+	if fee, ok := GetStringKey(RatingSCID, "HighLimitFee", Daemon.Rpc).(float64); ok {
 		HighLimitFee = uint64(fee)
 	} else {
-		logger.Errorln("[FetchFees] Could not get current high fee limit, using default")
+		logger.Errorln("[GetFees] Could not get current high fee limit, using default")
 	}
 }
 

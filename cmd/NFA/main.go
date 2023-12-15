@@ -108,8 +108,8 @@ func main() {
 		rpc.Ping()
 		if rpc.Daemon.IsConnected() && !gnomon.IsInitialized() && !gnomon.IsStarting() {
 			go gnomes.StartGnomon(app_tag, gnomon.DBStorageType(), []string{gnomes.NFA_SEARCH_FILTER}, 0, 0, nil)
-			rpc.FetchFees()
-			menu.Market.Filters = menu.FetchFilters("market_filter")
+			rpc.GetFees()
+			menu.Market.Filters = menu.GetFilters("market_filter")
 		}
 	}
 

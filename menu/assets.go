@@ -573,7 +573,7 @@ func PlaceAssets(tag string, profile fyne.CanvasObject, rescan func(), icon fyne
 	header_button.OnTapped = func() {
 		scid := scid_entry.Text
 		if len(scid) == 64 && name_entry.Text != "dReam Tables" && name_entry.Text != "dReams" {
-			if _, ok := rpc.FindStringKey(rpc.GnomonSCID, scid, rpc.Daemon.Rpc).(string); ok {
+			if _, ok := rpc.GetStringKey(rpc.GnomonSCID, scid, rpc.Daemon.Rpc).(string); ok {
 				setHeaderConfirm(name_entry.Text, descr_entry.Text, icon_entry.Text, scid, d.Window)
 			} else {
 				dialog.NewInformation("Check back soon", "SCID not stored on the main Gnomon SC yet\n\nOnce stored, you can set your SCID headers", d.Window).Show()

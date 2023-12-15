@@ -676,7 +676,7 @@ func daemonConnectedBox() fyne.Widget {
 			}
 
 			menu.Info.SetStatus("Starting Gnomon")
-			rpc.FetchFees()
+			rpc.GetFees()
 			filters := gnomonFilters()
 			gnomes.StartGnomon("dReams", gnomon.DBStorageType(), filters, menu.Assets.Count.G45+menu.Assets.Count.NFA, menu.Assets.Count.NFA, menu.G45Index)
 		}
