@@ -879,7 +879,7 @@ func SendMessageMenu(dest string, window_icon fyne.Resource) {
 	if !Assets.Button.messaging && rpc.Wallet.IsConnected() {
 		Assets.Button.messaging = true
 		smw := fyne.CurrentApp().NewWindow("Send Message")
-		smw.Resize(fyne.NewSize(330, 700))
+		smw.Resize(fyne.NewSize(330, 680))
 		smw.SetIcon(window_icon)
 		smw.SetCloseIntercept(func() {
 			Assets.Button.messaging = false
@@ -893,7 +893,7 @@ func SendMessageMenu(dest string, window_icon fyne.Resource) {
 		label.Wrapping = fyne.TextWrapWord
 		label.Alignment = fyne.TextAlignCenter
 
-		ringsize := widget.NewSelect([]string{"2", "16", "32", "64"}, func(s string) {})
+		ringsize := widget.NewSelect([]string{"2", "16", "32", "64", "128"}, func(s string) {})
 		ringsize.PlaceHolder = "Ringsize:"
 		ringsize.SetSelectedIndex(1)
 
@@ -929,12 +929,13 @@ func SendMessageMenu(dest string, window_icon fyne.Resource) {
 				smw.Close()
 			}
 		})
+		send_button.Importance = widget.HighImportance
 		send_button.Hide()
 
-		dest_cont := container.NewVBox(label, ringsize, dest_entry)
-		message_cont := container.NewBorder(nil, send_button, nil, nil, message_entry)
+		dest_cont := container.NewCenter(container.NewVBox(label, container.NewCenter(ringsize), dest_entry, dwidget.NewSpacer(300, 0)))
+		message_cont := container.NewBorder(nil, container.NewStack(send_button), nil, nil, message_entry)
 
-		content := container.NewVSplit(dest_cont, message_cont)
+		content := container.NewVSplit(container.NewStack(dest_cont), message_cont)
 
 		go func() {
 			for rpc.IsReady() && Assets.Button.messaging && !IsClosing() {

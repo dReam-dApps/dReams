@@ -14,13 +14,12 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
-	"fyne.io/fyne/v2/driver/desktop"
 )
 
 const (
 	MIN_WIDTH  = 1400
 	MIN_HEIGHT = 800
-	App_ID     = "https://dreamdapps.io"
+	App_ID     = "dreamdapps.io"
 	App_Name   = "dReams"
 )
 
@@ -88,9 +87,9 @@ func main() {
 		}()
 	}
 
-	if systemTray(dReams.App) {
-		dReams.App.(desktop.App).SetSystemTrayIcon(bundle.ResourceTrayIconPng)
-	}
+	// if systemTray(dReams.App) {
+	// 	dReams.App.(desktop.App).SetSystemTrayIcon(bundle.ResourceTrayIconPng)
+	// }
 
 	go fetch(done)
 	dReams.Window.ShowAndRun()

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"image/color"
-	"net/url"
 	"os"
 	"os/signal"
 	"strconv"
@@ -34,7 +33,6 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/dialog"
-	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/widget"
 )
 
@@ -165,33 +163,33 @@ func exitTerminal() {
 	}
 }
 
-// Make system tray with opts
-//   - Send Dero message menu
-//   - Explorer link
-//   - Manual reveal key for Holdero
-func systemTray(w fyne.App) bool {
-	if desk, ok := w.(desktop.App); ok {
-		m := fyne.NewMenu("MyApp",
-			fyne.NewMenuItem("Send Message", func() {
-				if !dReams.IsConfiguring() {
-					menu.SendMessageMenu("", bundle.ResourceDReamsIconAltPng)
-				}
-			}),
-			fyne.NewMenuItemSeparator(),
-			fyne.NewMenuItem("Explorer", func() {
-				link, _ := url.Parse("https://explorer.dero.io")
-				fyne.CurrentApp().OpenURL(link)
-			}),
-			fyne.NewMenuItemSeparator(),
-			fyne.NewMenuItem("Reveal Key", func() {
-				go holdero.RevealKey(rpc.Wallet.ClientKey)
-			}))
-		desk.SetSystemTrayMenu(m)
+// // Make system tray with opts
+// //   - Send Dero message menu
+// //   - Explorer link
+// //   - Manual reveal key for Holdero
+// func systemTray(w fyne.App) bool {
+// 	if desk, ok := w.(desktop.App); ok {
+// 		m := fyne.NewMenu("MyApp",
+// 			fyne.NewMenuItem("Send Message", func() {
+// 				if !dReams.IsConfiguring() {
+// 					menu.SendMessageMenu("", bundle.ResourceDReamsIconAltPng)
+// 				}
+// 			}),
+// 			fyne.NewMenuItemSeparator(),
+// 			fyne.NewMenuItem("Explorer", func() {
+// 				link, _ := url.Parse("https://explorer.dero.io")
+// 				fyne.CurrentApp().OpenURL(link)
+// 			}),
+// 			fyne.NewMenuItemSeparator(),
+// 			fyne.NewMenuItem("Reveal Key", func() {
+// 				go holdero.RevealKey(rpc.Wallet.ClientKey)
+// 			}))
+// 		desk.SetSystemTrayMenu(m)
 
-		return true
-	}
-	return false
-}
+// 		return true
+// 	}
+// 	return false
+// }
 
 // This is what we want to scan wallet for when Gnomon is synced
 func gnomonScan(contracts map[string]string) {
