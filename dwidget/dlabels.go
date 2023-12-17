@@ -54,3 +54,8 @@ func NewSpacer(w, h float32) *canvas.Rectangle {
 
 	return spacer
 }
+
+// Create a new line with min size
+func NewLine(w, h float32, c color.Color) fyne.CanvasObject {
+	return container.NewStack(NewSpacer(w, h), container.NewVBox(canvas.NewLine(c)))
+}

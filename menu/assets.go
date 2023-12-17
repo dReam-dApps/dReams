@@ -818,12 +818,12 @@ func AssetList(icon fyne.Resource, rescan func(), d *dreams.AppObject) fyne.Canv
 // Dialogs for claiming all NFAs available to wallet
 func ClaimAll(title string, d *dreams.AppObject) {
 	if rpc.IsReady() {
-		claimable := checkClaimable()
+		claimable := CheckClaimable()
 		l := len(claimable)
 		if l > 0 {
 			dialog.NewConfirm("Claim All", fmt.Sprintf("Claim your %d available assets?", l), func(b bool) {
 				if b {
-					go claimClaimable(title, claimable, d)
+					go ClaimClaimable(title, claimable, d)
 				}
 			}, d.Window).Show()
 		} else {
@@ -835,7 +835,7 @@ func ClaimAll(title string, d *dreams.AppObject) {
 }
 
 // Checks if wallet has any claimable NFAs, looking assets sent with dst uint64(0xA1B2C3D4E5F67890)
-func checkClaimable() (claimable []string) {
+func CheckClaimable() (claimable []string) {
 	entries := rpc.GetWalletTransfers(3000000, uint64(rpc.Wallet.Height), uint64(0xA1B2C3D4E5F67890))
 	for _, e := range *entries {
 		split := strings.Split(string(e.Payload), "  ")
@@ -862,7 +862,7 @@ func checkClaimable() (claimable []string) {
 }
 
 // Call ClaimOwnership on SC and confirm tx on all claimable SCs
-func claimClaimable(title string, claimable []string, d *dreams.AppObject) {
+func ClaimClaimable(title string, claimable []string, d *dreams.AppObject) {
 	wait := true
 	progress_label := dwidget.NewCenterLabel("")
 	progress := widget.NewProgressBar()

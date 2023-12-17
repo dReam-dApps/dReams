@@ -327,6 +327,7 @@ func GetNFAImages(scid string) {
 				gnomes.GetStorage(collection[0], name[0], &new)
 				if new.Image != nil && !bytes.Equal(new.Image, bundle.ResourceMarketCirclePng.StaticContent) {
 					Market.Icon = *canvas.NewImageFromReader(bytes.NewReader(new.Image), name[0])
+					Market.Details.Objects[0].(*fyne.Container).Objects[0].(*fyne.Container).Objects[1] = NFAIcon()
 				} else {
 					have = false
 				}
@@ -338,6 +339,7 @@ func GetNFAImages(scid string) {
 					Market.Details.Objects[0].(*fyne.Container).Objects[0].(*fyne.Container).Objects[1] = NFAIcon()
 				} else {
 					Market.Icon = *canvas.NewImageFromResource(bundle.ResourceMarketCirclePng)
+					Market.Details.Objects[0].(*fyne.Container).Objects[0].(*fyne.Container).Objects[1] = NFAIcon()
 				}
 			}
 
@@ -345,24 +347,26 @@ func GetNFAImages(scid string) {
 			if view == "AZY-Playing card decks" || view == "SIXPC" || view == "AZY-Playing card backs" || view == "SIXPCB" {
 				Market.Details.Objects[0].(*fyne.Container).Objects[0].(*fyne.Container).Objects[2] = ToolsBadge()
 			} else {
-				Market.Details.Objects[0].(*fyne.Container).Objects[0].(*fyne.Container).Objects[2] = layout.NewSpacer()
+				Market.Details.Objects[0].(*fyne.Container).Objects[0].(*fyne.Container).Objects[2] = container.NewStack(layout.NewSpacer())
 			}
 		} else {
 			Market.Icon = *canvas.NewImageFromResource(bundle.ResourceMarketCirclePng)
+			Market.Details.Objects[0].(*fyne.Container).Objects[0].(*fyne.Container).Objects[1] = NFAIcon()
 		}
 
 		if cover != nil {
 			Market.Cover, _ = dreams.DownloadCanvas(cover[0], name[0]+"-cover")
 			if Market.Cover.Resource != nil {
-				Market.Details.Objects[1] = NFACoverImg()
+				Market.Details.Objects[1].(*fyne.Container).Objects[0] = NFACoverImg()
 				if Market.Loading != nil {
 					Market.Loading.Stop()
 				}
 			} else {
-				Market.Details.Objects[1] = loadingBar()
+				Market.Details.Objects[1].(*fyne.Container).Objects[0] = loadingBar()
 			}
 		} else {
 			Market.Cover = *canvas.NewImageFromImage(nil)
+			Market.Details.Objects[1].(*fyne.Container).Objects[0] = NFACoverImg()
 		}
 	}
 }
@@ -410,11 +414,14 @@ func loadingBar() fyne.CanvasObject {
 
 // Clears all market NFA images
 func clearNFAImages() {
+	Market.Lock()
+	defer Market.Unlock()
+
 	Market.Details.Objects[0].(*fyne.Container).Objects[0].(*fyne.Container).Objects[2] = layout.NewSpacer()
 	Market.Icon = *canvas.NewImageFromImage(nil)
 
+	Market.Details.Objects[1].(*fyne.Container).Objects[0] = canvas.NewImageFromImage(nil)
 	Market.Cover = *canvas.NewImageFromImage(nil)
-	Market.Details.Objects[1] = canvas.NewImageFromImage(nil)
 }
 
 // Initialize market display objects
@@ -489,7 +496,7 @@ func AuctionInfo() fyne.Container {
 		container.NewVBox(
 			container.NewHBox(padding, NFAIcon(), layout.NewSpacer()),
 			form),
-		NFACoverImg())
+		container.NewCenter(layout.NewSpacer()))
 }
 
 // Reset auction display content to default values
@@ -539,7 +546,7 @@ func NotListedInfo() fyne.Container {
 		container.NewVBox(
 			container.NewHBox(padding, NFAIcon(), layout.NewSpacer()),
 			form),
-		NFACoverImg())
+		container.NewCenter(layout.NewSpacer()))
 }
 
 // Reset unlisted NFA display content to default values
@@ -587,7 +594,7 @@ func BuyNowInfo() fyne.Container {
 		container.NewVBox(
 			container.NewHBox(padding, NFAIcon(), layout.NewSpacer()),
 			form),
-		NFACoverImg())
+		container.NewCenter(layout.NewSpacer()))
 }
 
 // Reset buy now display content to default values
@@ -688,7 +695,7 @@ func PlaceMarket(d *dreams.AppObject) *container.Split {
 					go GetUnlistedDetails(scid)
 				}
 
-				Market.Details.Objects[1] = loadingBar()
+				Market.Details.Objects[1].(*fyne.Container).Objects[0] = loadingBar()
 				market.SetOffset(0.62)
 			}
 		} else {
@@ -967,7 +974,7 @@ func PlaceMarket(d *dreams.AppObject) *container.Split {
 			Market.Viewing.Asset = scid
 			go GetNFAImages(scid)
 			go GetAuctionDetails(scid)
-			Market.Details.Objects[1] = loadingBar()
+			Market.Details.Objects[1].(*fyne.Container).Objects[0] = loadingBar()
 			market.SetOffset(0.62)
 		}
 	}
@@ -985,7 +992,7 @@ func PlaceMarket(d *dreams.AppObject) *container.Split {
 			Market.Viewing.Asset = scid
 			go GetNFAImages(scid)
 			go GetBuyNowDetails(scid)
-			Market.Details.Objects[1] = loadingBar()
+			Market.Details.Objects[1].(*fyne.Container).Objects[0] = loadingBar()
 			market.SetOffset(0.62)
 		}
 	}
@@ -1003,7 +1010,7 @@ func PlaceMarket(d *dreams.AppObject) *container.Split {
 			Market.Viewing.Asset = scid
 			go GetNFAImages(scid)
 			go GetUnlistedDetails(scid)
-			Market.Details.Objects[1] = loadingBar()
+			Market.Details.Objects[1].(*fyne.Container).Objects[0] = loadingBar()
 			market.SetOffset(0.62)
 		}
 	}
@@ -1049,7 +1056,15 @@ func RunNFAMarket(d *dreams.AppObject, cont *fyne.Container) {
 		select {
 		case <-d.Receive(): // do on interval
 			if !rpc.Wallet.IsConnected() || !rpc.Daemon.IsConnected() {
+				Market.Auctions = []NFAListing{}
+				Market.Buys = []NFAListing{}
 				Market.Button.BidBuy.Hide()
+				Market.List.Auction.UnselectAll()
+				Market.List.Wallet.UnselectAll()
+				Market.List.Buy.UnselectAll()
+				Market.Viewing.Collection = ""
+				Market.Viewing.Asset = ""
+				ResetAuctionInfo()
 				synced = false
 				d.WorkDone()
 				continue
@@ -1082,9 +1097,6 @@ func RunNFAMarket(d *dreams.AppObject, cont *fyne.Container) {
 							} else {
 								GetAuctionDetails(Market.Viewing.Asset)
 							}
-						} else {
-							Market.Icon = *canvas.NewImageFromImage(nil)
-							Market.Cover = *canvas.NewImageFromImage(nil)
 						}
 					}
 
