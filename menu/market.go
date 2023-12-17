@@ -33,8 +33,8 @@ type marketObjects struct {
 	Tab          string
 	Entry        *dwidget.DeroAmts
 	Loading      *widget.ProgressBarInfinite
-	Icon         canvas.Image
-	Cover        canvas.Image
+	Icon         *canvas.Image
+	Cover        *canvas.Image
 	Details      fyne.Container
 	Actions      fyne.Container
 	Confirming   bool
@@ -326,7 +326,7 @@ func GetNFAImages(scid string) {
 				var new Asset
 				gnomes.GetStorage(collection[0], name[0], &new)
 				if new.Image != nil && !bytes.Equal(new.Image, bundle.ResourceMarketCirclePng.StaticContent) {
-					Market.Icon = *canvas.NewImageFromReader(bytes.NewReader(new.Image), name[0])
+					Market.Icon = canvas.NewImageFromReader(bytes.NewReader(new.Image), name[0])
 					Market.Details.Objects[0].(*fyne.Container).Objects[0].(*fyne.Container).Objects[1] = NFAIcon()
 				} else {
 					have = false
@@ -335,10 +335,10 @@ func GetNFAImages(scid string) {
 
 			if !have {
 				if img, err := dreams.DownloadBytes(icon[0]); err == nil {
-					Market.Icon = *canvas.NewImageFromReader(bytes.NewReader(img), name[0])
+					Market.Icon = canvas.NewImageFromReader(bytes.NewReader(img), name[0])
 					Market.Details.Objects[0].(*fyne.Container).Objects[0].(*fyne.Container).Objects[1] = NFAIcon()
 				} else {
-					Market.Icon = *canvas.NewImageFromResource(bundle.ResourceMarketCirclePng)
+					Market.Icon = canvas.NewImageFromResource(bundle.ResourceMarketCirclePng)
 					Market.Details.Objects[0].(*fyne.Container).Objects[0].(*fyne.Container).Objects[1] = NFAIcon()
 				}
 			}
@@ -350,13 +350,14 @@ func GetNFAImages(scid string) {
 				Market.Details.Objects[0].(*fyne.Container).Objects[0].(*fyne.Container).Objects[2] = container.NewStack(layout.NewSpacer())
 			}
 		} else {
-			Market.Icon = *canvas.NewImageFromResource(bundle.ResourceMarketCirclePng)
+			Market.Icon = canvas.NewImageFromResource(bundle.ResourceMarketCirclePng)
 			Market.Details.Objects[0].(*fyne.Container).Objects[0].(*fyne.Container).Objects[1] = NFAIcon()
 		}
 
 		if cover != nil {
-			Market.Cover, _ = dreams.DownloadCanvas(cover[0], name[0]+"-cover")
-			if Market.Cover.Resource != nil {
+			img, _ := dreams.DownloadCanvas(cover[0], name[0]+"-cover")
+			if img.Resource != nil {
+				Market.Cover = &img
 				Market.Details.Objects[1].(*fyne.Container).Objects[0] = NFACoverImg()
 				if Market.Loading != nil {
 					Market.Loading.Stop()
@@ -365,7 +366,7 @@ func GetNFAImages(scid string) {
 				Market.Details.Objects[1].(*fyne.Container).Objects[0] = loadingBar()
 			}
 		} else {
-			Market.Cover = *canvas.NewImageFromImage(nil)
+			Market.Cover = canvas.NewImageFromImage(nil)
 			Market.Details.Objects[1].(*fyne.Container).Objects[0] = NFACoverImg()
 		}
 	}
@@ -374,7 +375,7 @@ func GetNFAImages(scid string) {
 // Returns NFA market icon image with frame
 func NFAIcon() fyne.CanvasObject {
 	Market.Icon.SetMinSize(fyne.NewSize(90, 90))
-	border := container.NewBorder(layout.NewSpacer(), layout.NewSpacer(), layout.NewSpacer(), layout.NewSpacer(), &Market.Icon)
+	border := container.NewBorder(layout.NewSpacer(), layout.NewSpacer(), layout.NewSpacer(), layout.NewSpacer(), Market.Icon)
 
 	frame := canvas.NewImageFromResource(bundle.ResourceFramePng)
 	frame.SetMinSize(fyne.NewSize(100, 100))
@@ -382,12 +383,12 @@ func NFAIcon() fyne.CanvasObject {
 	return container.NewStack(border, frame)
 }
 
-var toolsBadge = *canvas.NewImageFromResource(bundle.ResourceDReamToolsPng)
+var toolsBadge = canvas.NewImageFromResource(bundle.ResourceDReamToolsPng)
 
 // Returns badge for dReam Tools enabled assets
 func ToolsBadge() fyne.CanvasObject {
 	toolsBadge.SetMinSize(fyne.NewSize(90, 90))
-	border := container.NewBorder(layout.NewSpacer(), layout.NewSpacer(), layout.NewSpacer(), layout.NewSpacer(), &toolsBadge)
+	border := container.NewBorder(layout.NewSpacer(), layout.NewSpacer(), layout.NewSpacer(), layout.NewSpacer(), toolsBadge)
 
 	frame := canvas.NewImageFromResource(bundle.ResourceFramePng)
 	frame.SetMinSize(fyne.NewSize(100, 100))
@@ -399,7 +400,7 @@ func ToolsBadge() fyne.CanvasObject {
 func NFACoverImg() fyne.CanvasObject {
 	Market.Cover.SetMinSize(fyne.NewSize(400, 600))
 
-	return container.NewCenter(&Market.Cover)
+	return container.NewCenter(Market.Cover)
 }
 
 // Loading bar for NFA cover image
@@ -418,10 +419,10 @@ func clearNFAImages() {
 	defer Market.Unlock()
 
 	Market.Details.Objects[0].(*fyne.Container).Objects[0].(*fyne.Container).Objects[2] = layout.NewSpacer()
-	Market.Icon = *canvas.NewImageFromImage(nil)
+	Market.Icon = canvas.NewImageFromImage(nil)
 
 	Market.Details.Objects[1].(*fyne.Container).Objects[0] = canvas.NewImageFromImage(nil)
-	Market.Cover = *canvas.NewImageFromImage(nil)
+	Market.Cover = canvas.NewImageFromImage(nil)
 }
 
 // Initialize market display objects
@@ -456,7 +457,10 @@ func NFAMarketInfo() fyne.Container {
 	Market.Display.Bid.Count.Disable()
 	Market.Display.Ends.Disable()
 
+	Market.Icon = canvas.NewImageFromImage(nil)
 	Market.Icon.SetMinSize(fyne.NewSize(94, 94))
+
+	Market.Cover = canvas.NewImageFromImage(nil)
 	Market.Cover.SetMinSize(fyne.NewSize(400, 600))
 
 	Market.Display.Description.Wrapping = fyne.TextWrapWord
