@@ -536,27 +536,19 @@ func sendAssetMenu(window_icon fyne.Resource, d *dreams.AppObject) {
 	viewing_label.Wrapping = fyne.TextWrapWord
 	viewing_label.Alignment = fyne.TextAlignCenter
 
-	info_label := widget.NewLabel("Enter all info before sending")
-
 	dest_entry := widget.NewMultiLineEntry()
 	dest_entry.SetPlaceHolder("Destination Address:")
 	dest_entry.Wrapping = fyne.TextWrapWord
-	dest_entry.Validator = validation.NewRegexp(`^(dero)\w{62}$`, "Invalid Address")
-	dest_entry.OnChanged = func(s string) {
-		if dest_entry.Validate() == nil {
-			info_label.SetText("")
+	dest_entry.Validator = func(s string) (err error) {
+		if strings.HasPrefix(s, "dero") && len(s) == 66 {
 			send_button.Show()
-		} else {
-			info_label.SetText("Enter destination address")
-			send_button.Hide()
+			return nil
 		}
-	}
 
-	// TODO entry highlight and delete all hang
-	entry_clear := widget.NewButtonWithIcon("", dreams.FyneIcon("contentUndo"), func() {
-		dest_entry.SetText("")
-	})
-	entry_clear.Importance = widget.LowImportance
+		send_button.Hide()
+
+		return fmt.Errorf("invalid address")
+	}
 
 	title_line := canvas.NewLine(bundle.TextColor)
 	title := container.NewCenter(container.NewVBox(dwidget.NewCanvasText("Sending Asset", 21, fyne.TextAlignCenter), title_line))
@@ -564,47 +556,43 @@ func sendAssetMenu(window_icon fyne.Resource, d *dreams.AppObject) {
 	var dest string
 	var confirm_open bool
 	send_button = widget.NewButton("Send Asset", func() {
-		if dest_entry.Validate() == nil {
-			confirm_open = true
-			send_asset := viewing_asset
+		confirm_open = true
+		send_asset := viewing_asset
 
-			confirm_button := widget.NewButtonWithIcon("Confirm", dreams.FyneIcon("confirm"), func() {
-				if dest_entry.Validate() == nil {
-					tx := rpc.SendAsset(send_asset, dest)
-					Assets.Button.sending = false
-					if tx != "" {
-						go ShowTxDialog("Send Asset", fmt.Sprintf("TXID: %s", tx), tx, 3*time.Second, d.Window)
-					} else {
-						go ShowTxDialog("Send Asset", "TX error, check logs", tx, 3*time.Second, d.Window)
-					}
-					saw.Close()
-				}
-			})
-			confirm_button.Importance = widget.HighImportance
+		confirm_button := widget.NewButtonWithIcon("Confirm", dreams.FyneIcon("confirm"), func() {
+			tx := rpc.SendAsset(send_asset, dest)
+			Assets.Button.sending = false
+			if tx != "" {
+				go ShowTxDialog("Send Asset", fmt.Sprintf("TXID: %s", tx), tx, 3*time.Second, d.Window)
+			} else {
+				go ShowTxDialog("Send Asset", "TX error, check logs", tx, 3*time.Second, d.Window)
+			}
+			saw.Close()
+		})
+		confirm_button.Importance = widget.HighImportance
 
-			cancel_button := widget.NewButtonWithIcon("Cancel", dreams.FyneIcon("cancel"), func() {
-				confirm_open = false
-				saw.SetContent(
-					container.NewStack(
-						BackgroundRast("sendAssetMenu"),
-						bundle.Alpha180,
-						saw_content))
-			})
-
-			dest = dest_entry.Text
-			confirm_label := widget.NewLabel(fmt.Sprintf("Sending SCID:\n\n%s\n\nDestination: %s", send_asset, dest))
-			confirm_label.Wrapping = fyne.TextWrapWord
-			confirm_label.Alignment = fyne.TextAlignCenter
-
-			confirm_display := container.NewVBox(layout.NewSpacer(), confirm_label, layout.NewSpacer())
-			confirm_options := container.NewAdaptiveGrid(2, confirm_button, cancel_button)
-			confirm_content := container.NewBorder(title, confirm_options, nil, nil, confirm_display)
+		cancel_button := widget.NewButtonWithIcon("Cancel", dreams.FyneIcon("cancel"), func() {
+			confirm_open = false
 			saw.SetContent(
 				container.NewStack(
 					BackgroundRast("sendAssetMenu"),
 					bundle.Alpha180,
-					confirm_content))
-		}
+					saw_content))
+		})
+
+		dest = dest_entry.Text
+		confirm_label := widget.NewLabel(fmt.Sprintf("Sending SCID:\n\n%s\n\nDestination: %s", send_asset, dest))
+		confirm_label.Wrapping = fyne.TextWrapWord
+		confirm_label.Alignment = fyne.TextAlignCenter
+
+		confirm_display := container.NewVBox(layout.NewSpacer(), confirm_label, layout.NewSpacer())
+		confirm_options := container.NewAdaptiveGrid(2, confirm_button, cancel_button)
+		confirm_content := container.NewBorder(title, confirm_options, nil, nil, confirm_display)
+		saw.SetContent(
+			container.NewStack(
+				BackgroundRast("sendAssetMenu"),
+				bundle.Alpha180,
+				confirm_content))
 	})
 	send_button.Importance = widget.HighImportance
 	send_button.Hide()
@@ -618,11 +606,7 @@ func sendAssetMenu(window_icon fyne.Resource, d *dreams.AppObject) {
 		layout.NewSpacer(),
 		container.NewCenter(Assets.Icon),
 		button_spacer,
-		container.NewStack(
-			dest_entry,
-			container.NewVBox(
-				layout.NewSpacer(),
-				container.NewHBox(layout.NewSpacer(), container.NewBorder(nil, layout.NewSpacer(), nil, layout.NewSpacer(), entry_clear)))),
+		container.NewStack(dest_entry),
 		button_spacer,
 		container.NewStack(button_spacer, container.NewVBox(layout.NewSpacer(), container.NewAdaptiveGrid(2, layout.NewSpacer(), container.NewStack(send_button)))))
 
@@ -716,72 +700,70 @@ func listMenu(window_icon fyne.Resource, d *dreams.AppObject) {
 
 	var confirm_open bool
 	set_button = widget.NewButton("Set Listing", func() {
-		if duration.Validate() == nil && start.Validate() == nil && charAddr.Validate() == nil && charPerc.Validate() == nil {
-			if listing.Selected != "" {
-				confirm_open = true
-				listing_asset := viewing_asset
-				artP, royaltyP := GetListingPercents(listing_asset)
+		if listing.Selected != "" {
+			confirm_open = true
+			listing_asset := viewing_asset
+			artP, royaltyP := GetListingPercents(listing_asset)
 
-				dur := rpc.StringToUint64(duration.Text)
-				s := rpc.ToAtomic(start.Text, 5)
-				sp := float64(s) / 100000
-				cp := rpc.StringToUint64(charPerc.Text)
+			dur := rpc.StringToUint64(duration.Text)
+			s := rpc.ToAtomic(start.Text, 5)
+			sp := float64(s) / 100000
+			cp := rpc.StringToUint64(charPerc.Text)
 
-				art_gets := (float64(s) * artP) / 100000
-				royalty_gets := (float64(s) * royaltyP) / 100000
-				char_gets := float64(s) * (float64(cp) / 100) / 100000
+			art_gets := (float64(s) * artP) / 100000
+			royalty_gets := (float64(s) * royaltyP) / 100000
+			char_gets := float64(s) * (float64(cp) / 100) / 100000
 
-				total := sp - art_gets - royalty_gets - char_gets
+			total := sp - art_gets - royalty_gets - char_gets
 
-				first_line := fmt.Sprintf("Listing SCID:\n\n%s\n\nList Type: %s\n\nDuration: %s Hours\n\nStart Price: %0.5f Dero\n\n", listing_asset, listing.Selected, duration.Text, sp)
-				second_line := fmt.Sprintf("Artificer Fee: %.0f%s - %0.5f Dero\n\nRoyalties: %.0f%s - %0.5f Dero\n\n", artP*100, "%", art_gets, royaltyP*100, "%", royalty_gets)
-				third_line := fmt.Sprintf("Charity Address: %s\n\nCharity Percent: %s%s - %0.5f Dero\n\nYou will receive %.5f Dero if asset sells at start price", charAddr.Text, charPerc.Text, "%", char_gets, total)
+			first_line := fmt.Sprintf("Listing SCID:\n\n%s\n\nList Type: %s\n\nDuration: %s Hours\n\nStart Price: %0.5f Dero\n\n", listing_asset, listing.Selected, duration.Text, sp)
+			second_line := fmt.Sprintf("Artificer Fee: %.0f%s - %0.5f Dero\n\nRoyalties: %.0f%s - %0.5f Dero\n\n", artP*100, "%", art_gets, royaltyP*100, "%", royalty_gets)
+			third_line := fmt.Sprintf("Charity Address: %s\n\nCharity Percent: %s%s - %0.5f Dero\n\nYou will receive %.5f Dero if asset sells at start price", charAddr.Text, charPerc.Text, "%", char_gets, total)
 
-				confirm_label := widget.NewLabel(first_line + second_line + third_line)
-				confirm_label.Wrapping = fyne.TextWrapWord
-				confirm_label.Alignment = fyne.TextAlignCenter
+			confirm_label := widget.NewLabel(first_line + second_line + third_line)
+			confirm_label.Wrapping = fyne.TextWrapWord
+			confirm_label.Alignment = fyne.TextAlignCenter
 
-				cancel_button := widget.NewButtonWithIcon("Cancel", dreams.FyneIcon("cancel"), func() {
-					confirm_open = false
-					aw.SetContent(
-						container.NewStack(
-							BackgroundRast("listMenu"),
-							bundle.Alpha180,
-							aw_content))
-				})
-
-				confirm_button := widget.NewButtonWithIcon("Confirm", dreams.FyneIcon("confirm"), func() {
-					tx := rpc.SetNFAListing(listing_asset, listing.Selected, charAddr.Text, dur, s, cp)
-					Assets.Button.listing = false
-					if rpc.Wallet.IsConnected() {
-						if isNFA(Assets.Viewing) {
-							Assets.Button.Send.Show()
-							Assets.Button.List.Show()
-						}
-					}
-					if tx != "" {
-						go ShowTxDialog(fmt.Sprintf("NFA %s", listing.Selected), fmt.Sprintf("TXID: %s", tx), tx, 3*time.Second, d.Window)
-					} else {
-						go ShowTxDialog(fmt.Sprintf("NFA %s", listing.Selected), "TX error, check logs", tx, 3*time.Second, d.Window)
-					}
-					aw.Close()
-				})
-				confirm_button.Importance = widget.HighImportance
-
-				confirm_options := container.NewAdaptiveGrid(2, confirm_button, cancel_button)
-				confirm_content := container.NewBorder(
-					title,
-					confirm_options,
-					nil,
-					nil,
-					container.NewVBox(layout.NewSpacer(), confirm_label, layout.NewSpacer()))
-
+			cancel_button := widget.NewButtonWithIcon("Cancel", dreams.FyneIcon("cancel"), func() {
+				confirm_open = false
 				aw.SetContent(
 					container.NewStack(
 						BackgroundRast("listMenu"),
 						bundle.Alpha180,
-						confirm_content))
-			}
+						aw_content))
+			})
+
+			confirm_button := widget.NewButtonWithIcon("Confirm", dreams.FyneIcon("confirm"), func() {
+				tx := rpc.SetNFAListing(listing_asset, listing.Selected, charAddr.Text, dur, s, cp)
+				Assets.Button.listing = false
+				if rpc.Wallet.IsConnected() {
+					if isNFA(Assets.Viewing) {
+						Assets.Button.Send.Show()
+						Assets.Button.List.Show()
+					}
+				}
+				if tx != "" {
+					go ShowTxDialog(fmt.Sprintf("NFA %s", listing.Selected), fmt.Sprintf("TXID: %s", tx), tx, 3*time.Second, d.Window)
+				} else {
+					go ShowTxDialog(fmt.Sprintf("NFA %s", listing.Selected), "TX error, check logs", tx, 3*time.Second, d.Window)
+				}
+				aw.Close()
+			})
+			confirm_button.Importance = widget.HighImportance
+
+			confirm_options := container.NewAdaptiveGrid(2, confirm_button, cancel_button)
+			confirm_content := container.NewBorder(
+				title,
+				confirm_options,
+				nil,
+				nil,
+				container.NewVBox(layout.NewSpacer(), confirm_label, layout.NewSpacer()))
+
+			aw.SetContent(
+				container.NewStack(
+					BackgroundRast("listMenu"),
+					bundle.Alpha180,
+					confirm_content))
 		}
 	})
 	set_button.Importance = widget.HighImportance
@@ -904,25 +886,26 @@ func SendMessageMenu(dest string, window_icon fyne.Resource) {
 		dest_entry := widget.NewMultiLineEntry()
 		dest_entry.SetPlaceHolder("Destination Address:")
 		dest_entry.Wrapping = fyne.TextWrapWord
-		dest_entry.Validator = validation.NewRegexp(`^(dero)\w{62}$`, "Invalid Address")
-		dest_entry.OnChanged = func(s string) {
-			if dest_entry.Validate() == nil && message_entry.Text != "" {
-				send_button.Show()
-			} else {
-				send_button.Hide()
+		dest_entry.Validator = func(s string) (err error) {
+			if strings.HasPrefix(s, "dero") && len(s) == 66 {
+				if message_entry.Text != "" {
+					send_button.Show()
+				} else {
+					send_button.Hide()
+				}
+				return nil
 			}
+
+			send_button.Hide()
+			return fmt.Errorf("invalid address")
 		}
 
 		message_entry.OnChanged = func(s string) {
-			if s != "" && dest_entry.Validate() == nil {
-				send_button.Show()
-			} else {
-				send_button.Hide()
-			}
+			dest_entry.Validate()
 		}
 
 		send_button = widget.NewButton("Send Message", func() {
-			if dest_entry.Validate() == nil && message_entry.Text != "" {
+			if message_entry.Text != "" {
 				rings := rpc.StringToUint64(ringsize.Selected)
 				go rpc.SendMessage(dest_entry.Text, message_entry.Text, rings)
 				Assets.Button.messaging = false

@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -14,7 +15,6 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/data/validation"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
 	xwidget "fyne.io/x/fyne/widget"
@@ -461,8 +461,31 @@ func (g *Gnomon) ControlPanel(w fyne.Window) *fyne.Container {
 	fast_force.Required = true
 
 	fast_diff := dwidget.NewDeroEntry("", 1, 0)
-	fast_diff.Validator = validation.NewRegexp(`^[^0]\d{0,}$`, "Int required")
 	fast_diff.AllowFloat = false
+	fast_diff.Validator = func(s string) (err error) {
+		if strings.HasPrefix(s, "0") {
+			fast_diff.SetText(strings.TrimLeft(s, "0"))
+			return
+		}
+
+		if i, err := strconv.ParseInt(s, 10, 64); err == nil {
+			if i > 100000 {
+				i = 100000
+				fast_diff.SetText("100000")
+			} else if i < 100 {
+				i = 100
+				fast_diff.SetText("100")
+			}
+			g.Fast.ForceFastSyncDiff = i
+
+			return nil
+		}
+
+		fast_diff.SetText("100")
+		g.Fast.ForceFastSyncDiff = structures.FORCE_FASTSYNC_DIFF
+
+		return
+	}
 
 	fast_enabled := widget.NewRadioGroup([]string{"true", "false"}, func(s string) {
 		if b, err := strconv.ParseBool(s); err == nil {
@@ -485,30 +508,6 @@ func (g *Gnomon) ControlPanel(w fyne.Window) *fyne.Container {
 	})
 	fast_enabled.Horizontal = true
 	fast_enabled.Required = true
-
-	fast_diff.OnChanged = func(s string) {
-		if fast_diff.Validate() != nil {
-			fast_diff.SetText("100")
-			g.Fast.ForceFastSyncDiff = structures.FORCE_FASTSYNC_DIFF
-			return
-		}
-
-		if i, err := strconv.ParseInt(fast_diff.Text, 10, 64); err == nil {
-			if i > 100000 {
-				i = 100000
-				fast_diff.SetText("100000")
-			} else if i < 100 {
-				i = 100
-				fast_diff.SetText("100")
-			}
-			g.Fast.ForceFastSyncDiff = i
-
-			return
-		}
-
-		fast_diff.SetText("100")
-		g.Fast.ForceFastSyncDiff = structures.FORCE_FASTSYNC_DIFF
-	}
 
 	fast_diff.SetText(strconv.Itoa(int(g.Fast.ForceFastSyncDiff)))
 

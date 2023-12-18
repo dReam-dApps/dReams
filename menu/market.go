@@ -21,7 +21,6 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/data/validation"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
@@ -939,11 +938,13 @@ func PlaceMarket(d *dreams.AppObject) *container.Split {
 	Market.Entry.ExtendBaseWidget(Market.Entry)
 	Market.Entry.SetText("0.0")
 	Market.Entry.PlaceHolder = "Dero:"
-	Market.Entry.Validator = validation.NewRegexp(`^\d{1,}\.\d{1,5}$|^[^0.]\d{0,}$`, "Int or float required")
-	Market.Entry.OnChanged = func(s string) {
-		if Market.Entry.Validate() != nil {
-			Market.Entry.SetText("0.0")
+	Market.Entry.Validator = func(s string) (err error) {
+		if _, err = strconv.ParseFloat(s, 64); err == nil {
+			return
 		}
+
+		Market.Entry.SetText("0.0")
+		return
 	}
 
 	// NFA actions container
