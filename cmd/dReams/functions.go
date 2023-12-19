@@ -25,7 +25,6 @@ import (
 	"github.com/dReam-dApps/dReams/menu"
 	"github.com/dReam-dApps/dReams/rpc"
 	"github.com/docopt/docopt-go"
-	"github.com/fyne-io/terminal"
 	"github.com/sirupsen/logrus"
 
 	"fyne.io/fyne/v2"
@@ -36,12 +35,6 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-type cliApp struct {
-	term    *terminal.Terminal
-	enabled bool
-}
-
-var cli cliApp
 var logger = structures.Logger.WithFields(logrus.Fields{})
 var command_line string = `dReams
 Platform for Dero dApps, powered by Gnomon.
@@ -52,7 +45,6 @@ Usage:
 
 Options:
   -h --help             Show this screen.
-  --cli=<false>		dReams option, enables cli app tab.
   --num-parallel-blocks=<1>   Gnomon option,  defines the number of parallel blocks to index.
   --dbtype=<boltdb>     Gnomon option,  defines type of database 'gravdb' or 'boltdb'.`
 
@@ -86,13 +78,6 @@ func flags() {
 			gnomon.SetParallel(5)
 		default:
 			gnomon.SetParallel(1)
-		}
-	}
-
-	cli.enabled = false
-	if arguments["--cli"] != nil {
-		if arguments["--cli"].(string) == "true" {
-			cli.enabled = true
 		}
 	}
 }
@@ -143,23 +128,6 @@ func save() dreams.SaveData {
 		Para:    gnomon.GetParallel(),
 		Assets:  menu.Assets.Enabled,
 		Dapps:   menu.Control.Dapps,
-	}
-}
-
-// Starts a Fyne terminal in dReams
-func startTerminal() *terminal.Terminal {
-	cli.term = terminal.New()
-	go func() {
-		_ = cli.term.RunLocalShell()
-	}()
-
-	return cli.term
-}
-
-// Exit running dReams terminal
-func exitTerminal() {
-	if cli.term != nil {
-		cli.term.Exit()
 	}
 }
 
@@ -223,7 +191,7 @@ func fetch(done chan struct{}) {
 			if !dReams.IsConfiguring() {
 				rpc.Ping()
 				rpc.EchoWallet("dReams")
-				go rpc.GetDreamsBalances(rpc.SCIDs)
+				rpc.GetDreamsBalances(rpc.SCIDs)
 				rpc.GetWalletHeight("dReams")
 				if !rpc.Startup {
 					checkConnection()
