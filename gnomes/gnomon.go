@@ -58,6 +58,7 @@ type SCHeaders struct {
 // SCID with Gnomon headers
 type SC struct {
 	ID     string
+	Rating uint64
 	Header SCHeaders
 }
 

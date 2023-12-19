@@ -472,7 +472,7 @@ func profile() fyne.CanvasObject {
 	form = append(form, widget.NewFormItem("Theme", menu.ThemeSelect(&dReams)))
 	form = append(form, widget.NewFormItem("Card Deck", holdero.FaceSelect(menu.Assets.SCIDs)))
 	form = append(form, widget.NewFormItem("Card Back", holdero.BackSelect(menu.Assets.SCIDs)))
-	form = append(form, widget.NewFormItem("Sharing", holdero.SharedDecks()))
+	form = append(form, widget.NewFormItem("Sharing", holdero.SharedDecks(&dReams)))
 	form = append(form, widget.NewFormItem("", container.NewVBox(line)))
 
 	spacer := canvas.NewRectangle(color.Transparent)

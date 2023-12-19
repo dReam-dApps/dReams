@@ -772,7 +772,7 @@ func AssetList(icon fyne.Resource, rescan func(), d *dreams.AppObject) fyne.Canv
 				if tx := rpc.ClaimNFA(entry.Text); tx != "" {
 					go ShowTxDialog("Claim NFA", fmt.Sprintf("TX: %s", tx), tx, 3*time.Second, d.Window)
 				} else {
-					dialog.NewInformation("Claim NFA", "TX Error", d.Window).Show()
+					go ShowTxDialog("Claim NFA", "TX Error, check logs", tx, 3*time.Second, d.Window)
 				}
 
 				return
