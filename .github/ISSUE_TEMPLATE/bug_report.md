@@ -10,6 +10,9 @@ assignees: ''
 **Describe the bug**
 A clear and concise description of what the bug is.
 
+**Relevant Package/Repo**
+Specify whether the bug is related to an imported package (dApp) or the main repository. (dReams)
+
 **To Reproduce**
 Steps to reproduce the behavior:
 1. Go to '...'
