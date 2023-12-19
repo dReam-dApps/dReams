@@ -442,11 +442,16 @@ func RateConfirm(scid string, d *dreams.AppObject) {
 
 // Create and show dialog for sent TX, dismiss copies txid to clipboard, dialog will hide after delay
 func ShowTxDialog(title, message, txid string, delay time.Duration, w fyne.Window) {
-	info := dialog.NewInformation(title, message, w)
-	info.SetDismissText("Copy")
-	info.SetOnClosed(func() {
-		w.Clipboard().SetContent(txid)
-	})
+	var button *widget.Button
+	if txid != "" {
+		button = widget.NewButton("Copy", func() { w.Clipboard().SetContent(txid) })
+	} else {
+		button = widget.NewButton("Ok", nil)
+	}
+
+	info := dialog.NewCustom(title, message, container.NewVBox(widget.NewLabel(message)), w)
+	info.SetButtons([]fyne.CanvasObject{button})
+
 	info.Show()
 	time.Sleep(delay)
 	info.Hide()
