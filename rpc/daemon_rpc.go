@@ -79,10 +79,10 @@ func IsReady() bool {
 	return false
 }
 
-// Set daemon rpc client with context and 6 sec cancel
+// Set daemon rpc client with context and 8 sec cancel
 func SetDaemonClient(addr string) (jsonrpc.RPCClient, context.Context, context.CancelFunc) {
 	client := jsonrpc.NewClient("http://" + addr + "/json_rpc")
-	ctx, cancel := context.WithTimeout(context.Background(), 6*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 8*time.Second)
 
 	return client, ctx, cancel
 }
