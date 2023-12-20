@@ -9,6 +9,7 @@ import (
 	"os"
 	"runtime"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/blang/semver/v4"
@@ -25,6 +26,7 @@ import (
 
 var dreamsV = semver.MustParse("0.10.1-dev") //"0.10.1d"
 
+// Get current package version
 func Version() semver.Version {
 	return dreamsV
 }
@@ -750,12 +752,36 @@ func SendAsset(scid, dest string) (tx string) {
 	return txid.TXID
 }
 
+type confirmation struct {
+	sync.RWMutex
+	value bool
+}
+
+var confirmTX confirmation
+
+func (c *confirmation) set(b bool) {
+	c.Lock()
+	c.value = b
+	c.Unlock()
+}
+
+func IsConfirmingTx() bool {
+	confirmTX.RLock()
+	defer confirmTX.RUnlock()
+
+	return confirmTX.value
+}
+
 // Watch a sent tx and return true if tx is confirmed
 //   - tag for log print
 //   - timeout is duration of loop in 2sec increment, will break if reached
 func ConfirmTx(txid, tag string, timeout int) bool {
 	if txid != "" {
 		count := 0
+		confirmTX.set(true)
+		defer func() {
+			confirmTX.set(false)
+		}()
 		time.Sleep(time.Second)
 		for IsReady() {
 			count++
@@ -768,17 +794,17 @@ func ConfirmTx(txid, tag string, timeout int) bool {
 				if tx.In_pool {
 					continue
 				} else if !tx.In_pool && tx.Block_Height > 1 && tx.ValidBlock != "" {
-					logger.Printf("[%s] TX Confirmed\n", tag)
+					logger.Printf("[%s] TX confirmed: {%s}\n", tag, txid)
 					return true
 				} else if !tx.In_pool && tx.Block_Height == 0 && tx.ValidBlock == "" {
-					logger.Warnf("[%s] TX Failed\n", tag)
+					logger.Warnf("[%s] TX failed: {%s}\n", tag, txid)
 					return false
 				}
 			}
 		}
 	}
 
-	logger.Errorf("[%s] Could Not Confirm TX\n", tag)
+	logger.Errorf("[%s] Could not confirm TX: {%s}\n", tag, txid)
 
 	return false
 }
@@ -801,10 +827,10 @@ func ConfirmTxRetry(txid, tag string, timeout int) (retry int) {
 			if tx.In_pool {
 				continue
 			} else if !tx.In_pool && tx.Block_Height > 1 && tx.ValidBlock != "" {
-				logger.Printf("[%s] TX Confirmed\n", tag)
+				logger.Printf("[%s] TX confirmed: {%s}\n", tag, txid)
 				return 100
 			} else if !tx.In_pool && tx.Block_Height == 0 && tx.ValidBlock == "" {
-				logger.Warnf("[%s] TX Failed, Retrying next block\n", tag)
+				logger.Warnf("[%s] TX failed: {%s}, Retrying next block\n", tag, txid)
 				time.Sleep(3 * time.Second)
 				for Wallet.Height <= next_block {
 					time.Sleep(3 * time.Second)
@@ -814,7 +840,7 @@ func ConfirmTxRetry(txid, tag string, timeout int) (retry int) {
 		}
 	}
 
-	logger.Errorf("[%s] Could Not Confirm TX\n", tag)
+	logger.Errorf("[%s] Could not confirm TX: {%s}\n", tag, txid)
 
 	return 2
 }

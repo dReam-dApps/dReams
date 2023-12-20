@@ -24,6 +24,7 @@ This file lists the changes to dReams repo with each version.
 * `dreams` DownloadBytes func
 * `dwidget` NewSpacer, NewLine and AddIndicator funcs
 * `rpc` PrintError and PrintLog funcs print to UI
+* `rpc` IsConfirmingTx funcs
 
 ### Changed
 
