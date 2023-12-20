@@ -55,6 +55,7 @@ This file lists the changes to dReams repo with each version.
 
 ### Fixed
 
+* Deprecated container.NewMax
 * Deprecated fyne.TextTruncate
 * Can't close when initializing
 * Channel short cycling

@@ -769,11 +769,8 @@ func AssetList(icon fyne.Resource, rescan func(), d *dreams.AppObject) fyne.Canv
 	claim_button := widget.NewButton("Claim", func() {
 		if len(entry.Text) == 64 {
 			if isNFA(entry.Text) {
-				if tx := rpc.ClaimNFA(entry.Text); tx != "" {
-					go ShowTxDialog("Claim NFA", fmt.Sprintf("TX: %s", tx), tx, 3*time.Second, d.Window)
-				} else {
-					go ShowTxDialog("Claim NFA", "TX Error, check logs", tx, 3*time.Second, d.Window)
-				}
+				tx := rpc.ClaimNFA(entry.Text)
+				go ShowTxDialog("Claim NFA", "ClaimNFA", tx, 3*time.Second, d.Window)
 
 				return
 			}

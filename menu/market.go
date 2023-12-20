@@ -158,17 +158,12 @@ func BidBuyConfirm(scid string, amt uint64, bid bool, d *dreams.AppObject) {
 	confirm := dialog.NewConfirm(title, text, func(b bool) {
 		if b {
 			if bid {
-				if tx := rpc.BidBuyNFA(scid, "Bid", amt); tx != "" {
-					go ShowTxDialog("NFA Bid", fmt.Sprintf("TXID: %s", tx), tx, 3*time.Second, d.Window)
-				} else {
-					go ShowTxDialog("NFA Bid", "TX error, check logs", tx, 3*time.Second, d.Window)
-				}
+				tx := rpc.BidBuyNFA(scid, "Bid", amt)
+				go ShowTxDialog("NFA Bid", "BidBuyNFA", tx, 3*time.Second, d.Window)
 			} else {
-				if tx := rpc.BidBuyNFA(scid, "BuyItNow", amt); tx != "" {
-					go ShowTxDialog("NFA Buy", fmt.Sprintf("TXID: %s", tx), tx, 3*time.Second, d.Window)
-				} else {
-					go ShowTxDialog("NFA Buy", "TX error, check logs", tx, 3*time.Second, d.Window)
-				}
+				tx := rpc.BidBuyNFA(scid, "BuyItNow", amt)
+				go ShowTxDialog("NFA Buy", "BidBuyNFA", tx, 3*time.Second, d.Window)
+
 			}
 		}
 		Market.Confirming = false
@@ -210,17 +205,11 @@ func ConfirmCancelClose(scid string, close bool, d *dreams.AppObject) {
 	confirm := dialog.NewConfirm(title, text, func(b bool) {
 		if b {
 			if close {
-				if tx := rpc.CancelCloseNFA(scid, true); tx != "" {
-					go ShowTxDialog("NFA Close", fmt.Sprintf("TXID: %s", tx), tx, 3*time.Second, d.Window)
-				} else {
-					go ShowTxDialog("NFA Close", "TX error, check logs", tx, 3*time.Second, d.Window)
-				}
+				tx := rpc.CancelCloseNFA(scid, true)
+				go ShowTxDialog("NFA Close", "CancelCloseNFA", tx, 3*time.Second, d.Window)
 			} else {
-				if tx := rpc.CancelCloseNFA(scid, false); tx != "" {
-					go ShowTxDialog("NFA Cancel", fmt.Sprintf("TXID: %s", tx), tx, 3*time.Second, d.Window)
-				} else {
-					go ShowTxDialog("NFA Cancel", "TX error, check logs", tx, 3*time.Second, d.Window)
-				}
+				tx := rpc.CancelCloseNFA(scid, false)
+				go ShowTxDialog("NFA Cancel", "CancelCloseNFA", tx, 3*time.Second, d.Window)
 			}
 			Market.Viewing.Asset = ""
 			Market.Viewing.Collection = ""

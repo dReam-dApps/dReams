@@ -391,11 +391,9 @@ func RateConfirm(scid string, d *dreams.AppObject) {
 		}
 
 		fee := uint64(math.Abs(slider.Value * 10000))
-		if tx := rpc.RateSCID(scid, fee, pos); tx != "" {
-			go ShowTxDialog("Rate SCID", fmt.Sprintf("TXID: %s", tx), tx, 3*time.Second, d.Window)
-		} else {
-			go ShowTxDialog("Rate SCID", "TX error, check logs", tx, 3*time.Second, d.Window)
-		}
+		tx := rpc.RateSCID(scid, fee, pos)
+		go ShowTxDialog("Rate SCID", "RateSCID", tx, 3*time.Second, d.Window)
+
 		done <- struct{}{}
 	})
 	confirm_button.Importance = widget.HighImportance
@@ -441,11 +439,17 @@ func RateConfirm(scid string, d *dreams.AppObject) {
 }
 
 // Create and show dialog for sent TX, dismiss copies txid to clipboard, dialog will hide after delay
-func ShowTxDialog(title, message, txid string, delay time.Duration, w fyne.Window) {
+func ShowTxDialog(title, tag, txid string, delay time.Duration, w fyne.Window) {
+	var message string
 	var button *widget.Button
 	if txid != "" {
+		message = fmt.Sprintf("TXID: %s", txid)
 		button = widget.NewButton("Copy", func() { w.Clipboard().SetContent(txid) })
+		if tag != "" {
+			go rpc.ConfirmTx(txid, tag, 45)
+		}
 	} else {
+		message = "TX error, check logs"
 		button = widget.NewButton("Ok", nil)
 	}
 
@@ -510,6 +514,15 @@ func ShowConfirmDialog(done chan struct{}, confirm interface{}) {
 	}
 }
 
+// Create and show dialog for general messages
+func ShowMessageDialog(title, message string, delay time.Duration, w fyne.Window) {
+	info := dialog.NewInformation(title, message, w)
+	info.Show()
+	time.Sleep(delay)
+	info.Hide()
+	info = nil
+}
+
 // Send Dero asset menu
 //   - Asset SCID can be sent as payload to receiver when sending asset
 //   - Pass resources for window_icon
@@ -567,11 +580,8 @@ func sendAssetMenu(window_icon fyne.Resource, d *dreams.AppObject) {
 		confirm_button := widget.NewButtonWithIcon("Confirm", dreams.FyneIcon("confirm"), func() {
 			tx := rpc.SendAsset(send_asset, dest)
 			Assets.Button.sending = false
-			if tx != "" {
-				go ShowTxDialog("Send Asset", fmt.Sprintf("TXID: %s", tx), tx, 3*time.Second, d.Window)
-			} else {
-				go ShowTxDialog("Send Asset", "TX error, check logs", tx, 3*time.Second, d.Window)
-			}
+			go ShowTxDialog("Send Asset", "SendAsset", tx, 3*time.Second, d.Window)
+
 			saw.Close()
 		})
 		confirm_button.Importance = widget.HighImportance
@@ -603,7 +613,7 @@ func sendAssetMenu(window_icon fyne.Resource, d *dreams.AppObject) {
 	send_button.Hide()
 
 	button_spacer := canvas.NewRectangle(color.Transparent)
-	button_spacer.SetMinSize(fyne.NewSize(0, 90))
+	button_spacer.SetMinSize(fyne.NewSize(0, 60))
 
 	saw_content = container.NewVBox(
 		title,
@@ -747,11 +757,8 @@ func listMenu(window_icon fyne.Resource, d *dreams.AppObject) {
 						Assets.Button.List.Show()
 					}
 				}
-				if tx != "" {
-					go ShowTxDialog(fmt.Sprintf("NFA %s", listing.Selected), fmt.Sprintf("TXID: %s", tx), tx, 3*time.Second, d.Window)
-				} else {
-					go ShowTxDialog(fmt.Sprintf("NFA %s", listing.Selected), "TX error, check logs", tx, 3*time.Second, d.Window)
-				}
+				go ShowTxDialog(fmt.Sprintf("NFA %s", listing.Selected), "SetNFAListing", tx, 3*time.Second, d.Window)
+
 				aw.Close()
 			})
 			confirm_button.Importance = widget.HighImportance
