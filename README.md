@@ -183,8 +183,8 @@ var logger = structures.Logger.WithFields(logrus.Fields{})
 var gnomon = gnomes.NewGnomes()
 
 func main() {
-	// Initialize Gnomon fast sync
-	gnomon.SetFastsync(true)
+	// Initialize Gnomon fast sync true to sync db immediately
+	gnomon.SetFastsync(true, false, 100)
 
 	// Initialize rpc address to rpc.Daemon var
 	rpc.Daemon.Rpc = "127.0.0.1:10102"
@@ -194,7 +194,7 @@ func main() {
 
 	rpc.Ping()
 	// Check for daemon connection, if daemon is not connected we won't start Gnomon
-	if rpc.Daemon.Connect {
+	if rpc.Daemon.IsConnected() {
 		// Initialize NFA search filter and start Gnomon
 		filter := []string{gnomes.NFA_SEARCH_FILTER}
 		gnomes.StartGnomon(app_tag, "boltdb", filter, 0, 0, nil)
@@ -209,7 +209,7 @@ func main() {
 		}()
 
 		// Gnomon will continue to run if daemon is connected
-		for !exit && rpc.Daemon.Connect {
+		for !exit && rpc.Daemon.IsConnected() {
 			contracts := gnomon.GetAllOwnersAndSCIDs()
 			logger.Printf("[%s] Index contains %d contracts\n", app_tag, len(contracts))
 			time.Sleep(3 * time.Second)
@@ -231,35 +231,50 @@ package main
 import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
+	"fyne.io/fyne/v2/widget"
 	dreams "github.com/dReam-dApps/dReams"
+	"github.com/dReam-dApps/dReams/bundle"
 	"github.com/dReam-dApps/dReams/menu"
 )
 
-// dReams menu.PlaceMarket() example
+// dReams menu PlaceMarket and PlaceAsset example
 
 // Name my app
 const app_tag = "My_app"
 
 func main() {
-	// Initialize Fyne app in dreams.AppObject
-	var d dreams.AppObject
-	d.App = app.New()
+	// Intialize Fyne window app and window into dReams app object
+	a := app.New()
+	w := a.NewWindow(app_tag)
+	w.Resize(fyne.NewSize(900, 700))
+	d := dreams.AppObject{
+		App:    a,
+		Window: w,
+	}
 
-	// Initialize fyne window with size
-	d.Window = d.App.NewWindow(app_tag)
-	d.Window.Resize(fyne.NewSize(300, 100))
-	d.Window.SetMaster()
+	// Simple asset profile with wallet name entry and theme select
+	line := canvas.NewLine(bundle.TextColor)
+	profile := []*widget.FormItem{}
+	profile = append(profile, widget.NewFormItem("Name", menu.NameEntry()))
+	profile = append(profile, widget.NewFormItem("", layout.NewSpacer()))
+	profile = append(profile, widget.NewFormItem("", container.NewVBox(line)))
+	profile = append(profile, widget.NewFormItem("Theme", menu.ThemeSelect(&d)))
+	profile = append(profile, widget.NewFormItem("", container.NewVBox(line)))
 
-	// Initialize asset map used by widgets
-	menu.Assets.SCIDs = make(map[string]string)
+	// Rescan button function in asset tab
+	rescan := func() {
+		// What you want to scan wallet for
+	}
 
+	// Place asset and market layouts into tabs
 	tabs := container.NewAppTabs(
-		container.NewTabItem("Assets", menu.PlaceAssets(app_tag, layout.NewSpacer(), nil, nil, &d)),
-		container.NewTabItem("Market", menu.PlaceMarket()))
+		container.NewTabItem("Assets", menu.PlaceAssets(app_tag, widget.NewForm(profile...), rescan, bundle.ResourceDReamsIconAltPng, &d)),
+		container.NewTabItem("Market", menu.PlaceMarket(&d)))
 
-	// Place tabs
+	// Place tabs as window content and run app
 	d.Window.SetContent(tabs)
 	d.Window.ShowAndRun()
 }
@@ -288,8 +303,8 @@ const app_tag = "My_app"
 var gnomon = gnomes.NewGnomes()
 
 func main() {
-	// Initialize Gnomon fast sync
-	gnomon.SetFastsync(true)
+	// Initialize Gnomon fast sync true to sync db immediately
+	gnomon.SetFastsync(true, false, 100)
 
 	// Initialize logger to Stdout
 	gnomes.InitLogrusLog(logrus.InfoLevel)
@@ -365,7 +380,7 @@ func main() {
 	// Initialize fyne container and add some various widgets for viewing purposes
 	cont := container.NewVBox()
 	cont.Add(container.NewAdaptiveGrid(3, dwidget.NewCenterLabel("Label"), widget.NewEntry(), widget.NewButton("Button", nil)))
-	cont.Add(container.NewAdaptiveGrid(3, widget.NewLabel("Label"), widget.NewCheck("Check", nil), widget.NewButton("Button", nil)))
+	cont.Add(container.NewAdaptiveGrid(3, widget.NewLabel("Label"), widget.NewCheck("Check", nil), dwidget.NewLine(30, 30, bundle.TextColor)))
 	cont.Add(widget.NewPasswordEntry())
 	cont.Add(widget.NewSlider(0, 100))
 
