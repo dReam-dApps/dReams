@@ -224,7 +224,7 @@ func main() {
 }
 ```
 ### menu 
-NFA related items such as the dReams NFA marketplace and asset controls can be independently imported for use in other dApps, it can be used with or without dReams filters. There are menu panels and custom Dero indicators that can be imported. This example shows how to import them as app tabs.
+NFA related items such as the dReams NFA marketplace and asset controls can be independently imported for use in other dApps, it can be used with or without dReams filters. There are menu panels and custom Dero indicators that can be imported. This example shows how to import asset controls and market as app tabs.
 ```
 package main
 
@@ -280,7 +280,7 @@ func main() {
 }
 ```
 ### dwidget
-The dwidget package is a extension to fyne widgets that intends to make creating dApps simpler and quicker with widgets specified for use with Dero. Numerical entries have prefix, increment and decimal control and pre-configured connection boxes can be used that are tied into dReams rpc vars and have default Dero connection addresses populated. There is objects for shutdown control as well as a spot for the dReams indicators, or new ones. This example starts a Fyne gui app using `VerticalEntries()` to start Gnomon when connected.
+The dwidget package is a extension to fyne widgets that intends to make creating dApps simpler and quicker with widgets specified for use with Dero. Numerical entries have prefix, increment and decimal control. Pre-configured connection boxes can be used that are tied into dReams rpc vars and have default Dero connection addresses populated. There is objects for shutdown control as well as a spot for the dReams indicators, or new ones. This example starts a Fyne gui app using `VerticalEntries()` to start Gnomon when connected.
 ```
 package main
 
