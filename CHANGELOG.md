@@ -2,7 +2,7 @@
 
 This file lists the changes to dReams repo with each version.
 
-## 0.11.0 - In Progress
+## 0.11.0 - December 23 2023
 
 ### Added
 
