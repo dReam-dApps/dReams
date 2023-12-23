@@ -43,6 +43,7 @@ This file lists the changes to dReams repo with each version.
 * Confirmations to dialogs  
 * Asset tab layout updated and broken down into sub tabs (owned, profile, index and headers)
 * Market layout updated
+* NFA minter layout updated
 * Import balances and swap from `holdero`
 * `gnomes` Gnomes var to Gnomes interface with added methods
 * `gnomes` control panel UI updated

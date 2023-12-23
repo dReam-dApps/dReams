@@ -111,9 +111,15 @@ func incrementSpacer() fyne.CanvasObject {
 // Place objects for NFA minting of collections or single mint
 func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 	collection_enable := widget.NewCheck("Collection", nil)
+
 	sign_button := widget.NewButton("File Sign", nil)
+	sign_button.Importance = widget.HighImportance
+
 	contracts_button := widget.NewButton("Create Contract", nil)
+	contracts_button.Importance = widget.HighImportance
+
 	install_button := widget.NewButton("Install Contract", nil)
+	install_button.Importance = widget.HighImportance
 
 	collection_high_entry := dwidget.NewDeroEntry("", 1, 0)
 	collection_high_entry.SetPlaceHolder("Ending At:")
@@ -1085,7 +1091,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 
 	collection_cont := container.NewBorder(nil, nil, collection_enable, container.NewAdaptiveGrid(2, url_add_incr, url_remove_incr), container.NewAdaptiveGrid(2, collection_low_entry, collection_high_entry))
 
-	wallet_cont := container.NewBorder(nil, container.NewAdaptiveGrid(2, rpc_label, wallet_label), nil, nil, container.NewAdaptiveGrid(2, wallet_pass_entry, open_wallet_button))
+	wallet_cont := container.NewBorder(nil, nil, nil, open_wallet_button, container.NewStack(dwidget.NewSpacer(300, 0), wallet_pass_entry))
 
 	instructions_button := widget.NewButton("How To Mint", nil)
 
@@ -1190,26 +1196,36 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 
 	mint_form := []*widget.FormItem{}
 	mint_form = append(mint_form, widget.NewFormItem("", instructions_button))
-	mint_form = append(mint_form, widget.NewFormItem("Config", container.NewBorder(nil, nil, nil, save_config_button, config_select)))
-	mint_form = append(mint_form, widget.NewFormItem("", collection_cont))
+
+	mint_form = append(mint_form, widget.NewFormItem("", container.NewAdaptiveGrid(2, collection_cont,
+		widget.NewForm(widget.NewFormItem("Config", container.NewBorder(nil, nil, nil, save_config_button, config_select))))))
+
 	mint_form = append(mint_form, widget.NewFormItem("", layout.NewSpacer()))
 	mint_form = append(mint_form, widget.NewFormItem("Collection", container.NewBorder(nil, nil, nil, set_up_collec, collection_entry)))
-	mint_form = append(mint_form, widget.NewFormItem("Owner Can Update", update_select))
-	mint_form = append(mint_form, widget.NewFormItem("Name", container.NewBorder(nil, nil, nil, extension_select, name_cont)))
+
+	mint_form = append(mint_form, widget.NewFormItem("Owner Can Update", container.NewAdaptiveGrid(2, update_select,
+		widget.NewForm(widget.NewFormItem("Name", container.NewBorder(nil, nil, nil, extension_select, name_cont))))))
+
+	mint_form = append(mint_form, widget.NewFormItem("Tags *", container.NewAdaptiveGrid(2, tags_entry,
+		widget.NewForm(widget.NewFormItem("Type   ", type_select)))))
+
 	mint_form = append(mint_form, widget.NewFormItem("Description", descr_entry))
-	mint_form = append(mint_form, widget.NewFormItem("Type", type_select))
-	mint_form = append(mint_form, widget.NewFormItem("Tags *", tags_entry))
-	mint_form = append(mint_form, widget.NewFormItem("File Check C", container.NewBorder(nil, nil, nil, import_signs, checkC_entry)))
-	mint_form = append(mint_form, widget.NewFormItem("File Check S", checkS_entry))
+
+	mint_form = append(mint_form, widget.NewFormItem("File Sign C", container.NewAdaptiveGrid(2, checkC_entry,
+		widget.NewForm(widget.NewFormItem("File Sign S", container.NewBorder(nil, nil, nil, import_signs, checkS_entry))))))
+
 	mint_form = append(mint_form, widget.NewFormItem("File URL *", file_entries))
 	mint_form = append(mint_form, widget.NewFormItem("Cover URL *", cover_entries))
 	mint_form = append(mint_form, widget.NewFormItem("Icon URL *", icon_entries))
 	mint_form = append(mint_form, widget.NewFormItem("File Sign URL *", sign_entries))
 	mint_form = append(mint_form, widget.NewFormItem("", layout.NewSpacer()))
-	mint_form = append(mint_form, widget.NewFormItem("Royalty %", royalty_entry))
-	mint_form = append(mint_form, widget.NewFormItem("Artificer %", art_entry))
-	mint_form = append(mint_form, widget.NewFormItem("", layout.NewSpacer()))
-	mint_form = append(mint_form, widget.NewFormItem("Wallet File", wallet_cont))
+
+	mint_form = append(mint_form, widget.NewFormItem("Royalty %", container.NewHBox(container.NewVBox(container.NewStack(dwidget.NewSpacer(280, 0), royalty_entry)),
+		widget.NewForm(widget.NewFormItem("Artificer %", container.NewStack(dwidget.NewSpacer(280, 0), art_entry))),
+		layout.NewSpacer(),
+		widget.NewForm(widget.NewFormItem("Wallet File", wallet_cont)))))
+
+	mint_form = append(mint_form, widget.NewFormItem("", container.NewAdaptiveGrid(2, rpc_label, wallet_label)))
 	mint_form = append(mint_form, widget.NewFormItem("", layout.NewSpacer()))
 	mint_form = append(mint_form, widget.NewFormItem("", container.NewAdaptiveGrid(3, container.NewStack(install_button), container.NewStack(contracts_button), sign_button)))
 
