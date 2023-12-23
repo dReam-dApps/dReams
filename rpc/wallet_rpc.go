@@ -24,7 +24,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-var dreamsV = semver.MustParse("0.10.1-dev") //"0.10.1d"
+var dreamsV = semver.MustParse("0.11.0")
 
 // Get current package version
 func Version() semver.Version {
