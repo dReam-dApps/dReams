@@ -205,9 +205,6 @@ func GetDapps() (dApps []string) {
 		}
 	}
 
-	// TODO remove for merge
-	dApps = append(dApps, "Grokked")
-
 	return
 }
 
