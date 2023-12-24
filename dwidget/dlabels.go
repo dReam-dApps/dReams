@@ -6,7 +6,6 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 	"github.com/dReam-dApps/dReams/bundle"
 )
@@ -20,7 +19,7 @@ func LabelColor(c *fyne.Container) *fyne.Container {
 		alpha = canvas.NewRectangle(color.RGBA{0, 0, 0, 150})
 	}
 
-	return container.New(layout.NewMaxLayout(), alpha, c)
+	return container.NewStack(alpha, c)
 }
 
 // Create a new *widget.Label with center alignment
@@ -46,4 +45,17 @@ func NewCanvasText(text string, size float32, align fyne.TextAlign) (canv *canva
 	canv.Alignment = align
 
 	return
+}
+
+// Create a new transparent *canvas.Rectangle to use as object spacer
+func NewSpacer(w, h float32) *canvas.Rectangle {
+	spacer := canvas.NewRectangle(color.Transparent)
+	spacer.SetMinSize(fyne.NewSize(w, h))
+
+	return spacer
+}
+
+// Create a new line with min size
+func NewLine(w, h float32, c color.Color) fyne.CanvasObject {
+	return container.NewStack(NewSpacer(w, h), container.NewVBox(canvas.NewLine(c)))
 }

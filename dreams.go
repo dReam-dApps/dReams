@@ -1,19 +1,20 @@
 package dreams
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"image/color"
+	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"runtime"
 	"sort"
-	"strings"
 	"sync"
 	"time"
 
 	"github.com/civilware/Gnomon/structures"
-	"github.com/dReam-dApps/dReams/bundle"
 	"github.com/dReam-dApps/dReams/rpc"
 	"github.com/sirupsen/logrus"
 
@@ -42,10 +43,11 @@ type SaveData struct {
 	Tables  []string     `json:"tables"`
 	Predict []string     `json:"predict"`
 	Sports  []string     `json:"sports"`
-	G45s    []string     `json:"g45s"`
-	NFAs    []string     `json:"nfas"`
+	Theme   string       `json:"theme"`
 	DBtype  string       `json:"dbType"`
 	Para    int          `json:"paraBlocks"`
+	FSForce bool         `json:"fastsyncForce"`
+	FSDiff  int64        `json:"fastsyncDiff"`
 
 	Assets map[string]bool `json:"assets"`
 	Dapps  map[string]bool `json:"dapps"`
@@ -74,34 +76,34 @@ type AssetSelect struct {
 	Select *widget.Select
 }
 
-type counter struct {
-	i int
+type count struct {
+	i       int
+	calling bool
+	closing bool
 	sync.RWMutex
 }
 
-var count counter
+var counter count
 var mu sync.RWMutex
+var ms = 100 * time.Millisecond
 var logger = structures.Logger.WithFields(logrus.Fields{})
 
-// Background theme AssetSelect
-var Theme AssetSelect
-
 // Add to active channel count
-func (c *counter) plus() {
+func (c *count) plus() {
 	c.Lock()
 	c.i++
 	c.Unlock()
 }
 
 // Subtract from active channel count
-func (c *counter) minus() {
+func (c *count) minus() {
 	c.Lock()
 	c.i--
 	c.Unlock()
 }
 
 // Check active channel count
-func (c *counter) active() int {
+func (c *count) active() int {
 	c.RLock()
 	defer c.RUnlock()
 
@@ -173,9 +175,13 @@ func (d *AppObject) SetChannels(i int) {
 
 // Signal all available channels when we are ready for them to work
 func (d *AppObject) SignalChannel() {
-	for count.active() < d.channels {
-		count.plus()
-		d.receive <- struct{}{}
+	if !counter.closing {
+		counter.calling = true
+		for counter.active() < d.channels {
+			counter.plus()
+			d.receive <- struct{}{}
+		}
+		counter.calling = false
 	}
 }
 
@@ -186,7 +192,10 @@ func (d *AppObject) Receive() <-chan struct{} {
 
 // Signal back to counter when work is done
 func (d *AppObject) WorkDone() {
-	count.minus()
+	for counter.calling {
+		time.Sleep(ms)
+	}
+	counter.minus()
 }
 
 // Close signal for a dApp
@@ -196,15 +205,20 @@ func (d *AppObject) CloseDapp() <-chan struct{} {
 
 // Send close signal to all active dApp channels
 func (d *AppObject) CloseAllDapps() {
+	for counter.calling {
+		time.Sleep(ms)
+	}
+	counter.closing = true
 	ch := 0
 	for ch < d.channels {
 		ch++
 		d.done <- struct{}{}
 	}
 
-	for count.active() > 0 {
+	for counter.active() > 0 {
 		time.Sleep(time.Second)
 	}
+	counter.closing = false
 }
 
 // Stop the main apps process
@@ -254,81 +268,70 @@ func FileExists(path, tag string) bool {
 	return false
 }
 
-// Download image file from url and return as canvas image
-func DownloadFile(URL, fileName string) (canvas.Image, error) {
-	client := &http.Client{Timeout: 15 * time.Second}
-	req, err := http.NewRequest("GET", URL, nil)
+// Download image file from URL and return as canvas.Image
+func DownloadCanvas(URL, fileName string) (canvas.Image, error) {
+	url, err := url.Parse(URL)
 	if err != nil {
 		return *canvas.NewImageFromImage(nil), err
 	}
-	response, err := client.Do(req)
+
+	client := &http.Client{Timeout: 15 * time.Second}
+	response, err := client.Get(url.String())
 	if err != nil {
 		return *canvas.NewImageFromImage(nil), err
 	}
 	defer response.Body.Close()
 
-	if response.StatusCode != 200 {
+	if response.StatusCode != http.StatusOK {
 		return *canvas.NewImageFromImage(nil), fmt.Errorf("received %d response code", response.StatusCode)
 	}
 
-	return *canvas.NewImageFromReader(response.Body, fileName), nil
+	// if !strings.HasPrefix(response.Header.Get("Content-Type"), "image/") {
+	// 	return canvas.NewImageFromImage(nil), fmt.Errorf("%s does not point to an image", URL)
+	// }
+
+	var buf bytes.Buffer
+	_, err = io.Copy(&buf, response.Body)
+	if err != nil {
+		return *canvas.NewImageFromImage(nil), err
+	}
+
+	return *canvas.NewImageFromReader(&buf, fileName), nil
 }
 
-// dReams app theme selection object
-//   - If image is not present locally, it is downloaded
-func ThemeSelect() fyne.Widget {
-	options := []string{"Main", "Legacy"}
-	Theme.Select = widget.NewSelect(options, func(s string) {
-		switch Theme.Select.SelectedIndex() {
-		case -1:
-			Theme.Name = "Main"
-		case 0:
-			Theme.Name = "Main"
-		case 1:
-			Theme.Name = "Legacy"
-		default:
-			Theme.Name = s
-		}
-		go func() {
-			dir := GetDir()
-			check := strings.Trim(s, "0123456789")
-			if check == "AZYDS" {
-				file := dir + "/assets/" + s + "/" + s + ".png"
-				if FileExists(file, "dReams") {
-					Theme.Img = *canvas.NewImageFromFile(file)
-				} else {
-					Theme.URL = "https://raw.githubusercontent.com/Azylem/" + s + "/main/" + s + ".png"
-					logger.Println("[dReams] Downloading", Theme.URL)
-					Theme.Img, _ = DownloadFile(Theme.URL, s)
-				}
-			} else if check == "SIXART" {
-				file := dir + "/assets/" + s + "/" + s + ".png"
-				if FileExists(file, "dReams") {
-					Theme.Img = *canvas.NewImageFromFile(file)
-				} else {
-					Theme.URL = "https://raw.githubusercontent.com/SixofClubsss/SIXART/main/" + s + "/" + s + ".png"
-					logger.Println("[dReams] Downloading", Theme.URL)
-					Theme.Img, _ = DownloadFile(Theme.URL, s)
-				}
-			} else if check == "HSTheme" {
-				file := dir + "/assets/" + s + "/" + s + ".png"
-				if FileExists(file, "dReams") {
-					Theme.Img = *canvas.NewImageFromFile(file)
-				} else {
-					Theme.URL = "https://raw.githubusercontent.com/High-Strangeness/High-Strangeness/main/" + s + "/" + s + ".png"
-					logger.Println("[dReams] Downloading", Theme.URL)
-					Theme.Img, _ = DownloadFile(Theme.URL, s)
-				}
-			} else if s == "Main" {
-				Theme.Img = *canvas.NewImageFromResource(bundle.ResourceBackgroundPng)
-			} else if s == "Legacy" {
-				Theme.Img = *canvas.NewImageFromResource(bundle.ResourceLegacyBackgroundPng)
-			}
-		}()
-	})
-	Theme.Select.PlaceHolder = "Theme"
+// Download url image file from URL and return as []byte
+func DownloadBytes(URL string) ([]byte, error) {
+	url, err := url.Parse(URL)
+	if err != nil {
+		return nil, err
+	}
 
-	return Theme.Select
+	client := http.Client{Timeout: 15 * time.Second}
+	response, err := client.Get(url.String())
+	if err != nil {
+		return nil, err
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to download the image: status code %d", response.StatusCode)
+	}
+
+	// if !strings.HasPrefix(response.Header.Get("Content-Type"), "image/") {
+	// 	return nil, fmt.Errorf("%s does not point to an image", URL)
+	// }
+
+	image, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return image, nil
+}
+
+// Returns Fyne theme icon for name
+func FyneIcon(name fyne.ThemeIconName) fyne.Resource {
+	return fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), name)
 }
 
 // Add a asset option to a AssetSelect

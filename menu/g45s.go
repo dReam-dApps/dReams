@@ -1,5 +1,14 @@
 package menu
 
+import (
+	"runtime"
+	"time"
+
+	"fyne.io/fyne/v2"
+	"github.com/civilware/Gnomon/structures"
+	"github.com/dReam-dApps/dReams/rpc"
+)
+
 const (
 	Seals_mint = "dero1qyfq8m3rju62tshju60zuc0ymrajwxqajkdh6pw888ejuv94jlfgjqq58px98"
 	Seals_coll = "c6fa9a2c95d97da816eb9689a2fb52be385bb1df9e93abe99373ddbd3407129d"
@@ -10,8 +19,9 @@ const (
 )
 
 type assetCount struct {
-	name  string
-	count int
+	name    string
+	count   int
+	creator string
 }
 
 // Dero Seals metadata struct
@@ -55,15 +65,17 @@ var dReamsG45s = []assetCount{
 
 // dReams G45 collections
 func IsDreamsG45(check string) bool {
-	if check == "Dero Seals" || check == "Dero A-Team" || check == "Dero Degens" {
-		return true
+	for _, g := range dReamsG45s {
+		if g.name == check {
+			return true
+		}
 	}
 
 	return false
 }
 
 // Returns collection SCID by name
-func G45Collection(name string) (collection string) {
+func G45CollectionSC(name string) (collection string) {
 	switch name {
 	case "Dero Seals":
 		return Seals_coll
@@ -80,9 +92,41 @@ func G45Collection(name string) (collection string) {
 func ReturnEnabledG45s(assets map[string]bool) (filter []string) {
 	for name, enabled := range assets {
 		if enabled && IsDreamsG45(name) {
-			filter = append(filter, G45Collection(name))
+			filter = append(filter, G45CollectionSC(name))
 		}
 	}
 
 	return
+}
+
+// Manually add G45 collections to Gnomon index
+func G45Index() {
+	if gnomon.DBStorageType() == "boltdb" {
+		for gnomon.IsWriting() {
+			time.Sleep(time.Second)
+		}
+	}
+	logger.Println("[dReams] Adding G45 Collections")
+	filters := gnomon.GetSearchFilters()
+	gnomon.SetSearchFilters([]string{})
+	scidstoadd := make(map[string]*structures.FastSyncImport)
+
+	for _, c := range ReturnEnabledG45s(Assets.Enabled) {
+		g45 := rpc.GetG45Collection(c)
+		for _, sc := range g45 {
+			scidstoadd[sc] = &structures.FastSyncImport{}
+		}
+	}
+
+	err := gnomon.AddSCIDToIndex(scidstoadd)
+	if err != nil {
+		logger.Errorf("[G45Index] %v\n", err)
+	}
+	gnomon.SetSearchFilters(filters)
+
+	if runtime.GOOS != "windows" {
+		fyne.CurrentApp().SendNotification(&fyne.Notification{
+			Title:   "dReams - Gnomon",
+			Content: "Fast sync completed"})
+	}
 }

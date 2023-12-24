@@ -9,6 +9,7 @@ Interact with a variety of different products and services on [Dero's](https://d
 4. [Build](#build) 
 5. [Packages](#packages) 
 	- [rpc](#rpc)
+	- [gnomes](#gnomes)
 	- [menu](#menu)
 	- [dwidget](#dwidget)
 	- [bundle](#bundle)
@@ -16,12 +17,12 @@ Interact with a variety of different products and services on [Dero's](https://d
 7. [Licensing](#licensing) 
 
 ### Project
-dReams is a open source platform application that houses multiple *desktop* dApps and utilities built on Dero. dReams has two facets to its use. 
+dReams is a open source platform application that houses multiple dApps and utilities built on Dero. dReams has two facets to its use. 
 
 ![goMod](https://img.shields.io/github/go-mod/go-version/dReam-dApps/dReams.svg)![goReport](https://goreportcard.com/badge/github.com/dReam-dApps/dReams)[![goDoc](https://img.shields.io/badge/godoc-reference-blue.svg)](https://pkg.go.dev/github.com/dReam-dApps/dReams)
 
 As a application
-> With a wide array of features from games to blockchain services, dReams is a point of entry into the privacy preserving world of Dero.
+> With a wide array of features from games to blockchain services, dReams app is a *desktop* point of entry into the privacy preserving world of Dero.
 
 As a repository
 > dReams serves as a source for building Dero applications. Written in [Go](https://go.dev/) and using the [Fyne toolkit](https://fyne.io/), the dReams repository is constructed into packages with function imports for many different Dero necessities. 
@@ -34,6 +35,13 @@ dReams [Template](https://github.com/dReam-dApps/Template) can be used to help c
 
 ### dApps
 All dApps are ran on chain in a decentralized manner. dReams and packages are solely interfaces to interact with these on chain services. With the main dReams application, users can access the dApps below from one place.
+- **[Grokked](https://github.com/SixofClubsss/Grokked)**
+	- Proof of attention game
+	- A player is randomly chosen as the Grok
+	- If they do not pass the Grok in the time frame they are removed from the game   
+	- The time frame gets shorter every turn, last player standing wins
+	- Deployable contracts
+	- Leader boards
 - **[Holdero](https://github.com/SixofClubsss/Holdero)**
 	- Multiplayer Texas Hold'em style poker
 	- In game assets 
@@ -52,12 +60,10 @@ All dApps are ran on chain in a decentralized manner. dReams and packages are so
 	- Tarot readings
 	- Custom cards and artwork by Kalina Lux
 	- Querent's companion
-- **[DerBnb](https://github.com/SixofClubsss/derbnbDesktop)**
-	- Property rental management app
-	- Mint property tokens
-	- Manage rentals and bookings with Dero private messaging
-	- DerBnb profit share
-	- TRVL tokens
+- **[Duels](https://github.com/SixofClubsss/Duels)**
+	- Duel Dero assets in a over or under showdown style game
+	- Three game modes, regular, death match and hardcore 
+	- Asset graveyard and leader board
 - **[NFA Marketplace](https://github.com/civilware/artificer-nfa-standard)**
 	- View and manage owned assets
 	- View and manage listings
@@ -148,8 +154,8 @@ func main() {
 	log.Printf("[%s] Not connected\n", app_tag)
 }
 ```
-### menu
-The menu package contains the base components used for Gnomon indexing. `StartGnomon()` allows apps to run a instance of Gnomon with search filter and pass optional func for any custom index requirements. NFA related items such as the dReams NFA marketplace and asset controls can be independently imported for use in other dApps, it can be used with or without dReams filters. There are menu panels and custom Dero indicators that can be imported. This example starts Gnomon with NFA search filter. 
+### gnomes
+The gnomes package contains the base components used for Gnomon indexing. `StartGnomon()` allows apps to run a instance of Gnomon with search filter and pass optional func for any custom index requirements.  
 ```
 package main
 
@@ -160,12 +166,12 @@ import (
 	"time"
 
 	"github.com/civilware/Gnomon/structures"
-	"github.com/dReam-dApps/dReams/menu"
+	"github.com/dReam-dApps/dReams/gnomes"
 	"github.com/dReam-dApps/dReams/rpc"
 	"github.com/sirupsen/logrus"
 )
 
-// dReams menu StartGnomon() example
+// dReams gnomes StartGnomon() example
 
 // Name my app
 const app_tag = "My_app"
@@ -173,22 +179,25 @@ const app_tag = "My_app"
 // Log output
 var logger = structures.Logger.WithFields(logrus.Fields{})
 
+// Gnomon instance from gnomes package
+var gnomon = gnomes.NewGnomes()
+
 func main() {
-	// Initialize Gnomon fast sync
-	menu.Gnomes.Fast = true
+	// Initialize Gnomon fast sync true to sync db immediately
+	gnomon.SetFastsync(true, false, 100)
 
 	// Initialize rpc address to rpc.Daemon var
 	rpc.Daemon.Rpc = "127.0.0.1:10102"
 
 	// Initialize logger to Stdout
-	menu.InitLogrusLog(logrus.InfoLevel)
+	gnomes.InitLogrusLog(logrus.InfoLevel)
 
 	rpc.Ping()
 	// Check for daemon connection, if daemon is not connected we won't start Gnomon
-	if rpc.Daemon.Connect {
+	if rpc.Daemon.IsConnected() {
 		// Initialize NFA search filter and start Gnomon
-		filter := []string{menu.NFA_SEARCH_FILTER}
-		menu.StartGnomon(app_tag, "boltdb", filter, 0, 0, nil)
+		filter := []string{gnomes.NFA_SEARCH_FILTER}
+		gnomes.StartGnomon(app_tag, "boltdb", filter, 0, 0, nil)
 
 		// Exit with ctrl-C
 		var exit bool
@@ -200,22 +209,78 @@ func main() {
 		}()
 
 		// Gnomon will continue to run if daemon is connected
-		for !exit && rpc.Daemon.Connect {
-			contracts := menu.Gnomes.GetAllOwnersAndSCIDs()
+		for !exit && rpc.Daemon.IsConnected() {
+			contracts := gnomon.GetAllOwnersAndSCIDs()
 			logger.Printf("[%s] Index contains %d contracts\n", app_tag, len(contracts))
 			time.Sleep(3 * time.Second)
 			rpc.Ping()
 		}
 
 		// Stop Gnomon
-		menu.Gnomes.Stop(app_tag)
+		gnomon.Stop(app_tag)
 	}
 
 	logger.Printf("[%s] Done\n", app_tag)
 }
 ```
+### menu 
+NFA related items such as the dReams NFA marketplace and asset controls can be independently imported for use in other dApps, it can be used with or without dReams filters. There are menu panels and custom Dero indicators that can be imported. This example shows how to import asset controls and market as app tabs.
+```
+package main
+
+import (
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/canvas"
+	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/layout"
+	"fyne.io/fyne/v2/widget"
+	dreams "github.com/dReam-dApps/dReams"
+	"github.com/dReam-dApps/dReams/bundle"
+	"github.com/dReam-dApps/dReams/menu"
+)
+
+// dReams menu PlaceMarket and PlaceAsset example
+
+// Name my app
+const app_tag = "My_app"
+
+func main() {
+	// Intialize Fyne window app and window into dReams app object
+	a := app.New()
+	w := a.NewWindow(app_tag)
+	w.Resize(fyne.NewSize(900, 700))
+	d := dreams.AppObject{
+		App:    a,
+		Window: w,
+	}
+
+	// Simple asset profile with wallet name entry and theme select
+	line := canvas.NewLine(bundle.TextColor)
+	profile := []*widget.FormItem{}
+	profile = append(profile, widget.NewFormItem("Name", menu.NameEntry()))
+	profile = append(profile, widget.NewFormItem("", layout.NewSpacer()))
+	profile = append(profile, widget.NewFormItem("", container.NewVBox(line)))
+	profile = append(profile, widget.NewFormItem("Theme", menu.ThemeSelect(&d)))
+	profile = append(profile, widget.NewFormItem("", container.NewVBox(line)))
+
+	// Rescan button function in asset tab
+	rescan := func() {
+		// What you want to scan wallet for
+	}
+
+	// Place asset and market layouts into tabs
+	tabs := container.NewAppTabs(
+		container.NewTabItem("Assets", menu.PlaceAssets(app_tag, widget.NewForm(profile...), rescan, bundle.ResourceDReamsIconAltPng, &d)),
+		container.NewTabItem("Market", menu.PlaceMarket(&d)))
+
+	// Place tabs as window content and run app
+	d.Window.SetContent(tabs)
+	d.Window.ShowAndRun()
+}
+```
 ### dwidget
-The dwidget package is a extension to fyne widgets that intends to make creating dApps simpler and quicker with widgets specified for use with Dero. Numerical entries have prefix, increment and decimal control and pre-configured connection boxes can be used that are tied into dReams rpc vars and have default Dero connection addresses populated. There is objects for shutdown control as well as a spot for the dReams indicators, or new ones. This example starts a Fyne gui app using `VerticalEntries()` to start Gnomon when connected.
+The dwidget package is a extension to fyne widgets that intends to make creating dApps simpler and quicker with widgets specified for use with Dero. Numerical entries have prefix, increment and decimal control. Pre-configured connection boxes can be used that are tied into dReams rpc vars and have default Dero connection addresses populated. There is objects for shutdown control as well as a spot for the dReams indicators, or new ones. This example starts a Fyne gui app using `VerticalEntries()` to start Gnomon when connected.
 ```
 package main
 
@@ -224,7 +289,7 @@ import (
 	"fyne.io/fyne/v2/app"
 
 	"github.com/dReam-dApps/dReams/dwidget"
-	"github.com/dReam-dApps/dReams/menu"
+	"github.com/dReam-dApps/dReams/gnomes"
 	"github.com/dReam-dApps/dReams/rpc"
 	"github.com/sirupsen/logrus"
 )
@@ -234,12 +299,15 @@ import (
 // Name my app
 const app_tag = "My_app"
 
+// Gnomon instance from gnomes package
+var gnomon = gnomes.NewGnomes()
+
 func main() {
-	// Initialize Gnomon fast sync
-	menu.Gnomes.Fast = true
+	// Initialize Gnomon fast sync true to sync db immediately
+	gnomon.SetFastsync(true, false, 100)
 
 	// Initialize logger to Stdout
-	menu.InitLogrusLog(logrus.InfoLevel)
+	gnomes.InitLogrusLog(logrus.InfoLevel)
 
 	// Initialize fyne app
 	a := app.New()
@@ -251,8 +319,8 @@ func main() {
 
 	// When window closes, stop Gnomon if running
 	w.SetCloseIntercept(func() {
-		if menu.Gnomes.Init {
-			menu.Gnomes.Stop(app_tag)
+		if gnomon.IsInitialized() {
+			gnomon.Stop(app_tag)
 		}
 		w.Close()
 	})
@@ -265,8 +333,8 @@ func main() {
 	connect_box.Button.OnTapped = func() {
 		rpc.GetAddress(app_tag)
 		rpc.Ping()
-		if rpc.Daemon.Connect && !menu.Gnomes.IsInitialized() && !menu.Gnomes.Start {
-			go menu.StartGnomon(app_tag, "boltdb", []string{menu.NFA_SEARCH_FILTER}, 0, 0, nil)
+		if rpc.Daemon.Connect && !gnomon.IsInitialized() && !gnomon.IsStarting() {
+			go gnomes.StartGnomon(app_tag, "boltdb", []string{gnomes.NFA_SEARCH_FILTER}, 0, 0, nil)
 		}
 	}
 
@@ -312,7 +380,7 @@ func main() {
 	// Initialize fyne container and add some various widgets for viewing purposes
 	cont := container.NewVBox()
 	cont.Add(container.NewAdaptiveGrid(3, dwidget.NewCenterLabel("Label"), widget.NewEntry(), widget.NewButton("Button", nil)))
-	cont.Add(container.NewAdaptiveGrid(3, widget.NewLabel("Label"), widget.NewCheck("Check", nil), widget.NewButton("Button", nil)))
+	cont.Add(container.NewAdaptiveGrid(3, widget.NewLabel("Label"), widget.NewCheck("Check", nil), dwidget.NewLine(30, 30, bundle.TextColor)))
 	cont.Add(widget.NewPasswordEntry())
 	cont.Add(widget.NewSlider(0, 100))
 

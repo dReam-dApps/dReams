@@ -28,6 +28,15 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
+const (
+	SIX_mint       = "dero1qy4ascka9rtspjvcyj6t8maazaay8t9udtt5nper3mukqkx2qtvyxqgflkpwp"
+	AZY_mint       = "dero1qyfk5w2rvqpl9kzfd7fpteyp2k362y6audydcu2qrgcmj6vtasfkgqq9704gn"
+	DCB_mint       = "dero1qy02stluwgh5aaawkmugqh47krtfzcq6f88jv2ydf6dkfupjca4gzqqwsmdzf"
+	HS_mint        = "dero1qy8p8cw8hr8dlxyg9xjxzlxf2zznwshcxk98ad688csgmk44y9kzyqqt9g2m0"
+	Dorbling_mint  = "dero1qy2tkfgpapjsgev8m9rs25209ajc6kcm42vzt2fapgk3ngmtc2guzqq52eq2r"
+	Desperado_mint = "dero1qy0ydkcwuf7nvh6938jpalt5snsj2atgmdyms67rd05whuy8a2hvzqg46gh5f"
+)
+
 type mintConfig struct {
 	Collection  string `json:"collection"`
 	Update      string `json:"update"`
@@ -96,15 +105,21 @@ func incrementSpacer() fyne.CanvasObject {
 
 	rect := canvas.NewRectangle(space_color)
 
-	return container.NewMax(rect, add_text)
+	return container.NewStack(rect, add_text)
 }
 
 // Place objects for NFA minting of collections or single mint
 func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 	collection_enable := widget.NewCheck("Collection", nil)
+
 	sign_button := widget.NewButton("File Sign", nil)
+	sign_button.Importance = widget.HighImportance
+
 	contracts_button := widget.NewButton("Create Contract", nil)
+	contracts_button.Importance = widget.HighImportance
+
 	install_button := widget.NewButton("Install Contract", nil)
+	install_button.Importance = widget.HighImportance
 
 	collection_high_entry := dwidget.NewDeroEntry("", 1, 0)
 	collection_high_entry.SetPlaceHolder("Ending At:")
@@ -1076,7 +1091,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 
 	collection_cont := container.NewBorder(nil, nil, collection_enable, container.NewAdaptiveGrid(2, url_add_incr, url_remove_incr), container.NewAdaptiveGrid(2, collection_low_entry, collection_high_entry))
 
-	wallet_cont := container.NewBorder(nil, container.NewAdaptiveGrid(2, rpc_label, wallet_label), nil, nil, container.NewAdaptiveGrid(2, wallet_pass_entry, open_wallet_button))
+	wallet_cont := container.NewBorder(nil, nil, nil, open_wallet_button, container.NewStack(dwidget.NewSpacer(300, 0), wallet_pass_entry))
 
 	instructions_button := widget.NewButton("How To Mint", nil)
 
@@ -1181,33 +1196,43 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 
 	mint_form := []*widget.FormItem{}
 	mint_form = append(mint_form, widget.NewFormItem("", instructions_button))
-	mint_form = append(mint_form, widget.NewFormItem("Config", container.NewBorder(nil, nil, nil, save_config_button, config_select)))
-	mint_form = append(mint_form, widget.NewFormItem("", collection_cont))
+
+	mint_form = append(mint_form, widget.NewFormItem("", container.NewAdaptiveGrid(2, collection_cont,
+		widget.NewForm(widget.NewFormItem("Config", container.NewBorder(nil, nil, nil, save_config_button, config_select))))))
+
 	mint_form = append(mint_form, widget.NewFormItem("", layout.NewSpacer()))
 	mint_form = append(mint_form, widget.NewFormItem("Collection", container.NewBorder(nil, nil, nil, set_up_collec, collection_entry)))
-	mint_form = append(mint_form, widget.NewFormItem("Owner Can Update", update_select))
-	mint_form = append(mint_form, widget.NewFormItem("Name", container.NewBorder(nil, nil, nil, extension_select, name_cont)))
+
+	mint_form = append(mint_form, widget.NewFormItem("Owner Can Update", container.NewAdaptiveGrid(2, update_select,
+		widget.NewForm(widget.NewFormItem("Name", container.NewBorder(nil, nil, nil, extension_select, name_cont))))))
+
+	mint_form = append(mint_form, widget.NewFormItem("Tags *", container.NewAdaptiveGrid(2, tags_entry,
+		widget.NewForm(widget.NewFormItem("Type   ", type_select)))))
+
 	mint_form = append(mint_form, widget.NewFormItem("Description", descr_entry))
-	mint_form = append(mint_form, widget.NewFormItem("Type", type_select))
-	mint_form = append(mint_form, widget.NewFormItem("Tags *", tags_entry))
-	mint_form = append(mint_form, widget.NewFormItem("File Check C", container.NewBorder(nil, nil, nil, import_signs, checkC_entry)))
-	mint_form = append(mint_form, widget.NewFormItem("File Check S", checkS_entry))
+
+	mint_form = append(mint_form, widget.NewFormItem("File Sign C", container.NewAdaptiveGrid(2, checkC_entry,
+		widget.NewForm(widget.NewFormItem("File Sign S", container.NewBorder(nil, nil, nil, import_signs, checkS_entry))))))
+
 	mint_form = append(mint_form, widget.NewFormItem("File URL *", file_entries))
 	mint_form = append(mint_form, widget.NewFormItem("Cover URL *", cover_entries))
 	mint_form = append(mint_form, widget.NewFormItem("Icon URL *", icon_entries))
 	mint_form = append(mint_form, widget.NewFormItem("File Sign URL *", sign_entries))
 	mint_form = append(mint_form, widget.NewFormItem("", layout.NewSpacer()))
-	mint_form = append(mint_form, widget.NewFormItem("Royalty %", royalty_entry))
-	mint_form = append(mint_form, widget.NewFormItem("Artificer %", art_entry))
+
+	mint_form = append(mint_form, widget.NewFormItem("Royalty %", container.NewHBox(container.NewVBox(container.NewStack(dwidget.NewSpacer(280, 0), royalty_entry)),
+		widget.NewForm(widget.NewFormItem("Artificer %", container.NewStack(dwidget.NewSpacer(280, 0), art_entry))),
+		layout.NewSpacer(),
+		widget.NewForm(widget.NewFormItem("Wallet File", wallet_cont)))))
+
+	mint_form = append(mint_form, widget.NewFormItem("", container.NewAdaptiveGrid(2, rpc_label, wallet_label)))
 	mint_form = append(mint_form, widget.NewFormItem("", layout.NewSpacer()))
-	mint_form = append(mint_form, widget.NewFormItem("Wallet File", wallet_cont))
-	mint_form = append(mint_form, widget.NewFormItem("", layout.NewSpacer()))
-	mint_form = append(mint_form, widget.NewFormItem("", container.NewAdaptiveGrid(3, container.NewMax(install_button), container.NewMax(contracts_button), sign_button)))
+	mint_form = append(mint_form, widget.NewFormItem("", container.NewAdaptiveGrid(3, container.NewStack(install_button), container.NewStack(contracts_button), sign_button)))
 
 	scroll := container.NewVScroll(widget.NewForm(mint_form...))
-	max := container.NewMax(scroll)
+	max := container.NewStack(scroll)
 	instructions_back_button := widget.NewButton("Back", func() {
-		max.Objects[0] = container.NewMax(scroll)
+		max.Objects[0] = container.NewStack(scroll)
 	})
 
 	instructions_button.OnTapped = func() {
