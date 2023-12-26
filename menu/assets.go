@@ -411,7 +411,7 @@ func returnEnabledNames(assets map[string]bool) (text string) {
 
 // Owned asset tab layout
 //   - tag for log print
-//   - profile is canvas object of widgets used to select assets for games, themes, ect
+//   - profile is canvas object of widgets used to select assets for games, themes, etc
 //   - rescan is func used to rescan wallet assets
 //   - icon resources for side menus
 //   - d for main window dialogs
