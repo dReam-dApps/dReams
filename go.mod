@@ -3,7 +3,7 @@ module github.com/dReam-dApps/dReams
 go 1.20
 
 require (
-	fyne.io/fyne/v2 v2.4.3
+	fyne.io/fyne/v2 v2.4.4-0.20231224124904-a09bbd790b98
 	fyne.io/x/fyne v0.0.0-20230411205836-1ca0ead20763
 	github.com/SixofClubsss/Baccarat v0.3.0
 	github.com/SixofClubsss/Duels v0.1.0
