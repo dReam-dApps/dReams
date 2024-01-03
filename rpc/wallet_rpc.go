@@ -24,13 +24,6 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-var dreamsV = semver.MustParse("0.11.0")
-
-// Get current package version
-func Version() semver.Version {
-	return dreamsV
-}
-
 // Prints session log entry to Wallet.LogEntry and stdout
 func PrintLog(format string, a ...any) {
 	text := fmt.Sprintf(format, a...)
