@@ -188,6 +188,26 @@ func GetStringKey(scid, key, daemon string) interface{} {
 	return result.VariableStringKeys[key]
 }
 
+// Get single uint64 key result from SCID with daemon input
+func GetUintKey(scid, key, daemon string) interface{} {
+	client, ctx, cancel := SetDaemonClient(daemon)
+	defer cancel()
+
+	var result *rpc.GetSC_Result
+	params := rpc.GetSC_Params{
+		SCID:      scid,
+		Code:      false,
+		Variables: true,
+	}
+
+	if err := client.CallFor(ctx, &result, "DERO.GetSC", params); err != nil {
+		logger.Errorln("[GetUintKey]", err)
+		return nil
+	}
+
+	return result.VariableUint64Keys[StringToUint64(key)]
+}
+
 // Get list of dReams dApps from contract store
 //   - Uses remote daemon if not connected
 func GetDapps() (dApps []string) {
