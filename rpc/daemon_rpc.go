@@ -89,11 +89,11 @@ func SetDaemonClient(addr string) (jsonrpc.RPCClient, context.Context, context.C
 
 // Ping Dero blockchain for connection
 func Ping() {
-	rpcClientD, ctx, cancel := SetDaemonClient(Daemon.Rpc)
+	client, ctx, cancel := SetDaemonClient(Daemon.Rpc)
 	defer cancel()
 
 	var result string
-	if err := rpcClientD.CallFor(ctx, &result, "DERO.Ping"); err != nil {
+	if err := client.CallFor(ctx, &result, "DERO.Ping"); err != nil {
 		Daemon.Connected(false)
 		return
 	}
@@ -107,11 +107,11 @@ func Ping() {
 
 // Get a daemons height
 func DaemonHeight(tag, ep string) uint64 {
-	rpcClientD, ctx, cancel := SetDaemonClient(ep)
+	client, ctx, cancel := SetDaemonClient(ep)
 	defer cancel()
 
 	var result *rpc.GetHeight_Result
-	if err := rpcClientD.CallFor(ctx, &result, "DERO.GetHeight"); err != nil {
+	if err := client.CallFor(ctx, &result, "DERO.GetHeight"); err != nil {
 		logger.Errorf("[%s] %s\n", tag, err)
 		return 0
 	}
@@ -121,11 +121,11 @@ func DaemonHeight(tag, ep string) uint64 {
 
 // Get a daemons version
 func DaemonVersion() (version string) {
-	rpcClientD, ctx, cancel := SetDaemonClient(Daemon.Rpc)
+	client, ctx, cancel := SetDaemonClient(Daemon.Rpc)
 	defer cancel()
 
 	var result *rpc.GetInfo_Result
-	if err := rpcClientD.CallFor(ctx, &result, "DERO.GetInfo"); err != nil {
+	if err := client.CallFor(ctx, &result, "DERO.GetInfo"); err != nil {
 		logger.Errorf("[DaemonVersion] %s\n", err)
 		return
 	}
@@ -138,7 +138,7 @@ func DaemonVersion() (version string) {
 //   - Pass args and transfers for call
 //   - If result is > max + 120, then returns max + 120
 func GasEstimate(scid, tag string, args rpc.Arguments, t []rpc.Transfer, max uint64) uint64 {
-	rpcClientD, ctx, cancel := SetDaemonClient(Daemon.Rpc)
+	client, ctx, cancel := SetDaemonClient(Daemon.Rpc)
 	defer cancel()
 
 	var result *rpc.GasEstimate_Result
@@ -154,7 +154,7 @@ func GasEstimate(scid, tag string, args rpc.Arguments, t []rpc.Transfer, max uin
 		Signer:    Wallet.Address,
 	}
 
-	if err := rpcClientD.CallFor(ctx, &result, "DERO.GetGasEstimate", params); err != nil {
+	if err := client.CallFor(ctx, &result, "DERO.GetGasEstimate", params); err != nil {
 		logger.Errorf("%s %s", tag, err)
 		return 0
 	}
@@ -170,7 +170,7 @@ func GasEstimate(scid, tag string, args rpc.Arguments, t []rpc.Transfer, max uin
 
 // Get single string key result from SCID with daemon input
 func GetStringKey(scid, key, daemon string) interface{} {
-	rpcClientD, ctx, cancel := SetDaemonClient(daemon)
+	client, ctx, cancel := SetDaemonClient(daemon)
 	defer cancel()
 
 	var result *rpc.GetSC_Result
@@ -180,7 +180,7 @@ func GetStringKey(scid, key, daemon string) interface{} {
 		Variables: true,
 	}
 
-	if err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params); err != nil {
+	if err := client.CallFor(ctx, &result, "DERO.GetSC", params); err != nil {
 		logger.Errorln("[GetStringKey]", err)
 		return nil
 	}
@@ -264,7 +264,7 @@ func GetFees() {
 
 // Check Gnomon SC for stored contract owner
 func CheckForIndex(scid string) interface{} {
-	rpcClientD, ctx, cancel := SetDaemonClient(Daemon.Rpc)
+	client, ctx, cancel := SetDaemonClient(Daemon.Rpc)
 	defer cancel()
 
 	var result *rpc.GetSC_Result
@@ -274,7 +274,7 @@ func CheckForIndex(scid string) interface{} {
 		Variables: true,
 	}
 
-	if err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params); err != nil {
+	if err := client.CallFor(ctx, &result, "DERO.GetSC", params); err != nil {
 		logger.Errorln("[CheckForIndex]", err)
 		return nil
 	}
@@ -285,7 +285,7 @@ func CheckForIndex(scid string) interface{} {
 // Get code of a SC
 func GetSCCode(scid string) string {
 	if Daemon.IsConnected() {
-		rpcClientD, ctx, cancel := SetDaemonClient(Daemon.Rpc)
+		client, ctx, cancel := SetDaemonClient(Daemon.Rpc)
 		defer cancel()
 
 		var result *rpc.GetSC_Result
@@ -295,7 +295,7 @@ func GetSCCode(scid string) string {
 			Variables: false,
 		}
 
-		if err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params); err != nil {
+		if err := client.CallFor(ctx, &result, "DERO.GetSC", params); err != nil {
 			logger.Errorln("[GetSCCode]", err)
 			return ""
 		}
@@ -307,7 +307,7 @@ func GetSCCode(scid string) string {
 
 // Get all asset SCIDs from collection
 func GetG45Collection(scid string) (scids []string) {
-	rpcClientD, ctx, cancel := SetDaemonClient(Daemon.Rpc)
+	client, ctx, cancel := SetDaemonClient(Daemon.Rpc)
 	defer cancel()
 
 	var result *rpc.GetSC_Result
@@ -317,7 +317,7 @@ func GetG45Collection(scid string) (scids []string) {
 		Variables: true,
 	}
 
-	if err := rpcClientD.CallFor(ctx, &result, "DERO.GetSC", params); err != nil {
+	if err := client.CallFor(ctx, &result, "DERO.GetSC", params); err != nil {
 		logger.Errorln("[GetG45Collection]", err)
 		return nil
 	}
@@ -350,7 +350,7 @@ func GetG45Collection(scid string) (scids []string) {
 
 // Get single TX data with GetTransaction
 func GetDaemonTx(txid string) *rpc.Tx_Related_Info {
-	rpcClientD, ctx, cancel := SetDaemonClient(Daemon.Rpc)
+	client, ctx, cancel := SetDaemonClient(Daemon.Rpc)
 	defer cancel()
 
 	var result *rpc.GetTransaction_Result
@@ -358,7 +358,7 @@ func GetDaemonTx(txid string) *rpc.Tx_Related_Info {
 		Tx_Hashes: []string{txid},
 	}
 
-	if err := rpcClientD.CallFor(ctx, &result, "DERO.GetTransaction", params); err != nil {
+	if err := client.CallFor(ctx, &result, "DERO.GetTransaction", params); err != nil {
 		logger.Errorln("[GetDaemonTx]", err)
 		return nil
 	}
@@ -370,9 +370,23 @@ func GetDaemonTx(txid string) *rpc.Tx_Related_Info {
 	return nil
 }
 
+// Get daemon TX pool
+func GetDaemonTxPool() (result *rpc.GetTxPool_Result) {
+	client, ctx, cancel := SetDaemonClient(Daemon.Rpc)
+	defer cancel()
+
+	var params *rpc.GetTxPool_Params
+	if err := client.CallFor(ctx, &result, "DERO.GetTxPool", params); err != nil {
+		logger.Errorln("[GetDaemonTxPool]", err)
+		return nil
+	}
+
+	return
+}
+
 // Verify TX signer with GetTransaction
 func VerifySigner(txid string) bool {
-	rpcClientD, ctx, cancel := SetDaemonClient(Daemon.Rpc)
+	client, ctx, cancel := SetDaemonClient(Daemon.Rpc)
 	defer cancel()
 
 	var result *rpc.GetTransaction_Result
@@ -380,7 +394,7 @@ func VerifySigner(txid string) bool {
 		Tx_Hashes: []string{txid},
 	}
 
-	if err := rpcClientD.CallFor(ctx, &result, "DERO.GetTransaction", params); err != nil {
+	if err := client.CallFor(ctx, &result, "DERO.GetTransaction", params); err != nil {
 		logger.Errorln("[VerifySigner]", err)
 		return false
 	}
@@ -390,11 +404,11 @@ func VerifySigner(txid string) bool {
 
 // Get difficulty from a daemon
 func GetDifficulty(ep string) float64 {
-	rpcClientD, ctx, cancel := SetDaemonClient(ep)
+	client, ctx, cancel := SetDaemonClient(ep)
 	defer cancel()
 
 	var result *rpc.GetInfo_Result
-	if err := rpcClientD.CallFor(ctx, &result, "DERO.GetInfo"); err != nil {
+	if err := client.CallFor(ctx, &result, "DERO.GetInfo"); err != nil {
 		logger.Errorln("[GetDifficulty]", err)
 		return 0
 	}
@@ -404,11 +418,11 @@ func GetDifficulty(ep string) float64 {
 
 // Get average block time from a daemon
 func GetBlockTime(ep string) float64 {
-	rpcClientD, ctx, cancel := SetDaemonClient(ep)
+	client, ctx, cancel := SetDaemonClient(ep)
 	defer cancel()
 
 	var result *rpc.GetInfo_Result
-	if err := rpcClientD.CallFor(ctx, &result, "DERO.GetInfo"); err != nil {
+	if err := client.CallFor(ctx, &result, "DERO.GetInfo"); err != nil {
 		logger.Errorln("[GetBlockTime]", err)
 		return 0
 	}
