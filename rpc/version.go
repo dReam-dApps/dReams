@@ -2,7 +2,7 @@ package rpc
 
 import "github.com/blang/semver/v4"
 
-var dreamsV = semver.MustParse("0.11.0-dev.7")
+var dreamsV = semver.MustParse("0.11.0-dev.9")
 
 // Get current package version
 func Version() semver.Version {
