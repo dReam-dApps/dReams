@@ -173,6 +173,9 @@ func introScreen() *fyne.Container {
 		menu.Control.Dapps = enabled_dapps
 		menu.Control.Unlock()
 
+		gnomon_gif.Stop()
+		gnomon_gif = nil
+
 		dReams.SetChannels(menu.EnabledDappCount())
 		logger.Println("[dReams] Loading dApps")
 		go func() {
@@ -249,10 +252,10 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 	back_button := widget.NewButton("Back", func() {
 		dReams.Configure(false)
 		gnomon_gif.Stop()
+		gnomon_gif = nil
 		menu.RestartGif(gnomes.Indicator.Icon)
 		go func() {
 			dReams.Window.Content().(*fyne.Container).Objects[1] = reset
-			dReams.Window.Content().(*fyne.Container).Objects[1].Refresh()
 		}()
 	})
 
@@ -280,7 +283,6 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 		img.SetMinSize(fyne.NewSize(180, 180))
 
 		dReams.Window.Content().(*fyne.Container).Objects[1] = container.NewStack(container.NewCenter(img, status_text), widget.NewProgressBarInfinite())
-		dReams.Window.Content().(*fyne.Container).Objects[1].Refresh()
 
 		logger.Println("[dReams] Closing dApps")
 		dReams.CloseAllDapps()
@@ -293,6 +295,7 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 		gnomon.Checked(false)
 		bundle.AppColor = skin_choice
 		gnomon_gif.Stop()
+		gnomon_gif = nil
 		status_text.Text = "Loading dApps..."
 		status_text.Refresh()
 		go func() {

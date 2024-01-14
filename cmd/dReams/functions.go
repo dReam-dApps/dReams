@@ -502,16 +502,14 @@ func checkConnection() {
 		menu.Control.Check.Daemon.SetChecked(true)
 	} else {
 		menu.Control.Check.Daemon.SetChecked(false)
-		disableActions(true)
 		disconnected()
 	}
 
 	if rpc.Wallet.IsConnected() {
 		if rpc.Daemon.IsConnected() {
-			disableActions(false)
+			menu.Assets.Swap.Show()
 		}
 	} else {
-		disableActions(true)
 		disconnected()
 		gnomon.Checked(false)
 	}
@@ -522,21 +520,11 @@ func disconnected() {
 	holdero.Disconnected(menu.DappEnabled("Holdero"))
 	prediction.Disconnected()
 	rpc.Wallet.Address = ""
+	menu.Assets.Swap.Hide()
 	menu.Assets.Names.ClearSelected()
 	menu.Theme.Select.Options = menu.Control.Themes
 	menu.Theme.Select.Refresh()
 	menu.Assets.Asset = []menu.Asset{}
-}
-
-// Disable actions requiring connection
-func disableActions(d bool) {
-	if d {
-		menu.Assets.Swap.Hide()
-	} else {
-		menu.Assets.Swap.Show()
-	}
-
-	menu.Assets.Swap.Refresh()
 }
 
 // dReams search filters for Gnomon index

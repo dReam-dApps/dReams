@@ -690,11 +690,6 @@ func DisableIndexControls(d bool) {
 			Assets.Button.Rescan.Hide()
 		}
 	}
-	Assets.Index.Add.Refresh()
-	Assets.Index.Search.Refresh()
-	Assets.Headers.Refresh()
-	Market.Actions.Refresh()
-	Assets.Button.Rescan.Refresh()
 }
 
 // Owned asset list object
