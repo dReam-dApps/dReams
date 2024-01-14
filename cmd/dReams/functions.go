@@ -201,16 +201,12 @@ func fetch(done chan struct{}) {
 					go menuRefresh(offset)
 
 					offset++
-					if offset >= 21 {
+					if offset >= 41 {
 						offset = 0
 					}
 				}
 
 				if rpc.Daemon.IsConnected() {
-					if rpc.Startup {
-						go menu.Info.RefreshPrice(App_Name)
-					}
-
 					rpc.Startup = false
 				}
 
@@ -248,7 +244,7 @@ func menuRefresh(offset int) {
 			menu.Info.SetStatus("Gnomon Syncing...")
 		}
 
-		if offset == 20 {
+		if offset == 40 || menu.Info.Price.Text == "" {
 			go menu.Info.RefreshPrice(App_Name)
 		}
 	}
