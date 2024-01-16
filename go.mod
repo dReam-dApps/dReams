@@ -1,6 +1,6 @@
 module github.com/dReam-dApps/dReams
 
-go 1.20
+go 1.21.5
 
 require (
 	fyne.io/fyne/v2 v2.4.4-0.20231224124904-a09bbd790b98
