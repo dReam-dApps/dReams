@@ -5,12 +5,12 @@ go 1.21.5
 require (
 	fyne.io/fyne/v2 v2.4.4-0.20231224124904-a09bbd790b98
 	fyne.io/x/fyne v0.0.0-20230411205836-1ca0ead20763
-	github.com/SixofClubsss/Baccarat v0.3.1-0.20240103080006-3e38d4093db3
-	github.com/SixofClubsss/Duels v0.1.1-0.20240103074307-b9b05d2d2b36
-	github.com/SixofClubsss/Grokked v0.1.1-0.20240103074045-ad6289232395
-	github.com/SixofClubsss/Holdero v0.3.1-0.20240103073854-2fbe0c751b18
-	github.com/SixofClubsss/Iluma v0.3.1-0.20240103073533-d70df2cb8fbe
-	github.com/SixofClubsss/dPrediction v0.3.1-0.20240103075708-dba37d990615
+	github.com/SixofClubsss/Baccarat v0.3.1-0.20240116061541-18315553c283
+	github.com/SixofClubsss/Duels v0.1.1-0.20240116060134-406eb6166f4b
+	github.com/SixofClubsss/Grokked v0.1.1-0.20240116061020-3e104cacde5d
+	github.com/SixofClubsss/Holdero v0.3.1-0.20240116060705-26bde051f69d
+	github.com/SixofClubsss/Iluma v0.3.1-0.20240116060431-4bcc8d741143
+	github.com/SixofClubsss/dPrediction v0.3.1-0.20240116071907-56575c1cea25
 	github.com/blang/semver/v4 v4.0.0
 	github.com/civilware/Gnomon v0.0.0-20240102201536-a5900d5a61da
 	github.com/deroproject/derohe v0.0.0-20230604143809-765b2db1f482
