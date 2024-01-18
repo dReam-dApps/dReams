@@ -789,15 +789,12 @@ func ConfirmTx(txid, tag string, timeout int) bool {
 				} else if !tx.In_pool && tx.Block_Height > 1 && tx.ValidBlock != "" {
 					logger.Printf("[%s] TX confirmed: {%s}\n", tag, txid)
 					return true
-				} else if !tx.In_pool && tx.Block_Height == 0 && tx.ValidBlock == "" {
-					logger.Warnf("[%s] TX failed: {%s}\n", tag, txid)
-					return false
 				}
 			}
 		}
 	}
 
-	logger.Errorf("[%s] Could not confirm TX: {%s}\n", tag, txid)
+	logger.Warnf("[%s] Could not confirm TX: {%s}\n", tag, txid)
 
 	return false
 }
@@ -814,7 +811,12 @@ func ConfirmTxRetry(txid, tag string, timeout int) (retry int) {
 		time.Sleep(2 * time.Second)
 		if tx := GetDaemonTx(txid); tx != nil {
 			if count > timeout {
-				break
+				logger.Warnf("[%s] TX: {%s} not confirmed, Retrying next block\n", tag, txid)
+				time.Sleep(3 * time.Second)
+				for Wallet.Height <= next_block {
+					time.Sleep(3 * time.Second)
+				}
+				return 1
 			}
 
 			if tx.In_pool {
@@ -822,13 +824,6 @@ func ConfirmTxRetry(txid, tag string, timeout int) (retry int) {
 			} else if !tx.In_pool && tx.Block_Height > 1 && tx.ValidBlock != "" {
 				logger.Printf("[%s] TX confirmed: {%s}\n", tag, txid)
 				return 100
-			} else if !tx.In_pool && tx.Block_Height == 0 && tx.ValidBlock == "" {
-				logger.Warnf("[%s] TX failed: {%s}, Retrying next block\n", tag, txid)
-				time.Sleep(3 * time.Second)
-				for Wallet.Height <= next_block {
-					time.Sleep(3 * time.Second)
-				}
-				return 1
 			}
 		}
 	}
