@@ -595,9 +595,14 @@ func gnomonFilters() (filter []string) {
 	}
 
 	if menu.DappEnabled("Grokked") {
-		grok := rpc.GetSCCode(grok.GROKSCID)
-		if grok != "" {
-			filter = append(filter, grok)
+		grokked := rpc.GetSCCode(grok.GROKSCID)
+		if grokked != "" {
+			filter = append(filter, grokked)
+		}
+
+		grokked = rpc.GetSCCode(grok.GROKOG)
+		if grokked != "" {
+			filter = append(filter, grokked)
 		}
 	}
 
