@@ -16,6 +16,7 @@ import (
 	"github.com/dReam-dApps/dReams/bundle"
 	"github.com/dReam-dApps/dReams/dwidget"
 	"github.com/dReam-dApps/dReams/rpc"
+	"github.com/deroproject/derohe/dvm"
 	"github.com/deroproject/derohe/walletapi"
 
 	"fyne.io/fyne/v2"
@@ -1060,6 +1061,13 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 							return
 						}
 
+						if _, _, err := dvm.ParseSmartContract(string(file)); err != nil {
+							error_message := dialog.NewInformation("Error", fmt.Sprintf("%s is not a valid SC", input_file), window)
+							error_message.Resize(fyne.NewSize(240, 150))
+							error_message.Show()
+							return
+						}
+
 						if string(file) == "" {
 							error_message := dialog.NewInformation("Error", fmt.Sprintf("%s is a empty file", input_file), window)
 							error_message.Resize(fyne.NewSize(240, 150))
@@ -1068,7 +1076,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 						}
 
 						if tx := rpc.UploadNFAContract(string(file)); tx == "" {
-							error_message := dialog.NewInformation("Error", "Could not install NFA", window)
+							error_message := dialog.NewInformation("Error", "Could not install NFA, check log", window)
 							error_message.Resize(fyne.NewSize(240, 150))
 							error_message.Show()
 						} else {

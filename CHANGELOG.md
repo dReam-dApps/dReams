@@ -2,14 +2,22 @@
 
 This file lists the changes to dReams repo with each version.
 
+## 0.11.2 - In Progress
+
+### Added
+* ParseSmartContract() when minting NFA
+
+
 ## 0.11.1 - January 19 2024
 
 ### Added
+
 * Xeggex price feed
 * `gnomes` Version var to SC
 * `rpc` GetUintKey()
 
 ### Changed
+
 * Go 1.21.5
 * Fyne 2.4.3
 * Gnomon 2.0.3-alpha.5
@@ -22,6 +30,7 @@ This file lists the changes to dReams repo with each version.
 * Clean up client var names in `rpc`
 
 ### Fixed
+
 * High memory use (#13)
 * False TX fail prints (#11)
 * Template typo
