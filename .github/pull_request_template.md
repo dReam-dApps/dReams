@@ -36,6 +36,7 @@ Please select the right one.
 - [ ] I have commented my code
 - [ ] I have tested with all DB types
 - [ ] My changes generate no new warnings
+- [ ] I have updated the semver version (rpc.version)
 
 ## License
 
