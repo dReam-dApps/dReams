@@ -2,7 +2,7 @@
 
 This file lists the changes to dReams repo with each version.
 
-## 0.11.1 - In Progress
+## 0.11.1 - January 19 2024
 
 ### Added
 * Xeggex price feed
