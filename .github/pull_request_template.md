@@ -16,7 +16,7 @@ Please select the right one.
 
 - [ ] (Patch) Bug fix (non-breaking change which fixes an issue)
 - [ ] (Minor) New feature (non-breaking change which adds functionality)
-- [ ] (Major) Breaking change (ffix or feature that would cause existing functionality to not work as expected and requires modifications in existing functionality to ensure expected behavior)
+- [ ] (Major) Breaking change (fix or feature that would cause existing functionality to not work as expected and requires modifications in existing functionality to ensure expected behavior)
 - [ ] This change requires a documentation update
 
 ## Which package(s) are impacted ?
@@ -36,6 +36,7 @@ Please select the right one.
 - [ ] I have commented my code
 - [ ] I have tested with all DB types
 - [ ] My changes generate no new warnings
+- [ ] I have updated the semver version (rpc.version)
 
 ## License
 

@@ -69,6 +69,9 @@ func (i *dispayObjects) RefreshDaemon(tag string) {
 // Refresh current Dero-USDT price
 func (i *dispayObjects) RefreshPrice(tag string) {
 	if rpc.Daemon.IsConnected() {
+		if i.Price.Text == "" {
+			i.Price.Text = "$"
+		}
 		_, price := GetPrice("DERO-USDT", tag)
 		i.Price.Text = fmt.Sprintf("$%s", price)
 	} else {

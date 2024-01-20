@@ -2,6 +2,31 @@
 
 This file lists the changes to dReams repo with each version.
 
+## 0.11.1 - January 19 2024
+
+### Added
+* Xeggex price feed
+* `gnomes` Version var to SC
+* `rpc` GetUintKey()
+
+### Changed
+* Go 1.21.5
+* Fyne 2.4.3
+* Gnomon 2.0.3-alpha.5
+* Baccarat 0.3.1
+* Holdero 0.3.1
+* dPrediction 0.3.1
+* Iluma 0.3.1
+* Duels 0.1.1
+* Grokked 0.1.1
+* Clean up client var names in `rpc`
+
+### Fixed
+* High memory use (#13)
+* False TX fail prints (#11)
+* Template typo
+
+
 ## 0.11.0 - December 23 2023
 
 ### Added

@@ -35,7 +35,7 @@ type marketObjects struct {
 	Icon         *canvas.Image
 	Cover        *canvas.Image
 	Details      fyne.Container
-	Actions      fyne.Container
+	Actions      *fyne.Container
 	Confirming   bool
 	Searching    bool
 	DreamsFilter bool
@@ -937,13 +937,13 @@ func PlaceMarket(d *dreams.AppObject) *container.Split {
 	}
 
 	// NFA actions container
-	Market.Actions = *container.NewBorder(nil, nil, nil, container.NewStack(button_spacer, Market.Button.BidBuy), Market.Entry)
+	Market.Actions = container.NewBorder(nil, nil, nil, container.NewStack(button_spacer, Market.Button.BidBuy), Market.Entry)
 	Market.Actions.Hide()
 
 	padding := canvas.NewRectangle(color.Transparent)
 	padding.SetMinSize(fyne.NewSize(123, 0))
 
-	details := container.NewBorder(nil, container.NewHBox(padding, container.NewStack(entry_spacer, &Market.Actions)), nil, nil, &Market.Details)
+	details := container.NewBorder(nil, container.NewHBox(padding, container.NewStack(entry_spacer, Market.Actions)), nil, nil, &Market.Details)
 
 	market = container.NewHSplit(details, max)
 	market.SetOffset(0.66)
@@ -1081,8 +1081,6 @@ func RunNFAMarket(d *dreams.AppObject, cont *fyne.Container) {
 				// Enable index controls and check if wallet is connected
 				DisableIndexControls(false)
 				if rpc.Wallet.IsConnected() {
-					Market.Actions.Show()
-					Assets.Claim.Show()
 					if d.OnSubTab("Market") {
 						// Update live market info
 						if len(Market.Viewing.Asset) == 64 {
@@ -1092,11 +1090,9 @@ func RunNFAMarket(d *dreams.AppObject, cont *fyne.Container) {
 								GetAuctionDetails(Market.Viewing.Asset)
 							}
 						}
-					}
 
-					if gnomon.IsSynced() {
-						if offset%5 == 0 {
-							if d.OnSubTab("Market") {
+						if gnomon.IsSynced() {
+							if offset%5 == 0 {
 								FindNFAListings(nil, nil)
 								if gnomon.DBStorageType() == "boltdb" {
 									for _, r := range Market.Auctions {

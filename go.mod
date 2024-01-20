@@ -1,18 +1,18 @@
 module github.com/dReam-dApps/dReams
 
-go 1.20
+go 1.21.5
 
 require (
-	fyne.io/fyne/v2 v2.4.1
+	fyne.io/fyne/v2 v2.4.4-0.20231224124904-a09bbd790b98
 	fyne.io/x/fyne v0.0.0-20230411205836-1ca0ead20763
-	github.com/SixofClubsss/Baccarat v0.3.0
-	github.com/SixofClubsss/Duels v0.1.0
-	github.com/SixofClubsss/Grokked v0.1.0
-	github.com/SixofClubsss/Holdero v0.3.0
-	github.com/SixofClubsss/Iluma v0.3.0
-	github.com/SixofClubsss/dPrediction v0.3.0
+	github.com/SixofClubsss/Baccarat v0.3.1
+	github.com/SixofClubsss/Duels v0.1.1
+	github.com/SixofClubsss/Grokked v0.1.1
+	github.com/SixofClubsss/Holdero v0.3.1
+	github.com/SixofClubsss/Iluma v0.3.1
+	github.com/SixofClubsss/dPrediction v0.3.1
 	github.com/blang/semver/v4 v4.0.0
-	github.com/civilware/Gnomon v0.0.0-20231218151558-0ee387e75195
+	github.com/civilware/Gnomon v0.0.0-20240102201536-a5900d5a61da
 	github.com/deroproject/derohe v0.0.0-20230604143809-765b2db1f482
 	github.com/sirupsen/logrus v1.9.3
 	github.com/superoo7/go-gecko v1.0.0
@@ -21,7 +21,7 @@ require (
 )
 
 require (
-	fyne.io/systray v1.10.1-0.20230722100817-88df1e0ffa9a // indirect
+	fyne.io/systray v1.10.1-0.20231115130155-104f5ef7839e // indirect
 	github.com/caarlos0/env/v6 v6.10.1 // indirect
 	github.com/cespare/xxhash v1.1.0 // indirect
 	github.com/creachadair/jrpc2 v0.43.0 // indirect

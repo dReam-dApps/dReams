@@ -411,7 +411,7 @@ func returnEnabledNames(assets map[string]bool) (text string) {
 
 // Owned asset tab layout
 //   - tag for log print
-//   - profile is canvas object of widgets used to select assets for games, themes, ect
+//   - profile is canvas object of widgets used to select assets for games, themes, etc
 //   - rescan is func used to rescan wallet assets
 //   - icon resources for side menus
 //   - d for main window dialogs
@@ -690,11 +690,6 @@ func DisableIndexControls(d bool) {
 			Assets.Button.Rescan.Hide()
 		}
 	}
-	Assets.Index.Add.Refresh()
-	Assets.Index.Search.Refresh()
-	Assets.Headers.Refresh()
-	Market.Actions.Refresh()
-	Assets.Button.Rescan.Refresh()
 }
 
 // Owned asset list object
@@ -889,10 +884,9 @@ func ClaimClaimable(title string, claimable []string, d *dreams.AppObject) {
 			progress_label.SetText(fmt.Sprintf("Claiming: %s\n\nPlease wait for TX to be confirmed", claim))
 			tx := rpc.ClaimNFA(claim)
 			time.Sleep(time.Second)
-			retry += rpc.ConfirmTxRetry(tx, "claimClaimable", 60)
+			retry += rpc.ConfirmTxRetry(tx, "claimClaimable", 50)
 
 			retry++
-
 		}
 	}
 	progress.SetValue(progress.Value + 1)
