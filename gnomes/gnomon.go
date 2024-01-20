@@ -57,9 +57,10 @@ type SCHeaders struct {
 
 // SCID with Gnomon headers
 type SC struct {
-	ID     string
-	Rating uint64
-	Header SCHeaders
+	ID      string
+	Rating  uint64
+	Version uint64
+	Header  SCHeaders
 }
 
 var logger = structures.Logger.WithFields(logrus.Fields{})

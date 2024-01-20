@@ -37,10 +37,6 @@ func (l *Lists) RemoveIndex(u uint64) {
 	if index != -1 {
 		l.All = append(l.All[:index], l.All[index+1:]...)
 	}
-
-	if l.List != nil {
-		l.List.Refresh()
-	}
 }
 
 // Check if u exists in All
