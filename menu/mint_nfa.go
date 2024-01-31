@@ -36,6 +36,7 @@ const (
 	HS_mint        = "dero1qy8p8cw8hr8dlxyg9xjxzlxf2zznwshcxk98ad688csgmk44y9kzyqqt9g2m0"
 	Dorbling_mint  = "dero1qy2tkfgpapjsgev8m9rs25209ajc6kcm42vzt2fapgk3ngmtc2guzqq52eq2r"
 	Desperado_mint = "dero1qy0ydkcwuf7nvh6938jpalt5snsj2atgmdyms67rd05whuy8a2hvzqg46gh5f"
+	DSkull_mint    = "dero1qyfn6esxwqk6mzx3whqtdfrz5aytu4nsfwk9hw02dp9p2nvf360r5qgzp2qre"
 )
 
 type mintConfig struct {

@@ -361,6 +361,12 @@ func checkNFAOwner(scid string) {
 						if menu.DappEnabled("Duels") {
 							duel.AddItemsToInventory(scid, header[0], owner[0], collection[0])
 						}
+					} else if collection[0] == "dSkullz" {
+						holdero.Settings.AddAvatar(header[0], owner[0])
+						menu.Assets.Add(add, icon[0])
+						if menu.DappEnabled("Duels") {
+							duel.AddItemsToInventory(scid, header[0], owner[0], collection[0])
+						}
 					}
 				}
 			}

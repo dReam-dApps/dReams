@@ -79,6 +79,7 @@ var dReamsNFAs = []assetCount{
 	{name: "Dorblings NFA", count: 110, creator: Dorbling_mint},
 	{name: "Dero Desperados", count: 777, creator: Desperado_mint},
 	{name: "Desperado Guns", count: 777, creator: Desperado_mint},
+	{name: "dSkullz", count: 27, creator: DSkull_mint},
 	// TODO DLAMPP count
 	// {name: "DLAMPP ", count: ?},
 }
@@ -184,7 +185,7 @@ func AssetType(collection, typeHdr string) string {
 		return "Theme/Avatar"
 	case "Dorblings NFA":
 		return "Avatar"
-	case "Death By Cupcake", "High Strangeness", "Dero Desperados", "Desperado Guns":
+	case "Death By Cupcake", "High Strangeness", "Dero Desperados", "Desperado Guns", "dSkullz":
 		return "Avatar/Duel"
 	default:
 		return typeHdr

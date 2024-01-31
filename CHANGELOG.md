@@ -2,9 +2,10 @@
 
 This file lists the changes to dReams repo with each version.
 
-## 0.11.2 - In Progress
+## 0.11.x - In Progress
 
 ### Added
+* dSkullz Collection
 * ParseSmartContract() when minting NFA
 
 
