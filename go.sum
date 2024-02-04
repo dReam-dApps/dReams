@@ -53,8 +53,8 @@ github.com/OneOfOne/xxhash v1.2.2 h1:KMrpdQIwFcEqXDklaen+P1axHaj9BSKzvpUUfnHldSE
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
 github.com/SixofClubsss/Baccarat v0.3.1 h1:Ii4rxdXu+plNvB7FhJcc5pM064UX0vmp6l6ySXhIacU=
 github.com/SixofClubsss/Baccarat v0.3.1/go.mod h1:1LbXm5cJs0LHsQc7CcKl7YTd6F/Uo9n9gu6xgRYTZHQ=
-github.com/SixofClubsss/Duels v0.1.1 h1:Yov4FMHeZoKnT5oUydeLr610wt+KkGbjK5tvRAcOA1A=
-github.com/SixofClubsss/Duels v0.1.1/go.mod h1:p493qg/Oe/5OES85gd5+WHr3Dm7E0lefgKzo/mV1wWw=
+github.com/SixofClubsss/Duels v0.1.2-0.20240204025815-127088402f7d h1:1l7DqzDiO8cpbnC5XpB+dfWbxu/DuTzPjy4cPvdHZDg=
+github.com/SixofClubsss/Duels v0.1.2-0.20240204025815-127088402f7d/go.mod h1:rv+q7m2BoFusRqOGYcktltNo6mWOiv6MaZbID5LwQcM=
 github.com/SixofClubsss/Grokked v0.1.1 h1:k7b6yU0TIVb+9GKztzReMItEDadiT50e+TGpjjJ/OK8=
 github.com/SixofClubsss/Grokked v0.1.1/go.mod h1:eJIt/JOi/IhXBI43WsNu+Yli9Fu71PwPsD9pY1ifNPE=
 github.com/SixofClubsss/Holdero v0.3.1 h1:17uaDCRwhyDrVdDsDBinHpiZji+TvOgCSxD1hiCS6dc=
