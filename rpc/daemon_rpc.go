@@ -159,13 +159,13 @@ func GasEstimate(scid, tag string, args rpc.Arguments, t []rpc.Transfer, max uin
 		return 0
 	}
 
-	logger.Println(tag+" Gas Fee:", result.GasStorage+120)
+	logger.Println(tag+" Gas Fee:", result.GasStorage+50)
 
 	if result.GasStorage < max {
-		return result.GasStorage + 120
+		return result.GasStorage + 50
 	}
 
-	return max + 120
+	return max + 50
 }
 
 // Get single string key result from SCID with daemon input

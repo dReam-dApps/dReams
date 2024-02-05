@@ -108,7 +108,7 @@ func NewHorizontalEntries(tag string, offset int) *DeroRpcEntries {
 	default_wallet := []string{"127.0.0.1:10103"}
 	wallet_entry := widget.NewSelectEntry(default_wallet)
 	wallet_entry.SetPlaceHolder("Wallet RPC:")
-	this_wallet := binding.BindString(&rpc.Wallet.Rpc)
+	this_wallet := binding.BindString(&rpc.Wallet.RPC.Port)
 	wallet_entry.Bind(this_wallet)
 	wallet_entry.OnChanged = func(s string) {
 		if rpc.Wallet.IsConnected() {
@@ -120,7 +120,7 @@ func NewHorizontalEntries(tag string, offset int) *DeroRpcEntries {
 
 	pass_entry := widget.NewPasswordEntry()
 	pass_entry.SetPlaceHolder("RPC user:pass")
-	this_auth := binding.BindString(&rpc.Wallet.UserPass)
+	this_auth := binding.BindString(&rpc.Wallet.RPC.Auth)
 	pass_entry.Bind(this_auth)
 	pass_entry.OnChanged = func(s string) {
 		if rpc.Wallet.IsConnected() {
@@ -187,7 +187,7 @@ func NewVerticalEntries(tag string, offset int) *DeroRpcEntries {
 	default_wallet := []string{"127.0.0.1:10103"}
 	wallet_entry := widget.NewSelectEntry(default_wallet)
 	wallet_entry.SetPlaceHolder("Wallet RPC:")
-	this_wallet := binding.BindString(&rpc.Wallet.Rpc)
+	this_wallet := binding.BindString(&rpc.Wallet.RPC.Port)
 	wallet_entry.Bind(this_wallet)
 	wallet_entry.OnChanged = func(s string) {
 		if rpc.Wallet.IsConnected() {
@@ -199,7 +199,7 @@ func NewVerticalEntries(tag string, offset int) *DeroRpcEntries {
 
 	pass_entry := widget.NewPasswordEntry()
 	pass_entry.SetPlaceHolder("RPC user:pass")
-	this_auth := binding.BindString(&rpc.Wallet.UserPass)
+	this_auth := binding.BindString(&rpc.Wallet.RPC.Auth)
 	pass_entry.Bind(this_auth)
 	pass_entry.OnChanged = func(s string) {
 		if rpc.Wallet.IsConnected() {

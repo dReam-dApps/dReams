@@ -24,6 +24,7 @@ import (
 	"github.com/dReam-dApps/dReams/gnomes"
 	"github.com/dReam-dApps/dReams/menu"
 	"github.com/dReam-dApps/dReams/rpc"
+	"github.com/deroproject/derohe/walletapi/xswd"
 	"github.com/docopt/docopt-go"
 	"github.com/sirupsen/logrus"
 
@@ -32,6 +33,7 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 )
 
@@ -508,16 +510,29 @@ func checkConnection() {
 		menu.Control.Check.Daemon.SetChecked(true)
 	} else {
 		menu.Control.Check.Daemon.SetChecked(false)
-		disconnected()
 	}
 
 	if rpc.Wallet.IsConnected() {
 		if rpc.Daemon.IsConnected() {
 			menu.Assets.Swap.Show()
 		}
+
+		if !rpc.Wallet.RPC.IsClosed() {
+			connect_select.DisableIndex(1)
+		} else if !rpc.Wallet.WS.IsClosed() {
+			connect_select.DisableIndex(0)
+		}
+
 	} else {
+		if !rpc.Wallet.WS.IsConnecting() {
+			rpc.Wallet.CloseConnections("dReams")
+			connect_select.EnableIndex(0)
+		} else {
+			connect_select.DisableIndex(0)
+		}
 		disconnected()
 		gnomon.Checked(false)
+		connect_select.EnableIndex(1)
 	}
 }
 
@@ -645,7 +660,7 @@ func daemonConnectedBox() fyne.Widget {
 
 // Daemon rpc entry object with default options
 //   - Bound to rpc.Daemon.Rpc
-func daemonRpcEntry() fyne.Widget {
+func daemonRPCEntry() fyne.Widget {
 	options := []string{
 		"",
 		rpc.DAEMON_RPC_DEFAULT,
@@ -661,7 +676,7 @@ func daemonRpcEntry() fyne.Widget {
 		options = append(options, menu.Control.Daemon)
 	}
 	entry := widget.NewSelectEntry(options)
-	entry.PlaceHolder = "Daemon RPC: "
+	entry.PlaceHolder = "Daemon: "
 
 	this := binding.BindString(&rpc.Daemon.Rpc)
 	entry.Bind(this)
@@ -669,14 +684,50 @@ func daemonRpcEntry() fyne.Widget {
 	return entry
 }
 
-// Wallet rpc entry object
-//   - Bound to rpc.Wallet.Rpc
-//   - Changes reset wallet connection and call checkConnection()
-func walletRpcEntry() fyne.Widget {
-	options := []string{"", "127.0.0.1:10103"}
-	entry := widget.NewSelectEntry(options)
-	entry.PlaceHolder = "Wallet RPC: "
-	entry.OnChanged = func(s string) {
+// Connect/Disconnect objects for RPC
+//   - Button OnConnect initializes RPC client and checks connection
+//   - Button OnDisconnect closes RPC client if not syncing wallet
+//   - Bound entries for Port and Auth
+func rpcConnection() fyne.CanvasObject {
+	port := "127.0.0.1:10103"
+	entryPort := widget.NewSelectEntry([]string{"", port})
+	entryAuth := widget.NewPasswordEntry()
+
+	button := widget.NewButton("Connect", nil)
+	button.OnTapped = func() {
+		if button.Text == "Disconnect" {
+			if rpc.Wallet.IsConnected() && gnomon.IsRunning() && !gnomon.HasChecked() {
+				dialog.NewInformation("Gnomon Syncing", "Wait for Gnomon to sync before disconnecting", dReams.Window).Show()
+				return
+			}
+
+			button.Importance = widget.MediumImportance
+			entryAuth.Enable()
+			entryPort.Enable()
+			rpc.Wallet.Connected(false)
+			rpc.Wallet.CloseConnections("dReams")
+			disconnected()
+			button.Text = "Connect"
+			button.Refresh()
+			return
+		}
+
+		go func() {
+			rpc.Wallet.RPC.Init()
+			rpc.GetAddress("dReams")
+			checkConnection()
+			if !rpc.Wallet.RPC.IsClosed() {
+				button.Importance = widget.HighImportance
+				button.Text = "Disconnect"
+				button.Refresh()
+				entryAuth.Disable()
+				entryPort.Disable()
+			}
+		}()
+	}
+
+	// OnChanged func for RPC entries
+	onChanged := func(s string) {
 		if rpc.Wallet.IsConnected() {
 			rpc.Wallet.Address = ""
 			rpc.Wallet.Display.Height = "0"
@@ -686,54 +737,83 @@ func walletRpcEntry() fyne.Widget {
 		}
 	}
 
-	entry.Bind(binding.BindString(&rpc.Wallet.Rpc))
-
-	return entry
-}
-
-// Authentication entry object
-//   - Bound to rpc.Wallet.UserPass
-//   - Changes call rpc.GetAddress() and checkConnection()
-func userPassEntry() fyne.Widget {
-	entry := widget.NewPasswordEntry()
-	entry.PlaceHolder = "user:pass"
-	entry.OnChanged = func(s string) {
-		if rpc.Wallet.IsConnected() {
-			rpc.GetAddress("dReams")
-			go checkConnection()
-		}
+	// Wallet RPC entry object bound to rpc.Wallet.RPC.Port
+	entryPort.PlaceHolder = "Wallet RPC: "
+	entryPort.Bind(binding.BindString(&rpc.Wallet.RPC.Port))
+	if entryPort.Text == "" {
+		entryPort.SetText(port)
 	}
+	entryPort.OnChanged = onChanged
 
-	entry.Bind(binding.BindString(&rpc.Wallet.UserPass))
+	// Authentication entry object bound to rpc.Wallet.RPC.Auth
+	entryAuth.PlaceHolder = "user:pass"
+	entryAuth.Bind(binding.BindString(&rpc.Wallet.RPC.Auth))
+	entryAuth.OnChanged = onChanged
 
-	return entry
+	return container.NewVBox(
+		dwidget.NewSpacer(300, 0),
+		entryPort,
+		container.NewBorder(nil, nil, nil, container.NewStack(dwidget.NewSpacer(100, 0), button), entryAuth))
 }
 
-// Connect button object for rpc
-//   - Pressed calls rpc.Ping(), rpc.GetAddress(), checkConnection(),
-//   - dapp.OnConnected() funcs get called here
-func rpcConnectButton() fyne.Widget {
-	var wait bool
-	button := widget.NewButton("Connect", func() {
-		go func() {
-			if !wait {
-				wait = true
-				rpc.Ping()
-				rpc.GetAddress("dReams")
-				checkConnection()
+// Connect/Disconnect objects for XSWD
+//   - Button OnConnect initializes WS and sends connection request
+//   - Button OnDisconnect closes WS if not syncing wallet
+//   - Bound entry for Port
+func xswdConnection() fyne.CanvasObject {
+	port := fmt.Sprintf("127.0.0.1:%d", xswd.XSWD_PORT)
+	entryPort := widget.NewSelectEntry([]string{"", port})
 
-				wait = false
-
+	button := widget.NewButton("Connect", nil)
+	button.OnTapped = func() {
+		if button.Text == "Disconnect" {
+			if rpc.Wallet.IsConnected() && gnomon.IsRunning() && !gnomon.HasChecked() {
+				dialog.NewInformation("Gnomon Syncing", "Wait for Gnomon to sync before disconnecting", dReams.Window).Show()
 				return
 			}
 
-			if !rpc.Wallet.IsConnected() {
-				logger.Warnf("[dReams] Syncing, please wait")
-			}
-		}()
-	})
+			button.Importance = widget.MediumImportance
+			rpc.Wallet.Connected(false)
+			rpc.Wallet.CloseConnections("dReams")
+			disconnected()
+			entryPort.Enable()
+			button.Text = "Connect"
+			button.Refresh()
+			return
+		}
 
-	return button
+		go func() {
+			button.Disable()
+			entryPort.Disable()
+			connect_select.DisableIndex(0)
+			if rpc.Wallet.WS.Init() {
+				rpc.GetAddress("dReams")
+				checkConnection()
+				button.Importance = widget.HighImportance
+				button.Text = "Disconnect"
+				button.Refresh()
+			} else {
+				entryPort.Enable()
+				button.Importance = widget.MediumImportance
+				button.Text = "Connect"
+				button.Refresh()
+				connect_select.EnableIndex(0)
+			}
+			button.Enable()
+		}()
+	}
+
+	// Wallet WS entry object bound to rpc.Wallet.WS.Port
+	entryPort.PlaceHolder = "Wallet WS: "
+	entryPort.Bind(binding.BindString(&rpc.Wallet.WS.Port))
+	if entryPort.Text == "" {
+		entryPort.SetText(port)
+	}
+
+	return container.NewVBox(
+		dwidget.NewSpacer(300, 0),
+		entryPort,
+		container.NewHBox(layout.NewSpacer(), container.NewStack(dwidget.NewSpacer(100, 0), button)))
 }
 
 // Rescan func for owned assets list
@@ -751,6 +831,7 @@ func rescan() {
 
 func dappCloseCheck() {
 	prediction.Service.IsStopped()
+	rpc.Wallet.CloseConnections("dReams")
 }
 
 // Returns map of current dApp package versions
