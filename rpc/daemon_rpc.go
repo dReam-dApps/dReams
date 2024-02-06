@@ -384,6 +384,24 @@ func GetDaemonTxPool() (result *rpc.GetTxPool_Result) {
 	return
 }
 
+// Get DERO address of given name
+func GetNameToAddress(name string) (address string) {
+	client, ctx, cancel := SetDaemonClient(Daemon.Rpc)
+	defer cancel()
+
+	var result *rpc.NameToAddress_Result
+	params := rpc.NameToAddress_Params{
+		Name:       name,
+		TopoHeight: -1,
+	}
+
+	if err := client.CallFor(ctx, &result, "DERO.NameToAddress", params); err != nil {
+		return
+	}
+
+	return result.Address
+}
+
 // Verify TX signer with GetTransaction
 func VerifySigner(txid string) bool {
 	client, ctx, cancel := SetDaemonClient(Daemon.Rpc)
