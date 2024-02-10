@@ -593,6 +593,10 @@ func place() *fyne.Container {
 		tabs.Append(container.NewTabItem("Grokked", grok.LayoutAllItems(&dReams)))
 	}
 
+	// if menu.DappEnabled("Dice") {
+	// 	tabs.Append(container.NewTabItem("Dice", dice.LayoutAll(&dReams)))
+	// }
+
 	tabs.Append(container.NewTabItem("Log", rpc.SessionLog(App_Name, rpc.Version())))
 
 	var fs_button *widget.Button

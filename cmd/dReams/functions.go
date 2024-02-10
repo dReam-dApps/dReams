@@ -772,6 +772,8 @@ func dappVersions(dapps []string) map[string]string {
 			versions["Duels"] = duel.Version().String()
 		case "Grokked":
 			versions["Grokked"] = grok.Version().String()
+			// case "Dice":
+			// 	versions["Dice"] = dice.Version().String()
 		}
 	}
 
