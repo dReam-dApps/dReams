@@ -81,6 +81,7 @@ type Gnomes interface {
 	GetSCIDValuesByKey(scid string, key interface{}) (valuesstring []string, valuesuint64 []uint64)
 	GetSCIDKeysByValue(scid string, key interface{}) (valuesstring []string, valuesuint64 []uint64)
 	GetAllSCIDVariableDetails(scid string) []*structures.SCIDVariable
+	GetAllSCIDInvokeDetailsByEntrypoint(scid string, entrypoint string) []*structures.SCTXParse
 	AddSCIDToIndex(scids map[string]*structures.FastSyncImport) error
 	GetLiveSCIDValuesByKey(scid string, key interface{}) (valuesstring []string, valuesuint64 []uint64, err error)
 	ControlPanel(w fyne.Window) *fyne.Container
@@ -433,6 +434,19 @@ func (g *Gnomon) GetAllSCIDVariableDetails(scid string) []*structures.SCIDVariab
 		return g.Indexer.BBSBackend.GetAllSCIDVariableDetails(scid)
 	default:
 		return g.Indexer.BBSBackend.GetAllSCIDVariableDetails(scid)
+	}
+}
+
+// Method of Gnomon GetAllSCIDInvokeDetailsByEntrypoint() where DB type is defined by Indexer.DBType
+//   - Default is boltdb
+func (g *Gnomon) GetAllSCIDInvokeDetailsByEntrypoint(scid string, entrypoint string) []*structures.SCTXParse {
+	switch g.Indexer.DBType {
+	case "gravdb":
+		return g.Indexer.GravDBBackend.GetAllSCIDInvokeDetailsByEntrypoint(scid, entrypoint)
+	case "boltdb":
+		return g.Indexer.BBSBackend.GetAllSCIDInvokeDetailsByEntrypoint(scid, entrypoint)
+	default:
+		return g.Indexer.BBSBackend.GetAllSCIDInvokeDetailsByEntrypoint(scid, entrypoint)
 	}
 }
 
