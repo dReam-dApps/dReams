@@ -373,3 +373,11 @@ func (a *AssetSelect) RemoveAsset(rm string) {
 
 	a.Select.Refresh()
 }
+
+// Get the max size for a object while maintaining aspect ratio
+func (d *AppObject) GetMaxSize(w, h float32) fyne.Size {
+	wRatio := d.Window.Canvas().Size().Width / 1400
+	hRatio := d.Window.Canvas().Size().Height / 800
+
+	return fyne.NewSize(w*wRatio, h*hRatio)
+}

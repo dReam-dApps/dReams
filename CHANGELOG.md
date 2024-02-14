@@ -8,7 +8,8 @@ This file lists the changes to dReams repo with each version.
 * dSkullz Collection
 * ParseSmartContract() for directory and when minting NFA
 * Auction highest bidder display
-* GetNameToAddress() and send to name
+* `rpc` GetNameToAddress() and send to name
+* `dreams` GetMaxSize()
 
 
 ## 0.11.1 - January 19 2024
