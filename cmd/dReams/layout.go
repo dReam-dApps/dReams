@@ -13,6 +13,7 @@ import (
 	"github.com/SixofClubsss/Grokked/grok"
 	"github.com/SixofClubsss/Holdero/holdero"
 	"github.com/SixofClubsss/Iluma/tarot"
+	"github.com/SixofClubsss/dDice/dice"
 	"github.com/SixofClubsss/dPrediction/prediction"
 	"github.com/dReam-dApps/dReams/bundle"
 	"github.com/dReam-dApps/dReams/dwidget"
@@ -499,7 +500,7 @@ func place() *fyne.Container {
 	// intros = append(intros, menu.MakeMenuIntro(derbnb.DreamsMenuIntro())...)
 	intros = append(intros, menu.MakeMenuIntro(duel.DreamsMenuIntro())...)
 	intros = append(intros, menu.MakeMenuIntro(grok.DreamsMenuIntro())...)
-	// intros = append(intros, menu.MakeMenuIntro(dice.DreamsMenuIntro())...)
+	intros = append(intros, menu.MakeMenuIntro(dice.DreamsMenuIntro())...)
 
 	// dReams menu tabs
 	asset_tab = menu.PlaceAssets("dReams", profile(), rescan, bundle.ResourceDReamsIconAltPng, &dReams)
@@ -594,9 +595,9 @@ func place() *fyne.Container {
 		tabs.Append(container.NewTabItem("Grokked", grok.LayoutAllItems(&dReams)))
 	}
 
-	// if menu.DappEnabled("Dice") {
-	// 	tabs.Append(container.NewTabItem("Dice", dice.LayoutAll(&dReams)))
-	// }
+	if menu.DappEnabled("Dice") {
+		tabs.Append(container.NewTabItem("Dice", dice.LayoutAll(&dReams)))
+	}
 
 	tabs.Append(container.NewTabItem("Log", rpc.SessionLog(App_Name, rpc.Version())))
 

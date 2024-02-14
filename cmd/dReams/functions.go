@@ -16,6 +16,7 @@ import (
 	"github.com/SixofClubsss/Grokked/grok"
 	"github.com/SixofClubsss/Holdero/holdero"
 	"github.com/SixofClubsss/Iluma/tarot"
+	"github.com/SixofClubsss/dDice/dice"
 	"github.com/SixofClubsss/dPrediction/prediction"
 	"github.com/civilware/Gnomon/structures"
 	dreams "github.com/dReam-dApps/dReams"
@@ -612,12 +613,12 @@ func gnomonFilters() (filter []string) {
 		}
 	}
 
-	// if menu.DappEnabled("Dice") {
-	// 	dice := rpc.GetSCCode(dice.DICESCID)
-	// 	if dice != "" {
-	// 		filter = append(filter, dice)
-	// 	}
-	// }
+	if menu.DappEnabled("Dice") {
+		dice := rpc.GetSCCode(dice.DICESCID)
+		if dice != "" {
+			filter = append(filter, dice)
+		}
+	}
 
 	filter = append(filter, menu.ReturnEnabledNFAs(menu.Assets.Enabled)...)
 
@@ -779,8 +780,8 @@ func dappVersions(dapps []string) map[string]string {
 			versions["Duels"] = duel.Version().String()
 		case "Grokked":
 			versions["Grokked"] = grok.Version().String()
-			// case "Dice":
-			// 	versions["Dice"] = dice.Version().String()
+		case "Dice":
+			versions["Dice"] = dice.Version().String()
 		}
 	}
 

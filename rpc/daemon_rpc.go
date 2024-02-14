@@ -225,8 +225,8 @@ func GetDapps() (dApps []string) {
 		}
 	}
 
-	// // TODO
-	// dApps = append(dApps, "Dice")
+	// TODO
+	dApps = append(dApps, "Dice")
 
 	return
 }
