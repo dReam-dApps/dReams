@@ -612,6 +612,13 @@ func gnomonFilters() (filter []string) {
 		}
 	}
 
+	// if menu.DappEnabled("Dice") {
+	// 	dice := rpc.GetSCCode(dice.DICESCID)
+	// 	if dice != "" {
+	// 		filter = append(filter, dice)
+	// 	}
+	// }
+
 	filter = append(filter, menu.ReturnEnabledNFAs(menu.Assets.Enabled)...)
 
 	return
