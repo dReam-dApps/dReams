@@ -14,7 +14,7 @@ require (
 	github.com/SixofClubsss/dPrediction v0.3.1
 	github.com/blang/semver/v4 v4.0.0
 	github.com/civilware/Gnomon v0.0.0-20240102201536-a5900d5a61da
-	github.com/deroproject/derohe v0.0.0-20230604143809-765b2db1f482
+	github.com/deroproject/derohe v0.0.0-20240215152352-a5a0e6a68ada
 	github.com/sirupsen/logrus v1.9.3
 	github.com/superoo7/go-gecko v1.0.0
 	github.com/x-cray/logrus-prefixed-formatter v0.5.2
