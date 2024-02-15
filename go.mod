@@ -13,7 +13,7 @@ require (
 	github.com/SixofClubsss/dDice v0.0.0-20240214090434-f6872885f157
 	github.com/SixofClubsss/dPrediction v0.3.1
 	github.com/blang/semver/v4 v4.0.0
-	github.com/civilware/Gnomon v0.0.0-20240102201536-a5900d5a61da
+	github.com/civilware/Gnomon v0.0.0-20240215215804-cfa19c264d97
 	github.com/deroproject/derohe v0.0.0-20240215152352-a5a0e6a68ada
 	github.com/sirupsen/logrus v1.9.3
 	github.com/superoo7/go-gecko v1.0.0
