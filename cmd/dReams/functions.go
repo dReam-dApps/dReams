@@ -193,9 +193,18 @@ func fetch(done chan struct{}) {
 		case <-ticker.C: // do on interval
 			if !dReams.IsConfiguring() {
 				rpc.Ping()
-				rpc.EchoWallet("dReams")
-				rpc.GetDreamsBalances(rpc.SCIDs)
-				rpc.GetWalletHeight("dReams")
+				if !rpc.Wallet.RPC.IsClosed() {
+					rpc.EchoWallet("dReams")
+					rpc.GetDreamsBalances(rpc.SCIDs)
+					rpc.GetWalletHeight("dReams")
+				} else if !rpc.Wallet.WS.IsClosed() {
+					if !rpc.Wallet.WS.IsRequesting() {
+						rpc.EchoWallet("dReams")
+						rpc.GetDreamsBalances(rpc.SCIDs)
+						rpc.GetWalletHeight("dReams")
+					}
+				}
+
 				if !rpc.Startup {
 					checkConnection()
 					gnomes.EndPoint()
@@ -214,7 +223,6 @@ func fetch(done chan struct{}) {
 				}
 
 				dReams.SignalChannel()
-
 			}
 		case <-dReams.Closing(): // exit loop
 			logger.Println("[dReams] Closing...")
@@ -525,7 +533,7 @@ func checkConnection() {
 		}
 
 	} else {
-		if !rpc.Wallet.WS.IsConnecting() {
+		if !rpc.Wallet.WS.IsConnecting() && !rpc.Wallet.WS.IsRequesting() {
 			rpc.Wallet.CloseConnections("dReams")
 			connect_select.EnableIndex(0)
 		} else {
@@ -717,6 +725,7 @@ func rpcConnection() fyne.CanvasObject {
 			disconnected()
 			button.Text = "Connect"
 			button.Refresh()
+			connect_select.EnableIndex(1)
 			return
 		}
 
@@ -787,6 +796,7 @@ func xswdConnection() fyne.CanvasObject {
 			entryPort.Enable()
 			button.Text = "Connect"
 			button.Refresh()
+			connect_select.EnableIndex(0)
 			return
 		}
 
@@ -796,18 +806,24 @@ func xswdConnection() fyne.CanvasObject {
 			connect_select.DisableIndex(0)
 			if rpc.Wallet.WS.Init() {
 				rpc.GetAddress("dReams")
-				checkConnection()
-				button.Importance = widget.HighImportance
-				button.Text = "Disconnect"
-				button.Refresh()
-			} else {
-				entryPort.Enable()
-				button.Importance = widget.MediumImportance
-				button.Text = "Connect"
-				button.Refresh()
-				connect_select.EnableIndex(0)
+				if rpc.Wallet.IsConnected() {
+					checkConnection()
+					button.Importance = widget.HighImportance
+					button.Text = "Disconnect"
+					button.Refresh()
+					button.Enable()
+					return
+				}
+
+				rpc.Wallet.CloseConnections("dReams")
 			}
+
+			entryPort.Enable()
+			button.Importance = widget.MediumImportance
+			button.Text = "Connect"
+			button.Refresh()
 			button.Enable()
+			connect_select.EnableIndex(0)
 		}()
 	}
 

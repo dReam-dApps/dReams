@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"sync"
 
+	"github.com/creachadair/jrpc2"
 	"github.com/deroproject/derohe/walletapi/xswd"
 	"github.com/gorilla/websocket"
 	"github.com/ybbus/jsonrpc/v3"
@@ -74,8 +75,21 @@ func (ws *XSWDserver) readAndUnmarshalWallet(toType interface{}) (err error) {
 		return
 	}
 
+	// Handle response error
 	if v.Error != nil {
-		return fmt.Errorf("%v", v.Error)
+		var result []byte
+		result, err = json.Marshal(v.Error)
+		if err != nil {
+			return fmt.Errorf("%v", v.Error)
+		}
+
+		var e *jrpc2.Error
+		err = json.Unmarshal(result, &e)
+		if err != nil {
+			return fmt.Errorf("%v", v.Error)
+		}
+
+		return fmt.Errorf("%s", e.Message)
 	}
 
 	js, err := json.Marshal(v.Result)
@@ -181,6 +195,10 @@ func (ws *XSWDserver) requesting(b bool) {
 
 // Wrapper for XSWD calls
 func (ws *XSWDserver) CallFor(out interface{}, method string, params interface{}) (err error) {
+	if ws.IsClosed() {
+		return fmt.Errorf("no connection with XSWD server")
+	}
+
 	request := jsonrpc.RPCRequest{
 		JSONRPC: "2.0",
 		ID:      1,

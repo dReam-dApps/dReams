@@ -76,7 +76,7 @@ func (w *wallet) CallFor(out interface{}, method string, params ...interface{}) 
 		}
 	} else if w.WS.conn != nil {
 		for w.WS.IsRequesting() {
-			time.Sleep(100 * time.Millisecond)
+			time.Sleep(500 * time.Millisecond)
 			logger.Warnln("[XSWD] Request sleep...")
 		}
 
