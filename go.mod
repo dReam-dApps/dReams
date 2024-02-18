@@ -10,10 +10,11 @@ require (
 	github.com/SixofClubsss/Grokked v0.1.2-0.20240205225744-bccd1d876329
 	github.com/SixofClubsss/Holdero v0.3.2-0.20240205225603-39980a0b65d3
 	github.com/SixofClubsss/Iluma v0.3.2-0.20240205225254-02e276deda8e
+	github.com/SixofClubsss/dDice v0.0.0-20240216005733-e6f868988ce2
 	github.com/SixofClubsss/dPrediction v0.3.2-0.20240205230152-394cb9b0c671
 	github.com/blang/semver/v4 v4.0.0
-	github.com/civilware/Gnomon v0.0.0-20240102201536-a5900d5a61da
-	github.com/deroproject/derohe v0.0.0-20230604143809-765b2db1f482
+	github.com/civilware/Gnomon v0.0.0-20240215215804-cfa19c264d97
+	github.com/deroproject/derohe v0.0.0-20240215152352-a5a0e6a68ada
 	github.com/gorilla/websocket v1.5.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/superoo7/go-gecko v1.0.0
@@ -49,7 +50,7 @@ require (
 	github.com/gopherjs/gopherjs v1.17.2 // indirect
 	github.com/jsummers/gobmp v0.0.0-20151104160322-e2ba15ffa76e // indirect
 	github.com/klauspost/compress v1.15.13 // indirect
-	github.com/klauspost/cpuid/v2 v2.2.5 // indirect
+	github.com/klauspost/cpuid/v2 v2.2.6 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.16 // indirect
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
@@ -72,13 +73,13 @@ require (
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.9.0 // indirect
 	go.uber.org/zap v1.24.0 // indirect
-	golang.org/x/crypto v0.14.0 // indirect
+	golang.org/x/crypto v0.17.0 // indirect
 	golang.org/x/image v0.14.0 // indirect
 	golang.org/x/mobile v0.0.0-20231108233038-35478a0c49da // indirect
-	golang.org/x/net v0.17.0 // indirect
+	golang.org/x/net v0.19.0 // indirect
 	golang.org/x/sync v0.5.0 // indirect
-	golang.org/x/sys v0.14.0 // indirect
-	golang.org/x/term v0.13.0 // indirect
+	golang.org/x/sys v0.15.0 // indirect
+	golang.org/x/term v0.15.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/xerrors v0.0.0-20231012003039-104605ab7028 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect

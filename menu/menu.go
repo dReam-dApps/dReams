@@ -18,6 +18,7 @@ import (
 	"github.com/dReam-dApps/dReams/dwidget"
 	"github.com/dReam-dApps/dReams/gnomes"
 	"github.com/dReam-dApps/dReams/rpc"
+	"github.com/deroproject/derohe/globals"
 	"github.com/sirupsen/logrus"
 
 	"fyne.io/fyne/v2"
@@ -558,14 +559,17 @@ func sendAssetMenu(window_icon fyne.Resource, d *dreams.AppObject) {
 	dest_entry.SetPlaceHolder("Destination Address:")
 	dest_entry.Wrapping = fyne.TextWrapWord
 	dest_entry.Validator = func(s string) (err error) {
-		if strings.HasPrefix(s, "dero") && len(s) == 66 {
-			send_button.Show()
-			return nil
+		if _, err = globals.ParseValidateAddress(s); err != nil {
+			addr := rpc.GetNameToAddress(strings.TrimSpace(s))
+			if _, err = globals.ParseValidateAddress(addr); err != nil {
+				send_button.Hide()
+				return
+			}
 		}
 
-		send_button.Hide()
+		send_button.Show()
 
-		return fmt.Errorf("invalid address")
+		return
 	}
 
 	title_line := canvas.NewLine(bundle.TextColor)
@@ -899,17 +903,21 @@ func SendMessageMenu(dest string, window_icon fyne.Resource) {
 		dest_entry.SetPlaceHolder("Destination Address:")
 		dest_entry.Wrapping = fyne.TextWrapWord
 		dest_entry.Validator = func(s string) (err error) {
-			if strings.HasPrefix(s, "dero") && len(s) == 66 {
-				if message_entry.Text != "" {
-					send_button.Show()
-				} else {
+			if _, err = globals.ParseValidateAddress(s); err != nil {
+				addr := rpc.GetNameToAddress(strings.TrimSpace(s))
+				if _, err = globals.ParseValidateAddress(addr); err != nil {
 					send_button.Hide()
+					return
 				}
-				return nil
 			}
 
-			send_button.Hide()
-			return fmt.Errorf("invalid address")
+			if message_entry.Text != "" {
+				send_button.Show()
+			} else {
+				send_button.Hide()
+			}
+
+			return
 		}
 
 		message_entry.OnChanged = func(s string) {

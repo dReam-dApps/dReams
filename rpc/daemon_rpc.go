@@ -81,7 +81,11 @@ func IsReady() bool {
 
 // Set daemon rpc client with context and 8 sec cancel
 func SetDaemonClient(addr string) (jsonrpc.RPCClient, context.Context, context.CancelFunc) {
-	client := jsonrpc.NewClient("http://" + addr + "/json_rpc")
+	if !strings.HasPrefix(addr, "http") {
+		addr = "http://" + addr
+	}
+
+	client := jsonrpc.NewClient(addr + "/json_rpc")
 	ctx, cancel := context.WithTimeout(context.Background(), 8*time.Second)
 
 	return client, ctx, cancel
@@ -224,6 +228,9 @@ func GetDapps() (dApps []string) {
 			json.Unmarshal(h, &dApps)
 		}
 	}
+
+	// TODO
+	dApps = append(dApps, "Dice")
 
 	return
 }
@@ -382,6 +389,24 @@ func GetDaemonTxPool() (result *rpc.GetTxPool_Result) {
 	}
 
 	return
+}
+
+// Get DERO address of given name
+func GetNameToAddress(name string) (address string) {
+	client, ctx, cancel := SetDaemonClient(Daemon.Rpc)
+	defer cancel()
+
+	var result *rpc.NameToAddress_Result
+	params := rpc.NameToAddress_Params{
+		Name:       name,
+		TopoHeight: -1,
+	}
+
+	if err := client.CallFor(ctx, &result, "DERO.NameToAddress", params); err != nil {
+		return
+	}
+
+	return result.Address
 }
 
 // Verify TX signer with GetTransaction

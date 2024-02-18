@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	dreams "github.com/dReam-dApps/dReams"
 	"github.com/dReam-dApps/dReams/bundle"
 	"github.com/dReam-dApps/dReams/dwidget"
 	"github.com/dReam-dApps/dReams/rpc"
@@ -170,7 +171,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 		}
 	})
 
-	descr_entry := widget.NewMultiLineEntry()
+	descr_entry := widget.NewEntry()
 	descr_entry.SetPlaceHolder("Asset Description:")
 	descr_entry.Validator = validation.NewRegexp(`^\w{1,}`, "String required")
 
@@ -1014,6 +1015,13 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 									break
 								}
 
+								if _, _, err := dvm.ParseSmartContract(string(file)); err != nil {
+									error_message := dialog.NewInformation("Error", fmt.Sprintf("%s is not a valid SC", input_file), window)
+									error_message.Resize(fyne.NewSize(240, 150))
+									error_message.Show()
+									return
+								}
+
 								if tx := rpc.UploadNFAContract(string(file)); tx == "" {
 									progress_label.SetText("Error installing " + input_file)
 									wait_message.SetDismissText("Close")
@@ -1062,15 +1070,15 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 							return
 						}
 
-						if _, _, err := dvm.ParseSmartContract(string(file)); err != nil {
-							error_message := dialog.NewInformation("Error", fmt.Sprintf("%s is not a valid SC", input_file), window)
+						if string(file) == "" {
+							error_message := dialog.NewInformation("Error", fmt.Sprintf("%s is a empty file", input_file), window)
 							error_message.Resize(fyne.NewSize(240, 150))
 							error_message.Show()
 							return
 						}
 
-						if string(file) == "" {
-							error_message := dialog.NewInformation("Error", fmt.Sprintf("%s is a empty file", input_file), window)
+						if _, _, err := dvm.ParseSmartContract(string(file)); err != nil {
+							error_message := dialog.NewInformation("Error", fmt.Sprintf("%s is not a valid SC", input_file), window)
 							error_message.Resize(fyne.NewSize(240, 150))
 							error_message.Show()
 							return
@@ -1203,6 +1211,45 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 		sign_entry_start.SetText(data.Sign)
 	}
 
+	// Parse all contracts in bas folder
+	scan_button := widget.NewButtonWithIcon("", dreams.FyneIcon("broken-image"), nil)
+	scan_button.Importance = widget.LowImportance
+	scan_button.OnTapped = func() {
+		if collection_entry.Validate() != nil {
+			dialog.NewInformation("No collection", "Enter a collection to scan", window).Show()
+			return
+		}
+
+		path := fmt.Sprintf("NFA-Creation/%s/bas/", collection_entry.Text)
+
+		files, err := filepath.Glob(fmt.Sprintf("%s*.bas", path))
+		if err != nil {
+			error_message := dialog.NewInformation("Error", fmt.Sprintf("Could not read %s", path), window)
+			error_message.Resize(fyne.NewSize(240, 150))
+			error_message.Show()
+			return
+		}
+
+		for _, f := range files {
+			file, err := os.ReadFile(f)
+			if err != nil {
+				error_message := dialog.NewInformation("Error", fmt.Sprintf("Could not read %s", f), window)
+				error_message.Resize(fyne.NewSize(240, 150))
+				error_message.Show()
+				return
+			}
+
+			if _, _, err := dvm.ParseSmartContract(string(file)); err != nil {
+				error_message := dialog.NewInformation("Error", fmt.Sprintf("%s is not a valid SC", f), window)
+				error_message.Resize(fyne.NewSize(240, 150))
+				error_message.Show()
+				return
+			}
+		}
+
+		dialog.NewInformation("Completed Scan", fmt.Sprintf("No errors found in %s", path), window).Show()
+	}
+
 	mint_form := []*widget.FormItem{}
 	mint_form = append(mint_form, widget.NewFormItem("", instructions_button))
 
@@ -1210,7 +1257,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 		widget.NewForm(widget.NewFormItem("Config", container.NewBorder(nil, nil, nil, save_config_button, config_select))))))
 
 	mint_form = append(mint_form, widget.NewFormItem("", layout.NewSpacer()))
-	mint_form = append(mint_form, widget.NewFormItem("Collection", container.NewBorder(nil, nil, nil, set_up_collec, collection_entry)))
+	mint_form = append(mint_form, widget.NewFormItem("Collection", container.NewBorder(nil, nil, nil, container.NewHBox(set_up_collec, scan_button), collection_entry)))
 
 	mint_form = append(mint_form, widget.NewFormItem("Owner Can Update", container.NewAdaptiveGrid(2, update_select,
 		widget.NewForm(widget.NewFormItem("Name", container.NewBorder(nil, nil, nil, extension_select, name_cont))))))

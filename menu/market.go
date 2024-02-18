@@ -60,6 +60,7 @@ type marketObjects struct {
 			Count   *widget.Entry
 			Current *widget.Entry
 			Price   *widget.Entry
+			Address *widget.Entry
 		}
 	}
 	Button struct {
@@ -428,6 +429,7 @@ func NFAMarketInfo() fyne.Container {
 	Market.Display.Bid.Current = widget.NewEntry()
 	Market.Display.Bid.Price = widget.NewEntry()
 	Market.Display.Bid.Count = widget.NewEntry()
+	Market.Display.Bid.Address = widget.NewEntry()
 	Market.Display.Ends = widget.NewEntry()
 
 	Market.Display.Name.Disable()
@@ -443,6 +445,7 @@ func NFAMarketInfo() fyne.Container {
 	Market.Display.Bid.Current.Disable()
 	Market.Display.Bid.Price.Disable()
 	Market.Display.Bid.Count.Disable()
+	Market.Display.Bid.Address.Disable()
 	Market.Display.Ends.Disable()
 
 	Market.Icon = canvas.NewImageFromImage(nil)
@@ -459,21 +462,27 @@ func NFAMarketInfo() fyne.Container {
 // Returns container for auction display objects
 func AuctionInfo() fyne.Container {
 	auction_form := []*widget.FormItem{}
-	auction_form = append(auction_form, widget.NewFormItem("Name", Market.Display.Name))
-	auction_form = append(auction_form, widget.NewFormItem("Asset Type", Market.Display.Type))
-	auction_form = append(auction_form, widget.NewFormItem("Collection", Market.Display.Collection))
-	auction_form = append(auction_form, widget.NewFormItem("Ends", Market.Display.Ends))
-	auction_form = append(auction_form, widget.NewFormItem("Bids", Market.Display.Bid.Count))
-	auction_form = append(auction_form, widget.NewFormItem("Description", Market.Display.Description))
-	auction_form = append(auction_form, widget.NewFormItem("Creator", Market.Display.Creator))
-	auction_form = append(auction_form, widget.NewFormItem("Owner", Market.Display.Owner))
-	auction_form = append(auction_form, widget.NewFormItem("Artificer %", Market.Display.Artificer))
-	auction_form = append(auction_form, widget.NewFormItem("Royalty %", Market.Display.Royalty))
+	auction_form = append(auction_form, widget.NewFormItem("Name", container.NewStack(Market.Display.Name)))
+	auction_form = append(auction_form, widget.NewFormItem("Asset Type", container.NewAdaptiveGrid(2,
+		Market.Display.Type,
+		widget.NewForm(widget.NewFormItem("Update", container.NewStack(Market.Display.Update))))))
 
-	auction_form = append(auction_form, widget.NewFormItem("Owner Update", Market.Display.Update))
-	auction_form = append(auction_form, widget.NewFormItem("Start Price", Market.Display.Price))
+	auction_form = append(auction_form, widget.NewFormItem("Collection", container.NewStack(Market.Display.Collection)))
+	auction_form = append(auction_form, widget.NewFormItem("Description", container.NewStack(Market.Display.Description)))
+	auction_form = append(auction_form, widget.NewFormItem("Creator", container.NewStack(Market.Display.Creator)))
+	auction_form = append(auction_form, widget.NewFormItem("Owner", container.NewStack(Market.Display.Owner)))
+	auction_form = append(auction_form, widget.NewFormItem("Royalty %", container.NewHBox(
+		container.NewStack(dwidget.NewSpacer(110, 0), container.NewStack(Market.Display.Royalty)),
+		layout.NewSpacer(),
+		widget.NewForm(widget.NewFormItem("Artificer %", container.NewStack(dwidget.NewSpacer(110, 0), Market.Display.Artificer))))))
 
-	auction_form = append(auction_form, widget.NewFormItem("Current Bid", Market.Display.Bid.Current))
+	auction_form = append(auction_form, widget.NewFormItem("Ends", container.NewStack(Market.Display.Ends)))
+	auction_form = append(auction_form, widget.NewFormItem("Start Price", container.NewStack(Market.Display.Price)))
+	auction_form = append(auction_form, widget.NewFormItem("Current Bid", container.NewAdaptiveGrid(2,
+		Market.Display.Bid.Current,
+		widget.NewForm(widget.NewFormItem("Bids", container.NewStack(Market.Display.Bid.Count))))))
+
+	auction_form = append(auction_form, widget.NewFormItem("Bidder", container.NewStack(Market.Display.Bid.Address)))
 
 	form_spacer := canvas.NewRectangle(color.Transparent)
 	form_spacer.SetMinSize(fyne.NewSize(330, 0))
@@ -514,16 +523,19 @@ func ResetAuctionInfo() {
 // Returns container for unlisted display objects
 func NotListedInfo() fyne.Container {
 	unlisted_form := []*widget.FormItem{}
-	unlisted_form = append(unlisted_form, widget.NewFormItem("Name", Market.Display.Name))
-	unlisted_form = append(unlisted_form, widget.NewFormItem("Asset Type", Market.Display.Type))
-	unlisted_form = append(unlisted_form, widget.NewFormItem("Collection", Market.Display.Collection))
-	unlisted_form = append(unlisted_form, widget.NewFormItem("Description", Market.Display.Description))
-	unlisted_form = append(unlisted_form, widget.NewFormItem("Creator", Market.Display.Creator))
-	unlisted_form = append(unlisted_form, widget.NewFormItem("Owner", Market.Display.Owner))
-	unlisted_form = append(unlisted_form, widget.NewFormItem("Artificer %", Market.Display.Artificer))
-	unlisted_form = append(unlisted_form, widget.NewFormItem("Royalty %", Market.Display.Royalty))
+	unlisted_form = append(unlisted_form, widget.NewFormItem("Name", container.NewStack(Market.Display.Name)))
+	unlisted_form = append(unlisted_form, widget.NewFormItem("Asset Type", container.NewAdaptiveGrid(2,
+		Market.Display.Type,
+		widget.NewForm(widget.NewFormItem("Update", container.NewStack(Market.Display.Update))))))
 
-	unlisted_form = append(unlisted_form, widget.NewFormItem("Owner Update", Market.Display.Update))
+	unlisted_form = append(unlisted_form, widget.NewFormItem("Collection", container.NewStack(Market.Display.Collection)))
+	unlisted_form = append(unlisted_form, widget.NewFormItem("Description", container.NewStack(Market.Display.Description)))
+	unlisted_form = append(unlisted_form, widget.NewFormItem("Creator", container.NewStack(Market.Display.Creator)))
+	unlisted_form = append(unlisted_form, widget.NewFormItem("Owner", container.NewStack(Market.Display.Owner)))
+	unlisted_form = append(unlisted_form, widget.NewFormItem("Royalty %", container.NewHBox(
+		container.NewStack(dwidget.NewSpacer(110, 0), container.NewStack(Market.Display.Royalty)),
+		layout.NewSpacer(),
+		widget.NewForm(widget.NewFormItem("Artificer %", container.NewStack(dwidget.NewSpacer(110, 0), Market.Display.Artificer))))))
 
 	form_spacer := canvas.NewRectangle(color.Transparent)
 	form_spacer.SetMinSize(fyne.NewSize(330, 0))
@@ -559,18 +571,22 @@ func ResetNotListedInfo() {
 // Returns container for NFA buy now display objects
 func BuyNowInfo() fyne.Container {
 	buy_form := []*widget.FormItem{}
-	buy_form = append(buy_form, widget.NewFormItem("Name", Market.Display.Name))
-	buy_form = append(buy_form, widget.NewFormItem("Asset Type", Market.Display.Type))
-	buy_form = append(buy_form, widget.NewFormItem("Collection", Market.Display.Collection))
-	buy_form = append(buy_form, widget.NewFormItem("Ends", Market.Display.Ends))
-	buy_form = append(buy_form, widget.NewFormItem("Description", Market.Display.Description))
-	buy_form = append(buy_form, widget.NewFormItem("Creator", Market.Display.Creator))
-	buy_form = append(buy_form, widget.NewFormItem("Owner", Market.Display.Owner))
-	buy_form = append(buy_form, widget.NewFormItem("Artificer %", Market.Display.Artificer))
-	buy_form = append(buy_form, widget.NewFormItem("Royalty %", Market.Display.Royalty))
+	buy_form = append(buy_form, widget.NewFormItem("Name", container.NewStack(Market.Display.Name)))
+	buy_form = append(buy_form, widget.NewFormItem("Asset Type", container.NewAdaptiveGrid(2,
+		Market.Display.Type,
+		widget.NewForm(widget.NewFormItem("Update", container.NewStack(Market.Display.Update))))))
 
-	buy_form = append(buy_form, widget.NewFormItem("Owner Update", Market.Display.Update))
-	buy_form = append(buy_form, widget.NewFormItem("Price", Market.Display.Price))
+	buy_form = append(buy_form, widget.NewFormItem("Collection", container.NewStack(Market.Display.Collection)))
+	buy_form = append(buy_form, widget.NewFormItem("Description", container.NewStack(Market.Display.Description)))
+	buy_form = append(buy_form, widget.NewFormItem("Creator", container.NewStack(Market.Display.Creator)))
+	buy_form = append(buy_form, widget.NewFormItem("Owner", container.NewStack(Market.Display.Owner)))
+	buy_form = append(buy_form, widget.NewFormItem("Royalty %", container.NewHBox(
+		container.NewStack(dwidget.NewSpacer(110, 0), container.NewStack(Market.Display.Royalty)),
+		layout.NewSpacer(),
+		widget.NewForm(widget.NewFormItem("Artificer %", container.NewStack(dwidget.NewSpacer(110, 0), Market.Display.Artificer))))))
+
+	buy_form = append(buy_form, widget.NewFormItem("Ends", container.NewStack(Market.Display.Ends)))
+	buy_form = append(buy_form, widget.NewFormItem("Price", container.NewStack(Market.Display.Price)))
 
 	form_spacer := canvas.NewRectangle(color.Transparent)
 	form_spacer.SetMinSize(fyne.NewSize(330, 0))
@@ -612,7 +628,7 @@ func PlaceMarket(d *dreams.AppObject) *container.Split {
 
 	buy_info := BuyNowInfo()
 
-	not_listed_info := NotListedInfo()
+	unlisted_info := NotListedInfo()
 
 	Market.Button.Cancel = widget.NewButton("Cancel", func() {
 		if len(Market.Viewing.Asset) == 64 {
@@ -678,7 +694,7 @@ func PlaceMarket(d *dreams.AppObject) *container.Split {
 					go GetNFAImages(scid)
 					go GetBuyNowDetails(scid)
 				default:
-					Market.Details = not_listed_info
+					Market.Details = unlisted_info
 					Market.Tab = "Buy"
 					Market.Entry.Disable()
 					Market.Entry.Hide()
@@ -837,23 +853,23 @@ func PlaceMarket(d *dreams.AppObject) *container.Split {
 			Market.Details = buy_info
 		case "My Listings":
 			go FindNFAListings(nil, nil)
-			Market.Tab = "Buy"
+			Market.Tab = "Listings"
 			Market.List.Auction.UnselectAll()
 			Market.List.Wallet.UnselectAll()
 			Market.List.Buy.UnselectAll()
 			Market.Entry.Hide()
 			Market.Entry.Disable()
 			ResetBuyInfo()
-			Market.Details = not_listed_info
+			Market.Details = unlisted_info
 		case "Search":
-			Market.Tab = "Buy"
+			Market.Tab = "Search"
 			Market.List.Auction.UnselectAll()
 			Market.List.Wallet.UnselectAll()
 			Market.List.Buy.UnselectAll()
 			Market.Entry.Hide()
 			Market.Entry.Disable()
 			ResetBuyInfo()
-			Market.Details = not_listed_info
+			Market.Details = unlisted_info
 		}
 
 		Market.Button.Close.Hide()
@@ -869,6 +885,8 @@ func PlaceMarket(d *dreams.AppObject) *container.Split {
 			Market.List.Buy.ScrollToTop()
 		case "Auction":
 			Market.List.Auction.ScrollToTop()
+		case "Listings":
+			Market.List.Wallet.ScrollToTop()
 		default:
 
 		}
@@ -880,6 +898,8 @@ func PlaceMarket(d *dreams.AppObject) *container.Split {
 			Market.List.Buy.ScrollToBottom()
 		case "Auction":
 			Market.List.Auction.ScrollToBottom()
+		case "Listings":
+			Market.List.Wallet.ScrollToBottom()
 		default:
 
 		}
@@ -956,7 +976,7 @@ func PlaceMarket(d *dreams.AppObject) *container.Split {
 	// Lists get images and details for Market objects on selected if not downloading already
 	Market.List.Auction.OnSelected = func(id widget.ListItemID) {
 		if Market.downloading && id != auction_index {
-			Market.List.Buy.Select(auction_index)
+			Market.List.Auction.Select(auction_index)
 			return
 		}
 
@@ -993,7 +1013,7 @@ func PlaceMarket(d *dreams.AppObject) *container.Split {
 
 	Market.List.Wallet.OnSelected = func(id widget.ListItemID) {
 		if Market.downloading && id != wallet_index {
-			Market.List.Buy.Select(wallet_index)
+			Market.List.Wallet.Select(wallet_index)
 			return
 		}
 
@@ -1388,6 +1408,7 @@ func GetAuctionDetails(scid string) {
 		creator, _ := gnomon.GetSCIDValuesByKey(scid, "creatorAddr")
 		owner, _ := gnomon.GetSCIDValuesByKey(scid, "owner")
 		typeHdr, _ := gnomon.GetSCIDValuesByKey(scid, "typeHdr")
+		bidder, _ := gnomon.GetSCIDValuesByKey(scid, "currBidAddr")
 		_, owner_update := gnomon.GetSCIDValuesByKey(scid, "ownerCanUpdate")
 		_, start := gnomon.GetSCIDValuesByKey(scid, "startPrice")
 		_, current := gnomon.GetSCIDValuesByKey(scid, "currBidAmt")
@@ -1418,9 +1439,15 @@ func GetAuctionDetails(scid string) {
 					Market.Display.Owner.SetText(owner[0])
 				}
 				if owner_update[0] == 1 {
-					Market.Display.Update.SetText("Yes")
+					Market.Display.Update.SetText("Owner")
 				} else {
-					Market.Display.Update.SetText("No")
+					Market.Display.Update.SetText("Creator")
+				}
+
+				if bidder != nil {
+					Market.Display.Bid.Address.SetText(bidder[0])
+				} else {
+					Market.Display.Bid.Address.SetText("None")
 				}
 
 				Market.Display.Artificer.SetText(strconv.Itoa(int(artFee[0])) + "%")
@@ -1484,7 +1511,10 @@ func GetAuctionDetails(scid string) {
 					Market.Button.Cancel.Hide()
 				}
 
-				Market.Button.BidBuy.Show()
+				if Market.Tab != "Listings" {
+					Market.Button.BidBuy.Show()
+				}
+
 				if now > endTime[0] || Market.Confirming {
 					Market.Button.BidBuy.Hide()
 				}
@@ -1530,9 +1560,9 @@ func GetBuyNowDetails(scid string) {
 				}
 
 				if owner_update[0] == 1 {
-					Market.Display.Update.SetText("Yes")
+					Market.Display.Update.SetText("Owner")
 				} else {
-					Market.Display.Update.SetText("No")
+					Market.Display.Update.SetText("Creator")
 				}
 
 				Market.Display.Artificer.SetText(strconv.Itoa(int(artFee[0])) + "%")
@@ -1567,7 +1597,10 @@ func GetBuyNowDetails(scid string) {
 					Market.Button.Cancel.Hide()
 				}
 
-				Market.Button.BidBuy.Show()
+				if Market.Tab != "Listings" {
+					Market.Button.BidBuy.Show()
+				}
+
 				if now > endTime[0] || Market.Confirming {
 					Market.Button.BidBuy.Hide()
 				}
@@ -1613,9 +1646,9 @@ func GetUnlistedDetails(scid string) {
 				}
 
 				if owner_update[0] == 1 {
-					Market.Display.Update.SetText("Yes")
+					Market.Display.Update.SetText("Owner")
 				} else {
-					Market.Display.Update.SetText("No")
+					Market.Display.Update.SetText("Creator")
 				}
 
 				Market.Display.Artificer.SetText(strconv.Itoa(int(artFee[0])) + "%")

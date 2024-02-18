@@ -59,6 +59,7 @@ func main() {
 
 	dReams.Window.SetCloseIntercept(func() {
 		if gnomon.IsStarting() {
+			dReams.Window.RequestFocus()
 			dialog.NewConfirm("Gnomon Syncing", "Are you sure you want to close dReams?", func(b bool) {
 				if b {
 					close()
