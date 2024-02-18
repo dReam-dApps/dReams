@@ -10,7 +10,7 @@ require (
 	github.com/SixofClubsss/Grokked v0.1.2-0.20240205225744-bccd1d876329
 	github.com/SixofClubsss/Holdero v0.3.2-0.20240205225603-39980a0b65d3
 	github.com/SixofClubsss/Iluma v0.3.2-0.20240205225254-02e276deda8e
-	github.com/SixofClubsss/dDice v0.0.0-20240216005733-e6f868988ce2
+	github.com/SixofClubsss/dDice v0.0.0-20240218030528-52020922df14
 	github.com/SixofClubsss/dPrediction v0.3.2-0.20240205230152-394cb9b0c671
 	github.com/blang/semver/v4 v4.0.0
 	github.com/civilware/Gnomon v0.0.0-20240215215804-cfa19c264d97

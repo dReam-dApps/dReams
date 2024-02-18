@@ -61,8 +61,8 @@ github.com/SixofClubsss/Holdero v0.3.2-0.20240205225603-39980a0b65d3 h1:IOMUQX+C
 github.com/SixofClubsss/Holdero v0.3.2-0.20240205225603-39980a0b65d3/go.mod h1:75CVWA2opcO9YwT4etzPRZ67lkEqAUydvzitBotXUe8=
 github.com/SixofClubsss/Iluma v0.3.2-0.20240205225254-02e276deda8e h1:MpCmLMM4FJ/s6/2/axb5bMEEFJbnqN+kgw/Zb/ZBkU4=
 github.com/SixofClubsss/Iluma v0.3.2-0.20240205225254-02e276deda8e/go.mod h1:Mo/z/ZqsL+T3lftc/PWcYw0aizjZjq0FO5oLNokWQoM=
-github.com/SixofClubsss/dDice v0.0.0-20240216005733-e6f868988ce2 h1:onvKWjG16tWfEfh3EBvSkvSjRY0Z8I1V7GOzSKaNzAI=
-github.com/SixofClubsss/dDice v0.0.0-20240216005733-e6f868988ce2/go.mod h1:Gtxr0CeGvzW6tMhaqdOM4ldiHJZm1ZZBAHHl1r48za4=
+github.com/SixofClubsss/dDice v0.0.0-20240218030528-52020922df14 h1:hvM/AJKYxYjBIh4A3+W+RVkTCYrLIakH9COk7hUQVTg=
+github.com/SixofClubsss/dDice v0.0.0-20240218030528-52020922df14/go.mod h1:gvj8pfEjYnnlZEa1JlVQXg+X6AZMqdsNCVRbFVqdg+0=
 github.com/SixofClubsss/dPrediction v0.3.2-0.20240205230152-394cb9b0c671 h1:KWhmbhJlK3KaOB5Og/Mzwz17AWyqvELGopTjj3OJaNg=
 github.com/SixofClubsss/dPrediction v0.3.2-0.20240205230152-394cb9b0c671/go.mod h1:f7H4mIPYtNZmUrHotrlws35PD0jubOFI/R5dYcQG6b8=
 github.com/SixofClubsss/derohe v0.0.0-20240205090107-bc2f4bfa1103 h1:lYzakivk5KWnU9T5yMg5rJeyA/GIgCRgSswJXraN4vM=
