@@ -52,8 +52,6 @@ type daemon struct {
 }
 
 var Daemon daemon
-var SCIDs map[string]string
-var Startup bool
 
 // Set daemon connection
 func (d *daemon) Connected(b bool) {

@@ -829,11 +829,11 @@ func ClaimAll(title string, d *dreams.AppObject) {
 
 // Checks if wallet has any claimable NFAs, looking assets sent with dst uint64(0xA1B2C3D4E5F67890)
 func CheckClaimable() (claimable []string) {
-	entries := rpc.GetWalletTransfers(3000000, uint64(rpc.Wallet.Height), uint64(0xA1B2C3D4E5F67890))
+	entries := rpc.GetWalletTransfers(3000000, rpc.Wallet.Height(), uint64(0xA1B2C3D4E5F67890))
 	for _, e := range *entries {
 		split := strings.Split(string(e.Payload), "  ")
 		if len(split) > 2 && len(split[1]) == 64 {
-			if gnomes.CheckOwner(split[1]) || rpc.TokenBalance(split[1]) != 1 {
+			if gnomes.CheckOwner(split[1]) || rpc.GetAssetBalance(split[1]) != 1 {
 				continue
 			}
 

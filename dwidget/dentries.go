@@ -112,9 +112,8 @@ func NewHorizontalEntries(tag string, offset int) *DeroRpcEntries {
 	wallet_entry.Bind(this_wallet)
 	wallet_entry.OnChanged = func(s string) {
 		if rpc.Wallet.IsConnected() {
-			rpc.Wallet.Address = ""
-			rpc.Wallet.Height = 0
 			rpc.Wallet.Connected(false)
+			rpc.Wallet.CloseConnections(tag)
 		}
 	}
 
@@ -124,11 +123,8 @@ func NewHorizontalEntries(tag string, offset int) *DeroRpcEntries {
 	pass_entry.Bind(this_auth)
 	pass_entry.OnChanged = func(s string) {
 		if rpc.Wallet.IsConnected() {
-			rpc.GetAddress(tag)
-			if !rpc.Wallet.IsConnected() {
-				rpc.Wallet.Address = ""
-				rpc.Wallet.Height = 0
-			}
+			rpc.Wallet.Connected(false)
+			rpc.Wallet.CloseConnections(tag)
 		}
 	}
 
@@ -191,9 +187,8 @@ func NewVerticalEntries(tag string, offset int) *DeroRpcEntries {
 	wallet_entry.Bind(this_wallet)
 	wallet_entry.OnChanged = func(s string) {
 		if rpc.Wallet.IsConnected() {
-			rpc.Wallet.Address = ""
-			rpc.Wallet.Height = 0
 			rpc.Wallet.Connected(false)
+			rpc.Wallet.CloseConnections(tag)
 		}
 	}
 
@@ -203,11 +198,8 @@ func NewVerticalEntries(tag string, offset int) *DeroRpcEntries {
 	pass_entry.Bind(this_auth)
 	pass_entry.OnChanged = func(s string) {
 		if rpc.Wallet.IsConnected() {
-			rpc.GetAddress(tag)
-			if !rpc.Wallet.IsConnected() {
-				rpc.Wallet.Address = ""
-				rpc.Wallet.Height = 0
-			}
+			rpc.Wallet.Connected(false)
+			rpc.Wallet.CloseConnections(tag)
 		}
 	}
 
@@ -255,7 +247,7 @@ func NewVerticalEntries(tag string, offset int) *DeroRpcEntries {
 // Refresh Balance of DeroRpcEntries
 //   - Gets balance from rpc.Wallet.Balance
 func (d *DeroRpcEntries) RefreshBalance() {
-	d.Balance.Text = (fmt.Sprintf("Balance: %.5f Dero", float64(rpc.Wallet.ReadBalance())/100000))
+	d.Balance.Text = (fmt.Sprintf("Balance: %.5f DERO", float64(rpc.Wallet.Balance("DERO"))/100000))
 	d.Balance.Refresh()
 }
 

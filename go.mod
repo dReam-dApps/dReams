@@ -14,6 +14,7 @@ require (
 	github.com/SixofClubsss/dPrediction v0.3.2-0.20240205230152-394cb9b0c671
 	github.com/blang/semver/v4 v4.0.0
 	github.com/civilware/Gnomon v0.0.0-20240215215804-cfa19c264d97
+	github.com/creachadair/jrpc2 v0.43.0
 	github.com/deroproject/derohe v0.0.0-20240215152352-a5a0e6a68ada
 	github.com/gorilla/websocket v1.5.0
 	github.com/sirupsen/logrus v1.9.3
@@ -29,7 +30,6 @@ require (
 	fyne.io/systray v1.10.1-0.20231115130155-104f5ef7839e // indirect
 	github.com/caarlos0/env/v6 v6.10.1 // indirect
 	github.com/cespare/xxhash v1.1.0 // indirect
-	github.com/creachadair/jrpc2 v0.43.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dchest/siphash v1.2.3 // indirect
 	github.com/deroproject/graviton v0.0.0-20220130070622-2c248a53b2e1 // indirect

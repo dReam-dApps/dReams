@@ -275,7 +275,6 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 
 		wait = true
 		rpc.Wallet.Connected(false)
-		rpc.Wallet.Height = 0
 
 		status_text := dwidget.NewCanvasText("Closing dApps...", 21, fyne.TextAlignCenter)
 		status_text.Color = color.White

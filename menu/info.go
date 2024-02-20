@@ -83,7 +83,7 @@ func (i *dispayObjects) RefreshPrice(tag string) {
 // Refresh wallet height display
 func (i *dispayObjects) RefreshWallet() {
 	if rpc.Wallet.IsConnected() {
-		i.Height.Wallet.Text = fmt.Sprintf("%d", rpc.Wallet.Height)
+		i.Height.Wallet.Text = fmt.Sprintf("%d", rpc.Wallet.Height())
 	} else {
 		i.Height.Wallet.Text = "0"
 	}

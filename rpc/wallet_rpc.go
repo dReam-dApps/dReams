@@ -15,6 +15,7 @@ import (
 	"github.com/blang/semver/v4"
 	"github.com/civilware/Gnomon/structures"
 	"github.com/deroproject/derohe/cryptography/crypto"
+	"github.com/deroproject/derohe/globals"
 	"github.com/deroproject/derohe/rpc"
 	"github.com/ybbus/jsonrpc/v3"
 
@@ -114,23 +115,21 @@ func SessionLog(tag string, dapp semver.Version) *fyne.Container {
 	return container.NewStack(cont, vbox)
 }
 
-// Initialize balance maps for supported tokens
+// Initialize balance maps with default tokens
 func init() {
-	Wallet.TokenBal = make(map[string]uint64)
-	Wallet.Display.Balance = make(map[string]string)
-	SCIDs = make(map[string]string)
-	SCIDs["dReams"] = DreamsSCID
-	SCIDs["HGC"] = HgcSCID
-	//SCIDs["TRVL"] = TrvlSCID
-	Wallet.Display.Balance["Dero"] = "0"
-	Wallet.Display.Balance["dReams"] = "0"
-	Wallet.Display.Balance["HGC"] = "0"
-	//Wallet.Display.Balance["TRVL"] = "0"
+	Wallet.balances = make(map[string]*balance)
+	Wallet.balances["DERO"] = &balance{decimal: 5}
+	Wallet.balances["dReams"] = &balance{decimal: 5, scid: DreamsSCID}
+	Wallet.balances["HGC"] = &balance{decimal: 5, scid: HgcSCID}
 }
 
 // Set wallet rpc client with auth, context and 8 sec cancel
 func SetWalletClient(addr, pass string) (jsonrpc.RPCClient, context.Context, context.CancelFunc) {
-	client := jsonrpc.NewClientWithOpts("http://"+addr+"/json_rpc", &jsonrpc.RPCClientOpts{
+	if !strings.HasPrefix(addr, "http") {
+		addr = "http://" + addr
+	}
+
+	client := jsonrpc.NewClientWithOpts(addr+"/json_rpc", &jsonrpc.RPCClientOpts{
 		CustomHeaders: map[string]string{
 			"Authorization": "Basic " + base64.StdEncoding.EncodeToString([]byte(pass)),
 		},
@@ -142,22 +141,17 @@ func SetWalletClient(addr, pass string) (jsonrpc.RPCClient, context.Context, con
 }
 
 // Echo Dero wallet for connection
-//   - tag for log print
-func EchoWallet(tag string) {
-	if Wallet.IsConnected() {
-		var result string
-		params := []string{"Hello", "World", "!"}
+func EchoWallet() (connected bool) {
+	var result string
+	params := []string{"Hello", "World", "!"}
 
-		if err := Wallet.CallFor(&result, "Echo", params); err != nil {
-			Wallet.Connected(false)
-			PrintError("[%s] %s", tag, err)
-			return
-		}
-
-		if result != "WALLET Hello World !" {
-			Wallet.Connected(false)
-		}
+	if err := Wallet.CallFor(&result, "Echo", params); err != nil {
+		PrintError("[EchoWallet] %s", err)
+		return
 	}
+
+	return result == "WALLET Hello World !"
+
 }
 
 // Get a wallets Dero address
@@ -171,7 +165,7 @@ func GetAddress(tag string) {
 		return
 	}
 
-	if (result.Address[0:4] == "dero" || result.Address[0:4] == "deto") && len(result.Address) == 66 {
+	if _, err := globals.ParseValidateAddress(result.Address); err == nil {
 		Wallet.Connected(true)
 		PrintLog("[%s] Wallet Connected: %s", tag, result.Address)
 		Wallet.Address = result.Address
@@ -179,6 +173,7 @@ func GetAddress(tag string) {
 		hash := sha256.Sum256(id)
 		Wallet.IdHash = hex.EncodeToString(hash[:])
 	} else {
+		PrintError("[%s] %s: %s", tag, err, result.Address)
 		Wallet.Connected(false)
 	}
 }
@@ -191,7 +186,7 @@ func GetWalletTx(txid string) *rpc.Entry {
 	}
 
 	if err := Wallet.CallFor(&result, "GetTransferbyTXID", params); err != nil {
-		logger.Errorln("[GetWalletTx]", err)
+		PrintError("[GetWalletTx] %s", err)
 		return nil
 	}
 
@@ -211,7 +206,7 @@ func GetWalletTransfers(min, max, dst uint64) *[]rpc.Entry {
 	}
 
 	if err := Wallet.CallFor(&result, "GetTransfers", params); err != nil {
-		logger.Errorln("[GetWalletTransfers]", err)
+		PrintError("[GetWalletTransfers] %s", err)
 		return nil
 	}
 
@@ -223,61 +218,26 @@ func GetBalance() uint64 {
 	var result *rpc.GetBalance_Result
 
 	if err := Wallet.CallFor(&result, "GetBalance"); err != nil {
-		logger.Errorln("[GetBalance]", err)
+		PrintError("[GetBalance] %s", err)
 		return 0
 	}
 
 	return result.Unlocked_Balance
 }
 
-// Returns wallet balance of token by SCID
-func TokenBalance(scid string) uint64 {
+// Returns wallet asset balance of SCID
+func GetAssetBalance(scid string) uint64 {
 	var result *rpc.GetBalance_Result
 	params := &rpc.GetBalance_Params{
 		SCID: crypto.HashHexToHash(scid),
 	}
 
 	if err := Wallet.CallFor(&result, "GetBalance", params); err != nil {
-		logger.Errorln("[TokenBalance]", err)
+		PrintError("[GetAssetBalance] %s", err)
 		return 0
 	}
 
 	return result.Unlocked_Balance
-}
-
-// Get Dero balance and all tokens used on dReams platform
-func GetDreamsBalances(assets map[string]string) {
-	Wallet.muB.Lock()
-	defer Wallet.muB.Unlock()
-
-	if Wallet.IsConnected() {
-		bal := GetBalance()
-		Wallet.Balance = bal
-		Wallet.Display.Balance["Dero"] = FromAtomic(bal, 5)
-
-		for name, sc := range assets {
-			token_bal := TokenBalance(sc)
-			Wallet.Display.Balance[name] = FromAtomic(decimal(name, token_bal))
-			Wallet.TokenBal[name] = token_bal
-		}
-
-		return
-	}
-
-	Wallet.Display.Balance["Dero"] = "0"
-	Wallet.Balance = 0
-	for name := range assets {
-		Wallet.Display.Balance[name] = "0"
-		Wallet.TokenBal[name] = 0
-	}
-}
-
-// Return Display.Balance string of name
-func DisplayBalance(name string) string {
-	Wallet.muB.Lock()
-	defer Wallet.muB.Unlock()
-
-	return Wallet.Display.Balance[name]
 }
 
 // Return asset transfer for SCID
@@ -303,34 +263,42 @@ func GetAssetSCIDforTransfer(amt uint64, scid string) (transfer rpc.Transfer) {
 	return
 }
 
-// Get display name of asset by SCID
-func GetAssetSCIDName(scid string) string {
-	switch scid {
-	case DreamsSCID:
-		return "dReams"
-	case HgcSCID:
-		return "HGC"
-	case TrvlSCID:
-		return "TRVL"
-	default:
-		return ""
+// Get asset name string by SCID from Wallet.balances
+func GetAssetNameBySCID(scid string) (name string) {
+	Wallet.RLock()
+	defer Wallet.RUnlock()
+
+	for n, b := range Wallet.balances {
+		if scid == b.scid {
+			return n
+		}
 	}
+
+	return
+}
+
+// Get asset SCID by name from Wallet.balances
+func GetAssetSCIDByName(name string) (scid string) {
+	Wallet.RLock()
+	defer Wallet.RUnlock()
+
+	if Wallet.balances[name] != nil {
+		scid = Wallet.balances[name].scid
+	}
+
+	return
 }
 
 // Gets Dero wallet height
-//   - tag for log print
-func GetWalletHeight(tag string) {
-	if Wallet.IsConnected() {
-		var result *rpc.GetHeight_Result
+func GetWalletHeight() uint64 {
+	var result *rpc.GetHeight_Result
 
-		if err := Wallet.CallFor(&result, "GetHeight"); err != nil {
-			logger.Errorf("[%s] %s\n", tag, err)
-			return
-		}
-
-		Wallet.Height = int(result.Height)
-		Wallet.Display.Height = fmt.Sprint(result.Height)
+	if err := Wallet.CallFor(&result, "GetHeight"); err != nil {
+		PrintError("[GetWalletHeight] %s", err)
+		return 0
 	}
+
+	return result.Height
 }
 
 // Swap Dero for dReams
@@ -646,7 +614,7 @@ func CancelCloseNFA(scid string, close bool) (tx string) {
 		t1.Payload_RPC = rpc.Arguments{
 			{Name: rpc.RPC_DESTINATION_PORT, DataType: rpc.DataUint64, Value: uint64(0xA1B2C3D4E5F67890)},
 			{Name: rpc.RPC_SOURCE_PORT, DataType: rpc.DataUint64, Value: uint64(0)},
-			{Name: rpc.RPC_COMMENT, DataType: rpc.DataString, Value: fmt.Sprintf("Winning bid on  %s  at height %d", scid, Wallet.Height)}}
+			{Name: rpc.RPC_COMMENT, DataType: rpc.DataString, Value: fmt.Sprintf("Winning bid on  %s  at height %d", scid, Wallet.Height())}}
 	}
 
 	t := []rpc.Transfer{t1}
@@ -712,7 +680,7 @@ func SendAsset(scid, dest string) (tx string) {
 	response := rpc.Arguments{
 		{Name: rpc.RPC_DESTINATION_PORT, DataType: rpc.DataUint64, Value: uint64(0xA1B2C3D4E5F67890)},
 		{Name: rpc.RPC_SOURCE_PORT, DataType: rpc.DataUint64, Value: uint64(0)},
-		{Name: rpc.RPC_COMMENT, DataType: rpc.DataString, Value: fmt.Sprintf("Sent you asset  %s  at height %d", scid, Wallet.Height)},
+		{Name: rpc.RPC_COMMENT, DataType: rpc.DataString, Value: fmt.Sprintf("Sent you asset  %s  at height %d", scid, Wallet.Height())},
 	}
 
 	t2 := rpc.Transfer{
@@ -800,7 +768,7 @@ func ConfirmTx(txid, tag string, timeout int) bool {
 //   - timeout is duration of loop in 2sec increment, will break if reached
 func ConfirmTxRetry(txid, tag string, timeout int) (retry int) {
 	count := 0
-	next_block := Wallet.Height + 1
+	next_block := Wallet.Height() + 1
 	time.Sleep(time.Second)
 	for IsReady() {
 		count++
@@ -809,7 +777,7 @@ func ConfirmTxRetry(txid, tag string, timeout int) (retry int) {
 			if count > timeout {
 				logger.Warnf("[%s] TX: {%s} not confirmed, Retrying next block\n", tag, txid)
 				time.Sleep(3 * time.Second)
-				for Wallet.Height <= next_block {
+				for Wallet.Height() <= next_block {
 					time.Sleep(3 * time.Second)
 				}
 				return 1
@@ -858,14 +826,4 @@ func SendMessage(dest, msg string, rings uint64) {
 	}
 
 	PrintLog("[SendMessage] Send Message TX: %s", txid)
-}
-
-// TODO should put decimal in Wallet.Display
-
-func decimal(name string, bal uint64) (uint64, int) {
-	if name == "TRVL" {
-		return bal * 100000, 0
-	}
-
-	return bal, 5
 }

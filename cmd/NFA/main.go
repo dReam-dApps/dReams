@@ -81,6 +81,7 @@ func main() {
 		menu.SetClose(true)
 		gnomon.Stop(app_tag)
 		d.StopProcess()
+		rpc.Wallet.CloseConnections(app_tag)
 		if rpc.Wallet.File != nil {
 			rpc.Wallet.File.Close_Encrypted_Wallet()
 		}
@@ -104,6 +105,7 @@ func main() {
 	// Create dwidget connection box with controls
 	connect_box := dwidget.NewHorizontalEntries(app_tag, 1)
 	connect_box.Button.OnTapped = func() {
+		rpc.Wallet.RPC.Init()
 		rpc.GetAddress(app_tag)
 		rpc.Ping()
 		if rpc.Daemon.IsConnected() && !gnomon.IsInitialized() && !gnomon.IsStarting() {
@@ -163,18 +165,13 @@ func main() {
 			select {
 			case <-ticker.C:
 				rpc.Ping()
-				rpc.EchoWallet(app_tag)
-				go rpc.GetDreamsBalances(rpc.SCIDs)
-				rpc.GetWalletHeight(app_tag)
+				rpc.Wallet.Sync()
 
 				// Refresh Dero balance and Gnomon endpoint
 				connect_box.RefreshBalance()
-				if !rpc.Startup {
-					gnomes.EndPoint()
-				}
 
 				if rpc.Daemon.IsConnected() && gnomon.IsRunning() {
-					rpc.Startup = false
+					gnomes.EndPoint()
 					connect_box.Disconnect.SetChecked(true)
 
 					// Check Gnomon index for SCs

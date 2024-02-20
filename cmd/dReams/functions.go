@@ -25,6 +25,8 @@ import (
 	"github.com/dReam-dApps/dReams/gnomes"
 	"github.com/dReam-dApps/dReams/menu"
 	"github.com/dReam-dApps/dReams/rpc"
+	"github.com/deroproject/derohe/config"
+	"github.com/deroproject/derohe/globals"
 	"github.com/deroproject/derohe/walletapi/xswd"
 	"github.com/docopt/docopt-go"
 	"github.com/sirupsen/logrus"
@@ -49,7 +51,8 @@ Usage:
 Options:
   -h --help             Show this screen.
   --num-parallel-blocks=<1>   Gnomon option,  defines the number of parallel blocks to index.
-  --dbtype=<boltdb>     Gnomon option,  defines type of database 'gravdb' or 'boltdb'.`
+  --dbtype=<boltdb>     Gnomon option,  defines type of database 'gravdb' or 'boltdb'.
+  --testnet=<false>     DERO option, defines if globals.Config is mainnet/testnet.`
 
 // Set opts when starting dReams
 func flags() {
@@ -81,6 +84,12 @@ func flags() {
 			gnomon.SetParallel(5)
 		default:
 			gnomon.SetParallel(1)
+		}
+	}
+
+	if arguments["--testnet"] != nil {
+		if arguments["--testnet"].(string) == "true" {
+			globals.Config = config.Testnet
 		}
 	}
 }
@@ -185,7 +194,6 @@ func gnomonScan(contracts map[string]string) {
 // Main dReams process loop
 func fetch(done chan struct{}) {
 	var offset int
-	rpc.Startup = true
 	time.Sleep(3 * time.Second)
 	ticker := time.NewTicker(3 * time.Second)
 	for {
@@ -193,33 +201,19 @@ func fetch(done chan struct{}) {
 		case <-ticker.C: // do on interval
 			if !dReams.IsConfiguring() {
 				rpc.Ping()
-				if !rpc.Wallet.RPC.IsClosed() {
-					rpc.EchoWallet("dReams")
-					rpc.GetDreamsBalances(rpc.SCIDs)
-					rpc.GetWalletHeight("dReams")
-				} else if !rpc.Wallet.WS.IsClosed() {
-					if !rpc.Wallet.WS.IsRequesting() {
-						rpc.EchoWallet("dReams")
-						rpc.GetDreamsBalances(rpc.SCIDs)
-						rpc.GetWalletHeight("dReams")
-					}
+				if !rpc.Wallet.WS.IsRequesting() {
+					rpc.Wallet.Sync()
 				}
 
-				if !rpc.Startup {
-					checkConnection()
-					gnomes.EndPoint()
-					gnomes.State(dReams.IsConfiguring(), gnomonScan)
+				checkConnection()
+				gnomes.EndPoint()
+				gnomes.State(dReams.IsConfiguring(), gnomonScan)
 
-					go menuRefresh(offset)
+				go menuRefresh(offset)
 
-					offset++
-					if offset >= 41 {
-						offset = 0
-					}
-				}
-
-				if rpc.Daemon.IsConnected() {
-					rpc.Startup = false
+				offset++
+				if offset >= 41 {
+					offset = 0
 				}
 
 				dReams.SignalChannel()
@@ -549,7 +543,6 @@ func checkConnection() {
 func disconnected() {
 	holdero.Disconnected(menu.DappEnabled("Holdero"))
 	prediction.Disconnected()
-	rpc.Wallet.Address = ""
 	menu.Assets.Swap.Hide()
 	menu.Assets.Names.ClearSelected()
 	menu.Theme.Select.Options = menu.Control.Themes
@@ -746,9 +739,6 @@ func rpcConnection() fyne.CanvasObject {
 	// OnChanged func for RPC entries
 	onChanged := func(s string) {
 		if rpc.Wallet.IsConnected() {
-			rpc.Wallet.Address = ""
-			rpc.Wallet.Display.Height = "0"
-			rpc.Wallet.Height = 0
 			rpc.Wallet.Connected(false)
 			go checkConnection()
 		}

@@ -7,8 +7,6 @@ import (
 
 	"fyne.io/fyne/v2/widget"
 	"github.com/civilware/Gnomon/structures"
-	"github.com/deroproject/derohe/cryptography/crypto"
-	"github.com/deroproject/derohe/rpc"
 	"github.com/deroproject/derohe/walletapi"
 	"github.com/sirupsen/logrus"
 	"github.com/ybbus/jsonrpc/v3"
@@ -18,21 +16,23 @@ type wallet struct {
 	IdHash    string
 	Address   string
 	ClientKey string
-	Balance   uint64
-	TokenBal  map[string]uint64
-	Height    int
+	balances  map[string]*balance
+	height    uint64
 	Connect   bool
 	KeyLock   bool
 	muC       sync.RWMutex
-	muB       sync.RWMutex
-	File      *walletapi.Wallet_Disk
-	LogEntry  *widget.Entry
-	RPC       RPCserver
-	WS        XSWDserver
-	Display   struct {
-		Balance map[string]string
-		Height  string
-	}
+	sync.RWMutex
+	File     *walletapi.Wallet_Disk
+	LogEntry *widget.Entry
+	RPC      RPCserver
+	WS       XSWDserver
+}
+
+type balance struct {
+	decimal int
+	atomic  uint64
+	format  string
+	scid    string
 }
 
 var Wallet wallet
@@ -65,6 +65,10 @@ func (w *wallet) IsConnected() bool {
 func (w *wallet) Connected(b bool) {
 	w.muC.Lock()
 	w.Connect = b
+	if !b {
+		w.height = 0
+		w.Address = ""
+	}
 	w.muC.Unlock()
 }
 
@@ -90,65 +94,98 @@ func (w *wallet) CallFor(out interface{}, method string, params ...interface{}) 
 	return
 }
 
-// Get Wallet.Balance, 0 if not connected
-func (w *wallet) GetBalance() {
-	w.muB.Lock()
-	defer w.muB.Unlock()
+// Call EchoWallet if wallet is connected and set Connected
+func (w *wallet) Echo() {
+	if w.IsConnected() {
+		w.Connected(EchoWallet())
+	}
+}
+
+// Call GetWalletHeight if wallet is connected and set height
+func (w *wallet) GetHeight() {
+	if w.IsConnected() {
+		w.height = GetWalletHeight()
+	}
+}
+
+// Returns all names of wallet.balances map
+func (w *wallet) Balances() (all []string) {
+	w.RLock()
+	defer w.RUnlock()
+
+	for name := range w.balances {
+		all = append(all, name)
+	}
+
+	return
+}
+
+// Returns balance in atomic units
+func (w *wallet) Balance(name string) (atomic uint64) {
+	w.RLock()
+	defer w.RUnlock()
+
+	if w.balances[name] != nil {
+		atomic = w.balances[name].atomic
+	}
+
+	return
+}
+
+// Returns balance string of name formatted to decimal place
+func (w *wallet) BalanceF(name string) (balance string) {
+	w.RLock()
+	defer w.RUnlock()
+
+	if w.balances[name] != nil {
+		return w.balances[name].format
+	} else {
+		return "0.00000"
+	}
+}
+
+// Returns wallet.height
+func (w *wallet) Height() uint64 {
+	return w.height
+}
+
+// Add a scid with balances data to wallet.balances map
+func (w *wallet) AddSCID(name, scid string, decimal int) {
+	w.Lock()
+	w.balances[name] = &balance{decimal: decimal, scid: scid}
+	w.Unlock()
+}
+
+// Get DERO balance and all assets in wallet.Balances
+func (w *wallet) GetAllBalances() {
+	w.Lock()
+	defer w.Unlock()
 
 	if w.IsConnected() {
-		var result *rpc.GetBalance_Result
-		if err := w.CallFor(&result, "GetBalance"); err != nil {
-			logger.Errorln("[GetBalance]", err)
-			w.Balance = 0
-			return
-		}
+		for name := range w.balances {
+			var bal uint64
+			if name == "DERO" {
+				bal = GetBalance()
+			} else {
+				bal = GetAssetBalance(w.balances[name].scid)
+			}
 
-		w.Balance = result.Unlocked_Balance
+			w.balances[name].atomic = bal
+			w.balances[name].format = FromAtomic(bal, w.balances[name].decimal)
+		}
 
 		return
 	}
 
-	w.Balance = 0
-}
-
-// Get single balance of Wallet.TokenBal[name], 0 if not connected
-func (w *wallet) GetTokenBalance(name, scid string) {
-	w.muB.Lock()
-	defer w.muB.Unlock()
-
-	if w.IsConnected() {
-		params := &rpc.GetBalance_Params{
-			SCID: crypto.HashHexToHash(scid),
-		}
-
-		var result *rpc.GetBalance_Result
-		if err := w.CallFor(&result, "GetBalance", params); err != nil {
-			logger.Errorln("[GetTokenBalance]", err)
-			w.TokenBal[name] = 0
-			return
-		}
-
-		w.TokenBal[name] = result.Unlocked_Balance
-
-		return
-
+	for name := range w.balances {
+		w.balances[name].atomic = 0
+		w.balances[name].format = FromAtomic(0, w.balances[name].decimal)
 	}
-
-	w.TokenBal[name] = 0
 }
 
-// Read Wallet.Balance
-func (w *wallet) ReadBalance() uint64 {
-	w.muB.RLock()
-	defer w.muB.RUnlock()
-
-	return w.Balance
-}
-
-// Read Wallet.TokenBal[name]
-func (w *wallet) ReadTokenBalance(name string) uint64 {
-	w.muB.RLock()
-	defer w.muB.RUnlock()
-
-	return w.TokenBal[name]
+// Sync calls wallet.Echo, wallet.GetHeight and wallet.GetAllBalances if wallet is connected
+func (w *wallet) Sync() {
+	w.Echo()
+	w.GetHeight()
+	w.GetAllBalances()
 }
