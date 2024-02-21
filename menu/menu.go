@@ -51,9 +51,6 @@ type exiting struct {
 	sync.RWMutex
 }
 
-// Background theme AssetSelect
-var Theme dreams.AssetSelect
-
 // Control menu indicators, checks, maps and defaults
 var Control menuObjects
 
@@ -68,7 +65,7 @@ var exit exiting
 
 // Initialize maps and defaults
 func init() {
-	Theme.Name = "Hex"
+	dreams.Theme.Name = "Hex"
 	Assets.SCIDs = make(map[string]string)
 	Assets.Enabled = make(map[string]bool)
 	Control.Dapps = make(map[string]bool)
@@ -195,7 +192,7 @@ func ReadDreamsConfig(tag string) (saved dreams.SaveData) {
 	}
 
 	if saved.Theme != "" {
-		Theme.Name = saved.Theme
+		dreams.Theme.Name = saved.Theme
 	}
 
 	if saved.Assets != nil {
@@ -252,9 +249,9 @@ func SwitchProfileIcon(collection, name, url string, size float32) (icon *canvas
 	return
 }
 
-// Returns default theme resource by Theme.Name
-func DefaultThemeResource() *fyne.StaticResource {
-	switch Theme.Name {
+// Returns default background theme resource by dreams.Theme.Name
+func DefaultBackgroundResource() *fyne.StaticResource {
+	switch dreams.Theme.Name {
 	case "Hex":
 		return bundle.ResourceBackground100Png
 	case "Bullet":
@@ -268,20 +265,20 @@ func DefaultThemeResource() *fyne.StaticResource {
 	}
 }
 
-// App theme selection object
+// App background theme selection object
 //   - If image is not present locally, it is downloaded
 func ThemeSelect(d *dreams.AppObject) fyne.CanvasObject {
 	options := Control.Themes
 	icon := AssetIcon(bundle.ResourceMarketCirclePng.StaticContent, "", 60)
 	var max *fyne.Container
-	Theme.Select = widget.NewSelect(options, nil)
-	Theme.Select.SetSelected(Theme.Name)
-	Theme.Select.OnChanged = func(s string) {
-		switch Theme.Select.SelectedIndex() {
+	dreams.Theme.Select = widget.NewSelect(options, nil)
+	dreams.Theme.Select.SetSelected(dreams.Theme.Name)
+	dreams.Theme.Select.OnChanged = func(s string) {
+		switch dreams.Theme.Select.SelectedIndex() {
 		case -1:
-			Theme.Name = "Hex"
+			dreams.Theme.Name = "Hex"
 		default:
-			Theme.Name = s
+			dreams.Theme.Name = s
 		}
 		go func() {
 			dir := dreams.GetDir()
@@ -290,57 +287,57 @@ func ThemeSelect(d *dreams.AppObject) fyne.CanvasObject {
 			if check == "AZYDS" {
 				file := dir + "/assets/" + s + "/" + s + ".png"
 				if dreams.FileExists(file, "dReams") {
-					Theme.Img = *canvas.NewImageFromFile(file)
+					dreams.Theme.Img = *canvas.NewImageFromFile(file)
 				} else {
-					Theme.URL = gnomes.GetAssetUrl(1, scid) // "https://raw.githubusercontent.com/Azylem/" + s + "/main/" + s + ".png"
-					logger.Println("[dReams] Downloading", Theme.URL)
+					dreams.Theme.URL = gnomes.GetAssetUrl(1, scid) // "https://raw.githubusercontent.com/Azylem/" + s + "/main/" + s + ".png"
+					logger.Println("[dReams] Downloading", dreams.Theme.URL)
 					if img, err := dreams.DownloadCanvas(gnomes.GetAssetUrl(0, scid), s); err == nil {
-						Theme.Img = img
+						dreams.Theme.Img = img
 					}
 				}
-				max.Objects[1].(*fyne.Container).Objects[0].(*fyne.Container).Objects[0] = SwitchProfileIcon("AZY-Deroscapes", s, Theme.URL, 60)
+				max.Objects[1].(*fyne.Container).Objects[0].(*fyne.Container).Objects[0] = SwitchProfileIcon("AZY-Deroscapes", s, dreams.Theme.URL, 60)
 			} else if check == "SIXART" {
 				file := dir + "/assets/" + s + "/" + s + ".png"
 				if dreams.FileExists(file, "dReams") {
-					Theme.Img = *canvas.NewImageFromFile(file)
+					dreams.Theme.Img = *canvas.NewImageFromFile(file)
 				} else {
-					Theme.URL = gnomes.GetAssetUrl(1, scid) // "https://raw.githubusercontent.com/SixofClubsss/SIXART/main/" + s + "/" + s + ".png"
-					logger.Println("[dReams] Downloading", Theme.URL)
+					dreams.Theme.URL = gnomes.GetAssetUrl(1, scid) // "https://raw.githubusercontent.com/SixofClubsss/SIXART/main/" + s + "/" + s + ".png"
+					logger.Println("[dReams] Downloading", dreams.Theme.URL)
 					if img, err := dreams.DownloadCanvas(gnomes.GetAssetUrl(0, scid), s); err == nil {
-						Theme.Img = img
+						dreams.Theme.Img = img
 					}
 				}
-				max.Objects[1].(*fyne.Container).Objects[0].(*fyne.Container).Objects[0] = SwitchProfileIcon("SIXART", s, Theme.URL, 60)
+				max.Objects[1].(*fyne.Container).Objects[0].(*fyne.Container).Objects[0] = SwitchProfileIcon("SIXART", s, dreams.Theme.URL, 60)
 			} else if check == "HSTheme" {
 				file := dir + "/assets/" + s + "/" + s + ".png"
 				if dreams.FileExists(file, "dReams") {
-					Theme.Img = *canvas.NewImageFromFile(file)
+					dreams.Theme.Img = *canvas.NewImageFromFile(file)
 				} else {
-					Theme.URL = "https://raw.githubusercontent.com/High-Strangeness/High-Strangeness/main/" + s + "/" + s + ".png"
-					logger.Println("[dReams] Downloading", Theme.URL)
-					if img, err := dreams.DownloadCanvas(Theme.URL, s); err == nil {
-						Theme.Img = img
+					dreams.Theme.URL = "https://raw.githubusercontent.com/High-Strangeness/High-Strangeness/main/" + s + "/" + s + ".png"
+					logger.Println("[dReams] Downloading", dreams.Theme.URL)
+					if img, err := dreams.DownloadCanvas(dreams.Theme.URL, s); err == nil {
+						dreams.Theme.Img = img
 					}
 				}
 				hs_icon := "https://raw.githubusercontent.com/High-Strangeness/High-Strangeness/main/HighStrangeness-IC.jpg"
 				max.Objects[1].(*fyne.Container).Objects[0].(*fyne.Container).Objects[0] = SwitchProfileIcon("High Strangeness", "HighStrangeness1", hs_icon, 60)
 			} else if s == "Hex" {
-				Theme.Img = *canvas.NewImageFromResource(bundle.ResourceBackground100Png)
+				dreams.Theme.Img = *canvas.NewImageFromResource(bundle.ResourceBackground100Png)
 				img := canvas.NewImageFromResource(bundle.ResourceMarketCirclePng)
 				img.SetMinSize(fyne.NewSize(60, 60))
 				max.Objects[1].(*fyne.Container).Objects[0].(*fyne.Container).Objects[0] = img
 			} else if s == "Bullet" {
-				Theme.Img = *canvas.NewImageFromResource(bundle.ResourceBackground110Png)
+				dreams.Theme.Img = *canvas.NewImageFromResource(bundle.ResourceBackground110Png)
 				img := canvas.NewImageFromResource(bundle.ResourceMarketCirclePng)
 				img.SetMinSize(fyne.NewSize(60, 60))
 				max.Objects[1].(*fyne.Container).Objects[0].(*fyne.Container).Objects[0] = img
 			} else if s == "Highway" {
-				Theme.Img = *canvas.NewImageFromResource(bundle.ResourceBackground111Png)
+				dreams.Theme.Img = *canvas.NewImageFromResource(bundle.ResourceBackground111Png)
 				img := canvas.NewImageFromResource(bundle.ResourceMarketCirclePng)
 				img.SetMinSize(fyne.NewSize(60, 60))
 				max.Objects[1].(*fyne.Container).Objects[0].(*fyne.Container).Objects[0] = img
 			} else if s == "Glass" {
-				Theme.Img = *canvas.NewImageFromResource(bundle.ResourceBackground112Png)
+				dreams.Theme.Img = *canvas.NewImageFromResource(bundle.ResourceBackground112Png)
 				img := canvas.NewImageFromResource(bundle.ResourceMarketCirclePng)
 				img.SetMinSize(fyne.NewSize(60, 60))
 				max.Objects[1].(*fyne.Container).Objects[0].(*fyne.Container).Objects[0] = img
@@ -348,8 +345,8 @@ func ThemeSelect(d *dreams.AppObject) fyne.CanvasObject {
 			d.Background.Refresh()
 		}()
 	}
-	Theme.Select.PlaceHolder = "Theme:"
-	max = container.NewBorder(nil, nil, icon, nil, container.NewVBox(Theme.Select))
+	dreams.Theme.Select.PlaceHolder = "Theme:"
+	max = container.NewBorder(nil, nil, icon, nil, container.NewVBox(dreams.Theme.Select))
 
 	return max
 }
@@ -857,12 +854,12 @@ func listMenu(window_icon fyne.Resource, d *dreams.AppObject) {
 func BackgroundRast(tag string) *canvas.Raster {
 	var err error
 	var img image.Image
-	if Theme.Img.Resource != nil {
-		if img, _, err = image.Decode(bytes.NewReader(Theme.Img.Resource.Content())); err == nil {
+	if dreams.Theme.Img.Resource != nil {
+		if img, _, err = image.Decode(bytes.NewReader(dreams.Theme.Img.Resource.Content())); err == nil {
 			return canvas.NewRasterFromImage(img)
 		}
 
-		if img, _, err = image.Decode(bytes.NewReader(DefaultThemeResource().StaticContent)); err == nil {
+		if img, _, err = image.Decode(bytes.NewReader(DefaultBackgroundResource().StaticContent)); err == nil {
 			return canvas.NewRasterFromImage(img)
 		}
 

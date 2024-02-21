@@ -16,11 +16,19 @@ import (
 
 	"github.com/civilware/Gnomon/structures"
 	"github.com/dReam-dApps/dReams/rpc"
+	"github.com/deroproject/derohe/walletapi/xswd"
 	"github.com/sirupsen/logrus"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/canvas"
+	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
+)
+
+const (
+	MIN_WIDTH  = 1400
+	MIN_HEIGHT = 800
 )
 
 // ContainerStack used for building various
@@ -58,6 +66,7 @@ type AppObject struct {
 	App        fyne.App
 	Window     fyne.Window
 	Background *fyne.Container
+	XSWD       *xswd.ApplicationData
 	os         string
 	configure  bool
 	tab        string
@@ -88,6 +97,9 @@ var mu sync.RWMutex
 var ms = 100 * time.Millisecond
 var logger = structures.Logger.WithFields(logrus.Fields{})
 
+// Background theme AssetSelect
+var Theme AssetSelect
+
 // Add to active channel count
 func (c *count) plus() {
 	c.Lock()
@@ -108,6 +120,28 @@ func (c *count) active() int {
 	defer c.RUnlock()
 
 	return c.i
+}
+
+// Creates a Fyne app returned as AppObject. Takes ID, name, fyne.Theme, fyne.Resources for icon and background images and XSWD application data.
+// Window default size is MIN_WIDTH x MIN_HEIGHT, centered and set as master, Theme.Img uses theme resource for background.
+func NewFyneApp(id, name string, skin fyne.Theme, icon, theme fyne.Resource, ad *xswd.ApplicationData) AppObject {
+	a := app.NewWithID(id)
+	a.Settings().SetTheme(skin)
+
+	w := a.NewWindow(name)
+	w.Resize(fyne.NewSize(MIN_WIDTH, MIN_HEIGHT))
+	w.SetIcon(icon)
+	w.CenterOnScreen()
+	w.SetMaster()
+
+	Theme.Img = *canvas.NewImageFromResource(theme)
+
+	return AppObject{
+		App:        a,
+		Window:     w,
+		Background: container.NewStack(&Theme.Img),
+		XSWD:       ad,
+	}
 }
 
 // Set what OS is being used
@@ -243,6 +277,14 @@ func (d *AppObject) IsWindows() bool {
 	return d.os == "windows"
 }
 
+// Get the max size for a object while maintaining aspect ratio
+func (d *AppObject) GetMaxSize(w, h float32) fyne.Size {
+	wRatio := d.Window.Canvas().Size().Width / MIN_WIDTH
+	hRatio := d.Window.Canvas().Size().Height / MIN_HEIGHT
+
+	return fyne.NewSize(w*wRatio, h*hRatio)
+}
+
 // Get current working directory path for prefix
 func GetDir() (dir string) {
 	dir, err := os.Getwd()
@@ -372,12 +414,4 @@ func (a *AssetSelect) RemoveAsset(rm string) {
 	}
 
 	a.Select.Refresh()
-}
-
-// Get the max size for a object while maintaining aspect ratio
-func (d *AppObject) GetMaxSize(w, h float32) fyne.Size {
-	wRatio := d.Window.Canvas().Size().Width / 1400
-	hRatio := d.Window.Canvas().Size().Height / 800
-
-	return fyne.NewSize(w*wRatio, h*hRatio)
 }

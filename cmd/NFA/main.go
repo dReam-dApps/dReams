@@ -19,7 +19,6 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
@@ -29,6 +28,7 @@ import (
 // dApp to run NFA market with full wallet controls from dReams packages
 
 const app_tag = "NFA Market"
+const app_id = "dreamdapps.io.nfa"
 
 func main() {
 	n := runtime.NumCPU()
@@ -38,22 +38,14 @@ func main() {
 	config := menu.ReadDreamsConfig(app_tag)
 	gnomon := gnomes.NewGnomes()
 
-	// Initialize Fyne app and window
-	a := app.NewWithID(fmt.Sprintf("%s Desktop Client", app_tag))
-	a.Settings().SetTheme(bundle.DeroTheme(config.Skin))
-	w := a.NewWindow(app_tag)
-	w.Resize(fyne.NewSize(1400, 800))
-	w.SetIcon(bundle.ResourceMarketIconPng)
-	w.CenterOnScreen()
-	w.SetMaster()
-
-	// Initialize dReams AppObject
-	menu.Theme.Img = *canvas.NewImageFromResource(menu.DefaultThemeResource())
-	d := dreams.AppObject{
-		App:        a,
-		Window:     w,
-		Background: container.NewStack(&menu.Theme.Img),
-	}
+	// Initialize Fyne app and window as dreams.AppObject
+	d := dreams.NewFyneApp(
+		app_id,
+		app_tag,
+		bundle.DeroTheme(config.Skin),
+		bundle.ResourceMarketIconPng,
+		menu.DefaultBackgroundResource(),
+		rpc.NewXSWDApplicationData(app_tag, "Non-Fungible Asset Market", app_id, true))
 
 	// Enable calling RunNFAMarket
 	enabled := menu.EnabledDappCount()
@@ -68,7 +60,7 @@ func main() {
 		save := dreams.SaveData{
 			Skin:   config.Skin,
 			DBtype: gnomon.DBStorageType(),
-			Theme:  menu.Theme.Name,
+			Theme:  dreams.Theme.Name,
 		}
 
 		if rpc.Daemon.Rpc == "" {

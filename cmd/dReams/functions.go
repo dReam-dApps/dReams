@@ -133,7 +133,7 @@ func save() dreams.SaveData {
 		Tables:  holdero.GetFavoriteTables(),
 		Predict: prediction.Predict.Favorites.SCIDs,
 		Sports:  prediction.Sports.Favorites.SCIDs,
-		Theme:   menu.Theme.Name,
+		Theme:   dreams.Theme.Name,
 		FSForce: gnomon.GetFastsync().ForceFastSync,
 		FSDiff:  gnomon.GetFastsync().ForceFastSyncDiff,
 		DBtype:  gnomon.DBStorageType(),
@@ -272,7 +272,7 @@ func checkDreamsNFAs(scids map[string]string, progress *widget.ProgressBar) {
 		}
 
 		logger.Println("[dReams] Checking NFA Assets")
-		menu.Theme.Select.Options = []string{}
+		dreams.Theme.Select.Options = []string{}
 		holdero.Settings.ClearAssets()
 
 		progress.Max = float64(len(scids))
@@ -287,9 +287,9 @@ func checkDreamsNFAs(scids map[string]string, progress *widget.ProgressBar) {
 		}
 
 		holdero.Settings.SortCardAssets()
-		menu.Theme.Sort()
-		menu.Theme.Select.Options = append(menu.Control.Themes, menu.Theme.Select.Options...)
-		menu.Theme.Select.SetSelected(menu.Theme.Name)
+		dreams.Theme.Sort()
+		dreams.Theme.Select.Options = append(menu.Control.Themes, dreams.Theme.Select.Options...)
+		dreams.Theme.Select.SetSelected(dreams.Theme.Name)
 		if menu.DappEnabled("Duels") {
 			duel.Inventory.SortAll()
 		}
@@ -325,7 +325,7 @@ func checkNFAOwner(scid string) {
 
 					check := strings.Trim(header[0], "0123456789")
 					if check == "AZYDS" || check == "SIXART" {
-						menu.Theme.Add(header[0], owner[0])
+						dreams.Theme.Add(header[0], owner[0])
 						holdero.Settings.AddAvatar(header[0], owner[0])
 						menu.Assets.Add(add, icon[0])
 					} else if check == "AZYPCB" || check == "SIXPCB" {
@@ -424,7 +424,7 @@ func hsCards(owner, name, check string) {
 
 	var have_theme bool
 	for i := tower; i > 0; i-- {
-		themes := menu.Theme.Select.Options
+		themes := dreams.Theme.Select.Options
 		for _, th := range themes {
 			if th == "HSTheme"+strconv.Itoa(i) {
 				have_theme = true
@@ -433,8 +433,8 @@ func hsCards(owner, name, check string) {
 
 		if !have_theme {
 			new_themes := append(themes, "HSTheme"+strconv.Itoa(i))
-			menu.Theme.Select.Options = new_themes
-			menu.Theme.Select.Refresh()
+			dreams.Theme.Select.Options = new_themes
+			dreams.Theme.Select.Refresh()
 		}
 	}
 }
@@ -545,8 +545,8 @@ func disconnected() {
 	prediction.Disconnected()
 	menu.Assets.Swap.Hide()
 	menu.Assets.Names.ClearSelected()
-	menu.Theme.Select.Options = menu.Control.Themes
-	menu.Theme.Select.Refresh()
+	dreams.Theme.Select.Options = menu.Control.Themes
+	dreams.Theme.Select.Refresh()
 	menu.Assets.Asset = []menu.Asset{}
 }
 
@@ -794,7 +794,7 @@ func xswdConnection() fyne.CanvasObject {
 			button.Disable()
 			entryPort.Disable()
 			connect_select.DisableIndex(0)
-			if rpc.Wallet.WS.Init() {
+			if rpc.Wallet.WS.Init(dReams.XSWD) {
 				rpc.GetAddress("dReams")
 				if rpc.Wallet.IsConnected() {
 					checkConnection()

@@ -1,6 +1,7 @@
 package rpc
 
 import (
+	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"math"
@@ -152,4 +153,10 @@ func DeroAddressFromKey(v interface{}) (address string) {
 	}
 
 	return
+}
+
+// Returns SHA256 hash of input string
+func HashToHexSHA256(input string) string {
+	hash := sha256.Sum256([]byte(input))
+	return hex.EncodeToString(hash[:])
 }

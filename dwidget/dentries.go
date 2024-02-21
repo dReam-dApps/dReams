@@ -87,7 +87,7 @@ type DeroEntries struct {
 	Balance       *canvas.Text
 	Button        *widget.Button
 	Connected     *widget.Check
-	Offset        int
+	offset        int
 	layout        int
 	daemonOptions []string
 }
@@ -147,7 +147,7 @@ func NewHorizontalEntries(tag string, offset int, d *dreams.AppObject) *DeroEntr
 		Balance:       balance,
 		Button:        button,
 		Connected:     check,
-		Offset:        offset,
+		offset:        offset,
 		daemonOptions: daemons,
 		layout:        0,
 	}
@@ -364,7 +364,7 @@ func onTapped(tag string, selectType *widget.Select, entryAuth *widget.Entry, en
 				entryXSWD.Disable()
 				selectType.Disable()
 				// TODO pass app data
-				if rpc.Wallet.WS.Init() {
+				if rpc.Wallet.WS.Init(d.XSWD) {
 					rpc.GetAddress(tag)
 					if rpc.Wallet.IsConnected() {
 						button.Importance = widget.HighImportance

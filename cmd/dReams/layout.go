@@ -15,6 +15,7 @@ import (
 	"github.com/SixofClubsss/Iluma/tarot"
 	"github.com/SixofClubsss/dDice/dice"
 	"github.com/SixofClubsss/dPrediction/prediction"
+	dreams "github.com/dReam-dApps/dReams"
 	"github.com/dReam-dApps/dReams/bundle"
 	"github.com/dReam-dApps/dReams/dwidget"
 	"github.com/dReam-dApps/dReams/gnomes"
@@ -183,7 +184,7 @@ func introScreen() *fyne.Container {
 			dReams.App.Settings().SetTheme(bundle.DeroTheme(bundle.AppColor))
 			dReams.Window.SetContent(container.NewStack(dReams.Background, place()))
 			if !dReams.Window.FullScreen() {
-				dReams.Window.Resize(fyne.NewSize(MIN_WIDTH, MIN_HEIGHT))
+				dReams.Window.Resize(fyne.NewSize(dreams.MIN_WIDTH, dreams.MIN_HEIGHT))
 			}
 			wait = false
 		}()
@@ -306,7 +307,7 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 			dReams.App.Settings().SetTheme(bundle.DeroTheme(bundle.AppColor))
 			dReams.Window.Content().(*fyne.Container).Objects[1] = place()
 			if !dReams.Window.FullScreen() {
-				dReams.Window.Resize(fyne.NewSize(MIN_WIDTH, MIN_HEIGHT))
+				dReams.Window.Resize(fyne.NewSize(dreams.MIN_WIDTH, dreams.MIN_HEIGHT))
 			}
 			wait = false
 		}()

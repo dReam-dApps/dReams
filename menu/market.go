@@ -1774,7 +1774,7 @@ func CheckAllNFAs(scids map[string]string) {
 		}
 
 		Assets.Asset = []Asset{}
-		Theme.Select.Options = []string{}
+		dreams.Theme.Select.Options = []string{}
 
 		for sc := range scids {
 			if !rpc.Wallet.IsConnected() || !gnomon.IsRunning() {
@@ -1797,7 +1797,7 @@ func CheckAllNFAs(scids map[string]string) {
 						}
 
 						if collection[0] == "AZY-Deroscapes" || collection[0] == "SIXART" {
-							Theme.Add(header[0], owner[0])
+							dreams.Theme.Add(header[0], owner[0])
 						}
 						Assets.Add(add, icon[0])
 					}
@@ -1864,8 +1864,8 @@ func CheckAllNFAs(scids map[string]string) {
 			}
 		}
 
-		Theme.Sort()
-		Theme.Select.Options = append(Control.Themes, Theme.Select.Options...)
+		dreams.Theme.Sort()
+		dreams.Theme.Select.Options = append(Control.Themes, dreams.Theme.Select.Options...)
 		Assets.SortList()
 	}
 }

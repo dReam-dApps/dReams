@@ -1,15 +1,15 @@
 package rpc
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 	"sync"
 
 	"github.com/creachadair/jrpc2"
+	"github.com/deroproject/derohe/walletapi/rpcserver"
 	"github.com/deroproject/derohe/walletapi/xswd"
 	"github.com/gorilla/websocket"
 	"github.com/ybbus/jsonrpc/v3"
@@ -25,27 +25,66 @@ type XSWDserver struct {
 	sync.RWMutex
 }
 
-// Default permissions that dReams will request on connection
-func dReamsXSWDApplication() *xswd.ApplicationData {
-	return &xswd.ApplicationData{
-		Id:          hex.EncodeToString(sha256.New().Sum([]byte("dReams")))[0:64],
-		Name:        "dReams",
-		Description: "dReamLand",
-		Url:         "http://dreamdapps.io",
-		OnClose:     make(chan bool),
-		Permissions: map[string]xswd.Permission{
-			"Echo":              xswd.AlwaysAllow,
-			"GetAddress":        xswd.AlwaysAllow,
-			"HasMethod":         xswd.AlwaysAllow,
-			"GetBalance":        xswd.AlwaysAllow,
-			"GetTransfers":      xswd.AlwaysAllow,
-			"GetTransferbyTXID": xswd.AlwaysAllow,
-			"GetHeight":         xswd.AlwaysAllow,
-			"transfer":          xswd.AlwaysAllow,
-			"Subscribe":         xswd.AlwaysAllow,
-		},
-		Signature: []byte("645265616d73e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495"),
+// Create XSWD application data for DERO connections
+//   - 'allow' true will request AlwaysAllow permissions upon connection for the methods used in rpc package
+func NewXSWDApplicationData(name, description, URL string, allow bool) *xswd.ApplicationData {
+	id := HashToHexSHA256(name)
+
+	// Add prefix for desktop apps
+	if !strings.HasPrefix(URL, "http") {
+		URL = "https://" + URL
 	}
+
+	permissions := make(map[string]xswd.Permission)
+	if allow {
+		// Methods used in this package
+		methods := []string{
+			"Echo",
+			"GetAddress",
+			"HasMethod",
+			"GetBalance",
+			"GetTransfers",
+			"GetTransferbyTXID",
+			"GetHeight",
+			"transfer",
+			"Subscribe",
+		}
+
+		permissions = NewXSWDPermissions(methods)
+	}
+
+	return &xswd.ApplicationData{
+		Id:          id,
+		Name:        name,
+		Description: description,
+		Url:         URL,
+		OnClose:     make(chan bool),
+		Permissions: permissions,
+		Signature:   []byte(id),
+	}
+}
+
+// Create a new permissions map for XSWD if methods exists in rpcserver.WalletHandler or is XSWD method
+func NewXSWDPermissions(methods []string) map[string]xswd.Permission {
+	var exists []string
+	for _, m := range methods {
+		if _, ok := rpcserver.WalletHandler[m]; ok {
+			exists = append(exists, m)
+			continue
+		}
+
+		// xswd methods
+		if m == "Subscribe" || m == "Unsubscribe" || m == "HasMethod" {
+			exists = append(exists, m)
+		}
+	}
+
+	permissions := make(map[string]xswd.Permission)
+	for _, e := range exists {
+		permissions[e] = xswd.AlwaysAllow
+	}
+
+	return permissions
 }
 
 // Initialize websocket
@@ -126,9 +165,9 @@ func (ws *XSWDserver) ConnectSocket() (response *xswd.AuthorizationResponse, err
 }
 
 // Initialize and connect to websocket
-func (ws *XSWDserver) Init() (connected bool) {
+func (ws *XSWDserver) Init(app *xswd.ApplicationData) (connected bool) {
 	if ws.conn == nil {
-		ws.app = dReamsXSWDApplication()
+		ws.app = app
 
 		var err error
 		ws.conn, err = CreateSocket(ws.Port)
