@@ -30,7 +30,7 @@ import (
 type marketObjects struct {
 	sync.RWMutex
 	Tab          string
-	Entry        *dwidget.DeroAmts
+	Entry        *dwidget.AmountEntry
 	Loading      *widget.ProgressBarInfinite
 	Icon         *canvas.Image
 	Cover        *canvas.Image
@@ -943,7 +943,7 @@ func PlaceMarket(d *dreams.AppObject) *container.Split {
 	button_spacer.SetMinSize(fyne.NewSize(40, 0))
 
 	// Market amount entry
-	Market.Entry = dwidget.NewDeroEntry("", 0.1, 1)
+	Market.Entry = dwidget.NewAmountEntry("", 0.1, 1)
 	Market.Entry.ExtendBaseWidget(Market.Entry)
 	Market.Entry.SetText("0.0")
 	Market.Entry.PlaceHolder = "Dero:"

@@ -474,7 +474,7 @@ func (g *Gnomon) ControlPanel(w fyne.Window) *fyne.Container {
 	fast_force.Horizontal = true
 	fast_force.Required = true
 
-	fast_diff := dwidget.NewDeroEntry("", 1, 0)
+	fast_diff := dwidget.NewAmountEntry("", 1, 0)
 	fast_diff.AllowFloat = false
 	fast_diff.Validator = func(s string) (err error) {
 		if strings.HasPrefix(s, "0") {

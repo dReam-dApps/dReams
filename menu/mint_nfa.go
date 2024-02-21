@@ -124,12 +124,12 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 	install_button := widget.NewButton("Install Contract", nil)
 	install_button.Importance = widget.HighImportance
 
-	collection_high_entry := dwidget.NewDeroEntry("", 1, 0)
+	collection_high_entry := dwidget.NewAmountEntry("", 1, 0)
 	collection_high_entry.SetPlaceHolder("Ending At:")
 	collection_high_entry.AllowFloat = false
 	collection_high_entry.Validator = validation.NewRegexp(`^[^0]\d{0,}$`, "Uint required")
 
-	collection_low_entry := dwidget.NewDeroEntry("", 1, 0)
+	collection_low_entry := dwidget.NewAmountEntry("", 1, 0)
 	collection_low_entry.SetPlaceHolder("Starting At:")
 	collection_low_entry.AllowFloat = false
 	collection_low_entry.Validator = validation.NewRegexp(`^[^0]\d{0,}$`, "Uint required")
@@ -411,12 +411,12 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 		}
 	}
 
-	royalty_entry := dwidget.NewDeroEntry("", 1, 0)
+	royalty_entry := dwidget.NewAmountEntry("", 1, 0)
 	royalty_entry.AllowFloat = false
 	royalty_entry.SetPlaceHolder("% you will get from each sale:")
 	royalty_entry.Validator = validation.NewRegexp(`^\d{1,2}$`, "Uint required")
 
-	art_entry := dwidget.NewDeroEntry("", 1, 0)
+	art_entry := dwidget.NewAmountEntry("", 1, 0)
 	art_entry.AllowFloat = false
 	art_entry.SetPlaceHolder("% Artificer will get from each sale:")
 	art_entry.Validator = validation.NewRegexp(`^\d{1,2}$`, "Uint required")

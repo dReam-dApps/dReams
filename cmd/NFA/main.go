@@ -102,27 +102,24 @@ func main() {
 	gnomon.SetFastsync(true, true, 10000)
 	gnomon.SetDBStorageType("boltdb")
 
-	// Create dwidget connection box with controls
-	connect_box := dwidget.NewHorizontalEntries(app_tag, 1)
-	connect_box.Button.OnTapped = func() {
-		rpc.Wallet.RPC.Init()
-		rpc.GetAddress(app_tag)
-		rpc.Ping()
-		if rpc.Daemon.IsConnected() && !gnomon.IsInitialized() && !gnomon.IsStarting() {
-			go gnomes.StartGnomon(app_tag, gnomon.DBStorageType(), []string{gnomes.NFA_SEARCH_FILTER}, 0, 0, nil)
-			rpc.GetFees()
-			menu.Market.Filters = menu.GetFilters("market_filter")
-		}
-	}
+	// Create dwidget connection box, using default OnTapped for connections
+	connection := dwidget.NewHorizontalEntries(app_tag, 1, &d)
 
-	connect_box.Disconnect.OnChanged = func(b bool) {
-		if !b {
+	// Gnomon controlled by daemon connection
+	connection.Connected.OnChanged = func(b bool) {
+		if b {
+			if rpc.Daemon.IsConnected() && !gnomon.IsInitialized() && !gnomon.IsStarting() {
+				go gnomes.StartGnomon(app_tag, gnomon.DBStorageType(), []string{gnomes.NFA_SEARCH_FILTER}, 0, 0, nil)
+				rpc.GetFees()
+				menu.Market.Filters = menu.GetFilters("market_filter")
+			}
+		} else {
 			gnomon.Stop(app_tag)
 		}
 	}
 
-	connect_box.AddDaemonOptions(config.Daemon)
-	connect_box.Container.Objects[0].(*fyne.Container).Add(menu.StartIndicators())
+	connection.AddDaemonOptions(config.Daemon)
+	connection.AddIndicator(menu.StartIndicators(nil))
 
 	// Layout asset profile objects
 	line := canvas.NewLine(bundle.TextColor)
@@ -168,43 +165,46 @@ func main() {
 				rpc.Wallet.Sync()
 
 				// Refresh Dero balance and Gnomon endpoint
-				connect_box.RefreshBalance()
+				connection.RefreshBalance()
 
-				if rpc.Daemon.IsConnected() && gnomon.IsRunning() {
+				if rpc.Daemon.IsConnected() {
+					connection.Connected.SetChecked(true)
 					gnomes.EndPoint()
-					connect_box.Disconnect.SetChecked(true)
 
-					// Check Gnomon index for SCs
-					gnomon.IndexContains()
-					if gnomon.HasIndex(1) {
-						gnomon.Checked(true)
-					}
+					if gnomon.IsRunning() {
+						// Check Gnomon index for SCs
+						gnomon.IndexContains()
+						if gnomon.HasIndex(1) {
+							gnomon.Checked(true)
+						}
 
-					// Check Gnomon index for sync
-					if gnomon.GetLastHeight() >= gnomon.GetChainHeight()-3 {
-						gnomon.Synced(true)
-					} else {
-						synced = false
-						gnomon.Synced(false)
-						gnomon.Checked(false)
-					}
+						// Check Gnomon index for sync
+						if gnomon.GetLastHeight() >= gnomon.GetChainHeight()-3 {
+							gnomon.Synced(true)
+						} else {
+							synced = false
+							gnomon.Synced(false)
+							gnomon.Checked(false)
+						}
 
-					// Check wallet for all owned NFAs and store icons in boltdb
-					if gnomon.IsSynced() {
-						if !synced {
-							menu.CheckAllNFAs(nil)
-							menu.Assets.List.Refresh()
-							if gnomon.DBStorageType() == "boltdb" {
-								for _, r := range menu.Assets.Asset {
-									gnomes.StoreBolt(r.Collection, r.Name, r)
+						// Check wallet for all owned NFAs and store icons in boltdb
+						if gnomon.IsSynced() {
+							if !synced {
+								menu.CheckAllNFAs(nil)
+								menu.Assets.List.Refresh()
+								if gnomon.DBStorageType() == "boltdb" {
+									for _, r := range menu.Assets.Asset {
+										gnomes.StoreBolt(r.Collection, r.Name, r)
+									}
 								}
+								synced = true
 							}
-							synced = true
 						}
 					}
 
 				} else {
-					connect_box.Disconnect.SetChecked(false)
+					gnomon.Synced(false)
+					connection.Connected.SetChecked(false)
 				}
 
 				d.SignalChannel()
@@ -222,7 +222,7 @@ func main() {
 
 	go func() {
 		time.Sleep(450 * time.Millisecond)
-		d.Window.SetContent(container.NewStack(d.Background, tabs, container.NewVBox(layout.NewSpacer(), connect_box.Container)))
+		d.Window.SetContent(container.NewStack(d.Background, tabs, container.NewVBox(layout.NewSpacer(), connection.Container)))
 	}()
 	d.Window.ShowAndRun()
 	<-done

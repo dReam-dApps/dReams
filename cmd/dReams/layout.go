@@ -31,7 +31,7 @@ import (
 	xwidget "fyne.io/x/fyne/widget"
 )
 
-var indicators []menu.DreamsIndicator
+var indicators []*menu.DreamsIndicator
 
 // Boot splash screen
 func splashScreen() fyne.CanvasObject {
@@ -504,6 +504,8 @@ func place() *fyne.Container {
 	intros = append(intros, menu.MakeMenuIntro(grok.DreamsMenuIntro())...)
 	intros = append(intros, menu.MakeMenuIntro(dice.DreamsMenuIntro())...)
 
+	indicators = []*menu.DreamsIndicator{}
+
 	// dReams menu tabs
 	asset_tab = menu.PlaceAssets("dReams", profile(), rescan, bundle.ResourceDReamsIconAltPng, &dReams)
 	menu_tabs = container.NewAppTabs(
@@ -623,7 +625,7 @@ func place() *fyne.Container {
 	if dReams.OS() != "darwin" {
 		alpha_box.Objects = append(alpha_box.Objects, container.NewHBox(layout.NewSpacer(), layout.NewSpacer(), layout.NewSpacer(), container.NewVBox(fs_button), layout.NewSpacer()))
 	}
-	alpha_box.Objects = append(alpha_box.Objects, menu.StartDreamsIndicators(indicators))
+	alpha_box.Objects = append(alpha_box.Objects, menu.StartIndicators(indicators))
 
 	tabs.OnSelected = func(ti *container.TabItem) {
 		dReams.SetTab(ti.Text)

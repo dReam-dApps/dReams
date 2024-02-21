@@ -39,6 +39,7 @@ type menuObjects struct {
 	Indicator struct {
 		Wallet *fyne.Animation
 		Daemon *fyne.Animation
+		TX     *fyne.Animation
 	}
 	Check struct {
 		Daemon *widget.Check
@@ -688,12 +689,12 @@ func listMenu(window_icon fyne.Resource, d *dreams.AppObject) {
 	listing := widget.NewSelect(listing_options, nil)
 	listing.PlaceHolder = "Type:"
 
-	duration := dwidget.NewDeroEntry("", 1, 0)
+	duration := dwidget.NewAmountEntry("", 1, 0)
 	duration.AllowFloat = false
 	duration.SetPlaceHolder("Duration in Hours:")
 	duration.Validator = validation.NewRegexp(`^[^0]\d{0,2}$`, "Int required")
 
-	start := dwidget.NewDeroEntry("", 0.1, 1)
+	start := dwidget.NewAmountEntry("", 0.1, 1)
 	start.AllowFloat = true
 	start.SetPlaceHolder("Start Price:")
 	start.Validator = validation.NewRegexp(`^\d{1,}\.\d{1,5}$|^[^0]\d{0,}$`, "Int or float required")
@@ -703,7 +704,7 @@ func listMenu(window_icon fyne.Resource, d *dreams.AppObject) {
 	charAddr.SetPlaceHolder("Charity Donation Address:")
 	charAddr.Validator = validation.NewRegexp(`^(dero)\w{62}$`, "Int required")
 
-	charPerc := dwidget.NewDeroEntry("", 1, 0)
+	charPerc := dwidget.NewAmountEntry("", 1, 0)
 	charPerc.AllowFloat = false
 	charPerc.SetPlaceHolder("Charity Donation %:")
 	charPerc.Validator = validation.NewRegexp(`^\d{1,2}$`, "Int required")
