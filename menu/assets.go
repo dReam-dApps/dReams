@@ -459,12 +459,10 @@ func PlaceAssets(tag string, profile fyne.CanvasObject, rescan func(), icon fyne
 	Info.Indexed = canvas.NewText("Indexed SCIDs: ", bundle.TextColor)
 	Info.Indexed.TextSize = 18
 
-	scroll_spacer := canvas.NewRectangle(color.Transparent)
-	scroll_spacer.SetMinSize(fyne.NewSize(77, 36))
-	scroll_buttons := container.NewHBox(scroll_top, scroll_bottom)
+	scroll_buttons := container.NewHBox(scroll_top, scroll_bottom, dwidget.NewSpacer(15, 0))
 
 	border := container.NewBorder(
-		container.NewHBox(layout.NewSpacer(), Info.Indexed, container.NewStack(scroll_spacer, scroll_buttons)),
+		container.NewHBox(layout.NewSpacer(), Info.Indexed, container.NewStack(dwidget.NewSpacer(77, 36), scroll_buttons)),
 		nil,
 		nil,
 		nil)

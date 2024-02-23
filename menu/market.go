@@ -753,6 +753,7 @@ func PlaceMarket(d *dreams.AppObject) *container.Split {
 			}
 		}
 	})
+	search_button.Importance = widget.HighImportance
 
 	clear_button := widget.NewButtonWithIcon("", dreams.FyneIcon("searchReplace"), func() {
 		search_entry.SetOptions([]string{})
