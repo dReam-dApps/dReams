@@ -27,25 +27,33 @@ import (
 
 // dApp to run NFA market with full wallet controls from dReams packages
 
-const app_tag = "NFA Market"
-const app_id = "dreamdapps.io.nfa"
+const (
+	appName = "NFA Market"
+	appID   = "dreamdapps.io.nfa"
+)
 
 func main() {
 	n := runtime.NumCPU()
 	runtime.GOMAXPROCS(n)
-	gnomes.InitLogrusLog(logrus.InfoLevel)
+
+	// Initialize logrus logger to stdout
 	logger := structures.Logger.WithFields(logrus.Fields{})
-	config := menu.ReadDreamsConfig(app_tag)
+	gnomes.InitLogrusLog(logrus.InfoLevel)
+
+	// Read config.json file
+	config := menu.ReadDreamsConfig(appName)
+
+	// New gnomes instance for app
 	gnomon := gnomes.NewGnomes()
 
 	// Initialize Fyne app and window as dreams.AppObject
 	d := dreams.NewFyneApp(
-		app_id,
-		app_tag,
+		appID,
+		appName,
 		bundle.DeroTheme(config.Skin),
 		bundle.ResourceMarketIconPng,
 		menu.DefaultBackgroundResource(),
-		rpc.NewXSWDApplicationData(app_tag, "Non-Fungible Asset Market", app_id, true))
+		rpc.NewXSWDApplicationData(appName, "Non-Fungible Asset Market", appID, true))
 
 	// Enable calling RunNFAMarket
 	enabled := menu.EnabledDappCount()
@@ -56,6 +64,7 @@ func main() {
 
 	// Initialize closing channels and func
 	done := make(chan struct{})
+
 	closeFunc := func() {
 		save := dreams.SaveData{
 			Skin:   config.Skin,
@@ -71,9 +80,9 @@ func main() {
 
 		menu.WriteDreamsConfig(save)
 		menu.SetClose(true)
-		gnomon.Stop(app_tag)
+		gnomon.Stop(appName)
 		d.StopProcess()
-		rpc.Wallet.CloseConnections(app_tag)
+		rpc.Wallet.CloseConnections(appName)
 		if rpc.Wallet.File != nil {
 			rpc.Wallet.File.Close_Encrypted_Wallet()
 		}
@@ -90,27 +99,30 @@ func main() {
 		closeFunc()
 	}()
 
-	// Initialize vars
+	// Initialize Gnomon vars
 	gnomon.SetFastsync(true, true, 10000)
 	gnomon.SetDBStorageType("boltdb")
 
-	// Create dwidget connection box, using default OnTapped for connections
-	connection := dwidget.NewHorizontalEntries(app_tag, 1, &d)
+	// Create dwidget connection box, using default OnTapped for RPC/XSWD connections
+	connection := dwidget.NewHorizontalEntries(appName, 1, &d)
 
 	// Gnomon controlled by daemon connection
 	connection.Connected.OnChanged = func(b bool) {
 		if b {
 			if rpc.Daemon.IsConnected() && !gnomon.IsInitialized() && !gnomon.IsStarting() {
-				go gnomes.StartGnomon(app_tag, gnomon.DBStorageType(), []string{gnomes.NFA_SEARCH_FILTER}, 0, 0, nil)
+				go gnomes.StartGnomon(appName, gnomon.DBStorageType(), []string{gnomes.NFA_SEARCH_FILTER}, 0, 0, nil)
 				rpc.GetFees()
 				menu.Market.Filters = menu.GetFilters("market_filter")
 			}
 		} else {
-			gnomon.Stop(app_tag)
+			gnomon.Stop(appName)
 		}
 	}
 
+	// Set any saved daemon configs
 	connection.AddDaemonOptions(config.Daemon)
+
+	// Adding dReams indicator panel for wallet, daemon and Gnomon
 	connection.AddIndicator(menu.StartIndicators(nil))
 
 	// Layout asset profile objects
@@ -136,9 +148,9 @@ func main() {
 	// Layout tabs
 	tabs := container.NewAppTabs(
 		container.NewTabItem("Market", menu.PlaceMarket(&d)),
-		container.NewTabItem("Assets", menu.PlaceAssets(app_tag, profile, rescan, bundle.ResourceMarketIconPng, &d)),
-		container.NewTabItem("Mint", menu.PlaceNFAMint(app_tag, d.Window)),
-		container.NewTabItem("Log", rpc.SessionLog(app_tag, rpc.Version())))
+		container.NewTabItem("Assets", menu.PlaceAssets(appName, profile, rescan, bundle.ResourceMarketIconPng, &d)),
+		container.NewTabItem("Mint", menu.PlaceNFAMint(appName, d.Window)),
+		container.NewTabItem("Log", rpc.SessionLog(appName, rpc.Version())))
 
 	tabs.SetTabLocation(container.TabLocationBottom)
 
@@ -202,7 +214,7 @@ func main() {
 				d.SignalChannel()
 
 			case <-d.Closing():
-				logger.Printf("[%s] Closing...", app_tag)
+				logger.Printf("[%s] Closing...", appName)
 				ticker.Stop()
 				d.CloseAllDapps()
 				time.Sleep(time.Second)
@@ -212,11 +224,12 @@ func main() {
 		}
 	}()
 
+	// Start app and place layout
 	go func() {
 		time.Sleep(450 * time.Millisecond)
 		d.Window.SetContent(container.NewStack(d.Background, tabs, container.NewVBox(layout.NewSpacer(), connection.Container)))
 	}()
 	d.Window.ShowAndRun()
 	<-done
-	logger.Printf("[%s] Closed\n", app_tag)
+	logger.Printf("[%s] Closed\n", appName)
 }

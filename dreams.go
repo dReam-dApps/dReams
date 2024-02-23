@@ -144,6 +144,11 @@ func NewFyneApp(id, name string, skin fyne.Theme, icon, theme fyne.Resource, ad 
 	}
 }
 
+// Default balance label with dReams, DERO and wallet height
+func SetBalanceLabelText() string {
+	return fmt.Sprintf("dReams Balance: %s      DERO Balance: %s      Height: %d", rpc.Wallet.BalanceF("dReams"), rpc.Wallet.BalanceF("DERO"), rpc.Wallet.Height())
+}
+
 // Set what OS is being used
 func (d *AppObject) SetOS() {
 	d.os = runtime.GOOS

@@ -572,35 +572,35 @@ func place() *fyne.Container {
 	tabs := container.NewAppTabs(container.NewTabItem("Menu", menu_tabs))
 
 	if menu.DappEnabled("Holdero") {
-		tabs.Append(container.NewTabItem("Holdero", holdero.LayoutAllItems(&dReams)))
+		tabs.Append(container.NewTabItem("Holdero", holdero.LayoutAll(&dReams)))
 		indicators = append(indicators, holdero.HolderoIndicator())
 	}
 
 	if menu.DappEnabled("Baccarat") {
-		tabs.Append(container.NewTabItem("Baccarat", baccarat.LayoutAllItems(&dReams)))
+		tabs.Append(container.NewTabItem("Baccarat", baccarat.LayoutAll(&dReams)))
 	}
 
 	if menu.DappEnabled("dSports and dPredictions") {
-		tabs.Append(container.NewTabItem("Predict", prediction.LayoutPredictItems(&dReams)))
-		tabs.Append(container.NewTabItem("Sports", prediction.LayoutSportsItems(&dReams)))
+		tabs.Append(container.NewTabItem("Predict", prediction.LayoutPredictions(&dReams)))
+		tabs.Append(container.NewTabItem("Sports", prediction.LayoutSports(&dReams)))
 		indicators = append(indicators, prediction.ServiceIndicator())
 	}
 
 	if menu.DappEnabled("Iluma") {
-		tabs.Append(container.NewTabItem("Iluma", tarot.LayoutAllItems(&dReams)))
+		tabs.Append(container.NewTabItem("Iluma", tarot.LayoutAll(&dReams)))
 	}
 
 	// // Under development
 	// if menu.DappEnabled("DerBnb") {
-	// 	tabs.Append(container.NewTabItem("DerBnb", derbnb.LayoutAllItems(true, &dReams)))
+	// 	tabs.Append(container.NewTabItem("DerBnb", derbnb.LayoutAll(true, &dReams)))
 	// }
 
 	if menu.DappEnabled("Duels") {
-		tabs.Append(container.NewTabItem("Duels", duel.LayoutAllItems(menu.Assets.SCIDs, &dReams)))
+		tabs.Append(container.NewTabItem("Duels", duel.LayoutAll(menu.Assets.SCIDs, &dReams)))
 	}
 
 	if menu.DappEnabled("Grokked") {
-		tabs.Append(container.NewTabItem("Grokked", grok.LayoutAllItems(&dReams)))
+		tabs.Append(container.NewTabItem("Grokked", grok.LayoutAll(&dReams)))
 	}
 
 	if menu.DappEnabled("Dice") {
