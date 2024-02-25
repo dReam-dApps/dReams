@@ -9,6 +9,7 @@ import (
 	"github.com/dReam-dApps/dReams/gnomes"
 	"github.com/dReam-dApps/dReams/menu"
 	"github.com/dReam-dApps/dReams/rpc"
+	"github.com/deroproject/derohe/walletapi"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -69,6 +70,8 @@ func main() {
 			close()
 		}
 	})
+
+	go walletapi.Initialize_LookupTable(1, 1<<24)
 
 	dReams.SetTab("Menu")
 

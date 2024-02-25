@@ -16,6 +16,7 @@ import (
 	"github.com/dReam-dApps/dReams/gnomes"
 	"github.com/dReam-dApps/dReams/menu"
 	"github.com/dReam-dApps/dReams/rpc"
+	"github.com/deroproject/derohe/walletapi"
 	"github.com/sirupsen/logrus"
 
 	"fyne.io/fyne/v2"
@@ -83,9 +84,6 @@ func main() {
 		gnomon.Stop(appName)
 		d.StopProcess()
 		rpc.Wallet.CloseConnections(appName)
-		if rpc.Wallet.File != nil {
-			rpc.Wallet.File.Close_Encrypted_Wallet()
-		}
 		d.Window.Close()
 	}
 	d.Window.SetCloseIntercept(closeFunc)
@@ -100,7 +98,7 @@ func main() {
 	}()
 
 	// Initialize Gnomon vars
-	gnomon.SetFastsync(true, true, 10000)
+	gnomon.SetFastsync(true, true, 3000)
 	gnomon.SetDBStorageType("boltdb")
 
 	// Create dwidget connection box, using default OnTapped for RPC/XSWD connections
@@ -153,6 +151,8 @@ func main() {
 		container.NewTabItem("Log", rpc.SessionLog(appName, rpc.Version())))
 
 	tabs.SetTabLocation(container.TabLocationBottom)
+
+	go walletapi.Initialize_LookupTable(1, 1<<24)
 
 	// For RunNFAMarket routine
 	d.SetSubTab("Market")

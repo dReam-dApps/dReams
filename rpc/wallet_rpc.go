@@ -14,6 +14,7 @@ import (
 
 	"github.com/blang/semver/v4"
 	"github.com/civilware/Gnomon/structures"
+	"github.com/deroproject/derohe/config"
 	"github.com/deroproject/derohe/cryptography/crypto"
 	"github.com/deroproject/derohe/globals"
 	"github.com/deroproject/derohe/rpc"
@@ -157,7 +158,7 @@ func EchoWallet() (connected bool) {
 // Get a wallets Dero address
 //   - tag for log print
 func GetAddress(tag string) {
-	var result *rpc.GetAddress_Result
+	var result rpc.GetAddress_Result
 
 	if err := Wallet.CallFor(&result, "GetAddress"); err != nil {
 		Wallet.Connected(false)
@@ -180,8 +181,8 @@ func GetAddress(tag string) {
 
 // Get wallet tx entry data by txid
 func GetWalletTx(txid string) *rpc.Entry {
-	var result *rpc.Get_Transfer_By_TXID_Result
-	params := rpc.Get_Transfer_By_TXID_Params{
+	var result rpc.Get_Transfer_By_TXID_Result
+	params := &rpc.Get_Transfer_By_TXID_Params{
 		TXID: txid,
 	}
 
@@ -195,8 +196,8 @@ func GetWalletTx(txid string) *rpc.Entry {
 
 // Get wallet transfers with min/max heights and dst port
 func GetWalletTransfers(min, max, dst uint64) *[]rpc.Entry {
-	var result *rpc.Get_Transfers_Result
-	params := rpc.Get_Transfers_Params{
+	var result rpc.Get_Transfers_Result
+	params := &rpc.Get_Transfers_Params{
 		Coinbase:        false,
 		In:              true,
 		Out:             false,
@@ -215,7 +216,7 @@ func GetWalletTransfers(min, max, dst uint64) *[]rpc.Entry {
 
 // Returns Dero wallet balance
 func GetBalance() uint64 {
-	var result *rpc.GetBalance_Result
+	var result rpc.GetBalance_Result
 
 	if err := Wallet.CallFor(&result, "GetBalance"); err != nil {
 		PrintError("[GetBalance] %s", err)
@@ -227,7 +228,7 @@ func GetBalance() uint64 {
 
 // Returns wallet asset balance of SCID
 func GetAssetBalance(scid string) uint64 {
-	var result *rpc.GetBalance_Result
+	var result rpc.GetBalance_Result
 	params := &rpc.GetBalance_Params{
 		SCID: crypto.HashHexToHash(scid),
 	}
@@ -291,7 +292,7 @@ func GetAssetSCIDByName(name string) (scid string) {
 
 // Gets Dero wallet height
 func GetWalletHeight() uint64 {
-	var result *rpc.GetHeight_Result
+	var result rpc.GetHeight_Result
 
 	if err := Wallet.CallFor(&result, "GetHeight"); err != nil {
 		PrintError("[GetWalletHeight] %s", err)
@@ -308,8 +309,6 @@ func GetdReams(amt uint64) (tx string) {
 		rpc.Argument{Name: "entrypoint", DataType: "S", Value: "IssueChips"},
 	}
 
-	txid := rpc.Transfer_Result{}
-
 	t1 := rpc.Transfer{
 		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
 		Amount:      0,
@@ -317,6 +316,7 @@ func GetdReams(amt uint64) (tx string) {
 	}
 
 	t := []rpc.Transfer{t1}
+	txid := rpc.Transfer_Result{}
 	fee := GasEstimate(BaccSCID, "[Swap]", args, t, LowLimitFee)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
@@ -343,8 +343,6 @@ func TradedReams(amt uint64) (tx string) {
 		rpc.Argument{Name: "entrypoint", DataType: "S", Value: "ConvertChips"},
 	}
 
-	txid := rpc.Transfer_Result{}
-
 	t1 := rpc.Transfer{
 		SCID:        crypto.HashHexToHash(DreamsSCID),
 		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
@@ -353,6 +351,7 @@ func TradedReams(amt uint64) (tx string) {
 	}
 
 	t := []rpc.Transfer{t1}
+	txid := rpc.Transfer_Result{}
 	fee := GasEstimate(BaccSCID, "[Swap]", args, t, LowLimitFee)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
@@ -389,8 +388,6 @@ func RateSCID(scid string, amt, pos uint64) (tx string) {
 		rpc.Argument{Name: "pos", DataType: "U", Value: pos},
 	}
 
-	txid := rpc.Transfer_Result{}
-
 	t1 := rpc.Transfer{
 		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
 		Amount:      0,
@@ -398,6 +395,7 @@ func RateSCID(scid string, amt, pos uint64) (tx string) {
 	}
 
 	t := []rpc.Transfer{t1}
+	txid := rpc.Transfer_Result{}
 	fee := GasEstimate(RatingSCID, "[RateSCID]", args, t, LowLimitFee)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
@@ -428,8 +426,6 @@ func SetHeaders(name, desc, icon, scid string) {
 		rpc.Argument{Name: "scid", DataType: "S", Value: scid},
 	}
 
-	txid := rpc.Transfer_Result{}
-
 	t1 := rpc.Transfer{
 		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
 		Amount:      0,
@@ -437,6 +433,7 @@ func SetHeaders(name, desc, icon, scid string) {
 	}
 
 	t := []rpc.Transfer{t1}
+	txid := rpc.Transfer_Result{}
 	fee := GasEstimate(GnomonSCID, "[SetHeaders]", args, t, HighLimitFee)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
@@ -461,8 +458,6 @@ func ClaimNFA(scid string) (tx string) {
 		rpc.Argument{Name: "entrypoint", DataType: "S", Value: "ClaimOwnership"},
 	}
 
-	txid := rpc.Transfer_Result{}
-
 	t1 := rpc.Transfer{
 		SCID:        crypto.HashHexToHash(scid),
 		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
@@ -471,6 +466,7 @@ func ClaimNFA(scid string) (tx string) {
 	}
 
 	t := []rpc.Transfer{t1}
+	txid := rpc.Transfer_Result{}
 	fee := GasEstimate(scid, "[ClaimNFA]", args, t, LowLimitFee)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
@@ -497,8 +493,6 @@ func BidBuyNFA(scid, bidor string, amt uint64) (tx string) {
 		rpc.Argument{Name: "entrypoint", DataType: "S", Value: bidor},
 	}
 
-	txid := rpc.Transfer_Result{}
-
 	t1 := rpc.Transfer{
 		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
 		Amount:      0,
@@ -506,6 +500,7 @@ func BidBuyNFA(scid, bidor string, amt uint64) (tx string) {
 	}
 
 	t := []rpc.Transfer{t1}
+	txid := rpc.Transfer_Result{}
 	fee := GasEstimate(scid, "[BidBuyNFA]", args, t, LowLimitFee)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
@@ -545,8 +540,6 @@ func SetNFAListing(scid, list, char string, dur, amt, perc uint64) (tx string) {
 		rpc.Argument{Name: "charityDonatePerc", DataType: "U", Value: perc},
 	}
 
-	txid := rpc.Transfer_Result{}
-
 	split_fee := ListingFee / 2
 
 	t1 := rpc.Transfer{
@@ -571,6 +564,7 @@ func SetNFAListing(scid, list, char string, dur, amt, perc uint64) (tx string) {
 	}
 
 	t := []rpc.Transfer{t1, t2, t3}
+	txid := rpc.Transfer_Result{}
 	fee := GasEstimate(scid, "[SetNFAListing]", args, t, LowLimitFee)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
@@ -602,8 +596,6 @@ func CancelCloseNFA(scid string, close bool) (tx string) {
 		rpc.Argument{Name: "entrypoint", DataType: "S", Value: call},
 	}
 
-	txid := rpc.Transfer_Result{}
-
 	t1 := rpc.Transfer{
 		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
 		Amount:      0,
@@ -618,6 +610,7 @@ func CancelCloseNFA(scid string, close bool) (tx string) {
 	}
 
 	t := []rpc.Transfer{t1}
+	txid := rpc.Transfer_Result{}
 	fee := GasEstimate(scid, "[CancelCloseNFA]", args, t, LowLimitFee)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
@@ -643,12 +636,12 @@ func CancelCloseNFA(scid string, close bool) (tx string) {
 
 // Upload a new NFA SC by string
 func UploadNFAContract(code string) (tx string) {
-	txid := rpc.Transfer_Result{}
 	t1 := rpc.Transfer{
 		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
 		Amount:      MintingFee,
 	}
 
+	txid := rpc.Transfer_Result{}
 	params := &rpc.Transfer_Params{
 		Transfers: []rpc.Transfer{t1},
 		SC_Code:   code,
@@ -689,10 +682,9 @@ func SendAsset(scid, dest string) (tx string) {
 		Burn:        0,
 		Payload_RPC: response,
 	}
+
 	t = append(t, t2)
-
 	txid := rpc.Transfer_Result{}
-
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_RPC:    rpc.Arguments{},
@@ -800,17 +792,26 @@ func ConfirmTxRetry(txid, tag string, timeout int) (retry int) {
 // Send a message to destination address through Dero transaction, with ringsize selection
 func SendMessage(dest, msg string, rings uint64) {
 	response := rpc.Arguments{
-		{Name: rpc.RPC_DESTINATION_PORT, DataType: rpc.DataUint64, Value: 1337},
+		{Name: rpc.RPC_DESTINATION_PORT, DataType: rpc.DataUint64, Value: uint64(1337)},
 		{Name: rpc.RPC_SOURCE_PORT, DataType: rpc.DataUint64, Value: uint64(0)},
 		{Name: rpc.RPC_COMMENT, DataType: rpc.DataString, Value: msg},
 	}
 
 	t1 := rpc.Transfer{
 		Destination: dest,
-		Amount:      1,
+		Amount:      0,
 		Burn:        0,
 		Payload_RPC: response,
 	}
+
+	fee := (rings + 1) * config.FEE_PER_KB / 4
+	if fee > LowLimitFee {
+		fee = LowLimitFee
+	} else {
+		fee = fee + 20
+	}
+
+	logger.Println("[SendMessage] Gas Fee:", fee+20)
 
 	t := []rpc.Transfer{t1}
 	txid := rpc.Transfer_Result{}
@@ -818,6 +819,7 @@ func SendMessage(dest, msg string, rings uint64) {
 		Transfers: t,
 		SC_RPC:    rpc.Arguments{},
 		Ringsize:  rings,
+		Fees:      fee,
 	}
 
 	if err := Wallet.CallFor(&txid, "transfer", params); err != nil {

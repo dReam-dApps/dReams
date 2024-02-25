@@ -2,6 +2,7 @@ package dwidget
 
 import (
 	"fmt"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -17,6 +18,7 @@ import (
 	"github.com/dReam-dApps/dReams/bundle"
 	"github.com/dReam-dApps/dReams/rpc"
 	"github.com/deroproject/derohe/config"
+	"github.com/deroproject/derohe/globals"
 	"github.com/deroproject/derohe/walletapi/xswd"
 )
 
@@ -104,12 +106,19 @@ func NewHorizontalEntries(tag string, offset int, d *dreams.AppObject) *DeroEntr
 
 	entryXSWD := NewWalletXSWDEntry(tag)
 
-	selectType := widget.NewSelect([]string{"RPC", "XSWD"}, nil)
+	_, names := dreams.GetAccounts()
+	entryDERO := widget.NewSelectEntry(names)
+	entryDERO.PlaceHolder = "dero.db path:"
+
+	entryPass := widget.NewPasswordEntry()
+	entryPass.PlaceHolder = "Password:"
+
+	selectType := widget.NewSelect([]string{"RPC", "XSWD", "DERO"}, nil)
 	selectType.PlaceHolder = "(Select)"
 	selectType.SetSelectedIndex(0)
 
 	button := widget.NewButtonWithIcon("", dreams.FyneIcon("confirm"), nil)
-	button.OnTapped = onTapped(tag, selectType, entryAuth, entryRPC, entryXSWD, button, d)
+	button.OnTapped = onTapped(tag, selectType, entryAuth, entryPass, entryRPC, entryXSWD, entryDERO, button, d)
 
 	balance := canvas.NewText(fmt.Sprintf("%.5f DERO", 0.0), bundle.TextColor)
 
@@ -129,13 +138,24 @@ func NewHorizontalEntries(tag string, offset int, d *dreams.AppObject) *DeroEntr
 		layout.NewSpacer(),
 		selectType)
 
+	layoutDERO := container.NewHBox(
+		container.NewStack(NewSpacer(210, 0), entryDaemon),
+		container.NewStack(NewSpacer(180, 0), entryDERO),
+		container.NewStack(NewSpacer(180, 0), entryPass),
+		selectType)
+
 	layoutAll := container.NewBorder(nil, nil, check, button, layoutRPC)
 
 	selectType.OnChanged = func(s string) {
-		if s == "RPC" {
+		switch s {
+		case "RPC":
 			layoutAll.Objects[0] = layoutRPC
-		} else {
+		case "XSWD":
 			layoutAll.Objects[0] = layoutXSWD
+		case "DERO":
+			layoutAll.Objects[0] = layoutDERO
+			_, names := dreams.GetAccounts()
+			layoutDERO.Objects[1].(*fyne.Container).Objects[1].(*widget.SelectEntry).SetOptions(names)
 		}
 	}
 
@@ -172,12 +192,19 @@ func NewVerticalEntries(tag string, d *dreams.AppObject) *DeroEntries {
 
 	entryXSWD := NewWalletXSWDEntry(tag)
 
-	selectType := widget.NewSelect([]string{"RPC", "XSWD"}, nil)
+	_, names := dreams.GetAccounts()
+	entryDERO := widget.NewSelectEntry(names)
+	entryDERO.PlaceHolder = "dero.db path:"
+
+	entryPass := widget.NewPasswordEntry()
+	entryPass.PlaceHolder = "Password:"
+
+	selectType := widget.NewSelect([]string{"RPC", "XSWD", "DERO"}, nil)
 	selectType.PlaceHolder = "(Select)"
 	selectType.SetSelectedIndex(0)
 
 	button := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "confirm"), nil)
-	button.OnTapped = onTapped(tag, selectType, entryAuth, entryRPC, entryXSWD, button, d)
+	button.OnTapped = onTapped(tag, selectType, entryAuth, entryPass, entryRPC, entryXSWD, entryDERO, button, d)
 
 	balance := canvas.NewText(fmt.Sprintf("%.5f Dero", 0.0), bundle.TextColor)
 
@@ -205,7 +232,12 @@ func NewVerticalEntries(tag string, d *dreams.AppObject) *DeroEntries {
 	layoutXSWD := container.NewVBox(
 		entryDaemon,
 		entryXSWD,
-		NewSpacer(0, 35))
+		NewSpacer(0, 33))
+
+	layoutDERO := container.NewVBox(
+		entryDaemon,
+		entryDERO,
+		entryPass)
 
 	layoutAll := container.NewVBox(
 		layoutRPC,
@@ -215,10 +247,15 @@ func NewVerticalEntries(tag string, d *dreams.AppObject) *DeroEntries {
 		check)
 
 	selectType.OnChanged = func(s string) {
-		if s == "RPC" {
+		switch s {
+		case "RPC":
 			layoutAll.Objects[0] = layoutRPC
-		} else {
+		case "XSWD":
 			layoutAll.Objects[0] = layoutXSWD
+		case "DERO":
+			layoutAll.Objects[0] = layoutDERO
+			_, names := dreams.GetAccounts()
+			layoutDERO.Objects[1].(*widget.SelectEntry).SetOptions(names)
 		}
 	}
 
@@ -311,14 +348,15 @@ func NewWalletXSWDEntry(tag string) (entryXSWD *widget.SelectEntry) {
 }
 
 // OnTapped default function for dwidget wallet connection button
-func onTapped(tag string, selectType *widget.Select, entryAuth *widget.Entry, entryRPC, entryXSWD *widget.SelectEntry, button *widget.Button, d *dreams.AppObject) func() {
+func onTapped(tag string, selectType *widget.Select, entryAuth, entryPass *widget.Entry, entryRPC, entryXSWD, entryDERO *widget.SelectEntry, button *widget.Button, d *dreams.AppObject) func() {
 	return func() {
 		if selectType.SelectedIndex() < 0 {
 			dialog.NewInformation("Select Connect Type", "Select RPC or XSWD wallet connection", d.Window).Show()
 			return
 		}
 
-		if selectType.Selected == "RPC" {
+		switch selectType.Selected {
+		case "RPC":
 			// Disconnect from RPC
 			if !rpc.Wallet.RPC.IsClosed() {
 				button.Importance = widget.MediumImportance
@@ -344,8 +382,7 @@ func onTapped(tag string, selectType *widget.Select, entryAuth *widget.Entry, en
 				entryAuth.Disable()
 				selectType.Disable()
 			}
-
-		} else {
+		case "XSWD":
 			// Disconnect from XSWD
 			if !rpc.Wallet.WS.IsClosed() {
 				button.Importance = widget.MediumImportance
@@ -383,6 +420,66 @@ func onTapped(tag string, selectType *widget.Select, entryAuth *widget.Entry, en
 				button.Refresh()
 				button.Enable()
 				selectType.Enable()
+			}()
+		case "DERO":
+			go func() {
+				button.Disable()
+				entryPass.Disable()
+				entryDERO.Disable()
+				selectType.Disable()
+				defer func() {
+					button.Enable()
+				}()
+
+				// Close wallet
+				if rpc.Wallet.File != nil {
+					rpc.Wallet.CloseConnections(tag)
+					selectType.Enable()
+					entryPass.Enable()
+					entryDERO.Enable()
+					button.Importance = widget.MediumImportance
+					button.Icon = dreams.FyneIcon("confirm")
+					button.Refresh()
+
+					return
+				} else {
+					rpc.Ping()
+					// Check if connected to daemon
+					if !rpc.Daemon.IsConnected() {
+						dialog.NewInformation("Select Daemon", "Connect to a daemon", d.Window).Show()
+						entryPass.Enable()
+						entryDERO.Enable()
+						selectType.Enable()
+						return
+					}
+
+					network := "mainnet"
+					if !globals.IsMainnet() {
+						network = "testnet"
+					}
+
+					dir := filepath.Join(dreams.GetDir(), network) + string(filepath.Separator)
+					path := filepath.Join(dir, entryDERO.Text)
+					if strings.HasPrefix(entryDERO.Text, "/") {
+						path = entryDERO.Text
+					}
+
+					// Open wallet
+					if err := rpc.Wallet.OpenWalletFile(tag, path, entryPass.Text); err != nil {
+						dialogError := dialog.NewInformation("Error", fmt.Sprintf("%s", err), d.Window)
+						dialogError.Show()
+						entryPass.Enable()
+						entryDERO.Enable()
+						selectType.Enable()
+						return
+					}
+
+					entryDERO.Disable()
+					entryPass.Disable()
+					button.Importance = widget.HighImportance
+					button.Icon = dreams.FyneIcon("cancel")
+					button.Refresh()
+				}
 			}()
 		}
 	}

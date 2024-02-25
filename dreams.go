@@ -9,13 +9,16 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"runtime"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/civilware/Gnomon/structures"
 	"github.com/dReam-dApps/dReams/rpc"
+	"github.com/deroproject/derohe/globals"
 	"github.com/deroproject/derohe/walletapi/xswd"
 	"github.com/sirupsen/logrus"
 
@@ -30,19 +33,6 @@ const (
 	MIN_WIDTH  = 1400
 	MIN_HEIGHT = 800
 )
-
-// ContainerStack used for building various
-// container/label layouts to be placed in main app
-type ContainerStack struct {
-	LeftLabel  *widget.Label
-	RightLabel *widget.Label
-	TopLabel   *canvas.Text
-
-	Back    fyne.Container
-	Front   fyne.Container
-	Actions fyne.Container
-	DApp    *fyne.Container
-}
 
 // Saved data for users local config.json file
 type SaveData struct {
@@ -313,6 +303,28 @@ func FileExists(path, tag string) bool {
 	}
 
 	return false
+}
+
+// Get .db files from wallet directory
+func GetAccounts() (prefix string, names []string) {
+	prefix = "mainnet"
+	if !globals.IsMainnet() {
+		prefix = "testnet"
+	}
+
+	path := filepath.Join(GetDir(), prefix) + string(filepath.Separator)
+
+	files, err := filepath.Glob(path + "*.db")
+	if err != nil {
+		logger.Errorln("[dReams]", err)
+		return
+	}
+
+	for _, f := range files {
+		names = append(names, strings.TrimPrefix(f, path))
+	}
+
+	return
 }
 
 // Download image file from URL and return as canvas.Image

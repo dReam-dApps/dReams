@@ -8,6 +8,7 @@ import (
 	"image/color"
 	"math"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -924,7 +925,10 @@ func SendMessageMenu(dest string, window_icon fyne.Resource) {
 
 		send_button = widget.NewButton("Send Message", func() {
 			if message_entry.Text != "" {
-				rings := rpc.StringToUint64(ringsize.Selected)
+				rings, err := strconv.ParseUint(ringsize.Selected, 10, 64)
+				if err != nil {
+					rings = 16
+				}
 				go rpc.SendMessage(dest_entry.Text, message_entry.Text, rings)
 				Assets.Button.messaging = false
 				smw.Close()

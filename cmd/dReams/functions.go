@@ -6,6 +6,7 @@ import (
 	"image/color"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"syscall"
@@ -520,22 +521,16 @@ func checkConnection() {
 			menu.Assets.Swap.Show()
 		}
 
-		if !rpc.Wallet.RPC.IsClosed() {
-			connect_select.DisableIndex(1)
-		} else if !rpc.Wallet.WS.IsClosed() {
-			connect_select.DisableIndex(0)
-		}
-
 	} else {
-		if !rpc.Wallet.WS.IsConnecting() && !rpc.Wallet.WS.IsRequesting() {
+		if !rpc.Wallet.WS.IsClosed() {
+			if !rpc.Wallet.WS.IsConnecting() && !rpc.Wallet.WS.IsRequesting() {
+				rpc.Wallet.CloseConnections("dReams")
+			}
+		} else if !rpc.Wallet.RPC.IsClosed() {
 			rpc.Wallet.CloseConnections("dReams")
-			connect_select.EnableIndex(0)
-		} else {
-			connect_select.DisableIndex(0)
 		}
 		disconnected()
 		gnomon.Checked(false)
-		connect_select.EnableIndex(1)
 	}
 }
 
@@ -719,6 +714,7 @@ func rpcConnection() fyne.CanvasObject {
 			button.Text = "Connect"
 			button.Refresh()
 			connect_select.EnableIndex(1)
+			connect_select.EnableIndex(2)
 			return
 		}
 
@@ -726,12 +722,14 @@ func rpcConnection() fyne.CanvasObject {
 			rpc.Wallet.RPC.Init()
 			rpc.GetAddress("dReams")
 			checkConnection()
-			if !rpc.Wallet.RPC.IsClosed() {
+			if rpc.Wallet.IsConnected() {
 				button.Importance = widget.HighImportance
 				button.Text = "Disconnect"
 				button.Refresh()
 				entryAuth.Disable()
 				entryPort.Disable()
+				connect_select.DisableIndex(1)
+				connect_select.DisableIndex(2)
 			}
 		}()
 	}
@@ -787,6 +785,7 @@ func xswdConnection() fyne.CanvasObject {
 			button.Text = "Connect"
 			button.Refresh()
 			connect_select.EnableIndex(0)
+			connect_select.EnableIndex(2)
 			return
 		}
 
@@ -794,6 +793,7 @@ func xswdConnection() fyne.CanvasObject {
 			button.Disable()
 			entryPort.Disable()
 			connect_select.DisableIndex(0)
+			connect_select.DisableIndex(2)
 			if rpc.Wallet.WS.Init(dReams.XSWD) {
 				rpc.GetAddress("dReams")
 				if rpc.Wallet.IsConnected() {
@@ -814,6 +814,7 @@ func xswdConnection() fyne.CanvasObject {
 			button.Refresh()
 			button.Enable()
 			connect_select.EnableIndex(0)
+			connect_select.EnableIndex(2)
 		}()
 	}
 
@@ -828,6 +829,82 @@ func xswdConnection() fyne.CanvasObject {
 		dwidget.NewSpacer(300, 0),
 		entryPort,
 		container.NewHBox(layout.NewSpacer(), container.NewStack(dwidget.NewSpacer(100, 0), button)))
+}
+
+// Connect/Disconnect objects for walletapi
+func accountConnection(d *dreams.AppObject) fyne.CanvasObject {
+	_, names := dreams.GetAccounts()
+
+	options := widget.NewSelectEntry(names)
+	options.PlaceHolder = "DERO.db:"
+
+	entryPass := widget.NewPasswordEntry()
+	entryPass.PlaceHolder = "Password:"
+
+	button := widget.NewButton("Sing in", nil)
+	button.OnTapped = func() {
+		go func() {
+			button.Disable()
+			defer func() {
+				button.Enable()
+			}()
+
+			if button.Text == "Sign out" {
+				if rpc.Wallet.IsConnected() && gnomon.IsRunning() && !gnomon.HasChecked() {
+					dialog.NewInformation("Gnomon Syncing", "Wait for Gnomon to sync before singing out", dReams.Window).Show()
+					return
+				}
+
+				rpc.Wallet.CloseConnections(App_Name)
+				options.Enable()
+				entryPass.Enable()
+				connect_select.EnableIndex(0)
+				connect_select.EnableIndex(1)
+				button.Importance = widget.MediumImportance
+				button.Text = "Sing in"
+				button.Refresh()
+
+				return
+			} else {
+				rpc.Ping()
+				if !rpc.Daemon.IsConnected() {
+					dialog.NewInformation("Select Daemon", "Connect to a daemon", dReams.Window).Show()
+					return
+				}
+
+				network := "mainnet"
+				if !globals.IsMainnet() {
+					network = "testnet"
+				}
+
+				dir := filepath.Join(dreams.GetDir(), network) + string(filepath.Separator)
+				path := filepath.Join(dir, options.Text)
+				if strings.HasPrefix(options.Text, "/") {
+					path = options.Text
+				}
+
+				if err := rpc.Wallet.OpenWalletFile(App_Name, path, entryPass.Text); err != nil {
+					logger.Errorf("[%s] %s\n", App_Name, err)
+					dialogError := dialog.NewInformation("Error", fmt.Sprintf("%s", err), dReams.Window)
+					dialogError.Show()
+					return
+				}
+
+				options.Disable()
+				entryPass.Disable()
+				connect_select.DisableIndex(0)
+				connect_select.DisableIndex(1)
+				button.Importance = widget.HighImportance
+				button.Text = "Sign out"
+				button.Refresh()
+			}
+		}()
+	}
+
+	return container.NewVBox(
+		dwidget.NewSpacer(300, 0),
+		options,
+		container.NewBorder(nil, nil, nil, container.NewStack(dwidget.NewSpacer(100, 0), button), entryPass))
 }
 
 // Rescan func for owned assets list

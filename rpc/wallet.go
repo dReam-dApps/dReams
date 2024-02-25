@@ -1,12 +1,16 @@
 package rpc
 
 import (
+	"encoding/base64"
 	"fmt"
 	"sync"
 	"time"
 
 	"fyne.io/fyne/v2/widget"
 	"github.com/civilware/Gnomon/structures"
+	"github.com/deroproject/derohe/cryptography/crypto"
+	"github.com/deroproject/derohe/rpc"
+	"github.com/deroproject/derohe/transaction"
 	"github.com/deroproject/derohe/walletapi"
 	"github.com/sirupsen/logrus"
 	"github.com/ybbus/jsonrpc/v3"
@@ -51,6 +55,14 @@ func (w *wallet) CloseConnections(tag string) {
 		w.WS.conn.Close()
 		w.WS.conn = nil
 	}
+
+	if w.File != nil {
+		logger.Infof("[%s] Wallet Closed\n", tag)
+		w.File.Close_Encrypted_Wallet()
+		w.File = nil
+	}
+
+	w.Connected(false)
 }
 
 // Check if wallet is connected
@@ -72,7 +84,38 @@ func (w *wallet) Connected(b bool) {
 	w.muC.Unlock()
 }
 
-// Wallet call switch for RPC or XSWD connections
+// Parse transfer params to match derohe rpcserver.Transfer()
+func parseTransferParams(p *rpc.Transfer_Params) (err error) {
+	for _, t := range p.Transfers {
+		_, err = t.Payload_RPC.CheckPack(transaction.PAYLOAD0_LIMIT)
+		if err != nil {
+			return
+		}
+	}
+
+	if len(p.SC_Code) >= 1 { // decode SC from base64 if possible, since json has limitations
+		if sc, err := base64.StdEncoding.DecodeString(p.SC_Code); err == nil {
+			p.SC_Code = string(sc)
+		}
+	}
+
+	if p.SC_Code != "" && p.SC_ID == "" {
+		p.SC_RPC = append(p.SC_RPC, rpc.Argument{Name: rpc.SCACTION, DataType: rpc.DataUint64, Value: uint64(rpc.SC_INSTALL)})
+		p.SC_RPC = append(p.SC_RPC, rpc.Argument{Name: rpc.SCCODE, DataType: rpc.DataString, Value: p.SC_Code})
+	}
+
+	if p.SC_ID != "" {
+		p.SC_RPC = append(p.SC_RPC, rpc.Argument{Name: rpc.SCACTION, DataType: rpc.DataUint64, Value: uint64(rpc.SC_CALL)})
+		p.SC_RPC = append(p.SC_RPC, rpc.Argument{Name: rpc.SCID, DataType: rpc.DataHash, Value: crypto.HashHexToHash(p.SC_ID)})
+		if p.SC_Code != "" {
+			p.SC_RPC = append(p.SC_RPC, rpc.Argument{Name: rpc.SCCODE, DataType: rpc.DataString, Value: p.SC_Code})
+		}
+	}
+
+	return
+}
+
+// Wallet call switch for RPC, XSWD or walletapi connections
 func (w *wallet) CallFor(out interface{}, method string, params ...interface{}) (err error) {
 	if w.RPC.client != nil {
 		if err = w.RPC.CallFor(&out, method, params...); err != nil {
@@ -86,6 +129,116 @@ func (w *wallet) CallFor(out interface{}, method string, params ...interface{}) 
 
 		if err = w.WS.CallFor(&out, method, jsonrpc.Params(params...)); err != nil {
 			return
+		}
+	} else if w.File != nil {
+		switch method {
+		case "transfer":
+			result, ok := out.(*rpc.Transfer_Result)
+			if !ok {
+				return fmt.Errorf("expected out to be *rpc.Transfer_Result, got %T", out)
+			}
+
+			if params == nil {
+				return fmt.Errorf("params can not be nil for %s", method)
+			}
+
+			if p, ok := params[0].(*rpc.Transfer_Params); ok {
+				err = parseTransferParams(p)
+				if err != nil {
+					return
+				}
+
+				var tx *transaction.Transaction
+				tx, err = w.File.TransferPayload0(p.Transfers, p.Ringsize, false, p.SC_RPC, p.Fees, false)
+				if err != nil {
+					return
+				}
+
+				err = w.File.SendTransaction(tx)
+				if err != nil {
+					return
+				}
+
+				result.TXID = tx.GetHash().String()
+
+			} else {
+				err = fmt.Errorf("expected params to be *rpc.Transfer_Params, got %T", params[0])
+			}
+		case "GetBalance":
+			result, ok := out.(*rpc.GetBalance_Result)
+			if !ok {
+				return fmt.Errorf("expected out to be *rpc.GetBalance_Result, got %T", out)
+			}
+
+			if params == nil {
+				return fmt.Errorf("params can not be nil for %s", method)
+			}
+
+			if p, ok := params[0].(*rpc.GetBalance_Params); ok {
+				var unlocked, locked uint64
+				if p.SCID.IsZero() {
+					unlocked, locked = w.File.Get_Balance()
+				} else {
+					unlocked, locked = w.File.Get_Balance_scid(p.SCID)
+				}
+
+				result.Balance = locked
+				result.Unlocked_Balance = unlocked
+			} else {
+				err = fmt.Errorf("expected out to be *rpc.GetBalance_Params, got %T", params[0])
+			}
+		case "GetTransfers":
+			result, ok := out.(*rpc.Get_Transfers_Result)
+			if !ok {
+				return fmt.Errorf("expected out to be *rpc.Get_Transfers_Result, got %T", out)
+			}
+
+			if params == nil {
+				return fmt.Errorf("params can not be nil for %s", method)
+			}
+
+			if p, ok := params[0].(*rpc.Get_Transfers_Params); ok {
+				result.Entries = w.File.Show_Transfers(p.SCID, p.Coinbase, p.In, p.Out, p.Min_Height, p.Max_Height, p.Sender, p.Receiver, p.DestinationPort, p.SourcePort)
+			} else {
+				err = fmt.Errorf("expected out to be *rpc.Get_Transfers_Params, got %T", params[0])
+			}
+		case "GetTransferByTXID":
+			result, ok := out.(*rpc.Get_Transfer_By_TXID_Result)
+			if !ok {
+				return fmt.Errorf("expected out to be *rpc.Get_Transfer_By_TXID_Result, got %T", out)
+			}
+
+			if params == nil {
+				return fmt.Errorf("params can not be nil for %s", method)
+			}
+
+			if p, ok := params[0].(*rpc.Get_Transfer_By_TXID_Params); ok {
+				scid, entry := w.File.Get_Payments_TXID(p.SCID, p.TXID)
+				result.SCID = scid
+				result.Entry = entry
+			} else {
+				err = fmt.Errorf("expected out to be *rpc.Get_Transfer_By_TXID_Params, got %T", params[0])
+			}
+		case "GetAddress":
+			result, ok := out.(*rpc.GetAddress_Result)
+			if !ok {
+				return fmt.Errorf("expected out to be *rpc.GetAddress_Result, got %T", out)
+			}
+
+			result.Address = w.File.GetAddress().String()
+
+		case "GetHeight":
+			result, ok := out.(*rpc.GetHeight_Result)
+			if !ok {
+				return fmt.Errorf("expected out to be *rpc.GetHeight_Result, got %T", out)
+			}
+
+			result.Height = w.File.Get_Height()
+		// case "Echo":
+		// 	out = "Wallet " + strings.Join(params[0].([]string), " ")
+
+		default:
+			err = fmt.Errorf("method %s is not available", method)
 		}
 	} else {
 		err = fmt.Errorf("wallet not connected for %s", method)
@@ -161,6 +314,22 @@ func (w *wallet) GetAllBalances() {
 	w.Lock()
 	defer w.Unlock()
 
+	if w.RPC.client == nil && w.WS.conn == nil && w.File != nil {
+		for name := range w.balances {
+			var bal uint64
+			if name == "DERO" {
+				bal, _ = w.File.Get_Balance()
+			} else {
+				bal, _ = w.File.Get_Balance_scid(crypto.HashHexToHash(w.balances[name].scid))
+			}
+
+			w.balances[name].atomic = bal
+			w.balances[name].format = FromAtomic(bal, w.balances[name].decimal)
+		}
+
+		return
+	}
+
 	if w.IsConnected() {
 		for name := range w.balances {
 			var bal uint64
@@ -185,7 +354,36 @@ func (w *wallet) GetAllBalances() {
 
 // Sync calls wallet.Echo, wallet.GetHeight and wallet.GetAllBalances if wallet is connected
 func (w *wallet) Sync() {
-	w.Echo()
+	if w.File != nil {
+		w.Lock()
+		walletapi.Daemon_Endpoint_Active = Daemon.Rpc
+		if err := walletapi.Connect(Daemon.Rpc); err != nil {
+			logger.Errorln("[Sync]", err)
+			w.Unlock()
+			w.Connected(false)
+			return
+		}
+
+		w.Unlock()
+		w.Connected(true)
+	} else {
+		w.Echo()
+	}
+
 	w.GetHeight()
 	w.GetAllBalances()
+}
+
+func (w *wallet) OpenWalletFile(tag, path, password string) (err error) {
+	w.File, err = walletapi.Open_Encrypted_Wallet(path, password)
+	if err != nil {
+		return
+	}
+
+	w.File.SetNetwork(true)
+	w.File.SetOnlineMode()
+	GetAddress(tag)
+	w.Connected(true)
+
+	return
 }

@@ -657,18 +657,30 @@ func place() *fyne.Container {
 
 // dReams wallet layout
 func placeWall(intros []menu.IntroText) *container.Split {
-	daemon_cont := container.NewBorder(nil, nil, dwidget.NewSpacer(54, 0), nil, daemonRPCEntry())
+	daemon_cont := container.NewVBox(daemonRPCEntry())
+
+	layoutRPC := container.NewVBox(daemon_cont, rpcConnection())
+	layoutXSWD := container.NewVBox(daemon_cont, xswdConnection())
+	layoutFile := container.NewVBox(daemon_cont, accountConnection(&dReams))
 
 	connect_select = container.NewAppTabs(
-		container.NewTabItem("RPC", rpcConnection()),
-		container.NewTabItem("XSWD", xswdConnection()))
+		container.NewTabItem("RPC", layoutRPC),
+		container.NewTabItem("XSWD", layoutXSWD),
+		container.NewTabItem("DERO", layoutFile))
 
 	connect_select.SetTabLocation(container.TabLocationLeading)
+	connect_select.OnSelected = func(ti *container.TabItem) {
+		switch ti.Text {
+		case "DERO":
+			_, names := dreams.GetAccounts()
+			layoutFile.Objects[1].(*fyne.Container).Objects[1].(*widget.SelectEntry).SetOptions(names)
+		}
+	}
 
 	daemon_check_cont := container.NewVBox(daemonConnectedBox())
 
 	connect_tabs := container.NewAppTabs(
-		container.NewTabItem("Connect", container.NewCenter(container.NewVBox(daemon_cont, connect_select, menu.InfoDisplay()))),
+		container.NewTabItem("Connect", container.NewCenter(container.NewVBox(container.NewStack(dwidget.NewSpacer(0, 120), connect_select), menu.InfoDisplay()))),
 		container.NewTabItem("Gnomon", container.NewCenter(gnomon.ControlPanel(dReams.Window))))
 
 	connect_tabs.OnSelected = func(ti *container.TabItem) {
