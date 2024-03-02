@@ -563,7 +563,7 @@ func (g *Gnomon) ControlPanel(w fyne.Window) *fyne.Container {
 	delete_db := widget.NewButton("Delete DB", func() {
 		dialog.NewConfirm("Delete DB", "This will delete your current Gnomon DB", func(b bool) {
 			if b {
-				os.RemoveAll(filepath.Clean("gnomondb"))
+				os.RemoveAll(filepath.Clean(filepath.Join("datashards", "gnomon")))
 				dialog.NewInformation("Gnomon", "DB Deleted", w).Show()
 				rpc.PrintLog("[Gnomon] DB deleted")
 
