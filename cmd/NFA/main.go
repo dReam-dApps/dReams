@@ -42,7 +42,7 @@ func main() {
 	gnomes.InitLogrusLog(logrus.InfoLevel)
 
 	// Read config.json file
-	config := menu.ReadDreamsConfig(appName)
+	config := menu.GetSettings(appName)
 
 	// New gnomes instance for app
 	gnomon := gnomes.NewGnomes()
@@ -79,7 +79,7 @@ func main() {
 			save.Daemon = []string{rpc.Daemon.Rpc}
 		}
 
-		menu.WriteDreamsConfig(save)
+		menu.StoreSettings(save)
 		menu.SetClose(true)
 		gnomon.Stop(appName)
 		d.StopProcess()

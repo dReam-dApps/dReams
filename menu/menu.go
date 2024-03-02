@@ -114,6 +114,76 @@ func DappEnabled(dapp string) bool {
 	return false
 }
 
+// Store settings to local storage
+func StoreSettings(store dreams.SaveData) {
+	if store.Daemon != nil && store.Daemon[0] == "" {
+		if Control.Daemon != "" {
+			store.Daemon[0] = Control.Daemon
+		} else {
+			store.Daemon[0] = "127.0.0.1:10102"
+		}
+	}
+
+	err := dreams.StoreValue("settings", "config", store)
+	if err != nil {
+		logger.Errorln("[StoreSettings]", err)
+	}
+}
+
+// Get settings from local storage
+func GetSettings(tag string) (saved dreams.SaveData) {
+	err := dreams.GetValue("settings", "config", &saved)
+	if err != nil {
+		logger.Errorf("[%s] %s\n", tag, err)
+	}
+
+	return
+}
+
+// Set menu and Gnomon settings from dreams.SaveData,
+// a nil or invalid 'saved' value will use default settings
+func SetSettings(saved dreams.SaveData) {
+	gnomon.SetParallel(1)
+	gnomon.SetDBStorageType("boltdb")
+	gnomon.SetFastsync(true, false, 10000)
+
+	bundle.AppColor = saved.Skin
+
+	if saved.Daemon != nil {
+		Control.Daemon = saved.Daemon[0]
+	}
+
+	if saved.Dapps != nil {
+		Control.Lock()
+		Control.Dapps = saved.Dapps
+		Control.Unlock()
+	}
+
+	if saved.Theme != "" {
+		dreams.Theme.Name = saved.Theme
+	}
+
+	if saved.Assets != nil {
+		Assets.Lock()
+		Assets.Enabled = saved.Assets
+		Assets.Unlock()
+	}
+
+	if saved.DBtype == "gravdb" {
+		gnomon.SetDBStorageType(saved.DBtype)
+	}
+
+	if saved.Para > 0 && saved.Para < 6 {
+		gnomon.SetParallel(saved.Para)
+	}
+
+	if saved.FSDiff > 0 {
+		gnomon.SetFastsync(true, saved.FSForce, saved.FSDiff)
+	}
+}
+
+// Deprecated: WriteDreamsConfig is deprecated. Use StoreSettings and GetSettings for app storage
+//
 // Save dReams config.json file for platform wide dApp use
 func WriteDreamsConfig(u dreams.SaveData) {
 	if u.Daemon != nil && u.Daemon[0] == "" {
@@ -137,6 +207,8 @@ func WriteDreamsConfig(u dreams.SaveData) {
 	}
 }
 
+// Deprecated: ReadDreamsConfig is deprecated. Use GetSettings and StoreSettings for app storage
+//
 // Read dReams platform config.json file
 //   - tag for log print
 //   - Sets up directory if none exists

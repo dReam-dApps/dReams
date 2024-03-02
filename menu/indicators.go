@@ -194,7 +194,7 @@ func StopIndicators(these []*DreamsIndicator) {
 	gnomes.Indicator.Full.Stop()
 	Control.Indicator.Daemon.Stop()
 	Control.Indicator.Wallet.Stop()
-	Control.Indicator.TX.Start()
+	Control.Indicator.TX.Stop()
 	for _, ind := range these {
 		ind.Animation.Stop()
 	}

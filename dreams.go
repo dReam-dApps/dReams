@@ -36,16 +36,14 @@ const (
 
 // Saved data for users local config.json file
 type SaveData struct {
-	Skin    color.Gray16 `json:"skin"`
-	Daemon  []string     `json:"daemon"`
-	Tables  []string     `json:"tables"`
-	Predict []string     `json:"predict"`
-	Sports  []string     `json:"sports"`
-	Theme   string       `json:"theme"`
-	DBtype  string       `json:"dbType"`
-	Para    int          `json:"paraBlocks"`
-	FSForce bool         `json:"fastsyncForce"`
-	FSDiff  int64        `json:"fastsyncDiff"`
+	Skin   color.Gray16 `json:"skin"`
+	Daemon []string     `json:"daemon"`
+	Theme  string       `json:"theme"`
+
+	DBtype  string `json:"dbType"`
+	Para    int    `json:"paraBlocks"`
+	FSForce bool   `json:"fastsyncForce"`
+	FSDiff  int64  `json:"fastsyncDiff"`
 
 	Assets map[string]bool `json:"assets"`
 	Dapps  map[string]bool `json:"dapps"`

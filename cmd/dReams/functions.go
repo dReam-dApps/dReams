@@ -98,14 +98,8 @@ func flags() {
 func init() {
 	dReams.SetOS()
 	gnomes.InitLogrusLog(logrus.InfoLevel)
-	saved := menu.ReadDreamsConfig("dReams")
-	if saved.Daemon != nil {
-		menu.Control.Daemon = saved.Daemon[0]
-	}
-
-	holdero.SetFavoriteTables(saved.Tables)
-	prediction.Predict.Favorites.SCIDs = saved.Predict
-	prediction.Sports.Favorites.SCIDs = saved.Sports
+	saved := menu.GetSettings(App_Name)
+	menu.SetSettings(saved)
 
 	menu.Market.DreamsFilter = true
 
@@ -114,7 +108,8 @@ func init() {
 	go func() {
 		<-c
 		menu.SetClose(true)
-		menu.WriteDreamsConfig(save())
+		menu.StoreSettings(saveSettings())
+		dreams.StoreAccount(saveAccount())
 		fmt.Println()
 		dappCloseCheck()
 		menu.Info.SetStatus("Putting Gnomon to Sleep")
@@ -126,14 +121,11 @@ func init() {
 	}()
 }
 
-// Build save struct for local preferences
-func save() dreams.SaveData {
+// Build dreams.SaveData struct for storage of local settings
+func saveSettings() dreams.SaveData {
 	return dreams.SaveData{
 		Skin:    bundle.AppColor,
 		Daemon:  []string{rpc.Daemon.Rpc},
-		Tables:  holdero.GetFavoriteTables(),
-		Predict: prediction.Predict.Favorites.SCIDs,
-		Sports:  prediction.Sports.Favorites.SCIDs,
 		Theme:   dreams.Theme.Name,
 		FSForce: gnomon.GetFastsync().ForceFastSync,
 		FSDiff:  gnomon.GetFastsync().ForceFastSyncDiff,
@@ -142,6 +134,17 @@ func save() dreams.SaveData {
 		Assets:  menu.Assets.Enabled,
 		Dapps:   menu.Control.Dapps,
 	}
+}
+
+// Add account data to dreams.AccountEncrypted for account storage
+func saveAccount() *dreams.AccountEncrypted {
+	new := &dreams.AccountData{
+		Tables:  holdero.GetFavoriteTables(),
+		Predict: prediction.Predict.Favorites.SCIDs,
+		Sports:  prediction.Sports.Favorites.SCIDs,
+	}
+
+	return dreams.AddAccountData(new)
 }
 
 // // Make system tray with opts
@@ -172,10 +175,28 @@ func save() dreams.SaveData {
 // 	return false
 // }
 
+// Try to load account from storage if exists and set preferences
+func loadAccount() {
+	if dreams.CreateAccountIfNone() {
+		logger.Println("[dReams] Loading account")
+		var saved dreams.AccountData
+		err := dreams.GetAccount(&saved)
+		if err != nil {
+			logger.Errorln("[loadAccount]", err)
+			return
+		}
+
+		holdero.SetFavoriteTables(saved.Tables)
+		prediction.Predict.Favorites.SCIDs = saved.Predict
+		prediction.Sports.Favorites.SCIDs = saved.Sports
+	}
+}
+
 // This is what we want to scan wallet for when Gnomon is synced
 func gnomonScan(contracts map[string]string) {
 	screen, bar := syncScreen()
 	menu_tabs.Items[2].Content = screen
+	loadAccount()
 	menu.CheckWalletNames(rpc.Wallet.Address)
 	screen.Objects[0].(*fyne.Container).Objects[1].(*canvas.Text).Text = "Syncing NFAs..."
 	checkDreamsNFAs(contracts, bar)
@@ -705,6 +726,7 @@ func rpcConnection() fyne.CanvasObject {
 				return
 			}
 
+			dreams.StoreAccount(saveAccount())
 			button.Importance = widget.MediumImportance
 			entryAuth.Enable()
 			entryPort.Enable()
@@ -777,6 +799,7 @@ func xswdConnection() fyne.CanvasObject {
 				return
 			}
 
+			dreams.StoreAccount(saveAccount())
 			button.Importance = widget.MediumImportance
 			rpc.Wallet.Connected(false)
 			rpc.Wallet.CloseConnections("dReams")
@@ -853,6 +876,11 @@ func accountConnection(d *dreams.AppObject) fyne.CanvasObject {
 				if rpc.Wallet.IsConnected() && gnomon.IsRunning() && !gnomon.HasChecked() {
 					dialog.NewInformation("Gnomon Syncing", "Wait for Gnomon to sync before singing out", dReams.Window).Show()
 					return
+				}
+
+				err := dreams.StoreAccount(saveAccount())
+				if err != nil {
+					logger.Errorln("[dReams]", err)
 				}
 
 				rpc.Wallet.CloseConnections(App_Name)

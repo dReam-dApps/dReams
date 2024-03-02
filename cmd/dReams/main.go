@@ -48,7 +48,8 @@ func main() {
 
 	close := func() {
 		menu.SetClose(true)
-		menu.WriteDreamsConfig(save())
+		menu.StoreSettings(saveSettings())
+		dreams.StoreAccount(saveAccount())
 		dappCloseCheck()
 		menu.Info.SetStatus("Putting Gnomon to Sleep")
 		gnomon.Stop("dReams")
