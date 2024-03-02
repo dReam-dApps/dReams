@@ -8,7 +8,7 @@ require (
 	github.com/SixofClubsss/Baccarat v0.3.2-0.20240302070844-9a34ea39508b
 	github.com/SixofClubsss/Duels v0.1.2-0.20240302070111-3fdbc0b65a66
 	github.com/SixofClubsss/Grokked v0.1.2-0.20240302065806-20b078821c76
-	github.com/SixofClubsss/Holdero v0.3.2-0.20240302065545-3ebd951374d9
+	github.com/SixofClubsss/Holdero v0.3.2-0.20240302202549-faabc4241d27
 	github.com/SixofClubsss/Iluma v0.3.2-0.20240302065119-cb5f0d5f9e30
 	github.com/SixofClubsss/dDice v0.0.0-20240302071103-35b7a0593995
 	github.com/SixofClubsss/dPrediction v0.3.2-0.20240302070642-46c3524985a6

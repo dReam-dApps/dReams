@@ -57,8 +57,8 @@ github.com/SixofClubsss/Duels v0.1.2-0.20240302070111-3fdbc0b65a66 h1:jUROVWldMG
 github.com/SixofClubsss/Duels v0.1.2-0.20240302070111-3fdbc0b65a66/go.mod h1:yOivbDNKFT06M4vg+qOeABIh3fLrUEt4Tm0cIVKQ51M=
 github.com/SixofClubsss/Grokked v0.1.2-0.20240302065806-20b078821c76 h1:GH03r0S3XR24kpU5zfntZpmnJNfiWESQGOkU8zCwq2s=
 github.com/SixofClubsss/Grokked v0.1.2-0.20240302065806-20b078821c76/go.mod h1:VfYDYZvQe6cFv8Zoom4iV2o43j8fU+q26UTZInH8yCw=
-github.com/SixofClubsss/Holdero v0.3.2-0.20240302065545-3ebd951374d9 h1:6A+dNPeKBs/zBeFwqN5A2ahECd1bE8iCiNs/Zfo4zrI=
-github.com/SixofClubsss/Holdero v0.3.2-0.20240302065545-3ebd951374d9/go.mod h1:9Oy8F9L3Aqltg2HcPebrLH1DOnxzh7Ai2aHIe23Qsp0=
+github.com/SixofClubsss/Holdero v0.3.2-0.20240302202549-faabc4241d27 h1:j0kUArhSKgSV1wsVLUJ6IGsTavu+qeyDltu5QFyzSSs=
+github.com/SixofClubsss/Holdero v0.3.2-0.20240302202549-faabc4241d27/go.mod h1:9Oy8F9L3Aqltg2HcPebrLH1DOnxzh7Ai2aHIe23Qsp0=
 github.com/SixofClubsss/Iluma v0.3.2-0.20240302065119-cb5f0d5f9e30 h1:ImrF8Q2qNeZVMTPPqeCMaAfY4DYgjUCBcUkLbmBU71g=
 github.com/SixofClubsss/Iluma v0.3.2-0.20240302065119-cb5f0d5f9e30/go.mod h1:WAm4cJY0AiAj2cmckH9/F/qALd/aU99GCJdLJfJ3sPc=
 github.com/SixofClubsss/dDice v0.0.0-20240302071103-35b7a0593995 h1:xk/1QhFwiyfMAUz85GBQw++bspJFUytH7fUegsIHHQ0=
