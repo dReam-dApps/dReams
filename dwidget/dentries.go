@@ -381,6 +381,8 @@ func onTapped(tag string, selectType *widget.Select, entryAuth, entryPass *widge
 				entryRPC.Disable()
 				entryAuth.Disable()
 				selectType.Disable()
+			} else {
+				rpc.Wallet.CloseConnections(tag)
 			}
 		case "XSWD":
 			// Disconnect from XSWD
