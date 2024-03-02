@@ -725,8 +725,11 @@ func rpcConnection() fyne.CanvasObject {
 				dialog.NewInformation("Gnomon Syncing", "Wait for Gnomon to sync before disconnecting", dReams.Window).Show()
 				return
 			}
+			if err := dreams.StoreAccount(saveAccount()); err != nil {
+				logger.Errorln("[dReams]", err)
+			}
+			dreams.SignOut()
 
-			dreams.StoreAccount(saveAccount())
 			button.Importance = widget.MediumImportance
 			entryAuth.Enable()
 			entryPort.Enable()
@@ -799,7 +802,11 @@ func xswdConnection() fyne.CanvasObject {
 				return
 			}
 
-			dreams.StoreAccount(saveAccount())
+			if err := dreams.StoreAccount(saveAccount()); err != nil {
+				logger.Errorln("[dReams]", err)
+			}
+			dreams.SignOut()
+
 			button.Importance = widget.MediumImportance
 			rpc.Wallet.Connected(false)
 			rpc.Wallet.CloseConnections("dReams")
@@ -855,7 +862,7 @@ func xswdConnection() fyne.CanvasObject {
 }
 
 // Connect/Disconnect objects for walletapi
-func accountConnection(d *dreams.AppObject) fyne.CanvasObject {
+func accountConnection() fyne.CanvasObject {
 	_, names := dreams.GetAccounts()
 
 	options := widget.NewSelectEntry(names)
@@ -878,10 +885,10 @@ func accountConnection(d *dreams.AppObject) fyne.CanvasObject {
 					return
 				}
 
-				err := dreams.StoreAccount(saveAccount())
-				if err != nil {
+				if err := dreams.StoreAccount(saveAccount()); err != nil {
 					logger.Errorln("[dReams]", err)
 				}
+				dreams.SignOut()
 
 				rpc.Wallet.CloseConnections(App_Name)
 				options.Enable()

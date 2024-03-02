@@ -661,7 +661,7 @@ func placeWall(intros []menu.IntroText) *container.Split {
 
 	layoutRPC := container.NewVBox(daemon_cont, rpcConnection())
 	layoutXSWD := container.NewVBox(daemon_cont, xswdConnection())
-	layoutFile := container.NewVBox(daemon_cont, accountConnection(&dReams))
+	layoutFile := container.NewVBox(daemon_cont, accountConnection())
 
 	connect_select = container.NewAppTabs(
 		container.NewTabItem("RPC", layoutRPC),

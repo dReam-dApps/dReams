@@ -51,8 +51,13 @@ const (
 // Account variable
 var myAccount *AccountEncrypted
 
-// Initialize myAccount variable
+// Initialize myAccount variable when package is used
 func init() {
+	SignOut()
+}
+
+// Reset myAccount variable
+func SignOut() {
 	myAccount = &AccountEncrypted{
 		account: &AccountData{},
 	}
@@ -161,9 +166,7 @@ func GetValue(bucket, key string, out interface{}) (err error) {
 // Add account data to account variable
 func AddAccountData(data *AccountData) *AccountEncrypted {
 	if myAccount.account == nil {
-		myAccount = &AccountEncrypted{
-			account: &AccountData{},
-		}
+		SignOut()
 	}
 
 	myAccount.account = data
