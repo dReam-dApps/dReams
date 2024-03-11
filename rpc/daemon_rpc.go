@@ -135,10 +135,23 @@ func DaemonVersion() (version string) {
 	return result.Version
 }
 
+// Gets daemon info
+func GetDaemonInfo() (result *rpc.GetInfo_Result) {
+	client, ctx, cancel := SetDaemonClient(Daemon.Rpc)
+	defer cancel()
+
+	if err := client.CallFor(ctx, &result, "DERO.GetInfo"); err != nil {
+		logger.Errorf("[GetDaemonInfo] %s\n", err)
+		return
+	}
+
+	return
+}
+
 // SC call gas estimate
 //   - tag for log print
 //   - Pass args and transfers for call
-//   - If result is > max + 120, then returns max + 120
+//   - If result is > max + 50, then returns max + 50
 func GasEstimate(scid, tag string, args rpc.Arguments, t []rpc.Transfer, max uint64) uint64 {
 	client, ctx, cancel := SetDaemonClient(Daemon.Rpc)
 	defer cancel()
