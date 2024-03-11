@@ -3,7 +3,7 @@ module github.com/dReam-dApps/dReams
 go 1.21.5
 
 require (
-	fyne.io/fyne/v2 v2.4.4-0.20231230213034-537ba82a15dc
+	fyne.io/fyne/v2 v2.4.4
 	fyne.io/x/fyne v0.0.0-20230717140956-ad10f343f15e
 	github.com/SixofClubsss/Baccarat v0.3.2-0.20240302070844-9a34ea39508b
 	github.com/SixofClubsss/Duels v0.1.2-0.20240302070111-3fdbc0b65a66
@@ -45,7 +45,7 @@ require (
 	github.com/go-logr/logr v1.2.3 // indirect
 	github.com/go-logr/zapr v1.2.3 // indirect
 	github.com/go-text/render v0.0.0-20230619120952-35bccb6164b8 // indirect
-	github.com/go-text/typesetting v0.0.0-20230616162802-9c17dd34aa4a // indirect
+	github.com/go-text/typesetting v0.1.0 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/gopherjs/gopherjs v1.17.2 // indirect
 	github.com/jsummers/gobmp v0.0.0-20151104160322-e2ba15ffa76e // indirect
@@ -58,7 +58,6 @@ require (
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
-	github.com/rymdport/portal v0.0.0-20231123202536-da45518a87bb // indirect
 	github.com/satori/go.uuid v1.2.0 // indirect
 	github.com/segmentio/fasthash v1.0.3 // indirect
 	github.com/srwiley/oksvg v0.0.0-20221011165216-be6e8873101c // indirect
