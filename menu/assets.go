@@ -467,6 +467,23 @@ func PlaceAssets(tag string, profile fyne.CanvasObject, rescan func(), icon fyne
 		nil,
 		nil)
 
+	btnDatashard := widget.NewButtonWithIcon("Delete Datashard", dreams.FyneIcon("delete"), nil)
+	btnDatashard.OnTapped = func() {
+		if gnomon.IsScanning() {
+			dialog.NewInformation("Profile", "Gnomon is syncing profile, please wait", d.Window).Show()
+		} else {
+			dialog.NewConfirm("Delete Datashard", fmt.Sprintf("This will delete local storage for account:\n\n%s", rpc.Wallet.Address), func(b bool) {
+				if b {
+					dreams.DeleteShard()
+					dialog.NewInformation("Profile", "Datashard Deleted", d.Window).Show()
+					rpc.PrintLog("[Profile] Datashard deleted")
+				}
+			}, d.Window).Show()
+		}
+	}
+
+	btnDatashard.Importance = widget.LowImportance
+
 	var tab *container.TabItem
 	tabs := container.NewAppTabs(
 		container.NewTabItemWithIcon("", bundle.ResourceMarketCirclePng, layout.NewSpacer()),
@@ -477,7 +494,7 @@ func PlaceAssets(tag string, profile fyne.CanvasObject, rescan func(), icon fyne
 					canvas.NewLine(bundle.TextColor),
 					dwidget.NewCanvasText("User Profile", 18, fyne.TextAlignCenter),
 					canvas.NewLine(bundle.TextColor))),
-			nil,
+			container.NewHBox(layout.NewSpacer(), btnDatashard),
 			nil,
 			nil,
 			profile)),
@@ -514,8 +531,8 @@ func PlaceAssets(tag string, profile fyne.CanvasObject, rescan func(), icon fyne
 			scroll_buttons.Show()
 		case "Profile":
 			scroll_buttons.Hide()
-			if !rpc.Daemon.IsConnected() || !rpc.Wallet.IsConnected() {
-				dialog.NewInformation("Profile", "Connect to daemon and wallet to set profile", d.Window).Show()
+			if !rpc.Wallet.IsConnected() {
+				dialog.NewInformation("Profile", "Connect to a wallet to view profile", d.Window).Show()
 				tabs.Select(tab)
 				return
 			}

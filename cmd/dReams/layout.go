@@ -657,11 +657,11 @@ func place() *fyne.Container {
 
 // dReams wallet layout
 func placeWall(intros []menu.IntroText) *container.Split {
-	daemon_cont := container.NewVBox(daemonRPCEntry())
+	daemon_entry := daemonRPCEntry()
 
-	layoutRPC := container.NewVBox(daemon_cont, rpcConnection())
-	layoutXSWD := container.NewVBox(daemon_cont, xswdConnection())
-	layoutFile := container.NewVBox(daemon_cont, accountConnection())
+	layoutRPC := container.NewVBox(layout.NewSpacer(), rpcConnection())
+	layoutXSWD := container.NewVBox(layout.NewSpacer(), xswdConnection())
+	layoutFile := container.NewVBox(layout.NewSpacer(), accountConnection())
 
 	connect_select = container.NewAppTabs(
 		container.NewTabItem("RPC", layoutRPC),
@@ -679,8 +679,16 @@ func placeWall(intros []menu.IntroText) *container.Split {
 
 	daemon_check_cont := container.NewVBox(daemonConnectedBox())
 
+	connect_tab := container.NewCenter(
+		container.NewVBox(
+			container.NewStack(
+				dwidget.NewSpacer(0, 120),
+				container.NewVBox(container.NewBorder(nil, nil, dwidget.NewSpacer(53, 0), nil, daemon_entry)),
+				connect_select),
+			menu.InfoDisplay()))
+
 	connect_tabs := container.NewAppTabs(
-		container.NewTabItem("Connect", container.NewCenter(container.NewVBox(container.NewStack(dwidget.NewSpacer(0, 120), connect_select), menu.InfoDisplay()))),
+		container.NewTabItem("Connect", connect_tab),
 		container.NewTabItem("Gnomon", container.NewCenter(gnomon.ControlPanel(dReams.Window))))
 
 	connect_tabs.OnSelected = func(ti *container.TabItem) {
@@ -697,7 +705,7 @@ func placeWall(intros []menu.IntroText) *container.Split {
 				} else if gnomon.IsInitialized() {
 					dialog.NewConfirm("Gnomon Running", "Shut down Gnomon to make changes", func(b bool) {
 						if b {
-							daemon_cont.Objects[0].(*widget.SelectEntry).SetText("")
+							daemon_entry.(*widget.SelectEntry).SetText("")
 							daemon_check_cont.Objects[0].(*widget.Check).SetChecked(false)
 						} else {
 							connect_tabs.SelectIndex(0)

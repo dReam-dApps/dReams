@@ -1079,6 +1079,8 @@ func RunNFAMarket(d *dreams.AppObject, cont *fyne.Container) {
 				Market.List.Buy.UnselectAll()
 				Market.Viewing.Collection = ""
 				Market.Viewing.Asset = ""
+				Assets.Claim.Hide()
+				Assets.Button.Rescan.Hide()
 				ResetAuctionInfo()
 				synced = false
 				d.WorkDone()

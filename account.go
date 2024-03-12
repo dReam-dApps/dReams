@@ -63,6 +63,15 @@ func SignOut() {
 	}
 }
 
+// Account address storage path, connection types are stored separately
+func shardAddress() string {
+	if rpc.Wallet.File != nil {
+		return fmt.Sprintf("%x", sha1.Sum([]byte(rpc.Wallet.Address)))
+	} else {
+		return fmt.Sprintf("%x", sha1.Sum([]byte(rpc.Wallet.Address+"1")))
+	}
+}
+
 // Find path for stored data
 //   - 'public' true will return settings DB
 //   - 'public' false will return account DB
@@ -82,12 +91,7 @@ func getShard(public bool) (db *bbolt.DB, err error) {
 			return
 		}
 
-		// Store connection types separately
-		if rpc.Wallet.File != nil {
-			shard = fmt.Sprintf("%x", sha1.Sum([]byte(rpc.Wallet.Address)))
-		} else {
-			shard = fmt.Sprintf("%x", sha1.Sum([]byte(rpc.Wallet.Address+"1")))
-		}
+		shard = shardAddress()
 	}
 
 	path := filepath.Join(dir, "datashards", shard)
@@ -103,6 +107,15 @@ func getShard(public bool) (db *bbolt.DB, err error) {
 	}
 
 	return
+}
+
+// Delete local storage for connected wallet
+func DeleteShard() error {
+	if rpc.Wallet.Address == "" {
+		return fmt.Errorf("no shard address")
+	}
+
+	return os.RemoveAll(filepath.Clean(filepath.Join("datashards", shardAddress())))
 }
 
 // Store a public value in DB
