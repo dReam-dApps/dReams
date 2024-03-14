@@ -306,6 +306,23 @@ func GetAssetUrl(w int, scid string) (url string) {
 	return
 }
 
+// Get name, collection and file extension of NFA
+func GetAssetInfo(scid string) (name string, collection string, extension string) {
+	if n, _ := gnomes.GetSCIDValuesByKey(scid, "nameHdr"); n != nil {
+		name = n[0]
+	}
+
+	if c, _ := gnomes.GetSCIDValuesByKey(scid, "collection"); c != nil {
+		collection = c[0]
+	}
+
+	if f, _ := gnomes.GetSCIDValuesByKey(scid, "fileURL"); f != nil {
+		extension = filepath.Ext(f[0])
+	}
+
+	return
+}
+
 // Check owner of any SCID using "owner" key
 func CheckOwner(scid string) bool {
 	if len(scid) != 64 || !gnomes.IsReady() {
