@@ -462,7 +462,7 @@ func onTapped(tag string, selectType *widget.Select, entryAuth, entryPass *widge
 
 					dir := filepath.Join(dreams.GetDir(), network) + string(filepath.Separator)
 					path := filepath.Join(dir, entryDERO.Text)
-					if strings.HasPrefix(entryDERO.Text, "/") {
+					if strings.HasPrefix(entryDERO.Text, string(filepath.Separator)) {
 						path = entryDERO.Text
 					}
 

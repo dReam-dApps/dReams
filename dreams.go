@@ -295,7 +295,7 @@ func FileExists(path, tag string) bool {
 		return true
 
 	} else if errors.Is(err, os.ErrNotExist) {
-		logger.Errorf("[%s] %s Not Found\n", tag, path)
+		logger.Warnf("[%s] %s not found\n", tag, path)
 
 		return false
 	}

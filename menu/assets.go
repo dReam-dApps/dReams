@@ -642,17 +642,17 @@ func indexEntry(w fyne.Window) fyne.CanvasObject {
 				for sc := range all {
 					if scid == sc {
 						dialog.NewInformation("Found", fmt.Sprintf("SCID %s found", scid), w).Show()
-						logger.Printf("[Search] %s Found\n", scid)
+						logger.Printf("[Search] %s found\n", scid)
 						found = true
 					}
 				}
 				if !found {
 					dialog.NewInformation("Not Found", fmt.Sprintf("Index does not contain SCID %s", scid), w).Show()
-					logger.Errorf("[Search] %s Not Found\n", scid)
+					logger.Errorf("[Search] %s not found\n", scid)
 				}
 			} else {
 				dialog.NewInformation("Not Valid", fmt.Sprintf("SCID %s is not valid", scid), w).Show()
-				logger.Errorf("[Search] %s Not Found\n", scid)
+				logger.Errorf("[Search] %s not found\n", scid)
 			}
 		}
 	})

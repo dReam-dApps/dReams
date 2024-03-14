@@ -914,7 +914,7 @@ func accountConnection() fyne.CanvasObject {
 
 				dir := filepath.Join(dreams.GetDir(), network) + string(filepath.Separator)
 				path := filepath.Join(dir, options.Text)
-				if strings.HasPrefix(options.Text, "/") {
+				if strings.HasPrefix(options.Text, string(filepath.Separator)) {
 					path = options.Text
 				}
 
