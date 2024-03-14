@@ -18,7 +18,6 @@ import (
 	"github.com/dReam-dApps/dReams/dwidget"
 	"github.com/dReam-dApps/dReams/rpc"
 	"github.com/deroproject/derohe/dvm"
-	"github.com/deroproject/derohe/walletapi"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -41,16 +40,22 @@ const (
 )
 
 type mintConfig struct {
-	Collection  string `json:"collection"`
-	Update      string `json:"update"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	TypeHdr     string `json:"typeHdr"`
-	Tags        string `json:"tags"`
-	File        string `json:"file"`
-	Cover       string `json:"cover"`
-	Icon        string `json:"icon"`
-	Sign        string `json:"sign"`
+	Collection  string   `json:"collection"`
+	Update      string   `json:"update"`
+	Name        string   `json:"name"`
+	Description string   `json:"description"`
+	TypeHdr     string   `json:"typeHdr"`
+	Tags        string   `json:"tags"`
+	Start       string   `json:"start"`
+	End         string   `json:"end"`
+	Extension   string   `json:"extension"`
+	File        []string `json:"file"`
+	Cover       []string `json:"cover"`
+	Icon        []string `json:"icon"`
+	Sign        []string `json:"sign"`
+	Multi       int      `json:"multi"`
+	Royalty     string   `json:"royalty"`
+	Artificer   string   `json:"artificer"`
 }
 
 //go:embed ART-NFA-MS1.bas
@@ -59,14 +64,14 @@ var ART_NFA_MS1 string
 // Tree object containing NFA minting instructions screen
 func HowToMintNFA(button *widget.Button) fyne.CanvasObject {
 	list := map[string][]string{
-		"":                       {"How To Mint NFAs"},
-		"How To Mint NFAs":       {"Get Started", "Single Asset", "Collection"},
-		"Get Started":            {"A NFA consists of four main parts: Asset file, Cover Image, Icon image, Dero file sign", "Each NFA is its own self contained marketplace", "This tool automates three areas of NFA installs: File sign, Contract creation, Contract install", "Storage is not provided at this point", "Entries with a * are mutable, meaning they can be updated by creator (or owner) after install", "Gas fees to install a NFA are ~0.20000 Dero", "There is a 0.00500 Dero dev fee for minting a NFA with this tool", "If minting a collection fees will be paid as each contract is installed, a total will be shown before hand", "For further info read the NFA documentation at github.com/civilware/artificer-nfa-standard"},
-		"Single Asset":           {"Disable the Collection check", "Type the name of your asset into the collection entry and click the folder button on right to set up NFA-Creation directory for your single asset", "NFA-Creation Directory", "File sign can be imported from file by clicking the file button to right of check C entry, or follow next step if you require file sign", "Single File Sign", "Fill out the rest of the information for your NFA and when complete the Create Contracts button will show", "Click Create Contract and confirm information, this will populate your bas folder with your asset contract", "Type the name of your asset in name entry and Install Contract will show if contract exists in bas folder", "Click Install Contract and confirm the install address is same as signing address", "NFA is now installed, check your wallet for NFA balance"},
-		"Single File Sign":       {"Enter minting wallet file password and open minting wallet file", "Place asset file into asset folder", "Enter the name of your asset in name entry, select extension to match file", "Click Sign File and confirm information", "Once confirmed, the file check C and file check S will population with your file signs"},
-		"Collection":             {"Collection automation installs assets of same name with incrementing numbers", "Enable the Collection check", "Type the name of your collection into the collection entry and click the folder button on right to set up NFA-Creation directory for your collection", "NFA-Creation Directory", "Enter the starting number and ending number for your collection", "File signs can be done externally and placed into sign folder, or follow next step if you require file signs", "Collection File Signs", "Make sure file signs are in sign directory for contract creation", "Fill out the rest of the information for your NFA collection and when complete the Create Contracts button will show", "The Asset Number sections are where it will add the incrementing number to your input to make the collection", "The + - buttons on top right can add or remove a increment section from Url paths", "Click Create Contract and confirm information", "Contract creation loop will start and populate your bas folder with your asset contracts, takes about 1 second per contract", "Type the name of your asset in name entry and Install Contract will show if contract exists in bas folder", "Click Install Contract and confirm the install address is same as signing address", "Minting loop will now start and installs one bas contract per block", "For larger collections this could take some time, 120 installs could take around 1 hour to complete", "If 100%, NFA collection is now installed, check your wallet for NFA balances"},
-		"Collection File Signs":  {"Enter minting wallet file password and open minting wallet file", "Place numbered asset files into asset folder", "Enter the name of your asset in name entry, select extension to match file", "Click Sign File and confirm information", "This starts a file sign loop of your selected range and stores all signed files in sign directory, takes about 1 second per sign"},
-		"NFA-Creation Directory": {"NFA-Creation directory stores collection and single asset directories", "Inside of your asset or collection directory are five sub directories", "Your main asset files are stored in asset", "Contracts created are stored in bas", "Signed files are stored in sign", "Cover and icon are optional directories at this point and are not used in the install process"},
+		"":                      {"How To Mint NFAs"},
+		"How To Mint NFAs":      {"Get Started", "Single Asset", "Collection"},
+		"Get Started":           {"A NFA consists of four main parts: Asset file, Cover Image, Icon image, Dero file sign", "Each NFA is its own self contained marketplace", "This tool automates three areas of NFA installs: File sign, Contract creation, Contract install", "Storage is not provided at this point", "Entries with a * are mutable, meaning they can be updated by creator (or owner) after install", "Gas fees to install a NFA are ~0.20000 Dero", "There is a 0.00500 Dero dev fee for minting a NFA with this tool", "If minting a collection fees will be paid as each contract is installed, a total will be shown before hand", "For further info read the NFA documentation at github.com/civilware/artificer-nfa-standard"},
+		"Single Asset":          {"Disable the Collection check", "Type the name of your asset into the collection entry and click the folder button on right to set up creation directory for your single asset", "Creation Directory", "File sign can be imported from file by clicking the file button to right of check C entry, or follow next step if you require file sign", "Single File Sign", "Fill out the rest of the information for your NFA and when complete the Create Contracts button will show", "Click Create Contract and confirm information, this will populate your bas folder with your asset contract", "Type the name of your asset in name entry and Install Contract will show if contract exists in bas folder", "Click Install Contract and confirm the install address is same as signing address", "NFA is now installed, check your wallet for NFA balance"},
+		"Single File Sign":      {"Enter minting wallet file password and open minting wallet file", "Place asset file into asset folder", "Enter the name of your asset in name entry, select extension to match file", "Click Sign File and confirm information", "Once confirmed, the file check C and file check S will population with your file signs"},
+		"Collection":            {"Collection automation installs assets of same name with incrementing numbers", "Enable the Collection check", "Type the name of your collection into the collection entry and click the folder button on right to set up creation directory for your collection", "Creation Directory", "Enter the starting number and ending number for your collection", "File signs can be done externally and placed into sign folder, or follow next step if you require file signs", "Collection File Signs", "Make sure file signs are in sign directory for contract creation", "Fill out the rest of the information for your NFA collection and when complete the Create Contracts button will show", "The Asset Number sections are where it will add the incrementing number to your input to make the collection", "The + - buttons on top right can add or remove a increment section from Url paths", "Click Create Contract and confirm information", "Contract creation loop will start and populate your bas folder with your asset contracts, takes about 1 second per contract", "Type the name of your asset in name entry and Install Contract will show if contract exists in bas folder", "Click Install Contract and confirm the install address is same as signing address", "Minting loop will now start and installs one bas contract per block", "For larger collections this could take some time, 120 installs could take around 1 hour to complete", "If 100%, NFA collection is now installed, check your wallet for NFA balances"},
+		"Collection File Signs": {"Enter minting wallet file password and open minting wallet file", "Place numbered asset files into asset folder", "Enter the name of your asset in name entry, select extension to match file", "Click Sign File and confirm information", "This starts a file sign loop of your selected range and stores all signed files in sign directory, takes about 1 second per sign"},
+		"Creation Directory":    {"Creation directory stores collection and single asset directories", "Inside of your asset or collection directory are five sub directories", "Your main asset files are stored in asset", "Contracts created are stored in bas", "Signed files are stored in sign", "Cover and icon are optional directories at this point and are not used in the install process"},
 	}
 
 	tree := widget.NewTreeWithStrings(list)
@@ -84,7 +89,7 @@ func HowToMintNFA(button *widget.Button) fyne.CanvasObject {
 
 	tree.OpenBranch("How To Mint NFAs")
 
-	return container.NewBorder(nil, button, nil, nil, tree)
+	return container.NewBorder(nil, container.NewCenter(button), nil, nil, tree)
 }
 
 // Create a new NFA contract string with passed values
@@ -149,10 +154,10 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 	extension_select := widget.NewSelect([]string{".jpg", ".png", ".gif", ".mp3", ".mp4", ".pdf", ".zip", ".7z", ".avi", ".mov", ".ogg"}, nil)
 	extension_select.PlaceHolder = "ext"
 
-	set_up_collec := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "folderNew"), func() {
+	set_up_collec := widget.NewButtonWithIcon("", dreams.FyneIcon("folderNew"), func() {
 		if collection_entry.Text != "" {
 			if collection_entry.Validate() == nil {
-				info_message := dialog.NewInformation("Collection Exists", "Check NFA-Creation directory", window)
+				info_message := dialog.NewInformation("Collection Exists", "Check creation directory", window)
 				info_message.Resize(fyne.NewSize(300, 150))
 				info_message.Show()
 				return
@@ -168,7 +173,15 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 
 			confirm.Resize(fyne.NewSize(600, 240))
 			confirm.Show()
+
+			return
 		}
+
+		info := dialog.NewInformation("Create", "Enter a collection name to create", window)
+		info.SetOnClosed(collection_entry.FocusLost)
+		collection_entry.FocusGained()
+		info.Show()
+
 	})
 
 	descr_entry := widget.NewEntry()
@@ -190,7 +203,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 	checkS_entry.SetPlaceHolder("File Sign S:")
 	checkS_entry.Validator = validation.NewRegexp(`^\w{61,64}$`, "Invalid")
 
-	import_signs := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "document"), func() {
+	import_signs := widget.NewButtonWithIcon("", dreams.FyneIcon("document"), func() {
 		read_filesign := dialog.NewFileOpen(func(uc fyne.URIReadCloser, err error) {
 			if err == nil && uc != nil {
 				readC, readS, _ := ReadDeroSignFile(tag, uc.URI().Path())
@@ -269,7 +282,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 		}
 	}
 
-	url_add_incr := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "contentAdd"), func() {
+	url_add_incr := widget.NewButtonWithIcon("", dreams.FyneIcon("contentAdd"), func() {
 		switch len(file_entries.Objects) {
 		case 0:
 			file_entries.Add(file_entry_start)
@@ -322,7 +335,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 		file_entries.Refresh()
 	})
 
-	url_remove_incr := widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "contentRemove"), func() {
+	url_remove_incr := widget.NewButtonWithIcon("", dreams.FyneIcon("contentRemove"), func() {
 		l := len(file_entries.Objects)
 		if l > 3 {
 			file_entries.Remove(file_entries.Objects[l-1])
@@ -436,72 +449,21 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 		}
 	}
 
-	wallet_label := widget.NewLabel("Signing address:")
-	wallet_label.Alignment = fyne.TextAlignCenter
-	wallet_label.Wrapping = fyne.TextWrapWord
-
-	rpc_label := widget.NewLabel(fmt.Sprintf("Installing address: %s", rpc.Wallet.Address))
-	rpc_label.Alignment = fyne.TextAlignCenter
-	rpc_label.Wrapping = fyne.TextWrapWord
-
-	var wallet_file_path string
-	wallet_pass_entry := widget.NewPasswordEntry()
-	wallet_pass_entry.SetPlaceHolder("Wallet file pass")
-	wallet_pass_entry.OnChanged = func(s string) {
-		rpc_label.SetText(fmt.Sprintf("Installing address: %s", rpc.Wallet.Address))
-		wallet_label.SetText("Signing address:")
-		sign_button.Hide()
-	}
-
-	open_wallet_button := widget.NewButton("Open Wallet File", func() {
-		open_wallet := dialog.NewFileOpen(func(uc fyne.URIReadCloser, err error) {
-			wallet_label.SetText("Signing address:")
-			if err == nil && uc != nil {
-				if rpc.Wallet.File, err = walletapi.Open_Encrypted_Wallet(uc.URI().Path(), wallet_pass_entry.Text); err == nil {
-					if _, err := os.ReadFile(uc.URI().Path()); err != nil {
-						logger.Errorf("[%s] Cannot read wallet file %s\n", tag, err)
-					} else {
-						rpc.Wallet.File.SetNetwork(true)
-						logger.Printf("[%s] Wallet file found , Wallet is registered: %t\n", tag, rpc.Wallet.File.IsRegistered())
-						wallet_label.SetText(fmt.Sprintf("Signing address: %s", rpc.Wallet.File.GetAddress().String()))
-						rpc_label.SetText(fmt.Sprintf("Installing address: %s", rpc.Wallet.Address))
-						wallet_file_path = uc.URI().Path()
-						error_message := dialog.NewInformation("Wallet", fmt.Sprintf("Signing with: %s", rpc.Wallet.File.GetAddress().String()), window)
-						error_message.Resize(fyne.NewSize(300, 150))
-						error_message.Show()
-						go rpc.Wallet.File.Close_Encrypted_Wallet()
-					}
-				} else {
-					logger.Errorf("[%s] Wallet %s\n", tag, err)
-					error_message := dialog.NewInformation("Wallet", "Invalid password", window)
-					error_message.Resize(fyne.NewSize(300, 150))
-					error_message.Show()
-					sign_button.Hide()
-				}
-				collection_entry.SetText(collection_entry.Text)
-			}
-		}, window)
-		if uri, err := createURI(); err == nil {
-			open_wallet.SetLocation(uri)
-		}
-		open_wallet.Resize(fyne.NewSize(900, 600))
-		open_wallet.Show()
-	})
-
 	sign_button.OnTapped = func() {
-		_, sign_path := SetUpNFACreation(tag, collection_entry.Text)
+		save_path, sign_path := SetUpNFACreation(tag, collection_entry.Text)
 		file_name := fmt.Sprintf("%s%s.sign", name_entry.Text, extension_select.Selected)
 		if collection_enable.Checked {
 			file_name = fmt.Sprintf("%s%s%s.sign", name_entry.Text, collection_low_entry.Text, extension_select.Selected)
 		}
 
-		_, err := os.Stat(sign_path + "/" + file_name)
+		full_sign_path := filepath.Join(sign_path, file_name)
+		_, err := os.Stat(full_sign_path)
 		if !os.IsNotExist(err) {
-			info := fmt.Sprintf("Check %s/%s", sign_path, file_name)
+			info := fmt.Sprintf("Check %s", full_sign_path)
 			info_message := dialog.NewInformation("File Exists", info, window)
 			info_message.Resize(fyne.NewSize(300, 150))
 			info_message.Show()
-			readC, readS, _ := ReadDeroSignFile(tag, filepath.Join(sign_path, file_name))
+			readC, readS, _ := ReadDeroSignFile(tag, full_sign_path)
 			checkC_entry.SetText(readC)
 			checkS_entry.SetText(readS)
 			return
@@ -511,9 +473,9 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 
 		var input string
 		if collection_enable.Checked {
-			input = fmt.Sprintf("NFA-Creation/%s/asset/%s%s%s", collection_entry.Text, name_entry.Text, collection_low_entry.Text, ext)
+			input = filepath.Join(save_path, "asset", fmt.Sprintf("%s%s%s", name_entry.Text, collection_low_entry.Text, ext))
 		} else {
-			input = fmt.Sprintf("NFA-Creation/%s/asset/%s%s", collection_entry.Text, name_entry.Text, ext)
+			input = filepath.Join(save_path, "asset", fmt.Sprintf("%s%s", name_entry.Text, ext))
 		}
 		_, err = os.Stat(input)
 		if os.IsNotExist(err) {
@@ -525,38 +487,18 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 		}
 
 		if rpc.Wallet.File != nil && extension_select.SelectedIndex() >= 0 {
-			var err error
-			if rpc.Wallet.File, err = walletapi.Open_Encrypted_Wallet(wallet_file_path, wallet_pass_entry.Text); err == nil {
-				if _, err := os.ReadFile(wallet_file_path); err != nil {
-					logger.Errorf("[%s] Cannot read wallet file %s\n", tag, err)
-					error_message := dialog.NewInformation("Error", "Could not read wallet file", window)
-					error_message.Resize(fyne.NewSize(300, 150))
-					error_message.Show()
-					sign_button.Hide()
-					return
-				}
-			} else {
-				logger.Errorf("[%s] Wallet %s\n", tag, err)
-				error_message := dialog.NewInformation("Wallet", "Invalid password", window)
-				error_message.Resize(fyne.NewSize(300, 150))
-				error_message.Show()
-				sign_button.Hide()
-				return
-			}
-
-			rpc.Wallet.File.SetNetwork(true)
-			address := rpc.Wallet.File.GetAddress().String()
+			address := rpc.Wallet.Address
 			if collection_enable.Checked {
 				var count, ending_at int
 				if count = rpc.StringToInt(collection_low_entry.Text); count < 1 {
 					logger.Warnf("[%s] Not starting signs from 0\n", tag)
-					go rpc.Wallet.File.Close_Encrypted_Wallet()
+
 					return
 				}
 
 				if ending_at = rpc.StringToInt(collection_high_entry.Text); ending_at < count {
 					logger.Warnf("[%s] Ending is less than starting at\n", tag)
-					go rpc.Wallet.File.Close_Encrypted_Wallet()
+
 					return
 				}
 
@@ -585,8 +527,8 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 							for wait {
 								i := strconv.Itoa(count)
 								signing_asset := fmt.Sprintf("Signing %s%s%s", name_entry.Text, i, ext)
-								input_file := fmt.Sprintf("NFA-Creation/%s/asset/%s%s%s", collection_entry.Text, name_entry.Text, i, ext)
-								output_file := fmt.Sprintf("NFA-Creation/%s/sign/%s%s%s%s", collection_entry.Text, name_entry.Text, i, ext, ".sign")
+								input_file := filepath.Join(save_path, "asset", fmt.Sprintf("%s%s%s", name_entry.Text, i, ext))
+								output_file := filepath.Join(sign_path, fmt.Sprintf("%s%s%s%s", name_entry.Text, i, ext, ".sign"))
 								_, err := os.Stat(output_file)
 								if !os.IsNotExist(err) {
 									logger.Warnf("[%s] %s exists\n", tag, output_file)
@@ -624,7 +566,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 								count++
 								progress.SetValue(float64(count))
 								if count > ending_at {
-									progress_label.SetText(fmt.Sprintf("Signed files in NFA-Creation/%s/sign", collection_entry.Text))
+									progress_label.SetText(fmt.Sprintf("Signed files in creation/%s/sign", collection_entry.Text))
 									wait_message.SetDismissText("Done")
 									break
 								}
@@ -632,10 +574,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 
 							wait = false
 							logger.Printf("[%s] Sign loop complete\n", tag)
-							go rpc.Wallet.File.Close_Encrypted_Wallet()
 						}()
-					} else {
-						go rpc.Wallet.File.Close_Encrypted_Wallet()
 					}
 				}, window)
 
@@ -646,8 +585,8 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 				info := fmt.Sprintf("You are about to sign asset file %s%s\n\nSigning address: %s", name_entry.Text, ext, address)
 				confirm := dialog.NewConfirm("File sign", info, func(b bool) {
 					if b {
-						input_file := fmt.Sprintf("NFA-Creation/%s/asset/%s%s", collection_entry.Text, name_entry.Text, ext)
-						output_file := fmt.Sprintf("NFA-Creation/%s/sign/%s%s%s", collection_entry.Text, name_entry.Text, ext, ".sign")
+						input_file := filepath.Join(save_path, "asset", fmt.Sprintf("%s%s", name_entry.Text, ext))
+						output_file := filepath.Join(sign_path, fmt.Sprintf("%s%s%s", name_entry.Text, ext, ".sign"))
 						if data, err := os.ReadFile(input_file); err != nil {
 							logger.Errorf("[%s] Cannot read input file %s\n", tag, err)
 							error_message := dialog.NewInformation("Error", "Could not read file", window)
@@ -665,14 +604,11 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 							info_message.Show()
 						}
 					}
-					go rpc.Wallet.File.Close_Encrypted_Wallet()
 				}, window)
 
 				confirm.Resize(fyne.NewSize(600, 240))
 				confirm.Show()
 			}
-
-			go rpc.Wallet.File.Close_Encrypted_Wallet()
 		}
 	}
 
@@ -695,9 +631,9 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 		save_path, sign_path := SetUpNFACreation(tag, collection)
 		file_name := fmt.Sprintf("%s.bas", name)
 
-		_, err := os.Stat(save_path + "/bas/" + file_name)
+		_, err := os.Stat(filepath.Join(save_path, "bas", file_name))
 		if !os.IsNotExist(err) {
-			info := fmt.Sprintf("Check %s/bas/%s", save_path, file_name)
+			info := fmt.Sprintf("Check %s", filepath.Join(save_path, "bas", file_name))
 			info_message := dialog.NewInformation("File Exists", info, window)
 			info_message.Resize(fyne.NewSize(300, 150))
 			info_message.Show()
@@ -757,7 +693,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 							name = name_entry.Text + incr
 							file_name := fmt.Sprintf("%s.bas", name)
 							progress_label.SetText("Creating " + file_name)
-							full_save_path := save_path + "/bas/" + file_name
+							full_save_path := filepath.Join(save_path, "bas", file_name)
 							_, err := os.Stat(full_save_path)
 							if !os.IsNotExist(err) {
 								wait = false
@@ -797,7 +733,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 								}
 
 								ext := extension_select.Selected + ".sign"
-								full_sign_path := sign_path + "/" + name + ext
+								full_sign_path := filepath.Join(sign_path, name+ext)
 								if data, err := os.ReadFile(full_sign_path); err != nil {
 									wait = false
 									logger.Errorf("[%s] Cannot read input file %s\n", tag, err)
@@ -878,7 +814,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 				if b {
 					name = name_entry.Text
 					file_name := fmt.Sprintf("%s.bas", name)
-					full_save_path := save_path + "/bas/" + file_name
+					full_save_path := filepath.Join(save_path, "bas", file_name)
 					if f, err := os.Create(full_save_path); err == nil {
 						file = file_entry_start.Text
 						cover = cover_entry_start.Text
@@ -916,6 +852,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 
 	install_button.OnTapped = func() {
 		if rpc.Wallet.IsConnected() {
+			save_path, _ := SetUpNFACreation(tag, collection_entry.Text)
 			if collection_enable.Checked {
 				var count, ending_at int
 				if count = rpc.StringToInt(collection_low_entry.Text); count < 1 {
@@ -936,9 +873,9 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 
 				var input string
 				if collection_enable.Checked {
-					input = fmt.Sprintf("NFA-Creation/%s/bas/%s%s.bas", collection_entry.Text, name_entry.Text, collection_low_entry.Text)
+					input = filepath.Join(save_path, "bas", fmt.Sprintf("%s%s.bas", name_entry.Text, collection_low_entry.Text))
 				} else {
-					input = fmt.Sprintf("NFA-Creation/%s/bas/%s.bas", collection_entry.Text, name_entry.Text)
+					input = filepath.Join(save_path, "bas", fmt.Sprintf("%s.bas", name_entry.Text))
 				}
 				_, err := os.Stat(input)
 				if os.IsNotExist(err) {
@@ -983,7 +920,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 									break
 								}
 
-								input_file := fmt.Sprintf("NFA-Creation/%s/bas/%s%d.bas", collection_entry.Text, name_entry.Text, count)
+								input_file := filepath.Join(save_path, "bas", fmt.Sprintf("%s%d.bas", name_entry.Text, count))
 								if _, err := os.Stat(input_file); err == nil {
 									logger.Printf("[%s] Installing %s\n", tag, input_file)
 									progress_label.SetText(fmt.Sprintf("Installing %s", input_file))
@@ -1056,7 +993,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 				info := fmt.Sprintf("You are about to install asset %s.bas\n\nEnsure all immutable info is correct on bas contract as this process is irreversible\n\nFees to install a NFA are ~0.21000 Dero\n\nRefer how to mint guide for any questions\n\nWallet address: %s", name_entry.Text, rpc.Wallet.Address)
 				confirm := dialog.NewConfirm("NFA Install", info, func(b bool) {
 					if b {
-						input_file := fmt.Sprintf("NFA-Creation/%s/bas/%s.bas", collection_entry.Text, name_entry.Text)
+						input_file := filepath.Join(save_path, "bas", fmt.Sprintf("%s.bas", name_entry.Text))
 						if _, err := os.Stat(input_file); err == nil {
 							logger.Printf("[%s] Installing %s\n", tag, input_file)
 						} else if errors.Is(err, os.ErrNotExist) {
@@ -1108,8 +1045,6 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 
 	collection_cont := container.NewBorder(nil, nil, collection_enable, container.NewAdaptiveGrid(2, url_add_incr, url_remove_incr), container.NewAdaptiveGrid(2, collection_low_entry, collection_high_entry))
 
-	wallet_cont := container.NewBorder(nil, nil, nil, open_wallet_button, container.NewStack(dwidget.NewSpacer(300, 0), wallet_pass_entry))
-
 	instructions_button := widget.NewButton("How To Mint", nil)
 
 	instructions_button.Importance = widget.LowImportance
@@ -1129,7 +1064,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 	// Save and load json config files with collection/asset data
 	config_select := widget.NewSelect([]string{}, nil)
 	config_select.PlaceHolder = "Load config"
-	if dir, err := os.Open("NFA-Creation"); err == nil {
+	if dir, err := os.Open("creation"); err == nil {
 		defer dir.Close()
 		if files, err := dir.Readdirnames(0); err == nil {
 			opts := []string{}
@@ -1143,9 +1078,45 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 		}
 	}
 
-	save_config_button := widget.NewButton("Save config", func() {
+	clear_all_button := widget.NewButtonWithIcon("", dreams.FyneIcon("contentUndo"), nil)
+	clear_all_button.Importance = widget.LowImportance
+	clear_all_button.OnTapped = func() {
+		dialog.NewConfirm("Clear All", "Would you like to clear all current entries?", func(b bool) {
+			if b {
+				config_select.SetSelectedIndex(-1)
+				collection_entry.SetText("")
+				update_select.SetSelected("")
+				name_entry.SetText("")
+				descr_entry.SetText("")
+				type_select.SetSelected("")
+				tags_entry.SetText("")
+
+				file_entry_start.SetText("")
+				cover_entry_start.SetText("")
+				icon_entry_start.SetText("")
+				sign_entry_start.SetText("")
+
+				file_entry_mid.SetText("")
+				cover_entry_mid.SetText("")
+				icon_entry_mid.SetText("")
+				sign_entry_mid.SetText("")
+
+				file_entry_end.SetText("")
+				cover_entry_end.SetText("")
+				icon_entry_end.SetText("")
+				sign_entry_end.SetText("")
+
+				royalty_entry.SetText("")
+				art_entry.SetText("")
+			}
+		}, window).Show()
+	}
+
+	save_config_button := widget.NewButtonWithIcon("Save", dreams.FyneIcon("documentSave"), nil)
+	save_config_button.Importance = widget.HighImportance
+	save_config_button.OnTapped = func() {
 		name := collection_entry.Text + ".json"
-		file, err := os.Create(filepath.Join("NFA-Creation", name))
+		file, err := os.Create(filepath.Join("creation", name))
 		if err != nil {
 			logger.Errorf("[%s] %s", tag, err)
 			return
@@ -1159,11 +1130,23 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 			Description: descr_entry.Text,
 			TypeHdr:     type_select.Selected,
 			Tags:        tags_entry.Text,
-			File:        file_entry_end.Text,
-			Cover:       cover_entry_start.Text,
-			Icon:        icon_entry_start.Text,
-			Sign:        sign_entry_start.Text,
+			Royalty:     royalty_entry.Text,
+			Artificer:   art_entry.Text,
+			Start:       collection_low_entry.Text,
+			End:         collection_high_entry.Text,
+			Extension:   extension_select.Selected,
 		}
+
+		if !collection_enable.Checked {
+			data.Multi = 1
+		} else {
+			data.Multi = len(file_entries.Objects)
+		}
+
+		data.File = append(data.File, file_entry_start.Text, file_entry_mid.Text, file_entry_end.Text)
+		data.Cover = append(data.Cover, cover_entry_start.Text, cover_entry_mid.Text, cover_entry_end.Text)
+		data.Icon = append(data.Icon, icon_entry_start.Text, icon_entry_mid.Text, icon_entry_end.Text)
+		data.Sign = append(data.Sign, sign_entry_start.Text, sign_entry_mid.Text, sign_entry_end.Text)
 
 		json, _ := json.MarshalIndent(data, "", " ")
 		if _, err = file.Write(json); err != nil {
@@ -1184,10 +1167,10 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 			sort.Strings(opts)
 			config_select.Options = opts
 		}
-	})
+	}
 
 	config_select.OnChanged = func(s string) {
-		file, err := os.ReadFile("NFA-Creation/" + s)
+		file, err := os.ReadFile(filepath.Join("creation", s))
 		if err != nil {
 			logger.Errorf("[%s] %s", tag, err)
 			return
@@ -1205,14 +1188,67 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 		descr_entry.SetText(data.Description)
 		type_select.SetSelected(data.TypeHdr)
 		tags_entry.SetText(data.Tags)
-		file_entry_end.SetText(data.File)
-		cover_entry_start.SetText(data.Cover)
-		icon_entry_start.SetText(data.Icon)
-		sign_entry_start.SetText(data.Sign)
+		extension_select.SetSelected(data.Extension)
+
+		art_entry.SetText("")
+		royalty_entry.SetText(data.Royalty)
+		art_entry.SetText(data.Artificer)
+
+		collection_low_entry.SetText("")
+		collection_high_entry.SetText(data.End)
+		collection_low_entry.SetText(data.Start)
+
+		for i := range data.File {
+			switch i {
+			case 0:
+				file_entry_start.SetText(data.File[i])
+				cover_entry_start.SetText(data.Cover[i])
+				icon_entry_start.SetText(data.Icon[i])
+				sign_entry_start.SetText(data.Sign[i])
+			case 1:
+				file_entry_mid.SetText(data.File[i])
+				cover_entry_mid.SetText(data.Cover[i])
+				icon_entry_mid.SetText(data.Icon[i])
+				sign_entry_mid.SetText(data.Sign[i])
+			case 2:
+				file_entry_end.SetText(data.File[i])
+				cover_entry_end.SetText(data.Cover[i])
+				icon_entry_end.SetText(data.Icon[i])
+				sign_entry_end.SetText(data.Sign[i])
+			}
+		}
+
+		if data.Multi == 5 {
+			collection_enable.SetChecked(true)
+			switch len(file_entries.Objects) {
+			case 3:
+				url_add_incr.OnTapped()
+			case 1:
+				url_add_incr.OnTapped()
+				url_add_incr.OnTapped()
+			}
+		} else if data.Multi == 3 {
+			collection_enable.SetChecked(true)
+			switch len(file_entries.Objects) {
+			case 5:
+				url_remove_incr.OnTapped()
+			case 1:
+				url_add_incr.OnTapped()
+			}
+		} else {
+			collection_enable.SetChecked(false)
+			switch len(file_entries.Objects) {
+			case 5:
+				url_remove_incr.OnTapped()
+				url_remove_incr.OnTapped()
+			case 3:
+				url_remove_incr.OnTapped()
+			}
+		}
 	}
 
 	// Parse all contracts in bas folder
-	scan_button := widget.NewButtonWithIcon("", dreams.FyneIcon("broken-image"), nil)
+	scan_button := widget.NewButtonWithIcon("Scan", dreams.FyneIcon("broken-image"), nil)
 	scan_button.Importance = widget.LowImportance
 	scan_button.OnTapped = func() {
 		if collection_entry.Validate() != nil {
@@ -1220,13 +1256,18 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 			return
 		}
 
-		path := fmt.Sprintf("NFA-Creation/%s/bas/", collection_entry.Text)
+		path := filepath.Join("creation", collection_entry.Text, "bas")
 
-		files, err := filepath.Glob(fmt.Sprintf("%s*.bas", path))
+		files, err := filepath.Glob(fmt.Sprintf("%s%s*.bas", path, string(filepath.Separator)))
 		if err != nil {
 			error_message := dialog.NewInformation("Error", fmt.Sprintf("Could not read %s", path), window)
 			error_message.Resize(fyne.NewSize(240, 150))
 			error_message.Show()
+			return
+		}
+
+		if len(files) < 1 {
+			dialog.NewInformation("Scan", fmt.Sprintf("No contracts to scan in %s", path), window).Show()
 			return
 		}
 
@@ -1247,14 +1288,14 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 			}
 		}
 
-		dialog.NewInformation("Completed Scan", fmt.Sprintf("No errors found in %s", path), window).Show()
+		dialog.NewInformation("Scan Complete", fmt.Sprintf("No errors found in %s", path), window).Show()
 	}
 
 	mint_form := []*widget.FormItem{}
-	mint_form = append(mint_form, widget.NewFormItem("", instructions_button))
+	mint_form = append(mint_form, widget.NewFormItem("", container.NewCenter(instructions_button)))
 
 	mint_form = append(mint_form, widget.NewFormItem("", container.NewAdaptiveGrid(2, collection_cont,
-		widget.NewForm(widget.NewFormItem("Config", container.NewBorder(nil, nil, nil, save_config_button, config_select))))))
+		widget.NewForm(widget.NewFormItem("Config", container.NewBorder(nil, nil, clear_all_button, save_config_button, config_select))))))
 
 	mint_form = append(mint_form, widget.NewFormItem("", layout.NewSpacer()))
 	mint_form = append(mint_form, widget.NewFormItem("Collection", container.NewBorder(nil, nil, nil, container.NewHBox(set_up_collec, scan_button), collection_entry)))
@@ -1278,21 +1319,28 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 
 	mint_form = append(mint_form, widget.NewFormItem("Royalty %", container.NewHBox(container.NewVBox(container.NewStack(dwidget.NewSpacer(280, 0), royalty_entry)),
 		widget.NewForm(widget.NewFormItem("Artificer %", container.NewStack(dwidget.NewSpacer(280, 0), art_entry))),
-		layout.NewSpacer(),
-		widget.NewForm(widget.NewFormItem("Wallet File", wallet_cont)))))
+		layout.NewSpacer())))
 
-	mint_form = append(mint_form, widget.NewFormItem("", container.NewAdaptiveGrid(2, rpc_label, wallet_label)))
 	mint_form = append(mint_form, widget.NewFormItem("", layout.NewSpacer()))
 	mint_form = append(mint_form, widget.NewFormItem("", container.NewAdaptiveGrid(3, container.NewStack(install_button), container.NewStack(contracts_button), sign_button)))
 
 	scroll := container.NewVScroll(widget.NewForm(mint_form...))
-	max := container.NewStack(scroll)
-	instructions_back_button := widget.NewButton("Back", func() {
-		max.Objects[0] = container.NewStack(scroll)
-	})
+
+	alpha120 := canvas.NewRectangle(color.RGBA{0, 0, 0, 120})
+	if bundle.AppColor == color.White {
+		alpha120 = canvas.NewRectangle(color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0x55})
+	}
+
+	max := container.NewStack(alpha120, scroll)
+
+	instructions_back_button := widget.NewButton("Back", nil)
+	instructions_back_button.Importance = widget.LowImportance
+	instructions_back_button.OnTapped = func() {
+		max.Objects[1] = container.NewStack(alpha120, scroll)
+	}
 
 	instructions_button.OnTapped = func() {
-		max.Objects[0] = HowToMintNFA(instructions_back_button)
+		max.Objects[1] = container.NewStack(alpha120, HowToMintNFA(instructions_back_button))
 	}
 
 	go func() {
@@ -1303,7 +1351,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 				sign_entry_start.Validate() == nil && royalty_entry.Validate() == nil && art_entry.Validate() == nil {
 				if collection_enable.Checked {
 					if collection_low_entry.Validate() == nil && collection_high_entry.Validate() == nil {
-						asset_file_start := fmt.Sprintf("NFA-Creation/%s/asset/%s%s%s", collection_entry.Text, name_entry.Text, collection_low_entry.Text, extension_select.Selected)
+						asset_file_start := filepath.Join("creation", collection_entry.Text, "asset", fmt.Sprintf("%s%s%s", name_entry.Text, collection_low_entry.Text, extension_select.Selected))
 						if _, err := os.ReadFile(asset_file_start); err == nil {
 							contracts_button.Show()
 						} else {
@@ -1313,7 +1361,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 						contracts_button.Hide()
 					}
 				} else {
-					asset_file := fmt.Sprintf("NFA-Creation/%s/asset/%s%s", collection_entry.Text, name_entry.Text, extension_select.Selected)
+					asset_file := filepath.Join("creation", collection_entry.Text, "asset", fmt.Sprintf("%s%s", name_entry.Text, extension_select.Selected))
 					if _, err := os.ReadFile(asset_file); err == nil {
 						contracts_button.Show()
 					} else {
@@ -1325,11 +1373,10 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 			}
 
 			if NFACreationExists(collection_entry.Text) {
-				if rpc.Wallet.File != nil && rpc.Wallet.File.Check_Password(wallet_pass_entry.Text) {
-					wallet_label.SetText(fmt.Sprintf("Signing address: %s", rpc.Wallet.File.GetAddress().String()))
+				if rpc.Wallet.File != nil {
 					if collection_enable.Checked {
 						if collection_low_entry.Text != "" && collection_high_entry.Text != "" {
-							sign_file_start := fmt.Sprintf("NFA-Creation/%s/asset/%s%s%s", collection_entry.Text, name_entry.Text, collection_low_entry.Text, extension_select.Selected)
+							sign_file_start := filepath.Join("creation", collection_entry.Text, "asset", fmt.Sprintf("%s%s%s", name_entry.Text, collection_low_entry.Text, extension_select.Selected))
 							if _, err := os.ReadFile(sign_file_start); err == nil {
 								sign_button.Show()
 							} else {
@@ -1339,7 +1386,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 							sign_button.Hide()
 						}
 					} else {
-						sign_file := fmt.Sprintf("NFA-Creation/%s/asset/%s%s", collection_entry.Text, name_entry.Text, extension_select.Selected)
+						sign_file := filepath.Join("creation", collection_entry.Text, "asset", fmt.Sprintf("%s%s", name_entry.Text, extension_select.Selected))
 						if _, err := os.ReadFile(sign_file); err == nil {
 							sign_button.Show()
 						} else {
@@ -1347,7 +1394,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 						}
 					}
 				} else {
-					wallet_label.SetText("Signing address:")
+					sign_button.Hide()
 				}
 				collection_entry.Validator = validation.NewRegexp(`^\w{2,}`, "String required")
 			} else {
@@ -1356,10 +1403,9 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 			}
 
 			if rpc.IsReady() {
-				rpc_label.SetText(fmt.Sprintf("Installing address: %s", rpc.Wallet.Address))
 				if collection_enable.Checked {
 					if collection_low_entry.Text != "" && collection_high_entry.Text != "" {
-						input_file_start := fmt.Sprintf("NFA-Creation/%s/bas/%s%s.bas", collection_entry.Text, name_entry.Text, collection_low_entry.Text)
+						input_file_start := filepath.Join("creation", collection_entry.Text, "bas", fmt.Sprintf("%s%s.bas", name_entry.Text, collection_low_entry.Text))
 						if _, err := os.ReadFile(input_file_start); err == nil {
 							install_button.Show()
 						} else {
@@ -1369,7 +1415,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 						install_button.Hide()
 					}
 				} else {
-					input_file := fmt.Sprintf("NFA-Creation/%s/bas/%s.bas", collection_entry.Text, name_entry.Text)
+					input_file := filepath.Join("creation", collection_entry.Text, "bas", fmt.Sprintf("%s.bas", name_entry.Text))
 					if _, err := os.ReadFile(input_file); err == nil {
 						install_button.Show()
 					} else {
@@ -1377,7 +1423,6 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 					}
 				}
 			} else {
-				rpc_label.SetText("Installing address:")
 				install_button.Hide()
 			}
 
@@ -1388,20 +1433,20 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 	return max
 }
 
-// Set up NFA-Creation directory with sub directory for collection or single asset,
+// Set up creation directory with sub directory for collection or single asset,
 // which contains sub directories for asset, bas, icon, cover and sign files
 func SetUpNFACreation(tag, collection string) (save_path string, sign_path string) {
-	main_path := "NFA-Creation"
+	main_path := "creation"
 	_, main := os.Stat(main_path)
 	if os.IsNotExist(main) {
-		logger.Printf("[%s] Creating NFA-Creation Dir\n", tag)
+		logger.Printf("[%s] Setting up creation directory\n", tag)
 		if err := os.Mkdir(main_path, 0755); err != nil {
 			logger.Errorf("[%s] %s\n", tag, err)
 			return
 		}
 	}
 
-	save_path = fmt.Sprintf("%s/%s", main_path, collection)
+	save_path = filepath.Join(main_path, collection)
 	_, coll := os.Stat(save_path)
 	if os.IsNotExist(coll) {
 		err := os.Mkdir(save_path, 0755)
@@ -1411,10 +1456,10 @@ func SetUpNFACreation(tag, collection string) (save_path string, sign_path strin
 		}
 	}
 
-	asset_path := save_path + "/asset"
+	asset_path := filepath.Join(save_path, "asset")
 	_, asset := os.Stat(asset_path)
 	if os.IsNotExist(asset) {
-		logger.Printf("[%s] Creating assets Dir\n", tag)
+		logger.Printf("[%s] Creating assets directory\n", tag)
 		err := os.Mkdir(asset_path, 0755)
 		if err != nil {
 			logger.Errorf("[%s] %s\n", tag, err)
@@ -1422,7 +1467,7 @@ func SetUpNFACreation(tag, collection string) (save_path string, sign_path strin
 		}
 	}
 
-	bas_path := save_path + "/bas"
+	bas_path := filepath.Join(save_path, "bas")
 	_, bas := os.Stat(bas_path)
 	if os.IsNotExist(bas) {
 		logger.Printf("[%s] Creating bas Dir\n", tag)
@@ -1433,10 +1478,10 @@ func SetUpNFACreation(tag, collection string) (save_path string, sign_path strin
 		}
 	}
 
-	cover_path := save_path + "/cover"
+	cover_path := filepath.Join(save_path, "cover")
 	_, cover := os.Stat(cover_path)
 	if os.IsNotExist(cover) {
-		logger.Printf("[%s] Creating covers Dir\n", tag)
+		logger.Printf("[%s] Creating covers directory\n", tag)
 		err := os.Mkdir(cover_path, 0755)
 		if err != nil {
 			logger.Errorf("[%s] %s\n", tag, err)
@@ -1444,10 +1489,10 @@ func SetUpNFACreation(tag, collection string) (save_path string, sign_path strin
 		}
 	}
 
-	icon_path := save_path + "/icon"
+	icon_path := filepath.Join(save_path, "icon")
 	_, icon := os.Stat(icon_path)
 	if os.IsNotExist(icon) {
-		logger.Printf("[%s] Creating icons Dir\n", tag)
+		logger.Printf("[%s] Creating icons directory\n", tag)
 		err := os.Mkdir(icon_path, 0755)
 		if err != nil {
 			logger.Errorf("[%s] %s\n", tag, err)
@@ -1455,10 +1500,10 @@ func SetUpNFACreation(tag, collection string) (save_path string, sign_path strin
 		}
 	}
 
-	sign_path = save_path + "/sign"
+	sign_path = filepath.Join(save_path, "sign")
 	_, sign := os.Stat(sign_path)
 	if os.IsNotExist(sign) {
-		logger.Printf("[%s] Creating sign Dir\n", tag)
+		logger.Printf("[%s] Creating sign directory\n", tag)
 		err := os.Mkdir(sign_path, 0755)
 		if err != nil {
 			logger.Errorf("[%s] %s\n", tag, err)
@@ -1471,43 +1516,43 @@ func SetUpNFACreation(tag, collection string) (save_path string, sign_path strin
 
 // Check that all creation directories exists
 func NFACreationExists(collection string) bool {
-	main_path := "NFA-Creation"
+	main_path := "creation"
 	_, main := os.Stat(main_path)
 	if os.IsNotExist(main) {
 		return false
 	}
 
-	save_path := fmt.Sprintf("%s/%s", main_path, collection)
+	save_path := filepath.Join(main_path, collection)
 	_, coll := os.Stat(save_path)
 	if os.IsNotExist(coll) {
 		return false
 	}
 
-	asset_path := save_path + "/asset"
+	asset_path := filepath.Join(save_path, "asset")
 	_, asset := os.Stat(asset_path)
 	if os.IsNotExist(asset) {
 		return false
 	}
 
-	bas_path := save_path + "/bas"
+	bas_path := filepath.Join(save_path, "bas")
 	_, bas := os.Stat(bas_path)
 	if os.IsNotExist(bas) {
 		return false
 	}
 
-	cover_path := save_path + "/cover"
+	cover_path := filepath.Join(save_path, "cover")
 	_, cover := os.Stat(cover_path)
 	if os.IsNotExist(cover) {
 		return false
 	}
 
-	icon_path := save_path + "/icon"
+	icon_path := filepath.Join(save_path, "icon")
 	_, icon := os.Stat(icon_path)
 	if os.IsNotExist(icon) {
 		return false
 	}
 
-	sign_path := save_path + "/sign"
+	sign_path := filepath.Join(save_path, "sign")
 	_, sign := os.Stat(sign_path)
 
 	return !os.IsNotExist(sign)

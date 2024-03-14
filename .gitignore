@@ -5,6 +5,7 @@ stats.json
 config.json
 .key
 NFA-Creation*
+creation*
 build*
 mainnet*
 testnet*
