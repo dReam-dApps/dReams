@@ -19,6 +19,7 @@ const (
 
 	UTIL_CARD_DECK = "cardDeck"
 	UTIL_CARD_BACK = "cardBack"
+	UTIL_DICE      = "dice"
 	UTIL_THEME     = "theme"
 	UTIL_AVATAR    = "avatar"
 	UTIL_DUEL_CHAR = "duelChar"

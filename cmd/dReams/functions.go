@@ -296,6 +296,7 @@ func checkDreamsNFAs(scids map[string]string, progress *widget.ProgressBar) {
 		logger.Println("[dReams] Checking NFA Assets")
 		dreams.Theme.Select.Options = []string{}
 		holdero.Settings.ClearAssets()
+		dice.Settings.ClearAssets()
 
 		progress.Max = float64(len(scids))
 
@@ -309,6 +310,7 @@ func checkDreamsNFAs(scids map[string]string, progress *widget.ProgressBar) {
 		}
 
 		holdero.Settings.SortCardAssets()
+		dice.Settings.SortAssets()
 		dreams.Theme.Sort()
 		dreams.Theme.Select.Options = append(menu.Control.Themes, dreams.Theme.Select.Options...)
 		dreams.Theme.Select.SetSelected(dreams.Theme.Name)
@@ -360,6 +362,8 @@ func checkNFAOwner(scid string) {
 							if menu.DappEnabled("Duels") {
 								duel.AddItemsToInventory(scid, header[0], owner[0], collection[0])
 							}
+						case menu.UTIL_DICE:
+							dice.Settings.AddDice(header[0], owner[0])
 						}
 					}
 
