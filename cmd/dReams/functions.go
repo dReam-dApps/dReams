@@ -333,7 +333,8 @@ func checkNFAOwner(scid string) {
 			icon, _ := gnomon.GetSCIDValuesByKey(scid, "iconURLHdr")
 			if owner != nil && file != nil && collection != nil && creator != nil && icon != nil {
 				if owner[0] == rpc.Wallet.Address && menu.ValidNFA(file[0]) {
-					if !menu.IsDreamsNFACreator(creator[0]) {
+					isCreator, utility := menu.IsDreamsNFACreator(creator[0], collection[0])
+					if !isCreator {
 						return
 					}
 
@@ -345,55 +346,29 @@ func checkNFAOwner(scid string) {
 						add.Type = menu.AssetType(collection[0], typeHdr[0])
 					}
 
-					check := strings.Trim(header[0], "0123456789")
-					if check == "AZYDS" || check == "SIXART" {
-						dreams.Theme.Add(header[0], owner[0])
-						holdero.Settings.AddAvatar(header[0], owner[0])
-						menu.Assets.Add(add, icon[0])
-					} else if check == "AZYPCB" || check == "SIXPCB" {
-						holdero.Settings.AddBacks(header[0], owner[0])
-						menu.Assets.Add(add, icon[0])
-					} else if check == "AZYPC" || check == "SIXPC" {
-						holdero.Settings.AddFaces(header[0], owner[0])
-						menu.Assets.Add(add, icon[0])
-					} else if check == "DBC" {
-						holdero.Settings.AddAvatar(header[0], owner[0])
-						menu.Assets.Add(add, icon[0])
-						if menu.DappEnabled("Duels") {
-							duel.AddItemsToInventory(scid, header[0], owner[0], collection[0])
+					for _, util := range utility {
+						switch util {
+						case menu.UTIL_AVATAR:
+							holdero.Settings.AddAvatar(header[0], owner[0])
+						case menu.UTIL_CARD_DECK:
+							holdero.Settings.AddFaces(header[0], owner[0])
+						case menu.UTIL_CARD_BACK:
+							holdero.Settings.AddBacks(header[0], owner[0])
+						case menu.UTIL_THEME:
+							dreams.Theme.Add(header[0], owner[0])
+						case menu.UTIL_DUEL_CHAR, menu.UTIL_DUEL_ITEM:
+							if menu.DappEnabled("Duels") {
+								duel.AddItemsToInventory(scid, header[0], owner[0], collection[0])
+							}
 						}
-					} else if collection[0] == "Dorblings NFA" {
-						holdero.Settings.AddAvatar(header[0], owner[0])
-						menu.Assets.Add(add, icon[0])
-					} else if collection[0] == "DLAMPP" {
-						// TODO review after mint
-						holdero.Settings.AddAvatar(header[0], owner[0])
-						menu.Assets.Add(add, icon[0])
-					} else if collection[0] == "High Strangeness" {
-						holdero.Settings.AddAvatar(header[0], owner[0])
-						menu.Assets.Add(add, icon[0])
+					}
+
+					menu.Assets.Add(add, icon[0])
+
+					if collection[0] == "High Strangeness" {
+						check := strings.Trim(header[0], "0123456789")
 						hsCards(owner[0], header[0], check)
-						if menu.DappEnabled("Duels") {
-							duel.AddItemsToInventory(scid, header[0], owner[0], collection[0])
-						}
-					} else if collection[0] == "Dero Desperados" {
-						holdero.Settings.AddAvatar(header[0], owner[0])
-						menu.Assets.Add(add, icon[0])
-						if menu.DappEnabled("Duels") {
-							duel.AddItemsToInventory(scid, header[0], owner[0], collection[0])
-						}
-					} else if collection[0] == "Desperado Guns" {
-						holdero.Settings.AddAvatar(header[0], owner[0])
-						menu.Assets.Add(add, icon[0])
-						if menu.DappEnabled("Duels") {
-							duel.AddItemsToInventory(scid, header[0], owner[0], collection[0])
-						}
-					} else if collection[0] == "dSkullz" {
-						holdero.Settings.AddAvatar(header[0], owner[0])
-						menu.Assets.Add(add, icon[0])
-						if menu.DappEnabled("Duels") {
-							duel.AddItemsToInventory(scid, header[0], owner[0], collection[0])
-						}
+
 					}
 				}
 			}

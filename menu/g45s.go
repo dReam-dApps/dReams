@@ -16,12 +16,20 @@ const (
 	ATeam_coll = "bbc357bdfe9fc41128fc11ce555eaadbd9b411eca903008396e0de4cc31821c7"
 	Degen_coll = "8edea52b9a8a041e3b579ca2d81ea3d3e87e148ba4409273d53039991afa91be"
 	Degen_mint = "dero1qy4e7jj4jaaj66pc0vg8h7l0hqelqjxj9ya9qgal03v0phjaycv5yqq8aqgyg"
+
+	UTIL_CARD_DECK = "cardDeck"
+	UTIL_CARD_BACK = "cardBack"
+	UTIL_THEME     = "theme"
+	UTIL_AVATAR    = "avatar"
+	UTIL_DUEL_CHAR = "duelChar"
+	UTIL_DUEL_ITEM = "duelItem"
 )
 
 type assetCount struct {
 	name    string
 	count   int
 	creator string
+	utility []string
 }
 
 // Dero Seals metadata struct

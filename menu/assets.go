@@ -68,18 +68,18 @@ type Asset struct {
 var Assets assetObjects
 
 var dReamsNFAs = []assetCount{
-	{name: "AZY-Playing card decks", count: 23, creator: AZY_mint},
-	{name: "AZY-Playing card backs", count: 53, creator: AZY_mint},
-	{name: "AZY-Deroscapes", count: 10, creator: AZY_mint},
-	{name: "Death By Cupcake", count: 8, creator: DCB_mint},
-	{name: "SIXPC", count: 9, creator: SIX_mint},
-	{name: "SIXPCB", count: 10, creator: SIX_mint},
-	{name: "SIXART", count: 17, creator: SIX_mint},
-	{name: "High Strangeness", count: 376, creator: HS_mint},
-	{name: "Dorblings NFA", count: 110, creator: Dorbling_mint},
-	{name: "Dero Desperados", count: 777, creator: Desperado_mint},
-	{name: "Desperado Guns", count: 777, creator: Desperado_mint},
-	{name: "dSkullz", count: 27, creator: DSkull_mint},
+	{name: "AZY-Playing card decks", count: 23, creator: AZY_mint, utility: []string{UTIL_CARD_DECK}},
+	{name: "AZY-Playing card backs", count: 53, creator: AZY_mint, utility: []string{UTIL_CARD_BACK}},
+	{name: "AZY-Deroscapes", count: 10, creator: AZY_mint, utility: []string{UTIL_AVATAR, UTIL_THEME}},
+	{name: "Death By Cupcake", count: 8, creator: DCB_mint, utility: []string{UTIL_AVATAR, UTIL_DUEL_CHAR}},
+	{name: "SIXPC", count: 9, creator: SIX_mint, utility: []string{UTIL_CARD_DECK}},
+	{name: "SIXPCB", count: 10, creator: SIX_mint, utility: []string{UTIL_CARD_BACK}},
+	{name: "SIXART", count: 17, creator: SIX_mint, utility: []string{UTIL_AVATAR, UTIL_THEME}},
+	{name: "High Strangeness", count: 376, creator: HS_mint, utility: []string{UTIL_AVATAR, UTIL_DUEL_CHAR}},
+	{name: "Dorblings NFA", count: 110, creator: Dorbling_mint, utility: []string{UTIL_AVATAR}},
+	{name: "Dero Desperados", count: 777, creator: Desperado_mint, utility: []string{UTIL_AVATAR, UTIL_DUEL_CHAR}},
+	{name: "Desperado Guns", count: 777, creator: Desperado_mint, utility: []string{UTIL_AVATAR, UTIL_DUEL_ITEM}},
+	{name: "dSkullz", count: 27, creator: DSkull_mint, utility: []string{UTIL_AVATAR, UTIL_DUEL_CHAR}},
 	// TODO DLAMPP count
 	// {name: "DLAMPP ", count: ?},
 }
@@ -135,14 +135,14 @@ func IsDreamsNFACollection(collection string) bool {
 }
 
 // Check if string is dReams NFA creator address
-func IsDreamsNFACreator(creator string) bool {
+func IsDreamsNFACreator(creator, collection string) (bool, []string) {
 	for _, c := range dReamsNFAs {
-		if c.creator == creator {
-			return true
+		if c.creator == creator && c.name == collection {
+			return true, c.utility
 		}
 	}
 
-	return false
+	return false, nil
 }
 
 // Get the nameHdr of a NFA
