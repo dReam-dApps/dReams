@@ -1,6 +1,7 @@
 package dreams
 
 import (
+	"archive/zip"
 	"bytes"
 	"errors"
 	"fmt"
@@ -416,6 +417,60 @@ func DownloadFile(URL, outPath string) error {
 	}
 
 	return nil
+}
+
+// Unzip a src file into destination
+func UnzipFile(src string, destination string) ([]string, error) {
+	var filenames []string
+
+	r, err := zip.OpenReader(src)
+	if err != nil {
+		return filenames, err
+	}
+
+	defer func() {
+		r.Close()
+		os.Remove(src)
+	}()
+
+	for _, f := range r.File {
+		fpath := filepath.Join(destination, f.Name)
+
+		if !strings.HasPrefix(fpath, filepath.Clean(destination)+string(os.PathSeparator)) {
+			return filenames, fmt.Errorf("%s is an illegal filepath", fpath)
+		}
+
+		filenames = append(filenames, fpath)
+
+		if f.FileInfo().IsDir() {
+			os.MkdirAll(fpath, os.ModePerm)
+			continue
+		}
+
+		if err = os.MkdirAll(filepath.Dir(fpath), os.ModePerm); err != nil {
+			return filenames, err
+		}
+
+		out, err := os.OpenFile(fpath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
+		if err != nil {
+			return filenames, err
+		}
+
+		rc, err := f.Open()
+		if err != nil {
+			return filenames, err
+		}
+
+		_, err = io.Copy(out, rc)
+		out.Close()
+		rc.Close()
+		if err != nil {
+			return filenames, err
+		}
+
+	}
+
+	return filenames, nil
 }
 
 // Returns Fyne theme icon for name
