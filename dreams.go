@@ -325,7 +325,7 @@ func GetAccounts() (prefix string, names []string) {
 	return
 }
 
-// Download image file from URL and return as canvas.Image
+// Download image from URL and return as canvas.Image
 func DownloadCanvas(URL, fileName string) (canvas.Image, error) {
 	url, err := url.Parse(URL)
 	if err != nil {
@@ -356,7 +356,7 @@ func DownloadCanvas(URL, fileName string) (canvas.Image, error) {
 	return *canvas.NewImageFromReader(&buf, fileName), nil
 }
 
-// Download url image file from URL and return as []byte
+// Download image from URL and return as []byte
 func DownloadBytes(URL string) ([]byte, error) {
 	url, err := url.Parse(URL)
 	if err != nil {
@@ -384,6 +384,38 @@ func DownloadBytes(URL string) ([]byte, error) {
 	}
 
 	return image, nil
+}
+
+// Download image from URL and save as file
+func DownloadFile(URL, outPath string) error {
+	url, err := url.Parse(URL)
+	if err != nil {
+		return err
+	}
+
+	out, err := os.Create(outPath)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	client := http.Client{Timeout: 30 * time.Second}
+	response, err := client.Get(url.String())
+	if err != nil {
+		return err
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode != http.StatusOK {
+		return fmt.Errorf("failed to download the image: status code %d", response.StatusCode)
+	}
+
+	_, err = io.Copy(out, response.Body)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Returns Fyne theme icon for name
