@@ -63,7 +63,7 @@ func SignOut() {
 
 // Account address storage path, connection types are stored separately
 func shardAddress() string {
-	if rpc.Wallet.File != nil {
+	if !rpc.Wallet.File.IsNil() {
 		return fmt.Sprintf("%x", sha1.Sum([]byte(rpc.Wallet.Address)))
 	} else {
 		return fmt.Sprintf("%x", sha1.Sum([]byte(rpc.Wallet.Address+"1")))
@@ -341,7 +341,7 @@ func CreateAccount() (m *AccountEncrypted, err error) {
 // Encrypt dreams account data, (w *Wallet_Memory) Save_Wallet()
 func (m *AccountEncrypted) EncryptAccount(password string) (result []byte, err error) {
 	var serialized []byte
-	if rpc.Wallet.File == nil {
+	if rpc.Wallet.File.IsNil() {
 		if password == "" {
 			// TODO something better
 			password = fmt.Sprintf("%x", sha256.Sum256([]byte(rpc.Wallet.Address)))
@@ -403,7 +403,7 @@ func DecryptAccount(password string) (result *AccountData, err error) {
 	}
 
 	var account_bytes []byte
-	if rpc.Wallet.File == nil {
+	if rpc.Wallet.File.IsNil() {
 		if password == "" {
 			// TODO something better
 			password = fmt.Sprintf("%x", sha256.Sum256([]byte(rpc.Wallet.Address)))

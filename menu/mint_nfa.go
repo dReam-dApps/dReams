@@ -486,7 +486,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 			return
 		}
 
-		if rpc.Wallet.File != nil && extension_select.SelectedIndex() >= 0 {
+		if !rpc.Wallet.File.IsNil() && extension_select.SelectedIndex() >= 0 {
 			address := rpc.Wallet.Address
 			if collection_enable.Checked {
 				var count, ending_at int
@@ -1373,7 +1373,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 			}
 
 			if NFACreationExists(collection_entry.Text) {
-				if rpc.Wallet.File != nil {
+				if !rpc.Wallet.File.IsNil() {
 					if collection_enable.Checked {
 						if collection_low_entry.Text != "" && collection_high_entry.Text != "" {
 							sign_file_start := filepath.Join("creation", collection_entry.Text, "asset", fmt.Sprintf("%s%s%s", name_entry.Text, collection_low_entry.Text, extension_select.Selected))

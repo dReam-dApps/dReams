@@ -434,7 +434,7 @@ func onTapped(tag string, selectType *widget.Select, entryAuth, entryPass *widge
 				}()
 
 				// Close wallet
-				if rpc.Wallet.File != nil {
+				if !rpc.Wallet.File.IsNil() {
 					rpc.Wallet.CloseConnections(tag)
 					selectType.Enable()
 					entryPass.Enable()

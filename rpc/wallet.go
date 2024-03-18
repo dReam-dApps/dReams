@@ -17,19 +17,21 @@ import (
 )
 
 type wallet struct {
-	IdHash    string
-	Address   string
-	ClientKey string
-	balances  map[string]*balance
-	height    uint64
-	Connect   bool
-	KeyLock   bool
-	muC       sync.RWMutex
+	IdHash   string
+	Address  string
+	balances map[string]*balance
+	height   uint64
+	Connect  bool
+	muC      sync.RWMutex
 	sync.RWMutex
-	File     *walletapi.Wallet_Disk
+	File     Disk
 	LogEntry *widget.Entry
 	RPC      RPCserver
 	WS       XSWDserver
+}
+
+type Disk struct {
+	disk *walletapi.Wallet_Disk
 }
 
 type balance struct {
@@ -56,10 +58,10 @@ func (w *wallet) CloseConnections(tag string) {
 		w.WS.conn = nil
 	}
 
-	if w.File != nil {
+	if w.File.disk != nil {
 		logger.Infof("[%s] Wallet Closed\n", tag)
-		w.File.Close_Encrypted_Wallet()
-		w.File = nil
+		w.File.disk.Close_Encrypted_Wallet()
+		w.File.disk = nil
 	}
 
 	w.Connected(false)
@@ -130,7 +132,7 @@ func (w *wallet) CallFor(out interface{}, method string, params ...interface{}) 
 		if err = w.WS.CallFor(&out, method, jsonrpc.Params(params...)); err != nil {
 			return
 		}
-	} else if w.File != nil {
+	} else if w.File.disk != nil {
 		switch method {
 		case "transfer":
 			result, ok := out.(*rpc.Transfer_Result)
@@ -149,12 +151,12 @@ func (w *wallet) CallFor(out interface{}, method string, params ...interface{}) 
 				}
 
 				var tx *transaction.Transaction
-				tx, err = w.File.TransferPayload0(p.Transfers, p.Ringsize, false, p.SC_RPC, p.Fees, false)
+				tx, err = w.File.disk.TransferPayload0(p.Transfers, p.Ringsize, false, p.SC_RPC, p.Fees, false)
 				if err != nil {
 					return
 				}
 
-				err = w.File.SendTransaction(tx)
+				err = w.File.disk.SendTransaction(tx)
 				if err != nil {
 					return
 				}
@@ -177,9 +179,9 @@ func (w *wallet) CallFor(out interface{}, method string, params ...interface{}) 
 			if p, ok := params[0].(*rpc.GetBalance_Params); ok {
 				var unlocked, locked uint64
 				if p.SCID.IsZero() {
-					unlocked, locked = w.File.Get_Balance()
+					unlocked, locked = w.File.disk.Get_Balance()
 				} else {
-					unlocked, locked = w.File.Get_Balance_scid(p.SCID)
+					unlocked, locked = w.File.disk.Get_Balance_scid(p.SCID)
 				}
 
 				result.Balance = locked
@@ -198,7 +200,7 @@ func (w *wallet) CallFor(out interface{}, method string, params ...interface{}) 
 			}
 
 			if p, ok := params[0].(*rpc.Get_Transfers_Params); ok {
-				result.Entries = w.File.Show_Transfers(p.SCID, p.Coinbase, p.In, p.Out, p.Min_Height, p.Max_Height, p.Sender, p.Receiver, p.DestinationPort, p.SourcePort)
+				result.Entries = w.File.disk.Show_Transfers(p.SCID, p.Coinbase, p.In, p.Out, p.Min_Height, p.Max_Height, p.Sender, p.Receiver, p.DestinationPort, p.SourcePort)
 			} else {
 				err = fmt.Errorf("expected out to be *rpc.Get_Transfers_Params, got %T", params[0])
 			}
@@ -213,7 +215,7 @@ func (w *wallet) CallFor(out interface{}, method string, params ...interface{}) 
 			}
 
 			if p, ok := params[0].(*rpc.Get_Transfer_By_TXID_Params); ok {
-				scid, entry := w.File.Get_Payments_TXID(p.SCID, p.TXID)
+				scid, entry := w.File.disk.Get_Payments_TXID(p.SCID, p.TXID)
 				result.SCID = scid
 				result.Entry = entry
 			} else {
@@ -225,7 +227,7 @@ func (w *wallet) CallFor(out interface{}, method string, params ...interface{}) 
 				return fmt.Errorf("expected out to be *rpc.GetAddress_Result, got %T", out)
 			}
 
-			result.Address = w.File.GetAddress().String()
+			result.Address = w.File.disk.GetAddress().String()
 
 		case "GetHeight":
 			result, ok := out.(*rpc.GetHeight_Result)
@@ -233,7 +235,7 @@ func (w *wallet) CallFor(out interface{}, method string, params ...interface{}) 
 				return fmt.Errorf("expected out to be *rpc.GetHeight_Result, got %T", out)
 			}
 
-			result.Height = w.File.Get_Height()
+			result.Height = w.File.disk.Get_Height()
 		// case "Echo":
 		// 	out = "Wallet " + strings.Join(params[0].([]string), " ")
 
@@ -314,13 +316,13 @@ func (w *wallet) GetAllBalances() {
 	w.Lock()
 	defer w.Unlock()
 
-	if w.RPC.client == nil && w.WS.conn == nil && w.File != nil {
+	if w.RPC.client == nil && w.WS.conn == nil && w.File.disk != nil {
 		for name := range w.balances {
 			var bal uint64
 			if name == "DERO" {
-				bal, _ = w.File.Get_Balance()
+				bal, _ = w.File.disk.Get_Balance()
 			} else {
-				bal, _ = w.File.Get_Balance_scid(crypto.HashHexToHash(w.balances[name].scid))
+				bal, _ = w.File.disk.Get_Balance_scid(crypto.HashHexToHash(w.balances[name].scid))
 			}
 
 			w.balances[name].atomic = bal
@@ -354,7 +356,7 @@ func (w *wallet) GetAllBalances() {
 
 // Sync calls wallet.Echo, wallet.GetHeight and wallet.GetAllBalances if wallet is connected
 func (w *wallet) Sync() {
-	if w.File != nil {
+	if w.File.disk != nil {
 		w.Lock()
 		walletapi.Daemon_Endpoint_Active = Daemon.Rpc
 		if err := walletapi.Connect(Daemon.Rpc); err != nil {
@@ -375,15 +377,33 @@ func (w *wallet) Sync() {
 }
 
 func (w *wallet) OpenWalletFile(tag, path, password string) (err error) {
-	w.File, err = walletapi.Open_Encrypted_Wallet(path, password)
+	w.File.disk, err = walletapi.Open_Encrypted_Wallet(path, password)
 	if err != nil {
 		return
 	}
 
-	w.File.SetNetwork(true)
-	w.File.SetOnlineMode()
+	w.File.disk.SetNetwork(true)
+	w.File.disk.SetOnlineMode()
 	GetAddress(tag)
 	w.Connected(true)
 
 	return
+}
+
+// Below are derohe *walletapi.Wallet_Disk methods to expose
+
+func (f *Disk) Encrypt(data []byte) (result []byte, err error) {
+	return f.disk.Encrypt(data)
+}
+
+func (f *Disk) Decrypt(data []byte) (result []byte, err error) {
+	return f.disk.Decrypt(data)
+}
+
+func (f *Disk) SignData(data []byte) (result []byte) {
+	return f.disk.SignData(data)
+}
+
+func (f *Disk) IsNil() bool {
+	return f.disk == nil
 }
