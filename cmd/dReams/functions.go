@@ -355,6 +355,8 @@ func checkNFAOwner(scid string) {
 						add.Type = menu.AssetType(collection[0], typeHdr[0])
 					}
 
+					menu.Assets.Add(add, icon[0])
+
 					for _, util := range utility {
 						switch util {
 						case menu.UTIL_AVATAR:
@@ -373,8 +375,6 @@ func checkNFAOwner(scid string) {
 							dice.Settings.AddDice(header[0], owner[0])
 						}
 					}
-
-					menu.Assets.Add(add, icon[0])
 
 					if collection[0] == "High Strangeness" {
 						check := strings.Trim(header[0], "0123456789")
