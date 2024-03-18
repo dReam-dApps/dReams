@@ -1118,7 +1118,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 		name := collection_entry.Text + ".json"
 		file, err := os.Create(filepath.Join("creation", name))
 		if err != nil {
-			logger.Errorf("[%s] %s", tag, err)
+			logger.Errorf("[%s] %s\n", tag, err)
 			return
 		}
 		defer file.Close()
@@ -1150,7 +1150,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 
 		json, _ := json.MarshalIndent(data, "", " ")
 		if _, err = file.Write(json); err != nil {
-			logger.Errorf("[%s] %s", tag, err)
+			logger.Errorf("[%s] %s\n", tag, err)
 		}
 
 		var have bool
@@ -1172,13 +1172,13 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 	config_select.OnChanged = func(s string) {
 		file, err := os.ReadFile(filepath.Join("creation", s))
 		if err != nil {
-			logger.Errorf("[%s] %s", tag, err)
+			logger.Errorf("[%s] %s\n", tag, err)
 			return
 		}
 
 		var data mintConfig
 		if err = json.Unmarshal(file, &data); err != nil {
-			logger.Errorf("[%s] %s", tag, err)
+			logger.Errorf("[%s] %s\n", tag, err)
 			return
 		}
 

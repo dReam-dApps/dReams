@@ -170,7 +170,7 @@ func GasEstimate(scid, tag string, args rpc.Arguments, t []rpc.Transfer, max uin
 	}
 
 	if err := client.CallFor(ctx, &result, "DERO.GetGasEstimate", params); err != nil {
-		logger.Errorf("%s %s", tag, err)
+		logger.Errorf("%s %s\n", tag, err)
 		return 0
 	}
 
