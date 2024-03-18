@@ -103,6 +103,9 @@ func init() {
 
 	menu.Market.DreamsFilter = true
 
+	dReams.AddAccountHandler("holdero", holdero.SetAccount)
+	dReams.AddAccountHandler("prediction", prediction.SetAccount)
+
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
@@ -139,12 +142,13 @@ func saveSettings() dreams.SaveData {
 // Add account data to dreams.AccountEncrypted for account storage
 func saveAccount() *dreams.AccountEncrypted {
 	new := &dreams.AccountData{
-		Tables:  holdero.GetFavoriteTables(),
-		Predict: prediction.Predict.Favorites.SCIDs,
-		Sports:  prediction.Sports.Favorites.SCIDs,
+		Dapp: map[string]interface{}{
+			"holdero":    holdero.GetAccount(),
+			"prediction": prediction.GetAccount(),
+		},
 	}
 
-	return dreams.AddAccountData(new)
+	return dreams.AddAccountData(new, "all")
 }
 
 // // Make system tray with opts
@@ -179,16 +183,19 @@ func saveAccount() *dreams.AccountEncrypted {
 func loadAccount() {
 	if dreams.CreateAccountIfNone() {
 		logger.Println("[dReams] Loading account")
-		var saved dreams.AccountData
-		err := dreams.GetAccount(&saved)
+		var account dreams.AccountData
+		err := dreams.GetAccount(&account)
 		if err != nil {
 			logger.Errorln("[loadAccount]", err)
 			return
 		}
 
-		holdero.SetFavoriteTables(saved.Tables)
-		prediction.Predict.Favorites.SCIDs = saved.Predict
-		prediction.Sports.Favorites.SCIDs = saved.Sports
+		for name, set := range dReams.GetAccountHandlers() {
+			err := set(account.Dapp[name])
+			if err != nil {
+				logger.Errorf("[loadAccount] %s %s\n", name, err)
+			}
+		}
 	}
 }
 
@@ -842,7 +849,7 @@ func xswdConnection() fyne.CanvasObject {
 
 // Connect/Disconnect objects for walletapi
 func accountConnection() fyne.CanvasObject {
-	_, names := dreams.GetAccounts()
+	_, names := dreams.GetDeroAccounts()
 
 	options := widget.NewSelectEntry(names)
 	options.PlaceHolder = "DERO.db:"

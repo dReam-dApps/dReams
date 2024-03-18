@@ -64,6 +64,9 @@ type AppObject struct {
 	done       chan struct{}
 	receive    chan struct{}
 	channels   int
+	account    struct {
+		handlers map[string]func(interface{}) error
+	}
 }
 
 // Select widget items for Dero assets
@@ -279,6 +282,20 @@ func (d *AppObject) GetMaxSize(w, h float32) fyne.Size {
 	return fyne.NewSize(w*wRatio, h*hRatio)
 }
 
+// Add dApp account handler to AppObject
+func (d *AppObject) AddAccountHandler(name string, f func(interface{}) error) {
+	if d.account.handlers == nil {
+		d.account.handlers = make(map[string]func(interface{}) error)
+	}
+
+	d.account.handlers[name] = f
+}
+
+// Get the current account handlers from AppObject
+func (d *AppObject) GetAccountHandlers() map[string]func(interface{}) error {
+	return d.account.handlers
+}
+
 // Get current working directory path for prefix
 func GetDir() (dir string) {
 	dir, err := os.Getwd()
@@ -304,8 +321,8 @@ func FileExists(path, tag string) bool {
 	return false
 }
 
-// Get .db files from wallet directory
-func GetAccounts() (prefix string, names []string) {
+// Get dero .db file names from wallet directory
+func GetDeroAccounts() (prefix string, names []string) {
 	prefix = "mainnet"
 	if !globals.IsMainnet() {
 		prefix = "testnet"

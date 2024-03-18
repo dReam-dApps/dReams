@@ -672,7 +672,7 @@ func placeWall(intros []menu.IntroText) *container.Split {
 	connect_select.OnSelected = func(ti *container.TabItem) {
 		switch ti.Text {
 		case "DERO":
-			_, names := dreams.GetAccounts()
+			_, names := dreams.GetDeroAccounts()
 			layoutFile.Objects[1].(*fyne.Container).Objects[1].(*widget.SelectEntry).SetOptions(names)
 		}
 	}

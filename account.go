@@ -38,9 +38,7 @@ type AccountEncrypted struct {
 
 // Account data to store for a connected wallet
 type AccountData struct {
-	Tables  []string `json:"tables"`
-	Predict []string `json:"predict"`
-	Sports  []string `json:"sports"`
+	Dapp map[string]interface{} `json:"dapp"`
 }
 
 const (
@@ -176,13 +174,34 @@ func GetValue(bucket, key string, out interface{}) (err error) {
 	return
 }
 
+// Helper function for setting dApp accounts
+func SetAccount(ad, toType interface{}) (err error) {
+	data, err := json.Marshal(ad)
+	if err != nil {
+		return
+	}
+
+	return json.Unmarshal(data, &toType)
+}
+
 // Add account data to account variable
-func AddAccountData(data *AccountData) *AccountEncrypted {
+//   - 'w' defines where data should be stored, pass "all" to store all AccountData
+func AddAccountData(data interface{}, w string) *AccountEncrypted {
 	if myAccount.account == nil {
 		SignOut()
 	}
 
-	myAccount.account = data
+	switch w {
+	case "all":
+		all, ok := data.(*AccountData)
+		if !ok {
+			break
+		}
+
+		myAccount.account = all
+	default:
+		myAccount.account.Dapp[w] = data
+	}
 
 	return myAccount
 }
@@ -193,6 +212,9 @@ func StoreAccount(store *AccountEncrypted) (err error) {
 	if err != nil {
 		return
 	}
+
+	myAccount.Lock()
+	defer myAccount.Unlock()
 
 	err = db.Update(func(tx *bbolt.Tx) (err error) {
 		b, err := tx.CreateBucketIfNotExists([]byte(accountBucket))
@@ -210,8 +232,6 @@ func StoreAccount(store *AccountEncrypted) (err error) {
 			return
 		}
 
-		myAccount.Lock()
-		defer myAccount.Unlock()
 		err = json.Unmarshal(data, &myAccount)
 		if err != nil {
 			return

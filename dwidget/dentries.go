@@ -106,7 +106,7 @@ func NewHorizontalEntries(tag string, offset int, d *dreams.AppObject) *DeroEntr
 
 	entryXSWD := NewWalletXSWDEntry(tag)
 
-	_, names := dreams.GetAccounts()
+	_, names := dreams.GetDeroAccounts()
 	entryDERO := widget.NewSelectEntry(names)
 	entryDERO.PlaceHolder = "dero.db path:"
 
@@ -154,7 +154,7 @@ func NewHorizontalEntries(tag string, offset int, d *dreams.AppObject) *DeroEntr
 			layoutAll.Objects[0] = layoutXSWD
 		case "DERO":
 			layoutAll.Objects[0] = layoutDERO
-			_, names := dreams.GetAccounts()
+			_, names := dreams.GetDeroAccounts()
 			layoutDERO.Objects[1].(*fyne.Container).Objects[1].(*widget.SelectEntry).SetOptions(names)
 		}
 	}
@@ -192,7 +192,7 @@ func NewVerticalEntries(tag string, d *dreams.AppObject) *DeroEntries {
 
 	entryXSWD := NewWalletXSWDEntry(tag)
 
-	_, names := dreams.GetAccounts()
+	_, names := dreams.GetDeroAccounts()
 	entryDERO := widget.NewSelectEntry(names)
 	entryDERO.PlaceHolder = "dero.db path:"
 
@@ -254,7 +254,7 @@ func NewVerticalEntries(tag string, d *dreams.AppObject) *DeroEntries {
 			layoutAll.Objects[0] = layoutXSWD
 		case "DERO":
 			layoutAll.Objects[0] = layoutDERO
-			_, names := dreams.GetAccounts()
+			_, names := dreams.GetDeroAccounts()
 			layoutDERO.Objects[1].(*widget.SelectEntry).SetOptions(names)
 		}
 	}
