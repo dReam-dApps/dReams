@@ -180,30 +180,43 @@ func saveAccount() *dreams.AccountEncrypted {
 // }
 
 // Try to load account from storage if exists and set preferences
-func loadAccount() {
-	if dreams.CreateAccountIfNone() {
+func loadAccount() (err error) {
+	var found bool
+	found, err = dreams.CreateAccountIfNone(App_Name)
+	if err != nil {
+		return
+	}
+
+	if found {
 		logger.Println("[dReams] Loading account")
 		var account dreams.AccountData
-		err := dreams.GetAccount(&account)
+		err = dreams.GetAccount(&account)
 		if err != nil {
 			logger.Errorln("[loadAccount]", err)
 			return
 		}
 
 		for name, set := range dReams.GetAccountHandlers() {
-			err := set(account.Dapp[name])
-			if err != nil {
-				logger.Errorf("[loadAccount] %s %s\n", name, err)
+			errr := set(account.Dapp[name])
+			if errr != nil {
+				logger.Errorf("[loadAccount] %s %s\n", name, errr)
 			}
 		}
 	}
+
+	return
 }
 
 // This is what we want to scan wallet for when Gnomon is synced
 func gnomonScan(contracts map[string]string) {
+	if err := loadAccount(); err != nil {
+		dialog.NewError(fmt.Errorf("error loading account %s", err), dReams.Window).Show()
+		// TODO probably other than return
+		return
+	}
+
 	screen, bar := syncScreen()
 	menu_tabs.Items[2].Content = screen
-	loadAccount()
 	menu.CheckWalletNames(rpc.Wallet.Address)
 	screen.Objects[0].(*fyne.Container).Objects[1].(*canvas.Text).Text = "Syncing NFAs..."
 	checkDreamsNFAs(contracts, bar)

@@ -57,6 +57,7 @@ func init() {
 // Reset myAccount variable
 func SignOut() {
 	myAccount = &AccountEncrypted{
+		Version: rpc.Version(),
 		account: &AccountData{},
 	}
 }
@@ -85,7 +86,7 @@ func getShard(public bool) (db *bbolt.DB, err error) {
 		shard = "settings"
 	} else {
 		if rpc.Wallet.Address == "" {
-			err = fmt.Errorf("nil wallet for account store")
+			err = fmt.Errorf("no wallet for account store")
 			return
 		}
 
@@ -110,7 +111,7 @@ func getShard(public bool) (db *bbolt.DB, err error) {
 // Delete local storage for connected wallet
 func DeleteShard() error {
 	if rpc.Wallet.Address == "" {
-		return fmt.Errorf("no shard address")
+		return fmt.Errorf("no wallet address")
 	}
 
 	return os.RemoveAll(filepath.Clean(filepath.Join("datashards", shardAddress())))
@@ -206,7 +207,7 @@ func AddAccountData(data interface{}, w string) *AccountEncrypted {
 	return myAccount
 }
 
-// Store encrypted dreams account in DB
+// Encrypt dreams account and store in DB
 func StoreAccount(store *AccountEncrypted) (err error) {
 	db, err := getShard(false)
 	if err != nil {
@@ -218,11 +219,6 @@ func StoreAccount(store *AccountEncrypted) (err error) {
 
 	err = db.Update(func(tx *bbolt.Tx) (err error) {
 		b, err := tx.CreateBucketIfNotExists([]byte(accountBucket))
-		if err != nil {
-			return
-		}
-
-		mar, err := json.Marshal(&store)
 		if err != nil {
 			return
 		}
@@ -242,16 +238,41 @@ func StoreAccount(store *AccountEncrypted) (err error) {
 			return
 		}
 
-		logger.Debugln("[StoreAccount]", string(mar))
-
 		return
 	})
 
 	db.Close()
 
+	return
+}
+
+// Store account in DB
+func storeAccount(store *AccountEncrypted) (err error) {
+	db, err := getShard(false)
 	if err != nil {
-		logger.Errorln("[StoreAccount]", err)
+		return
 	}
+
+	err = db.Update(func(tx *bbolt.Tx) (err error) {
+		b, err := tx.CreateBucketIfNotExists([]byte(accountBucket))
+		if err != nil {
+			return
+		}
+
+		mar, err := json.Marshal(&store)
+		if err != nil {
+			return
+		}
+
+		err = b.Put([]byte(accountKey), mar)
+		if err != nil {
+			return
+		}
+
+		return
+	})
+
+	db.Close()
 
 	return
 }
@@ -286,8 +307,6 @@ func GetAccount(out *AccountData) (err error) {
 		if err != nil {
 			return
 		}
-
-		logger.Debugln("[GetAccount]", string(data))
 
 		err = json.Unmarshal(data, &out)
 		if err != nil {
@@ -333,8 +352,6 @@ func CreateAccount() (m *AccountEncrypted, err error) {
 		return
 	}
 
-	myAccount = m
-
 	return
 }
 
@@ -352,6 +369,7 @@ func (m *AccountEncrypted) EncryptAccount(password string) (result []byte, err e
 		// encrypted the master password with the pbkdf2
 		m.Secret, err = walletapi.EncryptWithKey(m.pbkdf2[:], m.master)
 		if err != nil {
+			err = fmt.Errorf("pbkdf2 %s", err)
 			return
 		}
 
@@ -363,6 +381,7 @@ func (m *AccountEncrypted) EncryptAccount(password string) (result []byte, err e
 
 		m.Encrypted, err = walletapi.EncryptWithKey(m.master, serialized)
 		if err != nil {
+			err = fmt.Errorf("master %s", err)
 			return
 		}
 	} else {
@@ -415,12 +434,14 @@ func DecryptAccount(password string) (result *AccountData, err error) {
 		// try to decrypt the master password with the pbkdf2
 		w.master, err = walletapi.DecryptWithKey(w.pbkdf2, w.Secret) // decrypt the master key
 		if err != nil {
+			err = fmt.Errorf("pbkdf2 %s", err)
 			return
 		}
 
 		// password has been found, open the account
 		account_bytes, err = walletapi.DecryptWithKey(w.master, w.Encrypted)
 		if err != nil {
+			err = fmt.Errorf("master %s", err)
 			return
 		}
 	} else {
@@ -476,17 +497,24 @@ func AccountExists() (found bool, account *AccountEncrypted, err error) {
 }
 
 // Create a new account if none exists
-func CreateAccountIfNone() (found bool) {
+func CreateAccountIfNone(tag string) (found bool, err error) {
 	var acc *AccountEncrypted
-	found, acc, _ = AccountExists()
+	found, acc, err = AccountExists()
 	if !found {
-		var err error
-		logger.Debugln("[CreateAccountIfNone] No account, creating")
+		logger.Printf("[%s] Creating account\n", tag)
 		acc, err = CreateAccount()
 		if err != nil {
-			logger.Errorln("[CreateAccountIfNone]", err)
+			logger.Errorln("[CreateAccount]", err)
 			return
 		}
+
+		errr := storeAccount(acc)
+		if errr != nil {
+			logger.Errorln("[storeAccount]", errr)
+		}
+	} else if err != nil {
+		logger.Errorln("[AccountExists]", err)
+		return
 	}
 
 	myAccount = acc

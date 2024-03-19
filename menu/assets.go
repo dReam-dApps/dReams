@@ -2,6 +2,7 @@ package menu
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"image/color"
 	"sort"
@@ -468,13 +469,19 @@ func PlaceAssets(tag string, profile fyne.CanvasObject, rescan func(), icon fyne
 		nil)
 
 	btnDatashard := widget.NewButtonWithIcon("Delete Datashard", dreams.FyneIcon("delete"), nil)
+	btnDatashard.Importance = widget.LowImportance
 	btnDatashard.OnTapped = func() {
 		if gnomon.IsScanning() {
 			dialog.NewInformation("Profile", "Gnomon is syncing profile, please wait", d.Window).Show()
 		} else {
 			dialog.NewConfirm("Delete Datashard", fmt.Sprintf("This will delete local storage for account:\n\n%s", rpc.Wallet.Address), func(b bool) {
 				if b {
-					dreams.DeleteShard()
+					err := dreams.DeleteShard()
+					if err != nil {
+						dialog.NewInformation("Profile", fmt.Sprintf("Delete datashard %s", err), d.Window).Show()
+						return
+					}
+
 					dialog.NewInformation("Profile", "Datashard Deleted", d.Window).Show()
 					rpc.PrintLog("[Profile] Datashard deleted")
 				}
@@ -482,7 +489,48 @@ func PlaceAssets(tag string, profile fyne.CanvasObject, rescan func(), icon fyne
 		}
 	}
 
-	btnDatashard.Importance = widget.LowImportance
+	btnViewAccount := widget.NewButtonWithIcon("View Account", dreams.FyneIcon("account"), nil)
+	btnViewAccount.Importance = widget.LowImportance
+	btnViewAccount.OnTapped = func() {
+		found, account, err := dreams.AccountExists()
+		if err != nil {
+			dialog.NewError(err, d.Window).Show()
+			return
+		}
+
+		if found {
+			ae, err := json.MarshalIndent(account, "", "   ")
+			if err != nil {
+				dialog.NewInformation("Account", "Could not read encrypted account", d.Window).Show()
+				return
+			}
+
+			var data dreams.AccountData
+			err = dreams.GetAccount(&data)
+			if err != nil {
+				dialog.NewInformation("Account", fmt.Sprintf("Could not get account data\n\n%s", err), d.Window).Show()
+				return
+			}
+
+			var ad []byte
+			ad, err = json.MarshalIndent(data, "", "   ")
+			if err != nil {
+				dialog.NewInformation("Account", "Could not read account data", d.Window).Show()
+				return
+			}
+
+			entry := widget.NewMultiLineEntry()
+			entry.Wrapping = fyne.TextWrapWord
+			entry.Disable()
+			entry.SetText(fmt.Sprintf("%s\n\n%s", string(ad), string(ae)))
+
+			info := dialog.NewCustom("Account", "Close", entry, d.Window)
+			info.Resize(d.GetMaxSize(dreams.MIN_WIDTH*0.70, dreams.MIN_HEIGHT*0.80))
+			info.Show()
+		} else {
+			dialog.NewInformation("Account", "Account not found", d.Window).Show()
+		}
+	}
 
 	var tab *container.TabItem
 	tabs := container.NewAppTabs(
@@ -494,7 +542,7 @@ func PlaceAssets(tag string, profile fyne.CanvasObject, rescan func(), icon fyne
 					canvas.NewLine(bundle.TextColor),
 					dwidget.NewCanvasText("User Profile", 18, fyne.TextAlignCenter),
 					canvas.NewLine(bundle.TextColor))),
-			container.NewHBox(layout.NewSpacer(), btnDatashard),
+			container.NewHBox(btnViewAccount, layout.NewSpacer(), btnDatashard),
 			nil,
 			nil,
 			profile)),
