@@ -275,7 +275,7 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 		}
 
 		wait = true
-		rpc.Wallet.Connected(false)
+		rpc.Wallet.CloseConnections("dReams")
 
 		status_text := dwidget.NewCanvasText("Closing dApps...", 21, fyne.TextAlignCenter)
 		status_text.Color = color.White
@@ -286,7 +286,6 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 		dReams.Window.Content().(*fyne.Container).Objects[1] = container.NewStack(container.NewCenter(img, status_text), widget.NewProgressBarInfinite())
 
 		logger.Println("[dReams] Closing dApps")
-		rpc.Wallet.CloseConnections("dReams")
 		dReams.CloseAllDapps()
 		disconnected()
 		menu.Control.Lock()

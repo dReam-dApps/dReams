@@ -308,7 +308,6 @@ func NewWalletRPCEntries(tag string, defaults []string) (entryRPC *widget.Select
 	entryRPC.SetText(options[1])
 	entryRPC.OnChanged = func(s string) {
 		if rpc.Wallet.IsConnected() {
-			rpc.Wallet.Connected(false)
 			rpc.Wallet.CloseConnections(tag)
 		}
 	}
@@ -319,7 +318,6 @@ func NewWalletRPCEntries(tag string, defaults []string) (entryRPC *widget.Select
 	entryAuth.Bind(pass_bind)
 	entryAuth.OnChanged = func(s string) {
 		if rpc.Wallet.IsConnected() {
-			rpc.Wallet.Connected(false)
 			rpc.Wallet.CloseConnections(tag)
 		}
 	}
@@ -339,7 +337,6 @@ func NewWalletXSWDEntry(tag string) (entryXSWD *widget.SelectEntry) {
 	entryXSWD.SetText(options[1])
 	entryXSWD.OnChanged = func(s string) {
 		if rpc.Wallet.IsConnected() {
-			rpc.Wallet.Connected(false)
 			rpc.Wallet.CloseConnections(tag)
 		}
 	}
@@ -362,7 +359,6 @@ func onTapped(tag string, selectType *widget.Select, entryAuth, entryPass *widge
 				button.Importance = widget.MediumImportance
 				entryRPC.Enable()
 				entryAuth.Enable()
-				rpc.Wallet.Connected(false)
 				rpc.Wallet.CloseConnections(tag)
 				button.Icon = dreams.FyneIcon("confirm")
 				button.Refresh()
@@ -388,7 +384,6 @@ func onTapped(tag string, selectType *widget.Select, entryAuth, entryPass *widge
 			// Disconnect from XSWD
 			if !rpc.Wallet.WS.IsClosed() {
 				button.Importance = widget.MediumImportance
-				rpc.Wallet.Connected(false)
 				rpc.Wallet.CloseConnections(tag)
 				entryXSWD.Enable()
 				button.Icon = dreams.FyneIcon("confirm")

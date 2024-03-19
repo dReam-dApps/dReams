@@ -719,7 +719,6 @@ func rpcConnection() fyne.CanvasObject {
 			button.Importance = widget.MediumImportance
 			entryAuth.Enable()
 			entryPort.Enable()
-			rpc.Wallet.Connected(false)
 			rpc.Wallet.CloseConnections("dReams")
 			disconnected()
 			button.Text = "Connect"
@@ -794,7 +793,6 @@ func xswdConnection() fyne.CanvasObject {
 			dreams.SignOut()
 
 			button.Importance = widget.MediumImportance
-			rpc.Wallet.Connected(false)
 			rpc.Wallet.CloseConnections("dReams")
 			disconnected()
 			entryPort.Enable()
