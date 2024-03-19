@@ -1,9 +1,13 @@
 package menu
 
 import (
+	"image/color"
+
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
+	"github.com/dReam-dApps/dReams/bundle"
 )
 
 // Menu tree items for dApp intros
@@ -96,5 +100,10 @@ func IntroTree(intros []IntroText) fyne.CanvasObject {
 
 	tree.OpenBranch("Welcome to dReams")
 
-	return container.NewStack(tree)
+	alpha120 := canvas.NewRectangle(color.RGBA{0, 0, 0, 120})
+	if bundle.AppColor == color.White {
+		alpha120 = canvas.NewRectangle(color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0x55})
+	}
+
+	return container.NewStack(alpha120, tree)
 }

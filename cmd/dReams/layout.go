@@ -715,7 +715,7 @@ func placeWall(intros []menu.IntroText) *container.Split {
 		}
 	}
 
-	menu_top := container.NewHSplit(container.NewStack(bundle.Alpha120, menu.IntroTree(intros)), connect_tabs)
+	menu_top := container.NewHSplit(menu.IntroTree(intros), connect_tabs)
 	menu_top.SetOffset(0.66)
 
 	menu_bottom := container.NewAdaptiveGrid(1, holdero.PlaceSwap(&dReams))
