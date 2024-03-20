@@ -66,6 +66,7 @@ type AppObject struct {
 	channels   int
 	account    struct {
 		handlers map[string]func(interface{}) error
+		sync.RWMutex
 	}
 }
 
@@ -300,16 +301,20 @@ func (d *AppObject) GetMaxSize(w, h float32) fyne.Size {
 }
 
 // Add dApp account handler to AppObject
-func (d *AppObject) AddAccountHandler(name string, f func(interface{}) error) {
+func (d *AppObject) AddAccountHandlers(handlers map[string]func(interface{}) error) {
+	d.account.Lock()
 	if d.account.handlers == nil {
 		d.account.handlers = make(map[string]func(interface{}) error)
 	}
-
-	d.account.handlers[name] = f
+	d.account.handlers = handlers
+	d.account.Unlock()
 }
 
 // Get the current account handlers from AppObject
 func (d *AppObject) GetAccountHandlers() map[string]func(interface{}) error {
+	d.account.RLock()
+	defer d.account.RUnlock()
+
 	return d.account.handlers
 }
 

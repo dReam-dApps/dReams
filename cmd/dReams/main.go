@@ -33,6 +33,7 @@ func main() {
 		menu.DefaultBackgroundResource(),
 		true)
 
+	dReams.AddAccountHandlers(accountHandlers())
 	dReams.Window.SetContent(splashScreen())
 
 	done := make(chan struct{})

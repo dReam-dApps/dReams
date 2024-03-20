@@ -103,9 +103,6 @@ func init() {
 
 	menu.Market.DreamsFilter = true
 
-	dReams.AddAccountHandler("holdero", holdero.SetAccount)
-	dReams.AddAccountHandler("prediction", prediction.SetAccount)
-
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
@@ -179,6 +176,14 @@ func saveAccount() *dreams.AccountEncrypted {
 // 	return false
 // }
 
+// Dapp account handler funcs
+func accountHandlers() map[string]func(interface{}) error {
+	return map[string]func(interface{}) error{
+		"holdero":    holdero.SetAccount,
+		"prediction": prediction.SetAccount,
+	}
+}
+
 // Try to load account from storage if exists and set preferences
 func loadAccount() (err error) {
 	var found bool
@@ -209,12 +214,6 @@ func loadAccount() (err error) {
 
 // This is what we want to scan wallet for when Gnomon is synced
 func gnomonScan(contracts map[string]string) {
-	if err := loadAccount(); err != nil {
-		dialog.NewError(fmt.Errorf("error loading account %s", err), dReams.Window).Show()
-		// TODO probably other than return
-		return
-	}
-
 	screen, bar := syncScreen()
 	menu_tabs.Items[2].Content = screen
 	menu.CheckWalletNames(rpc.Wallet.Address)
@@ -724,7 +723,10 @@ func rpcConnection() fyne.CanvasObject {
 				dialog.NewInformation("Gnomon Syncing", "Wait for Gnomon to sync before disconnecting", dReams.Window).Show()
 				return
 			}
+
 			if err := dreams.StoreAccount(saveAccount()); err != nil {
+				err = fmt.Errorf("error storing account %s", err)
+				dialog.NewError(err, dReams.Window).Show()
 				logger.Errorln("[dReams]", err)
 			}
 			dreams.SignOut()
@@ -753,6 +755,9 @@ func rpcConnection() fyne.CanvasObject {
 				entryPort.Disable()
 				connect_select.DisableIndex(1)
 				connect_select.DisableIndex(2)
+				if err := loadAccount(); err != nil {
+					dialog.NewError(fmt.Errorf("error loading account %s", err), dReams.Window).Show()
+				}
 			}
 		}()
 	}
@@ -801,6 +806,8 @@ func xswdConnection() fyne.CanvasObject {
 			}
 
 			if err := dreams.StoreAccount(saveAccount()); err != nil {
+				err = fmt.Errorf("error storing account %s", err)
+				dialog.NewError(err, dReams.Window).Show()
 				logger.Errorln("[dReams]", err)
 			}
 			dreams.SignOut()
@@ -829,6 +836,9 @@ func xswdConnection() fyne.CanvasObject {
 					button.Text = "Disconnect"
 					button.Refresh()
 					button.Enable()
+					if err := loadAccount(); err != nil {
+						dialog.NewError(fmt.Errorf("error loading account %s", err), dReams.Window).Show()
+					}
 					return
 				}
 
@@ -883,6 +893,8 @@ func accountConnection() fyne.CanvasObject {
 				}
 
 				if err := dreams.StoreAccount(saveAccount()); err != nil {
+					err = fmt.Errorf("error storing account %s", err)
+					dialog.NewError(err, dReams.Window).Show()
 					logger.Errorln("[dReams]", err)
 				}
 				dreams.SignOut()
@@ -917,8 +929,7 @@ func accountConnection() fyne.CanvasObject {
 
 				if err := rpc.Wallet.OpenWalletFile(dReams.Name(), path, entryPass.Text); err != nil {
 					logger.Errorf("[%s] %s\n", dReams.Name(), err)
-					dialogError := dialog.NewInformation("Error", fmt.Sprintf("%s", err), dReams.Window)
-					dialogError.Show()
+					dialog.NewError(err, dReams.Window).Show()
 					return
 				}
 
@@ -929,6 +940,9 @@ func accountConnection() fyne.CanvasObject {
 				button.Importance = widget.HighImportance
 				button.Text = "Sign out"
 				button.Refresh()
+				if err := loadAccount(); err != nil {
+					dialog.NewError(fmt.Errorf("error loading account %s", err), dReams.Window).Show()
+				}
 			}
 		}()
 	}
