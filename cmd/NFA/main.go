@@ -51,10 +51,11 @@ func main() {
 	d := dreams.NewFyneApp(
 		appID,
 		appName,
+		"Non-Fungible Asset Market",
 		bundle.DeroTheme(config.Skin),
 		bundle.ResourceMarketIconPng,
 		menu.DefaultBackgroundResource(),
-		rpc.NewXSWDApplicationData(appName, "Non-Fungible Asset Market", appID, true))
+		true)
 
 	// Enable calling RunNFAMarket
 	enabled := menu.EnabledDappCount()

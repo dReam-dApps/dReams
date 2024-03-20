@@ -114,11 +114,19 @@ func (c *count) active() int {
 	return c.i
 }
 
-// Creates a Fyne app returned as AppObject. Takes ID, name, fyne.Theme, fyne.Resources for icon and background images and XSWD application data.
-// Window default size is MIN_WIDTH x MIN_HEIGHT, centered and set as master, Theme.Img uses theme resource for background.
-func NewFyneApp(id, name string, skin fyne.Theme, icon, theme fyne.Resource, ad *xswd.ApplicationData) AppObject {
+// Creates a Fyne app returned as AppObject. Window default size is MIN_WIDTH x MIN_HEIGHT, centered and set as master.
+//   - id, name, description strings for App
+//   - fyne.Theme and fyne.Resources for icon and background theme images
+//   - permissions true will request AlwaysAllow  XSWD permissions upon connection for the methods used in rpc package
+func NewFyneApp(id, name, description string, skin fyne.Theme, icon, theme fyne.Resource, permissions bool) AppObject {
 	a := app.NewWithID(id)
 	a.Settings().SetTheme(skin)
+
+	app.SetMetadata(fyne.AppMetadata{
+		ID:   id,
+		Name: name,
+		Icon: icon,
+	})
 
 	w := a.NewWindow(name)
 	w.Resize(fyne.NewSize(MIN_WIDTH, MIN_HEIGHT))
@@ -128,11 +136,15 @@ func NewFyneApp(id, name string, skin fyne.Theme, icon, theme fyne.Resource, ad 
 
 	Theme.Img = *canvas.NewImageFromResource(theme)
 
+	if description == "" {
+		description = id
+	}
+
 	return AppObject{
 		App:        a,
 		Window:     w,
 		Background: container.NewStack(&Theme.Img),
-		XSWD:       ad,
+		XSWD:       rpc.NewXSWDApplicationData(name, description, id, permissions),
 	}
 }
 
@@ -149,6 +161,11 @@ func (d *AppObject) SetOS() {
 // Check what OS is set
 func (d *AppObject) OS() string {
 	return d.os
+}
+
+// Returns App name
+func (d *AppObject) Name() string {
+	return d.App.Metadata().Name
 }
 
 // Set main configure bool

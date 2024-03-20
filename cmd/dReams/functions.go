@@ -98,7 +98,7 @@ func flags() {
 func init() {
 	dReams.SetOS()
 	gnomes.InitLogrusLog(logrus.InfoLevel)
-	saved := menu.GetSettings(App_Name)
+	saved := menu.GetSettings("dReams")
 	menu.SetSettings(saved)
 
 	menu.Market.DreamsFilter = true
@@ -182,7 +182,7 @@ func saveAccount() *dreams.AccountEncrypted {
 // Try to load account from storage if exists and set preferences
 func loadAccount() (err error) {
 	var found bool
-	found, err = dreams.CreateAccountIfNone(App_Name)
+	found, err = dreams.CreateAccountIfNone(dReams.Name())
 	if err != nil {
 		return
 	}
@@ -292,11 +292,11 @@ func menuRefresh(offset int) {
 		}
 
 		if offset == 40 || menu.Info.Price.Text == "" {
-			go menu.Info.RefreshPrice(App_Name)
+			go menu.Info.RefreshPrice(dReams.Name())
 		}
 	}
 
-	menu.Info.RefreshDaemon(App_Name)
+	menu.Info.RefreshDaemon(dReams.Name())
 	menu.Info.RefreshGnomon()
 	menu.Info.RefreshWallet()
 	menu.Info.RefreshIndexed()
@@ -887,7 +887,7 @@ func accountConnection() fyne.CanvasObject {
 				}
 				dreams.SignOut()
 
-				rpc.Wallet.CloseConnections(App_Name)
+				rpc.Wallet.CloseConnections(dReams.Name())
 				options.Enable()
 				entryPass.Enable()
 				connect_select.EnableIndex(0)
@@ -915,8 +915,8 @@ func accountConnection() fyne.CanvasObject {
 					path = options.Text
 				}
 
-				if err := rpc.Wallet.OpenWalletFile(App_Name, path, entryPass.Text); err != nil {
-					logger.Errorf("[%s] %s\n", App_Name, err)
+				if err := rpc.Wallet.OpenWalletFile(dReams.Name(), path, entryPass.Text); err != nil {
+					logger.Errorf("[%s] %s\n", dReams.Name(), err)
 					dialogError := dialog.NewInformation("Error", fmt.Sprintf("%s", err), dReams.Window)
 					dialogError.Show()
 					return
@@ -941,7 +941,7 @@ func accountConnection() fyne.CanvasObject {
 
 // Rescan func for owned assets list
 func rescan() {
-	logger.Printf("[%s] Rescaning Assets\n", App_Name)
+	logger.Printf("[%s] Rescaning Assets\n", dReams.Name())
 
 	menu.Assets.Asset = []menu.Asset{}
 	if menu.DappEnabled("Duels") {

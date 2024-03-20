@@ -8,19 +8,11 @@ import (
 	"github.com/dReam-dApps/dReams/bundle"
 	"github.com/dReam-dApps/dReams/gnomes"
 	"github.com/dReam-dApps/dReams/menu"
-	"github.com/dReam-dApps/dReams/rpc"
 	"github.com/deroproject/derohe/walletapi"
 
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/app"
-	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
-)
-
-const (
-	App_ID   = "dreamdapps.io"
-	App_Name = "dReams"
 )
 
 var dReams dreams.AppObject
@@ -31,20 +23,19 @@ func main() {
 	runtime.GOMAXPROCS(n)
 
 	flags()
-	dReams.App = app.NewWithID(App_ID)
-	dReams.App.Settings().SetTheme(bundle.DeroTheme(bundle.AppColor))
-	dReams.Window = dReams.App.NewWindow(App_Name)
-	dReams.Window.SetMaster()
-	dReams.Window.Resize(fyne.NewSize(dreams.MIN_WIDTH, dreams.MIN_HEIGHT))
-	dReams.Window.SetFixedSize(false)
-	dReams.Window.SetIcon(bundle.ResourceDReamsIconPng)
-	dReams.Window.CenterOnScreen()
-	done := make(chan struct{})
 
-	dReams.XSWD = rpc.NewXSWDApplicationData(App_Name, App_ID, App_ID, true)
-	dreams.Theme.Img = *canvas.NewImageFromResource(menu.DefaultBackgroundResource())
-	dReams.Background = container.NewStack(&dreams.Theme.Img)
+	dReams = dreams.NewFyneApp(
+		"dreamdapps.io",
+		"dReams",
+		"",
+		bundle.DeroTheme(bundle.AppColor),
+		bundle.ResourceDReamsIconPng,
+		menu.DefaultBackgroundResource(),
+		true)
+
 	dReams.Window.SetContent(splashScreen())
+
+	done := make(chan struct{})
 
 	close := func() {
 		menu.SetClose(true)

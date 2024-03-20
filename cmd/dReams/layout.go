@@ -606,7 +606,7 @@ func place() *fyne.Container {
 		tabs.Append(container.NewTabItem("Dice", dice.LayoutAll(&dReams)))
 	}
 
-	tabs.Append(container.NewTabItem("Log", rpc.SessionLog(App_Name, rpc.Version())))
+	tabs.Append(container.NewTabItem("Log", rpc.SessionLog(dReams.Name(), rpc.Version())))
 
 	var fs_button *widget.Button
 	fs_button = widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "viewFullScreen"), func() {
