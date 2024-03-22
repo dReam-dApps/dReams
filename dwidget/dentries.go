@@ -43,6 +43,26 @@ func NewAmountEntry(prefix string, increment float64, decimal uint) *AmountEntry
 	return entry
 }
 
+// Returns float64 of entry.Text
+func (e *AmountEntry) Float64() (f float64, err error) {
+	f, err = strconv.ParseFloat(e.Text, 64)
+	if err != nil {
+		return
+	}
+
+	return
+}
+
+// Returns uint64 of entry.Text
+func (e *AmountEntry) Uint64() (u uint64, err error) {
+	u, err = strconv.ParseUint(e.Text, 10, 64)
+	if err != nil {
+		return
+	}
+
+	return
+}
+
 // Accepts int or '.'
 func (e *AmountEntry) TypedRune(r rune) {
 	if r >= '0' && r <= '9' {
