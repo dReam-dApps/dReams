@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"image"
 	"image/color"
 	"io"
 	"net/http"
@@ -424,6 +425,19 @@ func DownloadBytes(URL string) ([]byte, error) {
 	}
 
 	return image, nil
+}
+
+// Get image size from []byte using image.DecodeConfig
+func GetImageSizeFromMemory(data []byte) (w float32, h float32, content string, err error) {
+	content = http.DetectContentType(data)
+
+	reader := bytes.NewReader(data)
+	config, _, err := image.DecodeConfig(reader)
+	if err != nil {
+		return 0, 0, content, err
+	}
+
+	return float32(config.Width), float32(config.Height), content, nil
 }
 
 // Download image from URL and save as file
