@@ -28,9 +28,10 @@ type assetObjects struct {
 	Enabled  map[string]bool
 	Headers  *fyne.Container
 	Swap     *fyne.Container
+	AddRmv   *fyne.Container
 	Claim    *fyne.Container
 	Names    *widget.Select
-	Balances *widget.List
+	Balances dwidget.Lists
 	List     *widget.List
 	Asset    []Asset
 	Viewing  string
@@ -83,6 +84,26 @@ var dReamsNFAs = []assetCount{
 	{name: "dSkullz", count: 27, creator: DSkull_mint, utility: []string{UTIL_AVATAR, UTIL_DUEL_CHAR}},
 	// TODO DLAMPP count
 	// {name: "DLAMPP ", count: ?},
+}
+
+// Refresh token balance List with current balance names
+func (a *assetObjects) RefreshTokens() {
+	_, a.Balances.SCIDs = rpc.Wallet.Balances()
+	a.Balances.List.Refresh()
+}
+
+// Set additional tokens to balance tracking and update List
+func (a *assetObjects) SetTokens(ad interface{}) (err error) {
+	var balances map[string]*rpc.Balance
+	err = dreams.SetAccount(ad, &balances)
+	if err != nil {
+		return
+	}
+
+	rpc.Wallet.SetTokens(balances)
+	a.RefreshTokens()
+
+	return
 }
 
 // Add asset to List and SCIDs

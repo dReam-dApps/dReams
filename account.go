@@ -19,7 +19,7 @@ import (
 // This file is highly influenced from derohe https://github.com/deroproject/derohe
 // dReams is using walletapi package to create encrypted account stores for dApp data
 
-// Wallets signed in with a wallet file are using their internal Encrypt/Decrypt functions for a high level of data protection
+// Wallets signed in with a wallet file are using their Encrypt/Decrypt methods for a high level of data protection
 
 // Wallets connected with RPC/XSWD are using walletapi.EncryptWithKey and DecryptWithKey functions to mirror
 // the encryption scheme of the wallet files. The accounts for these connections types could be improved upon
@@ -201,7 +201,13 @@ func AddAccountData(data interface{}, w string) *AccountEncrypted {
 
 		myAccount.account = all
 	default:
-		myAccount.account.Dapp[w] = data
+		if w != "" {
+			if myAccount.account.Dapp == nil {
+				myAccount.account.Dapp = make(map[string]interface{})
+			}
+
+			myAccount.account.Dapp[w] = data
+		}
 	}
 
 	return myAccount

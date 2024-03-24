@@ -3,12 +3,14 @@ package rpc
 import (
 	"encoding/base64"
 	"fmt"
+	"sort"
 	"sync"
 	"time"
 
 	"fyne.io/fyne/v2/widget"
 	"github.com/civilware/Gnomon/structures"
 	"github.com/deroproject/derohe/cryptography/crypto"
+	"github.com/deroproject/derohe/dvm"
 	"github.com/deroproject/derohe/rpc"
 	"github.com/deroproject/derohe/transaction"
 	"github.com/deroproject/derohe/walletapi"
@@ -19,7 +21,7 @@ import (
 type wallet struct {
 	IdHash   string
 	Address  string
-	balances map[string]*balance
+	balances map[string]*Balance
 	height   uint64
 	Connect  bool
 	muC      sync.RWMutex
@@ -34,11 +36,11 @@ type Disk struct {
 	disk *walletapi.Wallet_Disk
 }
 
-type balance struct {
-	decimal int
+type Balance struct {
+	Decimal int    `json:"decimal"`
+	SCID    string `json:"scid"`
 	atomic  uint64
 	format  string
-	scid    string
 }
 
 var Wallet wallet
@@ -263,14 +265,87 @@ func (w *wallet) GetHeight() {
 	}
 }
 
-// Returns all names of wallet.balances map
-func (w *wallet) Balances() (all []string) {
+// Set wallet.balances to the default tokens
+func (w *wallet) SetDefaultTokens() {
+	w.Lock()
+	w.balances = make(map[string]*Balance)
+	w.balances["DERO"] = &Balance{Decimal: 5}
+	w.balances["dReams"] = &Balance{Decimal: 5, SCID: DreamsSCID}
+	w.balances["HGC"] = &Balance{Decimal: 5, SCID: HgcSCID}
+	w.Unlock()
+}
+
+// Add additional tokens to wallet.balances
+func (w *wallet) SetTokens(balances map[string]*Balance) {
+	if w.balances == nil {
+		w.SetDefaultTokens()
+	}
+
+	w.Lock()
+	for name, bal := range balances {
+		w.balances[name] = bal
+	}
+	w.Unlock()
+}
+
+// Add a token to wallet.balances map
+func (w *wallet) TokenAdd(name, scid string, decimal int) (err error) {
+	code := GetSCCode(scid)
+	if code == "" {
+		return fmt.Errorf("could not get scid")
+	}
+
+	_, _, err = dvm.ParseSmartContract(code)
+	if err != nil {
+		return
+	}
+
+	w.Lock()
+	w.balances[name] = &Balance{
+		Decimal: decimal,
+		atomic:  0,
+		format:  "0",
+		SCID:    scid,
+	}
+	w.Unlock()
+	// TODO if w.File.disk
+
+	return
+}
+
+// Remove a token to wallet.balances map
+func (w *wallet) TokenRemove(name string) {
+	w.Lock()
+	delete(w.balances, name)
+	w.Unlock()
+}
+
+// Returns added tokens in wallet.balances map and all balance names
+func (w *wallet) Balances() (m map[string]*Balance, names []string) {
 	w.RLock()
 	defer w.RUnlock()
 
-	for name := range w.balances {
-		all = append(all, name)
+	m = make(map[string]*Balance)
+
+	for name, b := range w.balances {
+		names = append(names, name)
+		if name != "DERO" && name != "dReams" && name != "HGC" {
+			m[name] = b
+		}
 	}
+
+	sort.Slice(names, func(i, j int) bool {
+		if names[i] == "DERO" {
+			return true
+		} else if names[j] == "DERO" {
+			return false
+		} else if names[i] == "dReams" {
+			return true
+		} else if names[j] == "dReams" {
+			return false
+		}
+		return names[i] < names[j]
+	})
 
 	return
 }
@@ -307,7 +382,7 @@ func (w *wallet) Height() uint64 {
 // Add a scid with balances data to wallet.balances map
 func (w *wallet) AddSCID(name, scid string, decimal int) {
 	w.Lock()
-	w.balances[name] = &balance{decimal: decimal, scid: scid}
+	w.balances[name] = &Balance{Decimal: decimal, SCID: scid}
 	w.Unlock()
 }
 
@@ -322,11 +397,11 @@ func (w *wallet) GetAllBalances() {
 			if name == "DERO" {
 				bal, _ = w.File.disk.Get_Balance()
 			} else {
-				bal, _ = w.File.disk.Get_Balance_scid(crypto.HashHexToHash(w.balances[name].scid))
+				bal, _ = w.File.disk.Get_Balance_scid(crypto.HashHexToHash(w.balances[name].SCID))
 			}
 
 			w.balances[name].atomic = bal
-			w.balances[name].format = FromAtomic(bal, w.balances[name].decimal)
+			w.balances[name].format = FromAtomic(bal, w.balances[name].Decimal)
 		}
 
 		return
@@ -338,11 +413,11 @@ func (w *wallet) GetAllBalances() {
 			if name == "DERO" {
 				bal = GetBalance()
 			} else {
-				bal = GetAssetBalance(w.balances[name].scid)
+				bal = GetAssetBalance(w.balances[name].SCID)
 			}
 
 			w.balances[name].atomic = bal
-			w.balances[name].format = FromAtomic(bal, w.balances[name].decimal)
+			w.balances[name].format = FromAtomic(bal, w.balances[name].Decimal)
 		}
 
 		return
@@ -350,7 +425,7 @@ func (w *wallet) GetAllBalances() {
 
 	for name := range w.balances {
 		w.balances[name].atomic = 0
-		w.balances[name].format = FromAtomic(0, w.balances[name].decimal)
+		w.balances[name].format = FromAtomic(0, w.balances[name].Decimal)
 	}
 }
 

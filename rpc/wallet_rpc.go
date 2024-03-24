@@ -118,10 +118,7 @@ func SessionLog(tag string, dapp semver.Version) *fyne.Container {
 
 // Initialize balance maps with default tokens
 func init() {
-	Wallet.balances = make(map[string]*balance)
-	Wallet.balances["DERO"] = &balance{decimal: 5}
-	Wallet.balances["dReams"] = &balance{decimal: 5, scid: DreamsSCID}
-	Wallet.balances["HGC"] = &balance{decimal: 5, scid: HgcSCID}
+	Wallet.SetDefaultTokens()
 }
 
 // Set wallet rpc client with auth, context and 8 sec cancel
@@ -174,7 +171,7 @@ func GetAddress(tag string) {
 		hash := sha256.Sum256(id)
 		Wallet.IdHash = hex.EncodeToString(hash[:])
 	} else {
-		PrintError("[%s] %s: %s", tag, err, result.Address)
+		PrintError("[%s] %s", tag, err)
 		Wallet.Connected(false)
 	}
 }
@@ -270,7 +267,7 @@ func GetAssetNameBySCID(scid string) (name string) {
 	defer Wallet.RUnlock()
 
 	for n, b := range Wallet.balances {
-		if scid == b.scid {
+		if scid == b.SCID {
 			return n
 		}
 	}
@@ -284,7 +281,7 @@ func GetAssetSCIDByName(name string) (scid string) {
 	defer Wallet.RUnlock()
 
 	if Wallet.balances[name] != nil {
-		scid = Wallet.balances[name].scid
+		scid = Wallet.balances[name].SCID
 	}
 
 	return
