@@ -4,7 +4,7 @@ go 1.21.5
 
 require (
 	fyne.io/fyne/v2 v2.4.4
-	fyne.io/x/fyne v0.0.0-20230717140956-ad10f343f15e
+	fyne.io/x/fyne v0.0.0-20240326131024-3ba9170cc3be
 	github.com/SixofClubsss/Baccarat v0.3.2-0.20240324082833-ccb921feb6b5
 	github.com/SixofClubsss/Duels v0.1.2-0.20240320082813-3a8f3a4de589
 	github.com/SixofClubsss/Grokked v0.1.2-0.20240320082650-5540285de96c
