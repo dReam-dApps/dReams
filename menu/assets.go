@@ -697,7 +697,7 @@ func indexEntry(w fyne.Window) fyne.CanvasObject {
 			if err := gnomes.AddToIndex(s); err == nil {
 				dialog.NewInformation("Added to Index", "SCIDs added", w).Show()
 			} else {
-				dialog.NewInformation("Error", "Error adding SCIDs to index", w).Show()
+				dialog.NewError(fmt.Errorf("error adding SCIDs to index"), w).Show()
 			}
 		}
 	})

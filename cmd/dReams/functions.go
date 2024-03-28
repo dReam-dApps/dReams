@@ -874,7 +874,7 @@ func accountConnection() fyne.CanvasObject {
 	entryPass := widget.NewPasswordEntry()
 	entryPass.PlaceHolder = "Password:"
 
-	button := widget.NewButton("Sing in", nil)
+	button := widget.NewButton("Connect", nil)
 	button.OnTapped = func() {
 		go func() {
 			button.Disable()
@@ -882,7 +882,7 @@ func accountConnection() fyne.CanvasObject {
 				button.Enable()
 			}()
 
-			if button.Text == "Sign out" {
+			if button.Text == "Disconnect" {
 				if rpc.Wallet.IsConnected() && gnomon.IsRunning() && !gnomon.HasChecked() {
 					dialog.NewInformation("Gnomon Syncing", "Wait for Gnomon to sync before singing out", dReams.Window).Show()
 					return
@@ -898,11 +898,16 @@ func accountConnection() fyne.CanvasObject {
 				connect_select.EnableIndex(0)
 				connect_select.EnableIndex(1)
 				button.Importance = widget.MediumImportance
-				button.Text = "Sing in"
+				button.Text = "Connect"
 				button.Refresh()
 
 				return
 			} else {
+				if options.Text == "" {
+					dialog.NewInformation("Select Wallet", "Select a wallet file", dReams.Window).Show()
+					return
+				}
+
 				rpc.Ping()
 				if !rpc.Daemon.IsConnected() {
 					dialog.NewInformation("Select Daemon", "Connect to a daemon", dReams.Window).Show()
@@ -931,7 +936,7 @@ func accountConnection() fyne.CanvasObject {
 				connect_select.DisableIndex(0)
 				connect_select.DisableIndex(1)
 				button.Importance = widget.HighImportance
-				button.Text = "Sign out"
+				button.Text = "Disconnect"
 				button.Refresh()
 				if err := loadAccount(); err != nil {
 					dialog.NewError(fmt.Errorf("loading account %s", err), dReams.Window).Show()

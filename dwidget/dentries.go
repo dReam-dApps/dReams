@@ -128,7 +128,7 @@ func NewHorizontalEntries(tag string, offset int, d *dreams.AppObject) *DeroEntr
 
 	_, names := dreams.GetDeroAccounts()
 	entryDERO := widget.NewSelectEntry(names)
-	entryDERO.PlaceHolder = "dero.db path:"
+	entryDERO.PlaceHolder = "dero.db:"
 
 	entryPass := widget.NewPasswordEntry()
 	entryPass.PlaceHolder = "Password:"
@@ -214,7 +214,7 @@ func NewVerticalEntries(tag string, d *dreams.AppObject) *DeroEntries {
 
 	_, names := dreams.GetDeroAccounts()
 	entryDERO := widget.NewSelectEntry(names)
-	entryDERO.PlaceHolder = "dero.db path:"
+	entryDERO.PlaceHolder = "dero.db:"
 
 	entryPass := widget.NewPasswordEntry()
 	entryPass.PlaceHolder = "Password:"
@@ -460,6 +460,14 @@ func onTapped(tag string, selectType *widget.Select, entryAuth, entryPass *widge
 
 					return
 				} else {
+					if entryDERO.Text == "" {
+						dialog.NewInformation("Select Wallet", "Select a wallet file", d.Window).Show()
+						entryPass.Enable()
+						entryDERO.Enable()
+						selectType.Enable()
+						return
+					}
+
 					rpc.Ping()
 					// Check if connected to daemon
 					if !rpc.Daemon.IsConnected() {
@@ -483,8 +491,7 @@ func onTapped(tag string, selectType *widget.Select, entryAuth, entryPass *widge
 
 					// Open wallet
 					if err := rpc.Wallet.OpenWalletFile(tag, path, entryPass.Text); err != nil {
-						dialogError := dialog.NewInformation("Error", fmt.Sprintf("%s", err), d.Window)
-						dialogError.Show()
+						dialog.NewError(err, d.Window).Show()
 						entryPass.Enable()
 						entryDERO.Enable()
 						selectType.Enable()
