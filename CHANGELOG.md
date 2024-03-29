@@ -2,14 +2,60 @@
 
 This file lists the changes to dReams repo with each version.
 
-## 0.11.x - In Progress
+## 0.12.0 - In Progress
 
 ### Added
+* Implement platform wide encrypted account stores for local data
+* XSWD and DERO connections implemented into existing APIs and `dwidgets`
+* dDice 0.x.x
+* New asset type for creators, dice.
+* Implement custom token support for balances
+* TX confirmation indicator
 * dSkullz Collection
 * ParseSmartContract() for directory and when minting NFA
 * Auction highest bidder display
-* `rpc` GetNameToAddress() and send to name
-* `dreams` GetMaxSize()
+* Show SCID in market
+* View image assets in market
+* `dreams` NewFyneApp() to easily create new Fyne/dReams apps
+* `dreams` SetBalanceLabelText() for standardizing dApp labels
+* `dreams` DownloadFile() and UnzipFile()
+* `dreams` GetMaxSize() and GetImageSizeFromMemory()
+* `rpc` GetNameToAddress() and sending messages/assets to name
+* `rpc` HashToHexSHA256()
+* `rpc` GetDaemonInfo()
+* `menu` utility var to assetObjects, IsDreamsNFACreator() also returns utility
+* `gnomes` GetAllSCIDInvokeDetailsByEntrypoint()
+* `gnomes` GetAssetInfo()
+* `dwidget` Float64() and Uint64() methods for AmountEntry
+* `dwidget` dstack file with UpdateText() and SetUpdate()
+
+### Changed
+
+* Fyne 2.4.4
+* Gnomon 2.0.3-alpha.x
+* Baccarat 0.x.x
+* Holdero 0.x.x
+* dPrediction 0.x.x
+* Iluma 0.x.x
+* Duels 0.x.x
+* Grokked 0.x.x
+* dReams standard import function for dApps is now LayoutAll()
+* Removed DERO file buttons from NFA minter, is now integrated into its connection widget
+* NFA-Creation directory renamed to creation
+* All local storage locations contained within datashards directory
+* `rpc` removed unnecessary exported vars from wallet and created methods for File.disk
+* `rpc` balance map to map[string]*Balance
+* `rpc` SetDaemonClient() allows https endpoints
+* `menu` StartDreamsIndicators() removed in favor of StartIndicators for all apps
+* `menu` Theme moved to `dreams` package
+
+### Fixed
+
+* Padding on scroll to buttons covered by scroll bar
+* Hide claim button when disconnected
+* Store local theme image file after downloading
+* Save collection info when storing minting config
+* `rpc` catch int cases when using convert funcs
 
 
 ## 0.11.1 - January 19 2024
