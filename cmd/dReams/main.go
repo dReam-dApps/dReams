@@ -8,19 +8,11 @@ import (
 	"github.com/dReam-dApps/dReams/bundle"
 	"github.com/dReam-dApps/dReams/gnomes"
 	"github.com/dReam-dApps/dReams/menu"
+	"github.com/deroproject/derohe/walletapi"
 
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/app"
-	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
-)
-
-const (
-	MIN_WIDTH  = 1400
-	MIN_HEIGHT = 800
-	App_ID     = "dreamdapps.io"
-	App_Name   = "dReams"
 )
 
 var dReams dreams.AppObject
@@ -31,23 +23,24 @@ func main() {
 	runtime.GOMAXPROCS(n)
 
 	flags()
-	dReams.App = app.NewWithID(App_ID)
-	dReams.App.Settings().SetTheme(bundle.DeroTheme(bundle.AppColor))
-	dReams.Window = dReams.App.NewWindow(App_Name)
-	dReams.Window.SetMaster()
-	dReams.Window.Resize(fyne.NewSize(MIN_WIDTH, MIN_HEIGHT))
-	dReams.Window.SetFixedSize(false)
-	dReams.Window.SetIcon(bundle.ResourceDReamsIconPng)
-	dReams.Window.CenterOnScreen()
-	done := make(chan struct{})
 
-	menu.Theme.Img = *canvas.NewImageFromResource(menu.DefaultThemeResource())
-	dReams.Background = container.NewStack(&menu.Theme.Img)
+	dReams = dreams.NewFyneApp(
+		"dreamdapps.io",
+		"dReams",
+		"",
+		bundle.DeroTheme(bundle.AppColor),
+		bundle.ResourceDReamsIconPng,
+		menu.DefaultBackgroundResource(),
+		true)
+
+	dReams.AddAccountHandlers(accountHandlers())
 	dReams.Window.SetContent(splashScreen())
+
+	done := make(chan struct{})
 
 	close := func() {
 		menu.SetClose(true)
-		menu.WriteDreamsConfig(save())
+		menu.StoreSettings(saveSettings())
 		dappCloseCheck()
 		menu.Info.SetStatus("Putting Gnomon to Sleep")
 		gnomon.Stop("dReams")
@@ -70,6 +63,8 @@ func main() {
 		}
 	})
 
+	go walletapi.Initialize_LookupTable(1, 1<<24)
+
 	dReams.SetTab("Menu")
 
 	dapps := menu.EnabledDappCount()
@@ -84,7 +79,7 @@ func main() {
 			dReams.SetChannels(dapps)
 			time.Sleep(750 * time.Millisecond)
 			dReams.Window.SetContent(container.NewStack(dReams.Background, place()))
-			dReams.Window.Resize(fyne.NewSize(MIN_WIDTH, MIN_HEIGHT))
+			dReams.Window.Resize(fyne.NewSize(dreams.MIN_WIDTH, dreams.MIN_HEIGHT))
 		}()
 	}
 

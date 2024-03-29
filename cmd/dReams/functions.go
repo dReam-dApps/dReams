@@ -6,6 +6,7 @@ import (
 	"image/color"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"syscall"
@@ -25,6 +26,9 @@ import (
 	"github.com/dReam-dApps/dReams/gnomes"
 	"github.com/dReam-dApps/dReams/menu"
 	"github.com/dReam-dApps/dReams/rpc"
+	"github.com/deroproject/derohe/config"
+	"github.com/deroproject/derohe/globals"
+	"github.com/deroproject/derohe/walletapi/xswd"
 	"github.com/docopt/docopt-go"
 	"github.com/sirupsen/logrus"
 
@@ -33,6 +37,7 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 )
 
@@ -47,7 +52,8 @@ Usage:
 Options:
   -h --help             Show this screen.
   --num-parallel-blocks=<1>   Gnomon option,  defines the number of parallel blocks to index.
-  --dbtype=<boltdb>     Gnomon option,  defines type of database 'gravdb' or 'boltdb'.`
+  --dbtype=<boltdb>     Gnomon option,  defines type of database 'gravdb' or 'boltdb'.
+  --testnet=<false>     DERO option, defines if globals.Config is mainnet/testnet.`
 
 // Set opts when starting dReams
 func flags() {
@@ -81,19 +87,19 @@ func flags() {
 			gnomon.SetParallel(1)
 		}
 	}
+
+	if arguments["--testnet"] != nil {
+		if arguments["--testnet"].(string) == "true" {
+			globals.Config = config.Testnet
+		}
+	}
 }
 
 func init() {
 	dReams.SetOS()
 	gnomes.InitLogrusLog(logrus.InfoLevel)
-	saved := menu.ReadDreamsConfig("dReams")
-	if saved.Daemon != nil {
-		menu.Control.Daemon = saved.Daemon[0]
-	}
-
-	holdero.SetFavoriteTables(saved.Tables)
-	prediction.Predict.Favorites.SCIDs = saved.Predict
-	prediction.Sports.Favorites.SCIDs = saved.Sports
+	saved := menu.GetSettings("dReams")
+	menu.SetSettings(saved)
 
 	menu.Market.DreamsFilter = true
 
@@ -102,7 +108,7 @@ func init() {
 	go func() {
 		<-c
 		menu.SetClose(true)
-		menu.WriteDreamsConfig(save())
+		menu.StoreSettings(saveSettings())
 		fmt.Println()
 		dappCloseCheck()
 		menu.Info.SetStatus("Putting Gnomon to Sleep")
@@ -114,15 +120,12 @@ func init() {
 	}()
 }
 
-// Build save struct for local preferences
-func save() dreams.SaveData {
+// Build dreams.SaveData struct for storage of local settings
+func saveSettings() dreams.SaveData {
 	return dreams.SaveData{
 		Skin:    bundle.AppColor,
 		Daemon:  []string{rpc.Daemon.Rpc},
-		Tables:  holdero.GetFavoriteTables(),
-		Predict: prediction.Predict.Favorites.SCIDs,
-		Sports:  prediction.Sports.Favorites.SCIDs,
-		Theme:   menu.Theme.Name,
+		Theme:   dreams.Theme.Name,
 		FSForce: gnomon.GetFastsync().ForceFastSync,
 		FSDiff:  gnomon.GetFastsync().ForceFastSyncDiff,
 		DBtype:  gnomon.DBStorageType(),
@@ -130,6 +133,18 @@ func save() dreams.SaveData {
 		Assets:  menu.Assets.Enabled,
 		Dapps:   menu.Control.Dapps,
 	}
+}
+
+// Add account data to dreams.AccountEncrypted for account storage
+func saveAccount() *dreams.AccountEncrypted {
+	new := &dreams.AccountData{
+		Dapp: map[string]interface{}{
+			"holdero":    holdero.GetAccount(),
+			"prediction": prediction.GetAccount(),
+		},
+	}
+
+	return dreams.AddAccountData(new, "all")
 }
 
 // // Make system tray with opts
@@ -160,6 +175,43 @@ func save() dreams.SaveData {
 // 	return false
 // }
 
+// Dapp account handler funcs
+func accountHandlers() map[string]func(interface{}) error {
+	return map[string]func(interface{}) error{
+		"holdero":    holdero.SetAccount,
+		"prediction": prediction.SetAccount,
+		"tokens":     menu.Assets.SetTokens,
+	}
+}
+
+// Try to load account from storage if exists and set preferences
+func loadAccount() (err error) {
+	var found bool
+	found, err = dreams.CreateAccountIfNone(dReams.Name())
+	if err != nil {
+		return
+	}
+
+	if found {
+		logger.Println("[dReams] Loading account")
+		var account dreams.AccountData
+		err = dreams.GetAccount(&account)
+		if err != nil {
+			logger.Errorln("[loadAccount]", err)
+			return
+		}
+
+		for name, set := range dReams.GetAccountHandlers() {
+			errr := set(account.Dapp[name])
+			if errr != nil {
+				logger.Errorf("[loadAccount] %s %s\n", name, errr)
+			}
+		}
+	}
+
+	return
+}
+
 // This is what we want to scan wallet for when Gnomon is synced
 func gnomonScan(contracts map[string]string) {
 	screen, bar := syncScreen()
@@ -183,7 +235,6 @@ func gnomonScan(contracts map[string]string) {
 // Main dReams process loop
 func fetch(done chan struct{}) {
 	var offset int
-	rpc.Startup = true
 	time.Sleep(3 * time.Second)
 	ticker := time.NewTicker(3 * time.Second)
 	for {
@@ -191,28 +242,22 @@ func fetch(done chan struct{}) {
 		case <-ticker.C: // do on interval
 			if !dReams.IsConfiguring() {
 				rpc.Ping()
-				rpc.EchoWallet("dReams")
-				rpc.GetDreamsBalances(rpc.SCIDs)
-				rpc.GetWalletHeight("dReams")
-				if !rpc.Startup {
-					checkConnection()
-					gnomes.EndPoint()
-					gnomes.State(dReams.IsConfiguring(), gnomonScan)
-
-					go menuRefresh(offset)
-
-					offset++
-					if offset >= 41 {
-						offset = 0
-					}
+				if !rpc.Wallet.WS.IsRequesting() {
+					rpc.Wallet.Sync()
 				}
 
-				if rpc.Daemon.IsConnected() {
-					rpc.Startup = false
+				checkConnection()
+				gnomes.EndPoint()
+				gnomes.State(dReams.IsConfiguring(), gnomonScan)
+
+				go menuRefresh(offset)
+
+				offset++
+				if offset >= 41 {
+					offset = 0
 				}
 
 				dReams.SignalChannel()
-
 			}
 		case <-dReams.Closing(): // exit loop
 			logger.Println("[dReams] Closing...")
@@ -246,16 +291,16 @@ func menuRefresh(offset int) {
 		}
 
 		if offset == 40 || menu.Info.Price.Text == "" {
-			go menu.Info.RefreshPrice(App_Name)
+			go menu.Info.RefreshPrice(dReams.Name())
 		}
 	}
 
-	menu.Info.RefreshDaemon(App_Name)
+	menu.Info.RefreshDaemon(dReams.Name())
 	menu.Info.RefreshGnomon()
 	menu.Info.RefreshWallet()
 	menu.Info.RefreshIndexed()
 
-	menu.Assets.Balances.Refresh()
+	menu.Assets.Balances.List.Refresh()
 }
 
 // Check wallet for dReams NFAs
@@ -268,8 +313,9 @@ func checkDreamsNFAs(scids map[string]string, progress *widget.ProgressBar) {
 		}
 
 		logger.Println("[dReams] Checking NFA Assets")
-		menu.Theme.Select.Options = []string{}
+		dreams.Theme.Select.Options = []string{}
 		holdero.Settings.ClearAssets()
+		dice.Settings.ClearAssets()
 
 		progress.Max = float64(len(scids))
 
@@ -283,9 +329,10 @@ func checkDreamsNFAs(scids map[string]string, progress *widget.ProgressBar) {
 		}
 
 		holdero.Settings.SortCardAssets()
-		menu.Theme.Sort()
-		menu.Theme.Select.Options = append(menu.Control.Themes, menu.Theme.Select.Options...)
-		menu.Theme.Select.SetSelected(menu.Theme.Name)
+		dice.Settings.SortAssets()
+		dreams.Theme.Sort()
+		dreams.Theme.Select.Options = append(menu.Control.Themes, dreams.Theme.Select.Options...)
+		dreams.Theme.Select.SetSelected(dreams.Theme.Name)
 		if menu.DappEnabled("Duels") {
 			duel.Inventory.SortAll()
 		}
@@ -307,7 +354,8 @@ func checkNFAOwner(scid string) {
 			icon, _ := gnomon.GetSCIDValuesByKey(scid, "iconURLHdr")
 			if owner != nil && file != nil && collection != nil && creator != nil && icon != nil {
 				if owner[0] == rpc.Wallet.Address && menu.ValidNFA(file[0]) {
-					if !menu.IsDreamsNFACreator(creator[0]) {
+					isCreator, utility := menu.IsDreamsNFACreator(creator[0], collection[0])
+					if !isCreator {
 						return
 					}
 
@@ -319,55 +367,31 @@ func checkNFAOwner(scid string) {
 						add.Type = menu.AssetType(collection[0], typeHdr[0])
 					}
 
-					check := strings.Trim(header[0], "0123456789")
-					if check == "AZYDS" || check == "SIXART" {
-						menu.Theme.Add(header[0], owner[0])
-						holdero.Settings.AddAvatar(header[0], owner[0])
-						menu.Assets.Add(add, icon[0])
-					} else if check == "AZYPCB" || check == "SIXPCB" {
-						holdero.Settings.AddBacks(header[0], owner[0])
-						menu.Assets.Add(add, icon[0])
-					} else if check == "AZYPC" || check == "SIXPC" {
-						holdero.Settings.AddFaces(header[0], owner[0])
-						menu.Assets.Add(add, icon[0])
-					} else if check == "DBC" {
-						holdero.Settings.AddAvatar(header[0], owner[0])
-						menu.Assets.Add(add, icon[0])
-						if menu.DappEnabled("Duels") {
-							duel.AddItemsToInventory(scid, header[0], owner[0], collection[0])
+					menu.Assets.Add(add, icon[0])
+
+					for _, util := range utility {
+						switch util {
+						case menu.UTIL_AVATAR:
+							holdero.Settings.AddAvatar(header[0], owner[0])
+						case menu.UTIL_CARD_DECK:
+							holdero.Settings.AddFaces(header[0], owner[0])
+						case menu.UTIL_CARD_BACK:
+							holdero.Settings.AddBacks(header[0], owner[0])
+						case menu.UTIL_THEME:
+							dreams.Theme.Add(header[0], owner[0])
+						case menu.UTIL_DUEL_CHAR, menu.UTIL_DUEL_ITEM:
+							if menu.DappEnabled("Duels") {
+								duel.AddItemsToInventory(scid, header[0], owner[0], collection[0])
+							}
+						case menu.UTIL_DICE:
+							dice.Settings.AddDice(header[0], owner[0])
 						}
-					} else if collection[0] == "Dorblings NFA" {
-						holdero.Settings.AddAvatar(header[0], owner[0])
-						menu.Assets.Add(add, icon[0])
-					} else if collection[0] == "DLAMPP" {
-						// TODO review after mint
-						holdero.Settings.AddAvatar(header[0], owner[0])
-						menu.Assets.Add(add, icon[0])
-					} else if collection[0] == "High Strangeness" {
-						holdero.Settings.AddAvatar(header[0], owner[0])
-						menu.Assets.Add(add, icon[0])
+					}
+
+					if collection[0] == "High Strangeness" {
+						check := strings.Trim(header[0], "0123456789")
 						hsCards(owner[0], header[0], check)
-						if menu.DappEnabled("Duels") {
-							duel.AddItemsToInventory(scid, header[0], owner[0], collection[0])
-						}
-					} else if collection[0] == "Dero Desperados" {
-						holdero.Settings.AddAvatar(header[0], owner[0])
-						menu.Assets.Add(add, icon[0])
-						if menu.DappEnabled("Duels") {
-							duel.AddItemsToInventory(scid, header[0], owner[0], collection[0])
-						}
-					} else if collection[0] == "Desperado Guns" {
-						holdero.Settings.AddAvatar(header[0], owner[0])
-						menu.Assets.Add(add, icon[0])
-						if menu.DappEnabled("Duels") {
-							duel.AddItemsToInventory(scid, header[0], owner[0], collection[0])
-						}
-					} else if collection[0] == "dSkullz" {
-						holdero.Settings.AddAvatar(header[0], owner[0])
-						menu.Assets.Add(add, icon[0])
-						if menu.DappEnabled("Duels") {
-							duel.AddItemsToInventory(scid, header[0], owner[0], collection[0])
-						}
+
 					}
 				}
 			}
@@ -420,7 +444,7 @@ func hsCards(owner, name, check string) {
 
 	var have_theme bool
 	for i := tower; i > 0; i-- {
-		themes := menu.Theme.Select.Options
+		themes := dreams.Theme.Select.Options
 		for _, th := range themes {
 			if th == "HSTheme"+strconv.Itoa(i) {
 				have_theme = true
@@ -429,8 +453,8 @@ func hsCards(owner, name, check string) {
 
 		if !have_theme {
 			new_themes := append(themes, "HSTheme"+strconv.Itoa(i))
-			menu.Theme.Select.Options = new_themes
-			menu.Theme.Select.Refresh()
+			dreams.Theme.Select.Options = new_themes
+			dreams.Theme.Select.Refresh()
 		}
 	}
 }
@@ -509,14 +533,22 @@ func checkConnection() {
 		menu.Control.Check.Daemon.SetChecked(true)
 	} else {
 		menu.Control.Check.Daemon.SetChecked(false)
-		disconnected()
 	}
 
 	if rpc.Wallet.IsConnected() {
+		menu.Assets.AddRmv.Show()
 		if rpc.Daemon.IsConnected() {
 			menu.Assets.Swap.Show()
 		}
+
 	} else {
+		if !rpc.Wallet.WS.IsClosed() {
+			if !rpc.Wallet.WS.IsConnecting() && !rpc.Wallet.WS.IsRequesting() {
+				rpc.Wallet.CloseConnections("dReams")
+			}
+		} else if !rpc.Wallet.RPC.IsClosed() {
+			rpc.Wallet.CloseConnections("dReams")
+		}
 		disconnected()
 		gnomon.Checked(false)
 	}
@@ -526,11 +558,11 @@ func checkConnection() {
 func disconnected() {
 	holdero.Disconnected(menu.DappEnabled("Holdero"))
 	prediction.Disconnected()
-	rpc.Wallet.Address = ""
+	menu.Assets.AddRmv.Hide()
 	menu.Assets.Swap.Hide()
 	menu.Assets.Names.ClearSelected()
-	menu.Theme.Select.Options = menu.Control.Themes
-	menu.Theme.Select.Refresh()
+	dreams.Theme.Select.Options = menu.Control.Themes
+	dreams.Theme.Select.Refresh()
 	menu.Assets.Asset = []menu.Asset{}
 }
 
@@ -653,7 +685,7 @@ func daemonConnectedBox() fyne.Widget {
 
 // Daemon rpc entry object with default options
 //   - Bound to rpc.Daemon.Rpc
-func daemonRpcEntry() fyne.Widget {
+func daemonRPCEntry() fyne.Widget {
 	options := []string{
 		"",
 		rpc.DAEMON_RPC_DEFAULT,
@@ -669,7 +701,7 @@ func daemonRpcEntry() fyne.Widget {
 		options = append(options, menu.Control.Daemon)
 	}
 	entry := widget.NewSelectEntry(options)
-	entry.PlaceHolder = "Daemon RPC: "
+	entry.PlaceHolder = "Daemon: "
 
 	this := binding.BindString(&rpc.Daemon.Rpc)
 	entry.Bind(this)
@@ -677,76 +709,251 @@ func daemonRpcEntry() fyne.Widget {
 	return entry
 }
 
-// Wallet rpc entry object
-//   - Bound to rpc.Wallet.Rpc
-//   - Changes reset wallet connection and call checkConnection()
-func walletRpcEntry() fyne.Widget {
-	options := []string{"", "127.0.0.1:10103"}
-	entry := widget.NewSelectEntry(options)
-	entry.PlaceHolder = "Wallet RPC: "
-	entry.OnChanged = func(s string) {
+// Connect/Disconnect objects for RPC
+//   - Button OnConnect initializes RPC client and checks connection
+//   - Button OnDisconnect closes RPC client if not syncing wallet
+//   - Bound entries for Port and Auth
+func rpcConnection() fyne.CanvasObject {
+	port := "127.0.0.1:10103"
+	entryPort := widget.NewSelectEntry([]string{"", port})
+	entryAuth := widget.NewPasswordEntry()
+
+	button := widget.NewButton("Connect", nil)
+	button.OnTapped = func() {
+		if button.Text == "Disconnect" {
+			if rpc.Wallet.IsConnected() && gnomon.IsRunning() && !gnomon.HasChecked() {
+				dialog.NewInformation("Gnomon Syncing", "Wait for Gnomon to sync before disconnecting", dReams.Window).Show()
+				return
+			}
+
+			dreams.SignOut()
+
+			button.Importance = widget.MediumImportance
+			entryAuth.Enable()
+			entryPort.Enable()
+			rpc.Wallet.CloseConnections("dReams")
+			rpc.Wallet.SetDefaultTokens()
+			menu.Assets.RefreshTokens()
+			disconnected()
+			button.Text = "Connect"
+			button.Refresh()
+			connect_select.EnableIndex(1)
+			connect_select.EnableIndex(2)
+			return
+		}
+
+		go func() {
+			rpc.Wallet.RPC.Init()
+			rpc.GetAddress("dReams")
+			checkConnection()
+			if rpc.Wallet.IsConnected() {
+				button.Importance = widget.HighImportance
+				button.Text = "Disconnect"
+				button.Refresh()
+				entryAuth.Disable()
+				entryPort.Disable()
+				connect_select.DisableIndex(1)
+				connect_select.DisableIndex(2)
+				if err := loadAccount(); err != nil {
+					dialog.NewError(fmt.Errorf("loading account %s", err), dReams.Window).Show()
+				}
+			}
+		}()
+	}
+
+	// OnChanged func for RPC entries
+	onChanged := func(s string) {
 		if rpc.Wallet.IsConnected() {
-			rpc.Wallet.Address = ""
-			rpc.Wallet.Display.Height = "0"
-			rpc.Wallet.Height = 0
 			rpc.Wallet.Connected(false)
 			go checkConnection()
 		}
 	}
 
-	entry.Bind(binding.BindString(&rpc.Wallet.Rpc))
-
-	return entry
-}
-
-// Authentication entry object
-//   - Bound to rpc.Wallet.UserPass
-//   - Changes call rpc.GetAddress() and checkConnection()
-func userPassEntry() fyne.Widget {
-	entry := widget.NewPasswordEntry()
-	entry.PlaceHolder = "user:pass"
-	entry.OnChanged = func(s string) {
-		if rpc.Wallet.IsConnected() {
-			rpc.GetAddress("dReams")
-			go checkConnection()
-		}
+	// Wallet RPC entry object bound to rpc.Wallet.RPC.Port
+	entryPort.PlaceHolder = "Wallet RPC: "
+	entryPort.Bind(binding.BindString(&rpc.Wallet.RPC.Port))
+	if entryPort.Text == "" {
+		entryPort.SetText(port)
 	}
+	entryPort.OnChanged = onChanged
 
-	entry.Bind(binding.BindString(&rpc.Wallet.UserPass))
+	// Authentication entry object bound to rpc.Wallet.RPC.Auth
+	entryAuth.PlaceHolder = "user:pass"
+	entryAuth.Bind(binding.BindString(&rpc.Wallet.RPC.Auth))
+	entryAuth.OnChanged = onChanged
 
-	return entry
+	return container.NewVBox(
+		dwidget.NewSpacer(300, 0),
+		entryPort,
+		container.NewBorder(nil, nil, nil, container.NewStack(dwidget.NewSpacer(100, 0), button), entryAuth))
 }
 
-// Connect button object for rpc
-//   - Pressed calls rpc.Ping(), rpc.GetAddress(), checkConnection(),
-//   - dapp.OnConnected() funcs get called here
-func rpcConnectButton() fyne.Widget {
-	var wait bool
-	button := widget.NewButton("Connect", func() {
-		go func() {
-			if !wait {
-				wait = true
-				rpc.Ping()
-				rpc.GetAddress("dReams")
-				checkConnection()
+// Connect/Disconnect objects for XSWD
+//   - Button OnConnect initializes WS and sends connection request
+//   - Button OnDisconnect closes WS if not syncing wallet
+//   - Bound entry for Port
+func xswdConnection() fyne.CanvasObject {
+	port := fmt.Sprintf("127.0.0.1:%d", xswd.XSWD_PORT)
+	entryPort := widget.NewSelectEntry([]string{"", port})
 
-				wait = false
-
+	button := widget.NewButton("Connect", nil)
+	button.OnTapped = func() {
+		if button.Text == "Disconnect" {
+			if rpc.Wallet.IsConnected() && gnomon.IsRunning() && !gnomon.HasChecked() {
+				dialog.NewInformation("Gnomon Syncing", "Wait for Gnomon to sync before disconnecting", dReams.Window).Show()
 				return
 			}
 
-			if !rpc.Wallet.IsConnected() {
-				logger.Warnf("[dReams] Syncing, please wait")
+			dreams.SignOut()
+
+			button.Importance = widget.MediumImportance
+			rpc.Wallet.CloseConnections("dReams")
+			rpc.Wallet.SetDefaultTokens()
+			menu.Assets.RefreshTokens()
+			disconnected()
+			entryPort.Enable()
+			button.Text = "Connect"
+			button.Refresh()
+			connect_select.EnableIndex(0)
+			connect_select.EnableIndex(2)
+			return
+		}
+
+		go func() {
+			button.Disable()
+			entryPort.Disable()
+			connect_select.DisableIndex(0)
+			connect_select.DisableIndex(2)
+			if rpc.Wallet.WS.Init(dReams.XSWD) {
+				rpc.GetAddress("dReams")
+				if rpc.Wallet.IsConnected() {
+					checkConnection()
+					button.Importance = widget.HighImportance
+					button.Text = "Disconnect"
+					button.Refresh()
+					button.Enable()
+					if err := loadAccount(); err != nil {
+						dialog.NewError(fmt.Errorf("loading account %s", err), dReams.Window).Show()
+					}
+					return
+				}
+
+				rpc.Wallet.CloseConnections("dReams")
+			}
+
+			entryPort.Enable()
+			button.Importance = widget.MediumImportance
+			button.Text = "Connect"
+			button.Refresh()
+			button.Enable()
+			connect_select.EnableIndex(0)
+			connect_select.EnableIndex(2)
+		}()
+	}
+
+	// Wallet WS entry object bound to rpc.Wallet.WS.Port
+	entryPort.PlaceHolder = "Wallet WS: "
+	entryPort.Bind(binding.BindString(&rpc.Wallet.WS.Port))
+	if entryPort.Text == "" {
+		entryPort.SetText(port)
+	}
+
+	return container.NewVBox(
+		dwidget.NewSpacer(300, 0),
+		entryPort,
+		container.NewHBox(layout.NewSpacer(), container.NewStack(dwidget.NewSpacer(100, 0), button)))
+}
+
+// Connect/Disconnect objects for walletapi
+func accountConnection() fyne.CanvasObject {
+	_, names := dreams.GetDeroAccounts()
+
+	options := widget.NewSelectEntry(names)
+	options.PlaceHolder = "DERO.db:"
+
+	entryPass := widget.NewPasswordEntry()
+	entryPass.PlaceHolder = "Password:"
+
+	button := widget.NewButton("Connect", nil)
+	button.OnTapped = func() {
+		go func() {
+			button.Disable()
+			defer func() {
+				button.Enable()
+			}()
+
+			if button.Text == "Disconnect" {
+				if rpc.Wallet.IsConnected() && gnomon.IsRunning() && !gnomon.HasChecked() {
+					dialog.NewInformation("Gnomon Syncing", "Wait for Gnomon to sync before singing out", dReams.Window).Show()
+					return
+				}
+
+				dreams.SignOut()
+
+				rpc.Wallet.CloseConnections(dReams.Name())
+				rpc.Wallet.SetDefaultTokens()
+				menu.Assets.RefreshTokens()
+				options.Enable()
+				entryPass.Enable()
+				connect_select.EnableIndex(0)
+				connect_select.EnableIndex(1)
+				button.Importance = widget.MediumImportance
+				button.Text = "Connect"
+				button.Refresh()
+
+				return
+			} else {
+				if options.Text == "" {
+					dialog.NewInformation("Select Wallet", "Select a wallet file", dReams.Window).Show()
+					return
+				}
+
+				rpc.Ping()
+				if !rpc.Daemon.IsConnected() {
+					dialog.NewInformation("Select Daemon", "Connect to a daemon", dReams.Window).Show()
+					return
+				}
+
+				network := "mainnet"
+				if !globals.IsMainnet() {
+					network = "testnet"
+				}
+
+				dir := filepath.Join(dreams.GetDir(), network) + string(filepath.Separator)
+				path := filepath.Join(dir, options.Text)
+				if strings.HasPrefix(options.Text, string(filepath.Separator)) {
+					path = options.Text
+				}
+
+				if err := rpc.Wallet.OpenWalletFile(dReams.Name(), path, entryPass.Text); err != nil {
+					logger.Errorf("[%s] %s\n", dReams.Name(), err)
+					dialog.NewError(err, dReams.Window).Show()
+					return
+				}
+
+				options.Disable()
+				entryPass.Disable()
+				connect_select.DisableIndex(0)
+				connect_select.DisableIndex(1)
+				button.Importance = widget.HighImportance
+				button.Text = "Disconnect"
+				button.Refresh()
+				if err := loadAccount(); err != nil {
+					dialog.NewError(fmt.Errorf("loading account %s", err), dReams.Window).Show()
+				}
 			}
 		}()
-	})
+	}
 
-	return button
+	return container.NewVBox(
+		dwidget.NewSpacer(300, 0),
+		options,
+		container.NewBorder(nil, nil, nil, container.NewStack(dwidget.NewSpacer(100, 0), button), entryPass))
 }
 
 // Rescan func for owned assets list
 func rescan() {
-	logger.Printf("[%s] Rescaning Assets\n", App_Name)
+	logger.Printf("[%s] Rescaning Assets\n", dReams.Name())
 
 	menu.Assets.Asset = []menu.Asset{}
 	if menu.DappEnabled("Duels") {
@@ -759,6 +966,7 @@ func rescan() {
 
 func dappCloseCheck() {
 	prediction.Service.IsStopped()
+	rpc.Wallet.CloseConnections("dReams")
 }
 
 // Returns map of current dApp package versions

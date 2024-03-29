@@ -16,10 +16,10 @@ import (
 	"github.com/dReam-dApps/dReams/gnomes"
 	"github.com/dReam-dApps/dReams/menu"
 	"github.com/dReam-dApps/dReams/rpc"
+	"github.com/deroproject/derohe/walletapi"
 	"github.com/sirupsen/logrus"
 
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
@@ -28,32 +28,34 @@ import (
 
 // dApp to run NFA market with full wallet controls from dReams packages
 
-const app_tag = "NFA Market"
+const (
+	appName = "NFA Market"
+	appID   = "dreamdapps.io.nfa"
+)
 
 func main() {
 	n := runtime.NumCPU()
 	runtime.GOMAXPROCS(n)
-	gnomes.InitLogrusLog(logrus.InfoLevel)
+
+	// Initialize logrus logger to stdout
 	logger := structures.Logger.WithFields(logrus.Fields{})
-	config := menu.ReadDreamsConfig(app_tag)
+	gnomes.InitLogrusLog(logrus.InfoLevel)
+
+	// Read config.json file
+	config := menu.GetSettings(appName)
+
+	// New gnomes instance for app
 	gnomon := gnomes.NewGnomes()
 
-	// Initialize Fyne app and window
-	a := app.NewWithID(fmt.Sprintf("%s Desktop Client", app_tag))
-	a.Settings().SetTheme(bundle.DeroTheme(config.Skin))
-	w := a.NewWindow(app_tag)
-	w.Resize(fyne.NewSize(1400, 800))
-	w.SetIcon(bundle.ResourceMarketIconPng)
-	w.CenterOnScreen()
-	w.SetMaster()
-
-	// Initialize dReams AppObject
-	menu.Theme.Img = *canvas.NewImageFromResource(menu.DefaultThemeResource())
-	d := dreams.AppObject{
-		App:        a,
-		Window:     w,
-		Background: container.NewStack(&menu.Theme.Img),
-	}
+	// Initialize Fyne app and window as dreams.AppObject
+	d := dreams.NewFyneApp(
+		appID,
+		appName,
+		"Non-Fungible Asset Market",
+		bundle.DeroTheme(config.Skin),
+		bundle.ResourceMarketIconPng,
+		menu.DefaultBackgroundResource(),
+		true)
 
 	// Enable calling RunNFAMarket
 	enabled := menu.EnabledDappCount()
@@ -64,11 +66,12 @@ func main() {
 
 	// Initialize closing channels and func
 	done := make(chan struct{})
+
 	closeFunc := func() {
 		save := dreams.SaveData{
 			Skin:   config.Skin,
 			DBtype: gnomon.DBStorageType(),
-			Theme:  menu.Theme.Name,
+			Theme:  dreams.Theme.Name,
 		}
 
 		if rpc.Daemon.Rpc == "" {
@@ -77,13 +80,11 @@ func main() {
 			save.Daemon = []string{rpc.Daemon.Rpc}
 		}
 
-		menu.WriteDreamsConfig(save)
+		menu.StoreSettings(save)
 		menu.SetClose(true)
-		gnomon.Stop(app_tag)
+		gnomon.Stop(appName)
 		d.StopProcess()
-		if rpc.Wallet.File != nil {
-			rpc.Wallet.File.Close_Encrypted_Wallet()
-		}
+		rpc.Wallet.CloseConnections(appName)
 		d.Window.Close()
 	}
 	d.Window.SetCloseIntercept(closeFunc)
@@ -97,30 +98,31 @@ func main() {
 		closeFunc()
 	}()
 
-	// Initialize vars
-	gnomon.SetFastsync(true, true, 10000)
+	// Initialize Gnomon vars
+	gnomon.SetFastsync(true, true, 3000)
 	gnomon.SetDBStorageType("boltdb")
 
-	// Create dwidget connection box with controls
-	connect_box := dwidget.NewHorizontalEntries(app_tag, 1)
-	connect_box.Button.OnTapped = func() {
-		rpc.GetAddress(app_tag)
-		rpc.Ping()
-		if rpc.Daemon.IsConnected() && !gnomon.IsInitialized() && !gnomon.IsStarting() {
-			go gnomes.StartGnomon(app_tag, gnomon.DBStorageType(), []string{gnomes.NFA_SEARCH_FILTER}, 0, 0, nil)
-			rpc.GetFees()
-			menu.Market.Filters = menu.GetFilters("market_filter")
+	// Create dwidget connection box, using default OnTapped for RPC/XSWD connections
+	connection := dwidget.NewHorizontalEntries(appName, 1, &d)
+
+	// Gnomon controlled by daemon connection
+	connection.Connected.OnChanged = func(b bool) {
+		if b {
+			if rpc.Daemon.IsConnected() && !gnomon.IsInitialized() && !gnomon.IsStarting() {
+				go gnomes.StartGnomon(appName, gnomon.DBStorageType(), []string{gnomes.NFA_SEARCH_FILTER}, 0, 0, nil)
+				rpc.GetFees()
+				menu.Market.Filters = menu.GetFilters("market_filter")
+			}
+		} else {
+			gnomon.Stop(appName)
 		}
 	}
 
-	connect_box.Disconnect.OnChanged = func(b bool) {
-		if !b {
-			gnomon.Stop(app_tag)
-		}
-	}
+	// Set any saved daemon configs
+	connection.AddDaemonOptions(config.Daemon)
 
-	connect_box.AddDaemonOptions(config.Daemon)
-	connect_box.Container.Objects[0].(*fyne.Container).Add(menu.StartIndicators())
+	// Adding dReams indicator panel for wallet, daemon and Gnomon
+	connection.AddIndicator(menu.StartIndicators(nil))
 
 	// Layout asset profile objects
 	line := canvas.NewLine(bundle.TextColor)
@@ -145,11 +147,13 @@ func main() {
 	// Layout tabs
 	tabs := container.NewAppTabs(
 		container.NewTabItem("Market", menu.PlaceMarket(&d)),
-		container.NewTabItem("Assets", menu.PlaceAssets(app_tag, profile, rescan, bundle.ResourceMarketIconPng, &d)),
-		container.NewTabItem("Mint", menu.PlaceNFAMint(app_tag, d.Window)),
-		container.NewTabItem("Log", rpc.SessionLog(app_tag, rpc.Version())))
+		container.NewTabItem("Assets", menu.PlaceAssets(appName, profile, rescan, bundle.ResourceMarketIconPng, &d)),
+		container.NewTabItem("Mint", menu.PlaceNFAMint(appName, d.Window)),
+		container.NewTabItem("Log", rpc.SessionLog(appName, rpc.Version())))
 
 	tabs.SetTabLocation(container.TabLocationBottom)
+
+	go walletapi.Initialize_LookupTable(1, 1<<24)
 
 	// For RunNFAMarket routine
 	d.SetSubTab("Market")
@@ -163,57 +167,55 @@ func main() {
 			select {
 			case <-ticker.C:
 				rpc.Ping()
-				rpc.EchoWallet(app_tag)
-				go rpc.GetDreamsBalances(rpc.SCIDs)
-				rpc.GetWalletHeight(app_tag)
+				rpc.Wallet.Sync()
 
 				// Refresh Dero balance and Gnomon endpoint
-				connect_box.RefreshBalance()
-				if !rpc.Startup {
+				connection.RefreshBalance()
+
+				if rpc.Daemon.IsConnected() {
+					connection.Connected.SetChecked(true)
 					gnomes.EndPoint()
-				}
 
-				if rpc.Daemon.IsConnected() && gnomon.IsRunning() {
-					rpc.Startup = false
-					connect_box.Disconnect.SetChecked(true)
+					if gnomon.IsRunning() {
+						// Check Gnomon index for SCs
+						gnomon.IndexContains()
+						if gnomon.HasIndex(1) {
+							gnomon.Checked(true)
+						}
 
-					// Check Gnomon index for SCs
-					gnomon.IndexContains()
-					if gnomon.HasIndex(1) {
-						gnomon.Checked(true)
-					}
+						// Check Gnomon index for sync
+						if gnomon.GetLastHeight() >= gnomon.GetChainHeight()-3 {
+							gnomon.Synced(true)
+						} else {
+							synced = false
+							gnomon.Synced(false)
+							gnomon.Checked(false)
+						}
 
-					// Check Gnomon index for sync
-					if gnomon.GetLastHeight() >= gnomon.GetChainHeight()-3 {
-						gnomon.Synced(true)
-					} else {
-						synced = false
-						gnomon.Synced(false)
-						gnomon.Checked(false)
-					}
-
-					// Check wallet for all owned NFAs and store icons in boltdb
-					if gnomon.IsSynced() {
-						if !synced {
-							menu.CheckAllNFAs(nil)
-							menu.Assets.List.Refresh()
-							if gnomon.DBStorageType() == "boltdb" {
-								for _, r := range menu.Assets.Asset {
-									gnomes.StoreBolt(r.Collection, r.Name, r)
+						// Check wallet for all owned NFAs and store icons in boltdb
+						if gnomon.IsSynced() {
+							if !synced {
+								menu.CheckAllNFAs(nil)
+								menu.Assets.List.Refresh()
+								if gnomon.DBStorageType() == "boltdb" {
+									for _, r := range menu.Assets.Asset {
+										gnomes.StoreBolt(r.Collection, r.Name, r)
+									}
 								}
+								synced = true
 							}
-							synced = true
 						}
 					}
 
 				} else {
-					connect_box.Disconnect.SetChecked(false)
+					gnomon.Synced(false)
+					connection.Connected.SetChecked(false)
 				}
 
 				d.SignalChannel()
 
 			case <-d.Closing():
-				logger.Printf("[%s] Closing...", app_tag)
+				logger.Printf("[%s] Closing...", appName)
 				ticker.Stop()
 				d.CloseAllDapps()
 				time.Sleep(time.Second)
@@ -223,11 +225,12 @@ func main() {
 		}
 	}()
 
+	// Start app and place layout
 	go func() {
 		time.Sleep(450 * time.Millisecond)
-		d.Window.SetContent(container.NewStack(d.Background, tabs, container.NewVBox(layout.NewSpacer(), connect_box.Container)))
+		d.Window.SetContent(container.NewStack(d.Background, tabs, container.NewVBox(layout.NewSpacer(), connection.Container)))
 	}()
 	d.Window.ShowAndRun()
 	<-done
-	logger.Printf("[%s] Closed\n", app_tag)
+	logger.Printf("[%s] Closed\n", appName)
 }

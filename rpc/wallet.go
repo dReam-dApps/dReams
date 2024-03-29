@@ -1,120 +1,484 @@
 package rpc
 
 import (
+	"encoding/base64"
+	"fmt"
+	"sort"
 	"sync"
+	"time"
 
 	"fyne.io/fyne/v2/widget"
 	"github.com/civilware/Gnomon/structures"
 	"github.com/deroproject/derohe/cryptography/crypto"
+	"github.com/deroproject/derohe/dvm"
 	"github.com/deroproject/derohe/rpc"
+	"github.com/deroproject/derohe/transaction"
 	"github.com/deroproject/derohe/walletapi"
 	"github.com/sirupsen/logrus"
+	"github.com/ybbus/jsonrpc/v3"
 )
 
 type wallet struct {
-	UserPass  string
-	IdHash    string
-	Rpc       string
-	Address   string
-	ClientKey string
-	Balance   uint64
-	TokenBal  map[string]uint64
-	Height    int
-	Connect   bool
-	KeyLock   bool
-	MuC       sync.RWMutex
-	MuB       sync.RWMutex
-	File      *walletapi.Wallet_Disk
-	LogEntry  *widget.Entry
-	Display   struct {
-		Balance map[string]string
-		Height  string
-	}
+	IdHash   string
+	Address  string
+	balances map[string]*Balance
+	height   uint64
+	Connect  bool
+	muC      sync.RWMutex
+	sync.RWMutex
+	File     Disk
+	LogEntry *widget.Entry
+	RPC      RPCserver
+	WS       XSWDserver
+}
+
+type Disk struct {
+	disk *walletapi.Wallet_Disk
+}
+
+type Balance struct {
+	Decimal int    `json:"decimal"`
+	SCID    string `json:"scid"`
+	atomic  uint64
+	format  string
 }
 
 var Wallet wallet
 var logger = structures.Logger.WithFields(logrus.Fields{})
 
+// Close all connections to wallet
+func (w *wallet) CloseConnections(tag string) {
+	if w.RPC.client != nil {
+		logger.Infof("[%s] RPC Closed\n", tag)
+		w.RPC.client = nil
+		w.RPC.cancel = nil
+	}
+
+	if w.WS.conn != nil {
+		logger.Infof("[%s] XSWD Closed\n", tag)
+		w.WS.conn.Close()
+		w.WS.conn = nil
+	}
+
+	if w.File.disk != nil {
+		logger.Infof("[%s] Wallet Closed\n", tag)
+		w.File.disk.Close_Encrypted_Wallet()
+		w.File.disk = nil
+	}
+
+	w.Connected(false)
+}
+
 // Check if wallet is connected
 func (w *wallet) IsConnected() bool {
-	w.MuC.RLock()
-	defer w.MuC.RUnlock()
+	w.muC.RLock()
+	defer w.muC.RUnlock()
 
 	return w.Connect
 }
 
 // Set wallet connection
 func (w *wallet) Connected(b bool) {
-	w.MuC.Lock()
+	w.muC.Lock()
 	w.Connect = b
-	w.MuC.Unlock()
+	if !b {
+		w.height = 0
+		w.Address = ""
+	}
+	w.muC.Unlock()
 }
 
-// Get Wallet.Balance, 0 if not connected
-func (w *wallet) GetBalance() {
-	w.MuB.Lock()
-	defer w.MuB.Unlock()
-
-	if w.IsConnected() {
-		rpcClientW, ctx, cancel := SetWalletClient(w.Rpc, w.UserPass)
-		defer cancel()
-
-		var result *rpc.GetBalance_Result
-		if err := rpcClientW.CallFor(ctx, &result, "GetBalance"); err != nil {
-			logger.Errorln("[GetBalance]", err)
-			w.Balance = 0
+// Parse transfer params to match derohe rpcserver.Transfer()
+func parseTransferParams(p *rpc.Transfer_Params) (err error) {
+	for _, t := range p.Transfers {
+		_, err = t.Payload_RPC.CheckPack(transaction.PAYLOAD0_LIMIT)
+		if err != nil {
 			return
 		}
+	}
 
-		w.Balance = result.Unlocked_Balance
+	if len(p.SC_Code) >= 1 { // decode SC from base64 if possible, since json has limitations
+		if sc, err := base64.StdEncoding.DecodeString(p.SC_Code); err == nil {
+			p.SC_Code = string(sc)
+		}
+	}
+
+	if p.SC_Code != "" && p.SC_ID == "" {
+		p.SC_RPC = append(p.SC_RPC, rpc.Argument{Name: rpc.SCACTION, DataType: rpc.DataUint64, Value: uint64(rpc.SC_INSTALL)})
+		p.SC_RPC = append(p.SC_RPC, rpc.Argument{Name: rpc.SCCODE, DataType: rpc.DataString, Value: p.SC_Code})
+	}
+
+	if p.SC_ID != "" {
+		p.SC_RPC = append(p.SC_RPC, rpc.Argument{Name: rpc.SCACTION, DataType: rpc.DataUint64, Value: uint64(rpc.SC_CALL)})
+		p.SC_RPC = append(p.SC_RPC, rpc.Argument{Name: rpc.SCID, DataType: rpc.DataHash, Value: crypto.HashHexToHash(p.SC_ID)})
+		if p.SC_Code != "" {
+			p.SC_RPC = append(p.SC_RPC, rpc.Argument{Name: rpc.SCCODE, DataType: rpc.DataString, Value: p.SC_Code})
+		}
+	}
+
+	return
+}
+
+// Wallet call switch for RPC, XSWD or walletapi connections
+func (w *wallet) CallFor(out interface{}, method string, params ...interface{}) (err error) {
+	if w.RPC.client != nil {
+		if err = w.RPC.CallFor(&out, method, params...); err != nil {
+			return
+		}
+	} else if w.WS.conn != nil {
+		for w.WS.IsRequesting() {
+			time.Sleep(500 * time.Millisecond)
+			logger.Warnln("[XSWD] Request sleep...")
+		}
+
+		if err = w.WS.CallFor(&out, method, jsonrpc.Params(params...)); err != nil {
+			return
+		}
+	} else if w.File.disk != nil {
+		switch method {
+		case "transfer":
+			result, ok := out.(*rpc.Transfer_Result)
+			if !ok {
+				return fmt.Errorf("expected out to be *rpc.Transfer_Result, got %T", out)
+			}
+
+			if params == nil {
+				return fmt.Errorf("params can not be nil for %s", method)
+			}
+
+			if p, ok := params[0].(*rpc.Transfer_Params); ok {
+				err = parseTransferParams(p)
+				if err != nil {
+					return
+				}
+
+				var tx *transaction.Transaction
+				tx, err = w.File.disk.TransferPayload0(p.Transfers, p.Ringsize, false, p.SC_RPC, p.Fees, false)
+				if err != nil {
+					return
+				}
+
+				err = w.File.disk.SendTransaction(tx)
+				if err != nil {
+					return
+				}
+
+				result.TXID = tx.GetHash().String()
+
+			} else {
+				err = fmt.Errorf("expected params to be *rpc.Transfer_Params, got %T", params[0])
+			}
+		case "GetBalance":
+			result, ok := out.(*rpc.GetBalance_Result)
+			if !ok {
+				return fmt.Errorf("expected out to be *rpc.GetBalance_Result, got %T", out)
+			}
+
+			if params == nil {
+				return fmt.Errorf("params can not be nil for %s", method)
+			}
+
+			if p, ok := params[0].(*rpc.GetBalance_Params); ok {
+				var unlocked, locked uint64
+				if p.SCID.IsZero() {
+					unlocked, locked = w.File.disk.Get_Balance()
+				} else {
+					unlocked, locked = w.File.disk.Get_Balance_scid(p.SCID)
+				}
+
+				result.Balance = locked
+				result.Unlocked_Balance = unlocked
+			} else {
+				err = fmt.Errorf("expected out to be *rpc.GetBalance_Params, got %T", params[0])
+			}
+		case "GetTransfers":
+			result, ok := out.(*rpc.Get_Transfers_Result)
+			if !ok {
+				return fmt.Errorf("expected out to be *rpc.Get_Transfers_Result, got %T", out)
+			}
+
+			if params == nil {
+				return fmt.Errorf("params can not be nil for %s", method)
+			}
+
+			if p, ok := params[0].(*rpc.Get_Transfers_Params); ok {
+				result.Entries = w.File.disk.Show_Transfers(p.SCID, p.Coinbase, p.In, p.Out, p.Min_Height, p.Max_Height, p.Sender, p.Receiver, p.DestinationPort, p.SourcePort)
+			} else {
+				err = fmt.Errorf("expected out to be *rpc.Get_Transfers_Params, got %T", params[0])
+			}
+		case "GetTransferByTXID":
+			result, ok := out.(*rpc.Get_Transfer_By_TXID_Result)
+			if !ok {
+				return fmt.Errorf("expected out to be *rpc.Get_Transfer_By_TXID_Result, got %T", out)
+			}
+
+			if params == nil {
+				return fmt.Errorf("params can not be nil for %s", method)
+			}
+
+			if p, ok := params[0].(*rpc.Get_Transfer_By_TXID_Params); ok {
+				scid, entry := w.File.disk.Get_Payments_TXID(p.SCID, p.TXID)
+				result.SCID = scid
+				result.Entry = entry
+			} else {
+				err = fmt.Errorf("expected out to be *rpc.Get_Transfer_By_TXID_Params, got %T", params[0])
+			}
+		case "GetAddress":
+			result, ok := out.(*rpc.GetAddress_Result)
+			if !ok {
+				return fmt.Errorf("expected out to be *rpc.GetAddress_Result, got %T", out)
+			}
+
+			result.Address = w.File.disk.GetAddress().String()
+
+		case "GetHeight":
+			result, ok := out.(*rpc.GetHeight_Result)
+			if !ok {
+				return fmt.Errorf("expected out to be *rpc.GetHeight_Result, got %T", out)
+			}
+
+			result.Height = w.File.disk.Get_Height()
+		// case "Echo":
+		// 	out = "Wallet " + strings.Join(params[0].([]string), " ")
+
+		default:
+			err = fmt.Errorf("method %s is not available", method)
+		}
+	} else {
+		err = fmt.Errorf("wallet not connected for %s", method)
+	}
+
+	return
+}
+
+// Call EchoWallet if wallet is connected and set Connected
+func (w *wallet) Echo() {
+	if w.IsConnected() {
+		w.Connected(EchoWallet())
+	}
+}
+
+// Call GetWalletHeight if wallet is connected and set height
+func (w *wallet) GetHeight() {
+	if w.IsConnected() {
+		w.height = GetWalletHeight()
+	}
+}
+
+// Set wallet.balances to the default tokens
+func (w *wallet) SetDefaultTokens() {
+	w.Lock()
+	w.balances = make(map[string]*Balance)
+	w.balances["DERO"] = &Balance{Decimal: 5}
+	w.balances["dReams"] = &Balance{Decimal: 5, SCID: DreamsSCID}
+	w.balances["HGC"] = &Balance{Decimal: 5, SCID: HgcSCID}
+	w.Unlock()
+}
+
+// Add additional tokens to wallet.balances
+func (w *wallet) SetTokens(balances map[string]*Balance) {
+	if w.balances == nil {
+		w.SetDefaultTokens()
+	}
+
+	w.Lock()
+	for name, bal := range balances {
+		w.balances[name] = bal
+	}
+	w.Unlock()
+}
+
+// Add a token to wallet.balances map
+func (w *wallet) TokenAdd(name, scid string, decimal int) (err error) {
+	code := GetSCCode(scid)
+	if code == "" {
+		return fmt.Errorf("could not get scid")
+	}
+
+	_, _, err = dvm.ParseSmartContract(code)
+	if err != nil {
+		return
+	}
+
+	w.Lock()
+	w.balances[name] = &Balance{
+		Decimal: decimal,
+		atomic:  0,
+		format:  "0",
+		SCID:    scid,
+	}
+	w.Unlock()
+	// TODO if w.File.disk
+
+	return
+}
+
+// Remove a token to wallet.balances map
+func (w *wallet) TokenRemove(name string) {
+	w.Lock()
+	delete(w.balances, name)
+	w.Unlock()
+}
+
+// Returns added tokens in wallet.balances map and all balance names
+func (w *wallet) Balances() (m map[string]*Balance, names []string) {
+	w.RLock()
+	defer w.RUnlock()
+
+	m = make(map[string]*Balance)
+
+	for name, b := range w.balances {
+		names = append(names, name)
+		if name != "DERO" && name != "dReams" && name != "HGC" {
+			m[name] = b
+		}
+	}
+
+	sort.Slice(names, func(i, j int) bool {
+		if names[i] == "DERO" {
+			return true
+		} else if names[j] == "DERO" {
+			return false
+		} else if names[i] == "dReams" {
+			return true
+		} else if names[j] == "dReams" {
+			return false
+		}
+		return names[i] < names[j]
+	})
+
+	return
+}
+
+// Returns balance in atomic units
+func (w *wallet) Balance(name string) (atomic uint64) {
+	w.RLock()
+	defer w.RUnlock()
+
+	if w.balances[name] != nil {
+		atomic = w.balances[name].atomic
+	}
+
+	return
+}
+
+// Returns balance string of name formatted to decimal place
+func (w *wallet) BalanceF(name string) (balance string) {
+	w.RLock()
+	defer w.RUnlock()
+
+	if w.balances[name] != nil {
+		return w.balances[name].format
+	} else {
+		return "0.00000"
+	}
+}
+
+// Returns wallet.height
+func (w *wallet) Height() uint64 {
+	return w.height
+}
+
+// Add a scid with balances data to wallet.balances map
+func (w *wallet) AddSCID(name, scid string, decimal int) {
+	w.Lock()
+	w.balances[name] = &Balance{Decimal: decimal, SCID: scid}
+	w.Unlock()
+}
+
+// Get DERO balance and all assets in wallet.Balances
+func (w *wallet) GetAllBalances() {
+	w.Lock()
+	defer w.Unlock()
+
+	if w.RPC.client == nil && w.WS.conn == nil && w.File.disk != nil {
+		for name := range w.balances {
+			var bal uint64
+			if name == "DERO" {
+				bal, _ = w.File.disk.Get_Balance()
+			} else {
+				bal, _ = w.File.disk.Get_Balance_scid(crypto.HashHexToHash(w.balances[name].SCID))
+			}
+
+			w.balances[name].atomic = bal
+			w.balances[name].format = FromAtomic(bal, w.balances[name].Decimal)
+		}
 
 		return
 	}
 
-	w.Balance = 0
-}
-
-// Get single balance of Wallet.TokenBal[name], 0 if not connected
-func (w *wallet) GetTokenBalance(name, scid string) {
-	w.MuB.Lock()
-	defer w.MuB.Unlock()
-
 	if w.IsConnected() {
-		rpcClientW, ctx, cancel := SetWalletClient(w.Rpc, w.UserPass)
-		defer cancel()
+		for name := range w.balances {
+			var bal uint64
+			if name == "DERO" {
+				bal = GetBalance()
+			} else {
+				bal = GetAssetBalance(w.balances[name].SCID)
+			}
 
-		params := &rpc.GetBalance_Params{
-			SCID: crypto.HashHexToHash(scid),
+			w.balances[name].atomic = bal
+			w.balances[name].format = FromAtomic(bal, w.balances[name].Decimal)
 		}
 
-		var result *rpc.GetBalance_Result
-		if err := rpcClientW.CallFor(ctx, &result, "GetBalance", params); err != nil {
-			logger.Errorln("[GetTokenBalance]", err)
-			w.TokenBal[name] = 0
+		return
+	}
+
+	for name := range w.balances {
+		w.balances[name].atomic = 0
+		w.balances[name].format = FromAtomic(0, w.balances[name].Decimal)
+	}
+}
+
+// Sync calls wallet.Echo, wallet.GetHeight and wallet.GetAllBalances if wallet is connected
+func (w *wallet) Sync() {
+	if w.File.disk != nil {
+		w.Lock()
+		walletapi.Daemon_Endpoint_Active = Daemon.Rpc
+		if err := walletapi.Connect(Daemon.Rpc); err != nil {
+			logger.Errorln("[Sync]", err)
+			w.Unlock()
+			w.Connected(false)
 			return
 		}
 
-		w.TokenBal[name] = result.Unlocked_Balance
-
-		return
-
+		w.Unlock()
+		w.Connected(true)
+	} else {
+		w.Echo()
 	}
 
-	w.TokenBal[name] = 0
+	w.GetHeight()
+	w.GetAllBalances()
 }
 
-// Read Wallet.Balance
-func (w *wallet) ReadBalance() uint64 {
-	w.MuB.RLock()
-	defer w.MuB.RUnlock()
+func (w *wallet) OpenWalletFile(tag, path, password string) (err error) {
+	w.File.disk, err = walletapi.Open_Encrypted_Wallet(path, password)
+	if err != nil {
+		return
+	}
 
-	return w.Balance
+	w.File.disk.SetNetwork(true)
+	w.File.disk.SetOnlineMode()
+	GetAddress(tag)
+	w.Connected(true)
+
+	return
 }
 
-// Read Wallet.TokenBal[name]
-func (w *wallet) ReadTokenBalance(name string) uint64 {
-	w.MuB.RLock()
-	defer w.MuB.RUnlock()
+// Below are derohe *walletapi.Wallet_Disk methods to expose
 
-	return w.TokenBal[name]
+func (f *Disk) Encrypt(data []byte) (result []byte, err error) {
+	return f.disk.Encrypt(data)
+}
+
+func (f *Disk) Decrypt(data []byte) (result []byte, err error) {
+	return f.disk.Decrypt(data)
+}
+
+func (f *Disk) SignData(data []byte) (result []byte) {
+	return f.disk.SignData(data)
+}
+
+func (f *Disk) IsNil() bool {
+	return f.disk == nil
 }

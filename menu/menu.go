@@ -6,8 +6,11 @@ import (
 	"fmt"
 	"image"
 	"image/color"
+	"io"
 	"math"
 	"os"
+	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -39,6 +42,7 @@ type menuObjects struct {
 	Indicator struct {
 		Wallet *fyne.Animation
 		Daemon *fyne.Animation
+		TX     *fyne.Animation
 	}
 	Check struct {
 		Daemon *widget.Check
@@ -49,9 +53,6 @@ type exiting struct {
 	signal bool
 	sync.RWMutex
 }
-
-// Background theme AssetSelect
-var Theme dreams.AssetSelect
 
 // Control menu indicators, checks, maps and defaults
 var Control menuObjects
@@ -67,7 +68,7 @@ var exit exiting
 
 // Initialize maps and defaults
 func init() {
-	Theme.Name = "Hex"
+	dreams.Theme.Name = "Hex"
 	Assets.SCIDs = make(map[string]string)
 	Assets.Enabled = make(map[string]bool)
 	Control.Dapps = make(map[string]bool)
@@ -115,6 +116,76 @@ func DappEnabled(dapp string) bool {
 	return false
 }
 
+// Store settings to local storage
+func StoreSettings(store dreams.SaveData) {
+	if store.Daemon != nil && store.Daemon[0] == "" {
+		if Control.Daemon != "" {
+			store.Daemon[0] = Control.Daemon
+		} else {
+			store.Daemon[0] = "127.0.0.1:10102"
+		}
+	}
+
+	err := dreams.StoreValue("settings", "config", store)
+	if err != nil {
+		logger.Errorln("[StoreSettings]", err)
+	}
+}
+
+// Get settings from local storage
+func GetSettings(tag string) (saved dreams.SaveData) {
+	err := dreams.GetValue("settings", "config", &saved)
+	if err != nil {
+		logger.Errorf("[%s] %s\n", tag, err)
+	}
+
+	return
+}
+
+// Set menu and Gnomon settings from dreams.SaveData,
+// a nil or invalid 'saved' value will use default settings
+func SetSettings(saved dreams.SaveData) {
+	gnomon.SetParallel(1)
+	gnomon.SetDBStorageType("boltdb")
+	gnomon.SetFastsync(true, false, 10000)
+
+	bundle.AppColor = saved.Skin
+
+	if saved.Daemon != nil {
+		Control.Daemon = saved.Daemon[0]
+	}
+
+	if saved.Dapps != nil {
+		Control.Lock()
+		Control.Dapps = saved.Dapps
+		Control.Unlock()
+	}
+
+	if saved.Theme != "" {
+		dreams.Theme.Name = saved.Theme
+	}
+
+	if saved.Assets != nil {
+		Assets.Lock()
+		Assets.Enabled = saved.Assets
+		Assets.Unlock()
+	}
+
+	if saved.DBtype == "gravdb" {
+		gnomon.SetDBStorageType(saved.DBtype)
+	}
+
+	if saved.Para > 0 && saved.Para < 6 {
+		gnomon.SetParallel(saved.Para)
+	}
+
+	if saved.FSDiff > 0 {
+		gnomon.SetFastsync(true, saved.FSForce, saved.FSDiff)
+	}
+}
+
+// Deprecated: WriteDreamsConfig is deprecated. Use StoreSettings and GetSettings for app storage
+//
 // Save dReams config.json file for platform wide dApp use
 func WriteDreamsConfig(u dreams.SaveData) {
 	if u.Daemon != nil && u.Daemon[0] == "" {
@@ -138,6 +209,8 @@ func WriteDreamsConfig(u dreams.SaveData) {
 	}
 }
 
+// Deprecated: ReadDreamsConfig is deprecated. Use GetSettings and StoreSettings for app storage
+//
 // Read dReams platform config.json file
 //   - tag for log print
 //   - Sets up directory if none exists
@@ -194,7 +267,7 @@ func ReadDreamsConfig(tag string) (saved dreams.SaveData) {
 	}
 
 	if saved.Theme != "" {
-		Theme.Name = saved.Theme
+		dreams.Theme.Name = saved.Theme
 	}
 
 	if saved.Assets != nil {
@@ -251,9 +324,9 @@ func SwitchProfileIcon(collection, name, url string, size float32) (icon *canvas
 	return
 }
 
-// Returns default theme resource by Theme.Name
-func DefaultThemeResource() *fyne.StaticResource {
-	switch Theme.Name {
+// Returns default background theme resource by dreams.Theme.Name
+func DefaultBackgroundResource() *fyne.StaticResource {
+	switch dreams.Theme.Name {
 	case "Hex":
 		return bundle.ResourceBackground100Png
 	case "Bullet":
@@ -267,88 +340,105 @@ func DefaultThemeResource() *fyne.StaticResource {
 	}
 }
 
-// App theme selection object
+// App background theme selection object
 //   - If image is not present locally, it is downloaded
 func ThemeSelect(d *dreams.AppObject) fyne.CanvasObject {
 	options := Control.Themes
 	icon := AssetIcon(bundle.ResourceMarketCirclePng.StaticContent, "", 60)
 	var max *fyne.Container
-	Theme.Select = widget.NewSelect(options, nil)
-	Theme.Select.SetSelected(Theme.Name)
-	Theme.Select.OnChanged = func(s string) {
-		switch Theme.Select.SelectedIndex() {
+	dreams.Theme.Select = widget.NewSelect(options, nil)
+	dreams.Theme.Select.SetSelected(dreams.Theme.Name)
+	dreams.Theme.Select.OnChanged = func(s string) {
+		switch dreams.Theme.Select.SelectedIndex() {
 		case -1:
-			Theme.Name = "Hex"
+			dreams.Theme.Name = "Hex"
 		default:
-			Theme.Name = s
+			dreams.Theme.Name = s
 		}
 		go func() {
+			save := false
 			dir := dreams.GetDir()
 			check := strings.Trim(s, "0123456789")
 			scid := Assets.SCIDs[s]
-			if check == "AZYDS" {
-				file := dir + "/assets/" + s + "/" + s + ".png"
+			_, collection, ext := gnomes.GetAssetInfo(scid)
+			if ext == "" {
+				// Not minted
+				ext = ".png"
+			}
+
+			file := filepath.Join(dir, "datashards", "assets", s, s+ext)
+			if IsDreamsNFACollection(collection) {
 				if dreams.FileExists(file, "dReams") {
-					Theme.Img = *canvas.NewImageFromFile(file)
+					dreams.Theme.Img = *canvas.NewImageFromFile(file)
 				} else {
-					Theme.URL = gnomes.GetAssetUrl(1, scid) // "https://raw.githubusercontent.com/Azylem/" + s + "/main/" + s + ".png"
-					logger.Println("[dReams] Downloading", Theme.URL)
+					dreams.Theme.URL = gnomes.GetAssetUrl(1, scid)
+					logger.Println("[dReams] Downloading", dreams.Theme.URL)
 					if img, err := dreams.DownloadCanvas(gnomes.GetAssetUrl(0, scid), s); err == nil {
-						Theme.Img = img
+						dreams.Theme.Img = img
+						save = true
 					}
 				}
-				max.Objects[1].(*fyne.Container).Objects[0].(*fyne.Container).Objects[0] = SwitchProfileIcon("AZY-Deroscapes", s, Theme.URL, 60)
-			} else if check == "SIXART" {
-				file := dir + "/assets/" + s + "/" + s + ".png"
-				if dreams.FileExists(file, "dReams") {
-					Theme.Img = *canvas.NewImageFromFile(file)
-				} else {
-					Theme.URL = gnomes.GetAssetUrl(1, scid) // "https://raw.githubusercontent.com/SixofClubsss/SIXART/main/" + s + "/" + s + ".png"
-					logger.Println("[dReams] Downloading", Theme.URL)
-					if img, err := dreams.DownloadCanvas(gnomes.GetAssetUrl(0, scid), s); err == nil {
-						Theme.Img = img
-					}
-				}
-				max.Objects[1].(*fyne.Container).Objects[0].(*fyne.Container).Objects[0] = SwitchProfileIcon("SIXART", s, Theme.URL, 60)
+
+				max.Objects[1].(*fyne.Container).Objects[0].(*fyne.Container).Objects[0] = SwitchProfileIcon(collection, s, dreams.Theme.URL, 60)
 			} else if check == "HSTheme" {
-				file := dir + "/assets/" + s + "/" + s + ".png"
 				if dreams.FileExists(file, "dReams") {
-					Theme.Img = *canvas.NewImageFromFile(file)
+					dreams.Theme.Img = *canvas.NewImageFromFile(file)
 				} else {
-					Theme.URL = "https://raw.githubusercontent.com/High-Strangeness/High-Strangeness/main/" + s + "/" + s + ".png"
-					logger.Println("[dReams] Downloading", Theme.URL)
-					if img, err := dreams.DownloadCanvas(Theme.URL, s); err == nil {
-						Theme.Img = img
+					dreams.Theme.URL = "https://raw.githubusercontent.com/High-Strangeness/High-Strangeness/main/" + s + "/" + s + ".png"
+					logger.Println("[dReams] Downloading", dreams.Theme.URL)
+					if img, err := dreams.DownloadCanvas(dreams.Theme.URL, s); err == nil {
+						dreams.Theme.Img = img
+						save = true
 					}
 				}
 				hs_icon := "https://raw.githubusercontent.com/High-Strangeness/High-Strangeness/main/HighStrangeness-IC.jpg"
 				max.Objects[1].(*fyne.Container).Objects[0].(*fyne.Container).Objects[0] = SwitchProfileIcon("High Strangeness", "HighStrangeness1", hs_icon, 60)
 			} else if s == "Hex" {
-				Theme.Img = *canvas.NewImageFromResource(bundle.ResourceBackground100Png)
+				dreams.Theme.Img = *canvas.NewImageFromResource(bundle.ResourceBackground100Png)
 				img := canvas.NewImageFromResource(bundle.ResourceMarketCirclePng)
 				img.SetMinSize(fyne.NewSize(60, 60))
 				max.Objects[1].(*fyne.Container).Objects[0].(*fyne.Container).Objects[0] = img
 			} else if s == "Bullet" {
-				Theme.Img = *canvas.NewImageFromResource(bundle.ResourceBackground110Png)
+				dreams.Theme.Img = *canvas.NewImageFromResource(bundle.ResourceBackground110Png)
 				img := canvas.NewImageFromResource(bundle.ResourceMarketCirclePng)
 				img.SetMinSize(fyne.NewSize(60, 60))
 				max.Objects[1].(*fyne.Container).Objects[0].(*fyne.Container).Objects[0] = img
 			} else if s == "Highway" {
-				Theme.Img = *canvas.NewImageFromResource(bundle.ResourceBackground111Png)
+				dreams.Theme.Img = *canvas.NewImageFromResource(bundle.ResourceBackground111Png)
 				img := canvas.NewImageFromResource(bundle.ResourceMarketCirclePng)
 				img.SetMinSize(fyne.NewSize(60, 60))
 				max.Objects[1].(*fyne.Container).Objects[0].(*fyne.Container).Objects[0] = img
 			} else if s == "Glass" {
-				Theme.Img = *canvas.NewImageFromResource(bundle.ResourceBackground112Png)
+				dreams.Theme.Img = *canvas.NewImageFromResource(bundle.ResourceBackground112Png)
 				img := canvas.NewImageFromResource(bundle.ResourceMarketCirclePng)
 				img.SetMinSize(fyne.NewSize(60, 60))
 				max.Objects[1].(*fyne.Container).Objects[0].(*fyne.Container).Objects[0] = img
 			}
 			d.Background.Refresh()
+			if save {
+				err := os.MkdirAll(strings.TrimSuffix(file, s+ext), os.ModePerm)
+				if err != nil {
+					logger.Errorln("[dReams]", err)
+					return
+				}
+
+				out, err := os.Create(file)
+				if err != nil {
+					logger.Errorln("[dReams]", err)
+					return
+				}
+				defer out.Close()
+
+				_, err = io.Copy(out, bytes.NewReader(dreams.Theme.Img.Resource.Content()))
+				if err != nil {
+					logger.Errorln("[dReams]", err)
+					return
+				}
+			}
 		}()
 	}
-	Theme.Select.PlaceHolder = "Theme:"
-	max = container.NewBorder(nil, nil, icon, nil, container.NewVBox(Theme.Select))
+	dreams.Theme.Select.PlaceHolder = "Theme:"
+	max = container.NewBorder(nil, nil, icon, nil, container.NewVBox(dreams.Theme.Select))
 
 	return max
 }
@@ -688,12 +778,12 @@ func listMenu(window_icon fyne.Resource, d *dreams.AppObject) {
 	listing := widget.NewSelect(listing_options, nil)
 	listing.PlaceHolder = "Type:"
 
-	duration := dwidget.NewDeroEntry("", 1, 0)
+	duration := dwidget.NewAmountEntry("", 1, 0)
 	duration.AllowFloat = false
 	duration.SetPlaceHolder("Duration in Hours:")
 	duration.Validator = validation.NewRegexp(`^[^0]\d{0,2}$`, "Int required")
 
-	start := dwidget.NewDeroEntry("", 0.1, 1)
+	start := dwidget.NewAmountEntry("", 0.1, 1)
 	start.AllowFloat = true
 	start.SetPlaceHolder("Start Price:")
 	start.Validator = validation.NewRegexp(`^\d{1,}\.\d{1,5}$|^[^0]\d{0,}$`, "Int or float required")
@@ -703,7 +793,7 @@ func listMenu(window_icon fyne.Resource, d *dreams.AppObject) {
 	charAddr.SetPlaceHolder("Charity Donation Address:")
 	charAddr.Validator = validation.NewRegexp(`^(dero)\w{62}$`, "Int required")
 
-	charPerc := dwidget.NewDeroEntry("", 1, 0)
+	charPerc := dwidget.NewAmountEntry("", 1, 0)
 	charPerc.AllowFloat = false
 	charPerc.SetPlaceHolder("Charity Donation %:")
 	charPerc.Validator = validation.NewRegexp(`^\d{1,2}$`, "Int required")
@@ -856,12 +946,12 @@ func listMenu(window_icon fyne.Resource, d *dreams.AppObject) {
 func BackgroundRast(tag string) *canvas.Raster {
 	var err error
 	var img image.Image
-	if Theme.Img.Resource != nil {
-		if img, _, err = image.Decode(bytes.NewReader(Theme.Img.Resource.Content())); err == nil {
+	if dreams.Theme.Img.Resource != nil {
+		if img, _, err = image.Decode(bytes.NewReader(dreams.Theme.Img.Resource.Content())); err == nil {
 			return canvas.NewRasterFromImage(img)
 		}
 
-		if img, _, err = image.Decode(bytes.NewReader(DefaultThemeResource().StaticContent)); err == nil {
+		if img, _, err = image.Decode(bytes.NewReader(DefaultBackgroundResource().StaticContent)); err == nil {
 			return canvas.NewRasterFromImage(img)
 		}
 
@@ -926,7 +1016,10 @@ func SendMessageMenu(dest string, window_icon fyne.Resource) {
 
 		send_button = widget.NewButton("Send Message", func() {
 			if message_entry.Text != "" {
-				rings := rpc.StringToUint64(ringsize.Selected)
+				rings, err := strconv.ParseUint(ringsize.Selected, 10, 64)
+				if err != nil {
+					rings = 16
+				}
 				go rpc.SendMessage(dest_entry.Text, message_entry.Text, rings)
 				Assets.Button.messaging = false
 				smw.Close()

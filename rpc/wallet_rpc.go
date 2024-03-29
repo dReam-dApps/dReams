@@ -14,7 +14,9 @@ import (
 
 	"github.com/blang/semver/v4"
 	"github.com/civilware/Gnomon/structures"
+	"github.com/deroproject/derohe/config"
 	"github.com/deroproject/derohe/cryptography/crypto"
+	"github.com/deroproject/derohe/globals"
 	"github.com/deroproject/derohe/rpc"
 	"github.com/ybbus/jsonrpc/v3"
 
@@ -23,6 +25,33 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 )
+
+// RPC server connection vars
+type RPCserver struct {
+	Port   string
+	Auth   string
+	client jsonrpc.RPCClient
+	cancel context.CancelFunc
+}
+
+// Initialize RPC server connections
+func (r *RPCserver) Init() {
+	client, _, cancel := SetWalletClient(r.Port, r.Auth)
+	r.client = client
+	r.cancel = cancel
+}
+
+// Wrapper for jsonrpc.RPCClient CallFor()
+func (r *RPCserver) CallFor(out interface{}, method string, params ...interface{}) (err error) {
+	defer r.cancel()
+
+	return r.client.CallFor(context.Background(), out, method, params...)
+}
+
+// Initialize RPC server connections
+func (r *RPCserver) IsClosed() bool {
+	return r.client == nil
+}
 
 // Prints session log entry to Wallet.LogEntry and stdout
 func PrintLog(format string, a ...any) {
@@ -87,23 +116,18 @@ func SessionLog(tag string, dapp semver.Version) *fyne.Container {
 	return container.NewStack(cont, vbox)
 }
 
-// Initialize balance maps for supported tokens
+// Initialize balance maps with default tokens
 func init() {
-	Wallet.TokenBal = make(map[string]uint64)
-	Wallet.Display.Balance = make(map[string]string)
-	SCIDs = make(map[string]string)
-	SCIDs["dReams"] = DreamsSCID
-	SCIDs["HGC"] = HgcSCID
-	//SCIDs["TRVL"] = TrvlSCID
-	Wallet.Display.Balance["Dero"] = "0"
-	Wallet.Display.Balance["dReams"] = "0"
-	Wallet.Display.Balance["HGC"] = "0"
-	//Wallet.Display.Balance["TRVL"] = "0"
+	Wallet.SetDefaultTokens()
 }
 
 // Set wallet rpc client with auth, context and 8 sec cancel
 func SetWalletClient(addr, pass string) (jsonrpc.RPCClient, context.Context, context.CancelFunc) {
-	client := jsonrpc.NewClientWithOpts("http://"+addr+"/json_rpc", &jsonrpc.RPCClientOpts{
+	if !strings.HasPrefix(addr, "http") {
+		addr = "http://" + addr
+	}
+
+	client := jsonrpc.NewClientWithOpts(addr+"/json_rpc", &jsonrpc.RPCClientOpts{
 		CustomHeaders: map[string]string{
 			"Authorization": "Basic " + base64.StdEncoding.EncodeToString([]byte(pass)),
 		},
@@ -115,40 +139,31 @@ func SetWalletClient(addr, pass string) (jsonrpc.RPCClient, context.Context, con
 }
 
 // Echo Dero wallet for connection
-//   - tag for log print
-func EchoWallet(tag string) {
-	if Wallet.IsConnected() {
-		client, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
-		defer cancel()
+func EchoWallet() (connected bool) {
+	var result string
+	params := []string{"Hello", "World", "!"}
 
-		var result string
-		params := []string{"Hello", "World", "!"}
-		if err := client.CallFor(ctx, &result, "Echo", params); err != nil {
-			Wallet.Connected(false)
-			PrintError("[%s] %s", tag, err)
-			return
-		}
-
-		if result != "WALLET Hello World !" {
-			Wallet.Connected(false)
-		}
+	if err := Wallet.CallFor(&result, "Echo", params); err != nil {
+		PrintError("[EchoWallet] %s", err)
+		return
 	}
+
+	return result == "WALLET Hello World !"
+
 }
 
 // Get a wallets Dero address
 //   - tag for log print
 func GetAddress(tag string) {
-	client, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
-	defer cancel()
+	var result rpc.GetAddress_Result
 
-	var result *rpc.GetAddress_Result
-	if err := client.CallFor(ctx, &result, "GetAddress"); err != nil {
+	if err := Wallet.CallFor(&result, "GetAddress"); err != nil {
 		Wallet.Connected(false)
 		PrintError("[%s] %s", tag, err)
 		return
 	}
 
-	if (result.Address[0:4] == "dero" || result.Address[0:4] == "deto") && len(result.Address) == 66 {
+	if _, err := globals.ParseValidateAddress(result.Address); err == nil {
 		Wallet.Connected(true)
 		PrintLog("[%s] Wallet Connected: %s", tag, result.Address)
 		Wallet.Address = result.Address
@@ -156,22 +171,20 @@ func GetAddress(tag string) {
 		hash := sha256.Sum256(id)
 		Wallet.IdHash = hex.EncodeToString(hash[:])
 	} else {
+		PrintError("[%s] %s", tag, err)
 		Wallet.Connected(false)
 	}
 }
 
 // Get wallet tx entry data by txid
 func GetWalletTx(txid string) *rpc.Entry {
-	client, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
-	defer cancel()
-
-	var result *rpc.Get_Transfer_By_TXID_Result
-	params := rpc.Get_Transfer_By_TXID_Params{
+	var result rpc.Get_Transfer_By_TXID_Result
+	params := &rpc.Get_Transfer_By_TXID_Params{
 		TXID: txid,
 	}
 
-	if err := client.CallFor(ctx, &result, "GetTransferbyTXID", params); err != nil {
-		logger.Errorln("[GetWalletTx]", err)
+	if err := Wallet.CallFor(&result, "GetTransferbyTXID", params); err != nil {
+		PrintError("[GetWalletTx] %s", err)
 		return nil
 	}
 
@@ -180,11 +193,8 @@ func GetWalletTx(txid string) *rpc.Entry {
 
 // Get wallet transfers with min/max heights and dst port
 func GetWalletTransfers(min, max, dst uint64) *[]rpc.Entry {
-	client, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
-	defer cancel()
-
-	var result *rpc.Get_Transfers_Result
-	params := rpc.Get_Transfers_Params{
+	var result rpc.Get_Transfers_Result
+	params := &rpc.Get_Transfers_Params{
 		Coinbase:        false,
 		In:              true,
 		Out:             false,
@@ -193,8 +203,8 @@ func GetWalletTransfers(min, max, dst uint64) *[]rpc.Entry {
 		DestinationPort: dst,
 	}
 
-	if err := client.CallFor(ctx, &result, "GetTransfers", params); err != nil {
-		logger.Errorln("[GetWalletTx]", err)
+	if err := Wallet.CallFor(&result, "GetTransfers", params); err != nil {
+		PrintError("[GetWalletTransfers] %s", err)
 		return nil
 	}
 
@@ -203,69 +213,29 @@ func GetWalletTransfers(min, max, dst uint64) *[]rpc.Entry {
 
 // Returns Dero wallet balance
 func GetBalance() uint64 {
-	client, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
-	defer cancel()
+	var result rpc.GetBalance_Result
 
-	var result *rpc.GetBalance_Result
-	if err := client.CallFor(ctx, &result, "GetBalance"); err != nil {
-		logger.Errorln("[GetBalance]", err)
+	if err := Wallet.CallFor(&result, "GetBalance"); err != nil {
+		PrintError("[GetBalance] %s", err)
 		return 0
 	}
 
 	return result.Unlocked_Balance
 }
 
-// Returns wallet balance of token by SCID
-func TokenBalance(scid string) uint64 {
-	client, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
-	defer cancel()
-
-	var result *rpc.GetBalance_Result
+// Returns wallet asset balance of SCID
+func GetAssetBalance(scid string) uint64 {
+	var result rpc.GetBalance_Result
 	params := &rpc.GetBalance_Params{
 		SCID: crypto.HashHexToHash(scid),
 	}
 
-	if err := client.CallFor(ctx, &result, "GetBalance", params); err != nil {
-		logger.Errorln("[TokenBalance]", err)
+	if err := Wallet.CallFor(&result, "GetBalance", params); err != nil {
+		PrintError("[GetAssetBalance] %s", err)
 		return 0
 	}
 
 	return result.Unlocked_Balance
-}
-
-// Get Dero balance and all tokens used on dReams platform
-func GetDreamsBalances(assets map[string]string) {
-	Wallet.MuB.Lock()
-	defer Wallet.MuB.Unlock()
-
-	if Wallet.IsConnected() {
-		bal := GetBalance()
-		Wallet.Balance = bal
-		Wallet.Display.Balance["Dero"] = FromAtomic(bal, 5)
-
-		for name, sc := range assets {
-			token_bal := TokenBalance(sc)
-			Wallet.Display.Balance[name] = FromAtomic(decimal(name, token_bal))
-			Wallet.TokenBal[name] = token_bal
-		}
-
-		return
-	}
-
-	Wallet.Display.Balance["Dero"] = "0"
-	Wallet.Balance = 0
-	for name := range assets {
-		Wallet.Display.Balance[name] = "0"
-		Wallet.TokenBal[name] = 0
-	}
-}
-
-// Return Display.Balance string of name
-func DisplayBalance(name string) string {
-	Wallet.MuB.Lock()
-	defer Wallet.MuB.Unlock()
-
-	return Wallet.Display.Balance[name]
 }
 
 // Return asset transfer for SCID
@@ -291,47 +261,50 @@ func GetAssetSCIDforTransfer(amt uint64, scid string) (transfer rpc.Transfer) {
 	return
 }
 
-// Get display name of asset by SCID
-func GetAssetSCIDName(scid string) string {
-	switch scid {
-	case DreamsSCID:
-		return "dReams"
-	case HgcSCID:
-		return "HGC"
-	case TrvlSCID:
-		return "TRVL"
-	default:
-		return ""
+// Get asset name string by SCID from Wallet.balances
+func GetAssetNameBySCID(scid string) (name string) {
+	Wallet.RLock()
+	defer Wallet.RUnlock()
+
+	for n, b := range Wallet.balances {
+		if scid == b.SCID {
+			return n
+		}
 	}
+
+	return
+}
+
+// Get asset SCID by name from Wallet.balances
+func GetAssetSCIDByName(name string) (scid string) {
+	Wallet.RLock()
+	defer Wallet.RUnlock()
+
+	if Wallet.balances[name] != nil {
+		scid = Wallet.balances[name].SCID
+	}
+
+	return
 }
 
 // Gets Dero wallet height
-//   - tag for log print
-func GetWalletHeight(tag string) {
-	if Wallet.IsConnected() {
-		client, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
-		defer cancel()
+func GetWalletHeight() uint64 {
+	var result rpc.GetHeight_Result
 
-		var result *rpc.GetHeight_Result
-		if err := client.CallFor(ctx, &result, "GetHeight"); err != nil {
-			logger.Errorf("[%s] %s\n", tag, err)
-			return
-		}
-
-		Wallet.Height = int(result.Height)
-		Wallet.Display.Height = fmt.Sprint(result.Height)
+	if err := Wallet.CallFor(&result, "GetHeight"); err != nil {
+		PrintError("[GetWalletHeight] %s", err)
+		return 0
 	}
+
+	return result.Height
 }
 
 // Swap Dero for dReams
 //   - amt of Der to swap for dReams
 func GetdReams(amt uint64) (tx string) {
-	client, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
-	defer cancel()
-
-	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "IssueChips"}
-	args := rpc.Arguments{arg1}
-	txid := rpc.Transfer_Result{}
+	args := rpc.Arguments{
+		rpc.Argument{Name: "entrypoint", DataType: "S", Value: "IssueChips"},
+	}
 
 	t1 := rpc.Transfer{
 		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
@@ -340,6 +313,7 @@ func GetdReams(amt uint64) (tx string) {
 	}
 
 	t := []rpc.Transfer{t1}
+	txid := rpc.Transfer_Result{}
 	fee := GasEstimate(BaccSCID, "[Swap]", args, t, LowLimitFee)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
@@ -349,7 +323,7 @@ func GetdReams(amt uint64) (tx string) {
 		Fees:      fee,
 	}
 
-	if err := client.CallFor(ctx, &txid, "transfer", params); err != nil {
+	if err := Wallet.CallFor(&txid, "transfer", params); err != nil {
 		PrintError("[Swap] DERO-dReams %s", err)
 		return
 	}
@@ -362,12 +336,9 @@ func GetdReams(amt uint64) (tx string) {
 // Swap dReams for Dero
 //   - amt of dReams to swap for Dero
 func TradedReams(amt uint64) (tx string) {
-	client, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
-	defer cancel()
-
-	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "ConvertChips"}
-	args := rpc.Arguments{arg1}
-	txid := rpc.Transfer_Result{}
+	args := rpc.Arguments{
+		rpc.Argument{Name: "entrypoint", DataType: "S", Value: "ConvertChips"},
+	}
 
 	t1 := rpc.Transfer{
 		SCID:        crypto.HashHexToHash(DreamsSCID),
@@ -377,6 +348,7 @@ func TradedReams(amt uint64) (tx string) {
 	}
 
 	t := []rpc.Transfer{t1}
+	txid := rpc.Transfer_Result{}
 	fee := GasEstimate(BaccSCID, "[Swap]", args, t, LowLimitFee)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
@@ -386,7 +358,7 @@ func TradedReams(amt uint64) (tx string) {
 		Fees:      fee,
 	}
 
-	if err := client.CallFor(ctx, &txid, "transfer", params); err != nil {
+	if err := Wallet.CallFor(&txid, "transfer", params); err != nil {
 		PrintError("[Swap] dReams-DERO %s", err)
 		return
 	}
@@ -407,14 +379,11 @@ var HighLimitFee = uint64(10000)
 //   - amt of Dero for rating
 //   - pos defines positive or negative rating
 func RateSCID(scid string, amt, pos uint64) (tx string) {
-	client, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
-	defer cancel()
-
-	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "Rate"}
-	arg2 := rpc.Argument{Name: "scid", DataType: "S", Value: scid}
-	arg3 := rpc.Argument{Name: "pos", DataType: "U", Value: pos}
-	args := rpc.Arguments{arg1, arg2, arg3}
-	txid := rpc.Transfer_Result{}
+	args := rpc.Arguments{
+		rpc.Argument{Name: "entrypoint", DataType: "S", Value: "Rate"},
+		rpc.Argument{Name: "scid", DataType: "S", Value: scid},
+		rpc.Argument{Name: "pos", DataType: "U", Value: pos},
+	}
 
 	t1 := rpc.Transfer{
 		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
@@ -423,6 +392,7 @@ func RateSCID(scid string, amt, pos uint64) (tx string) {
 	}
 
 	t := []rpc.Transfer{t1}
+	txid := rpc.Transfer_Result{}
 	fee := GasEstimate(RatingSCID, "[RateSCID]", args, t, LowLimitFee)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
@@ -432,7 +402,7 @@ func RateSCID(scid string, amt, pos uint64) (tx string) {
 		Fees:      fee,
 	}
 
-	if err := client.CallFor(ctx, &txid, "transfer", params); err != nil {
+	if err := Wallet.CallFor(&txid, "transfer", params); err != nil {
 		PrintError("[RateSCID] %s", err)
 		return
 	}
@@ -445,16 +415,13 @@ func RateSCID(scid string, amt, pos uint64) (tx string) {
 // Set any SC headers on Gnomon SC
 //   - name, desc and icon are header params
 func SetHeaders(name, desc, icon, scid string) {
-	client, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
-	defer cancel()
-
-	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "SetSCIDHeaders"}
-	arg2 := rpc.Argument{Name: "name", DataType: "S", Value: name}
-	arg3 := rpc.Argument{Name: "descr", DataType: "S", Value: desc}
-	arg4 := rpc.Argument{Name: "icon", DataType: "S", Value: icon}
-	arg5 := rpc.Argument{Name: "scid", DataType: "S", Value: scid}
-	args := rpc.Arguments{arg1, arg2, arg3, arg4, arg5}
-	txid := rpc.Transfer_Result{}
+	args := rpc.Arguments{
+		rpc.Argument{Name: "entrypoint", DataType: "S", Value: "SetSCIDHeaders"},
+		rpc.Argument{Name: "name", DataType: "S", Value: name},
+		rpc.Argument{Name: "descr", DataType: "S", Value: desc},
+		rpc.Argument{Name: "icon", DataType: "S", Value: icon},
+		rpc.Argument{Name: "scid", DataType: "S", Value: scid},
+	}
 
 	t1 := rpc.Transfer{
 		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
@@ -463,6 +430,7 @@ func SetHeaders(name, desc, icon, scid string) {
 	}
 
 	t := []rpc.Transfer{t1}
+	txid := rpc.Transfer_Result{}
 	fee := GasEstimate(GnomonSCID, "[SetHeaders]", args, t, HighLimitFee)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
@@ -473,7 +441,7 @@ func SetHeaders(name, desc, icon, scid string) {
 		Fees:      fee,
 	}
 
-	if err := client.CallFor(ctx, &txid, "transfer", params); err != nil {
+	if err := Wallet.CallFor(&txid, "transfer", params); err != nil {
 		PrintError("[SetHeaders] %s", err)
 		return
 	}
@@ -483,12 +451,9 @@ func SetHeaders(name, desc, icon, scid string) {
 
 // Claim transferred NFA token
 func ClaimNFA(scid string) (tx string) {
-	client, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
-	defer cancel()
-
-	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "ClaimOwnership"}
-	args := rpc.Arguments{arg1, arg1}
-	txid := rpc.Transfer_Result{}
+	args := rpc.Arguments{
+		rpc.Argument{Name: "entrypoint", DataType: "S", Value: "ClaimOwnership"},
+	}
 
 	t1 := rpc.Transfer{
 		SCID:        crypto.HashHexToHash(scid),
@@ -498,6 +463,7 @@ func ClaimNFA(scid string) (tx string) {
 	}
 
 	t := []rpc.Transfer{t1}
+	txid := rpc.Transfer_Result{}
 	fee := GasEstimate(scid, "[ClaimNFA]", args, t, LowLimitFee)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
@@ -507,7 +473,7 @@ func ClaimNFA(scid string) (tx string) {
 		Fees:      fee,
 	}
 
-	if err := client.CallFor(ctx, &txid, "transfer", params); err != nil {
+	if err := Wallet.CallFor(&txid, "transfer", params); err != nil {
 		PrintError("[ClaimNFA] %s", err)
 		return
 	}
@@ -520,12 +486,9 @@ func ClaimNFA(scid string) (tx string) {
 // Send bid or buy to NFA SC
 //   - bidor defines bid or buy call
 func BidBuyNFA(scid, bidor string, amt uint64) (tx string) {
-	client, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
-	defer cancel()
-
-	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: bidor}
-	args := rpc.Arguments{arg1}
-	txid := rpc.Transfer_Result{}
+	args := rpc.Arguments{
+		rpc.Argument{Name: "entrypoint", DataType: "S", Value: bidor},
+	}
 
 	t1 := rpc.Transfer{
 		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
@@ -534,6 +497,7 @@ func BidBuyNFA(scid, bidor string, amt uint64) (tx string) {
 	}
 
 	t := []rpc.Transfer{t1}
+	txid := rpc.Transfer_Result{}
 	fee := GasEstimate(scid, "[BidBuyNFA]", args, t, LowLimitFee)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
@@ -543,7 +507,7 @@ func BidBuyNFA(scid, bidor string, amt uint64) (tx string) {
 		Fees:      fee,
 	}
 
-	if err := client.CallFor(ctx, &txid, "transfer", params); err != nil {
+	if err := Wallet.CallFor(&txid, "transfer", params); err != nil {
 		PrintError("[BidBuyNFA] %s", err)
 		return
 	}
@@ -564,17 +528,14 @@ func BidBuyNFA(scid, bidor string, amt uint64) (tx string) {
 //   - amt sets starting price
 //   - perc sets percentage to go to charity on sale
 func SetNFAListing(scid, list, char string, dur, amt, perc uint64) (tx string) {
-	client, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
-	defer cancel()
-
-	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: "Start"}
-	arg2 := rpc.Argument{Name: "listType", DataType: "S", Value: strings.ToLower(list)}
-	arg3 := rpc.Argument{Name: "duration", DataType: "U", Value: dur}
-	arg4 := rpc.Argument{Name: "startPrice", DataType: "U", Value: amt}
-	arg5 := rpc.Argument{Name: "charityDonateAddr", DataType: "S", Value: char}
-	arg6 := rpc.Argument{Name: "charityDonatePerc", DataType: "U", Value: perc}
-	args := rpc.Arguments{arg1, arg2, arg3, arg4, arg5, arg6}
-	txid := rpc.Transfer_Result{}
+	args := rpc.Arguments{
+		rpc.Argument{Name: "entrypoint", DataType: "S", Value: "Start"},
+		rpc.Argument{Name: "listType", DataType: "S", Value: strings.ToLower(list)},
+		rpc.Argument{Name: "duration", DataType: "U", Value: dur},
+		rpc.Argument{Name: "startPrice", DataType: "U", Value: amt},
+		rpc.Argument{Name: "charityDonateAddr", DataType: "S", Value: char},
+		rpc.Argument{Name: "charityDonatePerc", DataType: "U", Value: perc},
+	}
 
 	split_fee := ListingFee / 2
 
@@ -600,6 +561,7 @@ func SetNFAListing(scid, list, char string, dur, amt, perc uint64) (tx string) {
 	}
 
 	t := []rpc.Transfer{t1, t2, t3}
+	txid := rpc.Transfer_Result{}
 	fee := GasEstimate(scid, "[SetNFAListing]", args, t, LowLimitFee)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
@@ -609,7 +571,7 @@ func SetNFAListing(scid, list, char string, dur, amt, perc uint64) (tx string) {
 		Fees:      fee,
 	}
 
-	if err := client.CallFor(ctx, &txid, "transfer", params); err != nil {
+	if err := Wallet.CallFor(&txid, "transfer", params); err != nil {
 		PrintError("[SetNFAListing] %s", err)
 		return
 	}
@@ -622,17 +584,14 @@ func SetNFAListing(scid, list, char string, dur, amt, perc uint64) (tx string) {
 // Cancel or close a listed NFA. Can only be canceled within opening buffer period. Can only close listing after expiry
 //   - close true to close a listing and false to cancel
 func CancelCloseNFA(scid string, close bool) (tx string) {
-	client, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
-	defer cancel()
-
 	call := "CancelListing"
 	if close {
 		call = "CloseListing"
 	}
 
-	arg1 := rpc.Argument{Name: "entrypoint", DataType: "S", Value: call}
-	args := rpc.Arguments{arg1}
-	txid := rpc.Transfer_Result{}
+	args := rpc.Arguments{
+		rpc.Argument{Name: "entrypoint", DataType: "S", Value: call},
+	}
 
 	t1 := rpc.Transfer{
 		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
@@ -644,10 +603,11 @@ func CancelCloseNFA(scid string, close bool) (tx string) {
 		t1.Payload_RPC = rpc.Arguments{
 			{Name: rpc.RPC_DESTINATION_PORT, DataType: rpc.DataUint64, Value: uint64(0xA1B2C3D4E5F67890)},
 			{Name: rpc.RPC_SOURCE_PORT, DataType: rpc.DataUint64, Value: uint64(0)},
-			{Name: rpc.RPC_COMMENT, DataType: rpc.DataString, Value: fmt.Sprintf("Winning bid on  %s  at height %d", scid, Wallet.Height)}}
+			{Name: rpc.RPC_COMMENT, DataType: rpc.DataString, Value: fmt.Sprintf("Winning bid on  %s  at height %d", scid, Wallet.Height())}}
 	}
 
 	t := []rpc.Transfer{t1}
+	txid := rpc.Transfer_Result{}
 	fee := GasEstimate(scid, "[CancelCloseNFA]", args, t, LowLimitFee)
 	params := &rpc.Transfer_Params{
 		Transfers: t,
@@ -657,7 +617,7 @@ func CancelCloseNFA(scid string, close bool) (tx string) {
 		Fees:      fee,
 	}
 
-	if err := client.CallFor(ctx, &txid, "transfer", params); err != nil {
+	if err := Wallet.CallFor(&txid, "transfer", params); err != nil {
 		PrintError("[CancelCloseNFA] %s", err)
 		return
 	}
@@ -673,15 +633,12 @@ func CancelCloseNFA(scid string, close bool) (tx string) {
 
 // Upload a new NFA SC by string
 func UploadNFAContract(code string) (tx string) {
-	client, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
-	defer cancel()
-
-	txid := rpc.Transfer_Result{}
 	t1 := rpc.Transfer{
 		Destination: "dero1qyr8yjnu6cl2c5yqkls0hmxe6rry77kn24nmc5fje6hm9jltyvdd5qq4hn5pn",
 		Amount:      MintingFee,
 	}
 
+	txid := rpc.Transfer_Result{}
 	params := &rpc.Transfer_Params{
 		Transfers: []rpc.Transfer{t1},
 		SC_Code:   code,
@@ -690,7 +647,7 @@ func UploadNFAContract(code string) (tx string) {
 		Ringsize:  2,
 	}
 
-	if err := client.CallFor(ctx, &txid, "transfer", params); err != nil {
+	if err := Wallet.CallFor(&txid, "transfer", params); err != nil {
 		PrintError("[UploadNFAContract] %s", err)
 		return
 	}
@@ -702,9 +659,6 @@ func UploadNFAContract(code string) (tx string) {
 
 // Send Dero asset to destination address and sends asset SCID as message to destination as payload for claiming
 func SendAsset(scid, dest string) (tx string) {
-	client, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
-	defer cancel()
-
 	t1 := rpc.Transfer{
 		SCID:        crypto.HashHexToHash(scid),
 		Destination: dest,
@@ -716,7 +670,7 @@ func SendAsset(scid, dest string) (tx string) {
 	response := rpc.Arguments{
 		{Name: rpc.RPC_DESTINATION_PORT, DataType: rpc.DataUint64, Value: uint64(0xA1B2C3D4E5F67890)},
 		{Name: rpc.RPC_SOURCE_PORT, DataType: rpc.DataUint64, Value: uint64(0)},
-		{Name: rpc.RPC_COMMENT, DataType: rpc.DataString, Value: fmt.Sprintf("Sent you asset  %s  at height %d", scid, Wallet.Height)},
+		{Name: rpc.RPC_COMMENT, DataType: rpc.DataString, Value: fmt.Sprintf("Sent you asset  %s  at height %d", scid, Wallet.Height())},
 	}
 
 	t2 := rpc.Transfer{
@@ -725,17 +679,16 @@ func SendAsset(scid, dest string) (tx string) {
 		Burn:        0,
 		Payload_RPC: response,
 	}
+
 	t = append(t, t2)
-
 	txid := rpc.Transfer_Result{}
-
 	params := &rpc.Transfer_Params{
 		Transfers: t,
 		SC_RPC:    rpc.Arguments{},
 		Ringsize:  16,
 	}
 
-	if err := client.CallFor(ctx, &txid, "transfer", params); err != nil {
+	if err := Wallet.CallFor(&txid, "transfer", params); err != nil {
 		PrintError("[SendAsset] %s", err)
 		return
 	}
@@ -804,7 +757,7 @@ func ConfirmTx(txid, tag string, timeout int) bool {
 //   - timeout is duration of loop in 2sec increment, will break if reached
 func ConfirmTxRetry(txid, tag string, timeout int) (retry int) {
 	count := 0
-	next_block := Wallet.Height + 1
+	next_block := Wallet.Height() + 1
 	time.Sleep(time.Second)
 	for IsReady() {
 		count++
@@ -813,7 +766,7 @@ func ConfirmTxRetry(txid, tag string, timeout int) (retry int) {
 			if count > timeout {
 				logger.Warnf("[%s] TX: {%s} not confirmed, Retrying next block\n", tag, txid)
 				time.Sleep(3 * time.Second)
-				for Wallet.Height <= next_block {
+				for Wallet.Height() <= next_block {
 					time.Sleep(3 * time.Second)
 				}
 				return 1
@@ -835,21 +788,27 @@ func ConfirmTxRetry(txid, tag string, timeout int) (retry int) {
 
 // Send a message to destination address through Dero transaction, with ringsize selection
 func SendMessage(dest, msg string, rings uint64) {
-	client, ctx, cancel := SetWalletClient(Wallet.Rpc, Wallet.UserPass)
-	defer cancel()
-
 	response := rpc.Arguments{
-		{Name: rpc.RPC_DESTINATION_PORT, DataType: rpc.DataUint64, Value: 1337},
+		{Name: rpc.RPC_DESTINATION_PORT, DataType: rpc.DataUint64, Value: uint64(1337)},
 		{Name: rpc.RPC_SOURCE_PORT, DataType: rpc.DataUint64, Value: uint64(0)},
 		{Name: rpc.RPC_COMMENT, DataType: rpc.DataString, Value: msg},
 	}
 
 	t1 := rpc.Transfer{
 		Destination: dest,
-		Amount:      1,
+		Amount:      0,
 		Burn:        0,
 		Payload_RPC: response,
 	}
+
+	fee := (rings + 1) * config.FEE_PER_KB / 4
+	if fee > LowLimitFee {
+		fee = LowLimitFee
+	} else {
+		fee = fee + 20
+	}
+
+	logger.Println("[SendMessage] Gas Fee:", fee+20)
 
 	t := []rpc.Transfer{t1}
 	txid := rpc.Transfer_Result{}
@@ -857,22 +816,13 @@ func SendMessage(dest, msg string, rings uint64) {
 		Transfers: t,
 		SC_RPC:    rpc.Arguments{},
 		Ringsize:  rings,
+		Fees:      fee,
 	}
 
-	if err := client.CallFor(ctx, &txid, "transfer", params); err != nil {
+	if err := Wallet.CallFor(&txid, "transfer", params); err != nil {
 		PrintError("[SendMessage] %s", err)
 		return
 	}
 
 	PrintLog("[SendMessage] Send Message TX: %s", txid)
-}
-
-// TODO should put decimal in Wallet.Display
-
-func decimal(name string, bal uint64) (uint64, int) {
-	if name == "TRVL" {
-		return bal * 100000, 0
-	}
-
-	return bal, 5
 }

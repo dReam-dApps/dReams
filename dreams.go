@@ -1,53 +1,51 @@
 package dreams
 
 import (
+	"archive/zip"
 	"bytes"
 	"errors"
 	"fmt"
+	"image"
 	"image/color"
 	"io"
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"runtime"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/civilware/Gnomon/structures"
 	"github.com/dReam-dApps/dReams/rpc"
+	"github.com/deroproject/derohe/globals"
+	"github.com/deroproject/derohe/walletapi/xswd"
 	"github.com/sirupsen/logrus"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/canvas"
+	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 )
 
-// ContainerStack used for building various
-// container/label layouts to be placed in main app
-type ContainerStack struct {
-	LeftLabel  *widget.Label
-	RightLabel *widget.Label
-	TopLabel   *canvas.Text
-
-	Back    fyne.Container
-	Front   fyne.Container
-	Actions fyne.Container
-	DApp    *fyne.Container
-}
+const (
+	MIN_WIDTH  = 1400
+	MIN_HEIGHT = 800
+)
 
 // Saved data for users local config.json file
 type SaveData struct {
-	Skin    color.Gray16 `json:"skin"`
-	Daemon  []string     `json:"daemon"`
-	Tables  []string     `json:"tables"`
-	Predict []string     `json:"predict"`
-	Sports  []string     `json:"sports"`
-	Theme   string       `json:"theme"`
-	DBtype  string       `json:"dbType"`
-	Para    int          `json:"paraBlocks"`
-	FSForce bool         `json:"fastsyncForce"`
-	FSDiff  int64        `json:"fastsyncDiff"`
+	Skin   color.Gray16 `json:"skin"`
+	Daemon []string     `json:"daemon"`
+	Theme  string       `json:"theme"`
+
+	DBtype  string `json:"dbType"`
+	Para    int    `json:"paraBlocks"`
+	FSForce bool   `json:"fastsyncForce"`
+	FSDiff  int64  `json:"fastsyncDiff"`
 
 	Assets map[string]bool `json:"assets"`
 	Dapps  map[string]bool `json:"dapps"`
@@ -58,6 +56,7 @@ type AppObject struct {
 	App        fyne.App
 	Window     fyne.Window
 	Background *fyne.Container
+	XSWD       *xswd.ApplicationData
 	os         string
 	configure  bool
 	tab        string
@@ -66,6 +65,10 @@ type AppObject struct {
 	done       chan struct{}
 	receive    chan struct{}
 	channels   int
+	account    struct {
+		handlers map[string]func(interface{}) error
+		sync.RWMutex
+	}
 }
 
 // Select widget items for Dero assets
@@ -87,6 +90,9 @@ var counter count
 var mu sync.RWMutex
 var ms = 100 * time.Millisecond
 var logger = structures.Logger.WithFields(logrus.Fields{})
+
+// Background theme AssetSelect
+var Theme AssetSelect
 
 // Add to active channel count
 func (c *count) plus() {
@@ -110,6 +116,45 @@ func (c *count) active() int {
 	return c.i
 }
 
+// Creates a Fyne app returned as AppObject. Window default size is MIN_WIDTH x MIN_HEIGHT, centered and set as master.
+//   - id, name, description strings for App
+//   - fyne.Theme and fyne.Resources for icon and background theme images
+//   - permissions true will request AlwaysAllow  XSWD permissions upon connection for the methods used in rpc package
+func NewFyneApp(id, name, description string, skin fyne.Theme, icon, theme fyne.Resource, permissions bool) AppObject {
+	a := app.NewWithID(id)
+	a.Settings().SetTheme(skin)
+
+	app.SetMetadata(fyne.AppMetadata{
+		ID:   id,
+		Name: name,
+		Icon: icon,
+	})
+
+	w := a.NewWindow(name)
+	w.Resize(fyne.NewSize(MIN_WIDTH, MIN_HEIGHT))
+	w.SetIcon(icon)
+	w.CenterOnScreen()
+	w.SetMaster()
+
+	Theme.Img = *canvas.NewImageFromResource(theme)
+
+	if description == "" {
+		description = id
+	}
+
+	return AppObject{
+		App:        a,
+		Window:     w,
+		Background: container.NewStack(&Theme.Img),
+		XSWD:       rpc.NewXSWDApplicationData(name, description, id, permissions),
+	}
+}
+
+// Default balance label with dReams, DERO and wallet height
+func SetBalanceLabelText() string {
+	return fmt.Sprintf("dReams Balance: %s      DERO Balance: %s      Height: %d", rpc.Wallet.BalanceF("dReams"), rpc.Wallet.BalanceF("DERO"), rpc.Wallet.Height())
+}
+
 // Set what OS is being used
 func (d *AppObject) SetOS() {
 	d.os = runtime.GOOS
@@ -118,6 +163,11 @@ func (d *AppObject) SetOS() {
 // Check what OS is set
 func (d *AppObject) OS() string {
 	return d.os
+}
+
+// Returns App name
+func (d *AppObject) Name() string {
+	return d.App.Metadata().Name
 }
 
 // Set main configure bool
@@ -243,6 +293,32 @@ func (d *AppObject) IsWindows() bool {
 	return d.os == "windows"
 }
 
+// Get the max size for a object while maintaining aspect ratio
+func (d *AppObject) GetMaxSize(w, h float32) fyne.Size {
+	wRatio := d.Window.Canvas().Size().Width / MIN_WIDTH
+	hRatio := d.Window.Canvas().Size().Height / MIN_HEIGHT
+
+	return fyne.NewSize(w*wRatio, h*hRatio)
+}
+
+// Add dApp account handler to AppObject
+func (d *AppObject) AddAccountHandlers(handlers map[string]func(interface{}) error) {
+	d.account.Lock()
+	if d.account.handlers == nil {
+		d.account.handlers = make(map[string]func(interface{}) error)
+	}
+	d.account.handlers = handlers
+	d.account.Unlock()
+}
+
+// Get the current account handlers from AppObject
+func (d *AppObject) GetAccountHandlers() map[string]func(interface{}) error {
+	d.account.RLock()
+	defer d.account.RUnlock()
+
+	return d.account.handlers
+}
+
 // Get current working directory path for prefix
 func GetDir() (dir string) {
 	dir, err := os.Getwd()
@@ -260,7 +336,7 @@ func FileExists(path, tag string) bool {
 		return true
 
 	} else if errors.Is(err, os.ErrNotExist) {
-		logger.Errorf("[%s] %s Not Found\n", tag, path)
+		logger.Warnf("[%s] %s not found\n", tag, path)
 
 		return false
 	}
@@ -268,7 +344,29 @@ func FileExists(path, tag string) bool {
 	return false
 }
 
-// Download image file from URL and return as canvas.Image
+// Get dero .db file names from wallet directory
+func GetDeroAccounts() (prefix string, names []string) {
+	prefix = "mainnet"
+	if !globals.IsMainnet() {
+		prefix = "testnet"
+	}
+
+	path := filepath.Join(GetDir(), prefix) + string(filepath.Separator)
+
+	files, err := filepath.Glob(path + "*.db")
+	if err != nil {
+		logger.Errorln("[dReams]", err)
+		return
+	}
+
+	for _, f := range files {
+		names = append(names, strings.TrimPrefix(f, path))
+	}
+
+	return
+}
+
+// Download image from URL and return as canvas.Image
 func DownloadCanvas(URL, fileName string) (canvas.Image, error) {
 	url, err := url.Parse(URL)
 	if err != nil {
@@ -299,7 +397,7 @@ func DownloadCanvas(URL, fileName string) (canvas.Image, error) {
 	return *canvas.NewImageFromReader(&buf, fileName), nil
 }
 
-// Download url image file from URL and return as []byte
+// Download image from URL and return as []byte
 func DownloadBytes(URL string) ([]byte, error) {
 	url, err := url.Parse(URL)
 	if err != nil {
@@ -327,6 +425,105 @@ func DownloadBytes(URL string) ([]byte, error) {
 	}
 
 	return image, nil
+}
+
+// Get image size from []byte using image.DecodeConfig
+func GetImageSizeFromMemory(data []byte) (w float32, h float32, content string, err error) {
+	content = http.DetectContentType(data)
+
+	reader := bytes.NewReader(data)
+	config, _, err := image.DecodeConfig(reader)
+	if err != nil {
+		return 0, 0, content, err
+	}
+
+	return float32(config.Width), float32(config.Height), content, nil
+}
+
+// Download image from URL and save as file
+func DownloadFile(URL, outPath string) error {
+	url, err := url.Parse(URL)
+	if err != nil {
+		return err
+	}
+
+	out, err := os.Create(outPath)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	client := http.Client{Timeout: 30 * time.Second}
+	response, err := client.Get(url.String())
+	if err != nil {
+		return err
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode != http.StatusOK {
+		return fmt.Errorf("failed to download the image: status code %d", response.StatusCode)
+	}
+
+	_, err = io.Copy(out, response.Body)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Unzip a src file into destination
+func UnzipFile(src string, destination string) ([]string, error) {
+	var filenames []string
+
+	r, err := zip.OpenReader(src)
+	if err != nil {
+		return filenames, err
+	}
+
+	defer func() {
+		r.Close()
+		os.Remove(src)
+	}()
+
+	for _, f := range r.File {
+		fpath := filepath.Join(destination, f.Name)
+
+		if !strings.HasPrefix(fpath, filepath.Clean(destination)+string(os.PathSeparator)) {
+			return filenames, fmt.Errorf("%s is an illegal filepath", fpath)
+		}
+
+		filenames = append(filenames, fpath)
+
+		if f.FileInfo().IsDir() {
+			os.MkdirAll(fpath, os.ModePerm)
+			continue
+		}
+
+		if err = os.MkdirAll(filepath.Dir(fpath), os.ModePerm); err != nil {
+			return filenames, err
+		}
+
+		out, err := os.OpenFile(fpath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
+		if err != nil {
+			return filenames, err
+		}
+
+		rc, err := f.Open()
+		if err != nil {
+			return filenames, err
+		}
+
+		_, err = io.Copy(out, rc)
+		out.Close()
+		rc.Close()
+		if err != nil {
+			return filenames, err
+		}
+
+	}
+
+	return filenames, nil
 }
 
 // Returns Fyne theme icon for name
@@ -372,12 +569,4 @@ func (a *AssetSelect) RemoveAsset(rm string) {
 	}
 
 	a.Select.Refresh()
-}
-
-// Get the max size for a object while maintaining aspect ratio
-func (d *AppObject) GetMaxSize(w, h float32) fyne.Size {
-	wRatio := d.Window.Canvas().Size().Width / 1400
-	hRatio := d.Window.Canvas().Size().Height / 800
-
-	return fyne.NewSize(w*wRatio, h*hRatio)
 }

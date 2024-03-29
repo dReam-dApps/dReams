@@ -15,6 +15,7 @@ import (
 	"github.com/SixofClubsss/Iluma/tarot"
 	"github.com/SixofClubsss/dDice/dice"
 	"github.com/SixofClubsss/dPrediction/prediction"
+	dreams "github.com/dReam-dApps/dReams"
 	"github.com/dReam-dApps/dReams/bundle"
 	"github.com/dReam-dApps/dReams/dwidget"
 	"github.com/dReam-dApps/dReams/gnomes"
@@ -31,7 +32,7 @@ import (
 	xwidget "fyne.io/x/fyne/widget"
 )
 
-var indicators []menu.DreamsIndicator
+var indicators []*menu.DreamsIndicator
 
 // Boot splash screen
 func splashScreen() fyne.CanvasObject {
@@ -183,7 +184,7 @@ func introScreen() *fyne.Container {
 			dReams.App.Settings().SetTheme(bundle.DeroTheme(bundle.AppColor))
 			dReams.Window.SetContent(container.NewStack(dReams.Background, place()))
 			if !dReams.Window.FullScreen() {
-				dReams.Window.Resize(fyne.NewSize(MIN_WIDTH, MIN_HEIGHT))
+				dReams.Window.Resize(fyne.NewSize(dreams.MIN_WIDTH, dreams.MIN_HEIGHT))
 			}
 			wait = false
 		}()
@@ -274,8 +275,7 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 		}
 
 		wait = true
-		rpc.Wallet.Connected(false)
-		rpc.Wallet.Height = 0
+		rpc.Wallet.CloseConnections("dReams")
 
 		status_text := dwidget.NewCanvasText("Closing dApps...", 21, fyne.TextAlignCenter)
 		status_text.Color = color.White
@@ -306,7 +306,7 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 			dReams.App.Settings().SetTheme(bundle.DeroTheme(bundle.AppColor))
 			dReams.Window.Content().(*fyne.Container).Objects[1] = place()
 			if !dReams.Window.FullScreen() {
-				dReams.Window.Resize(fyne.NewSize(MIN_WIDTH, MIN_HEIGHT))
+				dReams.Window.Resize(fyne.NewSize(dreams.MIN_WIDTH, dreams.MIN_HEIGHT))
 			}
 			wait = false
 		}()
@@ -474,9 +474,9 @@ func profile() fyne.CanvasObject {
 	form = append(form, widget.NewFormItem("", container.NewVBox(line)))
 	form = append(form, widget.NewFormItem("Avatar", holdero.AvatarSelect(menu.Assets.SCIDs)))
 	form = append(form, widget.NewFormItem("Theme", menu.ThemeSelect(&dReams)))
-	form = append(form, widget.NewFormItem("Card Deck", holdero.FaceSelect(menu.Assets.SCIDs)))
+	form = append(form, widget.NewFormItem("Card Deck", holdero.FaceSelect(menu.Assets.SCIDs, &dReams)))
 	form = append(form, widget.NewFormItem("Card Back", holdero.BackSelect(menu.Assets.SCIDs)))
-	form = append(form, widget.NewFormItem("Sharing", holdero.SharedDecks(&dReams)))
+	form = append(form, widget.NewFormItem("Dice", dice.DiceSelect(menu.Assets.SCIDs)))
 	form = append(form, widget.NewFormItem("", container.NewVBox(line)))
 
 	spacer := canvas.NewRectangle(color.Transparent)
@@ -485,6 +485,8 @@ func profile() fyne.CanvasObject {
 	return container.NewCenter(container.NewBorder(spacer, nil, nil, nil, widget.NewForm(form...)))
 }
 
+// TODO move these
+var connect_select *container.AppTabs
 var menu_tabs *container.AppTabs
 var asset_tab *fyne.Container
 
@@ -501,6 +503,8 @@ func place() *fyne.Container {
 	intros = append(intros, menu.MakeMenuIntro(duel.DreamsMenuIntro())...)
 	intros = append(intros, menu.MakeMenuIntro(grok.DreamsMenuIntro())...)
 	intros = append(intros, menu.MakeMenuIntro(dice.DreamsMenuIntro())...)
+
+	indicators = []*menu.DreamsIndicator{}
 
 	// dReams menu tabs
 	asset_tab = menu.PlaceAssets("dReams", profile(), rescan, bundle.ResourceDReamsIconAltPng, &dReams)
@@ -532,7 +536,10 @@ func place() *fyne.Container {
 		case "dApps":
 			if gnomon.IsScanning() {
 				menu_tabs.SelectIndex(0)
-				dialog.NewInformation("Gnomon Syncing", "Please wait to make dApp changes", dReams.Window).Show()
+				dialog.NewInformation("Gnomon Syncing", "Wait to make dApp changes", dReams.Window).Show()
+			} else if rpc.Wallet.WS.IsConnecting() {
+				menu_tabs.SelectIndex(0)
+				dialog.NewInformation("XSWD Request", "Close connection requests to make dApp changes", dReams.Window).Show()
 			} else {
 				go func() {
 					reset := dReams.Window.Content().(*fyne.Container).Objects[1]
@@ -564,42 +571,42 @@ func place() *fyne.Container {
 	tabs := container.NewAppTabs(container.NewTabItem("Menu", menu_tabs))
 
 	if menu.DappEnabled("Holdero") {
-		tabs.Append(container.NewTabItem("Holdero", holdero.LayoutAllItems(&dReams)))
+		tabs.Append(container.NewTabItem("Holdero", holdero.LayoutAll(&dReams)))
 		indicators = append(indicators, holdero.HolderoIndicator())
 	}
 
 	if menu.DappEnabled("Baccarat") {
-		tabs.Append(container.NewTabItem("Baccarat", baccarat.LayoutAllItems(&dReams)))
+		tabs.Append(container.NewTabItem("Baccarat", baccarat.LayoutAll(&dReams)))
 	}
 
 	if menu.DappEnabled("dSports and dPredictions") {
-		tabs.Append(container.NewTabItem("Predict", prediction.LayoutPredictItems(&dReams)))
-		tabs.Append(container.NewTabItem("Sports", prediction.LayoutSportsItems(&dReams)))
+		tabs.Append(container.NewTabItem("Predict", prediction.LayoutPredictions(&dReams)))
+		tabs.Append(container.NewTabItem("Sports", prediction.LayoutSports(&dReams)))
 		indicators = append(indicators, prediction.ServiceIndicator())
 	}
 
 	if menu.DappEnabled("Iluma") {
-		tabs.Append(container.NewTabItem("Iluma", tarot.LayoutAllItems(&dReams)))
+		tabs.Append(container.NewTabItem("Iluma", tarot.LayoutAll(&dReams)))
 	}
 
 	// // Under development
 	// if menu.DappEnabled("DerBnb") {
-	// 	tabs.Append(container.NewTabItem("DerBnb", derbnb.LayoutAllItems(true, &dReams)))
+	// 	tabs.Append(container.NewTabItem("DerBnb", derbnb.LayoutAll(true, &dReams)))
 	// }
 
 	if menu.DappEnabled("Duels") {
-		tabs.Append(container.NewTabItem("Duels", duel.LayoutAllItems(menu.Assets.SCIDs, &dReams)))
+		tabs.Append(container.NewTabItem("Duels", duel.LayoutAll(menu.Assets.SCIDs, &dReams)))
 	}
 
 	if menu.DappEnabled("Grokked") {
-		tabs.Append(container.NewTabItem("Grokked", grok.LayoutAllItems(&dReams)))
+		tabs.Append(container.NewTabItem("Grokked", grok.LayoutAll(&dReams)))
 	}
 
 	if menu.DappEnabled("Dice") {
 		tabs.Append(container.NewTabItem("Dice", dice.LayoutAll(&dReams)))
 	}
 
-	tabs.Append(container.NewTabItem("Log", rpc.SessionLog(App_Name, rpc.Version())))
+	tabs.Append(container.NewTabItem("Log", rpc.SessionLog(dReams.Name(), rpc.Version())))
 
 	var fs_button *widget.Button
 	fs_button = widget.NewButtonWithIcon("", fyne.Theme.Icon(fyne.CurrentApp().Settings().Theme(), "viewFullScreen"), func() {
@@ -618,7 +625,7 @@ func place() *fyne.Container {
 	if dReams.OS() != "darwin" {
 		alpha_box.Objects = append(alpha_box.Objects, container.NewHBox(layout.NewSpacer(), layout.NewSpacer(), layout.NewSpacer(), container.NewVBox(fs_button), layout.NewSpacer()))
 	}
-	alpha_box.Objects = append(alpha_box.Objects, menu.StartDreamsIndicators(indicators))
+	alpha_box.Objects = append(alpha_box.Objects, menu.StartIndicators(indicators))
 
 	tabs.OnSelected = func(ti *container.TabItem) {
 		dReams.SetTab(ti.Text)
@@ -649,21 +656,38 @@ func place() *fyne.Container {
 
 // dReams wallet layout
 func placeWall(intros []menu.IntroText) *container.Split {
-	daemon_cont := container.NewHScroll(daemonRpcEntry())
-	daemon_cont.SetMinSize(fyne.NewSize(300, 35.1875))
+	daemon_entry := daemonRPCEntry()
 
-	user_input_cont := container.NewVBox(
-		daemon_cont,
-		walletRpcEntry(),
-		container.NewBorder(nil, nil, nil, rpcConnectButton(), userPassEntry()),
-		layout.NewSpacer(),
-		menu.InfoDisplay())
+	layoutRPC := container.NewVBox(layout.NewSpacer(), rpcConnection())
+	layoutXSWD := container.NewVBox(layout.NewSpacer(), xswdConnection())
+	layoutFile := container.NewVBox(layout.NewSpacer(), accountConnection())
+
+	connect_select = container.NewAppTabs(
+		container.NewTabItem("RPC", layoutRPC),
+		container.NewTabItem("XSWD", layoutXSWD),
+		container.NewTabItem("DERO", layoutFile))
+
+	connect_select.SetTabLocation(container.TabLocationLeading)
+	connect_select.OnSelected = func(ti *container.TabItem) {
+		switch ti.Text {
+		case "DERO":
+			_, names := dreams.GetDeroAccounts()
+			layoutFile.Objects[1].(*fyne.Container).Objects[1].(*widget.SelectEntry).SetOptions(names)
+		}
+	}
 
 	daemon_check_cont := container.NewVBox(daemonConnectedBox())
 
-	user_input_box := container.NewHBox(user_input_cont, daemon_check_cont)
+	connect_tab := container.NewCenter(
+		container.NewVBox(
+			container.NewStack(
+				dwidget.NewSpacer(0, 120),
+				container.NewVBox(container.NewBorder(nil, nil, dwidget.NewSpacer(53, 0), nil, daemon_entry)),
+				connect_select),
+			menu.InfoDisplay()))
+
 	connect_tabs := container.NewAppTabs(
-		container.NewTabItem("Connect", container.NewCenter(user_input_box)),
+		container.NewTabItem("Connect", connect_tab),
 		container.NewTabItem("Gnomon", container.NewCenter(gnomon.ControlPanel(dReams.Window))))
 
 	connect_tabs.OnSelected = func(ti *container.TabItem) {
@@ -680,7 +704,7 @@ func placeWall(intros []menu.IntroText) *container.Split {
 				} else if gnomon.IsInitialized() {
 					dialog.NewConfirm("Gnomon Running", "Shut down Gnomon to make changes", func(b bool) {
 						if b {
-							daemon_cont.Content.(*widget.SelectEntry).SetText("")
+							daemon_entry.(*widget.SelectEntry).SetText("")
 							daemon_check_cont.Objects[0].(*widget.Check).SetChecked(false)
 						} else {
 							connect_tabs.SelectIndex(0)
@@ -691,7 +715,7 @@ func placeWall(intros []menu.IntroText) *container.Split {
 		}
 	}
 
-	menu_top := container.NewHSplit(container.NewStack(bundle.Alpha120, menu.IntroTree(intros)), connect_tabs)
+	menu_top := container.NewHSplit(menu.IntroTree(intros), connect_tabs)
 	menu_top.SetOffset(0.66)
 
 	menu_bottom := container.NewAdaptiveGrid(1, holdero.PlaceSwap(&dReams))

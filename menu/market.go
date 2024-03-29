@@ -30,7 +30,7 @@ import (
 type marketObjects struct {
 	sync.RWMutex
 	Tab          string
-	Entry        *dwidget.DeroAmts
+	Entry        *dwidget.AmountEntry
 	Loading      *widget.ProgressBarInfinite
 	Icon         *canvas.Image
 	Cover        *canvas.Image
@@ -56,6 +56,8 @@ type marketObjects struct {
 		Artificer   *widget.Entry
 		Royalty     *widget.Entry
 		Ends        *widget.Entry
+		SCID        *widget.Entry
+		Link        *widget.Button
 		Bid         struct {
 			Count   *widget.Entry
 			Current *widget.Entry
@@ -71,6 +73,7 @@ type marketObjects struct {
 	Viewing struct {
 		Asset      string
 		Collection string
+		URL        string
 	}
 	List struct {
 		Auction *widget.List
@@ -212,6 +215,7 @@ func ConfirmCancelClose(scid string, close bool, d *dreams.AppObject) {
 				tx := rpc.CancelCloseNFA(scid, false)
 				go ShowTxDialog("NFA Cancel", "CancelCloseNFA", tx, 3*time.Second, d.Window)
 			}
+			Market.Viewing.URL = ""
 			Market.Viewing.Asset = ""
 			Market.Viewing.Collection = ""
 			Market.Button.Cancel.Hide()
@@ -304,7 +308,7 @@ func GetNFAImages(scid string) {
 		icon, _ := gnomon.GetSCIDValuesByKey(scid, "iconURLHdr")
 		cover, _ := gnomon.GetSCIDValuesByKey(scid, "coverURL")
 		collection, _ := gnomon.GetSCIDValuesByKey(scid, "collection")
-		if icon != nil && collection != nil {
+		if icon != nil && collection != nil && name != nil {
 			have, err := gnomes.StorageExists(collection[0], name[0])
 			if err != nil {
 				have = false
@@ -344,7 +348,11 @@ func GetNFAImages(scid string) {
 		}
 
 		if cover != nil {
-			img, _ := dreams.DownloadCanvas(cover[0], name[0]+"-cover")
+			img, err := dreams.DownloadCanvas(cover[0], name[0]+"-cover")
+			if err != nil {
+				logger.Errorln("[GetNFAImages]", err)
+			}
+
 			if img.Resource != nil {
 				Market.Cover = &img
 				Market.Details.Objects[1].(*fyne.Container).Objects[0] = NFACoverImg()
@@ -415,7 +423,7 @@ func clearNFAImages() {
 }
 
 // Initialize market display objects
-func NFAMarketInfo() fyne.Container {
+func NFAMarketInfo(d *dreams.AppObject) fyne.Container {
 	Market.Display.Name = widget.NewEntry()
 	Market.Display.Type = widget.NewEntry()
 	Market.Display.Collection = widget.NewEntry()
@@ -431,6 +439,53 @@ func NFAMarketInfo() fyne.Container {
 	Market.Display.Bid.Count = widget.NewEntry()
 	Market.Display.Bid.Address = widget.NewEntry()
 	Market.Display.Ends = widget.NewEntry()
+	Market.Display.SCID = widget.NewEntry()
+
+	Market.Display.Link = widget.NewButton("View", nil)
+	Market.Display.Link.Importance = widget.LowImportance
+	Market.Display.Link.OnTapped = func() {
+		splash := dialog.NewCustom(Market.Display.Name.Text, "", container.NewStack(widget.NewProgressBarInfinite(), dwidget.NewCanvasText("Loading image file...", 18, fyne.TextAlignCenter)), d.Window)
+		splash.Resize(d.GetMaxSize(300, 150))
+		splash.SetButtons([]fyne.CanvasObject{})
+		splash.Show()
+
+		if Market.Viewing.URL != "" {
+			data, err := dreams.DownloadBytes(Market.Viewing.URL)
+			if err != nil {
+				splash.Hide()
+				splash = nil
+
+				dialog.NewError(fmt.Errorf("could not download asset file"), d.Window).Show()
+				logger.Errorln("[View Asset] download", err)
+			} else {
+				w, h, _, err := dreams.GetImageSizeFromMemory(data)
+				if err != nil {
+					splash.Hide()
+					splash = nil
+
+					dialog.NewError(fmt.Errorf("view asset %s", err), d.Window).Show()
+					logger.Errorln("[View Asset] size", err)
+				} else {
+					img := canvas.NewImageFromReader(bytes.NewReader(data), "")
+					img.SetMinSize(d.GetMaxSize(w, h))
+					img.FillMode = canvas.ImageFillOriginal
+
+					splash.Hide()
+					splash = nil
+
+					dialog.NewCustom(Market.Display.Name.Text, "Ok", container.NewStack(img), d.Window).Show()
+				}
+			}
+		} else {
+			splash.Hide()
+			splash = nil
+			if rpc.IsReady() {
+				dialog.NewInformation("View", "Select asset to view", d.Window).Show()
+			} else {
+				dialog.NewInformation("View", "Connect to daemon and wallet to view asset", d.Window).Show()
+			}
+		}
+	}
 
 	Market.Display.Name.Disable()
 	Market.Display.Type.Disable()
@@ -447,6 +502,7 @@ func NFAMarketInfo() fyne.Container {
 	Market.Display.Bid.Count.Disable()
 	Market.Display.Bid.Address.Disable()
 	Market.Display.Ends.Disable()
+	Market.Display.SCID.Disable()
 
 	Market.Icon = canvas.NewImageFromImage(nil)
 	Market.Icon.SetMinSize(fyne.NewSize(94, 94))
@@ -483,6 +539,8 @@ func AuctionInfo() fyne.Container {
 		widget.NewForm(widget.NewFormItem("Bids", container.NewStack(Market.Display.Bid.Count))))))
 
 	auction_form = append(auction_form, widget.NewFormItem("Bidder", container.NewStack(Market.Display.Bid.Address)))
+	auction_form = append(auction_form, widget.NewFormItem("SCID", container.NewStack(Market.Display.SCID)))
+	auction_form = append(auction_form, widget.NewFormItem("", container.NewCenter(Market.Display.Link)))
 
 	form_spacer := canvas.NewRectangle(color.Transparent)
 	form_spacer.SetMinSize(fyne.NewSize(330, 0))
@@ -518,6 +576,7 @@ func ResetAuctionInfo() {
 	Market.Display.Bid.Price.SetText("")
 	Market.Display.Bid.Count.SetText("")
 	Market.Display.Ends.SetText("")
+	Market.Display.SCID.SetText("")
 }
 
 // Returns container for unlisted display objects
@@ -536,6 +595,9 @@ func NotListedInfo() fyne.Container {
 		container.NewStack(dwidget.NewSpacer(110, 0), container.NewStack(Market.Display.Royalty)),
 		layout.NewSpacer(),
 		widget.NewForm(widget.NewFormItem("Artificer %", container.NewStack(dwidget.NewSpacer(110, 0), Market.Display.Artificer))))))
+
+	unlisted_form = append(unlisted_form, widget.NewFormItem("SCID", container.NewStack(Market.Display.SCID)))
+	unlisted_form = append(unlisted_form, widget.NewFormItem("", container.NewCenter(Market.Display.Link)))
 
 	form_spacer := canvas.NewRectangle(color.Transparent)
 	form_spacer.SetMinSize(fyne.NewSize(330, 0))
@@ -566,6 +628,7 @@ func ResetNotListedInfo() {
 	Market.Display.Royalty.SetText("")
 	Market.Display.Owner.SetText("")
 	Market.Display.Update.SetText("")
+	Market.Display.SCID.SetText("")
 }
 
 // Returns container for NFA buy now display objects
@@ -587,6 +650,8 @@ func BuyNowInfo() fyne.Container {
 
 	buy_form = append(buy_form, widget.NewFormItem("Ends", container.NewStack(Market.Display.Ends)))
 	buy_form = append(buy_form, widget.NewFormItem("Price", container.NewStack(Market.Display.Price)))
+	buy_form = append(buy_form, widget.NewFormItem("SCID", container.NewStack(Market.Display.SCID)))
+	buy_form = append(buy_form, widget.NewFormItem("", container.NewCenter(Market.Display.Link)))
 
 	form_spacer := canvas.NewRectangle(color.Transparent)
 	form_spacer.SetMinSize(fyne.NewSize(330, 0))
@@ -620,11 +685,12 @@ func ResetBuyInfo() {
 	Market.Display.Owner.SetText("")
 	Market.Display.Update.SetText("")
 	Market.Display.Ends.SetText("")
+	Market.Display.SCID.SetText("")
 }
 
 // Place NFA market layout
 func PlaceMarket(d *dreams.AppObject) *container.Split {
-	auction_info := NFAMarketInfo()
+	auction_info := NFAMarketInfo(d)
 
 	buy_info := BuyNowInfo()
 
@@ -753,6 +819,7 @@ func PlaceMarket(d *dreams.AppObject) *container.Split {
 			}
 		}
 	})
+	search_button.Importance = widget.HighImportance
 
 	clear_button := widget.NewButtonWithIcon("", dreams.FyneIcon("searchReplace"), func() {
 		search_entry.SetOptions([]string{})
@@ -825,6 +892,7 @@ func PlaceMarket(d *dreams.AppObject) *container.Split {
 	tabs.DisableIndex(0)
 	tabs.SetTabLocation(container.TabLocationTop)
 	tabs.OnSelected = func(ti *container.TabItem) {
+		Market.Viewing.URL = ""
 		Market.Viewing.Asset = ""
 		Market.Viewing.Collection = ""
 		Market.Entry.SetText("0.0")
@@ -943,7 +1011,7 @@ func PlaceMarket(d *dreams.AppObject) *container.Split {
 	button_spacer.SetMinSize(fyne.NewSize(40, 0))
 
 	// Market amount entry
-	Market.Entry = dwidget.NewDeroEntry("", 0.1, 1)
+	Market.Entry = dwidget.NewAmountEntry("", 0.1, 1)
 	Market.Entry.ExtendBaseWidget(Market.Entry)
 	Market.Entry.SetText("0.0")
 	Market.Entry.PlaceHolder = "Dero:"
@@ -1078,6 +1146,9 @@ func RunNFAMarket(d *dreams.AppObject, cont *fyne.Container) {
 				Market.List.Buy.UnselectAll()
 				Market.Viewing.Collection = ""
 				Market.Viewing.Asset = ""
+				Market.Viewing.URL = ""
+				Assets.Claim.Hide()
+				Assets.Button.Rescan.Hide()
 				ResetAuctionInfo()
 				synced = false
 				d.WorkDone()
@@ -1403,6 +1474,7 @@ func SearchNFAsBy(by int, prefix string) (results map[string]string) {
 func GetAuctionDetails(scid string) {
 	if gnomon.IsReady() && len(scid) == 64 {
 		name, _ := gnomon.GetSCIDValuesByKey(scid, "nameHdr")
+		file, _ := gnomon.GetSCIDValuesByKey(scid, "fileURL")
 		collection, _ := gnomon.GetSCIDValuesByKey(scid, "collection")
 		description, _ := gnomon.GetSCIDValuesByKey(scid, "descrHdr")
 		creator, _ := gnomon.GetSCIDValuesByKey(scid, "creatorAddr")
@@ -1430,6 +1502,12 @@ func GetAuctionDetails(scid string) {
 				Market.Display.Collection.SetText(collection[0])
 
 				Market.Display.Description.SetText(description[0])
+
+				Market.Display.SCID.SetText(scid)
+
+				if file != nil {
+					Market.Viewing.URL = file[0]
+				}
 
 				if Market.Display.Creator.Text != creator[0] {
 					Market.Display.Creator.SetText(creator[0])
@@ -1527,6 +1605,7 @@ func GetAuctionDetails(scid string) {
 func GetBuyNowDetails(scid string) {
 	if gnomon.IsReady() && len(scid) == 64 {
 		name, _ := gnomon.GetSCIDValuesByKey(scid, "nameHdr")
+		file, _ := gnomon.GetSCIDValuesByKey(scid, "fileURL")
 		collection, _ := gnomon.GetSCIDValuesByKey(scid, "collection")
 		description, _ := gnomon.GetSCIDValuesByKey(scid, "descrHdr")
 		creator, _ := gnomon.GetSCIDValuesByKey(scid, "creatorAddr")
@@ -1550,6 +1629,12 @@ func GetBuyNowDetails(scid string) {
 				Market.Display.Collection.SetText(collection[0])
 
 				Market.Display.Description.SetText(description[0])
+
+				Market.Display.SCID.SetText(scid)
+
+				if file != nil {
+					Market.Viewing.URL = file[0]
+				}
 
 				if Market.Display.Creator.Text != creator[0] {
 					Market.Display.Creator.SetText(creator[0])
@@ -1613,6 +1698,7 @@ func GetBuyNowDetails(scid string) {
 func GetUnlistedDetails(scid string) {
 	if gnomon.IsReady() && len(scid) == 64 {
 		name, _ := gnomon.GetSCIDValuesByKey(scid, "nameHdr")
+		file, _ := gnomon.GetSCIDValuesByKey(scid, "fileURL")
 		collection, _ := gnomon.GetSCIDValuesByKey(scid, "collection")
 		description, _ := gnomon.GetSCIDValuesByKey(scid, "descrHdr")
 		creator, _ := gnomon.GetSCIDValuesByKey(scid, "creatorAddr")
@@ -1636,6 +1722,12 @@ func GetUnlistedDetails(scid string) {
 				Market.Display.Collection.SetText(collection[0])
 
 				Market.Display.Description.SetText(description[0])
+
+				Market.Display.SCID.SetText(scid)
+
+				if file != nil {
+					Market.Viewing.URL = file[0]
+				}
 
 				if Market.Display.Creator.Text != creator[0] {
 					Market.Display.Creator.SetText(creator[0])
@@ -1774,7 +1866,7 @@ func CheckAllNFAs(scids map[string]string) {
 		}
 
 		Assets.Asset = []Asset{}
-		Theme.Select.Options = []string{}
+		dreams.Theme.Select.Options = []string{}
 
 		for sc := range scids {
 			if !rpc.Wallet.IsConnected() || !gnomon.IsRunning() {
@@ -1797,7 +1889,7 @@ func CheckAllNFAs(scids map[string]string) {
 						}
 
 						if collection[0] == "AZY-Deroscapes" || collection[0] == "SIXART" {
-							Theme.Add(header[0], owner[0])
+							dreams.Theme.Add(header[0], owner[0])
 						}
 						Assets.Add(add, icon[0])
 					}
@@ -1864,8 +1956,8 @@ func CheckAllNFAs(scids map[string]string) {
 			}
 		}
 
-		Theme.Sort()
-		Theme.Select.Options = append(Control.Themes, Theme.Select.Options...)
+		dreams.Theme.Sort()
+		dreams.Theme.Select.Options = append(Control.Themes, dreams.Theme.Select.Options...)
 		Assets.SortList()
 	}
 }

@@ -1,6 +1,7 @@
 package rpc
 
 import (
+	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"math"
@@ -23,6 +24,8 @@ func IntType(v interface{}) (value int) {
 		if i, err := strconv.ParseInt(v, 10, 64); err == nil {
 			value = int(i)
 		}
+	case int:
+		value = v
 	}
 
 	return
@@ -39,6 +42,8 @@ func Uint64Type(v interface{}) (value uint64) {
 		if u, err := strconv.ParseUint(v, 10, 64); err == nil {
 			value = u
 		}
+	case int:
+		value = uint64(v)
 	}
 
 	return
@@ -55,6 +60,8 @@ func Float64Type(v interface{}) (value float64) {
 		if f, err := strconv.ParseFloat(v, 64); err == nil {
 			value = f
 		}
+	case int:
+		value = float64(v)
 	}
 
 	return
@@ -152,4 +159,10 @@ func DeroAddressFromKey(v interface{}) (address string) {
 	}
 
 	return
+}
+
+// Returns SHA256 hash of input string
+func HashToHexSHA256(input string) string {
+	hash := sha256.Sum256([]byte(input))
+	return hex.EncodeToString(hash[:])
 }

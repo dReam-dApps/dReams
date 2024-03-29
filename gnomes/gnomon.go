@@ -141,8 +141,7 @@ func NewBoltDB(dbType, dbPath string) *storage.BboltStore {
 		return nil
 	}
 
-	shasum := fmt.Sprintf("%x", sha1.Sum([]byte("dReams")))
-	db_name := fmt.Sprintf("gnomondb_bolt_%s_%s.db", "dReams", shasum)
+	db_name := fmt.Sprintf("gnomon_bolt_%s.db", "dReams")
 	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
 		if err := os.MkdirAll(dbPath, 0755); err != nil {
 			logger.Fatalf("[NewBoltDB] %s\n", err)
@@ -168,7 +167,7 @@ func StartGnomon(tag, dbtype string, filters []string, upper, lower int, custom 
 	gnomes.Start = true
 	logger.Printf("[%s] Starting Gnomon\n", tag)
 	shasum := fmt.Sprintf("%x", sha1.Sum([]byte("dReams")))
-	db_path := filepath.Join("gnomondb", fmt.Sprintf("%s_%s", "dReams", shasum))
+	db_path := filepath.Join("datashards", "gnomon", fmt.Sprintf("%s_%s", "dReams", shasum))
 	bolt_backend := NewBoltDB(dbtype, db_path)
 	grav_backend := NewGravDB(dbtype, db_path)
 
@@ -302,6 +301,23 @@ func GetAssetUrl(w int, scid string) (url string) {
 
 	if link != nil {
 		url = link[0]
+	}
+
+	return
+}
+
+// Get name, collection and file extension of NFA
+func GetAssetInfo(scid string) (name string, collection string, extension string) {
+	if n, _ := gnomes.GetSCIDValuesByKey(scid, "nameHdr"); n != nil {
+		name = n[0]
+	}
+
+	if c, _ := gnomes.GetSCIDValuesByKey(scid, "collection"); c != nil {
+		collection = c[0]
+	}
+
+	if f, _ := gnomes.GetSCIDValuesByKey(scid, "fileURL"); f != nil {
+		extension = filepath.Ext(f[0])
 	}
 
 	return

@@ -2,6 +2,7 @@ package menu
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"image/color"
 	"sort"
@@ -27,9 +28,10 @@ type assetObjects struct {
 	Enabled  map[string]bool
 	Headers  *fyne.Container
 	Swap     *fyne.Container
+	AddRmv   *fyne.Container
 	Claim    *fyne.Container
 	Names    *widget.Select
-	Balances *widget.List
+	Balances dwidget.Lists
 	List     *widget.List
 	Asset    []Asset
 	Viewing  string
@@ -68,20 +70,40 @@ type Asset struct {
 var Assets assetObjects
 
 var dReamsNFAs = []assetCount{
-	{name: "AZY-Playing card decks", count: 23, creator: AZY_mint},
-	{name: "AZY-Playing card backs", count: 53, creator: AZY_mint},
-	{name: "AZY-Deroscapes", count: 10, creator: AZY_mint},
-	{name: "Death By Cupcake", count: 8, creator: DCB_mint},
-	{name: "SIXPC", count: 9, creator: SIX_mint},
-	{name: "SIXPCB", count: 10, creator: SIX_mint},
-	{name: "SIXART", count: 17, creator: SIX_mint},
-	{name: "High Strangeness", count: 376, creator: HS_mint},
-	{name: "Dorblings NFA", count: 110, creator: Dorbling_mint},
-	{name: "Dero Desperados", count: 777, creator: Desperado_mint},
-	{name: "Desperado Guns", count: 777, creator: Desperado_mint},
-	{name: "dSkullz", count: 27, creator: DSkull_mint},
+	{name: "AZY-Playing card decks", count: 23, creator: AZY_mint, utility: []string{UTIL_CARD_DECK}},
+	{name: "AZY-Playing card backs", count: 53, creator: AZY_mint, utility: []string{UTIL_CARD_BACK}},
+	{name: "AZY-Deroscapes", count: 10, creator: AZY_mint, utility: []string{UTIL_AVATAR, UTIL_THEME}},
+	{name: "Death By Cupcake", count: 8, creator: DCB_mint, utility: []string{UTIL_AVATAR, UTIL_DUEL_CHAR}},
+	{name: "SIXPC", count: 9, creator: SIX_mint, utility: []string{UTIL_CARD_DECK}},
+	{name: "SIXPCB", count: 10, creator: SIX_mint, utility: []string{UTIL_CARD_BACK}},
+	{name: "SIXART", count: 17, creator: SIX_mint, utility: []string{UTIL_AVATAR, UTIL_THEME}},
+	{name: "High Strangeness", count: 376, creator: HS_mint, utility: []string{UTIL_AVATAR, UTIL_DUEL_CHAR}},
+	{name: "Dorblings NFA", count: 110, creator: Dorbling_mint, utility: []string{UTIL_AVATAR}},
+	{name: "Dero Desperados", count: 777, creator: Desperado_mint, utility: []string{UTIL_AVATAR, UTIL_DUEL_CHAR}},
+	{name: "Desperado Guns", count: 777, creator: Desperado_mint, utility: []string{UTIL_AVATAR, UTIL_DUEL_ITEM}},
+	{name: "dSkullz", count: 27, creator: DSkull_mint, utility: []string{UTIL_AVATAR, UTIL_DUEL_CHAR}},
 	// TODO DLAMPP count
 	// {name: "DLAMPP ", count: ?},
+}
+
+// Refresh token balance List with current balance names
+func (a *assetObjects) RefreshTokens() {
+	_, a.Balances.SCIDs = rpc.Wallet.Balances()
+	a.Balances.List.Refresh()
+}
+
+// Set additional tokens to balance tracking and update List
+func (a *assetObjects) SetTokens(ad interface{}) (err error) {
+	var balances map[string]*rpc.Balance
+	err = dreams.SetAccount(ad, &balances)
+	if err != nil {
+		return
+	}
+
+	rpc.Wallet.SetTokens(balances)
+	a.RefreshTokens()
+
+	return
 }
 
 // Add asset to List and SCIDs
@@ -135,14 +157,14 @@ func IsDreamsNFACollection(collection string) bool {
 }
 
 // Check if string is dReams NFA creator address
-func IsDreamsNFACreator(creator string) bool {
+func IsDreamsNFACreator(creator, collection string) (bool, []string) {
 	for _, c := range dReamsNFAs {
-		if c.creator == creator {
-			return true
+		if c.creator == creator && c.name == collection {
+			return true, c.utility
 		}
 	}
 
-	return false
+	return false, nil
 }
 
 // Get the nameHdr of a NFA
@@ -459,15 +481,77 @@ func PlaceAssets(tag string, profile fyne.CanvasObject, rescan func(), icon fyne
 	Info.Indexed = canvas.NewText("Indexed SCIDs: ", bundle.TextColor)
 	Info.Indexed.TextSize = 18
 
-	scroll_spacer := canvas.NewRectangle(color.Transparent)
-	scroll_spacer.SetMinSize(fyne.NewSize(77, 36))
-	scroll_buttons := container.NewHBox(scroll_top, scroll_bottom)
+	scroll_buttons := container.NewHBox(scroll_top, scroll_bottom, dwidget.NewSpacer(15, 0))
 
 	border := container.NewBorder(
-		container.NewHBox(layout.NewSpacer(), Info.Indexed, container.NewStack(scroll_spacer, scroll_buttons)),
+		container.NewHBox(layout.NewSpacer(), Info.Indexed, container.NewStack(dwidget.NewSpacer(77, 36), scroll_buttons)),
 		nil,
 		nil,
 		nil)
+
+	btnDatashard := widget.NewButtonWithIcon("Delete Datashard", dreams.FyneIcon("delete"), nil)
+	btnDatashard.Importance = widget.LowImportance
+	btnDatashard.OnTapped = func() {
+		if gnomon.IsScanning() {
+			dialog.NewInformation("Profile", "Gnomon is syncing profile, please wait", d.Window).Show()
+		} else {
+			dialog.NewConfirm("Delete Datashard", fmt.Sprintf("This will delete local storage for account:\n\n%s", rpc.Wallet.Address), func(b bool) {
+				if b {
+					err := dreams.DeleteShard()
+					if err != nil {
+						dialog.NewInformation("Profile", fmt.Sprintf("Delete datashard %s", err), d.Window).Show()
+						return
+					}
+
+					dialog.NewInformation("Profile", "Datashard Deleted", d.Window).Show()
+					rpc.PrintLog("[Profile] Datashard deleted")
+				}
+			}, d.Window).Show()
+		}
+	}
+
+	btnViewAccount := widget.NewButtonWithIcon("View Account", dreams.FyneIcon("account"), nil)
+	btnViewAccount.Importance = widget.LowImportance
+	btnViewAccount.OnTapped = func() {
+		found, account, err := dreams.AccountExists()
+		if err != nil {
+			dialog.NewError(err, d.Window).Show()
+			return
+		}
+
+		if found {
+			ae, err := json.MarshalIndent(account, "", "   ")
+			if err != nil {
+				dialog.NewInformation("Account", "Could not read encrypted account", d.Window).Show()
+				return
+			}
+
+			var data dreams.AccountData
+			err = dreams.GetAccount(&data)
+			if err != nil {
+				dialog.NewInformation("Account", fmt.Sprintf("Could not get account data\n\n%s", err), d.Window).Show()
+				return
+			}
+
+			var ad []byte
+			ad, err = json.MarshalIndent(data, "", "   ")
+			if err != nil {
+				dialog.NewInformation("Account", "Could not read account data", d.Window).Show()
+				return
+			}
+
+			entry := widget.NewMultiLineEntry()
+			entry.Wrapping = fyne.TextWrapWord
+			entry.Disable()
+			entry.SetText(fmt.Sprintf("%s\n\n%s", string(ad), string(ae)))
+
+			info := dialog.NewCustom("Account", "Close", entry, d.Window)
+			info.Resize(d.GetMaxSize(dreams.MIN_WIDTH*0.70, dreams.MIN_HEIGHT*0.80))
+			info.Show()
+		} else {
+			dialog.NewInformation("Account", "Account not found", d.Window).Show()
+		}
+	}
 
 	var tab *container.TabItem
 	tabs := container.NewAppTabs(
@@ -479,7 +563,7 @@ func PlaceAssets(tag string, profile fyne.CanvasObject, rescan func(), icon fyne
 					canvas.NewLine(bundle.TextColor),
 					dwidget.NewCanvasText("User Profile", 18, fyne.TextAlignCenter),
 					canvas.NewLine(bundle.TextColor))),
-			nil,
+			container.NewHBox(btnViewAccount, layout.NewSpacer(), btnDatashard),
 			nil,
 			nil,
 			profile)),
@@ -516,8 +600,8 @@ func PlaceAssets(tag string, profile fyne.CanvasObject, rescan func(), icon fyne
 			scroll_buttons.Show()
 		case "Profile":
 			scroll_buttons.Hide()
-			if !rpc.Daemon.IsConnected() || !rpc.Wallet.IsConnected() {
-				dialog.NewInformation("Profile", "Connect to daemon and wallet to set profile", d.Window).Show()
+			if !rpc.Wallet.IsConnected() {
+				dialog.NewInformation("Profile", "Connect to a wallet to view profile", d.Window).Show()
 				tabs.Select(tab)
 				return
 			}
@@ -613,7 +697,7 @@ func indexEntry(w fyne.Window) fyne.CanvasObject {
 			if err := gnomes.AddToIndex(s); err == nil {
 				dialog.NewInformation("Added to Index", "SCIDs added", w).Show()
 			} else {
-				dialog.NewInformation("Error", "Error adding SCIDs to index", w).Show()
+				dialog.NewError(fmt.Errorf("error adding SCIDs to index"), w).Show()
 			}
 		}
 	})
@@ -627,17 +711,17 @@ func indexEntry(w fyne.Window) fyne.CanvasObject {
 				for sc := range all {
 					if scid == sc {
 						dialog.NewInformation("Found", fmt.Sprintf("SCID %s found", scid), w).Show()
-						logger.Printf("[Search] %s Found\n", scid)
+						logger.Printf("[Search] %s found\n", scid)
 						found = true
 					}
 				}
 				if !found {
 					dialog.NewInformation("Not Found", fmt.Sprintf("Index does not contain SCID %s", scid), w).Show()
-					logger.Errorf("[Search] %s Not Found\n", scid)
+					logger.Errorf("[Search] %s not found\n", scid)
 				}
 			} else {
 				dialog.NewInformation("Not Valid", fmt.Sprintf("SCID %s is not valid", scid), w).Show()
-				logger.Errorf("[Search] %s Not Found\n", scid)
+				logger.Errorf("[Search] %s not found\n", scid)
 			}
 		}
 	})
@@ -829,11 +913,11 @@ func ClaimAll(title string, d *dreams.AppObject) {
 
 // Checks if wallet has any claimable NFAs, looking assets sent with dst uint64(0xA1B2C3D4E5F67890)
 func CheckClaimable() (claimable []string) {
-	entries := rpc.GetWalletTransfers(3000000, uint64(rpc.Wallet.Height), uint64(0xA1B2C3D4E5F67890))
+	entries := rpc.GetWalletTransfers(3000000, rpc.Wallet.Height(), uint64(0xA1B2C3D4E5F67890))
 	for _, e := range *entries {
 		split := strings.Split(string(e.Payload), "  ")
 		if len(split) > 2 && len(split[1]) == 64 {
-			if gnomes.CheckOwner(split[1]) || rpc.TokenBalance(split[1]) != 1 {
+			if gnomes.CheckOwner(split[1]) || rpc.GetAssetBalance(split[1]) != 1 {
 				continue
 			}
 
