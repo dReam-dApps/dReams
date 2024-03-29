@@ -56,6 +56,7 @@ type marketObjects struct {
 		Artificer   *widget.Entry
 		Royalty     *widget.Entry
 		Ends        *widget.Entry
+		SCID        *widget.Entry
 		Link        *widget.Button
 		Bid         struct {
 			Count   *widget.Entry
@@ -307,7 +308,7 @@ func GetNFAImages(scid string) {
 		icon, _ := gnomon.GetSCIDValuesByKey(scid, "iconURLHdr")
 		cover, _ := gnomon.GetSCIDValuesByKey(scid, "coverURL")
 		collection, _ := gnomon.GetSCIDValuesByKey(scid, "collection")
-		if icon != nil && collection != nil {
+		if icon != nil && collection != nil && name != nil {
 			have, err := gnomes.StorageExists(collection[0], name[0])
 			if err != nil {
 				have = false
@@ -347,7 +348,11 @@ func GetNFAImages(scid string) {
 		}
 
 		if cover != nil {
-			img, _ := dreams.DownloadCanvas(cover[0], name[0]+"-cover")
+			img, err := dreams.DownloadCanvas(cover[0], name[0]+"-cover")
+			if err != nil {
+				logger.Errorln("[GetNFAImages]", err)
+			}
+
 			if img.Resource != nil {
 				Market.Cover = &img
 				Market.Details.Objects[1].(*fyne.Container).Objects[0] = NFACoverImg()
@@ -434,6 +439,7 @@ func NFAMarketInfo(d *dreams.AppObject) fyne.Container {
 	Market.Display.Bid.Count = widget.NewEntry()
 	Market.Display.Bid.Address = widget.NewEntry()
 	Market.Display.Ends = widget.NewEntry()
+	Market.Display.SCID = widget.NewEntry()
 
 	Market.Display.Link = widget.NewButton("View", nil)
 	Market.Display.Link.Importance = widget.LowImportance
@@ -496,6 +502,7 @@ func NFAMarketInfo(d *dreams.AppObject) fyne.Container {
 	Market.Display.Bid.Count.Disable()
 	Market.Display.Bid.Address.Disable()
 	Market.Display.Ends.Disable()
+	Market.Display.SCID.Disable()
 
 	Market.Icon = canvas.NewImageFromImage(nil)
 	Market.Icon.SetMinSize(fyne.NewSize(94, 94))
@@ -532,7 +539,8 @@ func AuctionInfo() fyne.Container {
 		widget.NewForm(widget.NewFormItem("Bids", container.NewStack(Market.Display.Bid.Count))))))
 
 	auction_form = append(auction_form, widget.NewFormItem("Bidder", container.NewStack(Market.Display.Bid.Address)))
-	auction_form = append(auction_form, widget.NewFormItem("", container.NewHBox(Market.Display.Link)))
+	auction_form = append(auction_form, widget.NewFormItem("SCID", container.NewStack(Market.Display.SCID)))
+	auction_form = append(auction_form, widget.NewFormItem("", container.NewCenter(Market.Display.Link)))
 
 	form_spacer := canvas.NewRectangle(color.Transparent)
 	form_spacer.SetMinSize(fyne.NewSize(330, 0))
@@ -568,6 +576,7 @@ func ResetAuctionInfo() {
 	Market.Display.Bid.Price.SetText("")
 	Market.Display.Bid.Count.SetText("")
 	Market.Display.Ends.SetText("")
+	Market.Display.SCID.SetText("")
 }
 
 // Returns container for unlisted display objects
@@ -587,7 +596,8 @@ func NotListedInfo() fyne.Container {
 		layout.NewSpacer(),
 		widget.NewForm(widget.NewFormItem("Artificer %", container.NewStack(dwidget.NewSpacer(110, 0), Market.Display.Artificer))))))
 
-	unlisted_form = append(unlisted_form, widget.NewFormItem("", container.NewHBox(Market.Display.Link)))
+	unlisted_form = append(unlisted_form, widget.NewFormItem("SCID", container.NewStack(Market.Display.SCID)))
+	unlisted_form = append(unlisted_form, widget.NewFormItem("", container.NewCenter(Market.Display.Link)))
 
 	form_spacer := canvas.NewRectangle(color.Transparent)
 	form_spacer.SetMinSize(fyne.NewSize(330, 0))
@@ -618,6 +628,7 @@ func ResetNotListedInfo() {
 	Market.Display.Royalty.SetText("")
 	Market.Display.Owner.SetText("")
 	Market.Display.Update.SetText("")
+	Market.Display.SCID.SetText("")
 }
 
 // Returns container for NFA buy now display objects
@@ -639,7 +650,8 @@ func BuyNowInfo() fyne.Container {
 
 	buy_form = append(buy_form, widget.NewFormItem("Ends", container.NewStack(Market.Display.Ends)))
 	buy_form = append(buy_form, widget.NewFormItem("Price", container.NewStack(Market.Display.Price)))
-	buy_form = append(buy_form, widget.NewFormItem("", container.NewHBox(Market.Display.Link)))
+	buy_form = append(buy_form, widget.NewFormItem("SCID", container.NewStack(Market.Display.SCID)))
+	buy_form = append(buy_form, widget.NewFormItem("", container.NewCenter(Market.Display.Link)))
 
 	form_spacer := canvas.NewRectangle(color.Transparent)
 	form_spacer.SetMinSize(fyne.NewSize(330, 0))
@@ -673,6 +685,7 @@ func ResetBuyInfo() {
 	Market.Display.Owner.SetText("")
 	Market.Display.Update.SetText("")
 	Market.Display.Ends.SetText("")
+	Market.Display.SCID.SetText("")
 }
 
 // Place NFA market layout
@@ -1490,6 +1503,8 @@ func GetAuctionDetails(scid string) {
 
 				Market.Display.Description.SetText(description[0])
 
+				Market.Display.SCID.SetText(scid)
+
 				if file != nil {
 					Market.Viewing.URL = file[0]
 				}
@@ -1615,6 +1630,8 @@ func GetBuyNowDetails(scid string) {
 
 				Market.Display.Description.SetText(description[0])
 
+				Market.Display.SCID.SetText(scid)
+
 				if file != nil {
 					Market.Viewing.URL = file[0]
 				}
@@ -1705,6 +1722,8 @@ func GetUnlistedDetails(scid string) {
 				Market.Display.Collection.SetText(collection[0])
 
 				Market.Display.Description.SetText(description[0])
+
+				Market.Display.SCID.SetText(scid)
 
 				if file != nil {
 					Market.Viewing.URL = file[0]
