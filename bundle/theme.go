@@ -23,31 +23,37 @@ var purple = color.RGBA{105, 90, 205, 210}
 var blue = color.RGBA{31, 150, 200, 210}
 
 // Returns new alpha 120 canvas based on AppColor
-func NewAlpha120() (alpha *canvas.Rectangle) {
+func NewAlpha120(w, h float32) (alpha *canvas.Rectangle) {
 	alpha = canvas.NewRectangle(color.RGBA{0, 0, 0, 120})
 	if AppColor == color.White {
 		alpha = canvas.NewRectangle(color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0x55})
 	}
 
+	alpha.SetMinSize(fyne.NewSize(w, h))
+
 	return
 }
 
 // Returns new alpha 150 canvas based on AppColor
-func NewAlpha150() (alpha *canvas.Rectangle) {
+func NewAlpha150(w, h float32) (alpha *canvas.Rectangle) {
 	alpha = canvas.NewRectangle(color.RGBA{0, 0, 0, 150})
 	if AppColor == color.White {
 		alpha = canvas.NewRectangle(color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0xaa})
 	}
 
+	alpha.SetMinSize(fyne.NewSize(w, h))
+
 	return
 }
 
 // Returns new alpha 180 canvas based on AppColor
-func NewAlpha180() (alpha *canvas.Rectangle) {
+func NewAlpha180(w, h float32) (alpha *canvas.Rectangle) {
 	alpha = canvas.NewRectangle(color.RGBA{0, 0, 0, 180})
 	if AppColor == color.White {
 		alpha = canvas.NewRectangle(color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0x99})
 	}
+
+	alpha.SetMinSize(fyne.NewSize(w, h))
 
 	return
 }

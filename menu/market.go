@@ -415,9 +415,14 @@ func clearNFAImages() {
 	Market.Lock()
 	defer Market.Unlock()
 
+	// Clear tools, insert spacer
 	Market.Details.Objects[0].(*fyne.Container).Objects[0].(*fyne.Container).Objects[2] = layout.NewSpacer()
-	Market.Icon = canvas.NewImageFromImage(nil)
 
+	// Clear icon image from frame
+	Market.Icon = canvas.NewImageFromImage(nil)
+	Market.Details.Objects[0].(*fyne.Container).Objects[0].(*fyne.Container).Objects[1].(*fyne.Container).Objects[0].(*fyne.Container).Objects[0] = canvas.NewImageFromImage(nil) // NFAIcon()
+
+	// Clear cover image
 	Market.Details.Objects[1].(*fyne.Container).Objects[0] = canvas.NewImageFromImage(nil)
 	Market.Cover = canvas.NewImageFromImage(nil)
 }
@@ -575,6 +580,7 @@ func ResetAuctionInfo() {
 	Market.Display.Bid.Current.SetText("")
 	Market.Display.Bid.Price.SetText("")
 	Market.Display.Bid.Count.SetText("")
+	Market.Display.Bid.Address.SetText("")
 	Market.Display.Ends.SetText("")
 	Market.Display.SCID.SetText("")
 }
@@ -806,9 +812,10 @@ func PlaceMarket(d *dreams.AppObject) *container.Split {
 				i = 3
 			}
 
-			if scids = SearchNFAsBy(i, search_entry.Text); scids == nil || len(scids) < 1 {
-				dialog.NewInformation("No results", "Nothing found", d.Window).Show()
+			if newResults := SearchNFAsBy(i, search_entry.Text); newResults == nil || len(newResults) < 1 {
+				dialog.NewInformation("Search", "No results found", d.Window).Show()
 			} else {
+				scids = newResults
 				var showing []string
 				for k := range scids {
 					showing = append(showing, k)
@@ -822,6 +829,7 @@ func PlaceMarket(d *dreams.AppObject) *container.Split {
 	search_button.Importance = widget.HighImportance
 
 	clear_button := widget.NewButtonWithIcon("", dreams.FyneIcon("searchReplace"), func() {
+		scids = make(map[string]string)
 		search_entry.SetOptions([]string{})
 		search_entry.SetText("")
 	})
@@ -906,8 +914,8 @@ func PlaceMarket(d *dreams.AppObject) *container.Split {
 			Market.Button.BidBuy.Refresh()
 			Market.Entry.Show()
 			Market.Entry.Enable()
-			ResetAuctionInfo()
 			Market.Details = auction_info
+			ResetAuctionInfo()
 		case "Buy Now":
 			go FindNFAListings(nil, nil)
 			Market.Tab = "Buy"
@@ -917,8 +925,8 @@ func PlaceMarket(d *dreams.AppObject) *container.Split {
 			Market.Button.BidBuy.Refresh()
 			Market.Entry.Show()
 			Market.Entry.Disable()
-			ResetBuyInfo()
 			Market.Details = buy_info
+			ResetBuyInfo()
 		case "My Listings":
 			go FindNFAListings(nil, nil)
 			Market.Tab = "Listings"
@@ -927,8 +935,8 @@ func PlaceMarket(d *dreams.AppObject) *container.Split {
 			Market.List.Buy.UnselectAll()
 			Market.Entry.Hide()
 			Market.Entry.Disable()
-			ResetBuyInfo()
 			Market.Details = unlisted_info
+			ResetNotListedInfo()
 		case "Search":
 			Market.Tab = "Search"
 			Market.List.Auction.UnselectAll()
@@ -936,8 +944,8 @@ func PlaceMarket(d *dreams.AppObject) *container.Split {
 			Market.List.Buy.UnselectAll()
 			Market.Entry.Hide()
 			Market.Entry.Disable()
-			ResetBuyInfo()
 			Market.Details = unlisted_info
+			ResetNotListedInfo()
 		}
 
 		Market.Button.Close.Hide()
@@ -978,8 +986,7 @@ func PlaceMarket(d *dreams.AppObject) *container.Split {
 
 	scroll_cont := container.NewVBox(container.NewHBox(layout.NewSpacer(), scroll_top, scroll_bottom))
 
-	min_size := bundle.Alpha120
-	min_size.SetMinSize(fyne.NewSize(420, 0))
+	min_size := bundle.NewAlpha120(420, 0)
 
 	max := container.NewStack(min_size, tabs, scroll_cont)
 

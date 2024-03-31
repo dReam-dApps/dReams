@@ -87,7 +87,7 @@ func introScreen() *fyne.Container {
 		max.Objects[1].(*container.Split).Leading.(*fyne.Container).Objects[9].Refresh()
 		max.Objects[1].(*container.Split).Trailing.(*fyne.Container).Objects[1].(*canvas.Text).Color = bundle.TextColor
 		max.Objects[1].(*container.Split).Trailing.(*fyne.Container).Objects[1].Refresh()
-		max.Objects[0] = bundle.NewAlpha180()
+		max.Objects[0] = bundle.NewAlpha180(0, 0)
 		max.Objects[0].Refresh()
 	}
 
@@ -462,7 +462,7 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 		container.NewHBox(layout.NewSpacer(), container.NewVBox(line_spacer, line), layout.NewSpacer()),
 		container.NewCenter(container.NewHBox(container.NewStack(load_button), container.NewStack(back_button))))
 
-	return container.NewStack(bundle.NewAlpha180(), config_screen)
+	return container.NewStack(bundle.NewAlpha180(0, 0), config_screen)
 }
 
 // User profile layout with dreams.AssetSelects

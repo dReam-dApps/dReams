@@ -285,7 +285,7 @@ func GetSCHeaders(scid string) (header SCHeaders) {
 // Get a requested NFA url
 //   - w of 0 returns "fileURL"
 //   - w of 1 returns "iconURLHdr"
-//   - w of 2 returns "coverURLHdr"
+//   - w of 2 returns "coverURL"
 func GetAssetUrl(w int, scid string) (url string) {
 	var link []string
 	switch w {
