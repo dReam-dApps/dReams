@@ -843,13 +843,13 @@ func AssetList(icon fyne.Resource, rescan func(), d *dreams.AppObject) fyne.Canv
 	Assets.Button.List.Hide()
 	Assets.Button.Send.Hide()
 
-	entry := widget.NewEntry()
-	entry.SetPlaceHolder("Claim NFA:")
+	entryClaim := widget.NewEntry()
+	entryClaim.SetPlaceHolder("Claim NFA:")
 
 	claim_button := widget.NewButton("Claim", func() {
-		if len(entry.Text) == 64 {
-			if isNFA(entry.Text) {
-				tx := rpc.ClaimNFA(entry.Text)
+		if len(entryClaim.Text) == 64 {
+			if isNFA(entryClaim.Text) {
+				tx := rpc.ClaimNFA(entryClaim.Text)
 				go ShowTxDialog("Claim NFA", "ClaimNFA", tx, 3*time.Second, d.Window)
 
 				return
@@ -859,14 +859,17 @@ func AssetList(icon fyne.Resource, rescan func(), d *dreams.AppObject) fyne.Canv
 			return
 		}
 
-		dialog.NewInformation("Claim NFA", "Not a valid SCID", d.Window).Show()
+		info := dialog.NewInformation("Claim NFA", "Not a valid SCID", d.Window)
+		info.SetOnClosed(entryClaim.FocusLost)
+		entryClaim.FocusGained()
+		info.Show()
 	})
 
 	claim_all := widget.NewButton("Claim All", func() {
 		ClaimAll("Claim NFAs", d)
 	})
 
-	Assets.Claim = container.NewBorder(nil, nil, nil, container.NewHBox(claim_button, claim_all), entry)
+	Assets.Claim = container.NewBorder(nil, nil, nil, container.NewHBox(claim_button, claim_all), entryClaim)
 	Assets.Claim.Hide()
 
 	Assets.Button.Rescan = widget.NewButton("Rescan", func() {
