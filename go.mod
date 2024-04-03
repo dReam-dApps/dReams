@@ -5,16 +5,9 @@ go 1.21.5
 require (
 	fyne.io/fyne/v2 v2.4.4
 	fyne.io/x/fyne v0.0.0-20240326131024-3ba9170cc3be
-	github.com/SixofClubsss/Baccarat v0.3.2-0.20240328073256-5cd0cab7f1df
-	github.com/SixofClubsss/Duels v0.1.2-0.20240328072453-74aaf1ff7c5e
-	github.com/SixofClubsss/Grokked v0.1.2-0.20240328072205-039da76cb7cb
-	github.com/SixofClubsss/Holdero v0.3.2-0.20240328071441-8f739a2858e2
-	github.com/SixofClubsss/Iluma v0.3.2-0.20240328071159-14bf1d862476
-	github.com/SixofClubsss/dDice v0.0.0-20240328073500-e8e50a87dfcd
-	github.com/SixofClubsss/dPrediction v0.3.2-0.20240328072808-2698a565caf5
 	github.com/blang/semver/v4 v4.0.0
 	github.com/civilware/Gnomon v0.0.0-20240403103529-8b2fdb2b3106
-	github.com/creachadair/jrpc2 v0.43.0
+	github.com/creachadair/jrpc2 v0.35.4
 	github.com/deroproject/derohe v0.0.0-20240326214000-81d61c264e16
 	github.com/gorilla/websocket v1.5.0
 	github.com/sirupsen/logrus v1.9.3
