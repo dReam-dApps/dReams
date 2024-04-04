@@ -5,13 +5,13 @@ go 1.21.5
 require (
 	fyne.io/fyne/v2 v2.4.4-rc2.0.20240402155721-b703cfe79995
 	fyne.io/x/fyne v0.0.0-20240326131024-3ba9170cc3be
-	github.com/SixofClubsss/Baccarat v0.3.2-0.20240403203955-e501edfb6dec
-	github.com/SixofClubsss/Duels v0.1.2-0.20240403202954-d7e8b371cce5
-	github.com/SixofClubsss/Grokked v0.1.2-0.20240403202809-a702e159a72a
-	github.com/SixofClubsss/Holdero v0.3.2-0.20240403202500-8f297b11d365
-	github.com/SixofClubsss/Iluma v0.3.2-0.20240403202247-6871ae489172
-	github.com/SixofClubsss/dDice v0.0.0-20240403203727-9651c9a63cb8
-	github.com/SixofClubsss/dPrediction v0.3.2-0.20240403203515-024fbcc0f763
+	github.com/SixofClubsss/Baccarat v0.3.2-0.20240404043709-78e32236c4b1
+	github.com/SixofClubsss/Duels v0.1.2-0.20240404043009-d058d45c9029
+	github.com/SixofClubsss/Grokked v0.1.2-0.20240404042731-0a4573c250f9
+	github.com/SixofClubsss/Holdero v0.3.2-0.20240404042526-67278484f82f
+	github.com/SixofClubsss/Iluma v0.3.2-0.20240404041850-52dd277b0cae
+	github.com/SixofClubsss/dDice v0.0.0-20240404043520-2ba2f8032b45
+	github.com/SixofClubsss/dPrediction v0.3.2-0.20240404043333-d60017f245fc
 	github.com/blang/semver/v4 v4.0.0
 	github.com/civilware/Gnomon v0.0.0-20240403103529-8b2fdb2b3106
 	github.com/creachadair/jrpc2 v0.35.4

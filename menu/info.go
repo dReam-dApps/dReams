@@ -116,7 +116,7 @@ func InfoDisplay() fyne.CanvasObject {
 	// Info.Price.Alignment = fyne.TextAlignCenter
 
 	info_form := []*widget.FormItem{}
-	info_form = append(info_form, widget.NewFormItem("", Info.Status))
+	info_form = append(info_form, widget.NewFormItem("", container.NewCenter(Info.Status)))
 	info_form = append(info_form, widget.NewFormItem("Gnomon Height", container.NewStack(dwidget.NewSpacer(210, 0), Info.Height.Gnomes)))
 	info_form = append(info_form, widget.NewFormItem("Daemon Height", container.NewStack(dwidget.NewSpacer(210, 0), Info.Height.Daemon)))
 	info_form = append(info_form, widget.NewFormItem("Wallet Height", container.NewStack(dwidget.NewSpacer(210, 0), Info.Height.Wallet)))
