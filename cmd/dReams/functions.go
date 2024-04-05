@@ -364,7 +364,8 @@ func checkNFAOwner(scid string) {
 					add.Collection = collection[0]
 					add.SCID = scid
 					if typeHdr, _ := gnomon.GetSCIDValuesByKey(scid, "typeHdr"); typeHdr != nil {
-						add.Type = menu.AssetType(collection[0], typeHdr[0])
+						add.Type = typeHdr[0]
+						add.Utility = menu.AssetUtilityString(collection[0], typeHdr[0])
 					}
 
 					menu.Assets.Add(add, icon[0])
@@ -482,7 +483,8 @@ func checkDreamsG45s(g45s map[string]string, progress *widget.ProgressBar) {
 				if owner != nil && minter != nil && coll != nil && owner[0] != "" {
 					if owner[0] == rpc.Wallet.Address {
 						var add menu.Asset
-						add.Type = "Avatar"
+						add.Type = "Image"
+						add.Utility = "Avatar"
 						if minter[0] == menu.Seals_mint && coll[0] == menu.Seals_coll {
 							var seal menu.Seal
 							if err := json.Unmarshal([]byte(data[0]), &seal); err == nil {

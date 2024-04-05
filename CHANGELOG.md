@@ -43,6 +43,7 @@ This file lists the changes to dReams repo with each version.
 * Removed DERO file buttons from NFA minter, is now integrated into its connection widget
 * NFA-Creation directory renamed to creation
 * All local storage locations contained within datashards directory
+* Split type and utility display
 * `rpc` removed unnecessary exported vars from wallet and created methods for File.disk
 * `rpc` balance map to map[string]*Balance
 * `rpc` SetDaemonClient() allows https endpoints

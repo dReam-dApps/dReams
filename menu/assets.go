@@ -64,6 +64,7 @@ type Asset struct {
 	Collection string `json:"collection"`
 	SCID       string `json:"scid"`
 	Type       string `json:"type"`
+	Utility    string `json:"utility"`
 	Image      []byte `json:"image"`
 }
 
@@ -196,15 +197,15 @@ func ValidNFA(file string) bool {
 	return file != "-"
 }
 
-// Additional asset type info
-func AssetType(collection, typeHdr string) string {
+// Additional asset utility info
+func AssetUtilityString(collection, typeHdr string) string {
 	switch collection {
 	case "AZY-Playing card decks", "SIXPC":
 		return "Playing card deck"
 	case "AZY-Playing card backs", "SIXPCB":
 		return "Playing card back"
 	case "AZY-Deroscapes", "SIXART":
-		return "Theme/Avatar"
+		return "Avatar/Theme"
 	case "Dorblings NFA":
 		return "Avatar"
 	case "Death By Cupcake", "High Strangeness", "Dero Desperados", "Desperado Guns", "dSkullz":
@@ -808,7 +809,7 @@ func AssetList(icon fyne.Resource, rescan func(), d *dreams.AppObject) fyne.Canv
 			header := fmt.Sprintf("%s   %s   %s", a[i].Name, a[i].Collection, a[i].SCID)
 			if o.(*fyne.Container).Objects[0].(*fyne.Container).Objects[0].(*fyne.Container).Objects[0].(*widget.Label).Text != header {
 				o.(*fyne.Container).Objects[0].(*fyne.Container).Objects[0].(*fyne.Container).Objects[0].(*widget.Label).SetText(header)
-				o.(*fyne.Container).Objects[0].(*fyne.Container).Objects[0].(*fyne.Container).Objects[1].(*widget.Label).SetText(fmt.Sprintf("Type: %s", a[i].Type))
+				o.(*fyne.Container).Objects[0].(*fyne.Container).Objects[0].(*fyne.Container).Objects[1].(*widget.Label).SetText(fmt.Sprintf("Type: %s   Utility: %s", a[i].Type, a[i].Utility))
 				o.(*fyne.Container).Objects[0].(*fyne.Container).Objects[1].(*fyne.Container).Objects[0] = AssetIcon(a[i].Image, a[i].Name, 70)
 				o.Refresh()
 			}
