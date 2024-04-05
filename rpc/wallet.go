@@ -206,7 +206,7 @@ func (w *wallet) CallFor(out interface{}, method string, params ...interface{}) 
 			} else {
 				err = fmt.Errorf("expected out to be *rpc.Get_Transfers_Params, got %T", params[0])
 			}
-		case "GetTransferByTXID":
+		case "GetTransferbyTXID":
 			result, ok := out.(*rpc.Get_Transfer_By_TXID_Result)
 			if !ok {
 				return fmt.Errorf("expected out to be *rpc.Get_Transfer_By_TXID_Result, got %T", out)
