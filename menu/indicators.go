@@ -120,15 +120,15 @@ func StartIndicators(add []*DreamsIndicator) fyne.CanvasObject {
 	Control.Indicator.Wallet.RepeatCount = fyne.AnimationRepeatForever
 	Control.Indicator.Wallet.AutoReverse = true
 
-	d_text := canvas.NewText(" D ", bundle.TextColor)
-	d_text.TextStyle.Bold = true
+	d_text := canvas.NewText("D", bundle.TextColor)
+	d_text.TextStyle.Monospace = true
 	d_text.Alignment = fyne.TextAlignCenter
-	d_text.TextSize = 16
+	d_text.TextSize = 21
 
-	w_text := canvas.NewText(" W ", bundle.TextColor)
-	w_text.TextStyle.Bold = true
+	w_text := canvas.NewText("W", bundle.TextColor)
+	w_text.TextStyle.Monospace = true
 	w_text.Alignment = fyne.TextAlignCenter
-	w_text.TextSize = 16
+	w_text.TextSize = 21
 
 	// Tx confirmation indicator
 	var c_img *canvas.Image

@@ -215,6 +215,10 @@ func (t dTheme) Font(style fyne.TextStyle) fyne.Resource {
 		return ResourceVarelaRoundRegularTtf
 	}
 
+	if style.Monospace {
+		return ResourceAstrolyteTtf
+	}
+
 	return ResourceUbuntuRTtf
 }
 
