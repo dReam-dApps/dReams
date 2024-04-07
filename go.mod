@@ -3,7 +3,7 @@ module github.com/dReam-dApps/dReams
 go 1.21.5
 
 require (
-	fyne.io/fyne/v2 v2.4.4-rc2.0.20240402155721-b703cfe79995
+	fyne.io/fyne/v2 v2.4.4-rc2.0.20240406182811-8c17ddaea67e
 	fyne.io/x/fyne v0.0.0-20240326131024-3ba9170cc3be
 	github.com/SixofClubsss/Baccarat v0.3.2-0.20240404043709-78e32236c4b1
 	github.com/SixofClubsss/Duels v0.1.2-0.20240404043009-d058d45c9029
@@ -26,6 +26,7 @@ require (
 
 require (
 	fyne.io/systray v1.10.1-0.20231230205326-d160fd363db9 // indirect
+	github.com/BurntSushi/toml v1.3.2 // indirect
 	github.com/VictoriaMetrics/metrics v1.33.1 // indirect
 	github.com/caarlos0/env/v6 v6.10.1 // indirect
 	github.com/cenkalti/rpc2 v1.0.3 // indirect
