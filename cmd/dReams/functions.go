@@ -186,26 +186,23 @@ func accountHandlers() map[string]func(interface{}) error {
 
 // Try to load account from storage if exists and set preferences
 func loadAccount() (err error) {
-	var found bool
-	found, err = dreams.CreateAccountIfNone(dReams.Name())
+	err = dreams.CreateAccountIfNone(dReams.Name())
 	if err != nil {
 		return
 	}
 
-	if found {
-		logger.Println("[dReams] Loading account")
-		var account dreams.AccountData
-		err = dreams.GetAccount(&account)
-		if err != nil {
-			logger.Errorln("[loadAccount]", err)
-			return
-		}
+	logger.Println("[dReams] Loading account")
+	var account dreams.AccountData
+	err = dreams.GetAccount(&account)
+	if err != nil {
+		logger.Errorln("[loadAccount]", err)
+		return
+	}
 
-		for name, set := range dReams.GetAccountHandlers() {
-			errr := set(account.Dapp[name])
-			if errr != nil {
-				logger.Errorf("[loadAccount] %s %s\n", name, errr)
-			}
+	for name, set := range dReams.GetAccountHandlers() {
+		errr := set(account.Dapp[name])
+		if errr != nil {
+			logger.Errorf("[loadAccount] %s %s\n", name, errr)
 		}
 	}
 

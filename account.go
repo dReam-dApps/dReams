@@ -157,17 +157,16 @@ func GetValue(bucket, key string, out interface{}) (err error) {
 	}
 
 	err = db.View(func(tx *bbolt.Tx) (err error) {
-		if b := tx.Bucket([]byte(bucket)); b != nil {
-			if stored := b.Get([]byte(key)); stored != nil {
-				err = json.Unmarshal(stored, &out)
-				if err != nil {
-					return
-				}
-
-				return
-			}
+		b := tx.Bucket([]byte(bucket))
+		if b == nil {
+			return fmt.Errorf("bucket %s not found", bucket)
 		}
-		return
+
+		if stored := b.Get([]byte(key)); stored != nil {
+			return json.Unmarshal(stored, &out)
+		}
+
+		return fmt.Errorf("value %s not found", key)
 	})
 
 	db.Close()
@@ -299,7 +298,7 @@ func GetAccount(out *AccountData) (err error) {
 
 		stored := b.Get([]byte(accountKey))
 		if stored == nil {
-			return fmt.Errorf("key %s not found", accountKey)
+			return fmt.Errorf("account %s not found", shardAddress())
 		}
 
 		var data []byte
@@ -478,7 +477,7 @@ func AccountExists() (found bool, account *AccountEncrypted, err error) {
 		return
 	}
 
-	err = db.View(func(tx *bbolt.Tx) error {
+	err = db.View(func(tx *bbolt.Tx) (err error) {
 		b := tx.Bucket([]byte(accountBucket))
 		if b == nil {
 			return fmt.Errorf("bucket %s not found", accountBucket)
@@ -487,14 +486,10 @@ func AccountExists() (found bool, account *AccountEncrypted, err error) {
 		value := b.Get([]byte(accountKey))
 		if value != nil {
 			found = true
-			err = json.Unmarshal(value, &account)
-			if err != nil {
-				return err
-			}
-			return nil
+			return json.Unmarshal(value, &account)
 		}
 
-		return fmt.Errorf("account not found")
+		return fmt.Errorf("account key not found for %s", shardAddress())
 	})
 
 	db.Close()
@@ -503,7 +498,8 @@ func AccountExists() (found bool, account *AccountEncrypted, err error) {
 }
 
 // Create a new account if none exists
-func CreateAccountIfNone(tag string) (found bool, err error) {
+func CreateAccountIfNone(tag string) (err error) {
+	var found bool
 	var acc *AccountEncrypted
 	found, acc, err = AccountExists()
 	if !found {
