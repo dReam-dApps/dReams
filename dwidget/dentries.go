@@ -305,7 +305,7 @@ func NewDaemonEntry(defaults []string) (entry *widget.SelectEntry, daemons []str
 
 	entry = widget.NewSelectEntry(daemons)
 	entry.SetPlaceHolder("Daemon RPC:")
-	entry.Bind(binding.BindString(&rpc.Daemon.Rpc))
+	entry.Bind(binding.BindString(&rpc.Daemon.Endpoint))
 
 	return
 }
@@ -389,7 +389,7 @@ func onTapped(tag string, selectType *widget.Select, entryAuth, entryPass *widge
 			// Connect to RPC
 			rpc.Wallet.RPC.Init()
 			rpc.GetAddress(tag)
-			rpc.Ping()
+			rpc.Daemon.Ping()
 			if rpc.Wallet.IsConnected() {
 				button.Importance = widget.HighImportance
 				button.Icon = dreams.FyneIcon("cancel")
@@ -468,7 +468,7 @@ func onTapped(tag string, selectType *widget.Select, entryAuth, entryPass *widge
 						return
 					}
 
-					rpc.Ping()
+					rpc.Daemon.Ping()
 					// Check if connected to daemon
 					if !rpc.Daemon.IsConnected() {
 						dialog.NewInformation("Select Daemon", "Connect to a daemon", d.Window).Show()

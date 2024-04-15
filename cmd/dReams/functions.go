@@ -124,7 +124,7 @@ func init() {
 func saveSettings() dreams.SaveData {
 	return dreams.SaveData{
 		Skin:    bundle.AppColor,
-		Daemon:  []string{rpc.Daemon.Rpc},
+		Daemon:  []string{rpc.Daemon.Endpoint},
 		Theme:   dreams.Theme.Name,
 		FSForce: gnomon.GetFastsync().ForceFastSync,
 		FSDiff:  gnomon.GetFastsync().ForceFastSyncDiff,
@@ -238,7 +238,7 @@ func fetch(done chan struct{}) {
 		select {
 		case <-ticker.C: // do on interval
 			if !dReams.IsConfiguring() {
-				rpc.Ping()
+				rpc.Daemon.Ping()
 				if !rpc.Wallet.WS.IsRequesting() {
 					rpc.Wallet.Sync()
 				}
@@ -660,7 +660,7 @@ func gnomonFilters() (filter []string) {
 func daemonConnectedBox() fyne.Widget {
 	menu.Control.Check.Daemon = widget.NewCheck("", func(b bool) {
 		if !gnomon.IsInitialized() && !gnomon.IsStarting() {
-			if rpc.DaemonVersion() == "3.5.3-139.DEROHE.STARGATE+04042023" {
+			if rpc.Daemon.GetVersion() == "3.5.3-139.DEROHE.STARGATE+04042023" {
 				dialog.NewInformation("Daemon Version", "This daemon may conflict with Gnomon sync", dReams.Window).Show()
 			}
 
@@ -702,7 +702,7 @@ func daemonRPCEntry() fyne.Widget {
 	entry := widget.NewSelectEntry(options)
 	entry.PlaceHolder = "Daemon: "
 
-	this := binding.BindString(&rpc.Daemon.Rpc)
+	this := binding.BindString(&rpc.Daemon.Endpoint)
 	entry.Bind(this)
 
 	return entry
@@ -907,7 +907,7 @@ func accountConnection() fyne.CanvasObject {
 					return
 				}
 
-				rpc.Ping()
+				rpc.Daemon.Ping()
 				if !rpc.Daemon.IsConnected() {
 					dialog.NewInformation("Select Daemon", "Connect to a daemon", dReams.Window).Show()
 					return

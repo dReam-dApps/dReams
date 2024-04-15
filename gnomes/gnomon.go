@@ -180,7 +180,7 @@ func StartGnomon(tag, dbtype string, filters []string, upper, lower int, custom 
 
 	if filters != nil {
 		exclusions := []string{"bb43c3eb626ee767c9f305772a6666f7c7300441a0ad8538a0799eb4f12ebcd2"}
-		gnomes.Indexer = indexer.NewIndexer(grav_backend, bolt_backend, dbtype, filters, last_height, rpc.Daemon.Rpc, "daemon", false, false, &gnomes.Fast, exclusions)
+		gnomes.Indexer = indexer.NewIndexer(grav_backend, bolt_backend, dbtype, filters, last_height, rpc.Daemon.Endpoint, "daemon", false, false, &gnomes.Fast, exclusions)
 		go gnomes.Indexer.StartDaemonMode(gnomes.Para)
 		time.Sleep(3 * time.Second)
 		gnomes.Initialized(true)
@@ -213,7 +213,7 @@ func StartGnomon(tag, dbtype string, filters []string, upper, lower int, custom 
 // Update Gnomon endpoint to current rpc.Daemon.Rpc value
 func EndPoint() {
 	if rpc.Daemon.IsConnected() && gnomes.IsInitialized() && !gnomes.IsScanning() {
-		gnomes.Indexer.Endpoint = rpc.Daemon.Rpc
+		gnomes.Indexer.Endpoint = rpc.Daemon.Endpoint
 	}
 }
 

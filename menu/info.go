@@ -57,7 +57,7 @@ func (i *dispayObjects) RefreshIndexed() {
 // Refresh daemon height display
 func (i *dispayObjects) RefreshDaemon(tag string) {
 	if rpc.Daemon.IsConnected() {
-		height := rpc.DaemonHeight(tag, rpc.Daemon.Rpc)
+		height := rpc.Daemon.GetHeight(tag)
 		i.Height.Daemon.Text = fmt.Sprintf("%d", height)
 	} else {
 		i.Height.Daemon.Text = "0"

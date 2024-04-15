@@ -732,7 +732,7 @@ func ConfirmTx(txid, tag string, timeout int) bool {
 		for IsReady() {
 			count++
 			time.Sleep(2 * time.Second)
-			if tx := GetDaemonTx(txid); tx != nil {
+			if tx := Daemon.GetTx(txid); tx != nil {
 				if count > timeout {
 					break
 				}
@@ -762,7 +762,7 @@ func ConfirmTxRetry(txid, tag string, timeout int) (retry int) {
 	for IsReady() {
 		count++
 		time.Sleep(2 * time.Second)
-		if tx := GetDaemonTx(txid); tx != nil {
+		if tx := Daemon.GetTx(txid); tx != nil {
 			if count > timeout {
 				logger.Warnf("[%s] TX: {%s} not confirmed, Retrying next block\n", tag, txid)
 				time.Sleep(3 * time.Second)

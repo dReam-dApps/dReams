@@ -45,9 +45,9 @@ const (
 )
 
 type daemon struct {
-	Rpc     string
-	Connect bool
-	Height  uint64
+	Endpoint string
+	Connect  bool
+	Height   uint64
 	sync.RWMutex
 }
 
@@ -78,38 +78,38 @@ func IsReady() bool {
 }
 
 // Set daemon rpc client with context and 8 sec cancel
-func SetDaemonClient(addr string) (jsonrpc.RPCClient, context.Context, context.CancelFunc) {
-	if !strings.HasPrefix(addr, "http") {
-		addr = "http://" + addr
+func SetDaemonClient(endpoint string) (jsonrpc.RPCClient, context.Context, context.CancelFunc) {
+	if !strings.HasPrefix(endpoint, "http") {
+		endpoint = "http://" + endpoint
 	}
 
-	client := jsonrpc.NewClient(addr + "/json_rpc")
+	client := jsonrpc.NewClient(endpoint + "/json_rpc")
 	ctx, cancel := context.WithTimeout(context.Background(), 8*time.Second)
 
 	return client, ctx, cancel
 }
 
 // Ping Dero blockchain for connection
-func Ping() {
-	client, ctx, cancel := SetDaemonClient(Daemon.Rpc)
+func (d *daemon) Ping() {
+	client, ctx, cancel := SetDaemonClient(d.Endpoint)
 	defer cancel()
 
 	var result string
 	if err := client.CallFor(ctx, &result, "DERO.Ping"); err != nil {
-		Daemon.Connected(false)
+		d.Connected(false)
 		return
 	}
 
 	if result == "Pong " {
-		Daemon.Connected(true)
+		d.Connected(true)
 	} else {
-		Daemon.Connected(false)
+		d.Connected(false)
 	}
 }
 
-// Get a daemons height
-func DaemonHeight(tag, ep string) uint64 {
-	client, ctx, cancel := SetDaemonClient(ep)
+// Get a daemon's height from endpoint
+func GetDaemonHeight(tag, endpoint string) uint64 {
+	client, ctx, cancel := SetDaemonClient(endpoint)
 	defer cancel()
 
 	var result *rpc.GetHeight_Result
@@ -121,27 +121,36 @@ func DaemonHeight(tag, ep string) uint64 {
 	return result.Height
 }
 
-// Get a daemons version
-func DaemonVersion() (version string) {
-	client, ctx, cancel := SetDaemonClient(Daemon.Rpc)
+// Get Daemon height
+func (d *daemon) GetHeight(tag string) uint64 {
+	height := GetDaemonHeight(tag, d.Endpoint)
+
+	d.Height = height
+
+	return height
+}
+
+// Get Daemon version
+func (d *daemon) GetVersion() (version string) {
+	client, ctx, cancel := SetDaemonClient(d.Endpoint)
 	defer cancel()
 
 	var result *rpc.GetInfo_Result
 	if err := client.CallFor(ctx, &result, "DERO.GetInfo"); err != nil {
-		logger.Errorf("[DaemonVersion] %s\n", err)
+		logger.Errorf("[Daemon.GetVersion] %s\n", err)
 		return
 	}
 
 	return result.Version
 }
 
-// Gets daemon info
-func GetDaemonInfo() (result *rpc.GetInfo_Result) {
-	client, ctx, cancel := SetDaemonClient(Daemon.Rpc)
+// Gets Daemon info
+func (d *daemon) GetInfo() (result *rpc.GetInfo_Result) {
+	client, ctx, cancel := SetDaemonClient(d.Endpoint)
 	defer cancel()
 
 	if err := client.CallFor(ctx, &result, "DERO.GetInfo"); err != nil {
-		logger.Errorf("[GetDaemonInfo] %s\n", err)
+		logger.Errorf("[Daemon.GetInfo] %s\n", err)
 		return
 	}
 
@@ -153,7 +162,7 @@ func GetDaemonInfo() (result *rpc.GetInfo_Result) {
 //   - Pass args and transfers for call
 //   - If result is > max + 50, then returns max + 50
 func GasEstimate(scid, tag string, args rpc.Arguments, t []rpc.Transfer, max uint64) uint64 {
-	client, ctx, cancel := SetDaemonClient(Daemon.Rpc)
+	client, ctx, cancel := SetDaemonClient(Daemon.Endpoint)
 	defer cancel()
 
 	var result *rpc.GasEstimate_Result
@@ -183,9 +192,9 @@ func GasEstimate(scid, tag string, args rpc.Arguments, t []rpc.Transfer, max uin
 	return max + 50
 }
 
-// Get single string key result from SCID with daemon input
-func GetStringKey(scid, key, daemon string) interface{} {
-	client, ctx, cancel := SetDaemonClient(daemon)
+// Get single string key result from SCID from daemon endpoint
+func GetStringKey(scid, key, endpoint string) interface{} {
+	client, ctx, cancel := SetDaemonClient(endpoint)
 	defer cancel()
 
 	var result *rpc.GetSC_Result
@@ -203,9 +212,9 @@ func GetStringKey(scid, key, daemon string) interface{} {
 	return result.VariableStringKeys[key]
 }
 
-// Get single uint64 key result from SCID with daemon input
-func GetUintKey(scid, key, daemon string) interface{} {
-	client, ctx, cancel := SetDaemonClient(daemon)
+// Get single uint64 key result from SCID from daemon endpoint
+func GetUintKey(scid, key, endpoint string) interface{} {
+	client, ctx, cancel := SetDaemonClient(endpoint)
 	defer cancel()
 
 	var result *rpc.GetSC_Result
@@ -231,7 +240,7 @@ func GetDapps() (dApps []string) {
 	if !Daemon.IsConnected() {
 		daemon = DAEMON_RPC_REMOTE5
 	} else {
-		daemon = Daemon.Rpc
+		daemon = Daemon.Endpoint
 	}
 
 	if stored, ok := GetStringKey(RatingSCID, "dApps", daemon).(string); ok {
@@ -249,61 +258,41 @@ func GetDapps() (dApps []string) {
 // Get platform fees from on chain store
 //   - Overwrites default fee values with current stored values
 func GetFees() {
-	if fee, ok := GetStringKey(RatingSCID, "ContractUnlock", Daemon.Rpc).(float64); ok {
+	if fee, ok := GetStringKey(RatingSCID, "ContractUnlock", Daemon.Endpoint).(float64); ok {
 		UnlockFee = uint64(fee)
 	} else {
 		logger.Errorln("[GetFees] Could not get current contract unlock fee, using default")
 	}
 
-	if fee, ok := GetStringKey(RatingSCID, "ListingFee", Daemon.Rpc).(float64); ok {
+	if fee, ok := GetStringKey(RatingSCID, "ListingFee", Daemon.Endpoint).(float64); ok {
 		ListingFee = uint64(fee)
 	} else {
 		logger.Errorln("[GetFees] Could not get current listing fee, using default")
 	}
 
-	if fee, ok := GetStringKey(TarotSCID, "Fee", Daemon.Rpc).(float64); ok {
+	if fee, ok := GetStringKey(TarotSCID, "Fee", Daemon.Endpoint).(float64); ok {
 		IlumaFee = uint64(fee)
 	} else {
 		logger.Errorln("[GetFees] Could not get current Iluma fee, using default")
 	}
 
-	if fee, ok := GetStringKey(RatingSCID, "LowLimitFee", Daemon.Rpc).(float64); ok {
+	if fee, ok := GetStringKey(RatingSCID, "LowLimitFee", Daemon.Endpoint).(float64); ok {
 		LowLimitFee = uint64(fee)
 	} else {
 		logger.Errorln("[GetFees] Could not get current low fee limit, using default")
 	}
 
-	if fee, ok := GetStringKey(RatingSCID, "HighLimitFee", Daemon.Rpc).(float64); ok {
+	if fee, ok := GetStringKey(RatingSCID, "HighLimitFee", Daemon.Endpoint).(float64); ok {
 		HighLimitFee = uint64(fee)
 	} else {
 		logger.Errorln("[GetFees] Could not get current high fee limit, using default")
 	}
 }
 
-// Check Gnomon SC for stored contract owner
-func CheckForIndex(scid string) interface{} {
-	client, ctx, cancel := SetDaemonClient(Daemon.Rpc)
-	defer cancel()
-
-	var result *rpc.GetSC_Result
-	params := rpc.GetSC_Params{
-		SCID:      GnomonSCID,
-		Code:      false,
-		Variables: true,
-	}
-
-	if err := client.CallFor(ctx, &result, "DERO.GetSC", params); err != nil {
-		logger.Errorln("[CheckForIndex]", err)
-		return nil
-	}
-
-	return DeroAddressFromKey(result.VariableStringKeys[scid+"owner"])
-}
-
 // Get code of a SC
 func GetSCCode(scid string) string {
 	if Daemon.IsConnected() {
-		client, ctx, cancel := SetDaemonClient(Daemon.Rpc)
+		client, ctx, cancel := SetDaemonClient(Daemon.Endpoint)
 		defer cancel()
 
 		var result *rpc.GetSC_Result
@@ -325,7 +314,7 @@ func GetSCCode(scid string) string {
 
 // Get all asset SCIDs from collection
 func GetG45Collection(scid string) (scids []string) {
-	client, ctx, cancel := SetDaemonClient(Daemon.Rpc)
+	client, ctx, cancel := SetDaemonClient(Daemon.Endpoint)
 	defer cancel()
 
 	var result *rpc.GetSC_Result
@@ -366,9 +355,9 @@ func GetG45Collection(scid string) (scids []string) {
 	return
 }
 
-// Get single TX data with GetTransaction
-func GetDaemonTx(txid string) *rpc.Tx_Related_Info {
-	client, ctx, cancel := SetDaemonClient(Daemon.Rpc)
+// Get single TX data from Daemon
+func (d *daemon) GetTx(txid string) *rpc.Tx_Related_Info {
+	client, ctx, cancel := SetDaemonClient(d.Endpoint)
 	defer cancel()
 
 	var result *rpc.GetTransaction_Result
@@ -377,7 +366,7 @@ func GetDaemonTx(txid string) *rpc.Tx_Related_Info {
 	}
 
 	if err := client.CallFor(ctx, &result, "DERO.GetTransaction", params); err != nil {
-		logger.Errorln("[GetDaemonTx]", err)
+		logger.Errorln("[Daemon.GetTx]", err)
 		return nil
 	}
 
@@ -388,14 +377,14 @@ func GetDaemonTx(txid string) *rpc.Tx_Related_Info {
 	return nil
 }
 
-// Get daemon TX pool
-func GetDaemonTxPool() (result *rpc.GetTxPool_Result) {
-	client, ctx, cancel := SetDaemonClient(Daemon.Rpc)
+// Get Daemon TX pool
+func (d *daemon) GetTxPool() (result *rpc.GetTxPool_Result) {
+	client, ctx, cancel := SetDaemonClient(d.Endpoint)
 	defer cancel()
 
 	var params *rpc.GetTxPool_Params
 	if err := client.CallFor(ctx, &result, "DERO.GetTxPool", params); err != nil {
-		logger.Errorln("[GetDaemonTxPool]", err)
+		logger.Errorln("[Daemon.GetTxPool]", err)
 		return nil
 	}
 
@@ -404,7 +393,7 @@ func GetDaemonTxPool() (result *rpc.GetTxPool_Result) {
 
 // Get DERO address of given name
 func GetNameToAddress(name string) (address string) {
-	client, ctx, cancel := SetDaemonClient(Daemon.Rpc)
+	client, ctx, cancel := SetDaemonClient(Daemon.Endpoint)
 	defer cancel()
 
 	var result *rpc.NameToAddress_Result
@@ -422,7 +411,7 @@ func GetNameToAddress(name string) (address string) {
 
 // Verify TX signer with GetTransaction
 func VerifySigner(txid string) bool {
-	client, ctx, cancel := SetDaemonClient(Daemon.Rpc)
+	client, ctx, cancel := SetDaemonClient(Daemon.Endpoint)
 	defer cancel()
 
 	var result *rpc.GetTransaction_Result
@@ -439,8 +428,8 @@ func VerifySigner(txid string) bool {
 }
 
 // Get difficulty from a daemon
-func GetDifficulty(ep string) float64 {
-	client, ctx, cancel := SetDaemonClient(ep)
+func GetDifficulty(endpoint string) float64 {
+	client, ctx, cancel := SetDaemonClient(endpoint)
 	defer cancel()
 
 	var result *rpc.GetInfo_Result
@@ -453,8 +442,8 @@ func GetDifficulty(ep string) float64 {
 }
 
 // Get average block time from a daemon
-func GetBlockTime(ep string) float64 {
-	client, ctx, cancel := SetDaemonClient(ep)
+func GetBlockTime(endpoint string) float64 {
+	client, ctx, cancel := SetDaemonClient(endpoint)
 	defer cancel()
 
 	var result *rpc.GetInfo_Result

@@ -433,8 +433,8 @@ func (w *wallet) GetAllBalances() {
 func (w *wallet) Sync() {
 	if w.File.disk != nil {
 		w.Lock()
-		walletapi.Daemon_Endpoint_Active = Daemon.Rpc
-		if err := walletapi.Connect(Daemon.Rpc); err != nil {
+		walletapi.Daemon_Endpoint_Active = Daemon.Endpoint
+		if err := walletapi.Connect(Daemon.Endpoint); err != nil {
 			logger.Errorln("[Sync]", err)
 			w.Unlock()
 			w.Connected(false)

@@ -48,6 +48,10 @@ This file lists the changes to dReams repo with each version.
 * `rpc` removed unnecessary exported vars from wallet and created methods for File.disk
 * `rpc` balance map to map[string]*Balance
 * `rpc` SetDaemonClient() allows https endpoints
+* `rpc` Rename Daemon.Rpc to Daemon.Endpoint and maintain similar package naming
+* `rpc` Rename DaemonHeight => GetDaemonHeight
+* `rpc` Ping(), GetHeight(), GetVersion(), GetInfo(), GetTx(), GetTxPool() to daemon methods
+* `rpc` Remove CheckForIndex()
 * `menu` StartDreamsIndicators() removed in favor of StartIndicators for all apps
 * `menu` Theme moved to `dreams` package
 

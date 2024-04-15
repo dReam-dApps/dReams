@@ -74,10 +74,10 @@ func main() {
 			Theme:  dreams.Theme.Name,
 		}
 
-		if rpc.Daemon.Rpc == "" {
+		if rpc.Daemon.Endpoint == "" {
 			save.Daemon = config.Daemon
 		} else {
-			save.Daemon = []string{rpc.Daemon.Rpc}
+			save.Daemon = []string{rpc.Daemon.Endpoint}
 		}
 
 		menu.StoreSettings(save)
@@ -166,7 +166,7 @@ func main() {
 		for {
 			select {
 			case <-ticker.C:
-				rpc.Ping()
+				rpc.Daemon.Ping()
 				rpc.Wallet.Sync()
 
 				// Refresh Dero balance and Gnomon endpoint
