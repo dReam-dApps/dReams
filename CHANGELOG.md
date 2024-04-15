@@ -28,10 +28,11 @@ This file lists the changes to dReams repo with each version.
 * `gnomes` GetAssetInfo()
 * `dwidget` Float64() and Uint64() methods for AmountEntry
 * `dwidget` dstack file with UpdateText() and SetUpdate()
+* `bundle` astrolyte font 
 
 ### Changed
 
-* Fyne 2.4.4
+* Fyne 2.4.5
 * Gnomon 2.0.3-alpha.x
 * Baccarat 0.x.x
 * Holdero 0.x.x

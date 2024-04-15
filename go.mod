@@ -3,7 +3,7 @@ module github.com/dReam-dApps/dReams
 go 1.21.5
 
 require (
-	fyne.io/fyne/v2 v2.4.4-rc2.0.20240406182811-8c17ddaea67e
+	fyne.io/fyne/v2 v2.4.5
 	fyne.io/x/fyne v0.0.0-20240326131024-3ba9170cc3be
 	github.com/SixofClubsss/Baccarat v0.3.2-0.20240407220413-e24bbb735f5e
 	github.com/SixofClubsss/Duels v0.1.2-0.20240407220014-8d2cc3a51377
@@ -26,7 +26,6 @@ require (
 
 require (
 	fyne.io/systray v1.10.1-0.20231230205326-d160fd363db9 // indirect
-	github.com/BurntSushi/toml v1.3.2 // indirect
 	github.com/VictoriaMetrics/metrics v1.33.1 // indirect
 	github.com/caarlos0/env/v6 v6.10.1 // indirect
 	github.com/cenkalti/rpc2 v1.0.3 // indirect
@@ -45,11 +44,10 @@ require (
 	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20240306074159-ea2d69986ecb // indirect
 	github.com/go-logr/logr v1.2.3 // indirect
 	github.com/go-logr/zapr v1.2.3 // indirect
-	github.com/go-text/render v0.0.0-20230619120952-35bccb6164b8 // indirect
+	github.com/go-text/render v0.1.0 // indirect
 	github.com/go-text/typesetting v0.1.0 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/gopherjs/gopherjs v1.17.2 // indirect
-	github.com/jeandeaual/go-locale v0.0.0-20240204043739-672d8d016d9a // indirect
 	github.com/jsummers/gobmp v0.0.0-20151104160322-e2ba15ffa76e // indirect
 	github.com/klauspost/compress v1.15.13 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.6 // indirect
@@ -59,10 +57,8 @@ require (
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
 	github.com/minio/sha256-simd v1.0.0 // indirect
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646 // indirect
-	github.com/nicksnyder/go-i18n/v2 v2.4.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
-	github.com/rymdport/portal v0.2.2 // indirect
 	github.com/satori/go.uuid v1.2.0 // indirect
 	github.com/segmentio/fasthash v1.0.3 // indirect
 	github.com/srwiley/oksvg v0.0.0-20221011165216-be6e8873101c // indirect
@@ -85,5 +81,6 @@ require (
 	golang.org/x/xerrors v0.0.0-20231012003039-104605ab7028 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
+	honnef.co/go/js/dom v0.0.0-20210725211120-f030747120f2 // indirect
 	nhooyr.io/websocket v1.8.7 // indirect
 )
