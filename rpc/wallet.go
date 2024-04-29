@@ -2,8 +2,10 @@ package rpc
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -23,6 +25,7 @@ type wallet struct {
 	Address  string
 	balances map[string]*Balance
 	height   uint64
+	updated  uint64
 	Connect  bool
 	muC      sync.RWMutex
 	sync.RWMutex
@@ -128,7 +131,7 @@ func (w *wallet) CallFor(out interface{}, method string, params ...interface{}) 
 	} else if w.WS.conn != nil {
 		for w.WS.IsRequesting() {
 			time.Sleep(500 * time.Millisecond)
-			logger.Warnln("[XSWD] Request sleep...")
+			logger.Debugln("[XSWD] Request sleep...")
 		}
 
 		if err = w.WS.CallFor(&out, method, jsonrpc.Params(params...)); err != nil {
@@ -189,7 +192,7 @@ func (w *wallet) CallFor(out interface{}, method string, params ...interface{}) 
 				result.Balance = locked
 				result.Unlocked_Balance = unlocked
 			} else {
-				err = fmt.Errorf("expected out to be *rpc.GetBalance_Params, got %T", params[0])
+				err = fmt.Errorf("expected params to be *rpc.GetBalance_Params, got %T", params[0])
 			}
 		case "GetTransfers":
 			result, ok := out.(*rpc.Get_Transfers_Result)
@@ -204,7 +207,7 @@ func (w *wallet) CallFor(out interface{}, method string, params ...interface{}) 
 			if p, ok := params[0].(*rpc.Get_Transfers_Params); ok {
 				result.Entries = w.File.disk.Show_Transfers(p.SCID, p.Coinbase, p.In, p.Out, p.Min_Height, p.Max_Height, p.Sender, p.Receiver, p.DestinationPort, p.SourcePort)
 			} else {
-				err = fmt.Errorf("expected out to be *rpc.Get_Transfers_Params, got %T", params[0])
+				err = fmt.Errorf("expected params to be *rpc.Get_Transfers_Params, got %T", params[0])
 			}
 		case "GetTransferbyTXID":
 			result, ok := out.(*rpc.Get_Transfer_By_TXID_Result)
@@ -221,7 +224,7 @@ func (w *wallet) CallFor(out interface{}, method string, params ...interface{}) 
 				result.SCID = scid
 				result.Entry = entry
 			} else {
-				err = fmt.Errorf("expected out to be *rpc.Get_Transfer_By_TXID_Params, got %T", params[0])
+				err = fmt.Errorf("expected params to be *rpc.Get_Transfer_By_TXID_Params, got %T", params[0])
 			}
 		case "GetAddress":
 			result, ok := out.(*rpc.GetAddress_Result)
@@ -230,7 +233,6 @@ func (w *wallet) CallFor(out interface{}, method string, params ...interface{}) 
 			}
 
 			result.Address = w.File.disk.GetAddress().String()
-
 		case "GetHeight":
 			result, ok := out.(*rpc.GetHeight_Result)
 			if !ok {
@@ -238,9 +240,30 @@ func (w *wallet) CallFor(out interface{}, method string, params ...interface{}) 
 			}
 
 			result.Height = w.File.disk.Get_Height()
-		// case "Echo":
-		// 	out = "Wallet " + strings.Join(params[0].([]string), " ")
+		case "Echo":
+			result, ok := out.(*string)
+			if !ok {
+				return fmt.Errorf("expected out to be *string, got %T", out)
+			}
 
+			if params == nil {
+				return fmt.Errorf("params can not be nil for %s", method)
+			}
+
+			if p, ok := params[0].([]string); ok {
+				echo := "WALLET " + strings.Join(p, " ")
+				js, err := json.Marshal(echo)
+				if err != nil {
+					return fmt.Errorf("marshal: %s", err)
+				}
+
+				err = json.Unmarshal(js, &result)
+				if err != nil {
+					return fmt.Errorf("unmarshal: %s", err)
+				}
+			} else {
+				err = fmt.Errorf("expected params to be []string, got %T", params[0])
+			}
 		default:
 			err = fmt.Errorf("method %s is not available", method)
 		}
@@ -429,26 +452,14 @@ func (w *wallet) GetAllBalances() {
 	}
 }
 
-// Sync calls wallet.Echo, wallet.GetHeight and wallet.GetAllBalances if wallet is connected
+// Sync calls wallet.Echo and wallet.GetHeight if wallet is connected, wallet.GetAllBalances will be called every block height
 func (w *wallet) Sync() {
-	if w.File.disk != nil {
-		w.Lock()
-		walletapi.Daemon_Endpoint_Active = Daemon.Endpoint
-		if err := walletapi.Connect(Daemon.Endpoint); err != nil {
-			logger.Errorln("[Sync]", err)
-			w.Unlock()
-			w.Connected(false)
-			return
-		}
-
-		w.Unlock()
-		w.Connected(true)
-	} else {
-		w.Echo()
-	}
-
+	w.Echo()
 	w.GetHeight()
-	w.GetAllBalances()
+	if w.height > w.updated {
+		w.GetAllBalances()
+		w.updated = w.height
+	}
 }
 
 func (w *wallet) OpenWalletFile(tag, path, password string) (err error) {
@@ -459,8 +470,13 @@ func (w *wallet) OpenWalletFile(tag, path, password string) (err error) {
 
 	w.File.disk.SetNetwork(true)
 	w.File.disk.SetOnlineMode()
+	walletapi.Daemon_Endpoint_Active = Daemon.Endpoint
+	err = walletapi.Connect(Daemon.Endpoint)
+	if err != nil {
+		return
+	}
+
 	GetAddress(tag)
-	w.Connected(true)
 
 	return
 }

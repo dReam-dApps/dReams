@@ -5,6 +5,7 @@ This file lists the changes to dReams repo with each version.
 ## 0.12.0 - In Progress
 
 ### Added
+
 * Implement platform wide encrypted account stores for local data
 * XSWD and DERO connections implemented into existing APIs and `dwidgets`
 * dDice 0.x.x
@@ -54,6 +55,8 @@ This file lists the changes to dReams repo with each version.
 * `rpc` Remove CheckForIndex()
 * `menu` StartDreamsIndicators() removed in favor of StartIndicators for all apps
 * `menu` Theme moved to `dreams` package
+* `menu` Rename DefaultThemeResource() to DefaultBackgroundResource()
+* `menu` ReadDreamsConfig() and WriteDreamsConfig() deprecated, use StoreSettings(), GetSettings()
 
 ### Fixed
 

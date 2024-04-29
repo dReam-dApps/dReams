@@ -30,8 +30,7 @@ func main() {
 		"",
 		bundle.DeroTheme(bundle.AppColor),
 		bundle.ResourceDReamsIconPng,
-		menu.DefaultBackgroundResource(),
-		true)
+		menu.DefaultBackgroundResource())
 
 	dReams.AddAccountHandlers(accountHandlers())
 	dReams.Window.SetContent(splashScreen())

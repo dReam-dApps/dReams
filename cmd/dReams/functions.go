@@ -59,7 +59,7 @@ Options:
 func flags() {
 	arguments, err := docopt.ParseArgs(command_line, nil, rpc.Version().String())
 	if err != nil {
-		logger.Fatalf("Error while parsing arguments: %s\n", err)
+		logger.Fatalf("[dReams] Error while parsing arguments: %s\n", err)
 	}
 
 	if dReams.OS() == "linux" {
@@ -133,18 +133,6 @@ func saveSettings() dreams.SaveData {
 		Assets:  menu.Assets.Enabled,
 		Dapps:   menu.Control.Dapps,
 	}
-}
-
-// Add account data to dreams.AccountEncrypted for account storage
-func saveAccount() *dreams.AccountEncrypted {
-	new := &dreams.AccountData{
-		Dapp: map[string]interface{}{
-			"holdero":    holdero.GetAccount(),
-			"prediction": prediction.GetAccount(),
-		},
-	}
-
-	return dreams.AddAccountData(new, "all")
 }
 
 // // Make system tray with opts

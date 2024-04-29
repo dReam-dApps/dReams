@@ -141,15 +141,14 @@ func SetWalletClient(addr, pass string) (jsonrpc.RPCClient, context.Context, con
 // Echo Dero wallet for connection
 func EchoWallet() (connected bool) {
 	var result string
-	params := []string{"Hello", "World", "!"}
+	params := []string{"Hello", "dReams", "!"}
 
 	if err := Wallet.CallFor(&result, "Echo", params); err != nil {
 		PrintError("[EchoWallet] %s", err)
 		return
 	}
 
-	return result == "WALLET Hello World !"
-
+	return result == "WALLET Hello dReams !"
 }
 
 // Get a wallets Dero address
@@ -165,7 +164,7 @@ func GetAddress(tag string) {
 
 	if _, err := globals.ParseValidateAddress(result.Address); err == nil {
 		Wallet.Connected(true)
-		PrintLog("[%s] Wallet Connected: %s", tag, result.Address)
+		PrintLog("[%s] Wallet connected: %s", tag, result.Address)
 		Wallet.Address = result.Address
 		id := []byte(result.Address)
 		hash := sha256.Sum256(id)

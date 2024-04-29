@@ -26,17 +26,15 @@ type XSWDserver struct {
 }
 
 // Create XSWD application data for DERO connections
-//   - 'allow' true will request AlwaysAllow permissions upon connection for the methods used in rpc package
-func NewXSWDApplicationData(name, description, URL string, allow bool) *xswd.ApplicationData {
-	id := HashToHexSHA256(name)
-
+//   - A valid signature will request AlwaysAllow permissions upon connection for the methods used in rpc package
+func NewXSWDApplicationData(id, name, description, URL string, signature []byte) *xswd.ApplicationData {
 	// Add prefix for desktop apps
 	if !strings.HasPrefix(URL, "http") {
 		URL = "https://" + URL
 	}
 
 	permissions := make(map[string]xswd.Permission)
-	if allow {
+	if signature != nil {
 		// Methods used in this package
 		methods := []string{
 			"Echo",
@@ -47,7 +45,6 @@ func NewXSWDApplicationData(name, description, URL string, allow bool) *xswd.App
 			"GetTransferbyTXID",
 			"GetHeight",
 			"transfer",
-			"Subscribe",
 		}
 
 		permissions = NewXSWDPermissions(methods)
@@ -58,9 +55,8 @@ func NewXSWDApplicationData(name, description, URL string, allow bool) *xswd.App
 		Name:        name,
 		Description: description,
 		Url:         URL,
-		OnClose:     make(chan bool),
 		Permissions: permissions,
-		Signature:   []byte(id),
+		Signature:   signature,
 	}
 }
 
@@ -74,7 +70,7 @@ func NewXSWDPermissions(methods []string) map[string]xswd.Permission {
 		}
 
 		// xswd methods
-		if m == "Subscribe" || m == "Unsubscribe" || m == "HasMethod" {
+		if m == "Subscribe" || m == "Unsubscribe" || m == "HasMethod" || m == "SignData" || m == "CheckSignature" {
 			exists = append(exists, m)
 		}
 	}
@@ -101,7 +97,7 @@ func CreateSocket(port string) (con *websocket.Conn, err error) {
 }
 
 // Read message response and unmarshal toType
-func (ws *XSWDserver) readAndUnmarshalWallet(toType interface{}) (err error) {
+func (ws *XSWDserver) readAndUnmarshal(toType interface{}) (err error) {
 	var message []byte
 	_, message, err = ws.conn.ReadMessage()
 	if err != nil {
@@ -188,7 +184,7 @@ func (ws *XSWDserver) Init(app *xswd.ApplicationData) (connected bool) {
 			return true
 		}
 
-		logger.Println("[XSWD] Wallet denied connection request")
+		logger.Println("[XSWD]", m.Message)
 		ws.conn = nil
 	} else {
 		ws.conn = nil
@@ -255,5 +251,5 @@ func (ws *XSWDserver) CallFor(out interface{}, method string, params interface{}
 		return
 	}
 
-	return ws.readAndUnmarshalWallet(&out)
+	return ws.readAndUnmarshal(&out)
 }

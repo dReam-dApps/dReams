@@ -500,12 +500,18 @@ func PlaceAssets(tag string, profile fyne.CanvasObject, rescan func(), icon fyne
 				if b {
 					err := dreams.DeleteShard()
 					if err != nil {
-						dialog.NewInformation("Profile", fmt.Sprintf("Delete datashard %s", err), d.Window).Show()
+						dialog.NewInformation("Profile", fmt.Sprintf("Delete datashard: %s", err), d.Window).Show()
 						return
 					}
 
-					dialog.NewInformation("Profile", "Datashard Deleted", d.Window).Show()
-					rpc.PrintLog("[Profile] Datashard deleted")
+					rpc.PrintLog("[Profile] Datashard deleted: %s", rpc.Wallet.Address)
+					info := dialog.NewInformation("Profile", "Datashard deleted", d.Window)
+					info.Show()
+					go func() {
+						time.Sleep(2 * time.Second)
+						info.Hide()
+						info = nil
+					}()
 				}
 			}, d.Window).Show()
 		}

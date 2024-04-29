@@ -54,8 +54,7 @@ func main() {
 		"Non-Fungible Asset Market",
 		bundle.DeroTheme(config.Skin),
 		bundle.ResourceMarketIconPng,
-		menu.DefaultBackgroundResource(),
-		true)
+		menu.DefaultBackgroundResource())
 
 	// Enable calling RunNFAMarket
 	enabled := menu.EnabledDappCount()

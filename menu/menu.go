@@ -136,7 +136,7 @@ func StoreSettings(store dreams.SaveData) {
 func GetSettings(tag string) (saved dreams.SaveData) {
 	err := dreams.GetValue("settings", "config", &saved)
 	if err != nil {
-		logger.Errorf("[%s] %s\n", tag, err)
+		logger.Debugf("[%s] %s\n", tag, err)
 	}
 
 	return

@@ -3,6 +3,8 @@ package dreams
 import (
 	"archive/zip"
 	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"image"
@@ -21,6 +23,7 @@ import (
 	"github.com/civilware/Gnomon/structures"
 	"github.com/dReam-dApps/dReams/rpc"
 	"github.com/deroproject/derohe/globals"
+	"github.com/deroproject/derohe/walletapi"
 	"github.com/deroproject/derohe/walletapi/xswd"
 	"github.com/sirupsen/logrus"
 
@@ -116,16 +119,42 @@ func (c *count) active() int {
 	return c.i
 }
 
+// Check sha256sum of application when creating NewFyneApp()
+func checkSum() (name, hash string, err error) {
+	path, err := os.Executable()
+	if err != nil {
+		logger.Fatalln("[checkSum] Could not find:", err)
+	}
+
+	var bytes []byte
+	bytes, err = os.ReadFile(path)
+	if err != nil {
+		logger.Fatalln("[checkSum] Could not read:", err)
+	}
+
+	hasher := sha256.New()
+	if _, err = hasher.Write(bytes); err != nil {
+		logger.Fatalln("[checkSum] Could not write:", err)
+	}
+
+	_, exe := filepath.Split(path)
+
+	name = exe
+	hash = hex.EncodeToString(hasher.Sum(nil))
+
+	return
+}
+
 // Creates a Fyne app returned as AppObject. Window default size is MIN_WIDTH x MIN_HEIGHT, centered and set as master.
-//   - id, name, description strings for App
+//   - URL, name, description strings for App
 //   - fyne.Theme and fyne.Resources for icon and background theme images
-//   - permissions true will request AlwaysAllow  XSWD permissions upon connection for the methods used in rpc package
-func NewFyneApp(id, name, description string, skin fyne.Theme, icon, theme fyne.Resource, permissions bool) AppObject {
-	a := app.NewWithID(id)
+//   - A DERO signature is required for permission request to be accepted and if submitted must be valid or connection request will be denied
+func NewFyneApp(URL, name, description string, skin fyne.Theme, icon, theme fyne.Resource) AppObject {
+	a := app.NewWithID(URL)
 	a.Settings().SetTheme(skin)
 
 	app.SetMetadata(fyne.AppMetadata{
-		ID:   id,
+		ID:   URL,
 		Name: name,
 		Icon: icon,
 	})
@@ -139,14 +168,35 @@ func NewFyneApp(id, name, description string, skin fyne.Theme, icon, theme fyne.
 	Theme.Img = *canvas.NewImageFromResource(theme)
 
 	if description == "" {
-		description = id
+		description = URL
+	}
+
+	// Get application executable name and checksum
+	exc, hash, _ := checkSum()
+	logger.Printf("[%s] %s %s\n", name, exc, hash)
+
+	// Signature is only required if xswd permissions are to be requested
+	signature, message, err := LoadSignature(exc)
+	if err == nil {
+		m := strings.TrimSpace(string(message))
+		logger.Printf("[%s] Signature found\n", name)
+		if m != hash {
+			logger.Warnf("[%s] Signature does not match hash: %s\n", name, m)
+			signature = nil
+		} else {
+			logger.Printf("[%s] Signature valid\n", name)
+		}
+	} else {
+		logger.Debugf("[%s] Signature error: %s\n", name, err)
+		signature = nil
 	}
 
 	return AppObject{
 		App:        a,
 		Window:     w,
 		Background: container.NewStack(&Theme.Img),
-		XSWD:       rpc.NewXSWDApplicationData(name, description, id, permissions),
+		// See rpc.NewXSWDApplicationData for the requested permissions upon connection with valid signature
+		XSWD: rpc.NewXSWDApplicationData(hash, name, description, URL, signature),
 	}
 }
 
@@ -344,7 +394,7 @@ func FileExists(path, tag string) bool {
 	return false
 }
 
-// Get dero .db file names from wallet directory
+// Get DERO .db file names from wallet directory
 func GetDeroAccounts() (prefix string, names []string) {
 	prefix = "mainnet"
 	if !globals.IsMainnet() {
@@ -361,6 +411,21 @@ func GetDeroAccounts() (prefix string, names []string) {
 
 	for _, f := range files {
 		names = append(names, strings.TrimPrefix(f, path))
+	}
+
+	return
+}
+
+// Load a DERO signed message from file and check signature
+func LoadSignature(name string) (signature, message []byte, err error) {
+	signature, err = os.ReadFile(filepath.Join(GetDir(), name+".signed"))
+	if err != nil {
+		return
+	}
+
+	_, message, err = new(walletapi.Wallet_Memory).CheckSignature(signature)
+	if err != nil {
+		return
 	}
 
 	return

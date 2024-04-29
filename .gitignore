@@ -1,10 +1,5 @@
-gnomondb\\*
 gnomondb*
 config*
-stats.json
-config.json
-.key
-NFA-Creation*
 creation*
 build*
 mainnet*
