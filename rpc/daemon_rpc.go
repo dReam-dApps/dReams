@@ -166,8 +166,8 @@ func GasEstimate(scid, tag string, args rpc.Arguments, t []rpc.Transfer, max uin
 	defer cancel()
 
 	var result *rpc.GasEstimate_Result
-	arg1 := rpc.Argument{Name: "SC_ACTION", DataType: "U", Value: 0}
-	arg2 := rpc.Argument{Name: "SC_ID", DataType: "H", Value: scid}
+	arg1 := rpc.Argument{Name: rpc.SCACTION, DataType: rpc.DataUint64, Value: 0}
+	arg2 := rpc.Argument{Name: rpc.SCID, DataType: rpc.DataHash, Value: scid}
 	args = append(args, arg1, arg2)
 	params := rpc.GasEstimate_Params{
 		Transfers: t,
@@ -190,6 +190,55 @@ func GasEstimate(scid, tag string, args rpc.Arguments, t []rpc.Transfer, max uin
 	}
 
 	return max + 50
+}
+
+// SC install gas estimate
+//   - tag for log print
+//   - Pass code, ringsize and transfers for install
+//   - Max fee is 30050 atomic units
+func GasEstimateInstall(tag, code string, ringsize uint64, t []rpc.Transfer) uint64 {
+	client, ctx, cancel := SetDaemonClient(Daemon.Endpoint)
+	defer cancel()
+
+	var args rpc.Arguments
+	if code != "" {
+		args = append(args, rpc.Argument{Name: rpc.SCACTION, DataType: rpc.DataUint64, Value: uint64(rpc.SC_INSTALL)})
+		args = append(args, rpc.Argument{Name: rpc.SCCODE, DataType: rpc.DataString, Value: code})
+	} else {
+		logger.Errorf("%s %s\n", tag, fmt.Errorf("no SC_CODE to estimate fees"))
+		return 0
+	}
+
+	var result *rpc.GasEstimate_Result
+	params := rpc.GasEstimate_Params{
+		Transfers: t,
+		SC_Code:   code,
+		SC_Value:  0,
+		SC_RPC:    args,
+	}
+
+	if ringsize <= 2 {
+		params.Ringsize = 2
+		params.Signer = Wallet.Address
+	}
+
+	if err := client.CallFor(ctx, &result, "DERO.GetGasEstimate", params); err != nil {
+		logger.Errorf("%s %s\n", tag, err)
+		return 0
+	}
+
+	fee := uint64(0)
+	max := uint64(30000)
+
+	if result.GasStorage < max {
+		fee = result.GasStorage + 50
+	} else {
+		fee = max + 50
+	}
+
+	logger.Println(tag+" Install Fee:", fee)
+
+	return fee
 }
 
 // Get single string key result from SCID from daemon endpoint

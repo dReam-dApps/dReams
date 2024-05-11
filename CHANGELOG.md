@@ -24,6 +24,7 @@ This file lists the changes to dReams repo with each version.
 * `rpc` GetNameToAddress() and sending messages/assets to name
 * `rpc` HashToHexSHA256()
 * `rpc` GetDaemonInfo()
+* `rpc` GasEstimateInstall()
 * `menu` utility var to assetObjects, IsDreamsNFACreator() also returns utility
 * `gnomes` GetAllSCIDInvokeDetailsByEntrypoint()
 * `gnomes` GetAssetInfo()

@@ -646,6 +646,10 @@ func UploadNFAContract(code string) (tx string) {
 		Ringsize:  2,
 	}
 
+	if fees := GasEstimateInstall("UploadNFAContract", code, 2, params.Transfers); fees != 0 {
+		params.Fees = fees
+	}
+
 	if err := Wallet.CallFor(&txid, "transfer", params); err != nil {
 		PrintError("[UploadNFAContract] %s", err)
 		return
