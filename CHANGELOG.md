@@ -27,6 +27,7 @@ This file lists the changes to dReams repo with each version.
 * `menu` utility var to assetObjects, IsDreamsNFACreator() also returns utility
 * `gnomes` GetAllSCIDInvokeDetailsByEntrypoint()
 * `gnomes` GetAssetInfo()
+* `gnomes` GetLiveSCVariables() and StoreLiveSCIDVariableDetails()
 * `dwidget` Float64() and Uint64() methods for AmountEntry
 * `dwidget` dstack file with UpdateText() and SetUpdate()
 * `bundle` astrolyte font 

@@ -12,6 +12,7 @@ import (
 	"github.com/civilware/Gnomon/structures"
 	"github.com/dReam-dApps/dReams/dwidget"
 	"github.com/dReam-dApps/dReams/rpc"
+	"github.com/deroproject/graviton"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -80,10 +81,12 @@ type Gnomes interface {
 	GetAllOwnersAndSCIDs() map[string]string
 	GetSCIDValuesByKey(scid string, key interface{}) (valuesstring []string, valuesuint64 []uint64)
 	GetSCIDKeysByValue(scid string, key interface{}) (valuesstring []string, valuesuint64 []uint64)
+	GetLiveSCVariables(scid string) (variables []*structures.SCIDVariable, code string, balances map[string]uint64, err error)
 	GetAllSCIDVariableDetails(scid string) []*structures.SCIDVariable
 	GetAllSCIDInvokeDetailsByEntrypoint(scid string, entrypoint string) []*structures.SCTXParse
 	AddSCIDToIndex(scids map[string]*structures.FastSyncImport) error
 	GetLiveSCIDValuesByKey(scid string, key interface{}) (valuesstring []string, valuesuint64 []uint64, err error)
+	StoreLiveSCIDVariableDetails(scid string) (err error)
 	ControlPanel(w fyne.Window) *fyne.Container
 }
 
@@ -424,6 +427,11 @@ func (g *Gnomon) GetSCIDKeysByValue(scid string, key interface{}) (valuesstring 
 	}
 }
 
+// Method of Gnomon Indexer.RPC.GetSCVariables() to get current SC vars
+func (g *Gnomon) GetLiveSCVariables(scid string) (variables []*structures.SCIDVariable, code string, balances map[string]uint64, err error) {
+	return g.Indexer.RPC.GetSCVariables(scid, g.Indexer.ChainHeight, nil, nil, nil, false)
+}
+
 // Method of Gnomon GetAllSCIDVariableDetails() where DB type is defined by Indexer.DBType
 //   - Default is boltdb
 func (g *Gnomon) GetAllSCIDVariableDetails(scid string) []*structures.SCIDVariable {
@@ -459,6 +467,54 @@ func (g *Gnomon) AddSCIDToIndex(scids map[string]*structures.FastSyncImport) err
 func (g *Gnomon) GetLiveSCIDValuesByKey(scid string, key interface{}) (valuesstring []string, valuesuint64 []uint64, err error) {
 	var v []*structures.SCIDVariable
 	return g.Indexer.GetSCIDValuesByKey(v, scid, key, g.Indexer.ChainHeight)
+}
+
+// Method extending GetLiveSCVariables to include Gnomon StoreSCIDVariableDetails where DB type is defined by Indexer.DBType
+func (g *Gnomon) StoreLiveSCIDVariableDetails(scid string) (err error) {
+	var variables []*structures.SCIDVariable
+	variables, _, _, err = g.GetLiveSCVariables(scid)
+	if err != nil {
+		return
+	}
+
+	switch g.Indexer.DBType {
+	case "gravdb":
+		var tree *graviton.Tree
+		var trees []*graviton.Tree
+		tree, _, err = g.Indexer.GravDBBackend.StoreSCIDVariableDetails(scid, variables, g.Indexer.ChainHeight, true)
+		if err != nil {
+			return
+		}
+
+		trees = append(trees, tree)
+
+		tree, _, err = g.Indexer.GravDBBackend.StoreSCIDInteractionHeight(scid, g.Indexer.ChainHeight, true)
+		if err == nil {
+			trees = append(trees, tree)
+		}
+
+		_, err = g.Indexer.GravDBBackend.CommitTrees(trees)
+
+		return
+	case "boltdb":
+		_, err = g.Indexer.BBSBackend.StoreSCIDVariableDetails(scid, variables, g.Indexer.ChainHeight)
+		if err != nil {
+			return
+		}
+
+		_, err = g.Indexer.BBSBackend.StoreSCIDInteractionHeight(scid, g.Indexer.ChainHeight)
+
+		return
+	default:
+		_, err = g.Indexer.BBSBackend.StoreSCIDVariableDetails(scid, variables, g.Indexer.ChainHeight)
+		if err != nil {
+			return
+		}
+
+		_, err = g.Indexer.BBSBackend.StoreSCIDInteractionHeight(scid, g.Indexer.ChainHeight)
+
+		return
+	}
 }
 
 // UI control panel to set Gnomon vars
