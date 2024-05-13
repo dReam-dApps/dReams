@@ -40,10 +40,9 @@ type Disk struct {
 }
 
 type Balance struct {
-	Decimal int    `json:"decimal"`
-	SCID    string `json:"scid"`
-	atomic  uint64
-	format  string
+	SCID   string `json:"scid"`
+	atomic uint64
+	format string
 }
 
 var Wallet wallet
@@ -178,7 +177,8 @@ func (w *wallet) CallFor(out interface{}, method string, params ...interface{}) 
 			}
 
 			if params == nil {
-				return fmt.Errorf("params can not be nil for %s", method)
+				result.Unlocked_Balance, result.Balance = w.File.disk.Get_Balance()
+				return
 			}
 
 			if p, ok := params[0].(*rpc.GetBalance_Params); ok {
@@ -292,9 +292,9 @@ func (w *wallet) GetHeight() {
 func (w *wallet) SetDefaultTokens() {
 	w.Lock()
 	w.balances = make(map[string]*Balance)
-	w.balances["DERO"] = &Balance{Decimal: 5}
-	w.balances["dReams"] = &Balance{Decimal: 5, SCID: DreamsSCID}
-	w.balances["HGC"] = &Balance{Decimal: 5, SCID: HgcSCID}
+	w.balances["DERO"] = &Balance{}
+	w.balances["dReams"] = &Balance{SCID: DreamsSCID}
+	w.balances["HGC"] = &Balance{SCID: HgcSCID}
 	w.Unlock()
 }
 
@@ -312,7 +312,11 @@ func (w *wallet) SetTokens(balances map[string]*Balance) {
 }
 
 // Add a token to wallet.balances map
-func (w *wallet) TokenAdd(name, scid string, decimal int) (err error) {
+func (w *wallet) TokenAdd(name, scid string) (err error) {
+	if strings.ToUpper(name) == "DERO" {
+		return
+	}
+
 	code := GetSCCode(scid)
 	if code == "" {
 		return fmt.Errorf("could not get scid")
@@ -324,11 +328,12 @@ func (w *wallet) TokenAdd(name, scid string, decimal int) (err error) {
 	}
 
 	w.Lock()
-	w.balances[name] = &Balance{
-		Decimal: decimal,
-		atomic:  0,
-		format:  "0",
-		SCID:    scid,
+	if _, ok := w.balances[name]; !ok {
+		w.balances[name] = &Balance{
+			atomic: 0,
+			format: "0",
+			SCID:   scid,
+		}
 	}
 	w.Unlock()
 	// TODO if w.File.disk
@@ -385,7 +390,7 @@ func (w *wallet) Balance(name string) (atomic uint64) {
 	return
 }
 
-// Returns balance string of name formatted to decimal place
+// Returns balance string of name formatted to standard DERO decimal place
 func (w *wallet) BalanceF(name string) (balance string) {
 	w.RLock()
 	defer w.RUnlock()
@@ -402,33 +407,10 @@ func (w *wallet) Height() uint64 {
 	return w.height
 }
 
-// Add a scid with balances data to wallet.balances map
-func (w *wallet) AddSCID(name, scid string, decimal int) {
-	w.Lock()
-	w.balances[name] = &Balance{Decimal: decimal, SCID: scid}
-	w.Unlock()
-}
-
 // Get DERO balance and all assets in wallet.Balances
 func (w *wallet) GetAllBalances() {
 	w.Lock()
 	defer w.Unlock()
-
-	if w.RPC.client == nil && w.WS.conn == nil && w.File.disk != nil {
-		for name := range w.balances {
-			var bal uint64
-			if name == "DERO" {
-				bal, _ = w.File.disk.Get_Balance()
-			} else {
-				bal, _ = w.File.disk.Get_Balance_scid(crypto.HashHexToHash(w.balances[name].SCID))
-			}
-
-			w.balances[name].atomic = bal
-			w.balances[name].format = FromAtomic(bal, w.balances[name].Decimal)
-		}
-
-		return
-	}
 
 	if w.IsConnected() {
 		for name := range w.balances {
@@ -440,7 +422,7 @@ func (w *wallet) GetAllBalances() {
 			}
 
 			w.balances[name].atomic = bal
-			w.balances[name].format = FromAtomic(bal, w.balances[name].Decimal)
+			w.balances[name].format = FromAtomic(bal, 5)
 		}
 
 		return
@@ -448,7 +430,7 @@ func (w *wallet) GetAllBalances() {
 
 	for name := range w.balances {
 		w.balances[name].atomic = 0
-		w.balances[name].format = FromAtomic(0, w.balances[name].Decimal)
+		w.balances[name].format = FromAtomic(0, 5)
 	}
 }
 
@@ -473,6 +455,8 @@ func (w *wallet) OpenWalletFile(tag, path, password string) (err error) {
 	walletapi.Daemon_Endpoint_Active = Daemon.Endpoint
 	err = walletapi.Connect(Daemon.Endpoint)
 	if err != nil {
+		w.File.disk.Close_Encrypted_Wallet()
+		w.File.disk = nil
 		return
 	}
 
