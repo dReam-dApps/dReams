@@ -68,6 +68,7 @@ var exit exiting
 
 // Initialize maps and defaults
 func init() {
+	Market.DreamsFilter = true // If dApp wants all NFA collections, set this to false on dApp side
 	dreams.Theme.Name = "Hex"
 	Assets.SCIDs = make(map[string]string)
 	Assets.Enabled = make(map[string]bool)

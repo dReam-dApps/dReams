@@ -1191,7 +1191,7 @@ func RunNFAMarket(d *dreams.AppObject, cont *fyne.Container) {
 				continue
 			}
 
-			if !synced && gnomes.Scan(d.IsConfiguring()) {
+			if !synced && gnomes.Scan() {
 				cont.Objects[2].(*fyne.Container).Hide()
 				reset := cont.Objects[1]
 				screen, bar := syncScreen()

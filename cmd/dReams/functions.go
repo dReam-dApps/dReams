@@ -97,11 +97,9 @@ func flags() {
 
 func init() {
 	dReams.SetOS()
-	gnomes.InitLogrusLog(logrus.InfoLevel)
+
 	saved := menu.GetSettings("dReams")
 	menu.SetSettings(saved)
-
-	menu.Market.DreamsFilter = true
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
@@ -233,7 +231,7 @@ func fetch(done chan struct{}) {
 
 				checkConnection()
 				gnomes.EndPoint()
-				gnomes.State(dReams.IsConfiguring(), gnomonScan)
+				gnomes.State(gnomonScan)
 
 				go menuRefresh(offset)
 

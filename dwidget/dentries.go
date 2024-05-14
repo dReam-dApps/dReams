@@ -285,7 +285,7 @@ func NewVerticalEntries(tag string, d *dreams.AppObject) *DeroEntries {
 }
 
 // Creates a basic daemon select entry with default remote options
-//   - Entry bound to rpc.Daemon.Rpc
+//   - Entry bound to rpc.Daemon.Endpoint
 //   - Pass 'defaults' for custom default port options
 func NewDaemonEntry(defaults []string) (entry *widget.SelectEntry, daemons []string) {
 	daemons = []string{""}

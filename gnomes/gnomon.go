@@ -65,6 +65,11 @@ type SC struct {
 
 var logger = structures.Logger.WithFields(logrus.Fields{})
 
+// Initialize logger for package
+func init() {
+	InitLogrusLog(logrus.InfoLevel)
+}
+
 // Enable escape codes for windows Stdout
 func enableEscapeCodes() error {
 	cmd := exec.Command("cmd", "/c", "echo", "ON")
@@ -157,10 +162,10 @@ func NewBoltDB(dbType, dbPath string) *storage.BboltStore {
 }
 
 // Start Gnomon indexer with or without search filters
-//   - End point from rpc.Daemon.Rpc
+//   - End point from rpc.Daemon.Endpoint
 //   - tag for log print
 //   - dbtype defines gravdb or boltdb
-//   - custom func() is for adding specific SCID to index on Gnomon start, gnomes.Fast.Enabled false will bypass
+//   - custom func() is for adding specific SCID to index on Gnomon start, !gnomes.Fast.Enabled will bypass
 //   - lower defines the lower limit of indexed SCIDs from Gnomon search filters before custom adds
 //   - upper defines the higher limit when custom indexed SCIDs exist already
 func StartGnomon(tag, dbtype string, filters []string, upper, lower int, custom func()) {
@@ -210,14 +215,14 @@ func StartGnomon(tag, dbtype string, filters []string, upper, lower int, custom 
 	gnomes.Start = false
 }
 
-// Update Gnomon endpoint to current rpc.Daemon.Rpc value
+// Update Gnomon endpoint to current rpc.Daemon.Endpoint value
 func EndPoint() {
 	if rpc.Daemon.IsConnected() && gnomes.IsInitialized() && !gnomes.IsScanning() {
 		gnomes.Indexer.Endpoint = rpc.Daemon.Endpoint
 	}
 }
 
-// Check if Gnomon and RPC are ready
+// Check if Gnomon and wallet are ready
 func IsConnected() bool {
 	if rpc.IsReady() && gnomes.IsSynced() {
 		return true
@@ -226,9 +231,9 @@ func IsConnected() bool {
 	return false
 }
 
-// Scan tells dApps if Gnomon is ready for them to preform their initial scan
-func Scan(config bool) bool {
-	if gnomes.IsSynced() && gnomes.HasChecked() && !config {
+// Scan tells dApps if Gnomon is ready for them to preform a scan once Gnomon synced state is reached
+func Scan() bool {
+	if gnomes.IsSynced() && gnomes.HasChecked() {
 		return true
 	}
 
@@ -236,16 +241,15 @@ func Scan(config bool) bool {
 }
 
 // State checks and maintains Gnomon state (synced/scanning/checked), it will scan connected wallet once synced, then ensure sync
-//   - Hold out checking if app is configuring
-//   - Pass scan func for initial Gnomon sync
-func State(config bool, scan func(map[string]string)) {
+//   - Pass scan func for what Gnomon should initially scan for once synced
+func State(scan func(map[string]string)) {
 	if rpc.Daemon.IsConnected() && gnomes.IsRunning() {
 		contracts := gnomes.IndexContains()
 		if gnomes.HasIndex(2) && !gnomes.IsStarting() {
 			height := gnomes.GetChainHeight()
 			if gnomes.GetLastHeight() >= height-3 && height != 0 {
 				gnomes.Synced(true)
-				if !config && rpc.Wallet.IsConnected() && !gnomes.HasChecked() {
+				if rpc.Wallet.IsConnected() && !gnomes.HasChecked() {
 					gnomes.Scanning(true)
 					scan(contracts)
 					gnomes.Checked(true)

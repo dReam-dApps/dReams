@@ -37,9 +37,8 @@ func main() {
 	n := runtime.NumCPU()
 	runtime.GOMAXPROCS(n)
 
-	// Initialize logrus logger to stdout
+	// Initialize logrus logger to match Gnomon logs
 	logger := structures.Logger.WithFields(logrus.Fields{})
-	gnomes.InitLogrusLog(logrus.InfoLevel)
 
 	// Read config.json file
 	config := menu.GetSettings(appName)
@@ -100,6 +99,9 @@ func main() {
 	// Initialize Gnomon vars
 	gnomon.SetFastsync(true, true, 3000)
 	gnomon.SetDBStorageType("boltdb")
+
+	// Allow assets outside of dReams collection filter
+	menu.Market.DreamsFilter = false
 
 	// Create dwidget connection box, using default OnTapped for RPC/XSWD connections
 	connection := dwidget.NewHorizontalEntries(appName, 1, &d)
