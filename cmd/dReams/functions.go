@@ -110,12 +110,12 @@ func init() {
 		menu.SetClose(true)
 		menu.StoreSettings(saveSettings())
 		fmt.Println()
-		dappCloseCheck()
+		rpc.Wallet.CloseConnections("dReams")
 		menu.Info.SetStatus("Putting Gnomon to Sleep")
 		gnomon.Stop("dReams")
+		dReams.StopProcess()
 		menu.StopIndicators(indicators)
 		time.Sleep(time.Second)
-		dReams.StopProcess()
 		dReams.Window.Close()
 	}()
 }
@@ -645,7 +645,7 @@ func gnomonFilters() (filter []string) {
 }
 
 // Hidden object, controls Gnomon start and stop based on daemon connection
-func daemonConnectedBox() fyne.Widget {
+func daemonConnectedBox() *widget.Check {
 	menu.Control.Check.Daemon = widget.NewCheck("", func(b bool) {
 		if !gnomon.IsInitialized() && !gnomon.IsStarting() {
 			if rpc.Daemon.GetVersion() == "3.5.3-139.DEROHE.STARGATE+04042023" {
@@ -671,8 +671,8 @@ func daemonConnectedBox() fyne.Widget {
 }
 
 // Daemon rpc entry object with default options
-//   - Bound to rpc.Daemon.Rpc
-func daemonRPCEntry() fyne.Widget {
+//   - Bound to rpc.Daemon.Endpoint
+func daemonRPCEntry() *widget.SelectEntry {
 	options := []string{
 		"",
 		rpc.DAEMON_RPC_DEFAULT,
@@ -949,11 +949,6 @@ func rescan() {
 	gnomonScan(gnomon.IndexContains())
 	menu.Assets.List.UnselectAll()
 	menu.Assets.SortList()
-}
-
-func dappCloseCheck() {
-	prediction.Service.IsStopped()
-	rpc.Wallet.CloseConnections("dReams")
 }
 
 // Returns map of current dApp package versions

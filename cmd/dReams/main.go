@@ -8,6 +8,7 @@ import (
 	"github.com/dReam-dApps/dReams/bundle"
 	"github.com/dReam-dApps/dReams/gnomes"
 	"github.com/dReam-dApps/dReams/menu"
+	"github.com/dReam-dApps/dReams/rpc"
 	"github.com/deroproject/derohe/walletapi"
 
 	"fyne.io/fyne/v2"
@@ -40,7 +41,7 @@ func main() {
 	close := func() {
 		menu.SetClose(true)
 		menu.StoreSettings(saveSettings())
-		dappCloseCheck()
+		rpc.Wallet.CloseConnections("dReams")
 		menu.Info.SetStatus("Putting Gnomon to Sleep")
 		gnomon.Stop("dReams")
 		dReams.StopProcess()

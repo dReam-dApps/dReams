@@ -79,6 +79,8 @@ func introScreen() *fyne.Container {
 		}
 
 		dReams.App.Settings().SetTheme(bundle.DeroTheme(bundle.AppColor))
+		max.Objects[1].(*container.Split).Leading.(*fyne.Container).Objects[1].(*fyne.Container).Objects[1].(*fyne.Container).Objects[1].(*canvas.Line).StrokeColor = bundle.TextColor
+		max.Objects[1].(*container.Split).Leading.(*fyne.Container).Objects[1].(*fyne.Container).Objects[1].(*fyne.Container).Objects[1].(*canvas.Line).Refresh()
 		max.Objects[1].(*container.Split).Leading.(*fyne.Container).Objects[2].(*canvas.Text).Color = bundle.TextColor
 		max.Objects[1].(*container.Split).Leading.(*fyne.Container).Objects[2].Refresh()
 		max.Objects[1].(*container.Split).Leading.(*fyne.Container).Objects[7].(*canvas.Text).Color = bundle.TextColor
@@ -492,8 +494,6 @@ var asset_tab *fyne.Container
 
 // Main dReams layout
 func place() *fyne.Container {
-	menu.Control.Ratings = make(map[string]uint64)
-
 	var intros []menu.IntroText
 	intros = append(intros, menu.MakeMenuIntro(holdero.DreamsMenuIntro())...)
 	intros = append(intros, menu.MakeMenuIntro(baccarat.DreamsMenuIntro())...)
@@ -534,12 +534,12 @@ func place() *fyne.Container {
 			menu.Market.List.Auction.Refresh()
 			menu.Market.List.Buy.Refresh()
 		case "dApps":
-			if gnomon.IsScanning() {
+			if gnomon.IsScanning() || (gnomon.IsInitialized() && gnomon.IsStatus("fastsyncing")) {
 				menu_tabs.SelectIndex(0)
-				dialog.NewInformation("Gnomon Syncing", "Wait to make dApp changes", dReams.Window).Show()
+				dialog.NewInformation("Gnomon Syncing", "Wait for Gnomon to sync before making dApp changes", dReams.Window).Show()
 			} else if rpc.Wallet.WS.IsConnecting() {
 				menu_tabs.SelectIndex(0)
-				dialog.NewInformation("XSWD Request", "Close connection requests to make dApp changes", dReams.Window).Show()
+				dialog.NewInformation("XSWD Connection", "Allow or Deny the pending connection request in wallet before making dApp changes", dReams.Window).Show()
 			} else {
 				go func() {
 					reset := dReams.Window.Content().(*fyne.Container).Objects[1]
@@ -676,7 +676,7 @@ func placeWall(intros []menu.IntroText) *container.Split {
 		}
 	}
 
-	daemon_check_cont := container.NewVBox(daemonConnectedBox())
+	daemon_check := daemonConnectedBox()
 
 	connect_tab := container.NewCenter(
 		container.NewVBox(
@@ -704,8 +704,8 @@ func placeWall(intros []menu.IntroText) *container.Split {
 				} else if gnomon.IsInitialized() {
 					dialog.NewConfirm("Gnomon Running", "Shut down Gnomon to make changes", func(b bool) {
 						if b {
-							daemon_entry.(*widget.SelectEntry).SetText("")
-							daemon_check_cont.Objects[0].(*widget.Check).SetChecked(false)
+							daemon_entry.SetText("")
+							daemon_check.SetChecked(false)
 						} else {
 							connect_tabs.SelectIndex(0)
 						}
