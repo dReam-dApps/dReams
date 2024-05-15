@@ -1321,7 +1321,7 @@ func checkNFAAuctionListing(scid string) (asset NFAListing, owned, expired bool)
 							}
 
 							if owner, _ := gnomon.GetSCIDValuesByKey(scid, "owner"); owner != nil {
-								if owner[0] == rpc.Wallet.Address {
+								if rpc.Wallet.IsAddress(owner[0]) {
 									owned = true
 								}
 							}
@@ -1354,7 +1354,7 @@ func checkNFAAuctionListing(scid string) (asset NFAListing, owned, expired bool)
 							}
 
 							if owner, _ := gnomon.GetSCIDValuesByKey(scid, "owner"); owner != nil {
-								if owner[0] == rpc.Wallet.Address {
+								if rpc.Wallet.IsAddress(owner[0]) {
 									owned = true
 								}
 							}
@@ -1398,7 +1398,7 @@ func checkNFABuyListing(scid string) (asset NFAListing, owned, expired bool) {
 							}
 
 							if owner, _ := gnomon.GetSCIDValuesByKey(scid, "owner"); owner != nil {
-								if owner[0] == rpc.Wallet.Address {
+								if rpc.Wallet.IsAddress(owner[0]) {
 									owned = true
 								}
 							}
@@ -1431,7 +1431,7 @@ func checkNFABuyListing(scid string) (asset NFAListing, owned, expired bool) {
 							}
 
 							if owner, _ := gnomon.GetSCIDValuesByKey(scid, "owner"); owner != nil {
-								if owner[0] == rpc.Wallet.Address {
+								if rpc.Wallet.IsAddress(owner[0]) {
 									owned = true
 								}
 							}
@@ -1610,7 +1610,7 @@ func GetAuctionDetails(scid string) {
 				}
 
 				now := uint64(time.Now().Unix())
-				if owner[0] == rpc.Wallet.Address {
+				if rpc.Wallet.IsAddress(owner[0]) {
 					if now < startTime[0]+300 && startTime[0] > 0 && !Market.Confirming {
 						Market.Button.Cancel.Show()
 					} else {
@@ -1705,7 +1705,7 @@ func GetBuyNowDetails(scid string) {
 				Market.Display.Ends.SetText(end.String())
 
 				now := uint64(time.Now().Unix())
-				if owner[0] == rpc.Wallet.Address {
+				if rpc.Wallet.IsAddress(owner[0]) {
 					if now < startTime[0]+300 && startTime[0] > 0 && !Market.Confirming {
 						Market.Button.Cancel.Show()
 					} else {
@@ -1793,7 +1793,7 @@ func GetUnlistedDetails(scid string) {
 				Market.Entry.Disable()
 
 				now := uint64(time.Now().Unix())
-				if owner[0] == rpc.Wallet.Address {
+				if rpc.Wallet.IsAddress(owner[0]) {
 					if now < startTime[0]+300 && startTime[0] > 0 && !Market.Confirming {
 						Market.Button.Cancel.Show()
 					} else {
@@ -1921,7 +1921,7 @@ func CheckAllNFAs(scids map[string]string) {
 				collection, _ := gnomon.GetSCIDValuesByKey(sc, "collection")
 				icon, _ := gnomon.GetSCIDValuesByKey(sc, "iconURLHdr")
 				if owner != nil && file != nil && collection != nil && icon != nil {
-					if owner[0] == rpc.Wallet.Address && ValidNFA(file[0]) {
+					if rpc.Wallet.IsAddress(owner[0]) && ValidNFA(file[0]) {
 						var add Asset
 						add.Name = header[0]
 						add.Collection = collection[0]
@@ -1944,8 +1944,8 @@ func CheckAllNFAs(scids map[string]string) {
 					minter, _ := gnomon.GetSCIDValuesByKey(sc, "minter")
 					collection, _ := gnomon.GetSCIDValuesByKey(sc, "collection")
 
-					if data != nil && minter != nil && collection != nil && owner != nil && icon != nil {
-						if owner[0] == rpc.Wallet.Address && owner[0] != "" {
+					if minter != nil && collection != nil && owner != nil && icon != nil {
+						if rpc.Wallet.IsAddress(owner[0]) {
 							var add Asset
 							if minter[0] == Seals_mint && collection[0] == Seals_coll {
 								var seal Seal

@@ -65,9 +65,9 @@ func SignOut() {
 // Account address storage path, connection types are stored separately
 func shardAddress() string {
 	if !rpc.Wallet.File.IsNil() {
-		return fmt.Sprintf("%x", sha1.Sum([]byte(rpc.Wallet.Address)))
+		return fmt.Sprintf("%x", sha1.Sum([]byte(rpc.Wallet.Address())))
 	} else {
-		return fmt.Sprintf("%x", sha1.Sum([]byte(rpc.Wallet.Address+"1")))
+		return fmt.Sprintf("%x", sha1.Sum([]byte(rpc.Wallet.Address()+"1")))
 	}
 }
 
@@ -85,7 +85,7 @@ func getShard(public bool) (db *bbolt.DB, err error) {
 	if public {
 		shard = "settings"
 	} else {
-		if rpc.Wallet.Address == "" {
+		if rpc.Wallet.Address() == "" {
 			err = fmt.Errorf("no wallet for account store")
 			return
 		}
@@ -110,7 +110,7 @@ func getShard(public bool) (db *bbolt.DB, err error) {
 
 // Delete local storage for connected wallet
 func DeleteShard() error {
-	if rpc.Wallet.Address == "" {
+	if rpc.Wallet.Address() == "" {
 		return fmt.Errorf("no wallet address")
 	}
 
@@ -366,7 +366,7 @@ func (m *AccountEncrypted) EncryptAccount(password string) (result []byte, err e
 	if rpc.Wallet.File.IsNil() {
 		if password == "" {
 			// TODO something better
-			password = fmt.Sprintf("%x", sha256.Sum256([]byte(rpc.Wallet.Address)))
+			password = fmt.Sprintf("%x", sha256.Sum256([]byte(rpc.Wallet.Address())))
 		}
 
 		m.pbkdf2 = walletapi.Generate_Key(m.KDF, password)
@@ -430,7 +430,7 @@ func DecryptAccount(password string) (result *AccountData, err error) {
 	if rpc.Wallet.File.IsNil() {
 		if password == "" {
 			// TODO something better
-			password = fmt.Sprintf("%x", sha256.Sum256([]byte(rpc.Wallet.Address)))
+			password = fmt.Sprintf("%x", sha256.Sum256([]byte(rpc.Wallet.Address())))
 		}
 
 		// try to de-seal password and store it

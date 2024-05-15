@@ -487,7 +487,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 		}
 
 		if !rpc.Wallet.File.IsNil() && extension_select.SelectedIndex() >= 0 {
-			address := rpc.Wallet.Address
+			address := rpc.Wallet.Address()
 			if collection_enable.Checked {
 				var count, ending_at int
 				if count = rpc.StringToInt(collection_low_entry.Text); count < 1 {
@@ -888,7 +888,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 
 				total := ending_at - count + 1
 				total_fees := float64(0.21) * float64(total)
-				info := fmt.Sprintf("You are about to install %d asset files\n\nEnsure all immutable info is correct on bas contracts as this process is irreversible\n\nTotal fees to install this NFA collection will be ~%.5f Dero\n\nRefer how to mint guide for any questions\n\nWallet address: %s\n\nInstalling: %s%d.bas to %s%d.bas", total, total_fees, rpc.Wallet.Address, name_entry.Text, count, name_entry.Text, ending_at)
+				info := fmt.Sprintf("You are about to install %d asset files\n\nEnsure all immutable info is correct on bas contracts as this process is irreversible\n\nTotal fees to install this NFA collection will be ~%.5f Dero\n\nRefer how to mint guide for any questions\n\nWallet address: %s\n\nInstalling: %s%d.bas to %s%d.bas", total, total_fees, rpc.Wallet.Address(), name_entry.Text, count, name_entry.Text, ending_at)
 				confirm := dialog.NewConfirm("NFA Install", info, func(b bool) {
 					if b {
 						go func() {
@@ -990,7 +990,7 @@ func PlaceNFAMint(tag string, window fyne.Window) fyne.CanvasObject {
 				confirm.Resize(fyne.NewSize(600, 240))
 				confirm.Show()
 			} else {
-				info := fmt.Sprintf("You are about to install asset %s.bas\n\nEnsure all immutable info is correct on bas contract as this process is irreversible\n\nFees to install a NFA are ~0.21000 Dero\n\nRefer how to mint guide for any questions\n\nWallet address: %s", name_entry.Text, rpc.Wallet.Address)
+				info := fmt.Sprintf("You are about to install asset %s.bas\n\nEnsure all immutable info is correct on bas contract as this process is irreversible\n\nFees to install a NFA are ~0.21000 Dero\n\nRefer how to mint guide for any questions\n\nWallet address: %s", name_entry.Text, rpc.Wallet.Address())
 				confirm := dialog.NewConfirm("NFA Install", info, func(b bool) {
 					if b {
 						input_file := filepath.Join(save_path, "bas", fmt.Sprintf("%s.bas", name_entry.Text))

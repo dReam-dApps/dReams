@@ -22,7 +22,7 @@ import (
 
 type wallet struct {
 	IdHash   string
-	Address  string
+	address  string
 	balances map[string]*Balance
 	height   uint64
 	updated  uint64
@@ -79,13 +79,13 @@ func (w *wallet) IsConnected() bool {
 	return w.Connect
 }
 
-// Set wallet connection
+// Set wallet's connection status, if not connected wallet height and address will be cleared
 func (w *wallet) Connected(b bool) {
 	w.muC.Lock()
 	w.Connect = b
 	if !b {
 		w.height = 0
-		w.Address = ""
+		w.address = ""
 	}
 	w.muC.Unlock()
 }
@@ -272,6 +272,20 @@ func (w *wallet) CallFor(out interface{}, method string, params ...interface{}) 
 	}
 
 	return
+}
+
+// Get connected wallet's address
+func (w *wallet) Address() string {
+	return w.address
+}
+
+// Check if address matches connected wallet's address
+func (w *wallet) IsAddress(address string) bool {
+	if address == "" {
+		return false
+	}
+
+	return w.address == address
 }
 
 // Call EchoWallet if wallet is connected and set Connected

@@ -165,7 +165,7 @@ func GetAddress(tag string) {
 	if _, err := globals.ParseValidateAddress(result.Address); err == nil {
 		Wallet.Connected(true)
 		PrintLog("[%s] Wallet connected: %s", tag, result.Address)
-		Wallet.Address = result.Address
+		Wallet.address = result.Address
 		id := []byte(result.Address)
 		hash := sha256.Sum256(id)
 		Wallet.IdHash = hex.EncodeToString(hash[:])

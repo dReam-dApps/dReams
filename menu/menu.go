@@ -902,7 +902,7 @@ func listMenu(window_icon fyne.Resource, d *dreams.AppObject) {
 
 	charAddr.Disable()
 	charPerc.Disable()
-	charAddr.SetText(rpc.Wallet.Address)
+	charAddr.SetText(rpc.Wallet.Address())
 	charPerc.SetText("0")
 
 	enable_donations := widget.NewCheck("Enable Donations", func(b bool) {
@@ -914,7 +914,7 @@ func listMenu(window_icon fyne.Resource, d *dreams.AppObject) {
 		} else {
 			charAddr.Disable()
 			charPerc.Disable()
-			charAddr.SetText(rpc.Wallet.Address)
+			charAddr.SetText(rpc.Wallet.Address())
 			charPerc.SetText("0")
 		}
 	})

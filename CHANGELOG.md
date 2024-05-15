@@ -25,6 +25,7 @@ This file lists the changes to dReams repo with each version.
 * `rpc` HashToHexSHA256()
 * `rpc` GetDaemonInfo()
 * `rpc` GasEstimateInstall()
+* `rpc` IsAddress(address) checks equal
 * `menu` utility var to assetObjects, IsDreamsNFACreator() also returns utility
 * `gnomes` GetAllSCIDInvokeDetailsByEntrypoint()
 * `gnomes` GetAssetInfo()
@@ -55,6 +56,7 @@ This file lists the changes to dReams repo with each version.
 * `rpc` Rename DaemonHeight => GetDaemonHeight
 * `rpc` Ping(), GetHeight(), GetVersion(), GetInfo(), GetTx(), GetTxPool() to daemon methods
 * `rpc` Remove CheckForIndex()
+* `rpc` Use Wallet.Address() method instead of var
 * `menu` StartDreamsIndicators() removed in favor of StartIndicators for all apps
 * `menu` Theme moved to `dreams` package
 * `menu` Rename DefaultThemeResource() to DefaultBackgroundResource()

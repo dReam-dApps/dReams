@@ -23,14 +23,19 @@ func NameEntry() fyne.CanvasObject {
 }
 
 // Get a wallets registered names
-func CheckWalletNames(value string) {
+func CheckWalletNames() {
 	var wallet, names []string
-	if len(value) > 12 {
-		wallet = append(wallet, value[0:12])
+	address := rpc.Wallet.Address()
+	if len(address) > 12 {
+		wallet = append(wallet, address[0:12])
+	} else {
+		Assets.Names.Options = []string{}
+		Assets.Names.Refresh()
+		return
 	}
 
 	if gnomon.IsReady() {
-		names, _ = gnomon.GetSCIDKeysByValue(rpc.NameSCID, value)
+		names, _ = gnomon.GetSCIDKeysByValue(rpc.NameSCID, address)
 
 		sort.Strings(names)
 	}

@@ -468,9 +468,8 @@ func onTapped(tag string, selectType *widget.Select, entryAuth, entryPass *widge
 						return
 					}
 
-					rpc.Daemon.Ping()
 					// Check if connected to daemon
-					if !rpc.Daemon.IsConnected() {
+					if !rpc.Daemon.Ping() {
 						dialog.NewInformation("Select Daemon", "Connect to a daemon", d.Window).Show()
 						entryPass.Enable()
 						entryDERO.Enable()

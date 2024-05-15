@@ -199,7 +199,7 @@ func loadAccount() (err error) {
 func gnomonScan(contracts map[string]string) {
 	screen, bar := syncScreen()
 	menu_tabs.Items[2].Content = screen
-	menu.CheckWalletNames(rpc.Wallet.Address)
+	menu.CheckWalletNames()
 	screen.Objects[0].(*fyne.Container).Objects[1].(*canvas.Text).Text = "Syncing NFAs..."
 	checkDreamsNFAs(contracts, bar)
 	bar.SetValue(0)
@@ -336,7 +336,7 @@ func checkNFAOwner(scid string) {
 			creator, _ := gnomon.GetSCIDValuesByKey(scid, "creatorAddr")
 			icon, _ := gnomon.GetSCIDValuesByKey(scid, "iconURLHdr")
 			if owner != nil && file != nil && collection != nil && creator != nil && icon != nil {
-				if owner[0] == rpc.Wallet.Address && menu.ValidNFA(file[0]) {
+				if rpc.Wallet.IsAddress(owner[0]) && menu.ValidNFA(file[0]) {
 					isCreator, utility := menu.IsDreamsNFACreator(creator[0], collection[0])
 					if !isCreator {
 						return
@@ -464,7 +464,7 @@ func checkDreamsG45s(g45s map[string]string, progress *widget.ProgressBar) {
 				minter, _ := gnomon.GetSCIDValuesByKey(scid, "minter")
 				coll, _ := gnomon.GetSCIDValuesByKey(scid, "collection")
 				if owner != nil && minter != nil && coll != nil && owner[0] != "" {
-					if owner[0] == rpc.Wallet.Address {
+					if rpc.Wallet.IsAddress(owner[0]) {
 						var add menu.Asset
 						add.Type = "Image"
 						add.Utility = "Avatar"
@@ -893,8 +893,7 @@ func accountConnection() fyne.CanvasObject {
 					return
 				}
 
-				rpc.Daemon.Ping()
-				if !rpc.Daemon.IsConnected() {
+				if !rpc.Daemon.Ping() {
 					dialog.NewInformation("Select Daemon", "Connect to a daemon", dReams.Window).Show()
 					return
 				}

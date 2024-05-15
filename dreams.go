@@ -598,7 +598,7 @@ func FyneIcon(name fyne.ThemeIconName) fyne.Resource {
 
 // Add a asset option to a AssetSelect
 func (a *AssetSelect) Add(add, check string) {
-	if check == rpc.Wallet.Address {
+	if rpc.Wallet.IsAddress(check) {
 		opts := a.Select.Options
 		new_opts := append(opts, add)
 		a.Select.Options = new_opts

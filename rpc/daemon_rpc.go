@@ -90,7 +90,7 @@ func SetDaemonClient(endpoint string) (jsonrpc.RPCClient, context.Context, conte
 }
 
 // Ping Dero blockchain for connection
-func (d *daemon) Ping() {
+func (d *daemon) Ping() (connected bool) {
 	client, ctx, cancel := SetDaemonClient(d.Endpoint)
 	defer cancel()
 
@@ -101,10 +101,12 @@ func (d *daemon) Ping() {
 	}
 
 	if result == "Pong " {
-		d.Connected(true)
-	} else {
-		d.Connected(false)
+		connected = true
 	}
+
+	d.Connected(connected)
+
+	return connected
 }
 
 // Get a daemon's height from endpoint
@@ -175,7 +177,7 @@ func GasEstimate(scid, tag string, args rpc.Arguments, t []rpc.Transfer, max uin
 		SC_ID:     scid,
 		SC_RPC:    args,
 		Ringsize:  2,
-		Signer:    Wallet.Address,
+		Signer:    Wallet.address,
 	}
 
 	if err := client.CallFor(ctx, &result, "DERO.GetGasEstimate", params); err != nil {
@@ -219,7 +221,7 @@ func GasEstimateInstall(tag, code string, ringsize uint64, t []rpc.Transfer) uin
 
 	if ringsize <= 2 {
 		params.Ringsize = 2
-		params.Signer = Wallet.Address
+		params.Signer = Wallet.address
 	}
 
 	if err := client.CallFor(ctx, &result, "DERO.GetGasEstimate", params); err != nil {
@@ -473,7 +475,7 @@ func VerifySigner(txid string) bool {
 		return false
 	}
 
-	return result.Txs[0].Signer == Wallet.Address
+	return result.Txs[0].Signer == Wallet.address
 }
 
 // Get difficulty from a daemon

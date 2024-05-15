@@ -496,7 +496,7 @@ func PlaceAssets(tag string, profile fyne.CanvasObject, rescan func(), icon fyne
 		if gnomon.IsScanning() {
 			dialog.NewInformation("Profile", "Gnomon is syncing profile, please wait", d.Window).Show()
 		} else {
-			dialog.NewConfirm("Delete Datashard", fmt.Sprintf("This will delete local storage for account:\n\n%s", rpc.Wallet.Address), func(b bool) {
+			dialog.NewConfirm("Delete Datashard", fmt.Sprintf("This will delete local storage for account:\n\n%s", rpc.Wallet.Address()), func(b bool) {
 				if b {
 					err := dreams.DeleteShard()
 					if err != nil {
@@ -504,7 +504,7 @@ func PlaceAssets(tag string, profile fyne.CanvasObject, rescan func(), icon fyne
 						return
 					}
 
-					rpc.PrintLog("[Profile] Datashard deleted: %s", rpc.Wallet.Address)
+					rpc.PrintLog("[Profile] Datashard deleted: %s", rpc.Wallet.Address())
 					info := dialog.NewInformation("Profile", "Datashard deleted", d.Window)
 					info.Show()
 					go func() {
