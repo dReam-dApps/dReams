@@ -36,7 +36,7 @@ This file lists the changes to dReams repo with each version.
 
 ### Changed
 
-* Fyne 2.4.5
+* Fyne 2.5.0
 * Gnomon 2.0.3-alpha.x
 * Baccarat 0.x.x
 * Holdero 0.x.x
