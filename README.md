@@ -64,6 +64,11 @@ All dApps are ran on chain in a decentralized manner. dReams and packages are so
 	- Duel Dero assets in a over or under showdown style game
 	- Three game modes, regular, death match and hardcore 
 	- Asset graveyard and leader board
+- **[dDice](https://github.com/SixofClubsss/dDice)**
+	- Decentralized dice games
+	- Multiplayer tables
+	- DERO and tokens supported
+	- Dice assets
 - **[NFA Marketplace](https://github.com/civilware/artificer-nfa-standard)**
 	- View and manage owned assets
 	- View and manage listings
@@ -99,7 +104,7 @@ dReams repo is built as packages. With imports from the Dero code base, dReams v
 dReams [Template](https://github.com/dReam-dApps/Template) can be used as a UI starting point and you can view our [Examples](https://github.com/dReam-dApps/Examples) repo for further references. 
 ### rpc
 The rpc package contains all of the basic functionality needed to set up clients, check connectivity and read blockchain and wallet information. There are arbitrary rpc calls which any dApp can make use of such as the NFA calls, `SendMessage()` or `SendAsset()` with optional payload. This example checks for daemon and wallet rpc connectivity.
-```
+```go
 package main
 
 import (
@@ -156,7 +161,7 @@ func main() {
 ```
 ### gnomes
 The gnomes package contains the base components used for Gnomon indexing. `StartGnomon()` allows apps to run a instance of Gnomon with search filter and pass optional func for any custom index requirements.  
-```
+```go
 package main
 
 import (
@@ -225,7 +230,7 @@ func main() {
 ```
 ### menu 
 NFA related items such as the dReams NFA marketplace and asset controls can be independently imported for use in other dApps, it can be used with or without dReams filters. There are menu panels and custom Dero indicators that can be imported. This example shows how to import asset controls and market as app tabs.
-```
+```go
 package main
 
 import (
@@ -281,7 +286,7 @@ func main() {
 ```
 ### dwidget
 The dwidget package is a extension to fyne widgets that intends to make creating dApps simpler and quicker with widgets specified for use with Dero. Numerical entries have prefix, increment and decimal control. Pre-configured connection boxes can be used that are tied into dReams rpc vars and have default Dero connection addresses populated. There is objects for shutdown control as well as a spot for the dReams indicators, or new ones. This example starts a Fyne gui app using `VerticalEntries()` to start Gnomon when connected.
-```
+```go
 package main
 
 import (
@@ -345,7 +350,7 @@ func main() {
 ```
 ### bundle
 The bundle package contains all dReams resources. Images, gifs and fonts can be imported as well as the two Dero styled base app themes for Fyne. This example starts a Fyne gui app with various widgets to show case both Dero themes and image imports from bundle.
-```
+```go
 package main
 
 import (
