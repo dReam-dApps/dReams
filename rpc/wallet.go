@@ -13,6 +13,7 @@ import (
 	"github.com/civilware/Gnomon/structures"
 	"github.com/deroproject/derohe/cryptography/crypto"
 	"github.com/deroproject/derohe/dvm"
+	"github.com/deroproject/derohe/globals"
 	"github.com/deroproject/derohe/rpc"
 	"github.com/deroproject/derohe/transaction"
 	"github.com/deroproject/derohe/walletapi"
@@ -464,7 +465,7 @@ func (w *wallet) OpenWalletFile(tag, path, password string) (err error) {
 		return
 	}
 
-	w.File.disk.SetNetwork(true)
+	w.File.disk.SetNetwork(globals.IsMainnet())
 	w.File.disk.SetOnlineMode()
 	walletapi.Daemon_Endpoint_Active = Daemon.Endpoint
 	err = walletapi.Connect(Daemon.Endpoint)
