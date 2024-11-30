@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/civilware/tela/logger"
 	"github.com/deroproject/derohe/rpc"
 	"github.com/ybbus/jsonrpc/v3"
 )
@@ -185,7 +186,7 @@ func GasEstimate(scid, tag string, args rpc.Arguments, t []rpc.Transfer, max uin
 		return 0
 	}
 
-	logger.Println(tag+" Gas Fee:", result.GasStorage+50)
+	logger.Printf(tag+" Gas Fee: %d\n", result.GasStorage+50)
 
 	if result.GasStorage < max {
 		return result.GasStorage + 50
@@ -238,7 +239,7 @@ func GasEstimateInstall(tag, code string, ringsize uint64, t []rpc.Transfer) uin
 		fee = max + 50
 	}
 
-	logger.Println(tag+" Install Fee:", fee)
+	logger.Printf(tag+" Install Fee: %d\n", fee)
 
 	return fee
 }
@@ -256,7 +257,7 @@ func GetStringKey(scid, key, endpoint string) interface{} {
 	}
 
 	if err := client.CallFor(ctx, &result, "DERO.GetSC", params); err != nil {
-		logger.Errorln("[GetStringKey]", err)
+		logger.Errorf("[GetStringKey] %s\n", err)
 		return nil
 	}
 
@@ -276,7 +277,7 @@ func GetUintKey(scid, key, endpoint string) interface{} {
 	}
 
 	if err := client.CallFor(ctx, &result, "DERO.GetSC", params); err != nil {
-		logger.Errorln("[GetUintKey]", err)
+		logger.Errorf("[GetUintKey] %s\n", err)
 		return nil
 	}
 
@@ -312,31 +313,31 @@ func GetFees() {
 	if fee, ok := GetStringKey(RatingSCID, "ContractUnlock", Daemon.Endpoint).(float64); ok {
 		UnlockFee = uint64(fee)
 	} else {
-		logger.Errorln("[GetFees] Could not get current contract unlock fee, using default")
+		logger.Errorf("[GetFees] Could not get current contract unlock fee, using default\n")
 	}
 
 	if fee, ok := GetStringKey(RatingSCID, "ListingFee", Daemon.Endpoint).(float64); ok {
 		ListingFee = uint64(fee)
 	} else {
-		logger.Errorln("[GetFees] Could not get current listing fee, using default")
+		logger.Errorf("[GetFees] Could not get current listing fee, using default\n")
 	}
 
 	if fee, ok := GetStringKey(TarotSCID, "Fee", Daemon.Endpoint).(float64); ok {
 		IlumaFee = uint64(fee)
 	} else {
-		logger.Errorln("[GetFees] Could not get current Iluma fee, using default")
+		logger.Errorf("[GetFees] Could not get current Iluma fee, using default\n")
 	}
 
 	if fee, ok := GetStringKey(RatingSCID, "LowLimitFee", Daemon.Endpoint).(float64); ok {
 		LowLimitFee = uint64(fee)
 	} else {
-		logger.Errorln("[GetFees] Could not get current low fee limit, using default")
+		logger.Errorf("[GetFees] Could not get current low fee limit, using default\n")
 	}
 
 	if fee, ok := GetStringKey(RatingSCID, "HighLimitFee", Daemon.Endpoint).(float64); ok {
 		HighLimitFee = uint64(fee)
 	} else {
-		logger.Errorln("[GetFees] Could not get current high fee limit, using default")
+		logger.Errorf("[GetFees] Could not get current high fee limit, using default\n")
 	}
 }
 
@@ -354,7 +355,7 @@ func GetSCCode(scid string) string {
 		}
 
 		if err := client.CallFor(ctx, &result, "DERO.GetSC", params); err != nil {
-			logger.Errorln("[GetSCCode]", err)
+			logger.Errorf("[GetSCCode] %s\n", err)
 			return ""
 		}
 
@@ -376,7 +377,7 @@ func GetG45Collection(scid string) (scids []string) {
 	}
 
 	if err := client.CallFor(ctx, &result, "DERO.GetSC", params); err != nil {
-		logger.Errorln("[GetG45Collection]", err)
+		logger.Errorf("[GetG45Collection] %s\n", err)
 		return nil
 	}
 
@@ -389,7 +390,7 @@ func GetG45Collection(scid string) (scids []string) {
 			break
 		} else {
 			if hx, err := hex.DecodeString(fmt.Sprint(asset)); err != nil {
-				logger.Errorln("[GetG45Collection]", err)
+				logger.Errorf("[GetG45Collection] %s\n", err)
 				i++
 			} else {
 				split := strings.Split(string(hx), ",")
@@ -417,7 +418,7 @@ func (d *daemon) GetTx(txid string) *rpc.Tx_Related_Info {
 	}
 
 	if err := client.CallFor(ctx, &result, "DERO.GetTransaction", params); err != nil {
-		logger.Errorln("[Daemon.GetTx]", err)
+		logger.Errorf("[Daemon.GetTx] %s\n", err)
 		return nil
 	}
 
@@ -435,7 +436,7 @@ func (d *daemon) GetTxPool() (result *rpc.GetTxPool_Result) {
 
 	var params *rpc.GetTxPool_Params
 	if err := client.CallFor(ctx, &result, "DERO.GetTxPool", params); err != nil {
-		logger.Errorln("[Daemon.GetTxPool]", err)
+		logger.Errorf("[Daemon.GetTxPool] %s\n", err)
 		return nil
 	}
 
@@ -471,7 +472,7 @@ func VerifySigner(txid string) bool {
 	}
 
 	if err := client.CallFor(ctx, &result, "DERO.GetTransaction", params); err != nil {
-		logger.Errorln("[VerifySigner]", err)
+		logger.Errorf("[VerifySigner] %s\n", err)
 		return false
 	}
 
@@ -485,7 +486,7 @@ func GetDifficulty(endpoint string) float64 {
 
 	var result *rpc.GetInfo_Result
 	if err := client.CallFor(ctx, &result, "DERO.GetInfo"); err != nil {
-		logger.Errorln("[GetDifficulty]", err)
+		logger.Errorf("[GetDifficulty] %s\n", err)
 		return 0
 	}
 
@@ -499,7 +500,7 @@ func GetBlockTime(endpoint string) float64 {
 
 	var result *rpc.GetInfo_Result
 	if err := client.CallFor(ctx, &result, "DERO.GetInfo"); err != nil {
-		logger.Errorln("[GetBlockTime]", err)
+		logger.Errorf("[GetBlockTime] %s\n", err)
 		return 0
 	}
 

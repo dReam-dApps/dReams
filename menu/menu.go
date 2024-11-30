@@ -15,14 +15,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/civilware/Gnomon/structures"
+	"github.com/civilware/tela/logger"
 	dreams "github.com/dReam-dApps/dReams"
 	"github.com/dReam-dApps/dReams/bundle"
 	"github.com/dReam-dApps/dReams/dwidget"
 	"github.com/dReam-dApps/dReams/gnomes"
 	"github.com/dReam-dApps/dReams/rpc"
 	"github.com/deroproject/derohe/globals"
-	"github.com/sirupsen/logrus"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -56,9 +55,6 @@ type exiting struct {
 
 // Control menu indicators, checks, maps and defaults
 var Control menuObjects
-
-// Log output with logrus matching Gnomon
-var logger = structures.Logger.WithFields(logrus.Fields{})
 
 // Gnomon instance for menu
 var gnomon = gnomes.NewGnomes()
@@ -129,7 +125,7 @@ func StoreSettings(store dreams.SaveData) {
 
 	err := dreams.StoreValue("settings", "config", store)
 	if err != nil {
-		logger.Errorln("[StoreSettings]", err)
+		logger.Errorf("[StoreSettings] %s\n", err)
 	}
 }
 
@@ -199,14 +195,14 @@ func WriteDreamsConfig(u dreams.SaveData) {
 
 	file, err := os.Create("config/config.json")
 	if err != nil {
-		logger.Errorln("[WriteDreamsConfig]", err)
+		logger.Errorf("[WriteDreamsConfig] %s\n", err)
 		return
 	}
 	defer file.Close()
 
 	json, _ := json.MarshalIndent(u, "", " ")
 	if _, err = file.Write(json); err != nil {
-		logger.Errorln("[WriteDreamsConfig]", err)
+		logger.Errorf("[WriteDreamsConfig] %s\n", err)
 	}
 }
 
@@ -227,7 +223,7 @@ func ReadDreamsConfig(tag string) (saved dreams.SaveData) {
 			var save dreams.SaveData
 			json, _ := json.MarshalIndent(&save, "", " ")
 			if _, err = config.Write(json); err != nil {
-				logger.Errorln("[WriteDreamsConfig]", err)
+				logger.Errorf("[WriteDreamsConfig] %s\n", err)
 			}
 			config.Close()
 		}
@@ -245,12 +241,12 @@ func ReadDreamsConfig(tag string) (saved dreams.SaveData) {
 
 	file, err := os.ReadFile("config/config.json")
 	if err != nil {
-		logger.Errorln("[ReadDreamsConfig]", err)
+		logger.Errorf("[ReadDreamsConfig] %s\n", err)
 		return
 	}
 
 	if err = json.Unmarshal(file, &saved); err != nil {
-		logger.Errorln("[ReadDreamsConfig]", err)
+		logger.Errorf("[ReadDreamsConfig] %s\n", err)
 		return
 	}
 
@@ -294,7 +290,7 @@ func SwitchProfileIcon(collection, name, url string, size float32) (icon *canvas
 	have, err := gnomes.StorageExists(collection, name)
 	if err != nil {
 		have = false
-		logger.Errorln("[SwitchProfileIcon]", err)
+		logger.Errorf("[SwitchProfileIcon] %s\n", err)
 	}
 
 	if have {
@@ -315,7 +311,7 @@ func SwitchProfileIcon(collection, name, url string, size float32) (icon *canvas
 			icon.SetMinSize(fyne.NewSize(60, 60))
 			return
 		} else {
-			logger.Errorln("[SwitchProfileIcon]", err)
+			logger.Errorf("[SwitchProfileIcon] %s\n", err)
 		}
 	}
 
@@ -373,7 +369,7 @@ func ThemeSelect(d *dreams.AppObject) fyne.CanvasObject {
 					dreams.Theme.Img = *canvas.NewImageFromFile(file)
 				} else {
 					dreams.Theme.URL = gnomes.GetAssetUrl(1, scid)
-					logger.Println("[dReams] Downloading", dreams.Theme.URL)
+					logger.Printf("[dReams] Downloading %s\n", dreams.Theme.URL)
 					if img, err := dreams.DownloadCanvas(gnomes.GetAssetUrl(0, scid), s); err == nil {
 						dreams.Theme.Img = img
 						save = true
@@ -386,7 +382,7 @@ func ThemeSelect(d *dreams.AppObject) fyne.CanvasObject {
 					dreams.Theme.Img = *canvas.NewImageFromFile(file)
 				} else {
 					dreams.Theme.URL = "https://raw.githubusercontent.com/High-Strangeness/High-Strangeness/main/" + s + "/" + s + ".png"
-					logger.Println("[dReams] Downloading", dreams.Theme.URL)
+					logger.Printf("[dReams] Downloading %s\n", dreams.Theme.URL)
 					if img, err := dreams.DownloadCanvas(dreams.Theme.URL, s); err == nil {
 						dreams.Theme.Img = img
 						save = true
@@ -419,20 +415,20 @@ func ThemeSelect(d *dreams.AppObject) fyne.CanvasObject {
 			if save {
 				err := os.MkdirAll(strings.TrimSuffix(file, s+ext), os.ModePerm)
 				if err != nil {
-					logger.Errorln("[dReams]", err)
+					logger.Errorf("[dReams] %s\n", err)
 					return
 				}
 
 				out, err := os.Create(file)
 				if err != nil {
-					logger.Errorln("[dReams]", err)
+					logger.Errorf("[dReams] %s\n", err)
 					return
 				}
 				defer out.Close()
 
 				_, err = io.Copy(out, bytes.NewReader(dreams.Theme.Img.Resource.Content()))
 				if err != nil {
-					logger.Errorln("[dReams]", err)
+					logger.Errorf("[dReams] %s\n", err)
 					return
 				}
 			}

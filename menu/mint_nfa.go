@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/civilware/tela/logger"
 	dreams "github.com/dReam-dApps/dReams"
 	"github.com/dReam-dApps/dReams/bundle"
 	"github.com/dReam-dApps/dReams/dwidget"
@@ -1580,7 +1581,7 @@ func createURI() (uri fyne.ListableURI, err error) {
 	var dir string
 	dir, err = os.Getwd()
 	if err != nil {
-		logger.Println("[createURI] Failed to get current directory:", err)
+		logger.Printf("[createURI] Failed to get current directory: %s\n", err)
 		return
 	}
 

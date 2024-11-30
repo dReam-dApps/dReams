@@ -4,6 +4,7 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/civilware/tela/logger"
 	dreams "github.com/dReam-dApps/dReams"
 	"github.com/dReam-dApps/dReams/bundle"
 	"github.com/dReam-dApps/dReams/gnomes"
@@ -90,5 +91,5 @@ func main() {
 	go fetch(done)
 	dReams.Window.ShowAndRun()
 	<-done
-	logger.Println("[dReams] Closed")
+	logger.Printf("[dReams] Closed\n")
 }

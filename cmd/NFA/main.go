@@ -9,7 +9,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/civilware/Gnomon/structures"
+	"github.com/civilware/tela/logger"
 	dreams "github.com/dReam-dApps/dReams"
 	"github.com/dReam-dApps/dReams/bundle"
 	"github.com/dReam-dApps/dReams/dwidget"
@@ -17,7 +17,6 @@ import (
 	"github.com/dReam-dApps/dReams/menu"
 	"github.com/dReam-dApps/dReams/rpc"
 	"github.com/deroproject/derohe/walletapi"
-	"github.com/sirupsen/logrus"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -36,9 +35,6 @@ const (
 func main() {
 	n := runtime.NumCPU()
 	runtime.GOMAXPROCS(n)
-
-	// Initialize logrus logger to match Gnomon logs
-	logger := structures.Logger.WithFields(logrus.Fields{})
 
 	// Read config.json file
 	config := menu.GetSettings(appName)

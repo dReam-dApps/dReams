@@ -15,6 +15,7 @@ import (
 	"github.com/SixofClubsss/Iluma/tarot"
 	"github.com/SixofClubsss/dDice/dice"
 	"github.com/SixofClubsss/dPrediction/prediction"
+	"github.com/civilware/tela/logger"
 	dreams "github.com/dReam-dApps/dReams"
 	"github.com/dReam-dApps/dReams/bundle"
 	"github.com/dReam-dApps/dReams/dwidget"
@@ -181,7 +182,7 @@ func introScreen() *fyne.Container {
 		gnomon_gif = nil
 
 		dReams.SetChannels(menu.EnabledDappCount())
-		logger.Println("[dReams] Loading dApps")
+		logger.Printf("[dReams] Loading dApps\n")
 		go func() {
 			dReams.App.Settings().SetTheme(bundle.DeroTheme(bundle.AppColor))
 			dReams.Window.SetContent(container.NewStack(dReams.Background, place()))
@@ -287,7 +288,7 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 
 		dReams.Window.Content().(*fyne.Container).Objects[1] = container.NewStack(container.NewCenter(img, status_text), widget.NewProgressBarInfinite())
 
-		logger.Println("[dReams] Closing dApps")
+		logger.Printf("[dReams] Closing dApps\n")
 		dReams.CloseAllDapps()
 		disconnected()
 		menu.Control.Lock()
@@ -304,7 +305,7 @@ func dAppScreen(reset fyne.CanvasObject) *fyne.Container {
 		go func() {
 			time.Sleep(1500 * time.Millisecond)
 			menu.SetClose(false)
-			logger.Println("[dReams] Loading dApps")
+			logger.Printf("[dReams] Loading dApps\n")
 			dReams.App.Settings().SetTheme(bundle.DeroTheme(bundle.AppColor))
 			dReams.Window.Content().(*fyne.Container).Objects[1] = place()
 			if !dReams.Window.FullScreen() {

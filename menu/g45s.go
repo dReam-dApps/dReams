@@ -6,6 +6,7 @@ import (
 
 	"fyne.io/fyne/v2"
 	"github.com/civilware/Gnomon/structures"
+	"github.com/civilware/tela/logger"
 	"github.com/dReam-dApps/dReams/rpc"
 )
 
@@ -115,7 +116,7 @@ func G45Index() {
 			time.Sleep(time.Second)
 		}
 	}
-	logger.Println("[dReams] Adding G45 Collections")
+	logger.Printf("[dReams] Adding G45 Collections\n")
 	filters := gnomon.GetSearchFilters()
 	gnomon.SetSearchFilters([]string{})
 	scidstoadd := make(map[string]*structures.FastSyncImport)

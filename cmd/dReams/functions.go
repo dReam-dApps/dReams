@@ -20,6 +20,7 @@ import (
 	"github.com/SixofClubsss/dDice/dice"
 	"github.com/SixofClubsss/dPrediction/prediction"
 	"github.com/civilware/Gnomon/structures"
+	"github.com/civilware/tela/logger"
 	dreams "github.com/dReam-dApps/dReams"
 	"github.com/dReam-dApps/dReams/bundle"
 	"github.com/dReam-dApps/dReams/dwidget"
@@ -30,7 +31,6 @@ import (
 	"github.com/deroproject/derohe/globals"
 	"github.com/deroproject/derohe/walletapi/xswd"
 	"github.com/docopt/docopt-go"
-	"github.com/sirupsen/logrus"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -41,7 +41,6 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-var logger = structures.Logger.WithFields(logrus.Fields{})
 var command_line string = `dReams
 Platform for Dero dApps, powered by Gnomon.
 
@@ -177,11 +176,11 @@ func loadAccount() (err error) {
 		return
 	}
 
-	logger.Println("[dReams] Loading account")
+	logger.Printf("[dReams] Loading account\n")
 	var account dreams.AccountData
 	err = dreams.GetAccount(&account)
 	if err != nil {
-		logger.Errorln("[loadAccount]", err)
+		logger.Errorf("[loadAccount] %s\n", err)
 		return
 	}
 
@@ -243,7 +242,7 @@ func fetch(done chan struct{}) {
 				dReams.SignalChannel()
 			}
 		case <-dReams.Closing(): // exit loop
-			logger.Println("[dReams] Closing...")
+			logger.Printf("[dReams] Closing...\n")
 			ticker.Stop()
 			dReams.CloseAllDapps()
 			time.Sleep(time.Second)
@@ -295,7 +294,7 @@ func checkDreamsNFAs(scids map[string]string, progress *widget.ProgressBar) {
 			scids = gnomon.GetAllOwnersAndSCIDs()
 		}
 
-		logger.Println("[dReams] Checking NFA Assets")
+		logger.Printf("[dReams] Checking NFA Assets\n")
 		dreams.Theme.Select.Options = []string{}
 		holdero.Settings.ClearAssets()
 		dice.Settings.ClearAssets()
@@ -450,7 +449,7 @@ func checkDreamsG45s(g45s map[string]string, progress *widget.ProgressBar) {
 		if g45s == nil {
 			g45s = gnomon.GetAllOwnersAndSCIDs()
 		}
-		logger.Println("[dReams] Checking G45 Assets")
+		logger.Printf("[dReams] Checking G45 Assets\n")
 
 		progress.Max = float64(len(g45s))
 

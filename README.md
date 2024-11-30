@@ -123,40 +123,50 @@ import (
 const app_tag = "My_app"
 
 func main() {
-	// Initialize rpc addresses to rpc.Daemon and rpc.Wallet vars
-	rpc.Daemon.Rpc = "127.0.0.1:10102"
-	rpc.Wallet.Rpc = "127.0.0.1:10103"
-	// Initialize rpc.Wallet.UserPass for rpc user:pass
+	// Initialize rpc addresses to rpc.Daemon and rpc.Wallet.RPC vars
+	rpc.Daemon.Endpoint = "127.0.0.1:10102"
+	rpc.Wallet.RPC.Port = "127.0.0.1:10103"
+
+	// Initialize wallet RPC auth if needed
+	// rpc.Wallet.RPC.Auth = "user:pass"
+
+	// Uncomment the below line if using a testnet wallet to switch the network to testnet
+	// globals.Config = config.Testnet
 
 	// Check for daemon connection
-	rpc.Ping()
+	rpc.Daemon.Ping()
+
+	// Initialize wallet RPC server
+	rpc.Wallet.RPC.Init()
 
 	// Check for wallet connection and get address
 	rpc.GetAddress(app_tag)
 
 	// Exit with ctrl-C
-	var exit bool
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-	go func() {
-		<-c
-		log.Printf("[%s] Closing\n", app_tag)
-		exit = true
-	}()
 
+	log.Printf("[%s] Starting RPC example\n", app_tag)
 	// Loop will check for daemon and wallet connection and
-	// print wallet height and balance. It will keep
-	// running while daemon and wallet are connected or until exit
-	for !exit && rpc.IsReady() {
-		rpc.Wallet.GetBalance()
-		rpc.GetWalletHeight(app_tag)
-		log.Printf("[%s] Height: %d   Dero Balance: %s\n", app_tag, rpc.Wallet.Height, rpc.FromAtomic(rpc.Wallet.Balance, 5))
-		time.Sleep(3 * time.Second)
-		rpc.Ping()
-		rpc.EchoWallet(app_tag)
+	// print wallet height and balance. It will keep running while
+	// daemon and wallet are connected or until exit signal is received
+	for {
+		select {
+		case <-time.After(time.Second * 3):
+			rpc.Daemon.Ping()
+			rpc.Wallet.Sync()
+			if !rpc.IsReady() {
+				log.Printf("[%s] Not connected, closing\n", app_tag)
+				rpc.Wallet.CloseConnections(app_tag)
+				return
+			}
+			log.Printf("[%s] Height: %d   Dero Balance: %s\n", app_tag, rpc.Wallet.Height(), rpc.Wallet.BalanceF("DERO"))
+		case <-c:
+			log.Printf("[%s] Closing\n", app_tag)
+			rpc.Wallet.CloseConnections(app_tag)
+			return
+		}
 	}
-
-	log.Printf("[%s] Not connected\n", app_tag)
 }
 ```
 ### gnomes
@@ -173,16 +183,12 @@ import (
 	"github.com/civilware/Gnomon/structures"
 	"github.com/dReam-dApps/dReams/gnomes"
 	"github.com/dReam-dApps/dReams/rpc"
-	"github.com/sirupsen/logrus"
 )
 
 // dReams gnomes StartGnomon() example
 
 // Name my app
 const app_tag = "My_app"
-
-// Log output
-var logger = structures.Logger.WithFields(logrus.Fields{})
 
 // Gnomon instance from gnomes package
 var gnomon = gnomes.NewGnomes()
@@ -192,40 +198,74 @@ func main() {
 	gnomon.SetFastsync(true, false, 100)
 
 	// Initialize rpc address to rpc.Daemon var
-	rpc.Daemon.Rpc = "127.0.0.1:10102"
+	rpc.Daemon.Endpoint = "127.0.0.1:20000"
 
-	// Initialize logger to Stdout
-	gnomes.InitLogrusLog(logrus.InfoLevel)
-
-	rpc.Ping()
 	// Check for daemon connection, if daemon is not connected we won't start Gnomon
-	if rpc.Daemon.IsConnected() {
-		// Initialize NFA search filter and start Gnomon
+	if rpc.Daemon.Ping() {
+		// Initialize NFA search filter and start Gnomon with boltdb
 		filter := []string{gnomes.NFA_SEARCH_FILTER}
 		gnomes.StartGnomon(app_tag, "boltdb", filter, 0, 0, nil)
 
 		// Exit with ctrl-C
-		var exit bool
 		c := make(chan os.Signal, 1)
 		signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-		go func() {
-			<-c
-			exit = true
-		}()
 
 		// Gnomon will continue to run if daemon is connected
-		for !exit && rpc.Daemon.IsConnected() {
-			contracts := gnomon.GetAllOwnersAndSCIDs()
-			logger.Printf("[%s] Index contains %d contracts\n", app_tag, len(contracts))
-			time.Sleep(3 * time.Second)
-			rpc.Ping()
-		}
+		for {
+			select {
+			case <-time.After(time.Second * 3):
+				contracts := gnomon.GetAllOwnersAndSCIDs()
+				logger.Printf("[%s] Index contains %d contracts at height %d\n", app_tag, len(contracts), gnomon.GetChainHeight())
 
-		// Stop Gnomon
-		gnomon.Stop(app_tag)
+				if !rpc.Daemon.Ping() {
+					logger.Printf("[%s] Daemon lost connection\n", app_tag)
+					// Stop Gnomon
+					gnomon.Stop(app_tag)
+					logger.Printf("[%s] Done\n", app_tag)
+					return
+				}
+			case <-c: // Stop Gnomon when exit signal received
+				gnomon.Stop(app_tag)
+				logger.Printf("[%s] Done\n", app_tag)
+				return
+			}
+		}
 	}
 
-	logger.Printf("[%s] Done\n", app_tag)
+	logger.Printf("[%s] Daemon not connected\n", app_tag)
+}
+```
+### dreams
+The dreams package contains many internal components used throughout dReam dApps. It relies on derohe and Fyne imports, giving easy entry points into dApp creation and verification, account features, image handling, and running concurrent dApps. This example shows how to create and run basic dApp with dreams packages.
+```go
+package main
+
+import (
+	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/theme"
+
+	dreams "github.com/dReam-dApps/dReams"
+)
+
+// dReams NewFyneApp() example
+
+// Name my app
+const app_tag = "My_app"
+
+func main() {
+	// Initialize fyne app
+	d := dreams.NewFyneApp(
+		"",                   // ID/URL
+		app_tag,              // Name
+		"NewFyneApp example", // Description
+		theme.DefaultTheme(), // App theme
+		nil,                  // App icon
+		nil,                  // Background
+	)
+
+	// Place an empty container and start the app
+	d.Window.SetContent(container.NewHBox())
+	d.Window.ShowAndRun()
 }
 ```
 ### menu 
@@ -234,11 +274,10 @@ NFA related items such as the dReams NFA marketplace and asset controls can be i
 package main
 
 import (
-	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 	dreams "github.com/dReam-dApps/dReams"
 	"github.com/dReam-dApps/dReams/bundle"
@@ -251,14 +290,15 @@ import (
 const app_tag = "My_app"
 
 func main() {
-	// Intialize Fyne window app and window into dReams app object
-	a := app.New()
-	w := a.NewWindow(app_tag)
-	w.Resize(fyne.NewSize(900, 700))
-	d := dreams.AppObject{
-		App:    a,
-		Window: w,
-	}
+	// Initialize Fyne app and window as dreams.AppObject
+	d := dreams.NewFyneApp(
+		"",                   // ID/URL
+		app_tag,              // Name
+		"Menu example",       // Description
+		theme.DefaultTheme(), // App theme
+		nil,                  // App icon
+		nil,                  // Background
+	)
 
 	// Simple asset profile with wallet name entry and theme select
 	line := canvas.NewLine(bundle.TextColor)
@@ -285,18 +325,18 @@ func main() {
 }
 ```
 ### dwidget
-The dwidget package is a extension to fyne widgets that intends to make creating dApps simpler and quicker with widgets specified for use with Dero. Numerical entries have prefix, increment and decimal control. Pre-configured connection boxes can be used that are tied into dReams rpc vars and have default Dero connection addresses populated. There is objects for shutdown control as well as a spot for the dReams indicators, or new ones. This example starts a Fyne gui app using `VerticalEntries()` to start Gnomon when connected.
+The dwidget package is a extension to fyne widgets that intends to make creating dApp UIs simpler and quicker with widgets specified for use with Dero. Numerical entries have prefix, increment and decimal control. Pre-configured connection boxes can be used that are tied into dReams rpc vars and have default Dero connection addresses populated. There is objects for shutdown control as well as a spot for the dReams indicators, or new ones. This example starts a Fyne gui app using `VerticalEntries()` to start Gnomon when connected.
 ```go
 package main
 
 import (
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/theme"
 
+	dreams "github.com/dReam-dApps/dReams"
 	"github.com/dReam-dApps/dReams/dwidget"
 	"github.com/dReam-dApps/dReams/gnomes"
 	"github.com/dReam-dApps/dReams/rpc"
-	"github.com/sirupsen/logrus"
 )
 
 // dReams dwidget NewVerticalEntries() example
@@ -311,41 +351,42 @@ func main() {
 	// Initialize Gnomon fast sync true to sync db immediately
 	gnomon.SetFastsync(true, false, 100)
 
-	// Initialize logger to Stdout
-	gnomes.InitLogrusLog(logrus.InfoLevel)
-
 	// Initialize fyne app
-	a := app.New()
+	d := dreams.NewFyneApp(
+		"",                   // ID/URL
+		app_tag,              // Name
+		"dWidget example",    // Description
+		theme.DefaultTheme(), // App theme
+		nil,                  // App icon
+		nil,                  // Background
+	)
 
 	// Initialize fyne window with size
-	w := a.NewWindow(app_tag)
-	w.Resize(fyne.NewSize(300, 100))
-	w.SetMaster()
+	d.Window.Resize(fyne.NewSize(300, 100))
 
 	// When window closes, stop Gnomon if running
-	w.SetCloseIntercept(func() {
+	d.Window.SetCloseIntercept(func() {
 		if gnomon.IsInitialized() {
 			gnomon.Stop(app_tag)
 		}
-		w.Close()
+		d.Window.Close()
 	})
 
 	// Initialize dwidget connection box
-	connect_box := dwidget.NewVerticalEntries(app_tag, 1)
+	connect_box := dwidget.NewVerticalEntries(app_tag, &d)
 
 	// When connection button is pressed we will connect to wallet rpc,
 	// and start Gnomon with NFA search filter if it is not running
 	connect_box.Button.OnTapped = func() {
 		rpc.GetAddress(app_tag)
-		rpc.Ping()
-		if rpc.Daemon.Connect && !gnomon.IsInitialized() && !gnomon.IsStarting() {
+		if rpc.Daemon.Ping() && !gnomon.IsInitialized() && !gnomon.IsStarting() {
 			go gnomes.StartGnomon(app_tag, "boltdb", []string{gnomes.NFA_SEARCH_FILTER}, 0, 0, nil)
 		}
 	}
 
 	// Place connection box and start app
-	w.SetContent(connect_box.Container)
-	w.ShowAndRun()
+	d.Window.SetContent(connect_box.Container)
+	d.Window.ShowAndRun()
 }
 ```
 ### bundle
@@ -357,10 +398,10 @@ import (
 	"image/color"
 
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
+	dreams "github.com/dReam-dApps/dReams"
 	"github.com/dReam-dApps/dReams/bundle"
 	"github.com/dReam-dApps/dReams/dwidget"
 )
@@ -373,14 +414,17 @@ func main() {
 	bundle.AppColor = color.Black
 
 	// Initialize fyne app with Dero theme
-	a := app.New()
-	a.Settings().SetTheme(bundle.DeroTheme(bundle.AppColor))
+	d := dreams.NewFyneApp(
+		"",                                // ID/URL
+		app_tag,                           // Name
+		"dWidget example",                 // Description
+		bundle.DeroTheme(bundle.AppColor), // App theme
+		bundle.ResourceBlueBadge3Png,      // App icon
+		nil,                               // Background
+	)
 
 	// Initialize fyne window with size and icon from bundle package
-	w := a.NewWindow(app_tag)
-	w.SetIcon(bundle.ResourceBlueBadge3Png)
-	w.Resize(fyne.NewSize(300, 100))
-	w.SetMaster()
+	d.Window.Resize(fyne.NewSize(300, 100))
 
 	// Initialize fyne container and add some various widgets for viewing purposes
 	cont := container.NewVBox()
@@ -400,7 +444,7 @@ func main() {
 
 		}
 
-		a.Settings().SetTheme(bundle.DeroTheme(bundle.AppColor))
+		d.App.Settings().SetTheme(bundle.DeroTheme(bundle.AppColor))
 	})
 	change_theme.Horizontal = true
 	cont.Add(container.NewCenter(change_theme))
@@ -415,8 +459,8 @@ func main() {
 	cont.Add(select_entry)
 
 	// Place widget container and start app
-	w.SetContent(cont)
-	w.ShowAndRun()
+	d.Window.SetContent(cont)
+	d.Window.ShowAndRun()
 }
 ```
 

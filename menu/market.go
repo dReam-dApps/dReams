@@ -12,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/civilware/tela/logger"
 	dreams "github.com/dReam-dApps/dReams"
 	"github.com/dReam-dApps/dReams/bundle"
 	"github.com/dReam-dApps/dReams/dwidget"
@@ -261,7 +262,7 @@ func updateListItem(i widget.ListItemID, o fyne.CanvasObject, asset []NFAListing
 		have, err := gnomes.StorageExists(a.Collection, a.Name)
 		if err != nil {
 			have = false
-			logger.Errorln("[updateListItem]", err)
+			logger.Errorf("[updateListItem] %s\n", err)
 		}
 
 		if have {
@@ -313,7 +314,7 @@ func GetNFAImages(scid string) {
 			have, err := gnomes.StorageExists(collection[0], name[0])
 			if err != nil {
 				have = false
-				logger.Errorln("[GetNFAImages]", err)
+				logger.Errorf("[GetNFAImages] %s\n", err)
 			}
 
 			if have {
@@ -351,7 +352,7 @@ func GetNFAImages(scid string) {
 		if cover != nil {
 			img, err := dreams.DownloadCanvas(cover[0], name[0]+"-cover")
 			if err != nil {
-				logger.Errorln("[GetNFAImages]", err)
+				logger.Errorf("[GetNFAImages] %s\n", err)
 			}
 
 			if img.Resource != nil {
@@ -468,7 +469,7 @@ func NFAMarketInfo(d *dreams.AppObject) fyne.Container {
 				splash = nil
 
 				dialog.NewError(fmt.Errorf("could not download asset file"), d.Window).Show()
-				logger.Errorln("[View Asset] download", err)
+				logger.Errorf("[View Asset] Download: %s\n", err)
 			} else {
 				w, h, _, err := dreams.GetImageSizeFromMemory(data)
 				if err != nil {
@@ -476,7 +477,7 @@ func NFAMarketInfo(d *dreams.AppObject) fyne.Container {
 					splash = nil
 
 					dialog.NewError(fmt.Errorf("view asset %s", err), d.Window).Show()
-					logger.Errorln("[View Asset] size", err)
+					logger.Errorf("[View Asset] Size: %s\n", err)
 				} else {
 					img := canvas.NewImageFromReader(bytes.NewReader(data), "")
 					img.SetMinSize(d.GetMaxSize(w, h))
@@ -1196,7 +1197,7 @@ func RunNFAMarket(d *dreams.AppObject, cont *fyne.Container) {
 				reset := cont.Objects[1]
 				screen, bar := syncScreen()
 				cont.Objects[1] = screen
-				logger.Println("[NFA Market] Syncing")
+				logger.Printf("[NFA Market] Syncing\n")
 				FindNFAListings(nil, bar)
 				synced = true
 				cont.Objects[1] = reset
@@ -1255,7 +1256,7 @@ func RunNFAMarket(d *dreams.AppObject, cont *fyne.Container) {
 			d.WorkDone()
 
 		case <-d.CloseDapp(): // exit
-			logger.Println("[NFA Market] Done")
+			logger.Printf("[NFA Market] Done\n")
 			return
 		}
 	}
@@ -1266,11 +1267,11 @@ func GetFilters(check string) (filter []string) {
 	if stored, ok := rpc.GetStringKey(rpc.RatingSCID, check, rpc.Daemon.Endpoint).(string); ok {
 		if h, err := hex.DecodeString(stored); err == nil {
 			if err = json.Unmarshal(h, &filter); err != nil {
-				logger.Errorln("[GetFilters]", check, err)
+				logger.Errorf("[GetFilters] %s: %s\n", check, err)
 			}
 		}
 	} else {
-		logger.Errorln("[GetFilters] Could not get", check)
+		logger.Errorf("[GetFilters] Could not get %q\n", check)
 	}
 
 	return
@@ -1959,7 +1960,7 @@ func CheckAllNFAs(scids map[string]string) {
 										if img, err := dreams.DownloadBytes(ParseURL(seal.Image)); err == nil {
 											add.Image = img
 										} else {
-											logger.Errorln("[CheckAllNFAs]", err)
+											logger.Errorf("[CheckAllNFAs] %s\n", err)
 										}
 
 										Assets.Add(add, icon[0])
@@ -1975,7 +1976,7 @@ func CheckAllNFAs(scids map[string]string) {
 									if img, err := dreams.DownloadBytes(ParseURL(agent.Image)); err == nil {
 										add.Image = img
 									} else {
-										logger.Errorln("[CheckAllNFAs]", err)
+										logger.Errorf("[CheckAllNFAs] %s\n", err)
 									}
 
 									Assets.Add(add, icon[0])
@@ -1990,7 +1991,7 @@ func CheckAllNFAs(scids map[string]string) {
 									if img, err := dreams.DownloadBytes(ParseURL(degen.Image)); err == nil {
 										add.Image = img
 									} else {
-										logger.Errorln("[CheckAllNFAs]", err)
+										logger.Errorf("[CheckAllNFAs] %s\n", err)
 									}
 
 									Assets.Add(add, icon[0])

@@ -14,6 +14,7 @@ import (
 
 	"github.com/blang/semver/v4"
 	"github.com/civilware/Gnomon/structures"
+	"github.com/civilware/tela/logger"
 	"github.com/deroproject/derohe/config"
 	"github.com/deroproject/derohe/cryptography/crypto"
 	"github.com/deroproject/derohe/globals"
@@ -61,7 +62,7 @@ func PrintLog(format string, a ...any) {
 		Wallet.LogEntry.Refresh()
 	}
 
-	logger.Println(text)
+	logger.Printf("%s\n", text)
 }
 
 // Prints session error entry to Wallet.LogEntry and stdout
@@ -72,7 +73,7 @@ func PrintError(format string, a ...any) {
 		Wallet.LogEntry.Refresh()
 	}
 
-	logger.Errorln(text)
+	logger.Errorf("%s\n", text)
 }
 
 // Make gui log for txs with save function.
@@ -83,11 +84,11 @@ func SessionLog(tag string, dapp semver.Version) *fyne.Container {
 
 	if tag == "dReams" || tag == "NFA Market" {
 		text := fmt.Sprintf("[%s] %s  OS: %s  ARCH: %s  GNOMON: %s", tag, Version(), runtime.GOOS, runtime.GOARCH, structures.Version.String())
-		logger.Println(text)
+		logger.Printf("%s\n", text)
 		Wallet.LogEntry.SetText(fmt.Sprintf("%s  %s", time.Now().Format("2006/01/02 15:04:05"), text))
 	} else {
 		text := fmt.Sprintf("[%s] %s  OS: %s  ARCH: %s  DREAMS: %s  GNOMON: %s", tag, dapp.String(), runtime.GOOS, runtime.GOARCH, Version(), structures.Version.String())
-		logger.Println(text)
+		logger.Printf("%s\n", text)
 		Wallet.LogEntry.SetText(fmt.Sprintf("%s  %s", time.Now().Format("2006/01/02 15:04:05"), text))
 	}
 
@@ -96,13 +97,13 @@ func SessionLog(tag string, dapp semver.Version) *fyne.Container {
 		if f, err := os.Create(file_name); err == nil {
 			defer f.Close()
 			if _, err = f.WriteString(Wallet.LogEntry.Text); err != nil {
-				logger.Errorln("[saveLog]", err)
+				logger.Errorf("[saveLog] %s\n", err)
 				return
 			}
 
-			logger.Println("[saveLog] Log File Saved", file_name)
+			logger.Printf("[saveLog] Log File Saved %s\n", file_name)
 		} else {
-			logger.Errorln("[saveLog]", err)
+			logger.Errorf("[saveLog] %s\n", err)
 		}
 	})
 	button.Importance = widget.LowImportance
@@ -811,7 +812,7 @@ func SendMessage(dest, msg string, rings uint64) {
 		fee = fee + 20
 	}
 
-	logger.Println("[SendMessage] Gas Fee:", fee+20)
+	logger.Printf("[SendMessage] Gas Fee: %d\n", fee+20)
 
 	t := []rpc.Transfer{t1}
 	txid := rpc.Transfer_Result{}

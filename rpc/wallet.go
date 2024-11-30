@@ -10,14 +10,13 @@ import (
 	"time"
 
 	"fyne.io/fyne/v2/widget"
-	"github.com/civilware/Gnomon/structures"
+	"github.com/civilware/tela/logger"
 	"github.com/deroproject/derohe/cryptography/crypto"
 	"github.com/deroproject/derohe/dvm"
 	"github.com/deroproject/derohe/globals"
 	"github.com/deroproject/derohe/rpc"
 	"github.com/deroproject/derohe/transaction"
 	"github.com/deroproject/derohe/walletapi"
-	"github.com/sirupsen/logrus"
 	"github.com/ybbus/jsonrpc/v3"
 )
 
@@ -47,24 +46,23 @@ type Balance struct {
 }
 
 var Wallet wallet
-var logger = structures.Logger.WithFields(logrus.Fields{})
 
 // Close all connections to wallet
 func (w *wallet) CloseConnections(tag string) {
 	if w.RPC.client != nil {
-		logger.Infof("[%s] RPC Closed\n", tag)
+		logger.Printf("[%s] RPC Closed\n", tag)
 		w.RPC.client = nil
 		w.RPC.cancel = nil
 	}
 
 	if w.WS.conn != nil {
-		logger.Infof("[%s] XSWD Closed\n", tag)
+		logger.Printf("[%s] XSWD Closed\n", tag)
 		w.WS.conn.Close()
 		w.WS.conn = nil
 	}
 
 	if w.File.disk != nil {
-		logger.Infof("[%s] Wallet Closed\n", tag)
+		logger.Printf("[%s] Wallet Closed\n", tag)
 		w.File.disk.Close_Encrypted_Wallet()
 		w.File.disk = nil
 	}
@@ -131,7 +129,7 @@ func (w *wallet) CallFor(out interface{}, method string, params ...interface{}) 
 	} else if w.WS.conn != nil {
 		for w.WS.IsRequesting() {
 			time.Sleep(500 * time.Millisecond)
-			logger.Debugln("[XSWD] Request sleep...")
+			logger.Debugf("[XSWD] Request sleep...\n")
 		}
 
 		if err = w.WS.CallFor(&out, method, jsonrpc.Params(params...)); err != nil {

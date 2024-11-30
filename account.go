@@ -11,6 +11,7 @@ import (
 	"sync"
 
 	"github.com/blang/semver/v4"
+	"github.com/civilware/tela/logger"
 	"github.com/dReam-dApps/dReams/rpc"
 	"github.com/deroproject/derohe/walletapi"
 	"go.etcd.io/bbolt"
@@ -506,16 +507,16 @@ func CreateAccountIfNone(tag string) (err error) {
 		logger.Printf("[%s] Creating account\n", tag)
 		acc, err = CreateAccount()
 		if err != nil {
-			logger.Errorln("[CreateAccount]", err)
+			logger.Errorf("[CreateAccount] %s\n", err)
 			return
 		}
 
 		errr := storeAccount(acc)
 		if errr != nil {
-			logger.Errorln("[storeAccount]", errr)
+			logger.Errorf("[storeAccount] %s\n", errr)
 		}
 	} else if err != nil {
-		logger.Errorln("[AccountExists]", err)
+		logger.Errorf("[AccountExists] %s\n", err)
 		return
 	}
 

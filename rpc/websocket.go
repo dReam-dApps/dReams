@@ -8,6 +8,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/civilware/tela/logger"
 	"github.com/creachadair/jrpc2"
 	"github.com/deroproject/derohe/walletapi/rpcserver"
 	"github.com/deroproject/derohe/walletapi/xswd"
@@ -168,14 +169,14 @@ func (ws *XSWDserver) Init(app *xswd.ApplicationData) (connected bool) {
 		var err error
 		ws.conn, err = CreateSocket(ws.Port)
 		if err != nil {
-			logger.Errorln("[XSWD]", err)
+			logger.Errorf("[XSWD] %s\n", err)
 			return
 		}
 
 		ws.connecting(true)
 		m, err := ws.ConnectSocket()
 		if err != nil {
-			logger.Errorln("[XSWD]", err)
+			logger.Errorf("[XSWD] %s\n", err)
 			return
 		}
 
@@ -184,7 +185,7 @@ func (ws *XSWDserver) Init(app *xswd.ApplicationData) (connected bool) {
 			return true
 		}
 
-		logger.Println("[XSWD]", m.Message)
+		logger.Printf("[XSWD] %s\n", m.Message)
 		ws.conn = nil
 	} else {
 		ws.conn = nil

@@ -36,7 +36,7 @@ This file lists the changes to dReams repo with each version.
 
 ### Changed
 
-* Fyne 2.5.0
+* Fyne 2.5.2
 * Gnomon 2.0.3-alpha.x
 * Baccarat 0.x.x
 * Holdero 0.x.x
@@ -44,6 +44,7 @@ This file lists the changes to dReams repo with each version.
 * Iluma 0.x.x
 * Duels 0.x.x
 * Grokked 0.x.x
+* Deprecated logrus/logger in favour of tela/logger
 * dReams standard import function for dApps is now LayoutAll()
 * Removed DERO file buttons from NFA minter, is now integrated into its connection widget
 * NFA-Creation directory renamed to creation

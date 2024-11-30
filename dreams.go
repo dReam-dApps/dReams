@@ -20,12 +20,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/civilware/Gnomon/structures"
+	"github.com/civilware/tela/logger"
 	"github.com/dReam-dApps/dReams/rpc"
 	"github.com/deroproject/derohe/globals"
 	"github.com/deroproject/derohe/walletapi"
 	"github.com/deroproject/derohe/walletapi/xswd"
-	"github.com/sirupsen/logrus"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -92,7 +91,6 @@ type count struct {
 var counter count
 var mu sync.RWMutex
 var ms = 100 * time.Millisecond
-var logger = structures.Logger.WithFields(logrus.Fields{})
 
 // Background theme AssetSelect
 var Theme AssetSelect
@@ -123,18 +121,18 @@ func (c *count) active() int {
 func checkSum() (name, hash string, err error) {
 	path, err := os.Executable()
 	if err != nil {
-		logger.Fatalln("[checkSum] Could not find:", err)
+		logger.Fatalf("[checkSum] Could not find: %s\n ", err)
 	}
 
 	var bytes []byte
 	bytes, err = os.ReadFile(path)
 	if err != nil {
-		logger.Fatalln("[checkSum] Could not read:", err)
+		logger.Fatalf("[checkSum] Could not read: %s\n", err)
 	}
 
 	hasher := sha256.New()
 	if _, err = hasher.Write(bytes); err != nil {
-		logger.Fatalln("[checkSum] Could not write:", err)
+		logger.Fatalf("[checkSum] Could not write: %s\n", err)
 	}
 
 	_, exe := filepath.Split(path)
@@ -373,7 +371,7 @@ func (d *AppObject) GetAccountHandlers() map[string]func(interface{}) error {
 func GetDir() (dir string) {
 	dir, err := os.Getwd()
 	if err != nil {
-		logger.Errorln("[GetDir]", err)
+		logger.Errorf("[GetDir] %s\n", err)
 	}
 
 	return
@@ -405,7 +403,7 @@ func GetDeroAccounts() (prefix string, names []string) {
 
 	files, err := filepath.Glob(path + "*.db")
 	if err != nil {
-		logger.Errorln("[dReams]", err)
+		logger.Errorf("[dReams] %s\n", err)
 		return
 	}
 

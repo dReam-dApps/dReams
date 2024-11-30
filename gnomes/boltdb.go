@@ -4,18 +4,19 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/civilware/tela/logger"
 	"go.etcd.io/bbolt"
 )
 
 // Store data in boltdb, if using gravdb it will not store index
 func StoreBolt(bucket, key string, store interface{}) (err error) {
 	if gnomes.DBType != "boltdb" {
-		logger.Debugln("[StoreBolt] DB not boltdb")
+		logger.Debugf("[StoreBolt] DB not boltdb\n")
 		return
 	}
 
 	if gnomes.Indexer == nil {
-		logger.Debugln("[StoreBolt] DB is nil")
+		logger.Debugf("[StoreBolt] DB is nil\n")
 		return
 	}
 
@@ -37,13 +38,13 @@ func StoreBolt(bucket, key string, store interface{}) (err error) {
 
 		mar, err := json.Marshal(&store)
 		if err != nil {
-			logger.Debugln("[StoreBolt]", key, mar, bucket, err)
+			logger.Debugf("[StoreBolt] %s %v %s %s\n", key, mar, bucket, err)
 			return
 		}
 
 		err = b.Put([]byte(key), []byte(mar))
 		if err != nil {
-			logger.Debugln("[StoreBolt]", key, mar, bucket, err)
+			logger.Debugf("[StoreBolt] %s %v %s %s\n", key, mar, bucket, err)
 			return
 		}
 
@@ -58,12 +59,12 @@ func StoreBolt(bucket, key string, store interface{}) (err error) {
 // Get data from boltdb
 func GetStorage(bucket, key string, out interface{}) {
 	if gnomes.DBType != "boltdb" {
-		logger.Debugln("[GetStorage] DB not boltdb")
+		logger.Debugf("[GetStorage] DB not boltdb\n")
 		return
 	}
 
 	if gnomes.Indexer == nil {
-		logger.Debugln("[GetStorage] DB is nil")
+		logger.Debugf("[GetStorage] DB is nil\n")
 		return
 	}
 
@@ -73,7 +74,7 @@ func GetStorage(bucket, key string, out interface{}) {
 			if ok := b.Get([]byte(key)); ok != nil {
 				err := json.Unmarshal(ok, &out)
 				if err != nil {
-					logger.Debugln("[GetStorage]", err)
+					logger.Debugf("[GetStorage] %s\n", err)
 					return err
 				}
 				return nil
@@ -87,12 +88,12 @@ func GetStorage(bucket, key string, out interface{}) {
 // Delete data from boltdb
 func DeleteStorage(bucket, key string) {
 	if gnomes.DBType != "boltdb" {
-		logger.Debugln("[DeleteStorage] DB not boltdb")
+		logger.Debugf("[DeleteStorage] DB not boltdb\n")
 		return
 	}
 
 	if gnomes.Indexer == nil {
-		logger.Debugln("[DeleteStorage] DB is nil")
+		logger.Debugf("[DeleteStorage] DB is nil\n")
 		return
 	}
 
@@ -103,22 +104,22 @@ func DeleteStorage(bucket, key string) {
 	})
 
 	if err != nil {
-		logger.Debugln("[DeleteStorage]", bucket, err)
+		logger.Debugf("[DeleteStorage] %s %s\n", bucket, err)
 		return
 	}
 
-	logger.Debugln("[DeleteStorage]", key, "deleted")
+	logger.Debugf("[DeleteStorage] %s deleted\n", key)
 }
 
 // Check if data exists in boltdb
 func StorageExists(bucket, key string) (found bool, err error) {
 	if gnomes.DBType != "boltdb" {
-		logger.Debugln("[StorageExists] DB not boltdb")
+		logger.Debugf("[StorageExists] DB not boltdb\n")
 		return
 	}
 
 	if gnomes.Indexer == nil {
-		logger.Debugln("[StorageExists] DB is nil")
+		logger.Debugf("[StorageExists] DB is nil\n")
 		return
 	}
 

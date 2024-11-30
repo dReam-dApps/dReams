@@ -10,6 +10,7 @@ import (
 
 	"github.com/civilware/Gnomon/indexer"
 	"github.com/civilware/Gnomon/structures"
+	"github.com/civilware/tela/logger"
 	"github.com/dReam-dApps/dReams/dwidget"
 	"github.com/dReam-dApps/dReams/rpc"
 	"github.com/deroproject/graviton"

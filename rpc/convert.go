@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/civilware/tela/logger"
 	"github.com/deroproject/derohe/cryptography/crypto"
 	"github.com/deroproject/derohe/rpc"
 )
@@ -103,7 +104,7 @@ func StringToInt(s string) int {
 	if s != "" {
 		i, err := strconv.Atoi(s)
 		if err != nil {
-			logger.Errorln("[StringToInt]", err)
+			logger.Errorf("[StringToInt] %s\n", err)
 			return 0
 		}
 		return i
@@ -117,7 +118,7 @@ func StringToUint64(s string) uint64 {
 	if s != "" {
 		i, err := strconv.Atoi(s)
 		if err != nil {
-			logger.Errorln("[StringToUint64]", err)
+			logger.Errorf("[StringToUint64] %s\n", err)
 			return 0
 		}
 		return uint64(i)

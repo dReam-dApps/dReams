@@ -17,6 +17,7 @@ import (
 	"github.com/civilware/Gnomon/indexer"
 	"github.com/civilware/Gnomon/storage"
 	"github.com/civilware/Gnomon/structures"
+	"github.com/civilware/tela/logger"
 )
 
 const (
@@ -63,8 +64,6 @@ type SC struct {
 	Header  SCHeaders
 }
 
-var logger = structures.Logger.WithFields(logrus.Fields{})
-
 // Initialize logger for package
 func init() {
 	InitLogrusLog(logrus.InfoLevel)
@@ -78,13 +77,15 @@ func enableEscapeCodes() error {
 	return cmd.Run()
 }
 
+// Deprecated: tela/logger is preferred over logrus with a Init function, see "github.com/civilware/tela/logger"
+//
 // Initialize logrus logger matching Gnomon log
 func InitLogrusLog(level logrus.Level) {
 	colors := true
 	if runtime.GOOS == "windows" {
 		if err := enableEscapeCodes(); err != nil {
 			colors = false
-			logger.Warnln("[InitLogrusLog] Err enabling escape codes:", err)
+			logger.Warnf("[InitLogrusLog] Err enabling escape codes: %s\n", err)
 		}
 	}
 

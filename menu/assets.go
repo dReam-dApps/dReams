@@ -16,6 +16,7 @@ import (
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
+	"github.com/civilware/tela/logger"
 	dreams "github.com/dReam-dApps/dReams"
 	"github.com/dReam-dApps/dReams/bundle"
 	"github.com/dReam-dApps/dReams/dwidget"
@@ -112,7 +113,7 @@ func (a *assetObjects) Add(details Asset, url string) {
 	have, err := gnomes.StorageExists(details.Collection, details.Name)
 	if err != nil {
 		have = false
-		logger.Errorln("[AddAsset]", err)
+		logger.Errorf("[AddAsset] %s\n", err)
 	}
 
 	if have {
@@ -130,7 +131,7 @@ func (a *assetObjects) Add(details Asset, url string) {
 			details.Image = img
 		} else {
 			details.Image = bundle.ResourceMarketCirclePng.StaticContent
-			logger.Errorln("[AddAsset]", err)
+			logger.Errorf("[AddAsset] %s\n", err)
 		}
 	}
 

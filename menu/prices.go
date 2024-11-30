@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/civilware/tela/logger"
 	coingecko "github.com/superoo7/go-gecko/v3"
 )
 
@@ -163,7 +164,7 @@ func getOgre(coin string) (price string) {
 	client := &http.Client{Timeout: 10 * time.Second}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		logger.Errorln("[getOgre]", err)
+		logger.Errorf("[getOgre] %s\n", err)
 		return
 	}
 
@@ -172,20 +173,20 @@ func getOgre(coin string) (price string) {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		logger.Errorln("[getOgre]", err)
+		logger.Errorf("[getOgre] %s\n", err)
 		return
 	}
 	defer resp.Body.Close()
 
 	b, err := io.ReadAll(resp.Body)
 	if err != nil {
-		logger.Errorln("[getOgre]", err)
+		logger.Errorf("[getOgre] %s\n", err)
 		return
 	}
 
 	err = json.Unmarshal(b, &found)
 	if err != nil {
-		logger.Errorln("[getOgre]", err)
+		logger.Errorf("[getOgre] %s\n", err)
 		return
 	}
 
@@ -226,7 +227,7 @@ func getKucoin(coin string) (price string) {
 	client := &http.Client{Timeout: 10 * time.Second}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		logger.Errorln("[getKucoin]", err)
+		logger.Errorf("[getKucoin] %s\n", err)
 		return
 	}
 
@@ -235,20 +236,20 @@ func getKucoin(coin string) (price string) {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		logger.Errorln("[getKucoin]", err)
+		logger.Errorf("[getKucoin] %s\n", err)
 		return
 	}
 	defer resp.Body.Close()
 
 	b, err := io.ReadAll(resp.Body)
 	if err != nil {
-		logger.Errorln("[getKucoin]", err)
+		logger.Errorf("[getKucoin] %s\n", err)
 		return
 	}
 
 	err = json.Unmarshal(b, &found)
 	if err != nil {
-		logger.Errorln("[getKucoin]", err)
+		logger.Errorf("[getKucoin] %s\n", err)
 		return
 	}
 
@@ -288,7 +289,7 @@ func getGeko(coin string) string {
 
 	price, err := CG.SimpleSinglePrice(url, pair)
 	if err != nil {
-		logger.Errorln("[getGeko]", err)
+		logger.Errorf("[getGeko] %s\n", err)
 		return ""
 	}
 
@@ -324,7 +325,7 @@ func getXeggex(coin string) (price string) {
 	client := &http.Client{Timeout: 10 * time.Second}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		logger.Errorln("[getXeggex]", err)
+		logger.Errorf("[getXeggex] %s\n", err)
 		return
 	}
 
@@ -333,20 +334,20 @@ func getXeggex(coin string) (price string) {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		logger.Errorln("[getXeggex]", err)
+		logger.Errorf("[getXeggex] %s\n", err)
 		return
 	}
 	defer resp.Body.Close()
 
 	b, err := io.ReadAll(resp.Body)
 	if err != nil {
-		logger.Errorln("[getXeggex]", err)
+		logger.Errorf("[getXeggex] %s\n", err)
 		return
 	}
 
 	err = json.Unmarshal(b, &found)
 	if err != nil {
-		logger.Errorln("[getXeggex]", err)
+		logger.Errorf("[getXeggex] %s\n", err)
 		return
 	}
 
