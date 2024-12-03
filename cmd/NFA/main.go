@@ -212,7 +212,7 @@ func main() {
 				d.SignalChannel()
 
 			case <-d.Closing():
-				logger.Printf("[%s] Closing...", appName)
+				logger.Printf("[%s] Closing...\n", appName)
 				ticker.Stop()
 				d.CloseAllDapps()
 				time.Sleep(time.Second)

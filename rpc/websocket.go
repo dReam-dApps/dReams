@@ -87,7 +87,7 @@ func NewXSWDPermissions(methods []string) map[string]xswd.Permission {
 // Initialize websocket
 func CreateSocket(port string) (con *websocket.Conn, err error) {
 	u := url.URL{Scheme: "ws", Host: port, Path: "/xswd"}
-	logger.Printf("[XSWD] Connecting to %s", u.String())
+	logger.Printf("[XSWD] Connecting to %s\n", u.String())
 
 	header := http.Header{}
 	header.Set("content-type", "application/json")
